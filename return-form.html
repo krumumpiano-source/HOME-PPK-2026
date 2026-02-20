@@ -560,19 +560,7 @@
         return res.json();
     }
         //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
-        async function cachedCall(action, params, ttlMs) {
-            ttlMs = ttlMs || 120000;
-            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
-            try {
-                var s = localStorage.getItem(ck);
-                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
-            } catch(e) {}
-            var r = await callBackendGet(action, params || {});
-            if (r && r.success !== false) {
-                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-            }
-            return r;
-        }
+        // cachedCall: stale-while-revalidate  แสดงทนท, refresh ใน background`n        async function cachedCall(action, params, ttlMs) {`n            ttlMs = ttlMs || 300000;`n            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});`n            var fresh = null;`n            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}`n            if (fresh && fresh.d) {`n                if (Date.now() - fresh.t > ttlMs) {`n                    callBackendGet(action, params || {}).then(function(r) {`n                        if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }`n                    }).catch(function(){});`n                }`n                return fresh.d;`n            }`n            var r = await callBackendGet(action, params || {});`n            if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }`n            return r;`n        }
 
     // ============ Session + Auto-fill ============
     async function initPage() {

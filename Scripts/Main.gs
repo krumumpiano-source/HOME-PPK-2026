@@ -87,6 +87,9 @@ const GET_ACTIONS = {
   // ── Dashboard (single call) ──
   'getDashboardData':         'getDashboardData',
 
+  // ── batchGet — รวมหลาย action ใน 1 request ──
+  'batchGet':                 'handleBatchGet',
+
   // ── Billing Summary ──
   'getBillSummaryAll':        'getBillSummaryAll',
   'getCommonFee':             'getCommonFee',
@@ -343,6 +346,17 @@ function doPost(e) {
 
     // Route ไปยังฟังก์ชันที่ถูกต้อง
     var result = routePostAction(action, data);
+
+    // Invalidate cache หลัง write operations สำเร็จ
+    if (result && result.success) {
+      var housingWrites = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident','cleanupDuplicateHousing'];
+      var settingsWrites = ['updateSettings','saveHousingFormat'];
+      var announcementWrites = ['addAnnouncement','deleteAnnouncement'];
+      if (housingWrites.indexOf(action) !== -1) invalidateCache('housing','residents');
+      if (settingsWrites.indexOf(action) !== -1) invalidateCache('settings','housingFormat','waterRate','commonFee');
+      if (announcementWrites.indexOf(action) !== -1) invalidateCache('announcements');
+    }
+
     return jsonResponse(result);
 
   } catch (err) {
@@ -432,6 +446,53 @@ function validateSession(token) {
 }
 
 // ============================================================================
+// GAS CACHE HELPER — Server-side cache ด้วย CacheService (TTL 5 นาที)
+// ============================================================================
+
+/**
+ * ดึงข้อมูลจาก Cache ก่อน ถ้า miss → รันฟังก์ชัน แล้ว cache ผล
+ * @param {string} key     - cache key
+ * @param {Function} fn    - ฟังก์ชันที่ return data
+ * @param {number} ttlSec  - อายุ cache (วินาที, default 300 = 5 นาที)
+ * @returns {Object} ผลลัพธ์จาก fn หรือจาก cache
+ */
+function gasCache(key, fn, ttlSec) {
+  ttlSec = ttlSec || 300;
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'data_' + key;
+  try {
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      parsed._fromCache = true;
+      return parsed;
+    }
+  } catch (e) {}
+
+  var result = fn();
+  if (result && result.success !== false) {
+    try {
+      var str = JSON.stringify(result);
+      // CacheService จำกัด 100KB ต่อ key
+      if (str.length < 100000) cache.put(cacheKey, str, ttlSec);
+    } catch (e) {}
+  }
+  return result;
+}
+
+/**
+ * ล้าง cache หลัง write operations (housing, residents, settings, announcements)
+ * @param {...string} keys - ชื่อ cache key ที่ต้องการล้าง
+ */
+function invalidateCache() {
+  var keys = Array.prototype.slice.call(arguments);
+  var cache = CacheService.getScriptCache();
+  try {
+    cache.removeAll(keys.map(function(k) { return 'data_' + k; }));
+  } catch (e) {}
+}
+
+// ============================================================================
 // GET ROUTER — ส่งต่อ GET action ไปยังฟังก์ชันที่ถูกต้อง
 // ============================================================================
 
@@ -446,21 +507,27 @@ function validateSession(token) {
 function routeGetAction(action, params) {
   return safeExecute(function() {
     switch (action) {
-      // ── Settings & Housing ──
+      // ── Settings & Housing ── (cache 5 นาที)
       case 'getSettings':
-        return getSettings();
+        return gasCache('settings', function() { return getSettings(); });
       case 'getHousing':
-        return getHousingList();
+        return gasCache('housing', function() { return getHousingList(); });
       case 'getResidents':
-        return getResidentsList();
+        return gasCache('residents', function() { return getResidentsList(); });
+      case 'getAnnouncements':
+        return gasCache('announcements', function() { return getAnnouncements(); }, 180);
       case 'getUserProfile':
         return getUserProfile(params.userId || params._userId);
       case 'getCoresidents':
         return getCoresidents(params.residentId);
       case 'getHousingFormat':
-        return getHousingFormat();
+        return gasCache('housingFormat', function() { return getHousingFormat(); });
       case 'getWaterRate':
-        return getWaterRate();
+        return gasCache('waterRate', function() { return getWaterRate(); });
+
+      // ── batchGet — รวมหลาย action ใน 1 request ──
+      case 'batchGet':
+        return handleBatchGet(params);
 
       // ── Billing ──
       case 'getWaterBills':
@@ -506,17 +573,13 @@ function routeGetAction(action, params) {
       case 'getBillSummaryAll':
         return getBillSummaryAll(params.period);
       case 'getCommonFee':
-        return getCommonFee();
+        return gasCache('commonFee', function() { return getCommonFee(); });
       case 'getDueDate':
-        return getDueDate();
+        return gasCache('dueDate', function() { return getDueDate(); });
 
       // ── Housing / Regulations ──
       case 'getRegulationsPdf':
         return getRegulationsPdf();
-
-      // ── Announcements ──
-      case 'getAnnouncements':
-        return getAnnouncements();
 
       // ── Auth ──
       case 'getPendingRegistrations':
@@ -719,6 +782,43 @@ function getDashboardData(params) {
 // ============================================================================
 // MODULE REFERENCES — ฟังก์ชันทั้งหมดอยู่ในไฟล์ .gs ที่เกี่ยวข้อง
 // ============================================================================
+
+// ============================================================================
+// BATCH GET — รวมหลาย action ใน 1 HTTP request
+// ============================================================================
+
+/**
+ * batchGet: รับ keys=action1,action2,... → รันทุก action แล้วตอบรวมกัน
+ * ลด HTTP round-trips จาก 5 ครั้ง → 1 ครั้ง
+ * ตัวอย่าง: GET ?action=batchGet&keys=getSettings,getHousing,getResidents&token=xxx
+ */
+function handleBatchGet(params) {
+  var keys = (params.keys || '').split(',').map(function(k) { return k.trim(); }).filter(Boolean);
+  if (!keys.length) return { success: false, error: 'ต้องระบุ keys' };
+
+  var ALLOWED_BATCH_KEYS = [
+    'getSettings', 'getHousing', 'getResidents', 'getAnnouncements',
+    'getPendingRegistrations', 'getHousingFormat', 'getWaterRate',
+    'getCommonFee', 'getDueDate', 'getQueue'
+  ];
+
+  var results = {};
+  keys.forEach(function(key) {
+    if (!ALLOWED_BATCH_KEYS.includes(key)) {
+      results[key] = { success: false, error: 'ไม่อนุญาต key: ' + key };
+      return;
+    }
+    try {
+      results[key] = routeGetAction(key, params);
+    } catch (e) {
+      results[key] = { success: false, error: e.message };
+    }
+  });
+
+  return { success: true, results: results, _batchedAt: Date.now() };
+}
+
+
 // ✅ ไฟล์ .gs ครบทุกโมดูลแล้ว — ไม่มี stub เหลือ
 // ============================================================================
 

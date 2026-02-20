@@ -536,13 +536,24 @@
             return result;
         }
         //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+                // cachedCall: stale-while-revalidate — แสดงทันที, refresh ใน background
         async function cachedCall(action, params, ttlMs) {
-            ttlMs = ttlMs || 120000;
+            ttlMs = ttlMs || 300000; // 5 นาที
             var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
-            try {
-                var s = localStorage.getItem(ck);
-                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
-            } catch(e) {}
+            var fresh = null;
+            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}
+            if (fresh && fresh.d) {
+                if (Date.now() - fresh.t > ttlMs) {
+                    // หมดอายุ — refresh background โดยไม่รอ
+                    callBackendGet(action, params || {}).then(function(r) {
+                        if (r && r.success !== false) {
+                            try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+                        }
+                    }).catch(function(){});
+                }
+                return fresh.d; // return ทันทีจาก cache
+            }
+            // ไม่มี cache — ต้องรอ fetch จริง
             var r = await callBackendGet(action, params || {});
             if (r && r.success !== false) {
                 try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
