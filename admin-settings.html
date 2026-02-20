@@ -1703,11 +1703,23 @@
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             // Show selected tab
             document.getElementById('tab-' + tabName).classList.add('active');
             var activeBtn = btnEl ? btnEl.closest('.tab-btn') : null;
             if (activeBtn) activeBtn.classList.add('active');
+
+            // Lazy-load tab content on first open
+            if (!_tabRendered[tabName]) {
+                _tabRendered[tabName] = true;
+                if (tabName === 'water') { loadWaterSettings(); renderExemptionTable(); }
+                else if (tabName === 'electric') loadElectricSettings();
+                else if (tabName === 'common') loadCommonFeeSettings();
+                else if (tabName === 'system') loadSystemSettings();
+                else if (tabName === 'permissions') renderPermissionTable();
+                else if (tabName === 'announcements') renderAnnouncementsList();
+                else if (tabName === 'registration') loadPendingRegistrations();
+            }
         }
 
         // ========== Modal Functions ==========
@@ -2260,20 +2272,8 @@
             if (mode === 'byHouse') renderHouseCards();
             else if (mode === 'individual') renderResidentTable();
             else if (mode === 'manageHousing') {
+                // ใช้ข้อมูล localStorage ที่เคยดึงมาผ่าน batchGet แล้ว — ไม่ต้องเรียก GAS ซ้ำ
                 renderManageHousingCards();
-                if (WEB_APP_URL) {
-                    callBackendGet('getHousing').then(result => {
-                        if (result && result.success && result.data) {
-                            const housingData = result.data.map((h, i) => ({
-                                id: h.id || (i + 1), type: h.type || 'house', number: h.number || '',
-                                displayNumber: h.display_number || '', zone: h.zone || '',
-                                status: h.status || 'available', note: h.note || ''
-                            }));
-                            localStorage.setItem(STORAGE_KEYS.housing, JSON.stringify(housingData));
-                            renderManageHousingCards();
-                        }
-                    }).catch(() => {});
-                }
             }
         }
 
@@ -3627,25 +3627,52 @@
         }
 
         // ========== Load All Settings ==========
+        // track which tabs have been rendered at least once
+        const _tabRendered = {};
+
         function loadAllSettings() {
-            renderHousingTable();
-            renderManageHousingCards();
+            // ── โหลดเฉพาะส่วนที่จำเป็น (active tab = housing) ──
+            renderHouseCards();
             renderResidentTable();
-            renderHouseCards(); // เพิ่มการโหลด house cards view
-            loadWaterSettings();
-            loadElectricSettings();
-            loadCommonFeeSettings();
-            loadSystemSettings();
-            renderExemptionTable();
-            renderPermissionTable();
-            renderAnnouncementsList();
-            
+            renderHousingTable();
+
             // Load housing format settings
             const formatSettings = getHousingFormatSettings();
-            document.getElementById('houseNumberFormat').value = formatSettings.houseFormat;
-            document.getElementById('housePrefix').value = formatSettings.housePrefix;
-            document.getElementById('flatNumberFormat').value = formatSettings.flatFormat;
-            document.getElementById('flatPrefix').value = formatSettings.flatPrefix;
+            if (document.getElementById('houseNumberFormat'))
+                document.getElementById('houseNumberFormat').value = formatSettings.houseFormat;
+            if (document.getElementById('housePrefix'))
+                document.getElementById('housePrefix').value = formatSettings.housePrefix;
+            if (document.getElementById('flatNumberFormat'))
+                document.getElementById('flatNumberFormat').value = formatSettings.flatFormat;
+            if (document.getElementById('flatPrefix'))
+                document.getElementById('flatPrefix').value = formatSettings.flatPrefix;
+
+            _tabRendered['housing'] = true;
+        }
+
+        // เรียกหลัง batchGet กลับมา — re-render เฉพาะ tab ที่เคย render แล้ว
+        function reloadAllSettingsFull() {
+            renderHouseCards();
+            renderResidentTable();
+            renderHousingTable();
+            if (_tabRendered['water']) loadWaterSettings();
+            if (_tabRendered['electric']) loadElectricSettings();
+            if (_tabRendered['common']) loadCommonFeeSettings();
+            if (_tabRendered['system']) loadSystemSettings();
+            if (_tabRendered['permissions']) renderPermissionTable();
+            if (_tabRendered['announcements']) renderAnnouncementsList();
+            renderExemptionTable();
+            renderAnnouncementsList();
+
+            const formatSettings = getHousingFormatSettings();
+            if (document.getElementById('houseNumberFormat'))
+                document.getElementById('houseNumberFormat').value = formatSettings.houseFormat;
+            if (document.getElementById('housePrefix'))
+                document.getElementById('housePrefix').value = formatSettings.housePrefix;
+            if (document.getElementById('flatNumberFormat'))
+                document.getElementById('flatNumberFormat').value = formatSettings.flatFormat;
+            if (document.getElementById('flatPrefix'))
+                document.getElementById('flatPrefix').value = formatSettings.flatPrefix;
         }
 
         // ========== Load from Backend & Sync to localStorage ==========
@@ -3807,9 +3834,9 @@
             } catch (err) {
                 console.warn('Backend load failed, using localStorage:', err.message);
             }
-            
-            // Reload UI from localStorage (now synced with backend)
-            loadAllSettings();
+
+            // Reload UI — re-render เฉพาะ tab ที่ user เคยเปิดแล้ว
+            reloadAllSettingsFull();
         }
 
         // ========== Registration Approval Functions (Step 28) ==========
