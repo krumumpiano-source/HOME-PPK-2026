@@ -557,6 +557,12 @@
                 <button class="tab-btn" onclick="showTab('registration', this)" id="tabBtnRegistration">
                     <span class="tab-btn-icon">📝</span> อนุมัติการสมัคร <span class="badge badge-danger" id="pendingCount" style="margin-left:4px; display:none;">0</span>
                 </button>
+                <button class="tab-btn" onclick="showTab('housing', this)">
+                    <span class="tab-btn-icon">🏠</span> ที่พักอาศัย
+                </button>
+                <button class="tab-btn" onclick="showTab('resident', this)">
+                    <span class="tab-btn-icon">👥</span> ผู้พักอาศัย
+                </button>
             </div>
 
             <!-- Tab: Water -->
@@ -1129,6 +1135,52 @@
                 </div>
             </div>
 
+            <!-- Tab: Housing Management -->
+            <div class="tab-content" id="tab-housing">
+                <div class="section">
+                    <div class="section-title">🏠 จัดการที่พักอาศัย</div>
+                    <div class="section-desc">เพิ่ม ลบ แก้ไขบ้านพักและแฟลต และตั้งสถานะของที่พักอาศัยแต่ละหลัง</div>
+
+                    <div class="btn-group" style="margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                        <button class="btn btn-primary" onclick="openModal('addHousing')">➕ เพิ่มบ้านพัก/แฟลต</button>
+                        <button class="btn" onclick="loadHousingTabData()">🔄 โหลดข้อมูลจากระบบ</button>
+                    </div>
+
+                    <div id="manageHousingSummary" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
+
+                    <div style="margin-bottom:1rem;">
+                        <input type="text" id="searchHousing" placeholder="🔍 ค้นหาบ้าน แฟลต โซน..."
+                               style="width:100%; max-width:360px; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;"
+                               oninput="renderManageHousingCards()">
+                    </div>
+
+                    <div id="manageHousingGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem;"></div>
+                </div>
+            </div>
+
+            <!-- Tab: Resident Management -->
+            <div class="tab-content" id="tab-resident">
+                <div class="section">
+                    <div class="section-title">👥 จัดการผู้พักอาศัย</div>
+                    <div class="section-desc">เพิ่ม แก้ไข ย้าย ผู้พักอาศัยและผู้ร่วมพักอาศัย กำหนดให้ลงบ้านหรือแฟลตที่ต้องการ</div>
+
+                    <div class="btn-group" style="margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                        <button class="btn btn-primary" onclick="openModal('addResident')">➕ เพิ่มผู้พักอาศัย</button>
+                        <button class="btn" onclick="loadResidentTabData()">🔄 โหลดข้อมูลจากระบบ</button>
+                    </div>
+
+                    <div id="residentTabSummary" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
+
+                    <div style="margin-bottom:1rem;">
+                        <input type="text" id="searchResident" placeholder="🔍 ค้นหาชื่อ บ้าน ตำแหน่ง..."
+                               style="width:100%; max-width:360px; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;"
+                               oninput="renderResidentTable()">
+                    </div>
+
+                    <div id="residentIndividualContainer"></div>
+                </div>
+            </div>
+
             <!-- Modal: Approve Registration -->
             <div class="modal-overlay" id="modal-approveReg">
                 <div class="modal">
@@ -1613,6 +1665,8 @@
                 else if (tabName === 'permissions') renderPermissionTable();
                 else if (tabName === 'announcements') renderAnnouncementsList();
                 else if (tabName === 'registration') loadPendingRegistrations();
+                else if (tabName === 'housing') loadHousingTabData();
+                else if (tabName === 'resident') loadResidentTabData();
             }
         }
 
@@ -1651,7 +1705,8 @@
             const data = getHousingData();
             const residents = getResidentsData();
             const formatSettings = getHousingFormatSettings();
-            const searchTerm = (document.getElementById('searchResident').value || '').toLowerCase();
+            const searchEl = document.getElementById('searchHousing') || document.getElementById('searchResident');
+            const searchTerm = (searchEl ? searchEl.value : '').toLowerCase();
 
             const grid = document.getElementById('manageHousingGrid');
             const summary = document.getElementById('manageHousingSummary');
@@ -3677,6 +3732,86 @@
             if (_tabRendered['system']) loadSystemSettings();
             if (_tabRendered['permissions']) renderPermissionTable();
             if (_tabRendered['announcements']) renderAnnouncementsList();
+            if (_tabRendered['housing']) renderManageHousingCards();
+            if (_tabRendered['resident']) renderResidentTable();
+        }
+
+        // ========== Housing Tab Loader ==========
+        async function loadHousingTabData() {
+            renderManageHousingCards();
+            if (typeof WEB_APP_URL === 'undefined' || !WEB_APP_URL) return;
+            const grid = document.getElementById('manageHousingGrid');
+            if (grid) grid.innerHTML = '<div style="padding:1rem; color:var(--muted); text-align:center;">⏳ กำลังโหลดข้อมูลจากระบบ...</div>';
+            try {
+                const result = await callBackendGet('getHousing', {});
+                if (result && result.success && Array.isArray(result.data)) {
+                    const fetched = result.data.map((h, i) => ({
+                        id: h.id || (i + 1),
+                        type: h.type || 'house',
+                        number: h.number || '',
+                        displayNumber: h.display_number || '',
+                        zone: h.zone || '',
+                        status: h.status || 'available',
+                        note: h.note || ''
+                    }));
+                    saveHousingData(fetched);
+                }
+            } catch(e) { console.warn('loadHousingTabData:', e); }
+            renderManageHousingCards();
+        }
+
+        // ========== Resident Tab Loader ==========
+        async function loadResidentTabData() {
+            renderResidentTable();
+            updateResidentTabSummary();
+            if (typeof WEB_APP_URL === 'undefined' || !WEB_APP_URL) return;
+            const cont = document.getElementById('residentIndividualContainer');
+            if (cont) cont.innerHTML = '<div style="padding:1rem; color:var(--muted); text-align:center;">⏳ กำลังโหลดข้อมูลจากระบบ...</div>';
+            try {
+                const result = await callBackendGet('getResidents', {});
+                if (result && result.success && Array.isArray(result.data)) {
+                    const residentsData = result.data.map(r => ({
+                        id: r.id || '',
+                        prefix: r.prefix || '',
+                        firstname: r.firstname || '',
+                        lastname: r.lastname || '',
+                        position: r.position || '',
+                        subject_group: r.subject_group || '',
+                        phone: r.phone || '',
+                        email: r.email || '',
+                        house_number: r.house_number || '',
+                        residentType: r.resident_type || 'staff',
+                        cohabitants: r.cohabitants || 0,
+                        cohabitantNames: r.cohabitant_names || '[]',
+                        birthdate: r.birthdate || '',
+                        status: r.status || 'active'
+                    }));
+                    localStorage.setItem(STORAGE_KEYS.residents, JSON.stringify(residentsData));
+                }
+            } catch(e) { console.warn('loadResidentTabData:', e); }
+            renderResidentTable();
+            updateResidentTabSummary();
+        }
+
+        function updateResidentTabSummary() {
+            const el = document.getElementById('residentTabSummary');
+            if (!el) return;
+            const residents = getResidentsData();
+            const staff = residents.filter(r => r.residentType !== 'cohabitant').length;
+            let totalCo = 0;
+            residents.forEach(r => { try { totalCo += JSON.parse(r.cohabitantNames || '[]').length; } catch(e){} });
+            const houses = new Set(residents.map(r => r.house_number).filter(Boolean)).size;
+            el.innerHTML = `
+                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
+                    👨&#x200D;🏫 บุคลากร <strong>${staff}</strong> คน
+                </div>
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
+                    👪 ผู้ร่วมพัก <strong>${totalCo}</strong> คน
+                </div>
+                <div style="background:#fef9c3; border:1px solid #fde68a; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
+                    🏠 บ้านที่มีผู้พัก <strong>${houses}</strong> หลัง
+                </div>
+            `;
         }
 
         // ========== Load from Backend & Sync to localStorage ==========
