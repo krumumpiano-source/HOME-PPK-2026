@@ -653,23 +653,13 @@
                         </div>
                     </div>
 
-                    <!-- View: Manage Housing (table) -->
+                    <!-- View: Manage Housing (cards) -->
                     <div id="residentViewManageHousing" style="display:none;">
-                        <div class="table-container" style="margin-top:0.5rem;">
-                            <table id="housingTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width:50px;">ลำดับ</th>
-                                        <th>ประเภท</th>
-                                        <th>เลขที่/ชื่อ</th>
-                                        <th>โซน/อาคาร</th>
-                                        <th>สถานะ</th>
-                                        <th>ผู้พักอาศัย</th>
-                                        <th style="width:150px;">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="housingTableBody"></tbody>
-                            </table>
+                        <div style="margin-top:0.75rem;">
+                            <!-- Summary Stats -->
+                            <div id="manageHousingSummary" style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
+                            <!-- Card Grid -->
+                            <div id="manageHousingGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:1rem;"></div>
                         </div>
                     </div>
                 </div>
@@ -1812,6 +1802,118 @@
             localStorage.setItem(STORAGE_KEYS.housing, JSON.stringify(data));
         }
 
+        function renderManageHousingCards() {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEYS.housing) || '[]');
+            const residents = getResidentsData();
+            const formatSettings = getHousingFormatSettings();
+            const searchTerm = (document.getElementById('searchResident').value || '').toLowerCase();
+
+            const grid = document.getElementById('manageHousingGrid');
+            const summary = document.getElementById('manageHousingSummary');
+            if (!grid) return;
+
+            // Summary stats
+            const totalHouses = data.filter(h => h.type === 'house').length;
+            const totalFlats = data.filter(h => h.type === 'flat').length;
+            const occupied = data.filter(h => {
+                const dn = formatHousingNumber(h, formatSettings);
+                return residents.some(r => r.house_number === dn);
+            }).length;
+            const vacant = data.length - occupied;
+            if (summary) {
+                summary.innerHTML = `
+                    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
+                        🏠 บ้านพัก <strong>${totalHouses}</strong> หลัง
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
+                        🏢 แฟลต <strong>${totalFlats}</strong> ห้อง
+                    </div>
+                    <div style="background:#fef9c3; border:1px solid #fde68a; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
+                        ✅ มีผู้พัก <strong>${occupied}</strong> &nbsp;|&nbsp; ⬜ ว่าง <strong>${vacant}</strong>
+                    </div>
+                `;
+            }
+
+            // Sort: houses first, then flats, by number
+            const sorted = [...data].sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'house' ? -1 : 1;
+                return parseInt(a.number) - parseInt(b.number) || a.number.localeCompare(b.number);
+            });
+
+            // Filter by search
+            const filtered = sorted.filter(h => {
+                if (!searchTerm) return true;
+                const dn = formatHousingNumber(h, formatSettings).toLowerCase();
+                return dn.includes(searchTerm) || (h.zone || '').toLowerCase().includes(searchTerm) || (h.note || '').toLowerCase().includes(searchTerm);
+            });
+
+            const statusColors = {
+                available:   { bg: '#f0fdf4', border: '#86efac', dot: '#22c55e', label: 'ว่าง' },
+                occupied:    { bg: '#eff6ff', border: '#93c5fd', dot: '#3b82f6', label: 'มีผู้พัก' },
+                maintenance: { bg: '#fffbeb', border: '#fcd34d', dot: '#f59e0b', label: 'ซ่อมบำรุง' }
+            };
+
+            let html = '';
+
+            filtered.forEach(h => {
+                const dn = formatHousingNumber(h, formatSettings);
+                const s = statusColors[h.status] || statusColors.available;
+                const typeIcon = h.type === 'house' ? '🏠' : '🏢';
+                const typeLabel = h.type === 'house' ? 'บ้านพัก' : 'แฟลต';
+                const occupants = residents.filter(r => r.house_number === dn);
+                const occupantCount = occupants.length;
+                const safeId = String(h.id).replace(/'/g, '&apos;');
+                const safeDn = dn.replace(/'/g, '&apos;');
+
+                html += `
+                <div style="background:${s.bg}; border:1.5px solid ${s.border}; border-radius:12px; padding:1rem; display:flex; flex-direction:column; gap:0.6rem; position:relative; transition:box-shadow 0.2s;"
+                     onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.10)'"
+                     onmouseout="this.style.boxShadow=''">
+                    <!-- Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div style="font-size:1.25rem; font-weight:700; color:var(--primary); line-height:1.2;">${typeIcon} ${dn}</div>
+                            <div style="font-size:0.75rem; color:var(--muted); margin-top:0.1rem;">${typeLabel}${h.zone ? ' · ' + h.zone : ''}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.3rem; background:white; border-radius:20px; padding:0.2rem 0.6rem; font-size:0.75rem; border:1px solid ${s.border};">
+                            <span style="width:7px;height:7px;border-radius:50%;background:${s.dot};display:inline-block;"></span>
+                            ${s.label}
+                        </div>
+                    </div>
+
+                    <!-- Occupants count -->
+                    <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text);">
+                        <span style="font-size:1.1rem;">👥</span>
+                        <span><strong>${occupantCount}</strong> คน${occupantCount > 0 ? ': ' + occupants.slice(0,2).map(r=>`${r.firstname||''} ${r.lastname||''}`).join(', ') + (occupantCount > 2 ? '...' : '') : ' (ว่าง)'}</span>
+                    </div>
+
+                    ${h.note ? `<div style="font-size:0.78rem; color:var(--muted); background:rgba(255,255,255,0.7); padding:0.3rem 0.5rem; border-radius:6px;">📝 ${h.note}</div>` : ''}
+
+                    <!-- Action buttons -->
+                    <div style="display:flex; gap:0.5rem; margin-top:0.2rem; border-top:1px solid ${s.border}; padding-top:0.6rem;">
+                        <button class="btn btn-info" style="flex:1; font-size:0.82rem; padding:0.35rem;"
+                            onclick="openHouseDetails('${safeDn}')">👁️ ดูผู้พัก</button>
+                        <button class="btn btn-primary" style="flex:1; font-size:0.82rem; padding:0.35rem;"
+                            onclick="editHousing('${safeId}')">✏️ แก้ไข</button>
+                        <button class="btn btn-danger" style="flex:1; font-size:0.82rem; padding:0.35rem;"
+                            onclick="deleteHousing('${safeId}')">🗑️ ลบ</button>
+                    </div>
+                </div>`;
+            });
+
+            // "+" Add new card
+            html += `
+                <div style="border:2px dashed var(--border); border-radius:12px; padding:1rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; cursor:pointer; min-height:140px; color:var(--muted); transition:all 0.2s;"
+                     onclick="openModal('addHousing')"
+                     onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'; this.style.background='#eff6ff';"
+                     onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--muted)'; this.style.background='';">
+                    <div style="font-size:2rem; line-height:1;">＋</div>
+                    <div style="font-size:0.9rem; font-weight:600;">เพิ่มบ้าน/แฟลต</div>
+                </div>`;
+
+            grid.innerHTML = html || `<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:2rem;">ไม่พบข้อมูลที่ตรงกับการค้นหา</div>`;
+        }
+
         function renderHousingTable() {
             // ใช้ข้อมูลดิบทั้งหมดจาก localStorage ไม่ผ่าน filter regex (admin view)
             const data = JSON.parse(localStorage.getItem(STORAGE_KEYS.housing) || '[]');
@@ -1891,6 +1993,7 @@
                         });
                         saveHousingData(data);
                         renderHousingTable();
+                        renderManageHousingCards();
                         closeModal('addHousing');
                         document.getElementById('housingNumber').value = '';
                         document.getElementById('housingZone').value = '';
@@ -1917,6 +2020,7 @@
 
             saveHousingData(data);
             renderHousingTable();
+            renderManageHousingCards();
             closeModal('addHousing');
             document.getElementById('housingNumber').value = '';
             document.getElementById('housingZone').value = '';
@@ -1965,6 +2069,7 @@
                         const index = data.findIndex(h => String(h.id) === String(id));
                         if (index !== -1) { data[index] = { ...data[index], ...updatedItem }; saveHousingData(data); }
                         renderHousingTable();
+                        renderManageHousingCards();
                         closeModal('editHousing');
                         alert('อัปเดตข้อมูลเรียบร้อยแล้ว');
                     } else {
@@ -1980,6 +2085,7 @@
             data[index] = { ...data[index], ...updatedItem };
             saveHousingData(data);
             renderHousingTable();
+            renderManageHousingCards();
             closeModal('editHousing');
             alert('อัปเดตข้อมูลเรียบร้อยแล้ว');
         }
@@ -1998,8 +2104,8 @@
                     if (result && result.success) {
                         const data = getHousingData();
                         saveHousingData(data.filter(h => String(h.id) !== String(id)));
-                        renderHousingTable();
-                        renderHouseCards();
+                        renderManageHousingCards(); renderHouseCards();
+                        ;
                         alert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
                     } else {
                         alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
@@ -2010,8 +2116,8 @@
 
             const data = getHousingData();
             saveHousingData(data.filter(h => String(h.id) !== String(id)));
-            renderHousingTable();
-            renderHouseCards();
+            renderManageHousingCards(); renderHouseCards();
+            ;
             alert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
         }
 
@@ -2027,8 +2133,8 @@
                         const data = getHousingData();
                         const newData = data.filter(h => h.id !== id && String(h.id) !== String(id));
                         saveHousingData(newData);
-                        renderHousingTable();
-                        renderHouseCards();
+                        renderManageHousingCards(); renderHouseCards();
+                        ;
                         alert('ลบข้อมูลเรียบร้อยแล้ว');
                     } else {
                         alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
@@ -2040,16 +2146,20 @@
             const data = getHousingData();
             const newData = data.filter(h => h.id !== id);
             saveHousingData(newData);
-            renderHousingTable();
-            renderHouseCards();
+            renderManageHousingCards(); renderHouseCards();
+            ;
             alert('ลบข้อมูลเรียบร้อยแล้ว');
         }
 
         function filterHousingTable() {
+            // ถ้าอยู่ใน manageHousing mode ให้ re-render cards (search อยู่ใน renderManageHousingCards แล้ว)
+            if (currentResidentViewMode === 'manageHousing') {
+                renderManageHousingCards();
+                return;
+            }
             const el = document.getElementById('searchHousing') || document.getElementById('searchResident');
             const searchTerm = el ? el.value.toLowerCase() : '';
             const rows = document.querySelectorAll('#housingTableBody tr');
-            
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
@@ -2103,6 +2213,7 @@
             });
             saveHousingData(data);
             renderHousingTable();
+            renderManageHousingCards();
         }
 
         // ========== Resident Functions ==========
@@ -2201,22 +2312,17 @@
             if (mode === 'byHouse') renderHouseCards();
             else if (mode === 'individual') renderResidentTable();
             else if (mode === 'manageHousing') {
-                renderHousingTable(); // render ข้อมูลที่มีอยู่ทันที
-                // ดึงข้อมูลใหม่จาก backend แล้ว re-render
+                renderManageHousingCards();
                 if (WEB_APP_URL) {
                     callBackendGet('getHousing').then(result => {
                         if (result && result.success && result.data) {
                             const housingData = result.data.map((h, i) => ({
-                                id: h.id || (i + 1),
-                                type: h.type || 'house',
-                                number: h.number || '',
-                                displayNumber: h.display_number || '',
-                                zone: h.zone || '',
-                                status: h.status || 'available',
-                                note: h.note || ''
+                                id: h.id || (i + 1), type: h.type || 'house', number: h.number || '',
+                                displayNumber: h.display_number || '', zone: h.zone || '',
+                                status: h.status || 'available', note: h.note || ''
                             }));
                             localStorage.setItem(STORAGE_KEYS.housing, JSON.stringify(housingData));
-                            renderHousingTable();
+                            renderManageHousingCards();
                         }
                     }).catch(() => {});
                 }
@@ -3575,6 +3681,7 @@
         // ========== Load All Settings ==========
         function loadAllSettings() {
             renderHousingTable();
+            renderManageHousingCards();
             renderResidentTable();
             renderHouseCards(); // เพิ่มการโหลด house cards view
             loadWaterSettings();
