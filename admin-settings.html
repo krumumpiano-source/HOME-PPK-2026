@@ -1480,7 +1480,7 @@
                             <label style="margin:0;">👨‍👩‍👧 ผู้อาศัยร่วม</label>
                             <button type="button" class="btn btn-info" style="font-size:0.8rem; padding:0.3rem 0.75rem;" onclick="addCohabitantRow('residentCohabitantList')">➕ เพิ่มผู้อาศัยร่วม</button>
                         </div>
-                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — วันเกิด</div>
+                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — วันเกิด — <strong>บุคลากร PPK</strong> (ติ๊กถ้าเป็นบุคลากรโรงเรียน)</div>
                         <div id="residentCohabitantList" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
                 </div>
@@ -1594,7 +1594,7 @@
                             <label style="margin:0;">👨‍👩‍👧 ผู้อาศัยร่วม</label>
                             <button type="button" class="btn btn-info" style="font-size:0.8rem; padding:0.3rem 0.75rem;" onclick="addCohabitantRow('editResidentCohabitantList')">➕ เพิ่มผู้อาศัยร่วม</button>
                         </div>
-                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — วันเกิด</div>
+                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — วันเกิด — <strong>บุคลากร PPK</strong> (ติ๊กถ้าเป็นบุคลากรโรงเรียน)</div>
                         <div id="editResidentCohabitantList" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
                 </div>
@@ -1725,10 +1725,9 @@
         // ========== Modal Functions ==========
         function openModal(modalName) {
             document.getElementById('modal-' + modalName).classList.add('active');
-            
-            // Populate house dropdown when opening resident modal
-            if (modalName === 'addResident' || modalName === 'editResident') {
-                populateHouseDropdown(modalName === 'editResident' ? 'editResidentHouse' : 'residentHouse');
+            // editResident ควบคุม dropdown ตัวเอง (async await) ไม่ต้องเรียกซ้ำที่นี่
+            if (modalName === 'addResident') {
+                populateHouseDropdown('residentHouse'); // fire-and-forget; user hasn't had time to interact
             }
         }
 
@@ -2185,17 +2184,45 @@
             localStorage.setItem(STORAGE_KEYS.residents, JSON.stringify(data));
         }
 
-        function populateHouseDropdown(selectId) {
+        async function populateHouseDropdown(selectId, preselectValue = '') {
             const select = document.getElementById(selectId);
-            const housing = getHousingData();
+            if (!select) return;
+            let housing = getHousingData();
+
+            // ถ้า localStorage ว่าง (batchGet ยังไม่กลับ) ดึงโดยตรงจาก backend
+            if (housing.length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+                select.innerHTML = '<option value="">⏳ กำลังโหลดข้อมูล...</option>';
+                try {
+                    const result = await callBackendGet('getHousing', {});
+                    if (result && result.success && Array.isArray(result.data)) {
+                        const fetched = result.data.map((h, i) => ({
+                            id: h.id || (i + 1),
+                            type: h.type || 'house',
+                            number: h.number || '',
+                            displayNumber: h.display_number || '',
+                            zone: h.zone || '',
+                            status: h.status || 'available',
+                            note: h.note || ''
+                        }));
+                        saveHousingData(fetched);
+                        housing = fetched;
+                        // รีเฟรช housing cards ด้วย
+                        renderHouseCards();
+                        renderManageHousingCards();
+                    }
+                } catch(e) { console.warn('populateHouseDropdown fetch failed:', e); }
+            }
+
             const formatSettings = getHousingFormatSettings();
-            
             select.innerHTML = '<option value="">เลือกบ้าน/ห้อง</option>';
-            
             housing.forEach(h => {
                 const displayName = formatHousingNumber(h, formatSettings);
                 const statusText = h.status === 'available' ? ' (ว่าง)' : h.status === 'maintenance' ? ' (ซ่อมบำรุง)' : '';
-                select.innerHTML += `<option value="${displayName}">${displayName}${statusText}</option>`;
+                const opt = document.createElement('option');
+                opt.value = displayName;
+                opt.textContent = displayName + statusText;
+                if (preselectValue && displayName === preselectValue) opt.selected = true;
+                select.appendChild(opt);
             });
         }
 
@@ -2284,10 +2311,12 @@
                 if (!Array.isArray(arr)) return [];
                 return arr.map(item => {
                     if (typeof item === 'string') return item; // old format
-                    // new format: {prefix, firstname, lastname, relationship, birthdate}
+                    // new format: {prefix, firstname, lastname, relation (or legacy: relationship), birthdate, is_ppk_staff}
                     const name = `${item.prefix||''} ${item.firstname||''} ${item.lastname||''}`.trim();
-                    const rel = item.relationship ? ` (${item.relationship})` : '';
-                    return name + rel;
+                    const relVal = item.relation || item.relationship || '';
+                    const staffTag = item.is_ppk_staff ? ' 🏫' : '';
+                    const rel = relVal ? ` (${relVal})` : '';
+                    return name + rel + staffTag;
                 }).filter(Boolean);
             } catch(e) { return []; }
         }
@@ -2611,22 +2640,13 @@
             openModal('houseDetails');
         }
 
-        function addResidentToCurrentHouse() {
+        async function addResidentToCurrentHouse() {
             closeModal('houseDetails');
-            openModal('addResident');
-            
-            // Pre-select the current house
-            setTimeout(() => {
-                const select = document.getElementById('residentHouse');
-                if (select && currentHouseForDetails && currentHouseForDetails !== '(ไม่ระบุบ้าน)') {
-                    for (let option of select.options) {
-                        if (option.value === currentHouseForDetails || option.value.includes(currentHouseForDetails)) {
-                            select.value = option.value;
-                            break;
-                        }
-                    }
-                }
-            }, 100);
+            // เปิด modal ก่อน แล้ว await populate dropdown พร้อม preselect บ้านปัจจุบัน
+            document.getElementById('modal-addResident').classList.add('active');
+            const preselect = (currentHouseForDetails && currentHouseForDetails !== '(ไม่ระบุบ้าน)')
+                ? currentHouseForDetails : '';
+            await populateHouseDropdown('residentHouse', preselect);
         }
 
         function openMoveResidentModal(residentId) {
@@ -2662,7 +2682,7 @@
         }
 
         function confirmMoveResident() {
-            const residentId = parseInt(document.getElementById('moveResidentId').value);
+            const residentId = document.getElementById('moveResidentId').value; // อย่าใช้ parseInt — ID อาจเป็น "RES001"
             const newHouse = document.getElementById('moveResidentNewHouse').value;
             
             if (!newHouse) {
@@ -2671,7 +2691,7 @@
             }
             
             const data = getResidentsData();
-            const index = data.findIndex(r => r.id === residentId);
+            const index = data.findIndex(r => String(r.id) === String(residentId));
             
             if (index === -1) {
                 ppkAlert('ไม่พบข้อมูลผู้พักอาศัย');
@@ -2826,10 +2846,9 @@
             ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
         }
 
-        function editResident(id) {
+        async function editResident(id) {
             const data = getResidentsData();
             const item = data.find(r => String(r.id) === String(id));
-            
             if (!item) return;
 
             document.getElementById('editResidentId').value = id;
@@ -2846,11 +2865,8 @@
             document.getElementById('editResidentStatus').value = item.status || 'active';
             populateCohabitantContainer('editResidentCohabitantList', item.cohabitantNames || '[]');
 
-            // Populate and select house
-            populateHouseDropdown('editResidentHouse');
-            setTimeout(() => {
-                document.getElementById('editResidentHouse').value = item.house_number || '';
-            }, 100);
+            // await dropdown (อาจดึง backend ถ้า localStorage ว่าง) แล้วเลือกบ้านให้ถูกต้อง
+            await populateHouseDropdown('editResidentHouse', item.house_number || '');
 
             openModal('editResident');
         }
