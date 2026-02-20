@@ -355,7 +355,7 @@
             const token = localStorage.getItem('sessionToken');
             if (!token) { window.navigate('?page=login'); return; }
 
-            if (WEB_APP_URL) {
+            if (typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
                 try {
                     // ตรวจ session
                     const userResult = await callBackendGet('getCurrentUser');
@@ -412,7 +412,7 @@
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
