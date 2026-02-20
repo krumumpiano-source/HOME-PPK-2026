@@ -170,32 +170,57 @@
             color: var(--muted);
         }
 
-        /* Slip Send Button */
+        /* Slip Send Button — base */
         .slip-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
             width: 100%;
-            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
-            color: #fff;
             border: none;
             border-radius: 10px;
             padding: 0.65rem 1.2rem;
             font-family: inherit;
             font-size: 1rem;
             font-weight: 600;
-            cursor: pointer;
             margin-top: 0.85rem;
             transition: opacity 0.15s, transform 0.1s;
-            box-shadow: 0 2px 10px rgba(37,99,235,0.18);
+            color: #fff;
+            cursor: default;
         }
-        .slip-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-        .slip-btn:active { transform: translateY(0); opacity: 1; }
-        .slip-btn.outstanding-btn {
+        /* มียอด พร้อมส่งสลิป → เขียว, กดได้ */
+        .slip-btn.slip-active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 2px 10px rgba(16,185,129,0.25);
+            cursor: pointer;
+        }
+        .slip-btn.slip-active:hover { opacity: 0.88; transform: translateY(-1px); }
+        .slip-btn.slip-active:active { transform: translateY(0); }
+        /* ไม่มียอด → เทา, กดไม่ได้ */
+        .slip-btn.slip-disabled {
+            background: #d1d5db;
+            color: #6b7280;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        /* ส่งสลิปแล้ว รอตรวจสอบ → ส้ม, กดไม่ได้ */
+        .slip-btn.slip-reviewing {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 2px 10px rgba(245,158,11,0.25);
+        }
+        /* ชำระสำเร็จ → ฟ้าเขียว, กดไม่ได้ */
+        .slip-btn.slip-success {
+            background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+            box-shadow: 0 2px 10px rgba(6,182,212,0.2);
+        }
+        /* ยอดคงค้าง active → แดง-ส้ม */
+        .slip-btn.slip-outstanding {
             background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
             box-shadow: 0 2px 10px rgba(239,68,68,0.18);
+            cursor: pointer;
         }
+        .slip-btn.slip-outstanding:hover { opacity: 0.88; transform: translateY(-1px); }
+        .slip-btn.slip-outstanding:active { transform: translateY(0); }
         .slip-detail {
             font-size: 0.88rem;
             color: var(--muted);
@@ -297,6 +322,35 @@
         const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
+        // ตรวจสอบสถานะการชำระจาก recentPayments
+        // คืนค่า: 'none' | 'reviewing' | 'success'
+        function getPaymentStatus(recentPayments, month, year) {
+            const record = (recentPayments || []).find(r =>
+                String(r.month) === String(month) && String(r.year) === String(year)
+            );
+            if (!record) return 'none';
+            const s = (record.status || record.payment_status || '').toLowerCase();
+            const successWords = ['approved','paid','completed','success','สำเร็จ','อนุมัติ','ชำระแล้ว'];
+            if (successWords.some(w => s.includes(w))) return 'success';
+            return 'reviewing'; // มีรายการ = ส่งสลิปแล้วรอตรวจ
+        }
+
+        // สร้าง HTML ปุ่มตามสถานะ
+        function buildSlipBtnHTML(label, slipStatus, periodKey, amount, isOutstanding) {
+            if (slipStatus === 'success') {
+                return '<button class="slip-btn slip-success" disabled>✅ ชำระสำเร็จแล้ว</button>';
+            }
+            if (slipStatus === 'reviewing') {
+                return '<button class="slip-btn slip-reviewing" disabled>🔍 อยู่ในระหว่างตรวจสอบ</button>';
+            }
+            if (amount <= 0) {
+                return '<button class="slip-btn slip-disabled" disabled>📋 ยังไม่มีการแจ้งยอด</button>';
+            }
+            // active
+            const cls = isOutstanding ? 'slip-btn slip-outstanding' : 'slip-btn slip-active';
+            return '<button class="' + cls + '" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">📤 ' + label + '</button>';
+        }
+
         function renderPaymentInfo(outstandingArr, recentPayments, userHouse) {
             const outstandingEl = document.getElementById('outstandingAmount');
             const currentAmountEl = document.getElementById('currentMonthAmount');
@@ -319,25 +373,24 @@
 
             const periodKey = currentYear + currentMonth;
             const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + currentYear;
+            const monthlyStatus = getPaymentStatus(recentPayments, currentMonth, currentYear);
 
-            // ปุ่มส่งสลิปประจำเดือน — แสดงเสมอ (ให้ผู้ใช้ส่งสลิปได้ทุกเมื่อ)
+            // ปุ่มส่งสลิปประจำเดือน — แสดงเสมอ
             const slipBtnMonth = document.getElementById('slipBtnMonth');
             if (slipBtnMonth) {
                 slipBtnMonth.innerHTML =
                     '<div class="slip-detail">📅 งวด: ' + periodDisplay + (userHouse ? ' &nbsp;|&nbsp; 🏠 บ้าน: ' + userHouse : '') + '</div>' +
-                    '<button class="slip-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + monthTotal + ',false)">📤 ส่งสลิปชำระเงินประจำเดือน</button>';
+                    buildSlipBtnHTML('ส่งสลิปชำระเงินประจำเดือน', monthlyStatus, periodKey, monthTotal, false);
             }
 
-            // ปุ่มส่งสลิปยอดคงค้าง — แสดงเฉพาะเมื่อมียอดค้าง
+            // ปุ่มส่งสลิปยอดคงค้าง — แสดงเสมอ
             const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
             if (slipBtnOutstanding) {
-                if (totalOutstanding > 0) {
-                    slipBtnOutstanding.innerHTML =
-                        '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + totalOutstanding.toLocaleString('th-TH') + ' บาท</div>' +
-                        '<button class="slip-btn outstanding-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + totalOutstanding + ',true)">📤 ส่งสลิปชำระยอดคงค้าง</button>';
-                } else {
-                    slipBtnOutstanding.innerHTML = '';
-                }
+                const outDetail = totalOutstanding > 0
+                    ? '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + totalOutstanding.toLocaleString('th-TH') + ' บาท</div>'
+                    : '<div class="slip-detail">ไม่มียอดคงค้าง</div>';
+                slipBtnOutstanding.innerHTML = outDetail +
+                    buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', periodKey, totalOutstanding, true);
             }
         }
 
@@ -362,23 +415,21 @@
             document.getElementById('outstandingAmount').textContent = outstandingTotal.toLocaleString('th-TH');
             document.getElementById('outstandingAmount').className = outstandingTotal > 0 ? 'amount' : 'amount amount-ok';
 
-            // ปุ่มส่งสลิปจาก fallback data
+            // ปุ่มส่งสลิปจาก fallback data — ไม่ทราบสถานะ ใช้ active ถ้ามียอด
             const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + year;
             const slipBtnMonth = document.getElementById('slipBtnMonth');
             if (slipBtnMonth) {
                 slipBtnMonth.innerHTML =
                     '<div class="slip-detail">📅 งวด: ' + periodDisplay + (userHouse ? ' &nbsp;|&nbsp; 🏠 บ้าน: ' + userHouse : '') + '</div>' +
-                    '<button class="slip-btn" onclick="goToUploadSlip(\'' + key + '\',' + total + ',false)">📤 ส่งสลิปชำระเงินประจำเดือน</button>';
+                    buildSlipBtnHTML('ส่งสลิปชำระเงินประจำเดือน', 'none', key, total, false);
             }
             const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
             if (slipBtnOutstanding) {
-                if (outstandingTotal > 0) {
-                    slipBtnOutstanding.innerHTML =
-                        '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + outstandingTotal.toLocaleString('th-TH') + ' บาท</div>' +
-                        '<button class="slip-btn outstanding-btn" onclick="goToUploadSlip(\'' + key + '\',' + outstandingTotal + ',true)">📤 ส่งสลิปชำระยอดคงค้าง</button>';
-                } else {
-                    slipBtnOutstanding.innerHTML = '';
-                }
+                const outDetail = outstandingTotal > 0
+                    ? '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + outstandingTotal.toLocaleString('th-TH') + ' บาท</div>'
+                    : '<div class="slip-detail">ไม่มียอดคงค้าง</div>';
+                slipBtnOutstanding.innerHTML = outDetail +
+                    buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', key, outstandingTotal, true);
             }
         }
 
