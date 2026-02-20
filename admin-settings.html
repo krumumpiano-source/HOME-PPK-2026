@@ -1904,8 +1904,12 @@
         }
 
         function formatHousingNumber(item, settings) {
+            // ถ้ามี displayNumber / display_number ที่สมบูรณ์อยู่แล้ว ใช้ตรงๆ เลย
+            const cached = (item.displayNumber || item.display_number || '').trim();
+            if (cached) return cached;
+            // ไม่งั้น สร้างจาก prefix + number
             const prefix = item.type === 'house' ? settings.housePrefix : settings.flatPrefix;
-            return prefix + item.number;
+            return (prefix || '') + (item.number || '');
         }
 
         function getStatusBadge(status) {
