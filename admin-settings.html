@@ -2002,14 +2002,39 @@
             if (!await ppkConfirm(msg)) return;
 
             // Optimistic: ลบ UI ทันที
-            const data = getHousingData();
-            saveHousingData(data.filter(h => String(h.id) !== String(id)));
+            const allData = getHousingData();
+            const toDelete = allData.find(h => String(h.id) === String(id));
+            saveHousingData(allData.filter(h => String(h.id) !== String(id)));
             renderManageHousingCards();
-            ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
 
-            // Sync backend ใน background (ไม่รอ ไม่แสดง error)
+            // รอ backend ลบจริงจาก Sheet
             if (WEB_APP_URL) {
-                callBackend('deleteHousing', { id: String(id) }).catch(e => console.warn('deleteHousing sync:', e));
+                try {
+                    const result = await callBackend('deleteHousing', { id: String(id) });
+                    if (result && result.success) {
+                        ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
+                    } else {
+                        // กู้คืน
+                        if (toDelete) {
+                            const restored = getHousingData();
+                            restored.push(toDelete);
+                            saveHousingData(restored);
+                            renderManageHousingCards();
+                        }
+                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
+                    }
+                } catch(e) {
+                    // กู้คืน
+                    if (toDelete) {
+                        const restored = getHousingData();
+                        restored.push(toDelete);
+                        saveHousingData(restored);
+                        renderManageHousingCards();
+                    }
+                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+                }
+            } else {
+                ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว (เฉพาะเครื่อง)`);
             }
         }
 
@@ -2019,14 +2044,37 @@
             }
 
             // Optimistic: ลบ UI ทันที
-            const data = getHousingData();
-            saveHousingData(data.filter(h => String(h.id) !== String(id)));
+            const allData = getHousingData();
+            const toDelete = allData.find(h => String(h.id) === String(id));
+            saveHousingData(allData.filter(h => String(h.id) !== String(id)));
             renderManageHousingCards();
-            ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
 
-            // Sync backend ใน background (ไม่รอ ไม่แสดง error)
+            // รอ backend ลบจริงจาก Sheet
             if (WEB_APP_URL) {
-                callBackend('deleteHousing', { id: String(id) }).catch(e => console.warn('deleteHousing sync:', e));
+                try {
+                    const result = await callBackend('deleteHousing', { id: String(id) });
+                    if (result && result.success) {
+                        ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
+                    } else {
+                        if (toDelete) {
+                            const restored = getHousingData();
+                            restored.push(toDelete);
+                            saveHousingData(restored);
+                            renderManageHousingCards();
+                        }
+                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
+                    }
+                } catch(e) {
+                    if (toDelete) {
+                        const restored = getHousingData();
+                        restored.push(toDelete);
+                        saveHousingData(restored);
+                        renderManageHousingCards();
+                    }
+                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+                }
+            } else {
+                ppkAlert('ลบข้อมูลเรียบร้อยแล้ว (เฉพาะเครื่อง)');
             }
         }
 
