@@ -908,7 +908,7 @@
                         showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!');
                         return;
                     } else {
-                        alert('❌ บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
                         return;
                     }
                 } catch (e) { console.error('Save error:', e); }
@@ -1066,7 +1066,7 @@
             // ท้ายกระดาษ
             printWindow.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
             
-            printWindow.document.write('</body></html>');
+            printWindow.document.write('    <script src="ppk-utils.js"></script></body></html>');
             printWindow.document.close();
             
             // รอโหลดฟอนต์แล้วพิมพ์
@@ -1078,7 +1078,7 @@
         }
     
         async function doLogout() {
-            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
             if (token && WEB_APP_URL) {
                 try { await callBackend('logout', {}); } catch(e) {}
@@ -1087,5 +1087,5 @@
             navigate('?page=login');
         }
         </script>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>

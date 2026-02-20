@@ -1689,7 +1689,7 @@
             if (WEB_APP_URL && filename.startsWith('http')) {
                 window.open(filename, '_blank');
             } else {
-                alert(`เปิดไฟล์: ${filename}\n\n(ไฟล์จะเปิดได้เมื่อ Deploy Backend แล้ว)`);
+                ppkAlert(`เปิดไฟล์: ${filename}\n\n(ไฟล์จะเปิดได้เมื่อ Deploy Backend แล้ว)`);
             }
         }
 
@@ -1708,7 +1708,7 @@
             const dateInput = document.getElementById('queueExpiryDate');
             const newDate = dateInput.value;
             if (!newDate) {
-                alert('กรุณาเลือกวันหมดอายุคิว');
+                ppkAlert('กรุณาเลือกวันหมดอายุคิว');
                 return;
             }
             
@@ -1724,7 +1724,7 @@
             checkAndExpireQueue();
             
             renderAll();
-            alert(`บันทึกวันหมดอายุคิวเรียบร้อย\nคิวทั้งหมดจะหมดอายุวันที่ ${formatDate(newDate)}`);
+            ppkAlert(`บันทึกวันหมดอายุคิวเรียบร้อย\nคิวทั้งหมดจะหมดอายุวันที่ ${formatDate(newDate)}`);
         }
 
         function updateExpiryDisplay() {
@@ -1918,7 +1918,7 @@
         }
 
         async function approveFromQueue(id) {
-            if (!confirm('ยืนยันการอนุมัติให้เข้าพักอาศัย?')) return;
+            if (!await ppkConfirm('ยืนยันการอนุมัติให้เข้าพักอาศัย?')) return;
             
             const data = getData('residence');
             const item = data.find(d => d.id === id);
@@ -1947,7 +1947,7 @@
                     }
                 }
 
-                alert('อนุมัติเรียบร้อยแล้ว');
+                ppkAlert('อนุมัติเรียบร้อยแล้ว');
                 renderAll();
             }
         }
@@ -1980,7 +1980,7 @@
         });
     
         async function doLogout() {
-            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
             if (token && WEB_APP_URL) {
                 try { await callBackend('logout', {}); } catch(e) {}
@@ -1989,5 +1989,5 @@
             navigate('?page=login');
         }
         </script>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>

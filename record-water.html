@@ -799,7 +799,7 @@
             const rate = document.getElementById('water_rate').value;
             
             if (!rate || parseFloat(rate) <= 0) {
-                alert('⚠️ กรุณาตั้งค่าอัตราค่าน้ำก่อนบันทึก');
+                ppkAlert('⚠️ กรุณาตั้งค่าอัตราค่าน้ำก่อนบันทึก');
                 return;
             }
 
@@ -835,7 +835,7 @@
                         showSuccess('✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!');
                         return;
                     } else {
-                        alert('❌ บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
                         return;
                     }
                 } catch (e) {
@@ -1025,7 +1025,7 @@
             // ท้ายกระดาษ
             printWindow.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
             
-            printWindow.document.write('</body></html>');
+            printWindow.document.write('    <script src="ppk-utils.js"></script></body></html>');
             printWindow.document.close();
             
             // รอโหลดฟอนต์แล้วพิมพ์
@@ -1037,7 +1037,7 @@
         }
     
         async function doLogout() {
-            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
             if (token && WEB_APP_URL) {
                 try { await callBackend('logout', {}); } catch(e) {}
@@ -1046,5 +1046,5 @@
             navigate('?page=login');
         }
         </script>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>

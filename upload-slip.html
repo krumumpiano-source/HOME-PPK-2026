@@ -370,8 +370,8 @@
             const fileInput = document.getElementById('slip');
             const files = Array.from(fileInput.files).slice(0, 3);
 
-            if(files.length === 0){ alert('กรุณาแนบรูปสลิปอย่างน้อย 1 รูป'); return; }
-            if(paidAmount <= 0){ alert('กรุณากรอกจำนวนเงินที่ชำระ'); return; }
+            if(files.length === 0){ ppkAlert('กรุณาแนบรูปสลิปอย่างน้อย 1 รูป'); return; }
+            if(paidAmount <= 0){ ppkAlert('กรุณากรอกจำนวนเงินที่ชำระ'); return; }
 
             const submitBtn = document.querySelector('.submit-btn');
             submitBtn.disabled = true;
@@ -421,7 +421,7 @@
                     });
 
                     if (submitResult && submitResult.success) {
-                        alert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
+                        ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
                         window.navigate('?page=dashboard');
                         return;
                     } else {
@@ -445,7 +445,7 @@
                 const submissions = JSON.parse(localStorage.getItem(key) || '[]');
                 const existingIndex = submissions.findIndex(s => s.unitNumber === slipData.unitNumber);
                 if (existingIndex !== -1) {
-                    if (!confirm('คุณเคยส่งสลิปแล้ว ต้องการส่งใหม่หรือไม่?')) {
+                    if (!await ppkConfirm('คุณเคยส่งสลิปแล้ว ต้องการส่งใหม่หรือไม่?')) {
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'ยืนยันการส่งสลิป';
                         return;
@@ -456,11 +456,11 @@
                 }
                 localStorage.setItem(key, JSON.stringify(submissions));
 
-                alert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
+                ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
                 window.navigate('?page=dashboard');
 
             } catch (err) {
-                alert('เกิดข้อผิดพลาด: ' + err.message);
+                ppkAlert('เกิดข้อผิดพลาด: ' + err.message);
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'ยืนยันการส่งสลิป';
             }
@@ -549,5 +549,5 @@
             await loadBillingInfo();
         };
     </script>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>

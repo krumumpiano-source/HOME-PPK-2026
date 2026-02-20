@@ -980,7 +980,7 @@
                         });
 
                         renderAll();
-                        alert('คำนวณรายการอัตโนมัติจาก Backend เรียบร้อยแล้ว');
+                        ppkAlert('คำนวณรายการอัตโนมัติจาก Backend เรียบร้อยแล้ว');
                         return;
                     }
                 } catch (e) {
@@ -989,7 +989,7 @@
             }
             
             // ไม่มี Backend — แสดงข้อความแจ้ง
-            alert('กรุณาตั้งค่า Backend URL ก่อนใช้งานคำนวณอัตโนมัติ');
+            ppkAlert('กรุณาตั้งค่า Backend URL ก่อนใช้งานคำนวณอัตโนมัติ');
         }
 
         // calculateFromLocalStorage ถูกลบแล้ว — ใช้ Backend calculateAutoEntries แทน
@@ -1092,11 +1092,11 @@
             const imageFile = document.getElementById('incomeImage').files[0];
             
             if (!desc) {
-                alert('กรุณาระบุรายการ');
+                ppkAlert('กรุณาระบุรายการ');
                 return;
             }
             if (amount <= 0) {
-                alert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
+                ppkAlert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
                 return;
             }
             
@@ -1141,11 +1141,11 @@
             const imageFile = document.getElementById('expenseImage').files[0];
             
             if (!desc) {
-                alert('กรุณาระบุรายการ');
+                ppkAlert('กรุณาระบุรายการ');
                 return;
             }
             if (amount <= 0) {
-                alert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
+                ppkAlert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
                 return;
             }
             
@@ -1183,15 +1183,15 @@
             document.getElementById('expenseFileLabel').classList.remove('has-file');
         }
         
-        function deleteIncome(index) {
-            if (confirm('ต้องการลบรายการนี้?')) {
+        async function deleteIncome(index) {
+            if (await ppkConfirm('ต้องการลบรายการนี้?')) {
                 incomeItems.splice(index, 1);
                 renderAll();
             }
         }
         
-        function deleteExpense(index) {
-            if (confirm('ต้องการลบรายการนี้?')) {
+        async function deleteExpense(index) {
+            if (await ppkConfirm('ต้องการลบรายการนี้?')) {
                 expenseItems.splice(index, 1);
                 renderAll();
             }
@@ -1266,16 +1266,16 @@
                         expenseItems: backendExpense
                     });
                     if (result && result.success) {
-                        alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+                        ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
                     }
                 } catch (e) {
                     console.error('บันทึกไม่สำเร็จ:', e);
-                    alert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+                    ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
                 }
             } else {
-                alert('กรุณาตั้งค่า Backend URL ก่อนบันทึกข้อมูล');
+                ppkAlert('กรุณาตั้งค่า Backend URL ก่อนบันทึกข้อมูล');
             }
         }
         
@@ -1397,7 +1397,7 @@
         }
     
         async function doLogout() {
-            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
             if (token && WEB_APP_URL) {
                 try { await callBackend('logout', {}); } catch(e) {}
@@ -1406,5 +1406,5 @@
             navigate('?page=login');
         }
         </script>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>

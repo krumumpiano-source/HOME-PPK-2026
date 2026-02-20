@@ -1961,7 +1961,7 @@
             const note = document.getElementById('housingNote').value.trim();
 
             if (!number) {
-                alert('กรุณากรอกเลขที่/ชื่อ');
+                ppkAlert('กรุณากรอกเลขที่/ชื่อ');
                 return;
             }
 
@@ -1985,11 +1985,11 @@
                         document.getElementById('housingNumber').value = '';
                         document.getElementById('housingZone').value = '';
                         document.getElementById('housingNote').value = '';
-                        alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
@@ -2012,7 +2012,7 @@
             document.getElementById('housingNumber').value = '';
             document.getElementById('housingZone').value = '';
             document.getElementById('housingNote').value = '';
-            alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+            ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว');
         }
 
         function editHousing(id) {
@@ -2040,7 +2040,7 @@
             const note = document.getElementById('editHousingNote').value.trim();
 
             if (!number) {
-                alert('กรุณากรอกเลขที่/ชื่อ');
+                ppkAlert('กรุณากรอกเลขที่/ชื่อ');
                 return;
             }
 
@@ -2058,11 +2058,11 @@
                         renderHousingTable();
                         renderManageHousingCards();
                         closeModal('editHousing');
-                        alert('อัปเดตข้อมูลเรียบร้อยแล้ว');
+                        ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
@@ -2074,17 +2074,17 @@
             renderHousingTable();
             renderManageHousingCards();
             closeModal('editHousing');
-            alert('อัปเดตข้อมูลเรียบร้อยแล้ว');
+            ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
         }
 
-        function deleteHousingFromCard(id, displayName) {
+        async function deleteHousingFromCard(id, displayName) {
             const residents = getResidentsData();
             const residentCount = residents.filter(r => r.house_number === displayName).length;
             const residentWarning = residentCount > 0
                 ? `\n⚠️ มีผู้พักอาศัย ${residentCount} คน (บุคลากรจะไม่มีบ้านพัก)`
                 : '';
             const msg = `ต้องการลบ "${displayName}" หรือไม่?${residentWarning}\nการดำเนินการนี้ไม่สามารถยกเลิกได้`;
-            if (!confirm(msg)) return;
+            if (!await ppkConfirm(msg)) return;
 
             if (WEB_APP_URL) {
                 callBackend('deleteHousing', { id: String(id) }).then(result => {
@@ -2093,11 +2093,11 @@
                         saveHousingData(data.filter(h => String(h.id) !== String(id)));
                         renderManageHousingCards(); renderHouseCards();
                         ;
-                        alert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
+                        ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
@@ -2105,11 +2105,11 @@
             saveHousingData(data.filter(h => String(h.id) !== String(id)));
             renderManageHousingCards(); renderHouseCards();
             ;
-            alert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
+            ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
         }
 
-        function deleteHousing(id) {
-            if (!confirm('คุณต้องการลบข้อมูลนี้หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้')) {
+        async function deleteHousing(id) {
+            if (!await ppkConfirm('คุณต้องการลบข้อมูลนี้หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้')) {
                 return;
             }
 
@@ -2122,11 +2122,11 @@
                         saveHousingData(newData);
                         renderManageHousingCards(); renderHouseCards();
                         ;
-                        alert('ลบข้อมูลเรียบร้อยแล้ว');
+                        ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
@@ -2135,7 +2135,7 @@
             saveHousingData(newData);
             renderManageHousingCards(); renderHouseCards();
             ;
-            alert('ลบข้อมูลเรียบร้อยแล้ว');
+            ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
         }
 
         function filterHousingTable() {
@@ -2181,13 +2181,13 @@
                             house_number_format: settings.houseFormat === 'custom' ? settings.housePrefix + ' {number}' : '{prefix} {number}',
                             flat_number_format: settings.flatFormat === 'custom' ? settings.flatPrefix + ' {number}' : '{prefix} {number}'
                         });
-                        alert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
             } else {
-                alert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว (localStorage)');
+                ppkAlert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว (localStorage)');
             }
             
             localStorage.setItem(STORAGE_KEYS.housingFormat, JSON.stringify(settings));
@@ -2649,7 +2649,7 @@
             
             const resident = residents.find(r => r.id === residentId);
             if (!resident) {
-                alert('ไม่พบข้อมูลผู้พักอาศัย');
+                ppkAlert('ไม่พบข้อมูลผู้พักอาศัย');
                 return;
             }
             
@@ -2679,7 +2679,7 @@
             const newHouse = document.getElementById('moveResidentNewHouse').value;
             
             if (!newHouse) {
-                alert('กรุณาเลือกบ้าน/ห้องใหม่');
+                ppkAlert('กรุณาเลือกบ้าน/ห้องใหม่');
                 return;
             }
             
@@ -2687,7 +2687,7 @@
             const index = data.findIndex(r => r.id === residentId);
             
             if (index === -1) {
-                alert('ไม่พบข้อมูลผู้พักอาศัย');
+                ppkAlert('ไม่พบข้อมูลผู้พักอาศัย');
                 return;
             }
             
@@ -2702,7 +2702,7 @@
             saveResidentsData(data);
             closeModal('moveResident');
             
-            alert(`ย้ายผู้พักอาศัยจาก "${oldHouse}" ไป "${newHouse}" เรียบร้อยแล้ว`);
+            ppkAlert(`ย้ายผู้พักอาศัยจาก "${oldHouse}" ไป "${newHouse}" เรียบร้อยแล้ว`);
             
             renderHouseCards();
             renderResidentTable();
@@ -2712,8 +2712,8 @@
             }
         }
 
-        function deleteResidentFromHouse(residentId) {
-            if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบผู้พักอาศัยรายนี้?')) {
+        async function deleteResidentFromHouse(residentId) {
+            if (!await ppkConfirm('คุณแน่ใจหรือไม่ว่าต้องการลบผู้พักอาศัยรายนี้?')) {
                 return;
             }
 
@@ -2759,17 +2759,17 @@
             const cohabitants = cohabitantList.length;
 
             if (!firstName || !lastName) {
-                alert('กรุณากรอกชื่อและนามสกุล');
+                ppkAlert('กรุณากรอกชื่อและนามสกุล');
                 return;
             }
 
             if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-                alert('กรุณากรอกอีเมลให้ถูกต้อง');
+                ppkAlert('กรุณากรอกอีเมลให้ถูกต้อง');
                 return;
             }
 
             if (password && password.length < 8) {
-                alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+                ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                 return;
             }
 
@@ -2822,12 +2822,12 @@
                         renderHouseCards();
                         closeModal('addResident');
                         clearAddForm();
-                        alert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
                     } else {
                         data.pop(); // revert
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => { data.pop(); alert(err.message); });
+                }).catch(err => { data.pop(); ppkAlert(err.message); });
                 return;
             }
 
@@ -2836,7 +2836,7 @@
             renderHouseCards();
             closeModal('addResident');
             clearAddForm();
-            alert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+            ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
         }
 
         function editResident(id) {
@@ -2887,22 +2887,22 @@
             const status = document.getElementById('editResidentStatus').value;
 
             if (!id) {
-                alert('ไม่พบ ID ผู้พักอาศัย กรุณาปิดแล้วเปิดฟอร์มใหม่');
+                ppkAlert('ไม่พบ ID ผู้พักอาศัย กรุณาปิดแล้วเปิดฟอร์มใหม่');
                 return;
             }
 
             if (!firstName || !lastName) {
-                alert('กรุณากรอกชื่อและนามสกุล');
+                ppkAlert('กรุณากรอกชื่อและนามสกุล');
                 return;
             }
 
             if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-                alert('กรุณากรอกอีเมลให้ถูกต้อง');
+                ppkAlert('กรุณากรอกอีเมลให้ถูกต้อง');
                 return;
             }
 
             if (password && password.length < 8) {
-                alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+                ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                 return;
             }
 
@@ -2930,28 +2930,28 @@
                         renderResidentTable();
                         renderHouseCards();
                         closeModal('editResident');
-                        alert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                        ppkAlert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
             // Fallback: localStorage-only mode
             const data = getResidentsData();
             const index = data.findIndex(r => String(r.id) === String(id));
-            if (index === -1) { alert('ไม่พบข้อมูลผู้พักอาศัย ID: ' + id); return; }
+            if (index === -1) { ppkAlert('ไม่พบข้อมูลผู้พักอาศัย ID: ' + id); return; }
             data[index] = { ...data[index], ...updated };
             saveResidentsData(data);
             renderResidentTable();
             renderHouseCards();
             closeModal('editResident');
-            alert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+            ppkAlert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
         }
 
-        function deleteResident(id) {
-            if (!confirm('คุณต้องการลบข้อมูลผู้พักอาศัยนี้หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้')) {
+        async function deleteResident(id) {
+            if (!await ppkConfirm('คุณต้องการลบข้อมูลผู้พักอาศัยนี้หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้')) {
                 return;
             }
 
@@ -2964,11 +2964,11 @@
                         saveResidentsData(newData);
                         renderResidentTable();
                         renderHouseCards();
-                        alert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                        ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
@@ -2977,7 +2977,7 @@
             saveResidentsData(newData);
             renderResidentTable();
             renderHouseCards();
-            alert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+            ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
         }
 
         function resetResidentPassword(id) {
@@ -2986,7 +2986,7 @@
             if (!newPassword) return;
             
             if (newPassword.length < 8) {
-                alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+                ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                 return;
             }
 
@@ -3004,7 +3004,7 @@
             }
 
             saveResidentsData(data);
-            alert('รีเซ็ตรหัสผ่านเรียบร้อยแล้ว');
+            ppkAlert('รีเซ็ตรหัสผ่านเรียบร้อยแล้ว');
         }
 
         function filterResidentTable() {
@@ -3038,22 +3038,22 @@
                 if (!file) return;
                 
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = async function(e) {
                     try {
                         const data = JSON.parse(e.target.result);
                         if (Array.isArray(data)) {
-                            if (confirm(`พบข้อมูล ${data.length} รายการ ต้องการนำเข้าหรือไม่? (ข้อมูลเดิมจะถูกรวมกับข้อมูลใหม่)`)) {
+                            if (await ppkConfirm(`พบข้อมูล ${data.length} รายการ ต้องการนำเข้าหรือไม่? (ข้อมูลเดิมจะถูกรวมกับข้อมูลใหม่)`)) {
                                 const existing = getResidentsData();
                                 const merged = [...existing, ...data];
                                 saveResidentsData(merged);
                                 renderResidentTable();
-                                alert('นำเข้าข้อมูลเรียบร้อยแล้ว');
+                                ppkAlert('นำเข้าข้อมูลเรียบร้อยแล้ว');
                             }
                         } else {
-                            alert('รูปแบบไฟล์ไม่ถูกต้อง');
+                            ppkAlert('รูปแบบไฟล์ไม่ถูกต้อง');
                         }
                     } catch(err) {
-                        alert('เกิดข้อผิดพลาดในการอ่านไฟล์');
+                        ppkAlert('เกิดข้อผิดพลาดในการอ่านไฟล์');
                     }
                 };
                 reader.readAsText(file);
@@ -3085,13 +3085,13 @@
                     water_rounding: settings.rounding
                 }).then(result => {
                     if (result && result.success) {
-                        alert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
             } else {
-                alert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว (localStorage)');
+                ppkAlert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว (localStorage)');
             }
             
             localStorage.setItem(STORAGE_KEYS.waterSettings, JSON.stringify(settings));
@@ -3134,13 +3134,13 @@
                     electric_min_charge: String(settings.minCharge)
                 }).then(result => {
                     if (result && result.success) {
-                        alert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
             } else {
-                alert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว (localStorage)');
+                ppkAlert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว (localStorage)');
             }
             
             localStorage.setItem(STORAGE_KEYS.electricSettings, JSON.stringify(settings));
@@ -3191,13 +3191,13 @@
                     common_fee_flat: String(settings.flat)
                 }).then(result => {
                     if (result && result.success) {
-                        alert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
             } else {
-                alert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว (localStorage)');
+                ppkAlert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว (localStorage)');
             }
             
             localStorage.setItem(STORAGE_KEYS.commonFeeSettings, JSON.stringify(settings));
@@ -3323,13 +3323,13 @@
                     receipt_include_date: String(settings.receiptIncludeDate)
                 }).then(result => {
                     if (result && result.success) {
-                        alert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
+                        ppkAlert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
             } else {
-                alert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว (localStorage)');
+                ppkAlert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว (localStorage)');
             }
             
             localStorage.setItem(STORAGE_KEYS.systemSettings, JSON.stringify(settings));
@@ -3400,7 +3400,7 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            alert('สำรองข้อมูลเรียบร้อยแล้ว');
+            ppkAlert('สำรองข้อมูลเรียบร้อยแล้ว');
         }
 
         function restoreData() {
@@ -3412,16 +3412,16 @@
                 if (!file) return;
                 
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = async function(e) {
                     try {
                         const backup = JSON.parse(e.target.result);
                         
                         if (!backup.timestamp) {
-                            alert('รูปแบบไฟล์สำรองข้อมูลไม่ถูกต้อง');
+                            ppkAlert('รูปแบบไฟล์สำรองข้อมูลไม่ถูกต้อง');
                             return;
                         }
 
-                        if (!confirm(`ต้องการกู้คืนข้อมูลจากวันที่ ${new Date(backup.timestamp).toLocaleString('th-TH')} หรือไม่?\n\nคำเตือน: ข้อมูลปัจจุบันจะถูกแทนที่ด้วยข้อมูลจากไฟล์สำรอง`)) {
+                        if (!await ppkConfirm(`ต้องการกู้คืนข้อมูลจากวันที่ ${new Date(backup.timestamp).toLocaleString('th-TH')} หรือไม่?\n\nคำเตือน: ข้อมูลปัจจุบันจะถูกแทนที่ด้วยข้อมูลจากไฟล์สำรอง`)) {
                             return;
                         }
 
@@ -3439,10 +3439,10 @@
                         // Reload all data
                         loadAllSettings();
                         
-                        alert('กู้คืนข้อมูลเรียบร้อยแล้ว');
+                        ppkAlert('กู้คืนข้อมูลเรียบร้อยแล้ว');
                     } catch(err) {
                         console.error(err);
-                        alert('เกิดข้อผิดพลาดในการอ่านไฟล์สำรองข้อมูล');
+                        ppkAlert('เกิดข้อผิดพลาดในการอ่านไฟล์สำรองข้อมูล');
                     }
                 };
                 reader.readAsText(file);
@@ -3450,12 +3450,12 @@
             input.click();
         }
 
-        function clearAllData() {
-            if (!confirm('คุณต้องการล้างข้อมูลทั้งหมดหรือไม่?\n\nคำเตือน: การดำเนินการนี้ไม่สามารถยกเลิกได้! กรุณาสำรองข้อมูลก่อนดำเนินการ')) {
+        async function clearAllData() {
+            if (!await ppkConfirm('คุณต้องการล้างข้อมูลทั้งหมดหรือไม่?\n\nคำเตือน: การดำเนินการนี้ไม่สามารถยกเลิกได้! กรุณาสำรองข้อมูลก่อนดำเนินการ')) {
                 return;
             }
             
-            if (!confirm('ยืนยันอีกครั้ง: ข้อมูลทั้งหมดจะถูกลบ รวมถึงข้อมูลบ้านพัก ผู้พักอาศัย สิทธิ์ และการตั้งค่าทั้งหมด')) {
+            if (!await ppkConfirm('ยืนยันอีกครั้ง: ข้อมูลทั้งหมดจะถูกลบ รวมถึงข้อมูลบ้านพัก ผู้พักอาศัย สิทธิ์ และการตั้งค่าทั้งหมด')) {
                 return;
             }
 
@@ -3482,20 +3482,20 @@
                     const base64 = e.target.result;
                     localStorage.setItem('regulations_pdf', base64);
                     updateRegulationFileStatus();
-                    alert('อัพโหลดไฟล์ระเบียบเรียบร้อยแล้ว!');
+                    ppkAlert('อัพโหลดไฟล์ระเบียบเรียบร้อยแล้ว!');
                 };
                 reader.readAsDataURL(file);
             } else {
-                alert('กรุณาเลือกไฟล์ PDF เท่านั้น');
+                ppkAlert('กรุณาเลือกไฟล์ PDF เท่านั้น');
             }
             event.target.value = '';
         }
 
-        function deleteRegulationPdf() {
-            if (confirm('ต้องการลบไฟล์ระเบียบนี้หรือไม่?')) {
+        async function deleteRegulationPdf() {
+            if (await ppkConfirm('ต้องการลบไฟล์ระเบียบนี้หรือไม่?')) {
                 localStorage.removeItem('regulations_pdf');
                 updateRegulationFileStatus();
-                alert('ลบไฟล์ระเบียบเรียบร้อยแล้ว');
+                ppkAlert('ลบไฟล์ระเบียบเรียบร้อยแล้ว');
             }
         }
 
@@ -3535,7 +3535,7 @@
             const priority = document.getElementById('announcementPriority').value;
 
             if (!text) {
-                alert('กรุณากรอกข้อความประกาศ');
+                ppkAlert('กรุณากรอกข้อความประกาศ');
                 return;
             }
 
@@ -3555,11 +3555,11 @@
                         document.getElementById('announcementExpiry').value = '';
                         document.getElementById('announcementPriority').value = 'normal';
                         renderAnnouncementsList();
-                        alert('เพิ่มประกาศเรียบร้อยแล้ว!');
+                        ppkAlert('เพิ่มประกาศเรียบร้อยแล้ว!');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
                 return;
             }
 
@@ -3582,11 +3582,11 @@
             document.getElementById('announcementPriority').value = 'normal';
 
             renderAnnouncementsList();
-            alert('เพิ่มประกาศเรียบร้อยแล้ว!');
+            ppkAlert('เพิ่มประกาศเรียบร้อยแล้ว!');
         }
 
-        function deleteAnnouncement(id) {
-            if (!confirm('ต้องการลบประกาศนี้หรือไม่?')) return;
+        async function deleteAnnouncement(id) {
+            if (!await ppkConfirm('ต้องการลบประกาศนี้หรือไม่?')) return;
 
             // Delete from Backend
             if (WEB_APP_URL) {
@@ -3961,16 +3961,16 @@
                 });
 
                 if (result && result.success) {
-                    alert('อนุมัติเรียบร้อยแล้ว!\nUser ID: ' + (result.userId || '-') + '\nResident ID: ' + (result.residentId || '-'));
+                    ppkAlert('อนุมัติเรียบร้อยแล้ว!\nUser ID: ' + (result.userId || '-') + '\nResident ID: ' + (result.residentId || '-'));
                     closeModal('approveReg');
                     loadPendingRegistrations();
                     // Reload residents data
                     loadFromBackend();
                 } else {
-                    alert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
                 }
             } catch (err) {
-                alert(err.message);
+                ppkAlert(err.message);
             }
         }
 
@@ -3979,7 +3979,7 @@
             const note = document.getElementById('rejectRegNote').value.trim();
 
             if (!note) {
-                alert('กรุณาระบุเหตุผลที่ปฏิเสธ');
+                ppkAlert('กรุณาระบุเหตุผลที่ปฏิเสธ');
                 return;
             }
 
@@ -3990,14 +3990,14 @@
                 });
 
                 if (result && result.success) {
-                    alert('ปฏิเสธเรียบร้อยแล้ว');
+                    ppkAlert('ปฏิเสธเรียบร้อยแล้ว');
                     closeModal('rejectReg');
                     loadPendingRegistrations();
                 } else {
-                    alert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
                 }
             } catch (err) {
-                alert(err.message);
+                ppkAlert(err.message);
             }
         }
 
@@ -4067,7 +4067,7 @@
             });
             
             saveExemptionsData(exemptions);
-            alert('บันทึกการยกเว้นค่าส่วนกลางเรียบร้อยแล้ว');
+            ppkAlert('บันทึกการยกเว้นค่าส่วนกลางเรียบร้อยแล้ว');
         }
 
         // ========== Permission Functions ==========
@@ -4354,13 +4354,13 @@
             if (WEB_APP_URL) {
                 callBackend('updatePermissions', { permissions }).then(result => {
                     if (result && result.success) {
-                        alert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว');
+                        ppkAlert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว');
                     } else {
-                        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => alert(err.message));
+                }).catch(err => ppkAlert(err.message));
             } else {
-                alert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว (localStorage)');
+                ppkAlert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว (localStorage)');
             }
             
             savePermissionsData(permissions);
@@ -4448,7 +4448,7 @@
         };
     
         async function doLogout() {
-            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
             if (token && WEB_APP_URL) {
                 try { await callBackend('logout', {}); } catch(e) {}
@@ -4457,5 +4457,5 @@
             navigate('?page=login');
         }
         </script>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>

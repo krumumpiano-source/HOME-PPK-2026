@@ -264,7 +264,7 @@
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
     </div>
-</body>
+    <script src="ppk-utils.js"></script></body>
 </html>
 
 <script>
@@ -548,11 +548,11 @@
                 printWindow.document.write('  setTimeout(function() { window.print(); }, 500);');
                 printWindow.document.write('}');
                 printWindow.document.write('window.onload = renderPDFs;');
-                printWindow.document.write('<\/script></body></html>');
+                printWindow.document.write('<\/script>    <script src="ppk-utils.js"></script></body></html>');
                 printWindow.document.close();
             });
         } else {
-            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script></body></html>');
+            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script>    <script src="ppk-utils.js"></script></body></html>');
             printWindow.document.close();
         }
     }
@@ -691,7 +691,7 @@
     document.getElementById('requestForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        if (!WEB_APP_URL) { alert('ยังไม่ได้ตั้งค่า WEB_APP_URL'); return; }
+        if (!WEB_APP_URL) { ppkAlert('ยังไม่ได้ตั้งค่า WEB_APP_URL'); return; }
 
         const submitBtn = document.querySelector('.submit-btn');
         submitBtn.disabled = true;
@@ -739,13 +739,13 @@
             const result = await callBackend('submitRequest', data);
 
             if (result && result.success) {
-                alert('ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + (result.requestId || '-'));
+                ppkAlert('ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + (result.requestId || '-'));
                 window.navigate('?page=form');
             } else {
-                alert(result?.error || 'ส่งคำร้องไม่สำเร็จ');
+                ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ');
             }
         } catch (err) {
-            alert('ไม่สามารถเชื่อมต่อระบบได้');
+            ppkAlert('ไม่สามารถเชื่อมต่อระบบได้');
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'ส่งคำร้อง';
