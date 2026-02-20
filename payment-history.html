@@ -199,6 +199,77 @@
         .payment-history-container td {
             color: var(--text);
         }
+
+        /* Stat Cards */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+        @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 400px) { .stat-grid { grid-template-columns: 1fr; } }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            border-radius: 14px 14px 0 0;
+        }
+        .stat-card.c-total::before  { background: linear-gradient(90deg,#2563eb,#38e8ff); }
+        .stat-card.c-water::before  { background: linear-gradient(90deg,#06b6d4,#38e8ff); }
+        .stat-card.c-elec::before   { background: linear-gradient(90deg,#f59e0b,#fcd34d); }
+        .stat-card.c-common::before { background: linear-gradient(90deg,#10b981,#6ee7b7); }
+        .stat-card-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
+        .stat-card-label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+        .stat-card-value { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-top: 0.2rem; }
+        .stat-card.c-total  .stat-card-value { color: var(--primary); }
+        .stat-card.c-water  .stat-card-value { color: var(--info); }
+        .stat-card.c-elec   .stat-card-value { color: var(--warning); }
+        .stat-card.c-common .stat-card-value { color: var(--success); }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+        @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .chart-card-full {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 1000px;
+        }
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -243,9 +314,53 @@
             <span class="dashboard-header-icon">💸</span>
             <h2>ข้อมูลการชำระเงินย้อนหลัง</h2>
         </div>
+
+        <!-- Stat Cards -->
+        <div class="stat-grid">
+            <div class="stat-card c-total">
+                <div class="stat-card-icon">💰</div>
+                <div class="stat-card-label">ยอดชำระรวมทั้งปี</div>
+                <div class="stat-card-value" id="statTotal">-</div>
+            </div>
+            <div class="stat-card c-water">
+                <div class="stat-card-icon">💧</div>
+                <div class="stat-card-label">ค่าน้ำรวม</div>
+                <div class="stat-card-value" id="statWater">-</div>
+            </div>
+            <div class="stat-card c-elec">
+                <div class="stat-card-icon">⚡</div>
+                <div class="stat-card-label">ค่าไฟรวม</div>
+                <div class="stat-card-value" id="statElec">-</div>
+            </div>
+            <div class="stat-card c-common">
+                <div class="stat-card-icon">🏢</div>
+                <div class="stat-card-label">ค่าส่วนกลางรวม</div>
+                <div class="stat-card-value" id="statCommon">-</div>
+            </div>
+        </div>
+
+        <!-- Charts: Stacked Bar + Doughnut -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">📊 ค่าใช้จ่ายรายเดือน (แยกตามประเภท)</div>
+                <canvas id="chartBar" height="220"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🧩 สัดส่วนค่าใช้จ่าย</div>
+                <canvas id="chartDoughnut" height="220"></canvas>
+            </div>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="chart-card-full">
+            <div class="chart-title">📈 แนวโน้มยอดชำระรายเดือน</div>
+            <canvas id="chartLine" height="110"></canvas>
+        </div>
+
         <div class="filter-section">
             <label for="month">เลือกเดือน:</label>
             <select id="month">
+                <option value="">— ทั้งปี —</option>
                 <option value="01">มกราคม</option>
                 <option value="02">กุมภาพันธ์</option>
                 <option value="03">มีนาคม</option>
@@ -299,12 +414,131 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
 
         // ============ Constants ============
         const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-        let allHistoryData = []; // เก็บข้อมูลทั้งหมดที่โหลดมา
+        let allHistoryData = [];
+        let chartBar, chartDoughnut, chartLine;
+
+        // ============ Stat Cards ============
+        function updateStats(data) {
+            const fmt = v => v > 0 ? v.toLocaleString('th-TH') + ' บ.' : '-';
+            const total    = data.reduce((s,r) => s + (r.total || r.water+r.electric+r.common), 0);
+            const water    = data.reduce((s,r) => s + r.water, 0);
+            const electric = data.reduce((s,r) => s + r.electric, 0);
+            const common   = data.reduce((s,r) => s + r.common, 0);
+            document.getElementById('statTotal').textContent   = fmt(total);
+            document.getElementById('statWater').textContent   = fmt(water);
+            document.getElementById('statElec').textContent    = fmt(electric);
+            document.getElementById('statCommon').textContent  = fmt(common);
+        }
+
+        // ============ Charts ============
+        function renderCharts(data) {
+            const months = Array.from({length:12}, (_,i) => String(i+1).padStart(2,'0'));
+            const byMonth = {};
+            months.forEach(m => { byMonth[m] = {water:0, electric:0, common:0}; });
+            data.forEach(r => {
+                const m = String(r.month).padStart(2,'0');
+                if (byMonth[m]) {
+                    byMonth[m].water    += r.water;
+                    byMonth[m].electric += r.electric;
+                    byMonth[m].common   += r.common;
+                }
+            });
+
+            const labels    = months.map(m => THAI_MONTHS_SHORT[parseInt(m)-1]);
+            const waterArr  = months.map(m => byMonth[m].water);
+            const elecArr   = months.map(m => byMonth[m].electric);
+            const commonArr = months.map(m => byMonth[m].common);
+            const totalArr  = months.map(m => byMonth[m].water + byMonth[m].electric + byMonth[m].common);
+
+            if (chartBar)      chartBar.destroy();
+            if (chartDoughnut) chartDoughnut.destroy();
+            if (chartLine)     chartLine.destroy();
+
+            const fontKanit = { family: 'Kanit, sans-serif' };
+
+            // Stacked Bar
+            chartBar = new Chart(document.getElementById('chartBar'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'ค่าน้ำ',       data: waterArr,  backgroundColor: 'rgba(6,182,212,0.82)',   borderRadius: 3 },
+                        { label: 'ค่าไฟ',       data: elecArr,   backgroundColor: 'rgba(245,158,11,0.82)',  borderRadius: 3 },
+                        { label: 'ค่าส่วนกลาง', data: commonArr, backgroundColor: 'rgba(16,185,129,0.82)', borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: fontKanit, boxWidth: 14, padding: 10 } },
+                        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' บ.' } }
+                    },
+                    scales: {
+                        x: { stacked: true, ticks: { font: fontKanit } },
+                        y: { stacked: true, beginAtZero: true, ticks: { font: fontKanit, callback: v => v.toLocaleString('th-TH') } }
+                    }
+                }
+            });
+
+            // Doughnut
+            const totalW = waterArr.reduce((a,b)=>a+b,0);
+            const totalE = elecArr.reduce((a,b)=>a+b,0);
+            const totalC = commonArr.reduce((a,b)=>a+b,0);
+            chartDoughnut = new Chart(document.getElementById('chartDoughnut'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ค่าน้ำ','ค่าไฟ','ค่าส่วนกลาง'],
+                    datasets: [{ data: [totalW, totalE, totalC],
+                        backgroundColor: ['rgba(6,182,212,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],
+                        borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '62%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: fontKanit, padding: 12 } },
+                        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed.toLocaleString('th-TH') + ' บ.' } }
+                    }
+                }
+            });
+
+            // Line
+            chartLine = new Chart(document.getElementById('chartLine'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'ยอดชำระรวม',
+                        data: totalArr,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37,99,235,0.07)',
+                        borderWidth: 2.5,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#2563eb',
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => 'ยอด: ' + ctx.parsed.y.toLocaleString('th-TH') + ' บ.' } }
+                    },
+                    scales: {
+                        x: { ticks: { font: fontKanit } },
+                        y: { beginAtZero: true, ticks: { font: fontKanit, callback: v => v.toLocaleString('th-TH') } }
+                    }
+                }
+            });
+        }
 
         // ============ โหลดข้อมูล ============
         async function loadPaymentHistory() {
@@ -356,6 +590,8 @@
             }
 
             renderTable(allHistoryData);
+            updateStats(allHistoryData);
+            renderCharts(allHistoryData);
         }
 
         // ============ แสดงตาราง ============
@@ -388,15 +624,15 @@
         // ============ กรอง ============
         function filterHistory() {
             const selectedMonth = document.getElementById('month').value;
-            const selectedYear = document.getElementById('year').value;
-
-            // ถ้าเปลี่ยนปี ต้องโหลดใหม่จาก Backend
+            // โหลดใหม่จาก Backend (เผื่อเปลี่ยนปี) → กราฟแสดงทั้งปีเสมอ ตารางกรองตามเดือน
             loadPaymentHistory().then(() => {
                 if (selectedMonth) {
                     const filtered = allHistoryData.filter(item => item.month === selectedMonth);
                     renderTable(filtered);
+                    // stat cards อัปเดตตามการกรอง
+                    updateStats(filtered);
+                    // กราฟยังคงแสดงทั้งปี (ไม่กรอง) เพื่อให้เห็นภาพรวม
                 }
-                // ถ้าไม่เลือกเดือน จะแสดงทั้งหมด (โหลดมาแล้ว)
             });
         }
 
