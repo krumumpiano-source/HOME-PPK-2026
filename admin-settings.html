@@ -2649,34 +2649,58 @@
             await populateHouseDropdown('residentHouse', preselect);
         }
 
-        function openMoveResidentModal(residentId) {
+        async function openMoveResidentModal(residentId) {
             const residents = getResidentsData();
-            const housing = getHousingData();
+            let housing = getHousingData();
             const formatSettings = getHousingFormatSettings();
-            
-            const resident = residents.find(r => r.id === residentId);
+
+            const resident = residents.find(r => String(r.id) === String(residentId));
             if (!resident) {
                 ppkAlert('ไม่พบข้อมูลผู้พักอาศัย');
                 return;
             }
-            
+
             // Set data
             document.getElementById('moveResidentId').value = residentId;
-            document.getElementById('moveResidentName').textContent = 
+            document.getElementById('moveResidentName').textContent =
                 `${resident.prefix || ''}${resident.firstname || ''} ${resident.lastname || ''}`;
             document.getElementById('moveResidentOldHouse').textContent = resident.house_number || '-';
-            
-            // Populate house dropdown (excluding current house)
+
             const select = document.getElementById('moveResidentNewHouse');
             select.innerHTML = '<option value="">เลือกบ้าน/ห้องใหม่</option>';
-            
+
+            // ถ้า housing ว่าง ให้ดึงจาก backend โดยตรง
+            if (housing.length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+                select.innerHTML = '<option value="">⏳ กำลังโหลดข้อมูลบ้าน...</option>';
+                try {
+                    const result = await callBackendGet('getHousing', {});
+                    if (result && result.success && Array.isArray(result.data)) {
+                        const fetched = result.data.map((h, i) => ({
+                            id: h.id || (i + 1),
+                            type: h.type || 'house',
+                            number: h.number || '',
+                            displayNumber: h.display_number || '',
+                            zone: h.zone || '',
+                            status: h.status || 'available',
+                            note: h.note || ''
+                        }));
+                        saveHousingData(fetched);
+                        housing = fetched;
+                    }
+                } catch(e) { console.warn('openMoveResidentModal fetch failed:', e); }
+            }
+
+            select.innerHTML = '<option value="">เลือกบ้าน/ห้องใหม่</option>';
             housing.forEach(h => {
                 const displayName = formatHousingNumber(h, formatSettings);
                 if (displayName !== resident.house_number) {
-                    select.innerHTML += `<option value="${displayName}">${displayName}</option>`;
+                    const opt = document.createElement('option');
+                    opt.value = displayName;
+                    opt.textContent = displayName;
+                    select.appendChild(opt);
                 }
             });
-            
+
             closeModal('houseDetails');
             openModal('moveResident');
         }
