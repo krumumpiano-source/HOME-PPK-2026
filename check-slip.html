@@ -883,7 +883,7 @@
     }
 
     // ส่งเตือนรายเดียว
-    function showReminder(type, index){
+    async function showReminder(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
