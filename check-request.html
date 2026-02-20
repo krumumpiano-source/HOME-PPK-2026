@@ -1,0 +1,1982 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจคำร้อง/ลำดับคิวพักอาศัย | HOME PPK 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-left: 62px;
+            min-height: 100vh;
+            padding: 2rem;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .main-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .main-container { margin-left: 48px; padding: 1rem; }
+            .sidebar.expanded ~ .main-container { margin-left: 160px; }
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .back-btn:hover { background: #f1f5f9; }
+        .page-title { margin: 0; font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .tab-btn {
+            padding: 0.7rem 1.2rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .tab-badge {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary);
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .tab-btn.active .tab-badge {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary);
+        }
+        .tab-btn:not(.active) .tab-badge {
+            background: var(--muted);
+            color: white;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .section-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Controls */
+        .controls-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .form-group { flex: 1; min-width: 180px; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.95rem; font-weight: 600; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font: inherit;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.55rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn:hover { background: #f1f5f9; }
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; border-color: var(--success); }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: var(--warning); color: white; border-color: var(--warning); }
+        .btn-warning:hover { background: #d97706; }
+        .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-info { background: var(--info); color: white; border-color: var(--info); }
+        .btn-info:hover { background: #0891b2; }
+        .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
+
+        /* Table */
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        thead th {
+            background: #e2e8f0;
+            border: 1px solid var(--border);
+            padding: 0.75rem 0.6rem;
+            font-size: 0.9rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+        tbody td {
+            border: 1px solid var(--border);
+            padding: 0.6rem;
+            font-size: 0.9rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+        tbody tr:hover { background: #f8fafc; }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-reviewing { background: #dbeafe; color: #1d4ed8; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-waiting { background: #e0e7ff; color: #3730a3; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-expired { background: #f3f4f6; color: #6b7280; }
+
+        /* Priority Badges */
+        .priority-high { color: var(--danger); font-weight: 700; }
+        .priority-medium { color: var(--warning); font-weight: 700; }
+        .priority-low { color: var(--muted); }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted);
+        }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* Queue Section */
+        .queue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: box-shadow 0.2s;
+        }
+        .queue-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .queue-item.dragging {
+            opacity: 0.5;
+            border: 2px dashed var(--primary);
+        }
+        .queue-item.expired {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+        .queue-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .queue-info { flex: 1; }
+        .queue-name { font-weight: 600; margin-bottom: 0.25rem; }
+        .queue-detail { font-size: 0.85rem; color: var(--muted); }
+        .queue-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .drag-handle {
+            cursor: grab;
+            color: var(--muted);
+            font-size: 1.2rem;
+            padding: 0.5rem;
+        }
+        .drag-handle:active { cursor: grabbing; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--surface);
+            border-radius: 14px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 10;
+        }
+        .modal-title { margin: 0; font-size: 1.2rem; font-weight: 700; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--muted);
+            padding: 0.25rem;
+        }
+        .modal-close:hover { color: var(--text); }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        /* Detail List */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .detail-item { margin-bottom: 0.75rem; }
+        .detail-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.2rem; }
+        .detail-value { font-weight: 500; }
+
+        /* Attachments */
+        .attachments-list { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .attachment-item:hover { background: #e2e8f0; }
+
+        /* Stats Cards */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .stat-icon.pending { background: #fef3c7; }
+        .stat-icon.reviewing { background: #dbeafe; }
+        .stat-icon.approved { background: #d1fae5; }
+        .stat-icon.queue { background: #e0e7ff; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.85rem; color: var(--muted); }
+
+        /* Hide content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls-row { flex-direction: column; }
+            .queue-item { flex-direction: column; align-items: flex-start; }
+            .queue-actions { width: 100%; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container" id="mainContainer">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigate('?page=team-management')">← ย้อนกลับ</button>
+            <h1 class="page-title">📋 ตรวจคำร้อง/ลำดับคิวพักอาศัย</h1>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon pending">📥</div>
+                <div>
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-label">รอดำเนินการ</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon reviewing">🔍</div>
+                <div>
+                    <div class="stat-value" id="statReviewing">0</div>
+                    <div class="stat-label">กำลังตรวจสอบ</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon approved">✅</div>
+                <div>
+                    <div class="stat-value" id="statApproved">0</div>
+                    <div class="stat-label">อนุมัติแล้ว</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon queue">👥</div>
+                <div>
+                    <div class="stat-value" id="statQueue">0</div>
+                    <div class="stat-label">ในคิวรอเข้าพัก</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="residence" onclick="switchTab('residence')">
+                🏠 ขอเข้าพักอาศัย <span class="tab-badge" id="badgeResidence">0</span>
+            </button>
+            <button class="tab-btn" data-tab="repair" onclick="switchTab('repair')">
+                🔧 แจ้งซ่อมแซม <span class="tab-badge" id="badgeRepair">0</span>
+            </button>
+            <button class="tab-btn" data-tab="transfer" onclick="switchTab('transfer')">
+                🔄 ขอย้ายบ้านพัก <span class="tab-badge" id="badgeTransfer">0</span>
+            </button>
+            <button class="tab-btn" data-tab="return" onclick="switchTab('return')">
+                📤 ขอคืนบ้านพัก <span class="tab-badge" id="badgeReturn">0</span>
+            </button>
+        </div>
+
+        <!-- Tab: Residence Requests -->
+        <div class="tab-content active" id="tab-residence">
+            <!-- Queue Management -->
+            <div class="section-card">
+                <h3 class="section-title">👥 ลำดับคิวรอเข้าพักอาศัย</h3>
+                <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
+                    ลากเพื่อเรียงลำดับคิว และจัดการสถานะคำร้อง
+                </p>
+                
+                <!-- Queue Expiry Settings -->
+                <div class="queue-settings" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span style="font-weight:600;">⏰ วันหมดอายุคิว:</span>
+                        <input type="date" id="queueExpiryDate" style="padding:0.5rem 0.8rem;border:1px solid var(--border);border-radius:8px;font:inherit;min-width:180px;">
+                        <button class="btn btn-primary btn-sm" onclick="saveQueueExpiryDate()" style="white-space:nowrap;">💾 บันทึก</button>
+                    </div>
+                    <div style="font-size:0.85rem;color:var(--muted);">
+                        📌 คิวทั้งหมดจะหมดอายุพร้อมกันตามวันที่กำหนด | ปัจจุบัน: <strong id="currentExpiryDisplay">-</strong>
+                    </div>
+                </div>
+                <div class="queue-container" id="queueContainer">
+                    <!-- Queue items will be rendered here -->
+                </div>
+                <div class="empty-state" id="queueEmpty" style="display:none;">
+                    <div class="empty-state-icon">📭</div>
+                    <div>ยังไม่มีคำร้องในคิวรอเข้าพัก</div>
+                </div>
+            </div>
+
+            <!-- Residence Requests Table -->
+            <div class="section-card">
+                <h3 class="section-title">📋 คำร้องขอเข้าพักอาศัยทั้งหมด</h3>
+                <div class="controls-row">
+                    <div class="form-group">
+                        <label>กรองสถานะ</label>
+                        <select id="filterResidenceStatus" onchange="renderResidenceRequests()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="waiting">รอคิวเข้าพัก</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="rejected">ไม่อนุมัติ</option>
+                            <option value="expired">หมดอายุ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchResidence" placeholder="ชื่อ, เบอร์โทร..." oninput="renderResidenceRequests()">
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>วันที่ยื่น</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>กลุ่มสาระ</th>
+                                <th>ลักษณะเข้าพัก</th>
+                                <th>สถานะ</th>
+                                <th>วันหมดอายุ</th>
+                                <th style="width:150px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="residenceTableBody"></tbody>
+                    </table>
+                </div>
+                <!-- Pagination Controls -->
+                <div class="pagination-controls" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div style="font-size:0.9rem;color:var(--muted);">
+                        <span id="residencePaginationInfo">แสดง 0-0 จาก 0 รายการ</span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn btn-sm" onclick="changePage('residence', -1)" id="residencePrevBtn">◀ ก่อนหน้า</button>
+                        <select id="residencePage" onchange="renderResidenceRequests()" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font:inherit;">
+                            <option value="1">หน้า 1</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="changePage('residence', 1)" id="residenceNextBtn">ถัดไป ▶</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Repair Requests -->
+        <div class="tab-content" id="tab-repair">
+            <div class="section-card">
+                <h3 class="section-title">🔧 คำร้องแจ้งซ่อมแซม</h3>
+                <div class="controls-row">
+                    <div class="form-group">
+                        <label>กรองสถานะ</label>
+                        <select id="filterRepairStatus" onchange="renderRepairRequests()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="completed">ดำเนินการเสร็จ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>กรองความเร่งด่วน</label>
+                        <select id="filterRepairUrgency" onchange="renderRepairRequests()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="urgent_high">ด่วนมาก</option>
+                            <option value="urgent">ด่วน</option>
+                            <option value="normal">ปกติ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchRepair" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderRepairRequests()">
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>วันที่แจ้ง</th>
+                                <th>ผู้แจ้ง</th>
+                                <th>หมายเลขบ้าน</th>
+                                <th>ประเภทงาน</th>
+                                <th>ความเร่งด่วน</th>
+                                <th>สถานะ</th>
+                                <th style="width:150px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="repairTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Transfer Requests -->
+        <div class="tab-content" id="tab-transfer">
+            <div class="section-card">
+                <h3 class="section-title">🔄 คำร้องขอย้ายบ้านพัก</h3>
+                <div class="controls-row">
+                    <div class="form-group">
+                        <label>กรองสถานะ</label>
+                        <select id="filterTransferStatus" onchange="renderTransferRequests()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="rejected">ไม่อนุมัติ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchTransfer" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderTransferRequests()">
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>วันที่ยื่น</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>บ้านพักปัจจุบัน</th>
+                                <th>ขอย้ายไป</th>
+                                <th>เหตุผล</th>
+                                <th>สถานะ</th>
+                                <th style="width:150px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transferTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Return Requests -->
+        <div class="tab-content" id="tab-return">
+            <div class="section-card">
+                <h3 class="section-title">📤 คำร้องขอคืนบ้านพัก</h3>
+                <div class="controls-row">
+                    <div class="form-group">
+                        <label>กรองสถานะ</label>
+                        <select id="filterReturnStatus" onchange="renderReturnRequests()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="completed">ดำเนินการเสร็จ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchReturn" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderReturnRequests()">
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>วันที่ยื่น</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>หมายเลขบ้าน</th>
+                                <th>วันที่ต้องการคืน</th>
+                                <th>เหตุผล</th>
+                                <th>สถานะ</th>
+                                <th style="width:150px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">รายละเอียดคำร้อง</h3>
+                <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be dynamically inserted -->
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <button class="btn" onclick="closeModal('detailModal')">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiry Date Modal - No longer used, kept for compatibility -->
+
+    <!-- Status Modal -->
+    <div class="modal-overlay" id="statusModal">
+        <div class="modal" style="max-width:450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">เปลี่ยนสถานะคำร้อง</h3>
+                <button class="modal-close" onclick="closeModal('statusModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>สถานะ</label>
+                    <select id="statusSelect">
+                        <option value="pending">รอดำเนินการ</option>
+                        <option value="reviewing">กำลังตรวจสอบ</option>
+                        <option value="waiting">รอคิวเข้าพัก</option>
+                        <option value="approved">อนุมัติ</option>
+                        <option value="rejected">ไม่อนุมัติ</option>
+                        <option value="completed">ดำเนินการเสร็จ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>หมายเหตุ (ถ้ามี)</label>
+                    <textarea id="statusNote" rows="3" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font:inherit;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('statusModal')">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveStatus()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
+        ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+        งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+    </div>
+
+    <script>
+        // ========== Backend API Helpers ==========
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload), redirect: 'follow'
+                });
+                const text = await response.text();
+                const result = JSON.parse(text);
+                if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return; }
+                return result;
+            } catch (err) { console.error('Backend error:', err); throw new Error('ไม่สามารถเชื่อมต่อระบบได้'); }
+        }
+
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken');
+            const q = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+            const text = await res.text();
+            const result = JSON.parse(text);
+            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return null; }
+            return result;
+        }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { window.navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+                return result.user;
+            } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+        }
+
+        // ========== Data Storage ==========
+        // ใช้ Backend เป็นหลัก
+
+        let currentEditId = null;
+        let currentEditType = null;
+
+        // Cache ข้อมูลจาก Backend
+        let cachedData = {
+            residence: [],
+            repair: [],
+            transfer: [],
+            return: []
+        };
+        let dataLoaded = false;
+
+        // โหลดข้อมูลจาก Backend
+        async function loadAllRequests() {
+            if (WEB_APP_URL) {
+                try {
+                    const currentYear = new Date().getFullYear() + 543;
+                    const [resResult, repResult, trfResult, retResult, queueResult] = await Promise.all([
+                        callBackendGet('getRequests', { type: 'residence', year: String(currentYear) }),
+                        callBackendGet('getRequests', { type: 'repair', year: String(currentYear) }),
+                        callBackendGet('getRequests', { type: 'transfer', year: String(currentYear) }),
+                        callBackendGet('getRequests', { type: 'return', year: String(currentYear) }),
+                        callBackendGet('getQueue')
+                    ]);
+
+                    if (resResult && resResult.success) cachedData.residence = resResult.data || [];
+                    if (repResult && repResult.success) cachedData.repair = repResult.data || [];
+                    if (trfResult && trfResult.success) cachedData.transfer = trfResult.data || [];
+                    if (retResult && retResult.success) cachedData.return = retResult.data || [];
+
+                    // merge queue positions
+                    if (queueResult && queueResult.success && queueResult.data) {
+                        queueResult.data.forEach(function(q) {
+                            const item = cachedData.residence.find(r => r.id === q.id);
+                            if (item) {
+                                item.queuePosition = q.position;
+                            }
+                        });
+                    }
+
+                    dataLoaded = true;
+                    return;
+                } catch (e) {
+                    console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
+                }
+            }
+            
+            // ไม่มี Backend — แสดงข้อมูลว่าง
+            cachedData.residence = [];
+            cachedData.repair = [];
+            cachedData.transfer = [];
+            cachedData.return = [];
+            dataLoaded = true;
+        }
+
+        // initSampleData ถูกลบแล้ว — ข้อมูลทั้งหมดมาจาก Backend
+
+        // ========== Data Functions ==========
+        function getData(type) {
+            return cachedData[type] || [];
+        }
+
+        function saveData(type, data) {
+            cachedData[type] = data;
+        }
+
+        async function updateRequestStatus(type, id, newStatus, note = '') {
+            // อัปเดตใน cache
+            const data = getData(type);
+            const index = data.findIndex(item => item.id === id);
+            if (index !== -1) {
+                data[index].status = newStatus;
+                if (note) data[index].notes = note;
+                saveData(type, data);
+            }
+            
+            // ส่งไป Backend
+            if (WEB_APP_URL) {
+                try {
+                    await callBackend('reviewRequest', {
+                        requestId: id,
+                        type: type,
+                        status: newStatus,
+                        note: note
+                    });
+                } catch (e) {
+                    console.error('อัปเดตสถานะไม่สำเร็จ:', e);
+                }
+            }
+        }
+
+        // ========== Queue Functions ==========
+        function getQueueItems() {
+            const residenceData = getData('residence');
+            return residenceData
+                .filter(item => item.status === 'waiting' && item.queuePosition)
+                .sort((a, b) => a.queuePosition - b.queuePosition);
+        }
+
+        function updateQueueOrder(orderedIds) {
+            const data = getData('residence');
+            orderedIds.forEach((id, index) => {
+                const item = data.find(r => r.id === id);
+                if (item) item.queuePosition = index + 1;
+            });
+            saveData('residence', data);
+            
+            // ส่งลำดับใหม่ไป Backend
+            if (WEB_APP_URL) {
+                callBackend('updateQueue', { orderedIds: orderedIds }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
+            }
+        }
+
+        function addToQueue(id) {
+            const data = getData('residence');
+            const item = data.find(r => r.id === id);
+            if (item) {
+                const queueItems = getQueueItems();
+                item.status = 'waiting';
+                item.queuePosition = queueItems.length + 1;
+                saveData('residence', data);
+                
+                // ส่งไป Backend
+                if (WEB_APP_URL) {
+                    callBackend('reviewRequest', {
+                        requestId: id,
+                        type: 'residence',
+                        status: 'waiting',
+                        queuePosition: item.queuePosition
+                    }).catch(e => console.error('เพิ่มคิวไม่สำเร็จ:', e));
+                }
+            }
+        }
+
+        function removeFromQueue(id) {
+            const data = getData('residence');
+            const item = data.find(r => r.id === id);
+            if (item) {
+                item.queuePosition = null;
+                saveData('residence', data);
+                const queueItems = data
+                    .filter(r => r.status === 'waiting' && r.queuePosition)
+                    .sort((a, b) => a.queuePosition - b.queuePosition);
+                queueItems.forEach((q, index) => q.queuePosition = index + 1);
+                saveData('residence', data);
+                
+                // ส่งไป Backend
+                if (WEB_APP_URL) {
+                    callBackend('reviewRequest', {
+                        requestId: id,
+                        type: 'residence',
+                        status: 'reviewing',
+                        removeFromQueue: true
+                    }).catch(e => console.error('ลบจากคิวไม่สำเร็จ:', e));
+                }
+            }
+        }
+
+        // ========== UI Functions ==========
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === 'tab-' + tabId);
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear() + 543;
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            return `${day} ${months[month-1]} ${year}`;
+        }
+
+        function getStatusBadge(status) {
+            const statuses = {
+                pending: { class: 'status-pending', text: 'รอดำเนินการ' },
+                reviewing: { class: 'status-reviewing', text: 'กำลังตรวจสอบ' },
+                waiting: { class: 'status-waiting', text: 'รอคิวเข้าพัก' },
+                approved: { class: 'status-approved', text: 'อนุมัติแล้ว' },
+                rejected: { class: 'status-rejected', text: 'ไม่อนุมัติ' },
+                completed: { class: 'status-completed', text: 'ดำเนินการเสร็จ' },
+                expired: { class: 'status-expired', text: 'หมดอายุ' }
+            };
+            const s = statuses[status] || { class: 'status-pending', text: status };
+            return `<span class="status-badge ${s.class}">${s.text}</span>`;
+        }
+
+        function getUrgencyText(urgency) {
+            const urgencies = {
+                urgent_high: '<span class="priority-high">🔴 ด่วนมาก</span>',
+                urgent: '<span class="priority-medium">🟡 ด่วน</span>',
+                normal: '<span class="priority-low">🟢 ปกติ</span>'
+            };
+            return urgencies[urgency] || urgency;
+        }
+
+        function getStayTypeText(type) {
+            return type === 'alone' ? 'พักคนเดียว' : 'พักกับครอบครัว';
+        }
+
+        function getWorkTypeText(types) {
+            const workTypes = {
+                electrical: 'ระบบไฟฟ้า',
+                plumbing: 'ระบบน้ำประปา',
+                structure: 'โครงสร้างอาคาร',
+                fixtures: 'อุปกรณ์ตกแต่ง',
+                utilities: 'สาธารณูปโภคส่วนกลาง',
+                other: 'อื่นๆ'
+            };
+            return types.map(t => workTypes[t] || t).join(', ');
+        }
+
+        function getReasonText(reasons) {
+            const reasonMap = {
+                new_position: 'ย้ายมาปฏิบัติหน้าที่',
+                far_from_home: 'อยู่ห่างไกลจากภูมิลำเนา',
+                family_responsibility: 'มีภาระครอบครัว',
+                health: 'ปัญหาสุขภาพ',
+                other: 'อื่นๆ'
+            };
+            return reasons.map(r => reasonMap[r] || r).join(', ');
+        }
+
+        // ========== Render Functions ==========
+        function updateStats() {
+            const residence = getData('residence');
+            const repair = getData('repair');
+            const transfer = getData('transfer');
+            const returnData = getData('return');
+
+            const allData = [...residence, ...repair, ...transfer, ...returnData];
+            
+            document.getElementById('statPending').textContent = allData.filter(d => d.status === 'pending').length;
+            document.getElementById('statReviewing').textContent = allData.filter(d => d.status === 'reviewing').length;
+            document.getElementById('statApproved').textContent = allData.filter(d => d.status === 'approved' || d.status === 'completed').length;
+            document.getElementById('statQueue').textContent = residence.filter(d => d.status === 'waiting').length;
+
+            // Update badges
+            document.getElementById('badgeResidence').textContent = residence.filter(d => d.status !== 'approved' && d.status !== 'rejected').length;
+            document.getElementById('badgeRepair').textContent = repair.filter(d => d.status !== 'completed').length;
+            document.getElementById('badgeTransfer').textContent = transfer.filter(d => d.status !== 'approved' && d.status !== 'rejected').length;
+            document.getElementById('badgeReturn').textContent = returnData.filter(d => d.status !== 'completed').length;
+        }
+
+        function renderQueue() {
+            const container = document.getElementById('queueContainer');
+            const emptyState = document.getElementById('queueEmpty');
+            const queueItems = getQueueItems();
+
+            if (queueItems.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            const globalExpiryDate = getQueueExpiryDate();
+            const isExpired = globalExpiryDate ? new Date(globalExpiryDate) < new Date() : false;
+            
+            container.innerHTML = queueItems.map((item, index) => {
+                return `
+                <div class="queue-item" draggable="true" data-id="${item.id}">
+                    <span class="drag-handle" title="ลากเพื่อเรียงลำดับ">⋮⋮</span>
+                    <div class="queue-number">${index + 1}</div>
+                    <div class="queue-info">
+                        <div class="queue-name">${item.prefix}${item.fullname}</div>
+                        <div class="queue-detail">
+                            📞 ${item.phone} | 📧 ${item.email || '-'}<br>
+                            📅 ยื่นเมื่อ: ${formatDate(item.submitDate)}
+                        </div>
+                    </div>
+                    <div class="queue-actions">
+                        <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">📋 ดูรายละเอียด</button>
+                        <button class="btn btn-sm btn-success" onclick="approveFromQueue('${item.id}')">✅ อนุมัติเข้าพัก</button>
+                        <button class="btn btn-sm btn-danger" onclick="removeFromQueue('${item.id}'); renderAll();">❌ นำออกจากคิว</button>
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            // Add drag & drop functionality
+            initDragAndDrop();
+        }
+
+        function initDragAndDrop() {
+            const container = document.getElementById('queueContainer');
+            const items = container.querySelectorAll('.queue-item');
+            let draggedItem = null;
+
+            items.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedItem = this;
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                    draggedItem = null;
+                    // Save new order
+                    const newOrder = [...container.querySelectorAll('.queue-item')].map(el => el.dataset.id);
+                    updateQueueOrder(newOrder);
+                    renderQueue();
+                });
+
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    if (draggedItem && afterElement) {
+                        container.insertBefore(draggedItem, afterElement);
+                    } else if (draggedItem) {
+                        container.appendChild(draggedItem);
+                    }
+                });
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.queue-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset, element: child };
+                }
+                return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function renderResidenceRequests() {
+            const tbody = document.getElementById('residenceTableBody');
+            let data = getData('residence');
+            
+            // Apply filters
+            const statusFilter = document.getElementById('filterResidenceStatus').value;
+            const searchFilter = document.getElementById('searchResidence').value.toLowerCase();
+
+            if (statusFilter) {
+                data = data.filter(d => d.status === statusFilter);
+            }
+            if (searchFilter) {
+                data = data.filter(d => 
+                    d.fullname.toLowerCase().includes(searchFilter) ||
+                    d.phone.includes(searchFilter)
+                );
+            }
+
+            // Sort by date (newest first)
+            data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
+
+            // Pagination - แสดงผล 50 รายการแรก สามารถกดดูเพิ่มเติมได้
+            const itemsPerPage = 50;
+            const currentPage = parseInt(document.getElementById('residencePage')?.value || '1');
+            const totalItems = data.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+            
+            const globalExpiryDate = getQueueExpiryDate();
+
+            if (paginatedData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                updatePaginationInfo('residence', 0, 0, 0);
+                return;
+            }
+
+            tbody.innerHTML = paginatedData.map((item, index) => {
+                let expiryDisplay = '-';
+                if (item.status === 'waiting' && globalExpiryDate) {
+                    expiryDisplay = formatDate(globalExpiryDate);
+                } else if (item.status === 'expired' && item.expiredDate) {
+                    expiryDisplay = `<span style="color:var(--danger);">หมดอายุ ${formatDate(item.expiredDate)}</span>`;
+                }
+                return `
+                <tr>
+                    <td>${startIndex + index + 1}</td>
+                    <td>${formatDate(item.submitDate)}</td>
+                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
+                    <td>${item.subjectGroup}</td>
+                    <td>${getStayTypeText(item.stayType)}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>${expiryDisplay}</td>
+                    <td>
+                        <div style="display:flex;gap:0.3rem;justify-content:center;flex-wrap:wrap;">
+                            <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('residence', '${item.id}')">📝</button>
+                            ${item.status === 'pending' || item.status === 'reviewing' ? 
+                                `<button class="btn btn-sm btn-success" onclick="addToQueue('${item.id}'); renderAll();">➕ คิว</button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+            
+            updatePaginationInfo('residence', currentPage, totalPages, totalItems);
+        }
+
+        function renderRepairRequests() {
+            const tbody = document.getElementById('repairTableBody');
+            let data = getData('repair');
+            
+            const statusFilter = document.getElementById('filterRepairStatus').value;
+            const urgencyFilter = document.getElementById('filterRepairUrgency').value;
+            const searchFilter = document.getElementById('searchRepair').value.toLowerCase();
+
+            if (statusFilter) data = data.filter(d => d.status === statusFilter);
+            if (urgencyFilter) data = data.filter(d => d.urgency === urgencyFilter);
+            if (searchFilter) {
+                data = data.filter(d => 
+                    d.fullname.toLowerCase().includes(searchFilter) ||
+                    d.houseNumber.toLowerCase().includes(searchFilter)
+                );
+            }
+
+            data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${formatDate(item.submitDate)}</td>
+                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
+                    <td>${item.houseNumber}</td>
+                    <td>${getWorkTypeText(item.workTypes)}</td>
+                    <td>${getUrgencyText(item.urgency)}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>
+                        <div style="display:flex;gap:0.3rem;justify-content:center;">
+                            <button class="btn btn-sm btn-info" onclick="showDetail('repair', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('repair', '${item.id}')">📝</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTransferRequests() {
+            const tbody = document.getElementById('transferTableBody');
+            let data = getData('transfer');
+            
+            const statusFilter = document.getElementById('filterTransferStatus').value;
+            const searchFilter = document.getElementById('searchTransfer').value.toLowerCase();
+
+            if (statusFilter) data = data.filter(d => d.status === statusFilter);
+            if (searchFilter) {
+                data = data.filter(d => 
+                    d.fullname.toLowerCase().includes(searchFilter) ||
+                    d.currentHouse.toLowerCase().includes(searchFilter)
+                );
+            }
+
+            data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${formatDate(item.submitDate)}</td>
+                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
+                    <td>${item.currentHouse}</td>
+                    <td>${item.requestedHouse}</td>
+                    <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.transferReason}">${item.transferReason}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>
+                        <div style="display:flex;gap:0.3rem;justify-content:center;">
+                            <button class="btn btn-sm btn-info" onclick="showDetail('transfer', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('transfer', '${item.id}')">📝</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderReturnRequests() {
+            const tbody = document.getElementById('returnTableBody');
+            let data = getData('return');
+            
+            const statusFilter = document.getElementById('filterReturnStatus').value;
+            const searchFilter = document.getElementById('searchReturn').value.toLowerCase();
+
+            if (statusFilter) data = data.filter(d => d.status === statusFilter);
+            if (searchFilter) {
+                data = data.filter(d => 
+                    d.fullname.toLowerCase().includes(searchFilter) ||
+                    d.houseNumber.toLowerCase().includes(searchFilter)
+                );
+            }
+
+            data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${formatDate(item.submitDate)}</td>
+                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
+                    <td>${item.houseNumber}</td>
+                    <td>${formatDate(item.returnDate)}</td>
+                    <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.returnReason}">${item.returnReason}</td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>
+                        <div style="display:flex;gap:0.3rem;justify-content:center;">
+                            <button class="btn btn-sm btn-info" onclick="showDetail('return', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('return', '${item.id}')">📝</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAll() {
+            updateStats();
+            renderQueue();
+            renderResidenceRequests();
+            renderRepairRequests();
+            renderTransferRequests();
+            renderReturnRequests();
+        }
+
+        // ========== Modal Functions ==========
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            currentEditId = null;
+            currentEditType = null;
+        }
+
+        function showDetail(type, id) {
+            const data = getData(type);
+            const item = data.find(d => d.id === id);
+            if (!item) return;
+
+            document.getElementById('modalTitle').textContent = getDetailTitle(type);
+            
+            let content = '';
+            
+            if (type === 'residence') {
+                content = `
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">รหัสคำร้อง</div>
+                            <div class="detail-value">${item.id}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">วันที่ยื่น</div>
+                            <div class="detail-value">${formatDate(item.submitDate)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ชื่อ-นามสกุล</div>
+                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
+                            <div class="detail-value">${item.phone}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">อีเมล</div>
+                            <div class="detail-value">${item.email || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">LINE ID</div>
+                            <div class="detail-value">${item.lineId || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">กลุ่มสาระการเรียนรู้</div>
+                            <div class="detail-value">${item.subjectGroup}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ลักษณะการเข้าพัก</div>
+                            <div class="detail-value">${getStayTypeText(item.stayType)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">จำนวนผู้เข้าพัก</div>
+                            <div class="detail-value">${item.totalResidents} คน</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">สถานะ</div>
+                            <div class="detail-value">${getStatusBadge(item.status)}</div>
+                        </div>
+                        ${item.queuePosition ? `
+                        <div class="detail-item">
+                            <div class="detail-label">ลำดับคิว</div>
+                            <div class="detail-value">ลำดับที่ ${item.queuePosition}</div>
+                        </div>
+                        ` : ''}
+                        ${item.expiryDate ? `
+                        <div class="detail-item">
+                            <div class="detail-label">วันหมดอายุคำร้อง</div>
+                            <div class="detail-value">${formatDate(item.expiryDate)}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ${item.residents && item.residents.length > 0 ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">รายชื่อผู้พักอาศัยร่วม</div>
+                        <div class="detail-value">
+                            <ul style="margin:0.5rem 0;padding-left:1.5rem;">
+                                ${item.residents.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">เหตุผลในการขอเข้าพัก</div>
+                        <div class="detail-value">${getReasonText(item.reasons)}</div>
+                    </div>
+                    ${item.additionalInfo ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">ข้อมูลเพิ่มเติม</div>
+                        <div class="detail-value">${item.additionalInfo}</div>
+                    </div>
+                    ` : ''}
+                `;
+            } else if (type === 'repair') {
+                content = `
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">รหัสคำร้อง</div>
+                            <div class="detail-value">${item.id}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">วันที่แจ้ง</div>
+                            <div class="detail-value">${formatDate(item.submitDate)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ผู้แจ้ง</div>
+                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
+                            <div class="detail-value">${item.phone}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">หมายเลขบ้านพัก</div>
+                            <div class="detail-value">${item.houseNumber}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">กลุ่มสาระ</div>
+                            <div class="detail-value">${item.subjectGroup}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ประเภทงาน</div>
+                            <div class="detail-value">${getWorkTypeText(item.workTypes)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ความเร่งด่วน</div>
+                            <div class="detail-value">${getUrgencyText(item.urgency)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">สถานะ</div>
+                            <div class="detail-value">${getStatusBadge(item.status)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">รายละเอียดปัญหา</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.problemDetail}</div>
+                    </div>
+                `;
+            } else if (type === 'transfer') {
+                content = `
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">รหัสคำร้อง</div>
+                            <div class="detail-value">${item.id}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">วันที่ยื่น</div>
+                            <div class="detail-value">${formatDate(item.submitDate)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ชื่อ-นามสกุล</div>
+                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
+                            <div class="detail-value">${item.phone}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">กลุ่มสาระ</div>
+                            <div class="detail-value">${item.subjectGroup}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">บ้านพักปัจจุบัน</div>
+                            <div class="detail-value">${item.currentHouse}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ขอย้ายไปยัง</div>
+                            <div class="detail-value">${item.requestedHouse}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">สถานะ</div>
+                            <div class="detail-value">${getStatusBadge(item.status)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">เหตุผลในการขอย้าย</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.transferReason}</div>
+                    </div>
+                `;
+            } else if (type === 'return') {
+                content = `
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">รหัสคำร้อง</div>
+                            <div class="detail-value">${item.id}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">วันที่ยื่น</div>
+                            <div class="detail-value">${formatDate(item.submitDate)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ชื่อ-นามสกุล</div>
+                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
+                            <div class="detail-value">${item.phone}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">กลุ่มสาระ</div>
+                            <div class="detail-value">${item.subjectGroup}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">หมายเลขบ้านพัก</div>
+                            <div class="detail-value">${item.houseNumber}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">วันที่ต้องการคืน</div>
+                            <div class="detail-value">${formatDate(item.returnDate)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">สถานะ</div>
+                            <div class="detail-value">${getStatusBadge(item.status)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">เหตุผลในการขอคืน</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.returnReason}</div>
+                    </div>
+                `;
+            }
+
+            // Add attachments section
+            if (item.attachments && item.attachments.length > 0) {
+                content += `
+                    <div class="detail-item" style="margin-top:1.5rem;">
+                        <div class="detail-label">ไฟล์แนบ</div>
+                        <div class="attachments-list">
+                            ${item.attachments.map(file => `
+                                <div class="attachment-item" onclick="viewAttachment('${file}')">
+                                    📎 ${file}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Add notes section
+            if (item.notes) {
+                content += `
+                    <div class="detail-item" style="margin-top:1.5rem;">
+                        <div class="detail-label">หมายเหตุจากเจ้าหน้าที่</div>
+                        <div class="detail-value" style="background:#fef3c7;padding:0.75rem;border-radius:8px;">${item.notes}</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('modalBody').innerHTML = content;
+            openModal('detailModal');
+        }
+
+        function getDetailTitle(type) {
+            const titles = {
+                residence: '📋 รายละเอียดคำร้องขอเข้าพักอาศัย',
+                repair: '🔧 รายละเอียดคำร้องแจ้งซ่อมแซม',
+                transfer: '🔄 รายละเอียดคำร้องขอย้ายบ้านพัก',
+                return: '📤 รายละเอียดคำร้องขอคืนบ้านพัก'
+            };
+            return titles[type] || 'รายละเอียดคำร้อง';
+        }
+
+        function viewAttachment(filename) {
+            if (WEB_APP_URL && filename.startsWith('http')) {
+                window.open(filename, '_blank');
+            } else {
+                alert(`เปิดไฟล์: ${filename}\n\n(ไฟล์จะเปิดได้เมื่อ Deploy Backend แล้ว)`);
+            }
+        }
+
+        // ========== Queue Expiry Functions ==========
+        let _queueExpiryDate = null;
+
+        function getQueueExpiryDate() {
+            return _queueExpiryDate;
+        }
+
+        function setQueueExpiryDate(dateStr) {
+            _queueExpiryDate = dateStr;
+        }
+
+        function saveQueueExpiryDate() {
+            const dateInput = document.getElementById('queueExpiryDate');
+            const newDate = dateInput.value;
+            if (!newDate) {
+                alert('กรุณาเลือกวันหมดอายุคิว');
+                return;
+            }
+            
+            setQueueExpiryDate(newDate);
+            updateExpiryDisplay();
+            
+            // บันทึกไป Backend
+            if (WEB_APP_URL) {
+                callBackend('updateSettings', { queue_expiry_date: newDate }).catch(e => console.error(e));
+            }
+            
+            // ตรวจสอบและลบคิวที่หมดอายุอัตโนมัติ
+            checkAndExpireQueue();
+            
+            renderAll();
+            alert(`บันทึกวันหมดอายุคิวเรียบร้อย\nคิวทั้งหมดจะหมดอายุวันที่ ${formatDate(newDate)}`);
+        }
+
+        function updateExpiryDisplay() {
+            const display = document.getElementById('currentExpiryDisplay');
+            const expiryDate = getQueueExpiryDate();
+            if (display) {
+                if (expiryDate) {
+                    const isExpired = new Date(expiryDate) < new Date();
+                    display.innerHTML = `<span style="${isExpired ? 'color:var(--danger);' : 'color:var(--success);'}">${formatDate(expiryDate)}${isExpired ? ' (หมดอายุแล้ว)' : ''}</span>`;
+                } else {
+                    display.textContent = 'ยังไม่ได้กำหนด';
+                }
+            }
+        }
+
+        function checkAndExpireQueue() {
+            const expiryDate = getQueueExpiryDate();
+            if (!expiryDate) return;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiry = new Date(expiryDate);
+            expiry.setHours(0, 0, 0, 0);
+            
+            if (expiry < today) {
+                // คิวหมดอายุแล้ว - เปลี่ยนสถานะคำร้องที่อยู่ในคิวเป็น expired
+                const data = getData('residence');
+                let expiredCount = 0;
+                
+                data.forEach(item => {
+                    if (item.status === 'waiting' && item.queuePosition) {
+                        item.status = 'expired';
+                        item.queuePosition = null;
+                        item.expiredDate = new Date().toISOString().split('T')[0];
+                        expiredCount++;
+                    }
+                });
+                
+                if (expiredCount > 0) {
+                    saveData('residence', data);
+                    console.log(`ลบคิวที่หมดอายุ ${expiredCount} รายการ`);
+                }
+            }
+        }
+
+        async function initQueueExpirySelector() {
+            const dateInput = document.getElementById('queueExpiryDate');
+            
+            // โหลดจาก Backend settings
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getSettings');
+                    if (result && result.success && result.data) {
+                        _queueExpiryDate = result.data.queue_expiry_date || null;
+                    }
+                } catch (e) {
+                    console.error('โหลด queue expiry ไม่สำเร็จ:', e);
+                }
+            }
+            
+            const storedDate = getQueueExpiryDate();
+            
+            if (dateInput) {
+                if (storedDate) {
+                    dateInput.value = storedDate;
+                } else {
+                    // Default: 1 ปีจากวันนี้
+                    const defaultDate = new Date();
+                    defaultDate.setFullYear(defaultDate.getFullYear() + 1);
+                    dateInput.value = defaultDate.toISOString().split('T')[0];
+                }
+            }
+            
+            updateExpiryDisplay();
+            
+            // ตรวจสอบคิวหมดอายุทุกครั้งที่โหลดหน้า
+            checkAndExpireQueue();
+        }
+
+        // ========== Pagination Functions ==========
+        function updatePaginationInfo(type, currentPage, totalPages, totalItems) {
+            const infoEl = document.getElementById(`${type}PaginationInfo`);
+            const pageSelect = document.getElementById(`${type}Page`);
+            const prevBtn = document.getElementById(`${type}PrevBtn`);
+            const nextBtn = document.getElementById(`${type}NextBtn`);
+            
+            if (infoEl) {
+                const itemsPerPage = 50;
+                const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+                const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+                infoEl.textContent = `แสดง ${startItem}-${endItem} จาก ${totalItems} รายการ`;
+            }
+            
+            if (pageSelect) {
+                pageSelect.innerHTML = '';
+                for (let i = 1; i <= Math.max(1, totalPages); i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `หน้า ${i}`;
+                    if (i === currentPage) opt.selected = true;
+                    pageSelect.appendChild(opt);
+                }
+            }
+            
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+        }
+        
+        function changePage(type, direction) {
+            const pageSelect = document.getElementById(`${type}Page`);
+            if (!pageSelect) return;
+            
+            const currentPage = parseInt(pageSelect.value);
+            const newPage = currentPage + direction;
+            const totalOptions = pageSelect.options.length;
+            
+            if (newPage >= 1 && newPage <= totalOptions) {
+                pageSelect.value = newPage;
+                if (type === 'residence') renderResidenceRequests();
+            }
+        }
+
+        function openStatusModal(type, id) {
+            currentEditId = id;
+            currentEditType = type;
+            
+            const data = getData(type);
+            const item = data.find(d => d.id === id);
+            
+            // Update status options based on type
+            const statusSelect = document.getElementById('statusSelect');
+            let options = '';
+            
+            if (type === 'residence') {
+                options = `
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="reviewing">กำลังตรวจสอบ</option>
+                    <option value="waiting">รอคิวเข้าพัก</option>
+                    <option value="approved">อนุมัติเข้าพัก</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
+                    <option value="expired">หมดอายุ</option>
+                `;
+            } else if (type === 'repair') {
+                options = `
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="reviewing">กำลังตรวจสอบ</option>
+                    <option value="approved">อนุมัติ</option>
+                    <option value="completed">ดำเนินการเสร็จ</option>
+                `;
+            } else {
+                options = `
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="reviewing">กำลังตรวจสอบ</option>
+                    <option value="approved">อนุมัติ</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
+                    <option value="completed">ดำเนินการเสร็จ</option>
+                `;
+            }
+            
+            statusSelect.innerHTML = options;
+            
+            if (item) {
+                statusSelect.value = item.status;
+                document.getElementById('statusNote').value = item.notes || '';
+            }
+            
+            openModal('statusModal');
+        }
+
+        async function saveStatus() {
+            const newStatus = document.getElementById('statusSelect').value;
+            const note = document.getElementById('statusNote').value;
+
+            await updateRequestStatus(currentEditType, currentEditId, newStatus, note);
+
+            // Special handling for residence queue
+            if (currentEditType === 'residence') {
+                const data = getData('residence');
+                const item = data.find(d => d.id === currentEditId);
+                if (item) {
+                    if (newStatus === 'waiting' && !item.queuePosition) {
+                        addToQueue(currentEditId);
+                    } else if (newStatus !== 'waiting' && item.queuePosition) {
+                        removeFromQueue(currentEditId);
+                    }
+                }
+            }
+
+            closeModal('statusModal');
+            renderAll();
+        }
+
+        async function approveFromQueue(id) {
+            if (!confirm('ยืนยันการอนุมัติให้เข้าพักอาศัย?')) return;
+            
+            const data = getData('residence');
+            const item = data.find(d => d.id === id);
+            if (item) {
+                item.status = 'approved';
+                item.queuePosition = null;
+                saveData('residence', data);
+
+                // Reorder remaining queue
+                const queueItems = data
+                    .filter(r => r.status === 'waiting' && r.queuePosition)
+                    .sort((a, b) => a.queuePosition - b.queuePosition);
+                queueItems.forEach((q, index) => q.queuePosition = index + 1);
+                saveData('residence', data);
+
+                // ส่งไป Backend
+                if (WEB_APP_URL) {
+                    try {
+                        await callBackend('reviewRequest', {
+                            requestId: id,
+                            type: 'residence',
+                            status: 'approved'
+                        });
+                    } catch (e) {
+                        console.error('อนุมัติไม่สำเร็จ:', e);
+                    }
+                }
+
+                alert('อนุมัติเรียบร้อยแล้ว');
+                renderAll();
+            }
+        }
+
+        // ========== Sidebar Toggle ==========
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mainContainer = document.getElementById('mainContainer');
+
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            updateMainMargin();
+        };
+
+        function updateMainMargin() {
+            mainContainer.style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        }
+
+        window.addEventListener('resize', updateMainMargin);
+
+        // ========== Initialize ==========
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkSession();
+            await loadAllRequests();
+            initQueueExpirySelector();
+            renderAll();
+            updateMainMargin();
+        });
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

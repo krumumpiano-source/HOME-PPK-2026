@@ -1,0 +1,209 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลืมอีเมล | ระบบสมาชิก</title>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+    body {
+        font-family: 'Kanit', sans-serif;
+        background: linear-gradient(135deg, #4f8cff 0%, #38e8ff 100%);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-container {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        padding: 2.5rem 2rem 2rem 2rem;
+        max-width: 370px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .login-container h2 {
+        margin: 0 0 1rem 0;
+        color: #2563eb;
+        font-weight: 700;
+        text-align: center;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    label {
+        font-size: 1rem;
+        color: #333;
+    }
+    input[type="tel"] {
+        padding: 0.7rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        outline: none;
+        transition: border 0.2s;
+    }
+    input[type="tel"]:focus {
+        border: 1.5px solid #2563eb;
+    }
+    .error-message {
+        color: #e11d48;
+        font-size: 0.95rem;
+        margin-top: -0.5rem;
+        margin-bottom: 0.5rem;
+        display: none;
+    }
+    .login-btn {
+        background: linear-gradient(90deg, #2563eb 0%, #38e8ff 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.8rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .login-btn:hover {
+        background: linear-gradient(90deg, #38e8ff 0%, #2563eb 100%);
+    }
+    .menu-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .menu-links a {
+        color: #2563eb;
+        text-decoration: none;
+        font-size: 0.98rem;
+        text-align: center;
+        transition: color 0.2s;
+    }
+    .menu-links a:hover {
+        color: #e11d48;
+    }
+    @media (max-width: 480px) {
+        .login-container {
+            padding: 1.5rem 0.7rem 1.2rem 0.7rem;
+            max-width: 98vw;
+        }
+    }
+    </style>
+</head>
+<body>
+    <form class="login-container" id="forgotEmailForm" autocomplete="on" onsubmit="return validateForgotEmail();">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <div>
+                <div style="font-size:1.15rem; font-weight:700; color:#2563eb;">HOME PPK 2026</div>
+                <div style="font-size:0.98rem; color:#555;">โปรแกรมบริหารจัดการ งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
+            </div>
+        </div>
+        <h2 id="forgotEmailTitle">ลืมอีเมล</h2>
+        <div class="form-group">
+            <label for="phone" id="phoneLabel">กรอกเบอร์โทรศัพท์ที่ใช้สมัคร</label>
+            <input type="tel" id="phone" name="phone" required placeholder="กรอกเบอร์โทรศัพท์" pattern="[0-9]{9,15}" style="font-size:1.15rem; padding:1rem 1.2rem;" maxlength="15" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+        </div>
+        <div class="error-message" id="errorMsg"></div>
+        <button type="submit" class="login-btn" id="forgotEmailBtn">ขออีเมลที่ใช้สมัคร</button>
+        <div class="menu-links">
+            <a href="#" onclick="navigate('?page=login');return false;" id="backToLogin">กลับสู่หน้าเข้าสู่ระบบ</a>
+        </div>
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;" id="footerCredit">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
+            <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </form>
+    <script>
+        // ============ API Configuration ============
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        // ============ API Helper ============
+        async function callBackend(action, data = {}) {
+            const payload = { action, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                const text = await response.text();
+                return JSON.parse(text);
+            } catch (err) {
+                console.error('Backend error:', err);
+                throw new Error('ไม่สามารถเชื่อมต่อระบบได้ — กรุณาลองใหม่');
+            }
+        }
+
+        // ============ Form Validation ============
+        function validateForgotEmail() {
+            const phone = document.getElementById('phone').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+            errorMsg.textContent = '';
+            if (!/^\d{9,15}$/.test(phone)) {
+                errorMsg.textContent = 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (9-15 หลัก)';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+            // Validation passed → call backend
+            handleFindEmail();
+            return false; // prevent form submission
+        }
+
+        // ============ Find Email Handler ============
+        async function handleFindEmail() {
+            const phone = document.getElementById('phone').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const forgotEmailBtn = document.getElementById('forgotEmailBtn');
+
+            forgotEmailBtn.disabled = true;
+            forgotEmailBtn.textContent = 'กำลังค้นหา...';
+            errorMsg.style.display = 'none';
+
+            try {
+                if (!WEB_APP_URL) {
+                    throw new Error('ยังไม่ได้ตั้งค่า WEB_APP_URL — กรุณาติดต่อผู้ดูแลระบบ');
+                }
+
+                const result = await callBackend('findEmail', { phone });
+
+                if (result.success) {
+                    // แสดงอีเมลที่ปกปิดบางส่วน
+                    document.getElementById('forgotEmailForm').innerHTML = `
+                        <div style="text-align:center; padding:2rem 1rem;">
+                            <div style="font-size:3rem; margin-bottom:1rem;">📧</div>
+                            <h2 style="color:#10b981; margin-bottom:1rem;">พบอีเมลที่เชื่อมกับเบอร์นี้!</h2>
+                            <p style="color:#555; font-size:1.05rem; margin-bottom:0.5rem;">
+                                ${result.message || 'อีเมลที่ใช้สมัครคือ'}
+                            </p>
+                            <p style="font-size:1.5rem; font-weight:700; color:#2563eb; margin-bottom:1.5rem; letter-spacing:1px;">
+                                ${result.email || ''}
+                            </p>
+                            <a href="#" onclick="navigate('?page=login');return false;" style="display:inline-block; padding:0.8rem 2rem; background:linear-gradient(90deg,#2563eb,#38e8ff); color:#fff; border-radius:8px; text-decoration:none; font-weight:700;">กลับสู่หน้าเข้าสู่ระบบ</a>
+                        </div>
+                    `;
+                } else {
+                    errorMsg.textContent = result.error || 'ไม่พบอีเมลที่เชื่อมกับเบอร์โทรนี้';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = err.message || 'ไม่สามารถเชื่อมต่อระบบได้';
+                errorMsg.style.display = 'block';
+            } finally {
+                forgotEmailBtn.disabled = false;
+                forgotEmailBtn.textContent = 'ขออีเมลที่ใช้สมัคร';
+            }
+        }
+    </script>
+</body>
+</html>
+

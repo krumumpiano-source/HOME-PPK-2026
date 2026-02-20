@@ -1,0 +1,814 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ยอดเบิกประจำเดือน | HOME PPK 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            margin-left: 62px;
+            min-height: 100vh;
+            padding: 2rem;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .dashboard-container { margin-left: 48px; padding: 1rem; }
+            .sidebar.expanded ~ .dashboard-container { margin-left: 160px; }
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: var(--bg);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .page-header h2 {
+            margin: 0;
+            font-size: 2rem;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .section {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 2px solid #fbbf24;
+            padding-bottom: 0.5rem;
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #78350f;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1px solid #d4a574;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            background: #fffbeb;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.2);
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #fff;
+            color: #d97706;
+            border: 2px solid #d97706;
+        }
+        .btn-secondary:hover {
+            background: #fef3c7;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        /* Summary Table */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .summary-table th, .summary-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+        }
+        .summary-table th {
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 700;
+        }
+        .summary-table tr:hover {
+            background: #fffbeb;
+        }
+        .summary-table .amount {
+            text-align: right;
+            font-weight: 700;
+            color: #059669;
+        }
+        .summary-table .total-row {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #fff;
+        }
+        .summary-table .total-row td {
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-color: #d97706;
+        }
+        
+        /* Additional Items */
+        .additional-items {
+            margin-top: 1rem;
+        }
+        .additional-item {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .additional-item input {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #d4a574;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .additional-item input:first-child {
+            flex: 2;
+        }
+        .additional-item input:nth-child(2) {
+            flex: 1;
+            text-align: right;
+        }
+        .additional-item button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #dc2626;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .additional-item button:hover {
+            background: #b91c1c;
+        }
+        
+        .add-item-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.5rem 1rem;
+            background: #10b981;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .add-item-btn:hover {
+            background: #059669;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #1e40af;
+            font-size: 0.95rem;
+        }
+        .info-box strong {
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        
+        /* Print Styles */
+        .print-btn {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+        .print-btn:hover {
+            box-shadow: 0 4px 12px rgba(139,92,246,0.4);
+        }
+        
+        @media print {
+            .sidebar, .back-btn, .btn, .add-item-btn, .additional-item button, .no-print {
+                display: none !important;
+            }
+            .dashboard-container {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+            }
+            .section {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.95rem;
+            color: #78350f;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+    
+    <div class="dashboard-container" id="dashboardContainer">
+        <button class="back-btn" onclick="navigate('?page=team-management')">← กลับ</button>
+        
+        <div class="page-header">
+            <h2>💰 ยอดเบิกประจำเดือน</h2>
+        </div>
+        
+        <!-- ส่วนเลือกเดือน/ปี -->
+        <div class="section no-print">
+            <div class="section-title">📅 เลือกรอบบิล</div>
+            <div class="controls-row">
+                <div class="form-group">
+                    <label for="bill_month">เดือน</label>
+                    <select id="bill_month" onchange="loadData()">
+                        <option value="01">มกราคม</option>
+                        <option value="02">กุมภาพันธ์</option>
+                        <option value="03">มีนาคม</option>
+                        <option value="04">เมษายน</option>
+                        <option value="05">พฤษภาคม</option>
+                        <option value="06">มิถุนายน</option>
+                        <option value="07">กรกฎาคม</option>
+                        <option value="08">สิงหาคม</option>
+                        <option value="09">กันยายน</option>
+                        <option value="10">ตุลาคม</option>
+                        <option value="11">พฤศจิกายน</option>
+                        <option value="12">ธันวาคม</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bill_year">ปี พ.ศ.</label>
+                    <select id="bill_year" onchange="loadData()">
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <button class="btn" onclick="loadData()">🔄 โหลดข้อมูล</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ส่วนสรุปยอดเบิก -->
+        <div class="section">
+            <div class="section-title">📊 สรุปยอดเบิกประจำเดือน <span id="periodDisplay"></span></div>
+            
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th style="width:60%;">รายการ</th>
+                        <th style="width:40%;">จำนวนเงิน (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryBody">
+                    <tr>
+                        <td>💧 ค่าน้ำรวม</td>
+                        <td class="amount" id="waterTotal">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>⚡ ค่าไฟรวม (ที่การไฟฟ้าเรียกเก็บ)</td>
+                        <td class="amount" id="electricTotal">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🗑️ ค่าขยะ
+                            <input type="number" id="garbageFee" value="310" min="0" step="10" 
+                                   style="width:100px;margin-left:1rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="garbageDisplay">310.00</td>
+                    </tr>
+                </tbody>
+                <tbody id="additionalItemsBody">
+                    <!-- รายการค่าอื่นๆ จะถูกเพิ่มที่นี่ -->
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td>💵 ยอดรวมสำหรับถอนธนาคาร</td>
+                        <td class="amount" id="grandTotal" style="color:#fff;">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <!-- ส่วนเพิ่มรายการอื่นๆ -->
+            <div class="additional-items no-print">
+                <h4 style="margin:1rem 0 0.5rem 0;color:#78350f;">📝 เพิ่มค่าใช้จ่ายอื่นๆ</h4>
+                <div id="additionalItemsContainer"></div>
+                <button class="add-item-btn" onclick="addAdditionalItem()">
+                    ➕ เพิ่มรายการ
+                </button>
+            </div>
+            
+            <div class="info-box">
+                <strong>📋 คำอธิบาย</strong>
+                • ค่าน้ำรวม: ดึงจากข้อมูลบันทึกค่าน้ำประจำเดือน<br>
+                • ค่าไฟรวม: ยอดที่การไฟฟ้าเรียกเก็บ (ดึงจากข้อมูลบันทึกค่าไฟ)<br>
+                • ค่าขยะ: ค่าเริ่มต้น 310 บาท สามารถแก้ไขได้<br>
+                • ค่าใช้จ่ายอื่นๆ: สามารถเพิ่มรายการและจำนวนเงินได้ตามต้องการ
+            </div>
+        </div>
+        
+        <!-- ปุ่มดำเนินการ -->
+        <div class="section no-print" style="text-align:center;">
+            <button class="btn" onclick="saveData()" style="margin-right:1rem;">💾 บันทึกข้อมูล</button>
+            <button class="btn print-btn" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+        </div>
+        
+        <div class="footer-note">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+
+    <script>
+        // ========== Backend API Helpers ==========
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload), redirect: 'follow'
+                });
+                const text = await response.text();
+                const result = JSON.parse(text);
+                if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return; }
+                return result;
+            } catch (err) { console.error('Backend error:', err); throw new Error('ไม่สามารถเชื่อมต่อระบบได้'); }
+        }
+
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken');
+            const q = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+            const text = await res.text();
+            const result = JSON.parse(text);
+            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return null; }
+            return result;
+        }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { window.navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+                return result.user;
+            } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+        }
+
+        // ========== Page Logic ==========
+        const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                             'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        
+        let additionalItems = [];
+        
+        // เริ่มต้นเมื่อโหลดหน้า
+        window.onload = async function() {
+            await checkSession();
+            initYearSelector();
+            setCurrentPeriod();
+            await loadData();
+            
+            // Event listener สำหรับค่าขยะ
+            document.getElementById('garbageFee').addEventListener('input', function() {
+                document.getElementById('garbageDisplay').textContent = formatMoney(parseFloat(this.value) || 0);
+                calculateTotal();
+            });
+        };
+        
+        // สร้างตัวเลือกปี
+        function initYearSelector() {
+            const yearSelect = document.getElementById('bill_year');
+            const currentYear = new Date().getFullYear() + 543;
+            yearSelect.innerHTML = '';
+            
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+        }
+        
+        // ตั้งค่าเดือน/ปีปัจจุบัน
+        function setCurrentPeriod() {
+            const now = new Date();
+            document.getElementById('bill_month').value = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('bill_year').value = now.getFullYear() + 543;
+        }
+
+        function getPeriod() {
+            const month = document.getElementById('bill_month').value;
+            const year = document.getElementById('bill_year').value;
+            return { month, year, period: year + '-' + month, key: year + month };
+        }
+        
+        // โหลดข้อมูล
+        async function loadData() {
+            const { month, year, period, key } = getPeriod();
+            
+            // แสดงช่วงเวลา
+            const monthIndex = parseInt(month) - 1;
+            document.getElementById('periodDisplay').textContent = `(${THAI_MONTHS[monthIndex]} ${year})`;
+
+            let waterTotal = 0;
+            let electricTotal = 0;
+            let garbageFee = 310;
+            additionalItems = [];
+
+            if (WEB_APP_URL) {
+                try {
+                    // ดึงข้อมูลจาก Backend ทั้งหมดพร้อมกัน
+                    const [waterResult, electricResult, withdrawResult] = await Promise.all([
+                        callBackendGet('getWaterBillTotal', { period }),
+                        callBackendGet('getElectricBillPEA', { period }),
+                        callBackendGet('getMonthlyWithdraw', { period })
+                    ]);
+
+                    if (waterResult && waterResult.success) {
+                        waterTotal = waterResult.total || 0;
+                    }
+                    if (electricResult && electricResult.success) {
+                        electricTotal = electricResult.peaTotal || 0;
+                    }
+                    if (withdrawResult && withdrawResult.success && withdrawResult.data) {
+                        garbageFee = withdrawResult.data.garbageFee || 310;
+                        additionalItems = withdrawResult.data.additionalItems || [];
+                    }
+                } catch (e) {
+                    console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
+                    alert('โหลดข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
+                    return;
+                }
+            } else {
+                alert('กรุณาตั้งค่า Backend URL ก่อนใช้งาน');
+                return;
+            }
+
+            document.getElementById('waterTotal').textContent = formatMoney(waterTotal);
+            document.getElementById('electricTotal').textContent = formatMoney(electricTotal);
+            document.getElementById('garbageFee').value = garbageFee;
+            document.getElementById('garbageDisplay').textContent = formatMoney(garbageFee);
+            
+            renderAdditionalItems();
+            calculateTotal();
+        }
+
+        // loadFromLocalStorage ถูกลบแล้ว — ใช้ Backend แทน
+        
+        // เพิ่มรายการค่าใช้จ่ายอื่นๆ
+        function addAdditionalItem() {
+            additionalItems.push({ name: '', amount: 0 });
+            renderAdditionalItems();
+        }
+        
+        // ลบรายการค่าใช้จ่ายอื่นๆ
+        function removeAdditionalItem(index) {
+            additionalItems.splice(index, 1);
+            renderAdditionalItems();
+            calculateTotal();
+        }
+        
+        // แสดงรายการค่าใช้จ่ายอื่นๆ
+        function renderAdditionalItems() {
+            const container = document.getElementById('additionalItemsContainer');
+            const tbody = document.getElementById('additionalItemsBody');
+            
+            container.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            additionalItems.forEach((item, index) => {
+                // ส่วน input
+                const div = document.createElement('div');
+                div.className = 'additional-item';
+                div.innerHTML = `
+                    <input type="text" placeholder="ชื่อรายการ" value="${item.name}" 
+                           onchange="updateAdditionalItem(${index}, 'name', this.value)">
+                    <input type="number" placeholder="จำนวนเงิน" value="${item.amount}" min="0"
+                           onchange="updateAdditionalItem(${index}, 'amount', this.value)">
+                    <button onclick="removeAdditionalItem(${index})" title="ลบรายการ">×</button>
+                `;
+                container.appendChild(div);
+                
+                // ส่วนตาราง
+                if (item.name && item.amount > 0) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>📦 ${item.name}</td>
+                        <td class="amount">${formatMoney(parseFloat(item.amount) || 0)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+        
+        // อัปเดตรายการค่าใช้จ่ายอื่นๆ
+        function updateAdditionalItem(index, field, value) {
+            if (field === 'amount') {
+                additionalItems[index][field] = parseFloat(value) || 0;
+            } else {
+                additionalItems[index][field] = value;
+            }
+            renderAdditionalItems();
+            calculateTotal();
+        }
+        
+        // คำนวณยอดรวม
+        function calculateTotal() {
+            const waterTotal = parseMoney(document.getElementById('waterTotal').textContent);
+            const electricTotal = parseMoney(document.getElementById('electricTotal').textContent);
+            const garbageFee = parseFloat(document.getElementById('garbageFee').value) || 0;
+            
+            let additionalTotal = 0;
+            additionalItems.forEach(item => {
+                additionalTotal += parseFloat(item.amount) || 0;
+            });
+            
+            const grandTotal = waterTotal + electricTotal + garbageFee + additionalTotal;
+            document.getElementById('grandTotal').textContent = formatMoney(grandTotal);
+        }
+        
+        // บันทึกข้อมูล
+        async function saveData() {
+            const { month, year, period, key } = getPeriod();
+            const garbageFee = parseFloat(document.getElementById('garbageFee').value) || 310;
+            
+            const data = {
+                month: month,
+                year: year,
+                garbageFee: garbageFee,
+                additionalItems: additionalItems,
+                savedAt: new Date().toISOString()
+            };
+            
+            if (WEB_APP_URL) {
+                try {
+                    // คำนวณ totalWithdraw
+                    const waterTotal = parseMoney(document.getElementById('waterTotal').textContent);
+                    const electricTotal = parseMoney(document.getElementById('electricTotal').textContent);
+                    let additionalTotal = 0;
+                    additionalItems.forEach(item => { additionalTotal += parseFloat(item.amount) || 0; });
+
+                    const result = await callBackend('saveWithdraw', {
+                        period: period,
+                        garbageFee: garbageFee,
+                        additionalItems: additionalItems,
+                        totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
+                    });
+                    if (result && result.success) {
+                        alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+                    } else {
+                        alert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
+                    }
+                } catch (e) {
+                    console.error('บันทึกไม่สำเร็จ:', e);
+                    alert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+                }
+            } else {
+                alert('กรุณาตั้งค่า Backend URL ก่อนบันทึกข้อมูล');
+            }
+        }
+        
+        // ฟอร์แมตเงิน
+        function formatMoney(value) {
+            return parseFloat(value).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        // แปลงเงินจาก string
+        function parseMoney(str) {
+            return parseFloat(str.replace(/,/g, '')) || 0;
+        }
+        
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        };
+        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+        window.addEventListener('resize', function() {
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        });
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

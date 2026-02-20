@@ -1,0 +1,1080 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกค่าไฟ | HOME PPK 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            margin-left: 62px;
+            background: var(--surface);
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .dashboard-container { margin-left: 48px; padding: 1.2rem 0.5rem; }
+            .sidebar.expanded ~ .dashboard-container { margin-left: 160px; }
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 0.5rem;
+            justify-content: center;
+        }
+        .dashboard-header-icon {
+            font-size: 2.1rem;
+            color: #e0b97a;
+        }
+        .dashboard-container h2 {
+            margin: 0;
+            color: #e0b97a;
+            font-weight: 700;
+            font-size: 2.1rem;
+            text-align: center;
+        }
+        
+        .back-btn {
+            align-self: flex-start;
+            background: linear-gradient(135deg, #f5e6d3, #f9e9d2);
+            color: #b48850;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'Kanit', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 149, 106, 0.4);
+        }
+        
+        .section {
+            background: #fffdfa;
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid #f5e6d3;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #e0b97a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 2px solid #f5e6d3;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #8b7355;
+            font-size: 0.95rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid #e6d5c3;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Kanit', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #d4a373;
+            box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.15);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        /* ตารางบันทึกค่าไฟ */
+        .meter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .meter-table th {
+            background: linear-gradient(135deg, #f5e6d3, #f9e9d2);
+            color: #b48850;
+            padding: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .meter-table td {
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #f5e6d3;
+            text-align: center;
+        }
+        .meter-table tr:nth-child(even) {
+            background: #fffdf8;
+        }
+        .meter-table tr:hover {
+            background: #fef6e8;
+        }
+        .meter-table input {
+            width: 100px;
+            padding: 0.5rem;
+            border: 1px solid #e6d5c3;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-family: 'Kanit', sans-serif;
+        }
+        .meter-table input:focus {
+            outline: none;
+            border-color: #d4a373;
+            box-shadow: 0 0 0 2px rgba(212, 163, 115, 0.2);
+        }
+        
+        .usage-value {
+            font-weight: 700;
+            color: #e0b97a;
+        }
+        .amount-value {
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #f5e6d3, #f9e9d2);
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #b48850;
+            padding: 0.8rem 2rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Kanit', sans-serif;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(to right, #e5e7eb, #d1d5db);
+            color: #374151;
+        }
+        
+        .btn-print {
+            background: linear-gradient(to right, #d1fae5, #bbf7d0);
+            color: #065f46;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .info-box {
+            background: #fff8ed;
+            border: 1px solid #f5e6d3;
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1rem;
+            color: #b48850;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #065f46;
+            text-align: center;
+            display: none;
+            margin-top: 1rem;
+        }
+        .success-message.show {
+            display: block;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #fffdfa, #fff8ed);
+            border: 2px solid #f5e6d3;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-label {
+            font-size: 0.9rem;
+            color: #e0b97a;
+        }
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e0b97a;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+            }
+            .meter-table {
+                font-size: 0.85rem;
+            }
+            .meter-table input {
+                width: 70px;
+                padding: 0.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+    
+    <div class="dashboard-container" id="dashboardContainer">
+        <button class="back-btn" onclick="navigate('?page=team-management')">
+            ← กลับ
+        </button>
+        
+        <div class="dashboard-header">
+            <span class="dashboard-header-icon">⚡</span>
+            <h2>บันทึกค่าไฟ</h2>
+        </div>
+        
+        <div class="info-box" id="infoBox">
+            ℹ️ กำลังโหลดการตั้งค่า...
+        </div>
+        
+        <!-- เลือกรอบบิล -->
+        <div class="section">
+            <div class="section-title">📅 รอบบิล</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="bill_month">เดือน</label>
+                    <select id="bill_month">
+                        <option value="01">มกราคม</option>
+                        <option value="02">กุมภาพันธ์</option>
+                        <option value="03">มีนาคม</option>
+                        <option value="04">เมษายน</option>
+                        <option value="05">พฤษภาคม</option>
+                        <option value="06">มิถุนายน</option>
+                        <option value="07">กรกฎาคม</option>
+                        <option value="08">สิงหาคม</option>
+                        <option value="09">กันยายน</option>
+                        <option value="10">ตุลาคม</option>
+                        <option value="11">พฤศจิกายน</option>
+                        <option value="12">ธันวาคม</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bill_year">ปี พ.ศ.</label>
+                    <select id="bill_year">
+                        <script>
+                            (function(){
+                                var cy = new Date().getFullYear() + 543;
+                                for(var y = cy + 1; y >= cy - 5; y--){
+                                    document.write('<option value="' + y + '"' + (y === cy ? ' selected' : '') + '>' + y + '</option>');
+                                }
+                            })();
+                        </script>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ค่าไฟรวมจากการไฟฟ้า -->
+        <div class="section">
+            <div class="section-title">⚡ ยอดค่าไฟจากการไฟฟ้า</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="pea_total">ค่าไฟรวมที่การไฟฟ้าเรียกเก็บ (บาท)</label>
+                    <input type="number" id="pea_total" placeholder="กรอกยอดค่าไฟรวม" step="0.01" min="0" onchange="calculateSummary()" onblur="calculateSummary()">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="lost_house">ค่า Lost บ้านพัก (บาท)</label>
+                    <input type="number" id="lost_house" placeholder="ค่า Lost บ้านพัก" step="0.01" min="0" onchange="calculateSummary()" onblur="calculateSummary()">
+                </div>
+                <div class="form-group">
+                    <label for="lost_flat">ค่า Lost แฟลต (บาท)</label>
+                    <input type="number" id="lost_flat" placeholder="ค่า Lost แฟลต" step="0.01" min="0" onchange="calculateSummary()" onblur="calculateSummary()">
+                </div>
+            </div>
+        </div>
+        
+        <!-- ตารางบันทึกค่าไฟ -->
+        <div class="section">
+            <div class="section-title">📝 บันทึกค่าไฟ</div>
+            
+            <table class="meter-table">
+                <thead id="electricTableHead">
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th>บ้านพัก/แฟลต</th>
+                        <th>ผู้พักอาศัย</th>
+                        <th>ยอดค่าไฟ (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody id="electricTableBody">
+                    <!-- ข้อมูลจะถูกโหลดจาก JavaScript -->
+                </tbody>
+            </table>
+            
+            <!-- สรุปยอด -->
+            <div class="summary-box">
+                <div class="summary-item">
+                    <div class="summary-label">จำนวนบ้านพัก</div>
+                    <div class="summary-value" id="totalHouses">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">รวมค่าไฟ (ปัดเศษ)</div>
+                    <div class="summary-value" id="totalAmount">0 ฿</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">รวมค่า Lost</div>
+                    <div class="summary-value" id="totalLost">0 ฿</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">รวมทั้งหมด</div>
+                    <div class="summary-value" id="grandTotal">0 ฿</div>
+                </div>
+            </div>
+            
+            <!-- ส่วนต่าง -->
+            <div class="summary-box" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #86efac;">
+                <div class="summary-item">
+                    <div class="summary-label">ค่าไฟการไฟฟ้าเรียกเก็บ</div>
+                    <div class="summary-value" id="peaTotal" style="color: #059669;">0 ฿</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">ส่วนต่างเรียกเก็บเกิน (ปัดเศษ)</div>
+                    <div class="summary-value" id="diffAmount" style="color: #059669;">0 ฿</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ปุ่ม -->
+        <div class="button-group">
+            <button class="btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
+            <button class="btn btn-print" onclick="printReport()">🖨️ พิมพ์รายงาน</button>
+            <button class="btn btn-secondary" onclick="navigate('?page=team-management')">❌ ยกเลิก</button>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            ✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!
+        </div>
+        
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
+            <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+
+    <script>
+        // ============ API Configuration ============
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        // ============ API Helper ============
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                const text = await response.text();
+                const result = JSON.parse(text);
+                if (result.error === 'SESSION_EXPIRED') {
+                    localStorage.clear(); window.navigate('?page=login'); return;
+                }
+                return result;
+            } catch (err) {
+                console.error('Backend error:', err);
+                throw new Error('ไม่สามารถเชื่อมต่อระบบได้ — กรุณาลองใหม่');
+            }
+        }
+
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken');
+            const q = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+            return res.json();
+        }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { window.navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+                return result.user;
+            } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+        }
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        };
+        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+        window.addEventListener('resize', function() {
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        });
+        
+        // ตั้งค่าเดือนปัจจุบัน
+        const now = new Date();
+        document.getElementById('bill_month').value = String(now.getMonth() + 1).padStart(2, '0');
+
+        // ============ Electric Method Settings ============
+        let electricMethod = 'bill'; // 'bill' = กรอกยอดตรง, 'unit' = คำนวณตามหน่วย
+        let electricRate = 0;
+
+        async function loadElectricSettings() {
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getSettings');
+                    if (result && result.success && result.data) {
+                        electricMethod = result.data.electric_method || 'bill';
+                        electricRate = parseFloat(result.data.electric_rate) || 0;
+                    }
+                } catch (e) { console.error('loadSettings error:', e); }
+            }
+            // Fallback: localStorage
+            if (!electricMethod || electricMethod === 'bill') {
+                const stored = localStorage.getItem('adminSettings_electric');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    electricMethod = parsed.method || 'bill';
+                    electricRate = parseFloat(parsed.rate) || 0;
+                }
+            }
+            updateMethodUI();
+        }
+
+        function updateMethodUI() {
+            const infoBox = document.getElementById('infoBox');
+            const thead = document.getElementById('electricTableHead');
+
+            if (electricMethod === 'unit') {
+                infoBox.innerHTML = 'ℹ️ โหมด: <strong>คำนวณตามหน่วย</strong> — กรอกเลขมิเตอร์เดิมและปัจจุบัน ระบบจะคำนวณค่าไฟอัตโนมัติ (อัตรา ' + (electricRate || '?') + ' บาท/หน่วย)';
+                thead.innerHTML = '<tr>' +
+                    '<th>ลำดับ</th>' +
+                    '<th>บ้านพัก/แฟลต</th>' +
+                    '<th>ผู้พักอาศัย</th>' +
+                    '<th>มิเตอร์เดิม</th>' +
+                    '<th>มิเตอร์ปัจจุบัน</th>' +
+                    '<th>หน่วยใช้</th>' +
+                    '<th>ยอดค่าไฟ (บาท)</th>' +
+                    '</tr>';
+            } else {
+                infoBox.innerHTML = 'ℹ️ โหมด: <strong>กรอกตามใบแจ้งหนี้</strong> — กรอกยอดค่าไฟของแต่ละบ้านพัก ระบบจะคำนวณยอดรวมโดยอัตโนมัติ';
+                thead.innerHTML = '<tr>' +
+                    '<th>ลำดับ</th>' +
+                    '<th>บ้านพัก/แฟลต</th>' +
+                    '<th>ผู้พักอาศัย</th>' +
+                    '<th>ยอดค่าไฟ (บาท)</th>' +
+                    '</tr>';
+            }
+        }
+
+        // ============ ดึงข้อมูลจาก Backend ============
+        async function getResidentsData() {
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getResidents');
+                    if (result && result.success && result.data) return result.data;
+                } catch (e) { console.error('getResidents error:', e); }
+            }
+            const stored = localStorage.getItem('residentsData');
+            if (stored) return JSON.parse(stored);
+            return [];
+        }
+        
+        // ดึงข้อมูลค่าไฟที่บันทึกไว้
+        async function getSavedElectricData() {
+            const month = document.getElementById('bill_month').value;
+            const year = document.getElementById('bill_year').value;
+            const period = year + '-' + month;
+
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getElectricBills', { period });
+                    if (result && result.success && result.data && result.data.length > 0) {
+                        // โหลดค่า PEA total + lost
+                        if (result.meta) {
+                            document.getElementById('pea_total').value = result.meta.pea_total || '';
+                            document.getElementById('lost_house').value = result.meta.lost_house || '';
+                            document.getElementById('lost_flat').value = result.meta.lost_flat || '';
+                        }
+                        const amountMap = {};
+                        result.data.forEach(r => {
+                            amountMap[r.house_number || r.house] = parseFloat(r.amount) || 0;
+                        });
+                        return amountMap;
+                    }
+                } catch (e) { console.error('getElectricBills error:', e); }
+            }
+
+            // Fallback: localStorage
+            const key = 'electricBill_' + year + month;
+            const savedData = localStorage.getItem(key);
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                if (parsed.pea_total !== undefined) document.getElementById('pea_total').value = parsed.pea_total || '';
+                if (parsed.lost_house !== undefined) document.getElementById('lost_house').value = parsed.lost_house || '';
+                if (parsed.lost_flat !== undefined) document.getElementById('lost_flat').value = parsed.lost_flat || '';
+                const amountMap = {};
+                (parsed.records || []).forEach(record => {
+                    amountMap[record.house] = parseFloat(record.amount) || 0;
+                });
+                return amountMap;
+            }
+            
+            document.getElementById('pea_total').value = '';
+            document.getElementById('lost_house').value = '';
+            document.getElementById('lost_flat').value = '';
+            return {};
+        }
+        
+        // สร้างตารางผู้พักอาศัย
+        async function renderResidentsTable() {
+            const residents = await getResidentsData();
+            const savedAmounts = await getSavedElectricData();
+            const tbody = document.getElementById('electricTableBody');
+            tbody.innerHTML = '';
+
+            if (residents.length === 0) {
+                const cols = electricMethod === 'unit' ? 7 : 4;
+                tbody.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                return;
+            }
+            
+            // กรองเฉพาะผู้พักที่มีบ้านและ active
+            const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
+            if (activeResidents.length === 0) {
+                const cols = electricMethod === 'unit' ? 7 : 4;
+                tbody.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                return;
+            }
+            activeResidents.forEach((resident, index) => {
+                const houseNum = resident.house_number || '';
+                const savedAmount = savedAmounts[houseNum] || '';
+                const residentName = ((resident.prefix||'') + (resident.firstname||'') + ' ' + (resident.lastname||'')).trim();
+                
+                const row = document.createElement('tr');
+                row.dataset.index = index;
+                row.dataset.house = houseNum;
+
+                if (electricMethod === 'unit') {
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${houseNum}</td>
+                        <td>${residentName}</td>
+                        <td><input type="number" class="prev-meter" value="" placeholder="เดิม" onchange="calculateUnitRow(this)" onblur="calculateUnitRow(this)" step="1" min="0"></td>
+                        <td><input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" onblur="calculateUnitRow(this)" step="1" min="0"></td>
+                        <td class="units-used">0</td>
+                        <td class="electric-amount-cell">${savedAmount ? Math.ceil(savedAmount) : 0}</td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${houseNum}</td>
+                        <td>${residentName}</td>
+                        <td><input type="number" class="electric-amount" value="${savedAmount}" placeholder="กรอกยอดค่าไฟ" onchange="roundUpAndCalculate(this)" onblur="roundUpAndCalculate(this)" step="1" min="0"></td>
+                    `;
+                }
+                tbody.appendChild(row);
+            });
+            
+            calculateSummary();
+        }
+        
+        // เมื่อเปลี่ยนรอบบิล โหลดข้อมูลใหม่
+        document.getElementById('bill_month').addEventListener('change', renderResidentsTable);
+        document.getElementById('bill_year').addEventListener('change', renderResidentsTable);
+        
+        // ปัดเศษขึ้นและคำนวณใหม่
+        function roundUpAndCalculate(input) {
+            const value = parseFloat(input.value);
+            if (!isNaN(value) && value > 0) {
+                input.value = Math.ceil(value);
+            } else if (input.value !== '') {
+                input.value = 0;
+            }
+            calculateSummary();
+        }
+
+        // คำนวณค่าไฟตามหน่วย (unit mode)
+        function calculateUnitRow(input) {
+            const row = input.closest('tr');
+            const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
+            const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
+            const unitsUsed = Math.max(0, currMeter - prevMeter);
+            let amount = unitsUsed * electricRate;
+            amount = Math.ceil(amount);
+
+            row.querySelector('.units-used').textContent = unitsUsed;
+            row.querySelector('.electric-amount-cell').textContent = amount;
+            calculateSummary();
+        }
+        
+        // คำนวณสรุป
+        function calculateSummary() {
+            const rows = document.querySelectorAll('#electricTableBody tr');
+            let totalAmount = 0;
+            let count = 0;
+            
+            rows.forEach(row => {
+                if (electricMethod === 'unit') {
+                    const amountCell = row.querySelector('.electric-amount-cell');
+                    if (!amountCell) return;
+                    const value = parseFloat(amountCell.textContent) || 0;
+                    totalAmount += value;
+                } else {
+                    const amountInput = row.querySelector('.electric-amount');
+                    if (!amountInput) return;
+                    const value = parseFloat(amountInput.value) || 0;
+                    totalAmount += Math.ceil(value);
+                }
+                count++;
+            });
+            
+            const lostHouse = parseFloat(document.getElementById('lost_house').value) || 0;
+            const lostFlat = parseFloat(document.getElementById('lost_flat').value) || 0;
+            const totalLost = Math.ceil(lostHouse) + Math.ceil(lostFlat);
+            const grandTotal = totalAmount + totalLost;
+            const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
+            const diff = grandTotal - peaTotal;
+            
+            document.getElementById('totalHouses').textContent = count;
+            document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('th-TH') + ' ฿';
+            document.getElementById('totalLost').textContent = totalLost.toLocaleString('th-TH') + ' ฿';
+            document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('th-TH') + ' ฿';
+            document.getElementById('peaTotal').textContent = peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
+            
+            const diffEl = document.getElementById('diffAmount');
+            diffEl.textContent = diff.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
+            diffEl.style.color = '#059669';
+        }
+        
+        // บันทึกข้อมูล → Backend
+        async function saveData() {
+            const month = document.getElementById('bill_month').value;
+            const year = document.getElementById('bill_year').value;
+            
+            const rows = document.querySelectorAll('#electricTableBody tr');
+            const records = [];
+            
+            rows.forEach(row => {
+                let amount = 0;
+                if (electricMethod === 'unit') {
+                    const amountCell = row.querySelector('.electric-amount-cell');
+                    if (!amountCell) return;
+                    amount = parseFloat(amountCell.textContent) || 0;
+                } else {
+                    const amountInput = row.querySelector('.electric-amount');
+                    if (!amountInput) return;
+                    amount = Math.ceil(parseFloat(amountInput.value) || 0);
+                }
+                records.push({
+                    house_number: row.dataset.house || row.cells[1].textContent,
+                    resident_name: row.cells[2].textContent,
+                    amount: amount
+                });
+            });
+            
+            const electricData = {
+                month: month,
+                year: year,
+                period: year + '-' + month,
+                pea_total: parseFloat(document.getElementById('pea_total').value) || 0,
+                lost_house: parseFloat(document.getElementById('lost_house').value) || 0,
+                lost_flat: parseFloat(document.getElementById('lost_flat').value) || 0,
+                records: records,
+                savedAt: new Date().toISOString()
+            };
+
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackend('submitElectricBill', electricData);
+                    if (result && result.success) {
+                        showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!');
+                        return;
+                    } else {
+                        alert('❌ บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
+                        return;
+                    }
+                } catch (e) { console.error('Save error:', e); }
+            }
+
+            // Fallback: localStorage
+            localStorage.setItem('electricBill_' + year + month, JSON.stringify(electricData));
+            showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว! (localStorage)');
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+        
+        // โหลดข้อมูลเมื่อเปิดหน้า
+        window.onload = async function() {
+            const user = await checkSession();
+            if (!user) return;
+            await loadElectricSettings();
+            await renderResidentsTable();
+        };
+        
+        // ฟังก์ชันพิมพ์รายงาน
+        function printReport() {
+            const month = document.getElementById('bill_month').value;
+            const year = document.getElementById('bill_year').value;
+            
+            const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            const monthName = thaiMonths[parseInt(month) - 1];
+            
+            // วันที่ปัจจุบัน
+            const today = new Date();
+            const printDate = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
+            
+            // เก็บข้อมูลจากตาราง
+            const rows = document.querySelectorAll('#electricTableBody tr');
+            let tableHTML = '';
+            let totalAmount = 0;
+            let rowNum = 1;
+            
+            // ดึงค่า Lost และค่าไฟการไฟฟ้า
+            const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
+            const lostHouse = Math.ceil(parseFloat(document.getElementById('lost_house').value) || 0);
+            const lostFlat = Math.ceil(parseFloat(document.getElementById('lost_flat').value) || 0);
+            const totalLost = lostHouse + lostFlat;
+            
+            rows.forEach(row => {
+                const house = row.cells[1].textContent;
+                const resident = row.cells[2].textContent;
+                const amount = row.querySelector('.electric-amount').value || '0';
+                const amountNum = Math.ceil(parseFloat(amount) || 0);
+                
+                tableHTML += '<tr>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: center;">' + rowNum + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + house + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + resident + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: right;">' + amountNum.toLocaleString('th-TH') + '</td>';
+                tableHTML += '</tr>';
+                
+                totalAmount += amountNum;
+                rowNum++;
+            });
+            
+            // สร้างหน้าพิมพ์ตามระเบียบสารบรรณ
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานบันทึกค่าไฟ</title>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            // ตั้งค่าหน้ากระดาษ A4 ตามระเบียบสารบรรณ
+            printWindow.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
+            printWindow.document.write('@media print { body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
+            printWindow.document.write('* { box-sizing: border-box; }');
+            printWindow.document.write('body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 14pt; line-height: 1.4; margin: 0; padding: 2.5cm 2cm 2cm 3cm; }');
+            printWindow.document.write('.header { text-align: center; margin-bottom: 0.5cm; }');
+            printWindow.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
+            printWindow.document.write('.header-subtitle { font-size: 16pt; }');
+            printWindow.document.write('.header-period { font-size: 16pt; margin-top: 0.2cm; }');
+            printWindow.document.write('.date-line { text-align: right; margin-bottom: 0.3cm; font-size: 14pt; }');
+            printWindow.document.write('table { border-collapse: collapse; width: 100%; margin: 0.3cm 0; font-size: 14pt; }');
+            printWindow.document.write('th { background-color: #d4a373; color: white; font-weight: bold; border: 1px solid #000; padding: 8px; }');
+            printWindow.document.write('td { border: 1px solid #000; padding: 6px; }');
+            printWindow.document.write('tr:nth-child(even) { background-color: #fffdf8; }');
+            printWindow.document.write('.summary-row { background-color: #fef8f0 !important; font-weight: bold; }');
+            printWindow.document.write('.signature-section { margin-top: 1cm; display: flex; justify-content: space-between; }');
+            printWindow.document.write('.signature-box { width: 30%; text-align: center; font-size: 14pt; }');
+            printWindow.document.write('.signature-line { margin-top: 1.5cm; border-top: 1px dotted #000; padding-top: 0.2cm; }');
+            printWindow.document.write('.footer { text-align: center; margin-top: 0.5cm; font-size: 12pt; color: #666; }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            
+            // หัวเอกสาร
+            printWindow.document.write('<div class="header">');
+            printWindow.document.write('<div class="header-title">⚡ รายงานบันทึกค่าไฟ</div>');
+            printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
+            printWindow.document.write('<div class="header-period">ประจำเดือน' + monthName + ' พ.ศ. ' + year + '</div>');
+            printWindow.document.write('</div>');
+            
+            // วันที่พิมพ์
+            printWindow.document.write('<div class="date-line">วันที่พิมพ์: ' + printDate + '</div>');
+            
+            // ตารางข้อมูล
+            printWindow.document.write('<table>');
+            printWindow.document.write('<thead><tr>');
+            printWindow.document.write('<th style="width: 60px;">ลำดับ</th>');
+            printWindow.document.write('<th style="width: 150px;">บ้านพัก/แฟลต</th>');
+            printWindow.document.write('<th>ผู้พักอาศัย</th>');
+            printWindow.document.write('<th style="width: 150px;">ยอดค่าไฟ (บาท)</th>');
+            printWindow.document.write('</tr></thead>');
+            printWindow.document.write('<tbody>');
+            printWindow.document.write(tableHTML);
+            // แถวสรุปค่าไฟ
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมค่าไฟ (ปัดเศษ)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + totalAmount.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('</tr>');
+            // แถว Lost บ้านพัก
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่า Lost บ้านพัก</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostHouse.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('</tr>');
+            // แถว Lost แฟลต
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่า Lost แฟลต</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostFlat.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวรวมทั้งหมด
+            const grandTotal = totalAmount + totalLost;
+            printWindow.document.write('<tr style="background-color: #e8c9a0 !important; font-weight: bold;">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมทั้งหมด</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + grandTotal.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวค่าไฟการไฟฟ้าเรียกเก็บ
+            printWindow.document.write('<tr style="background-color: #d1fae5 !important;">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่าไฟการไฟฟ้าเรียกเก็บ</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวส่วนต่าง
+            const diff = grandTotal - peaTotal;
+            printWindow.document.write('<tr style="background-color: #d1fae5 !important; font-weight: bold;">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">ส่วนต่างเรียกเก็บเกิน (จากการปัดเศษ)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold; color: #059669;">' + diff.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            printWindow.document.write('</tbody></table>');
+            
+            // ช่องลงชื่อ
+            printWindow.document.write('<div class="signature-section">');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้บันทึกข้อมูล<br>(.......................................)<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้ตรวจสอบ<br>(.......................................)<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">หัวหน้างานส่งเสริมฯ<br>(.......................................)<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('</div>');
+            
+            // ท้ายกระดาษ
+            printWindow.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
+            
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            
+            // รอโหลดฟอนต์แล้วพิมพ์
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                }, 500);
+            };
+        }
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

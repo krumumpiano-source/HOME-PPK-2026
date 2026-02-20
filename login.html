@@ -1,0 +1,369 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ล็อกอิน | ระบบสมาชิก</title>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+    body {
+        font-family: 'Kanit', sans-serif;
+        background: linear-gradient(135deg, #4f8cff 0%, #38e8ff 100%);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-container {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        padding: 2.5rem 2rem 2rem 2rem;
+        max-width: 370px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .login-container h2 {
+        margin: 0 0 1rem 0;
+        color: #2563eb;
+        font-weight: 700;
+        text-align: center;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    label {
+        font-size: 1rem;
+        color: #333;
+    }
+    input[type="email"], input[type="password"], input[type="text"].pw-input {
+        padding: 0.7rem 2.8rem 0.7rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        outline: none;
+        transition: border 0.2s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    input[type="email"]:focus, input[type="password"]:focus, input[type="text"].pw-input:focus {
+        border: 1.5px solid #2563eb;
+    }
+    .pw-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .pw-toggle {
+        position: absolute;
+        right: 0.75rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        color: #6b7280;
+        padding: 0;
+        line-height: 1;
+        user-select: none;
+    }
+    .pw-toggle:hover { color: #2563eb; }
+    .error-message {
+        color: #e11d48;
+        font-size: 0.95rem;
+        margin-top: -0.5rem;
+        margin-bottom: 0.5rem;
+        display: none;
+    }
+    .login-btn {
+        background: linear-gradient(90deg, #2563eb 0%, #38e8ff 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.8rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .login-btn:hover {
+        background: linear-gradient(90deg, #38e8ff 0%, #2563eb 100%);
+    }
+    .menu-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .menu-links a {
+        color: #2563eb;
+        text-decoration: none;
+        font-size: 0.98rem;
+        text-align: center;
+        transition: color 0.2s;
+    }
+    .menu-links a:hover {
+        color: #e11d48;
+    }
+    @media (max-width: 480px) {
+        .login-container {
+            padding: 1.5rem 0.7rem 1.2rem 0.7rem;
+            max-width: 98vw;
+        }
+    }
+    </style>
+    <!-- First-Login Modal: บังคับเปลี่ยนรหัสผ่านครั้งแรก -->
+    <style>
+    #firstLoginOverlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.55);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    #firstLoginOverlay.active { display: flex; }
+    #firstLoginBox {
+        background: #fff;
+        border-radius: 18px;
+        padding: 2rem 1.8rem;
+        width: 100%; max-width: 380px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        font-family: 'Kanit', sans-serif;
+    }
+    #firstLoginBox h3 { color: #2563eb; margin: 0 0 0.5rem; font-size: 1.2rem; }
+    #firstLoginBox p  { color: #555; font-size: 0.92rem; margin: 0 0 1.2rem; }
+    .fl-group { display:flex; flex-direction:column; gap:0.3rem; margin-bottom:0.9rem; }
+    .fl-group label { font-size:0.9rem; color:#333; }
+    .fl-group input { padding:0.65rem 0.9rem; border:1px solid #d1d5db; border-radius:8px; font-size:0.95rem; font-family:Kanit,sans-serif; width:100%; box-sizing:border-box; }
+    .fl-group input:focus { border-color:#2563eb; outline:none; }
+    #flError { color:#e11d48; font-size:0.88rem; min-height:1.2rem; margin-bottom:0.5rem; }
+    #flSubmitBtn { width:100%; background:linear-gradient(90deg,#2563eb,#38e8ff); color:#fff; border:none; border-radius:8px; padding:0.75rem; font-size:1rem; font-weight:700; cursor:pointer; font-family:Kanit,sans-serif; }
+    </style>
+</head>
+<body>
+    <form class="login-container" id="loginForm" autocomplete="on" onsubmit="return validateForm();">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <div>
+                <div style="font-size:1.15rem; font-weight:700; color:#2563eb;">HOME PPK 2026</div>
+                <div style="font-size:0.98rem; color:#555;">โปรแกรมบริหารจัดการ งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
+            </div>
+        </div>
+        <h2 id="loginTitle">เข้าสู่ระบบ</h2>
+        <div class="form-group">
+            <label for="email" id="emailLabel">อีเมล</label>
+            <input type="email" id="email" name="email" required placeholder="กรอกอีเมล">
+        </div>
+        <div class="form-group">
+            <label for="password" id="passwordLabel">รหัสผ่าน</label>
+            <div class="pw-wrapper">
+                <input type="password" id="password" name="password" required placeholder="รหัสผ่านอย่างน้อย 8 ตัว" autocomplete="current-password">
+                <button type="button" class="pw-toggle" onclick="togglePassword()" id="pwToggleBtn" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">👁</button>
+            </div>
+        </div>
+        <div class="error-message" id="errorMsg"></div>
+        <button type="submit" class="login-btn" id="loginBtn">เข้าสู่ระบบ</button>
+        <div class="menu-links">
+            <a href="#" onclick="navigate('?page=forgot-password');return false;" id="forgotPass">ลืมรหัสผ่าน?</a>
+            <a href="#" onclick="navigate('?page=forgot-email');return false;" id="forgotEmail">ลืมอีเมล?</a>
+            <a href="#" onclick="navigate('?page=register');return false;" id="registerMenu">สมัครใช้บริการ</a>
+        </div>
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;" id="footerCredit">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
+            <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </form>
+
+    <!-- First-Login Modal -->
+    <div id="firstLoginOverlay">
+        <div id="firstLoginBox">
+            <h3>&#128274; เปลี่ยนรหัสผ่านครั้งแรก</h3>
+            <p>รหัสผ่านเริ่มต้นของคุณคือวันเดือนปีเกิด<br>กรุณาตั้งรหัสผ่านใหม่ก่อนใช้งานระบบ</p>
+            <div class="fl-group">
+                <label>รหัสผ่านปัจจุบัน (วันเดือนปีเกิด เช่น 31Dec1985)</label>
+                <input type="password" id="flOldPw" placeholder="รหัสผ่านเริ่มต้น" autocomplete="current-password">
+            </div>
+            <div class="fl-group">
+                <label>รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label>
+                <input type="password" id="flNewPw" placeholder="รหัสผ่านใหม่" autocomplete="new-password">
+            </div>
+            <div class="fl-group">
+                <label>ยืนยันรหัสผ่านใหม่</label>
+                <input type="password" id="flConfirmPw" placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง" autocomplete="new-password">
+            </div>
+            <div id="flError"></div>
+            <button id="flSubmitBtn" onclick="submitFirstLoginChange()">ยืนยันเปลี่ยนรหัสผ่าน</button>
+        </div>
+    </div>
+    <script>
+        // ============ API Configuration ============
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        // ============ Password Toggle ============
+        function togglePassword() {
+            var input = document.getElementById('password');
+            var btn = document.getElementById('pwToggleBtn');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+                btn.title = 'ซ่อนรหัสผ่าน';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+                btn.title = 'แสดงรหัสผ่าน';
+            }
+        }
+
+        // ============ API Helper ============
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            let text = '';
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch (parseErr) {
+                    console.error('Response not JSON. Status:', response.status, 'Body:', text.substring(0, 500));
+                    throw new Error('Server ตอบกลับไม่ถูกรูปแบบ (status ' + response.status + '): ' + text.substring(0, 200));
+                }
+            } catch (err) {
+                console.error('Backend error:', err.message, 'URL:', WEB_APP_URL, 'Raw:', text.substring(0, 200));
+                if (err.message.startsWith('Server ตอบกลับ')) throw err;
+                throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + err.message);
+            }
+        }
+
+        // ============ Form Validation ============
+        function validateForm() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.style.display = 'none';
+            errorMsg.textContent = '';
+            if (!email || !/\S+@\S+/.test(email)) {
+                errorMsg.textContent = 'กรุณากรอกอีเมลให้ถูกต้อง';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+            if (!password) {
+                errorMsg.textContent = 'กรุณากรอกรหัสผ่าน';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+            handleLogin();
+            return false;
+        }
+
+        // ============ Login Handler ============
+        async function handleLogin() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const loginBtn = document.getElementById('loginBtn');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+            errorMsg.style.display = 'none';
+
+            try {
+                if (!WEB_APP_URL) {
+                    throw new Error('ยังไม่ได้ตั้งค่า WEB_APP_URL — กรุณาติดต่อผู้ดูแลระบบ');
+                }
+
+                const result = await callBackend('login', { email, password });
+
+                if (result.success) {
+                    // Store session
+                    localStorage.setItem('sessionToken', result.token);
+                    localStorage.setItem('currentUser', JSON.stringify(result.user));
+
+                    // ถ้าเป็นล็อกอินครั้งแรก → แสดง modal บังคับเปลี่ยนรหัสผ่าน
+                    if (result.must_change_password || (result.user && result.user.must_change_password)) {
+                        window._firstLoginUserId = result.user.id;
+                        document.getElementById('firstLoginOverlay').classList.add('active');
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'เข้าสู่ระบบ';
+                        return;
+                    }
+
+                    // Redirect to dashboard
+                    var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
+                    window.location.href = baseUrl + '?page=dashboard';
+                } else {
+                    errorMsg.textContent = result.error || result.message || 'เข้าสู่ระบบไม่สำเร็จ';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = err.message || 'ไม่สามารถเชื่อมต่อระบบได้';
+                errorMsg.style.display = 'block';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'เข้าสู่ระบบ';
+            }
+        }
+
+        // ============ First-Login Change Password ============
+        async function submitFirstLoginChange() {
+            const oldPw     = document.getElementById('flOldPw').value;
+            const newPw     = document.getElementById('flNewPw').value;
+            const confirmPw = document.getElementById('flConfirmPw').value;
+            const errEl     = document.getElementById('flError');
+            const btn       = document.getElementById('flSubmitBtn');
+            errEl.textContent = '';
+
+            if (!oldPw) { errEl.textContent = 'กรุณากรอกรหัสผ่านปัจจุบัน'; return; }
+            if (!newPw || newPw.length < 6) { errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว'; return; }
+            if (newPw !== confirmPw) { errEl.textContent = 'รหัสผ่านไม่ตรงกัน'; return; }
+            if (oldPw === newPw) { errEl.textContent = 'รหัสผ่านใหม่ต้องไม่ซ้ำกับเดิม'; return; }
+
+            btn.disabled = true;
+            btn.textContent = 'กำลังบันทึก...';
+            try {
+                const result = await callBackend('changePassword', {
+                    _userId: window._firstLoginUserId,
+                    oldPassword: oldPw,
+                    newPassword: newPw
+                });
+                if (result && result.success) {
+                    var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
+                    window.location.href = baseUrl + '?page=dashboard';
+                } else {
+                    errEl.textContent = result.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+                    btn.disabled = false;
+                    btn.textContent = 'ยืนยันเปลี่ยนรหัสผ่าน';
+                }
+            } catch(e) {
+                errEl.textContent = e.message;
+                btn.disabled = false;
+                btn.textContent = 'ยืนยันเปลี่ยนรหัสผ่าน';
+            }
+        }
+
+        // ============ Auto-redirect if already logged in ============
+        (function() {
+            const token = localStorage.getItem('sessionToken');
+            if (token && WEB_APP_URL) {
+                callBackend('getCurrentUser').then(result => {
+                    if (result && result.success) {
+                        var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
+                        window.location.href = baseUrl + '?page=dashboard';
+                    }
+                }).catch(() => {});
+            }
+        })();
+    </script>
+</body>
+</html>
+

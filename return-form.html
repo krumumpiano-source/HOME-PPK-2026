@@ -1,0 +1,631 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบฟอร์มคำร้องขอคืนบ้านพัก</title>
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .form-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .form-section h3 {
+            color: #1e40af;
+            margin-bottom: 1rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-left: 0;
+            padding-left: 0;
+        }
+        .checkbox-group label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-left: 0;
+            padding-left: 0;
+            font-weight: normal;
+        }
+        .checkbox-group label input {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: normal;
+        }
+        .radio-group label input {
+            width: 16px;
+            height: 16px;
+        }
+        .submit-btn {
+            background: linear-gradient(to right, #4f8cff, #1e40af);
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .submit-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group label, .checkbox-group label, .radio-group label {
+            line-height: 1.5;
+        }
+        textarea {
+            line-height: 1.5;
+        }
+        .auto-fill-note {
+            background-color: #e0f2fe;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #0369a1;
+            font-size: 0.9rem;
+        }
+        .warning-note {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #92400e;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>แบบฟอร์มคำร้องขอคืนบ้านพัก</h2>
+
+        <div class="warning-note">
+            ⚠️ <strong>หมายเหตุ:</strong> การยื่นคำร้องขอคืนบ้านพักจะมีผลให้ท่านสิ้นสุดสิทธิ์การพักอาศัยในบ้านพักครูตามวันที่กำหนด กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยื่นคำร้อง
+        </div>
+
+        <form id="returnForm" action="#" method="post" enctype="multipart/form-data">
+            <!-- ส่วนที่ 1: ข้อมูลผู้พักอาศัย -->
+            <div class="form-section">
+                <h3>ส่วนที่ 1: ข้อมูลผู้พักอาศัย</h3>
+                <div class="auto-fill-note">
+                    * ข้อมูลส่วนนี้จะดึงจากระบบโดยอัตโนมัติเมื่อเชื่อมต่อกับฐานข้อมูล
+                </div>
+                <div class="form-group">
+                    <label>คำนำหน้า</label>
+                    <select name="prefix" id="prefix">
+                        <option value="นาย">นาย</option>
+                        <option value="นาง">นาง</option>
+                        <option value="นางสาว">นางสาว</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อ-นามสกุล</label>
+                    <input type="text" name="fullname" id="fullname" required>
+                </div>
+                <div class="form-group">
+                    <label>หมายเลขโทรศัพท์</label>
+                    <input type="tel" name="phone" id="phone" required>
+                </div>
+                <div class="form-group">
+                    <label>กลุ่มสาระการเรียนรู้</label>
+                    <select name="subject_group" id="subject_group">
+                        <option value="ภาษาไทย">ภาษาไทย</option>
+                        <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                        <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                        <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                        <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                        <option value="ศิลปะ">ศิลปะ</option>
+                        <option value="การงานอาชีพ">การงานอาชีพ</option>
+                        <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                        <option value="ลูกจ้าง">ลูกจ้าง</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>บ้านพัก/ห้องพักที่พักอาศัยอยู่ปัจจุบัน</label>
+                    <input type="text" name="current_house" id="current_house" placeholder="เลขประจำบ้านพักหรือแฟลต" required>
+                </div>
+                <div class="form-group">
+                    <label>วันที่เข้าพักอาศัย</label>
+                    <input type="date" name="move_in_date" id="move_in_date">
+                </div>
+            </div>
+
+            <!-- ส่วนที่ 2: เหตุผลในการคืนบ้านพัก -->
+            <div class="form-section">
+                <h3>ส่วนที่ 2: เหตุผลในการคืนบ้านพัก</h3>
+                
+                <div class="form-group">
+                    <label>เหตุผลในการคืนบ้านพัก (โปรดเลือก)</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="reason" value="transfer"> ย้ายสถานศึกษา / ปฏิบัติราชการ ณ หน่วยงานอื่น</label>
+                        <label><input type="checkbox" name="reason" value="resign"> พ้นจากตำแหน่ง (ลาออก, เกษียณอายุราชการ, ถึงแก่กรรม)</label>
+                        <label><input type="checkbox" name="reason" value="disqualified"> พ้นคุณสมบัติตามระเบียบว่าด้วยงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</label>
+                        <label><input type="checkbox" name="reason" value="mou_violation"> ฝ่าฝืนข้อตกลงใน MOU</label>
+                        <label><input type="checkbox" name="reason" value="revoked"> ถูกเพิกถอนสิทธิการพักอาศัยตามมติของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</label>
+                        <label><input type="checkbox" name="reason" value="other"> อื่น ๆ (โปรดระบุ)</label>
+                    </div>
+                    <input type="text" name="other_reason" id="other_reason" placeholder="โปรดระบุเหตุผลอื่น ๆ" style="margin-top: 0.5rem;">
+                </div>
+
+                <div class="form-group">
+                    <label>วันที่คาดว่าจะส่งคืนบ้านพัก</label>
+                    <input type="date" name="return_date" id="return_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label>รายละเอียดเพิ่มเติม (ถ้ามี)</label>
+                    <textarea name="additional_info" id="additional_info" rows="3" placeholder="กรุณาระบุรายละเอียดเพิ่มเติมที่ต้องการแจ้งให้ทราบ"></textarea>
+                </div>
+            </div>
+
+            <!-- ส่วนที่ 3: ข้อตกลง -->
+            <div class="form-section">
+                <h3>ส่วนที่ 3: ข้อตกลง</h3>
+                <p>ข้าพเจ้าขอรับรองว่า ข้อมูลที่ใช้ประกอบการขอคืนบ้านพักนี้เป็นความจริงทุกประการ และข้าพเจ้ายินยอมที่จะส่งมอบบ้านพัก/ห้องพักในสภาพเรียบร้อย พร้อมทั้งชำระค่าใช้จ่ายค้างชำระ (ถ้ามี) ให้เสร็จสิ้นก่อนวันส่งคืน และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="agreement" required> ข้าพเจ้ายอมรับข้อตกลงข้างต้น</label>
+                </div>
+            </div>
+
+            <!-- ช่องแนบไฟล์เอกสาร -->
+            <div class="form-section">
+                <label>แนบไฟล์เอกสารที่เกี่ยวข้อง (ถ้ามี)</label>
+                <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 1rem; text-align: center; background-color: #f9f9f9;">
+                    <input type="file" name="attachments[]" id="file-input" multiple style="display: none;">
+                    <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem;">เลือกไฟล์</button>
+                    <p style="margin-top: 0.5rem; color: #666;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+                    <div id="file-list" style="margin-top: 1rem; text-align: left;"></div>
+                </div>
+            </div>
+
+            <script>
+                document.getElementById('file-input').addEventListener('change', function() {
+                    const fileList = document.getElementById('file-list');
+                    fileList.innerHTML = '';
+                    for (let i = 0; i < this.files.length; i++) {
+                        const file = this.files[i];
+                        const fileItem = document.createElement('div');
+                        fileItem.style.padding = '0.5rem';
+                        fileItem.style.borderBottom = '1px solid #ddd';
+                        fileItem.textContent = file.name;
+                        fileList.appendChild(fileItem);
+                    }
+                });
+            </script>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" class="back-btn" onclick="window.navigate('?page=form')" style="background: linear-gradient(to right, #d1d5db, #9ca3af); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">ย้อนกลับ</button>
+                <button type="button" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">พิมพ์คำร้อง</button>
+                <button type="submit" class="submit-btn">ส่งคำร้อง</button>
+            </div>
+        </form>
+
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.95rem; color:#888;">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+</body>
+</html>
+
+<script>
+    function printForm() {
+        // รวบรวมข้อมูลจากฟอร์ม
+        const prefix = document.getElementById('prefix').value;
+        const fullname = document.getElementById('fullname').value;
+        const phone = document.getElementById('phone').value;
+        const subjectGroup = document.getElementById('subject_group').value;
+        const currentHouse = document.getElementById('current_house').value;
+        const moveInDate = document.getElementById('move_in_date').value;
+        const returnDate = document.getElementById('return_date').value;
+        const additionalInfo = document.getElementById('additional_info').value;
+
+        // แปลงวันที่เป็นภาษาไทย
+        const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        
+        function formatThaiDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.getDate() + ' ' + thaiMonths[date.getMonth()] + ' ' + (date.getFullYear() + 543);
+        }
+
+        const moveInDateThai = formatThaiDate(moveInDate);
+        const returnDateThai = formatThaiDate(returnDate);
+
+        // รวบรวมเหตุผลในการคืนบ้านพัก
+        const reasonTexts = {
+            'transfer': 'ย้ายสถานศึกษา / ปฏิบัติราชการ ณ หน่วยงานอื่น',
+            'resign': 'พ้นจากตำแหน่ง (ลาออก, เกษียณอายุราชการ, ถึงแก่กรรม)',
+            'disqualified': 'พ้นคุณสมบัติตามระเบียบว่าด้วยงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม',
+            'mou_violation': 'ฝ่าฝืนข้อตกลงใน MOU',
+            'revoked': 'ถูกเพิกถอนสิทธิการพักอาศัยตามมติของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู'
+        };
+
+        // วันที่ปัจจุบัน
+        const today = new Date();
+        const dateStr = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
+
+        // สร้างหน้าพิมพ์ตามระเบียบสารบรรณ
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มคำร้องขอคืนบ้านพัก</title>');
+        printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
+        printWindow.document.write('<style>');
+        // ตั้งค่าหน้ากระดาษ A4 ตามระเบียบสารบรรณ
+        printWindow.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
+        printWindow.document.write('@media print { body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
+        printWindow.document.write('* { box-sizing: border-box; }');
+        printWindow.document.write('body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 16pt; line-height: 1.4; margin: 0; padding: 2.5cm 2cm 2cm 3cm; width: 21cm; min-height: 29.7cm; }');
+        printWindow.document.write('.header { text-align: center; margin-bottom: 0.3cm; page-break-inside: avoid; }');
+        printWindow.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
+        printWindow.document.write('.header-subtitle { font-size: 16pt; }');
+        printWindow.document.write('.date-line { text-align: right; margin-bottom: 0.2cm; }');
+        printWindow.document.write('.salutation { margin-bottom: 0.2cm; }');
+        printWindow.document.write('.intro { text-indent: 2.5cm; margin-bottom: 0.2cm; text-align: justify; }');
+        printWindow.document.write('.section { margin-bottom: 0.3cm; page-break-inside: avoid; }');
+        printWindow.document.write('.section-title { font-weight: bold; text-decoration: underline; margin-bottom: 0.1cm; }');
+        printWindow.document.write('.indent { padding-left: 1cm; }');
+        printWindow.document.write('.indent2 { padding-left: 2cm; }');
+        printWindow.document.write('table { border-collapse: collapse; width: 100%; margin: 0.1cm 0; font-size: 14pt; page-break-inside: avoid; }');
+        printWindow.document.write('th, td { border: 1px solid #000; padding: 3px; }');
+        printWindow.document.write('th { background-color: #f5f5f5; font-weight: bold; }');
+        printWindow.document.write('.checkbox { display: inline-block; width: 10pt; height: 10pt; border: 1px solid #000; margin-right: 0.1cm; vertical-align: middle; text-align: center; line-height: 10pt; font-size: 8pt; }');
+        printWindow.document.write('.signature-section { margin-top: 0.3cm; display: flex; justify-content: space-between; page-break-inside: avoid; }');
+        printWindow.document.write('.signature-box { width: 45%; text-align: center; }');
+        printWindow.document.write('.signature-line { margin-top: 0.5cm; }');
+        printWindow.document.write('.small-text { font-size: 14pt; }');
+        printWindow.document.write('.approval-boxes { margin-top: 0.5cm; }');
+        printWindow.document.write('.approval-box { border: 1px solid #000; margin-bottom: 0.4cm; padding: 0.3cm; page-break-inside: avoid; }');
+        printWindow.document.write('.approval-box .approval-header { font-weight: bold; background-color: #f5f5f5; padding: 0.2cm; margin: -0.3cm -0.3cm 0.3cm -0.3cm; border-bottom: 1px solid #000; }');
+        printWindow.document.write('.approval-box .approval-content { font-size: 14pt; }');
+        printWindow.document.write('.dotted-line-long { display: inline-block; width: 80%; border-bottom: 1px dotted #000; }');
+        printWindow.document.write('.dotted-line-full { display: block; width: 100%; border-bottom: 1px dotted #000; height: 1.5em; }');
+        printWindow.document.write('.dotted-line { display: inline-block; width: 70%; border-bottom: 1px dotted #000; margin-left: 0.1cm; }');
+        printWindow.document.write('.dotted-line-short { display: inline-block; width: 4cm; border-bottom: 1px dotted #000; }');
+        printWindow.document.write('.dotted-line-date { display: inline-block; width: 3cm; border-bottom: 1px dotted #000; }');
+        printWindow.document.write('.dotted-line-sig { display: inline-block; width: 3.5cm; border-bottom: 1px dotted #000; }');
+        printWindow.document.write('.pdf-page { max-width: 100%; margin-bottom: 0.5cm; display: block; }');
+        printWindow.document.write('</style>');
+        printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+        printWindow.document.write('</head><body>');
+        
+        // หัวเอกสาร
+        printWindow.document.write('<div class="header">');
+        printWindow.document.write('<div class="header-title">แบบฟอร์มคำร้องขอคืนบ้านพัก</div>');
+        printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
+        printWindow.document.write('</div>');
+        
+        // วันที่
+        printWindow.document.write('<div class="date-line">วันที่ ' + dateStr + '</div>');
+        
+        // คำขึ้นต้น
+        printWindow.document.write('<div class="salutation"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
+        
+        // คำนำ
+        printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' ผู้พักอาศัย ' + currentHouse + ' มีความประสงค์ขอคืนบ้านพัก โดยมีรายละเอียดดังต่อไปนี้</p>');
+        
+        // ส่วนที่ 1: ข้อมูลผู้พักอาศัย
+        printWindow.document.write('<div class="section">');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 1: ข้อมูลผู้พักอาศัย</div>');
+        printWindow.document.write('<div class="indent small-text">');
+        printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
+        printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + '</div>');
+        printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div>');
+        printWindow.document.write('<div>บ้านพัก/ห้องพักที่พักอาศัยอยู่ปัจจุบัน: ' + currentHouse + '</div>');
+        printWindow.document.write('<div>วันที่เข้าพักอาศัย: ' + moveInDateThai + '</div>');
+        printWindow.document.write('</div></div>');
+        
+        // ส่วนที่ 2: เหตุผลในการคืนบ้านพัก
+        printWindow.document.write('<div class="section">');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 2: เหตุผลในการคืนบ้านพัก</div>');
+        printWindow.document.write('<div class="indent small-text">');
+        
+        // แสดงเหตุผลทั้งหมดพร้อม checkbox
+        const allReasons = [
+            { value: 'transfer', text: 'ย้ายสถานศึกษา / ปฏิบัติราชการ ณ หน่วยงานอื่น' },
+            { value: 'resign', text: 'พ้นจากตำแหน่ง (ลาออก, เกษียณอายุราชการ, ถึงแก่กรรม)' },
+            { value: 'disqualified', text: 'พ้นคุณสมบัติตามระเบียบว่าด้วยงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม' },
+            { value: 'mou_violation', text: 'ฝ่าฝืนข้อตกลงใน MOU' },
+            { value: 'revoked', text: 'ถูกเพิกถอนสิทธิการพักอาศัยตามมติของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู' }
+        ];
+        
+        allReasons.forEach(r => {
+            const checked = document.querySelector('input[name="reason"][value="' + r.value + '"]')?.checked;
+            printWindow.document.write('<div><span class="checkbox">' + (checked ? '&#10003;' : '') + '</span> ' + r.text + '</div>');
+        });
+        
+        const otherReasonChecked = document.querySelector('input[name="reason"][value="other"]')?.checked;
+        const otherReasonText = document.getElementById('other_reason').value;
+        printWindow.document.write('<div><span class="checkbox">' + (otherReasonChecked ? '&#10003;' : '') + '</span> อื่น ๆ ' + (otherReasonText ? ': ' + otherReasonText : '<span class="dotted-line-short"></span>') + '</div>');
+        
+        printWindow.document.write('<div style="margin-top: 0.3cm;">วันที่คาดว่าจะส่งคืนบ้านพัก: ' + returnDateThai + '</div>');
+        
+        if (additionalInfo) {
+            printWindow.document.write('<div style="margin-top: 0.2cm;">รายละเอียดเพิ่มเติม: ' + additionalInfo + '</div>');
+        }
+        printWindow.document.write('</div></div>');
+        
+        // ส่วนที่ 3: ข้อตกลง
+        printWindow.document.write('<div class="section">');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 3: ข้อตกลง</div>');
+        printWindow.document.write('<p class="indent small-text" style="text-align: justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลที่ใช้ประกอบการขอคืนบ้านพักนี้เป็นความจริงทุกประการ และข้าพเจ้ายินยอมที่จะส่งมอบบ้านพัก/ห้องพักในสภาพเรียบร้อย พร้อมทั้งชำระค่าใช้จ่ายค้างชำระ (ถ้ามี) ให้เสร็จสิ้นก่อนวันส่งคืน และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p>');
+        printWindow.document.write('</div>');
+        
+        // ช่องลงชื่อ
+        printWindow.document.write('<div class="signature-section small-text">');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div>');
+        printWindow.document.write('</div>');
+        
+        // อ่านชื่อผู้บริหารจาก admin settings
+        var _sys = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+        var _headName = _sys.headOfPromotion || '';
+        var _viceName = _sys.viceDirector || '';
+        var _dirName = _sys.director || '';
+
+        // ส่วนความเห็นผู้บริหาร (เป็น 3 กล่องเรียงลงมา)
+        printWindow.document.write('<div class="approval-boxes">');
+        
+        // กล่องที่ 1: หัวหน้างานส่งเสริมฯ
+        printWindow.document.write('<div class="approval-box">');
+        printWindow.document.write('<div class="approval-header">ความเห็นหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div>');
+        printWindow.document.write('<div class="approval-content">');
+        printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
+        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
+        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
+        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
+        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>ตำแหน่ง<span class="dotted-line-short"></span><br>วันที่<span class="dotted-line-date"></span></div>');
+        printWindow.document.write('</div></div>');
+        
+        // กล่องที่ 2: รองผู้อำนวยการกลุ่มบริหารทั่วไป
+        printWindow.document.write('<div class="approval-box">');
+        printWindow.document.write('<div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div>');
+        printWindow.document.write('<div class="approval-content">');
+        printWindow.document.write('<div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div>');
+        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
+        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
+        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
+        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_viceName || '<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div>');
+        printWindow.document.write('</div></div>');
+        
+        // กล่องที่ 3: ผู้อำนวยการ
+        printWindow.document.write('<div class="approval-box">');
+        printWindow.document.write('<div class="approval-header">คำสั่งผู้อำนวยการ</div>');
+        printWindow.document.write('<div class="approval-content">');
+        printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
+        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
+        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
+        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
+        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div>');
+        printWindow.document.write('</div></div>');
+        
+        printWindow.document.write('</div>');
+
+        // ส่วนเอกสารแนบ
+        const fileInput = document.getElementById('file-input');
+        const files = fileInput.files;
+        
+        if (files.length > 0) {
+            printWindow.document.write('<div style="page-break-before: always;"></div>');
+            printWindow.document.write('<div class="header" style="margin-top: 1cm;">');
+            printWindow.document.write('<div class="header-title">เอกสารแนบประกอบคำร้อง</div>');
+            printWindow.document.write('</div>');
+            
+            let filePromises = [];
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isImage = file.type.startsWith('image/');
+                const isPDF = file.type === 'application/pdf';
+                
+                const promise = new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        resolve({
+                            index: i + 1,
+                            dataUrl: e.target.result,
+                            isImage: isImage,
+                            isPDF: isPDF,
+                            arrayBuffer: isPDF ? e.target.result : null
+                        });
+                    };
+                    if (isPDF) {
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        reader.readAsDataURL(file);
+                    }
+                });
+                filePromises.push(promise);
+            }
+            
+            // รอให้อ่านไฟล์ทั้งหมดเสร็จ
+            Promise.all(filePromises).then(async results => {
+                for (const result of results) {
+                    if (result.isImage) {
+                        printWindow.document.write('<div style="margin-bottom: 0.5cm; text-align: center;">');
+                        printWindow.document.write('<img src="' + result.dataUrl + '" style="max-width: 100%; max-height: 25cm; display: block; margin: 0 auto;">');
+                        printWindow.document.write('</div>');
+                    } else if (result.isPDF) {
+                        printWindow.document.write('<div id="pdf-container-' + result.index + '"></div>');
+                    }
+                }
+                
+                printWindow.document.write('<script>');
+                printWindow.document.write('pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";');
+                printWindow.document.write('async function renderPDFs() {');
+                printWindow.document.write('  const pdfDataArray = ' + JSON.stringify(results.filter(r => r.isPDF).map(r => ({ index: r.index, data: Array.from(new Uint8Array(r.arrayBuffer)) }))) + ';');
+                printWindow.document.write('  for (const pdfData of pdfDataArray) {');
+                printWindow.document.write('    const typedArray = new Uint8Array(pdfData.data);');
+                printWindow.document.write('    const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;');
+                printWindow.document.write('    const container = document.getElementById("pdf-container-" + pdfData.index);');
+                printWindow.document.write('    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {');
+                printWindow.document.write('      const page = await pdf.getPage(pageNum);');
+                printWindow.document.write('      const scale = 2;');
+                printWindow.document.write('      const viewport = page.getViewport({ scale: scale });');
+                printWindow.document.write('      const canvas = document.createElement("canvas");');
+                printWindow.document.write('      canvas.width = viewport.width;');
+                printWindow.document.write('      canvas.height = viewport.height;');
+                printWindow.document.write('      canvas.style.maxWidth = "100%";');
+                printWindow.document.write('      canvas.style.marginBottom = "0.5cm";');
+                printWindow.document.write('      canvas.style.display = "block";');
+                printWindow.document.write('      if (pageNum > 1) { canvas.style.pageBreakBefore = "always"; }');
+                printWindow.document.write('      const ctx = canvas.getContext("2d");');
+                printWindow.document.write('      await page.render({ canvasContext: ctx, viewport: viewport }).promise;');
+                printWindow.document.write('      container.appendChild(canvas);');
+                printWindow.document.write('    }');
+                printWindow.document.write('  }');
+                printWindow.document.write('  setTimeout(function() { window.print(); }, 500);');
+                printWindow.document.write('}');
+                printWindow.document.write('window.onload = renderPDFs;');
+                printWindow.document.write('<\/script></body></html>');
+                printWindow.document.close();
+            });
+        } else {
+            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script></body></html>');
+            printWindow.document.close();
+        }
+    }
+
+    // ============ API Configuration ============
+    var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+    async function callBackend(action, data = {}) {
+        const token = localStorage.getItem('sessionToken');
+        const payload = { action, token, ...data };
+        try {
+            const response = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), redirect: 'follow' });
+            const text = await response.text();
+            const result = JSON.parse(text);
+            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return; }
+            return result;
+        } catch (err) { console.error('Backend error:', err); throw err; }
+    }
+
+    async function callBackendGet(action, params = {}) {
+        if (!WEB_APP_URL) return null;
+        const token = localStorage.getItem('sessionToken');
+        const q = new URLSearchParams({ action, token, ...params }).toString();
+        const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+        return res.json();
+    }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+    // ============ Session + Auto-fill ============
+    async function initPage() {
+        const token = localStorage.getItem('sessionToken');
+        if (!token && WEB_APP_URL) { window.navigate('?page=login'); return; }
+        if (!WEB_APP_URL) return;
+        try {
+            const result = await callBackendGet('getCurrentUser');
+            if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return; }
+            const resident = result.user.resident || {};
+            const form = document.querySelector('select[name="prefix"]');
+            if (form && resident.prefix) form.value = resident.prefix;
+            const fullname = document.querySelector('input[name="fullname"]');
+            if (fullname && resident.firstname) fullname.value = (resident.firstname || '') + ' ' + (resident.lastname || '');
+            const phone = document.querySelector('input[name="phone"]');
+            if (phone && resident.phone) phone.value = resident.phone;
+            const group = document.querySelector('select[name="subject_group"]');
+            if (group && resident.position) group.value = resident.position;
+            const currentHouse = document.querySelector('input[name="current_house"]');
+            if (currentHouse && resident.house_number) currentHouse.value = resident.house_number;
+        } catch (e) { console.warn('Auto-fill failed', e); }
+    }
+
+    // ============ Submit Handler ============
+    document.getElementById('returnForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!WEB_APP_URL) { alert('ยังไม่ได้ตั้งค่า WEB_APP_URL'); return; }
+        const submitBtn = document.querySelector('.submit-btn');
+        submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
+        try {
+            const reasons = [];
+            document.querySelectorAll('input[name="reason"]:checked').forEach(cb => reasons.push(cb.value));
+            const data = {
+                type: 'return',
+                prefix: document.querySelector('select[name="prefix"]').value,
+                fullname: document.querySelector('input[name="fullname"]').value,
+                phone: document.querySelector('input[name="phone"]').value,
+                subject_group: document.querySelector('select[name="subject_group"]').value,
+                current_house: document.querySelector('input[name="current_house"]').value,
+                move_in_date: document.querySelector('input[name="move_in_date"]')?.value || '',
+                reasons: reasons,
+                other_reason: document.querySelector('input[name="other_reason"]')?.value || '',
+                return_date: document.querySelector('input[name="return_date"]')?.value || '',
+                additional_info: document.querySelector('textarea[name="additional_info"]')?.value || ''
+            };
+            const result = await callBackend('submitRequest', data);
+            if (result && result.success) {
+                alert('ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + (result.requestId || '-'));
+                window.navigate('?page=form');
+            } else { alert(result?.error || 'ส่งคำร้องไม่สำเร็จ'); }
+        } catch (err) { alert('ไม่สามารถเชื่อมต่อระบบได้');
+        } finally { submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง'; }
+    });
+
+    initPage();
+</script>

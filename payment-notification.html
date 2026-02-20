@@ -1,0 +1,435 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งยอดชำระ | HOME PPK 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        :root {
+            --bg: #f8fafc; --surface: #ffffff; --border: #e5e7eb; --text: #0f172a;
+            --muted: #64748b; --primary: #10b981; --primary-dark: #059669;
+            --primary-light: #d1fae5; --primary-lighter: #ecfdf5; --accent: #065f46;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); min-height: 100vh; margin: 0; color: var(--text); }
+        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 62px; background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%); box-shadow: 2px 0 12px rgba(0,0,0,0.07); display: flex; flex-direction: column; align-items: center; padding: 1.2rem 0.3rem; transition: width 0.2s; z-index: 100; }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle { background: none; border: none; color: #fff; font-size: 1.7rem; margin-bottom: 1.2rem; cursor: pointer; outline: none; align-self: flex-end; }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link { display: flex; align-items: center; gap: 0.9rem; color: #fff; background: none; border: none; font-size: 1.08rem; font-family: inherit; padding: 0.5rem; border-radius: 8px; cursor: pointer; text-align: left; width: 100%; transition: background 0.15s, color 0.15s; }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+        @media (max-width: 600px) { .sidebar { width: 48px; } .sidebar.expanded { width: 160px; } }
+        .dashboard-container { margin-left: 62px; background: var(--surface); padding: 2rem; min-height: 100vh; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; transition: margin-left 0.2s; }
+        .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
+        @media (max-width: 600px) { .dashboard-container { margin-left: 48px; padding: 1.2rem 0.5rem; } .sidebar.expanded ~ .dashboard-container { margin-left: 160px; } }
+        .dashboard-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem; justify-content: center; }
+        .dashboard-header-icon { font-size: 2.1rem; color: var(--primary); }
+        .dashboard-container h2 { margin: 0; color: var(--primary); font-weight: 700; font-size: 2.1rem; text-align: center; }
+        .back-btn { align-self: flex-start; background: linear-gradient(135deg, var(--primary-light), #a7f3d0); color: var(--accent); border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-family: 'Kanit', sans-serif; transition: transform 0.2s, box-shadow 0.2s; }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+        .section { background: var(--primary-lighter); border-radius: 14px; padding: 1.5rem; margin-bottom: 0.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.03); width: 100%; max-width: 1100px; border: 1px solid #a7f3d0; }
+        .section-title { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 2px solid #a7f3d0; padding-bottom: 0.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; color: var(--accent); font-size: 0.95rem; }
+        .form-group select { width: 100%; padding: 0.7rem 1rem; border: 1px solid #6ee7b7; border-radius: 8px; font-size: 1rem; font-family: 'Kanit', sans-serif; background: #fff; }
+        .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+        .form-row { display: flex; gap: 1rem; }
+        .form-row .form-group { flex: 1; }
+        .info-box { background: var(--primary-light); border: 1px solid #a7f3d0; border-radius: 8px; padding: 0.8rem 1rem; margin-bottom: 1rem; color: var(--accent); font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; width: 100%; max-width: 1100px; }
+        .table-capture-area { width: 100%; max-width: 1100px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .table-header-bar { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; text-align: center; padding: 0.9rem 1rem; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; }
+        .notify-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.95rem; }
+        .notify-table th { background: linear-gradient(135deg, var(--primary-light), #a7f3d0); color: var(--accent); padding: 0.7rem 0.5rem; font-weight: 700; text-align: center; border: 1px solid #86efac; white-space: nowrap; }
+        .notify-table td { padding: 0.55rem 0.5rem; border: 1px solid #d1fae5; text-align: center; vertical-align: middle; }
+        .notify-table tr:nth-child(even) { background: #f0fdf4; }
+        .notify-table tr:hover { background: #dcfce7; }
+        .notify-table .col-no { width: 50px; }
+        .notify-table .col-resident { min-width: 160px; text-align: left; padding-left: 0.8rem; }
+        .notify-table .col-meter { min-width: 110px; }
+        .notify-table .col-money { min-width: 80px; }
+        .amount-value { font-weight: 700; color: var(--primary-dark); }
+        .total-value { font-weight: 700; color: #b45309; font-size: 1.05rem; }
+        .table-footer-note { background: #fffbeb; color: #92400e; text-align: center; padding: 0.6rem; font-size: 0.85rem; border-top: 1px solid #fde68a; }
+        .save-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { border-radius: 10px; font-size: 1.1rem; font-weight: bold; padding: 0.8rem 2rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06); transition: transform 0.2s, box-shadow 0.2s; font-family: 'Kanit', sans-serif; display: flex; align-items: center; gap: 0.5rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); }
+        .btn:active { transform: translateY(0); }
+        .btn-house { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-flat { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; }
+        .btn-secondary { background: linear-gradient(to right, #e5e7eb, #d1d5db); color: #374151; }
+        .btn-load { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
+        .success-message { background: var(--primary-light); border: 1px solid var(--primary); border-radius: 8px; padding: 1rem; color: var(--accent); text-align: center; display: none; margin-top: 1rem; width: 100%; max-width: 1100px; }
+        .success-message.show { display: block; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center; }
+        .loading-overlay.show { display: flex; }
+        .loading-box { background: #fff; padding: 2rem 3rem; border-radius: 16px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .loading-box .spinner { border: 4px solid #e5e7eb; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ค่าส่วนกลาง editable */
+        .common-cell { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+        .common-input { width: 60px; text-align: center; border: 1px solid #6ee7b7; border-radius: 5px; font-family: 'Kanit', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--primary-dark); padding: 2px 4px; background: #f0fdf4; }
+        .common-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+        .exempt-btn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid #f87171; background: #fff1f2; color: #ef4444; font-size: 0.7rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-family: 'Kanit', sans-serif; transition: all 0.15s; flex-shrink: 0; }
+        .exempt-btn:hover { background: #fecaca; }
+        .exempt-btn.exempted { background: #10b981; color: #fff; border-color: #059669; }
+        .exempt-btn.exempted:hover { background: #059669; }
+        .exempted-row .common-input { color: #9ca3af; text-decoration: line-through; }
+
+        @media (max-width: 600px) { .form-row { flex-direction: column; gap: 0; } .save-buttons { flex-direction: column; } .btn { width: 100%; justify-content: center; } .notify-table { font-size: 0.8rem; } .notify-table th, .notify-table td { padding: 0.4rem 0.3rem; } .table-header-bar { font-size: 1rem; } .common-input { width: 50px; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู"></button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')"><span class="sidebar-link-icon">🏠</span><span class="sidebar-label">แดชบอร์ด</span></button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')"><span class="sidebar-link-icon">💸</span><span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span></button>
+            <button class="sidebar-link" onclick="navigate('?page=form')"><span class="sidebar-link-icon">📝</span><span class="sidebar-label">แบบฟอร์มคำร้อง</span></button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')"><span class="sidebar-link-icon">📚</span><span class="sidebar-label">ระเบียบ</span></button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')"><span class="sidebar-link-icon">⚙️</span><span class="sidebar-label">ตั้งค่าส่วนตัว</span></button>
+            <button class="sidebar-link active" onclick="navigate('?page=team-management')"><span class="sidebar-link-icon">👥</span><span class="sidebar-label">โปรแกรมบริหารจัดการ</span></button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+    <div class="dashboard-container" id="dashboardContainer">
+        <button class="back-btn" onclick="navigate('?page=team-management')"> กลับ</button>
+        <div class="dashboard-header">
+            <span class="dashboard-header-icon"></span>
+            <h2>แจ้งยอดชำระ</h2>
+        </div>
+        <div class="info-box">ℹ ข้อมูลค่าน้ำ ค่าไฟ ค่าส่วนกลาง จะถูกดึงจากระบบโดยอัตโนมัติ ระบบจะคำนวณยอดรวมให้ กดปุ่มบันทึกภาพเพื่อส่งแจ้งยอด</div>
+        <div class="section">
+            <div class="section-title"> เลือกรอบบิล</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="bill_month">เดือน</label>
+                    <select id="bill_month">
+                        <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option><option value="03">มีนาคม</option>
+                        <option value="04">เมษายน</option><option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
+                        <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option><option value="09">กันยายน</option>
+                        <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bill_year">ปี พ.ศ.</label>
+                    <select id="bill_year"></select>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:0.5rem;">
+                <button class="btn btn-load" onclick="loadBillData()"> ดึงข้อมูล</button>
+            </div>
+        </div>
+
+        <!-- ตารางบ้านพัก -->
+        <div class="table-capture-area" id="captureHouse">
+            <div class="table-header-bar" id="houseTableTitle"> บ้านพัก ประจำเดือนกุมภาพันธ์ พ.ศ. 2569</div>
+            <table class="notify-table">
+                <thead><tr>
+                    <th class="col-no">เลขที่</th><th class="col-resident">ผู้พักอาศัย</th>
+                    <th class="col-meter">มิเตอร์น้ำ<br>(ก่อน - ล่าสุด)</th>
+                    <th class="col-money">ค่าน้ำ</th><th class="col-money">ค่าไฟ</th>
+                    <th class="col-money">ค่าส่วนกลาง</th><th class="col-money">รวม</th>
+                </tr></thead>
+                <tbody id="houseTableBody"></tbody>
+            </table>
+            <div class="table-footer-note" id="houseFooterNote">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ...</div>
+        </div>
+        <div class="save-buttons"><button class="btn btn-house" onclick="saveAsImage('captureHouse','house')"> บันทึกรูป  บ้านพัก</button></div>
+
+        <!-- ตารางแฟลต -->
+        <div class="table-capture-area" id="captureFlat">
+            <div class="table-header-bar" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);" id="flatTableTitle"> แฟลต ประจำเดือนกุมภาพันธ์ พ.ศ. 2569</div>
+            <table class="notify-table">
+                <thead><tr>
+                    <th class="col-no">เลขที่</th><th class="col-resident">ผู้พักอาศัย</th>
+                    <th class="col-meter">มิเตอร์น้ำ<br>(ก่อน - ล่าสุด)</th>
+                    <th class="col-money">ค่าน้ำ</th><th class="col-money">ค่าไฟ</th>
+                    <th class="col-money">ค่าส่วนกลาง</th><th class="col-money">รวม</th>
+                </tr></thead>
+                <tbody id="flatTableBody"></tbody>
+            </table>
+            <div class="table-footer-note" id="flatFooterNote">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ...</div>
+        </div>
+        <div class="save-buttons"><button class="btn btn-flat" onclick="saveAsImage('captureFlat','flat')"> บันทึกรูป  แฟลต</button></div>
+
+        <div class="save-buttons"><button class="btn btn-secondary" onclick="navigate('?page=team-management')"> กลับหน้าบริหารจัดการ</button></div>
+        <div class="success-message" id="successMessage">บันทึกรูปภาพเรียบร้อยแล้ว!</div>
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay"><div class="loading-box"><div class="spinner"></div><div>กำลังบันทึกรูปภาพ...</div></div></div>
+
+    <script>
+        // === Backend API Helpers ===
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+        async function callBackend(action, data = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken') || '';
+            const payload = { action, token, ...data };
+            const res = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), redirect: 'follow' });
+            const text = await res.text(); const result = JSON.parse(text);
+            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); navigate('?page=login'); return; }
+            return result;
+        }
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken') || '';
+            const qs = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + qs, { redirect: 'follow' });
+            const text = await res.text(); return JSON.parse(text);
+        }
+        // cachedCall: GET + localStorage cache
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; } } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }
+            return r;
+        }
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return null;
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); navigate('?page=login'); return null; }
+                return result.user;
+            } catch (e) { console.warn('Session check failed:', e); return null; }
+        }
+
+        // === Sidebar ===
+        var sidebar = document.getElementById('sidebar');
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function(){
+            sidebar.classList.toggle('expanded');
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth<=600?'160px':'280px') : (window.innerWidth<=600?'48px':'62px');
+        };
+        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth<=600?'48px':'62px');
+        window.addEventListener('resize',function(){
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth<=600?'160px':'280px') : (window.innerWidth<=600?'48px':'62px');
+        });
+
+        var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        var now = new Date();
+
+        // === สร้าง dropdown ปี พ.ศ. แบบ dynamic ===
+        function initYearSelector() {
+            var sel = document.getElementById('bill_year');
+            var currentBE = now.getFullYear() + 543;
+            for (var y = currentBE; y >= currentBE - 3; y--) {
+                var opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                sel.appendChild(opt);
+            }
+        }
+        initYearSelector();
+        document.getElementById('bill_month').value = String(now.getMonth()+1).padStart(2,'0');
+
+        // === คำนวณวันกำหนดชำระ (วันทำการ) ===
+        async function calculateDueDate() {
+            try {
+                var result = await callBackendGet('getDueDate');
+                if (result && result.success && result.dueDate) {
+                    return result.dueDate;
+                }
+            } catch (e) { console.warn('getDueDate from backend failed:', e); }
+            // fallback คำนวณเอง
+            var adminDueDays = parseInt(localStorage.getItem('due_date_working_days')) || 15;
+            var today = new Date();
+            var count = 0;
+            var d = new Date(today);
+            while (count < adminDueDays) {
+                d.setDate(d.getDate() + 1);
+                var day = d.getDay();
+                if (day !== 0 && day !== 6) { count++; }
+            }
+            var dd = d.getDate();
+            var mm = THAI_MONTHS[d.getMonth()];
+            var yy = d.getFullYear() + 543;
+            return dd + ' ' + mm + ' ' + yy;
+        }
+
+        async function updateFooterNotes() {
+            var dueText = await calculateDueDate();
+            var footerText = 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ' + dueText;
+            document.getElementById('houseFooterNote').textContent = footerText;
+            document.getElementById('flatFooterNote').textContent = footerText;
+        }
+
+        function updateTableTitles(){
+            var mi = parseInt(document.getElementById('bill_month').value)-1;
+            var y = document.getElementById('bill_year').value;
+            document.getElementById('houseTableTitle').textContent = '🏠 บ้านพัก ประจำเดือน'+THAI_MONTHS[mi]+' พ.ศ. '+y;
+            document.getElementById('flatTableTitle').textContent = '🏢 แฟลต ประจำเดือน'+THAI_MONTHS[mi]+' พ.ศ. '+y;
+        }
+        document.getElementById('bill_month').addEventListener('change',updateTableTitles);
+        document.getElementById('bill_year').addEventListener('change',updateTableTitles);
+
+        // === แปลงเลขมิเตอร์เป็น 4 หลักท้าย ===
+        function last4(num) {
+            if (num == null) return '-';
+            var s = String(num);
+            return s.length > 4 ? s.slice(-4) : s;
+        }
+
+        // === ดึงข้อมูลจาก Backend ===
+        async function loadBillData(){
+            updateTableTitles();
+            await updateFooterNotes();
+            var month = document.getElementById('bill_month').value;
+            var yearBE = document.getElementById('bill_year').value;
+            var yearCE = parseInt(yearBE) - 543;
+            var period = yearCE + '-' + month;
+            var houses = [];
+            var flats = [];
+            try {
+                var result = await callBackendGet('getBillSummaryAll', { period: period });
+                if (result && result.success && result.data) {
+                    result.data.forEach(function(item) {
+                        var mapped = {
+                            number: item.houseNumber || item.house_number || '',
+                            residents: item.residents || item.occupantName || '',
+                            prevMeter: item.prevWaterMeter || item.prev_meter,
+                            currMeter: item.currWaterMeter || item.curr_meter,
+                            water: item.waterBill || item.water || 0,
+                            electric: item.electricBill || item.electric || 0,
+                            common: item.commonFee || item.common || 0
+                        };
+                        var num = mapped.number.toLowerCase();
+                        if (num.indexOf('แฟลต') >= 0 || num.indexOf('flat') >= 0) {
+                            flats.push(mapped);
+                        } else {
+                            houses.push(mapped);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('โหลดข้อมูลจาก Backend ไม่สำเร็จ:', e);
+            }
+            renderTable('houseTableBody', houses, 'house');
+            renderTable('flatTableBody', flats, 'flat');
+        }
+
+        function renderTable(tbodyId,dataArray,type){
+            var tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            if (dataArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:1.5rem;">ไม่มีข้อมูล — กรุณาเชื่อมต่อ Backend หรือบันทึกค่าน้ำ/ค่าไฟก่อน</td></tr>';
+                return;
+            }
+            for(var i=0;i<dataArray.length;i++){
+                var item=dataArray[i];
+                var commonVal = item.common || 0;
+                var rt=(item.water||0)+(item.electric||0)+commonVal;
+                var parts=(item.residents||'').split('\n');
+                var rd='';
+                for(var j=0;j<parts.length;j++){var r=parts[j].trim();if(r){if(rd)rd+='<br>';rd+=r;}}
+                var md=(item.prevMeter!=null&&item.currMeter!=null)
+                    ? last4(item.prevMeter)+' - '+last4(item.currMeter) : '-';
+                var tr=document.createElement('tr');
+                tr.setAttribute('data-index', i);
+                tr.setAttribute('data-type', type);
+                tr.innerHTML=
+                    '<td class="col-no">'+item.number+'</td>'+
+                    '<td class="col-resident">'+rd+'</td>'+
+                    '<td class="col-meter">'+md+'</td>'+
+                    '<td class="amount-value">'+(item.water?item.water.toLocaleString():'-')+'</td>'+
+                    '<td class="amount-value">'+(item.electric?item.electric.toLocaleString():'-')+'</td>'+
+                    '<td class="amount-value"><div class="common-cell">'+
+                        '<input type="number" class="common-input" value="'+commonVal+'" min="0" onchange="recalcRow(this)" data-original="'+commonVal+'">'+
+                        '<button class="exempt-btn" title="ยกเว้นค่าส่วนกลาง" onclick="toggleExempt(this)"></button>'+
+                    '</div></td>'+
+                    '<td class="total-value">'+rt.toLocaleString()+'</td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        function recalcRow(input) {
+            var tr = input.closest('tr');
+            var cells = tr.querySelectorAll('td');
+            var water = parseFloat((cells[3].textContent||'0').replace(/,/g,'')) || 0;
+            var electric = parseFloat((cells[4].textContent||'0').replace(/,/g,'')) || 0;
+            var common = parseFloat(input.value) || 0;
+            var total = water + electric + common;
+            cells[6].textContent = total.toLocaleString();
+        }
+
+        function toggleExempt(btn) {
+            var tr = btn.closest('tr');
+            var input = tr.querySelector('.common-input');
+            if (btn.classList.contains('exempted')) {
+                btn.classList.remove('exempted');
+                btn.title = 'ยกเว้นค่าส่วนกลาง';
+                btn.textContent = '';
+                tr.classList.remove('exempted-row');
+                input.value = input.getAttribute('data-original');
+                input.disabled = false;
+            } else {
+                btn.classList.add('exempted');
+                btn.title = 'ยกเลิกการยกเว้น';
+                btn.textContent = '';
+                tr.classList.add('exempted-row');
+                input.value = 0;
+                input.disabled = true;
+            }
+            recalcRow(input);
+        }
+
+        function saveAsImage(captureId,type){
+            var overlay=document.getElementById('loadingOverlay');
+            overlay.classList.add('show');
+            var element=document.getElementById(captureId);
+            var month=document.getElementById('bill_month').value;
+            var year=document.getElementById('bill_year').value;
+            var monthName=THAI_MONTHS[parseInt(month)-1];
+            var typeName=type==='house'?'บ้านพัก':'แฟลต';
+            var fileName='แจ้งยอดชำระ_'+typeName+'_'+monthName+'_'+year+'.png';
+            html2canvas(element,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:1200}).then(function(canvas){
+                overlay.classList.remove('show');
+                var link=document.createElement('a');
+                link.download=fileName;
+                link.href=canvas.toDataURL('image/png');
+                link.click();
+                var msg=document.getElementById('successMessage');
+                msg.textContent='บันทึกรูปภาพ "'+typeName+'" สำเร็จ!';
+                msg.classList.add('show');
+                setTimeout(function(){msg.classList.remove('show');},3000);
+            }).catch(function(err){
+                overlay.classList.remove('show');
+                alert('เกิดข้อผิดพลาด: '+err.message);
+            });
+        }
+
+        window.onload = async function(){
+            await checkSession();
+            updateTableTitles();
+            await updateFooterNotes();
+            await loadBillData();
+        };
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

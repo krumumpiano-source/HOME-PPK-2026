@@ -1,0 +1,1305 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ตรวจสลิปการชำระเงิน | HOME PPK 2026</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+
+    :root{
+      --bg:#f8fafc;
+      --surface:#ffffff;
+      --border:#e5e7eb;
+      --text:#0f172a;
+      --muted:#64748b;
+      --thead:#e2e8f0;
+      --hover:#f1f5f9;
+      --shadow:0 8px 24px rgba(15,23,42,.06);
+      --primary:#2563eb;
+      --success:#10b981;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+    }
+
+    *{box-sizing:border-box;}
+    body{margin:0;min-height:100vh;font-family:'Kanit',sans-serif;background:var(--bg);color:var(--text);}
+
+    .sidebar{position:fixed;top:0;left:0;height:100vh;width:62px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:1.2rem .3rem;transition:width .2s;z-index:100;}
+    .sidebar.expanded{width:280px;align-items:flex-start;padding-left:.7rem;}
+    .sidebar-toggle{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1.3rem;cursor:pointer;align-self:flex-end;margin-bottom:1rem;}
+    .sidebar-toggle:hover{background:var(--hover);}
+    .sidebar-menu{display:flex;flex-direction:column;gap:.2rem;width:100%;flex:1;}
+    .sidebar-link{display:flex;align-items:center;gap:.9rem;width:100%;padding:.55rem;border-radius:10px;border:1px solid transparent;background:none;color:var(--text);font:inherit;font-size:1.02rem;cursor:pointer;text-align:left;transition:background .15s,border-color .15s;}
+    .sidebar-link:hover,.sidebar-link.active{background:var(--hover);border-color:var(--border);}
+    .sidebar-link-icon{font-size:1.2rem;min-width:1.5em;text-align:center;}
+    .sidebar-label{display:none;font-size:.98rem;line-height:1.3;white-space:normal;word-wrap:break-word;}
+    .sidebar.expanded .sidebar-label{display:inline;}
+
+    @media (max-width:600px){
+      .sidebar{width:48px;}
+      .sidebar.expanded{width:160px;}
+    }
+
+    .dashboard-container{margin-left:62px;min-height:100vh;padding:2rem;display:flex;flex-direction:column;gap:1.2rem;align-items:center;transition:margin-left .2s;}
+    .sidebar.expanded ~ .dashboard-container{margin-left:280px;}
+    @media (max-width:600px){
+      .dashboard-container{margin-left:48px;padding:1.2rem .6rem;}
+      .sidebar.expanded ~ .dashboard-container{margin-left:160px;}
+    }
+
+    .back-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);font:inherit;font-weight:700;cursor:pointer;}
+    .back-btn:hover{background:var(--hover);}
+
+    .page-header{width:100%;max-width:1200px;display:flex;justify-content:center;}
+    .page-header h2{margin:0;font-size:2rem;font-weight:700;}
+
+    .section{width:100%;max-width:1200px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:var(--shadow);}
+    .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.9rem;}
+    .section-title{margin:0;font-size:1.15rem;font-weight:700;}
+    .section-subtitle{margin-top:.25rem;font-size:.92rem;color:var(--muted);}
+
+    .controls-row{display:flex;gap:1rem;flex-wrap:wrap;}
+    .form-group{flex:1;min-width:200px;}
+    .form-group label{display:block;margin-bottom:.4rem;font-size:.95rem;font-weight:700;}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:10px;font:inherit;background:#fff;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#cbd5e1;box-shadow:0 0 0 3px rgba(148,163,184,.18);}
+
+    .btn{padding:.55rem .9rem;border-radius:10px;border:1px solid var(--border);background:#fff;font:inherit;font-size:.98rem;font-weight:700;cursor:pointer;transition:all .2s;}
+    .btn:hover{background:var(--hover);}
+    .btn:disabled{opacity:.55;cursor:not-allowed;}
+    .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+    .btn-primary:hover{background:#1d4ed8;}
+    .btn-success{background:var(--success);color:#fff;border-color:var(--success);}
+    .btn-success:hover{background:#059669;}
+    .btn-warning{background:var(--warning);color:#fff;border-color:var(--warning);}
+    .btn-warning:hover{background:#d97706;}
+    .btn-danger{background:var(--danger);color:#fff;border-color:var(--danger);}
+    .btn-danger:hover{background:#dc2626;}
+    .btn-sm{padding:.35rem .6rem;font-size:.85rem;border-radius:8px;}
+
+    .table-container{position:relative;overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;}
+    thead th{background:var(--thead);border:1px solid var(--border);padding:.75rem .6rem;font-size:.95rem;text-align:center;}
+    tbody td{border:1px solid var(--border);padding:.6rem .6rem;font-size:.95rem;text-align:center;vertical-align:middle;}
+    tbody tr:hover{background:var(--hover);}
+
+    .status-badge{display:inline-block;padding:.25rem .6rem;border-radius:20px;font-size:.85rem;font-weight:600;}
+    .status-match{background:#d1fae5;color:#065f46;}
+    .status-mismatch{background:#fee2e2;color:#991b1b;}
+    .status-pending{background:#fef3c7;color:#92400e;}
+    .status-unpaid{background:#f3f4f6;color:#6b7280;}
+    .status-approved{background:#dbeafe;color:#1e40af;}
+
+    .slip-thumb{width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;}
+    .slip-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,.15);}
+    .no-slip{color:var(--muted);font-size:.85rem;}
+
+    .action-btns{display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap;}
+
+    .summary-box{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:1rem;padding:1rem;background:#f1f5f9;border-radius:10px;}
+    .summary-item{text-align:center;flex:1;min-width:100px;}
+    .summary-label{font-size:.85rem;color:var(--muted);margin-bottom:.25rem;}
+    .summary-value{font-size:1.5rem;font-weight:700;}
+    .summary-value.success{color:var(--success);}
+    .summary-value.warning{color:var(--warning);}
+    .summary-value.danger{color:var(--danger);}
+    .summary-value.primary{color:var(--primary);}
+
+    .action-buttons{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;}
+
+    .footer-note{text-align:center;margin-top:.4rem;font-size:.95rem;color:#94a3b8;}
+
+    .empty-row{padding:1.2rem .6rem;color:var(--muted);text-align:center;}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;justify-content:center;align-items:center;}
+    .modal-overlay.show{display:flex;}
+    .modal-content{background:#fff;border-radius:16px;padding:1.5rem;max-width:600px;width:95%;max-height:90vh;overflow-y:auto;position:relative;}
+    .modal-close{position:absolute;top:1rem;right:1rem;width:32px;height:32px;border-radius:50%;border:none;background:var(--danger);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .modal-title{font-size:1.3rem;font-weight:700;margin-bottom:1rem;padding-right:2.5rem;}
+    .modal-body{margin-bottom:1rem;}
+    .modal-actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;}
+
+    .slip-gallery{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+    .slip-gallery img{max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);}
+
+    .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem 1rem;}
+    .info-item{display:flex;justify-content:space-between;padding:.5rem;background:#f8fafc;border-radius:6px;}
+    .info-label{color:var(--muted);font-size:.9rem;}
+    .info-value{font-weight:600;}
+
+    .amount-compare{display:flex;gap:1rem;margin:1rem 0;justify-content:center;flex-wrap:wrap;}
+    .amount-box{text-align:center;padding:1rem;border-radius:10px;min-width:120px;flex:1;}
+    .amount-box.notified{background:#dbeafe;border:2px solid var(--primary);}
+    .amount-box.paid{background:#d1fae5;border:2px solid var(--success);}
+    .amount-box.diff{background:#fee2e2;border:2px solid var(--danger);}
+    .amount-label{font-size:.85rem;color:var(--muted);margin-bottom:.3rem;}
+    .amount-value{font-size:1.5rem;font-weight:700;}
+
+    @media (max-width:900px){
+      .info-grid{grid-template-columns:1fr;}
+    }
+    @media (max-width:600px){
+      .section-head{flex-direction:column;align-items:stretch;}
+      .controls-row{flex-direction:column;}
+      .btn{width:100%;}
+      .action-buttons{flex-direction:column;}
+      .amount-compare{flex-direction:column;}
+    }
+
+    @media print{
+      .sidebar,.back-btn,.action-buttons{display:none !important;}
+      .dashboard-container{margin-left:0 !important;padding:1rem !important;}
+      .section{box-shadow:none;border:1px solid #ccc;}
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู" aria-label="ขยาย/ย่อเมนู">☰</button>
+    <nav class="sidebar-menu">
+      <button class="sidebar-link" title="แดชบอร์ด" onclick="navigate('?page=dashboard')">
+        <span class="sidebar-link-icon">🏠</span><span class="sidebar-label">แดชบอร์ด</span>
+      </button>
+      <button class="sidebar-link" title="ข้อมูลการชำระย้อนหลัง" onclick="navigate('?page=payment-history')">
+        <span class="sidebar-link-icon">💸</span><span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+      </button>
+      <button class="sidebar-link" title="แบบฟอร์มคำร้อง" onclick="navigate('?page=form')">
+        <span class="sidebar-link-icon">📝</span><span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+      </button>
+      <button class="sidebar-link" title="ระเบียบ" onclick="navigate('?page=regulations')">
+        <span class="sidebar-link-icon">📚</span><span class="sidebar-label">ระเบียบ</span>
+      </button>
+      <button class="sidebar-link" title="ตั้งค่าส่วนตัว" onclick="navigate('?page=settings')">
+        <span class="sidebar-link-icon">⚙️</span><span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+      </button>
+      <button class="sidebar-link active" title="โปรแกรมจัดการคณะทำงาน" onclick="navigate('?page=team-management')">
+        <span class="sidebar-link-icon">👥</span><span class="sidebar-label">โปรแกรมจัดการคณะทำงาน</span>
+      </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+    </nav>
+  </div>
+
+  <div class="dashboard-container" id="dashboardContainer">
+    <button class="back-btn" onclick="navigate('?page=team-management')">← กลับ</button>
+
+    <div class="page-header"><h2>🧾 ตรวจสลิปการชำระเงิน</h2></div>
+
+    <!-- ตัวเลือกรอบบิล -->
+    <div class="section" id="controlsSection">
+      <div class="section-head">
+        <div>
+          <div class="section-title">📅 รอบบิล</div>
+          <div class="section-subtitle">เลือกเดือน/ปี เพื่อตรวจสอบสลิปการชำระ</div>
+        </div>
+      </div>
+      <div class="controls-row">
+        <div class="form-group">
+          <label for="bill_month">เดือน</label>
+          <select id="bill_month"></select>
+        </div>
+        <div class="form-group">
+          <label for="bill_year">ปี พ.ศ.</label>
+          <select id="bill_year"></select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end;">
+          <button class="btn btn-primary" onclick="loadSlipData()">🔍 โหลดข้อมูล</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ตารางบ้านพัก -->
+    <div class="section" id="section-houses">
+      <div class="section-head">
+        <div>
+          <div class="section-title">🏠 บ้านพัก</div>
+          <div class="section-subtitle">ตรวจสอบการชำระเงินของบ้านพัก</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="table-houses">
+          <thead>
+            <tr>
+              <th style="width:50px;">ลำดับ</th>
+              <th style="width:100px;">เลขที่บ้าน</th>
+              <th>ชื่อผู้พัก</th>
+              <th style="width:100px;">ยอดที่แจ้ง</th>
+              <th style="width:100px;">ยอดที่ชำระ</th>
+              <th style="width:80px;">สถานะ</th>
+              <th style="width:70px;">สลิป</th>
+              <th style="width:180px;">การดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-houses"></tbody>
+        </table>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-item">
+          <div class="summary-label">ชำระแล้ว (ตรง)</div>
+          <div class="summary-value success" id="houses-match">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">ยอดไม่ตรง</div>
+          <div class="summary-value warning" id="houses-mismatch">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">รอตรวจ</div>
+          <div class="summary-value primary" id="houses-pending">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">ยังไม่ชำระ</div>
+          <div class="summary-value danger" id="houses-unpaid">0</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-success" onclick="sendAllReceipts('houses')">📧 ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)</button>
+        <button class="btn btn-warning" onclick="sendReminder('houses')">📧 ส่งอีเมลเตือนรายที่ยังไม่ชำระ</button>
+      </div>
+    </div>
+
+    <!-- ตารางแฟลต -->
+    <div class="section" id="section-flats">
+      <div class="section-head">
+        <div>
+          <div class="section-title">🏢 แฟลต</div>
+          <div class="section-subtitle">ตรวจสอบการชำระเงินของแฟลต</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="table-flats">
+          <thead>
+            <tr>
+              <th style="width:50px;">ลำดับ</th>
+              <th style="width:100px;">เลขที่ห้อง</th>
+              <th>ชื่อผู้พัก</th>
+              <th style="width:100px;">ยอดที่แจ้ง</th>
+              <th style="width:100px;">ยอดที่ชำระ</th>
+              <th style="width:80px;">สถานะ</th>
+              <th style="width:70px;">สลิป</th>
+              <th style="width:180px;">การดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-flats"></tbody>
+        </table>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-item">
+          <div class="summary-label">ชำระแล้ว (ตรง)</div>
+          <div class="summary-value success" id="flats-match">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">ยอดไม่ตรง</div>
+          <div class="summary-value warning" id="flats-mismatch">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">รอตรวจ</div>
+          <div class="summary-value primary" id="flats-pending">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">ยังไม่ชำระ</div>
+          <div class="summary-value danger" id="flats-unpaid">0</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-success" onclick="sendAllReceipts('flats')">📧 ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)</button>
+        <button class="btn btn-warning" onclick="sendReminder('flats')">📧 ส่งอีเมลเตือนรายที่ยังไม่ชำระ</button>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br />
+      งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+    </div>
+  </div>
+
+  <!-- Modal ดูรายละเอียด -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div class="modal-title" id="modalTitle">รายละเอียดการชำระ</div>
+      <div class="modal-body">
+        <div class="info-grid" id="modalInfo"></div>
+        <div class="amount-compare" id="amountCompare"></div>
+        <div class="slip-gallery" id="slipGallery"></div>
+      </div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <!-- Modal บันทึกการชำระด้วยตนเอง -->
+  <div class="modal-overlay" id="manualPayModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeManualPayModal()">×</button>
+      <div class="modal-title">💵 บันทึกการชำระด้วยตนเอง</div>
+      <div class="modal-body">
+        <div class="info-grid" id="manualPayInfo"></div>
+        <div class="form-group" style="margin-top:1rem;">
+          <label for="manualPayAmount">ยอดที่ชำระ (บาท):</label>
+          <input type="number" id="manualPayAmount" min="0" step="0.01" placeholder="กรอกยอดเงินที่รับชำระ" />
+        </div>
+        <div class="form-group">
+          <label for="manualPayNote">หมายเหตุ (ถ้ามี):</label>
+          <textarea id="manualPayNote" rows="2" placeholder="บันทึกเพิ่มเติม เช่น ชื่อผู้รับเงิน"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-success" onclick="saveManualPayment()">✓ บันทึกและอนุมัติ</button>
+        <button class="btn" onclick="closeManualPayModal()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ API Configuration ============
+    var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+    async function callBackend(action, data = {}) {
+      const token = localStorage.getItem('sessionToken');
+      const payload = { action, token, ...data };
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload), redirect: 'follow'
+        });
+        const text = await response.text();
+        const result = JSON.parse(text);
+        if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return; }
+        return result;
+      } catch (err) { console.error('Backend error:', err); throw new Error('ไม่สามารถเชื่อมต่อระบบได้'); }
+    }
+
+    async function callBackendGet(action, params = {}) {
+      if (!WEB_APP_URL) return null;
+      const token = localStorage.getItem('sessionToken');
+      const q = new URLSearchParams({ action, token, ...params }).toString();
+      const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+      return res.json();
+    }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+    async function checkSession() {
+      const token = localStorage.getItem('sessionToken');
+      if (!token) { window.navigate('?page=login'); return null; }
+      if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+      try {
+        const result = await callBackendGet('getCurrentUser');
+        if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+        return result.user;
+      } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+    }
+
+    let housesData = [];
+    let flatsData = [];
+    let currentUnit = null;
+    let currentUserData = null;
+    let cachedAdminSettings = {};
+
+    const THAI_MONTHS = [
+      'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
+    ];
+
+    function toBuddhistYear(adYear){ return Number(adYear) + 543; }
+
+    function getSelectedPeriod(){
+      const month = document.getElementById('bill_month').value;
+      const year = document.getElementById('bill_year').value;
+      const idx = Math.max(0, Math.min(11, Number(month) - 1));
+      return { month, year, monthName: THAI_MONTHS[idx], key: year + month };
+    }
+
+    function formatMoney(v){
+      const n = Number(v);
+      return Number.isFinite(n) ? n.toLocaleString('th-TH') : '0';
+    }
+
+    // โหลดข้อมูลสลิปและเปรียบเทียบกับยอดแจ้ง
+    async function loadSlipData(){
+      const { month, year, key } = getSelectedPeriod();
+      const period = year + '-' + month;
+
+      housesData = [];
+      flatsData = [];
+
+      // ลอง Backend ก่อน
+      if (WEB_APP_URL) {
+        try {
+          // ดึงยอดแจ้งจาก BillSummaryAll
+          const billResult = await callBackendGet('getBillSummaryAll', { period });
+          const billData = (billResult && billResult.success) ? (billResult.data || []) : [];
+
+          // ดึงสลิปที่ส่งมา
+          const slipResult = await callBackendGet('getSlipSubmissions', { period });
+          const slipData = (slipResult && slipResult.success) ? (slipResult.data || []) : [];
+
+          // รวมข้อมูล
+          billData.forEach((bill, idx) => {
+            const unitNumber = String(bill.house_number || '');
+            const slip = slipData.find(s => String(s.house_number) === unitNumber) || null;
+
+            const unitData = {
+              id: idx + 1,
+              unitNumber: unitNumber,
+              name: bill.resident_name || '',
+              email: bill.email || '',
+              waterAmount: parseFloat(bill.water_amount) || 0,
+              electricAmount: parseFloat(bill.electric_amount) || 0,
+              commonFee: parseFloat(bill.common_fee) || 0,
+              notifiedAmount: parseFloat(bill.total_amount || 0) || ((parseFloat(bill.water_amount)||0) + (parseFloat(bill.electric_amount)||0) + (parseFloat(bill.common_fee)||0)),
+              paidAmount: slip ? parseFloat(slip.paid_amount) || 0 : null,
+              slipImages: [],
+              slipDate: slip ? (slip.submitted_at || null) : null,
+              slipId: slip ? slip.id : null,
+              approval: slip && (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
+              noResident: false
+            };
+
+            // ดึง URL รูปสลิป
+            if (slip && slip.slip_file_ids) {
+              String(slip.slip_file_ids).split(',').forEach(fid => {
+                fid = fid.trim();
+                if (fid) unitData.slipImages.push('https://drive.google.com/thumbnail?id=' + fid + '&sz=w800');
+              });
+            }
+
+            if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
+              flatsData.push(unitData);
+            } else {
+              housesData.push(unitData);
+            }
+          });
+
+          // เพิ่มรายการที่ส่งสลิปมาแต่ไม่อยู่ใน BillSummaryAll
+          slipData.forEach(slip => {
+            const unitNumber = String(slip.house_number || '');
+            const alreadyInBill = housesData.concat(flatsData).find(u => u.unitNumber === unitNumber);
+            if (!alreadyInBill) {
+              const unitData = {
+                id: housesData.length + flatsData.length + 1,
+                unitNumber: unitNumber,
+                name: slip.resident_name || '',
+                email: slip.email || '',
+                waterAmount: 0, electricAmount: 0, commonFee: 0,
+                notifiedAmount: parseFloat(slip.notified_amount) || 0,
+                paidAmount: parseFloat(slip.paid_amount) || 0,
+                slipImages: [],
+                slipDate: slip.submitted_at || null,
+                slipId: slip.id || null,
+                approval: (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
+                noResident: false
+              };
+              if (slip.slip_file_ids) {
+                String(slip.slip_file_ids).split(',').forEach(fid => {
+                  fid = fid.trim();
+                  if (fid) unitData.slipImages.push('https://drive.google.com/thumbnail?id=' + fid + '&sz=w800');
+                });
+              }
+              if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
+                flatsData.push(unitData);
+              } else {
+                housesData.push(unitData);
+              }
+            }
+          });
+
+          if (housesData.length > 0 || flatsData.length > 0) {
+            renderAll();
+            return;
+          }
+        } catch (e) { console.error('loadSlipData backend error:', e); }
+      }
+
+      // ── Fallback: localStorage ──
+
+      // ดึงข้อมูลผู้พักอาศัย
+      const residentsData = JSON.parse(localStorage.getItem('residentsData') || '[]');
+      
+      // ดึงข้อมูลค่าน้ำ ค่าไฟ
+      const waterData = JSON.parse(localStorage.getItem('waterBill_' + key) || '{}');
+      const waterRecords = waterData.records || [];
+      const electricData = JSON.parse(localStorage.getItem('electricBill_' + key) || '{}');
+      const electricRecords = electricData.records || [];
+      
+      // ดึงข้อมูลสลิปที่ส่งมา
+      const slipSubmissions = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
+      
+      // ดึงข้อมูลสถานะการอนุมัติ
+      const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
+
+      // ค่าส่วนกลาง
+      const commonFeeRate = Number(localStorage.getItem('commonFee') || '110');
+
+      housesData = [];
+      flatsData = [];
+
+      // รวมข้อมูลทั้งหมด
+      residentsData.forEach((resident, idx) => {
+        const unitNumber = resident.house_number || '';
+        
+        // ค้นหาข้อมูลค่าน้ำ ค่าไฟ
+        const waterRecord = waterRecords.find(w => w.house === unitNumber) || {};
+        const electricRecord = electricRecords.find(e => e.house === unitNumber) || {};
+        
+        // คำนวณยอดที่แจ้ง
+        const waterAmount = parseFloat(waterRecord.amount) || 0;
+        const electricAmount = parseFloat(electricRecord.amount) || 0;
+        const commonFee = resident.no_resident ? 0 : commonFeeRate;
+        const notifiedAmount = waterAmount + electricAmount + commonFee;
+        
+        // ค้นหาข้อมูลสลิปที่ส่งมา
+        const slipData = slipSubmissions.find(s => s.unitNumber === unitNumber) || null;
+        const paidAmount = slipData ? parseFloat(slipData.paidAmount) || 0 : null;
+        const slipImages = slipData ? (slipData.slipImages || []) : [];
+        const slipDate = slipData ? slipData.submittedAt : null;
+        
+        // ตรวจสอบสถานะการอนุมัติ
+        const approval = slipApprovals[unitNumber] || null;
+
+        const unitData = {
+          id: idx + 1,
+          unitNumber: unitNumber,
+          name: resident.resident || '',
+          email: resident.email || '',
+          waterAmount: waterAmount,
+          electricAmount: electricAmount,
+          commonFee: commonFee,
+          notifiedAmount: notifiedAmount,
+          paidAmount: paidAmount,
+          slipImages: slipImages,
+          slipDate: slipDate,
+          approval: approval,
+          noResident: resident.no_resident || false
+        };
+
+        if(unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')){
+          flatsData.push(unitData);
+        } else {
+          housesData.push(unitData);
+        }
+      });
+
+      // ถ้าไม่มีข้อมูลผู้พักอาศัย ให้ดึงจากบันทึกค่าน้ำ
+      if(housesData.length === 0 && flatsData.length === 0){
+        waterRecords.forEach((w, idx) => {
+          const unitNumber = w.house || '';
+          const eRecord = electricRecords.find(e => e.house === unitNumber) || {};
+          
+          const waterAmount = parseFloat(w.amount) || 0;
+          const electricAmount = parseFloat(eRecord.amount) || 0;
+          const notifiedAmount = waterAmount + electricAmount + commonFeeRate;
+          
+          const slipData = slipSubmissions.find(s => s.unitNumber === unitNumber) || null;
+          const paidAmount = slipData ? parseFloat(slipData.paidAmount) || 0 : null;
+          const slipImages = slipData ? (slipData.slipImages || []) : [];
+          const slipDate = slipData ? slipData.submittedAt : null;
+          
+          const approval = slipApprovals[unitNumber] || null;
+
+          const unitData = {
+            id: idx + 1,
+            unitNumber: unitNumber,
+            name: w.resident || '',
+            email: '',
+            waterAmount: waterAmount,
+            electricAmount: electricAmount,
+            commonFee: commonFeeRate,
+            notifiedAmount: notifiedAmount,
+            paidAmount: paidAmount,
+            slipImages: slipImages,
+            slipDate: slipDate,
+            approval: approval,
+            noResident: false
+          };
+
+          if(unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')){
+            flatsData.push(unitData);
+          } else {
+            housesData.push(unitData);
+          }
+        });
+      }
+
+      renderAll();
+    }
+
+    // ตรวจสอบสถานะ
+    function getStatus(unit){
+      if(unit.noResident) return 'no-resident';
+      if(unit.approval && unit.approval.status === 'approved') return 'approved';
+      if(unit.paidAmount === null) return 'unpaid';
+      if(unit.paidAmount === unit.notifiedAmount) return 'match';
+      if(unit.paidAmount !== unit.notifiedAmount) return 'mismatch';
+      return 'pending';
+    }
+
+    function getStatusBadge(status){
+      const badges = {
+        'match': '<span class="status-badge status-match">✓ ตรง</span>',
+        'mismatch': '<span class="status-badge status-mismatch">✗ ไม่ตรง</span>',
+        'pending': '<span class="status-badge status-pending">⏳ รอตรวจ</span>',
+        'unpaid': '<span class="status-badge status-unpaid">○ ยังไม่ชำระ</span>',
+        'approved': '<span class="status-badge status-approved">✓ อนุมัติแล้ว</span>',
+        'no-resident': '<span class="status-badge status-unpaid">- ไม่มีผู้พัก</span>'
+      };
+      return badges[status] || '';
+    }
+
+    function renderTable(type){
+      const tbody = document.getElementById(type === 'houses' ? 'tbody-houses' : 'tbody-flats');
+      const list = type === 'houses' ? housesData : flatsData;
+      tbody.innerHTML = '';
+
+      let countMatch = 0, countMismatch = 0, countPending = 0, countUnpaid = 0;
+
+      if(!Array.isArray(list) || list.length === 0){
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 8;
+        td.className = 'empty-row';
+        td.textContent = 'ยังไม่มีข้อมูล - กรุณาเลือกเดือน/ปี แล้วกดโหลดข้อมูล';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      list.forEach((unit, index) => {
+        const tr = document.createElement('tr');
+        const status = getStatus(unit);
+
+        // นับสถานะ
+        if(status === 'match' || status === 'approved') countMatch++;
+        else if(status === 'mismatch') countMismatch++;
+        else if(status === 'pending') countPending++;
+        else if(status === 'unpaid') countUnpaid++;
+
+        // สลิป thumbnail
+        let slipHtml = '<span class="no-slip">-</span>';
+        if(unit.slipImages && unit.slipImages.length > 0){
+          slipHtml = '<img src="' + unit.slipImages[0] + '" class="slip-thumb" onclick="viewDetail(\'' + type + '\',' + index + ')" alt="สลิป" />';
+        }
+
+        // ปุ่มการดำเนินการ
+        let actionsHtml = '';
+        if(unit.noResident){
+          actionsHtml = '<span style="color:var(--muted);font-size:.85rem;">ไม่มีผู้พัก</span>';
+        } else if(status === 'approved'){
+          actionsHtml = '<div class="action-btns">' +
+            '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
+            '<button class="btn btn-sm btn-success" onclick="sendReceiptEmail(\'' + type + '\',' + index + ')" title="ส่งใบเสร็จทางอีเมล">📧 ส่งใบเสร็จ</button>' +
+          '</div>';
+        } else if(status === 'unpaid'){
+          actionsHtml = '<div class="action-btns">' +
+            '<button class="btn btn-sm btn-primary" onclick="showManualPayment(\'' + type + '\',' + index + ')" title="บันทึกการชำระด้วยตนเอง">💵 บันทึก</button>' +
+            '<button class="btn btn-sm btn-warning" onclick="showReminder(\'' + type + '\',' + index + ')" title="ส่งอีเมลเตือน">📧 เตือน</button>' +
+          '</div>';
+        } else {
+          actionsHtml = '<div class="action-btns">' +
+            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
+            '<button class="btn btn-sm btn-success" onclick="approvePayment(\'' + type + '\',' + index + ')">✓</button>' +
+          '</div>';
+        }
+
+        tr.innerHTML = '<td>' + (index + 1) + '</td>' +
+          '<td style="font-weight:700;">' + unit.unitNumber + '</td>' +
+          '<td style="text-align:left;">' + (unit.name || '-') + '</td>' +
+          '<td>' + formatMoney(unit.notifiedAmount) + '</td>' +
+          '<td>' + (unit.paidAmount !== null ? formatMoney(unit.paidAmount) : '-') + '</td>' +
+          '<td>' + getStatusBadge(status) + '</td>' +
+          '<td>' + slipHtml + '</td>' +
+          '<td>' + actionsHtml + '</td>';
+
+        tbody.appendChild(tr);
+      });
+
+      // อัปเดตสรุป
+      document.getElementById(type + '-match').textContent = countMatch;
+      document.getElementById(type + '-mismatch').textContent = countMismatch;
+      document.getElementById(type + '-pending').textContent = countPending;
+      document.getElementById(type + '-unpaid').textContent = countUnpaid;
+    }
+
+    function renderAll(){
+      renderTable('houses');
+      renderTable('flats');
+    }
+
+    // ดูรายละเอียด
+    function viewDetail(type, index){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit) return;
+
+      currentUnit = { type, index, data: unit };
+
+      document.getElementById('modalTitle').textContent = '📋 รายละเอียด: ' + unit.unitNumber;
+
+      // ข้อมูลทั่วไป
+      const infoHtml = `
+        <div class="info-item"><span class="info-label">เลขที่:</span><span class="info-value">${unit.unitNumber}</span></div>
+        <div class="info-item"><span class="info-label">ชื่อผู้พัก:</span><span class="info-value">${unit.name || '-'}</span></div>
+        <div class="info-item"><span class="info-label">ค่าน้ำ:</span><span class="info-value">${formatMoney(unit.waterAmount)} บาท</span></div>
+        <div class="info-item"><span class="info-label">ค่าไฟ:</span><span class="info-value">${formatMoney(unit.electricAmount)} บาท</span></div>
+        <div class="info-item"><span class="info-label">ค่าส่วนกลาง:</span><span class="info-value">${formatMoney(unit.commonFee)} บาท</span></div>
+        <div class="info-item"><span class="info-label">วันที่ส่งสลิป:</span><span class="info-value">${unit.slipDate ? new Date(unit.slipDate).toLocaleString('th-TH') : '-'}</span></div>
+      `;
+      document.getElementById('modalInfo').innerHTML = infoHtml;
+
+      // เปรียบเทียบยอด
+      const diff = unit.paidAmount !== null ? unit.paidAmount - unit.notifiedAmount : 0;
+      let diffClass = diff === 0 ? '' : 'diff';
+      const amountHtml = `
+        <div class="amount-box notified">
+          <div class="amount-label">ยอดที่แจ้ง</div>
+          <div class="amount-value">${formatMoney(unit.notifiedAmount)}</div>
+        </div>
+        <div class="amount-box paid">
+          <div class="amount-label">ยอดที่ชำระ</div>
+          <div class="amount-value">${unit.paidAmount !== null ? formatMoney(unit.paidAmount) : '-'}</div>
+        </div>
+        ${diff !== 0 ? `<div class="amount-box diff">
+          <div class="amount-label">ส่วนต่าง</div>
+          <div class="amount-value">${diff > 0 ? '+' : ''}${formatMoney(diff)}</div>
+        </div>` : ''}
+      `;
+      document.getElementById('amountCompare').innerHTML = amountHtml;
+
+      // แสดงสลิป
+      let galleryHtml = '';
+      if(unit.slipImages && unit.slipImages.length > 0){
+        unit.slipImages.forEach(img => {
+          galleryHtml += `<img src="${img}" alt="สลิป" onclick="window.open('${img}','_blank')" style="cursor:pointer;" />`;
+        });
+      } else {
+        galleryHtml = '<p style="color:var(--muted);text-align:center;">ไม่มีรูปสลิป</p>';
+      }
+      document.getElementById('slipGallery').innerHTML = galleryHtml;
+
+      // ปุ่มการดำเนินการ
+      const status = getStatus(unit);
+      let actionsHtml = '';
+      if(status === 'approved'){
+        actionsHtml = '<span style="color:var(--success);">✓ อนุมัติการชำระแล้ว</span>';
+      } else if(unit.paidAmount !== null) {
+        actionsHtml = `
+          <button class="btn btn-success" onclick="approvePayment('${type}',${index});closeModal();">✓ อนุมัติ (ส่งใบเสร็จ)</button>
+        `;
+      }
+      actionsHtml += '<button class="btn" onclick="closeModal()">ปิด</button>';
+      document.getElementById('modalActions').innerHTML = actionsHtml;
+
+      document.getElementById('detailModal').classList.add('show');
+    }
+
+    function closeModal(){
+      document.getElementById('detailModal').classList.remove('show');
+      currentUnit = null;
+    }
+
+    // อนุมัติการชำระ
+    async function approvePayment(type, index){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit) return;
+      
+      if(!confirm(`ยืนยันอนุมัติการชำระเงินของ ${unit.unitNumber} (${unit.name})?\nยอดที่ชำระ: ${formatMoney(unit.paidAmount)} บาท`)){
+        return;
+      }
+
+      // ส่ง Backend ก่อน
+      if (WEB_APP_URL && unit.slipId) {
+        try {
+          const result = await callBackend('reviewSlip', {
+            slipId: unit.slipId,
+            status: 'approved',
+            note: ''
+          });
+          if (result && result.success) {
+            unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
+            alert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+            renderTable(type);
+            return;
+          } else {
+            alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่สามารถอนุมัติได้'));
+            return;
+          }
+        } catch (e) { console.error('approvePayment backend error:', e); }
+      }
+
+      // Fallback: localStorage
+      const { key } = getSelectedPeriod();
+      const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
+      
+      slipApprovals[unit.unitNumber] = {
+        status: 'approved',
+        approvedAt: new Date().toISOString(),
+        approvedBy: (currentUserData && currentUserData.fullname) || 'ผู้ดูแลระบบ',
+        paidAmount: unit.paidAmount,
+        notifiedAmount: unit.notifiedAmount
+      };
+      
+      localStorage.setItem('slipApprovals_' + key, JSON.stringify(slipApprovals));
+      
+      // อัปเดตข้อมูลใน memory
+      unit.approval = slipApprovals[unit.unitNumber];
+      
+      alert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+      renderTable(type);
+    }
+
+    // ส่งเตือนรายเดียว
+    function showReminder(type, index){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit) return;
+
+      if(confirm(`ส่งอีเมลเตือนการชำระไปยัง ${unit.unitNumber} (${unit.name})?`)){
+        sendReminderToUnit(unit);
+      }
+    }
+
+    async function sendReminderToUnit(unit){
+      const { monthName, year, month } = getSelectedPeriod();
+      const period = year + '-' + month;
+
+      // ลองส่งผ่าน Backend ก่อน
+      if (WEB_APP_URL && unit.email) {
+        try {
+          const result = await callBackend('sendNotification', {
+            type: 'reminder',
+            period: period,
+            house_number: unit.unitNumber,
+            recipient_email: unit.email,
+            recipient_name: unit.name
+          });
+          if (result && result.success) {
+            alert(`📧 ส่งอีเมลเตือนไปยัง ${unit.unitNumber} (${unit.email}) สำเร็จ`);
+            return;
+          }
+        } catch (e) { console.error('sendReminder backend error:', e); }
+      }
+
+      // Fallback: แสดง console + alert
+      const systemSettings = cachedAdminSettings || {};
+      const emailSender = systemSettings.emailSender || '';
+      const emailSignature = systemSettings.emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
+      const emailReminderNote = systemSettings.emailReminderNote || 'กรุณาชำระเงินและส่งสลิปโดยเร็วที่สุด';
+      const incUnit = systemSettings.reminderIncludeUnit !== false;
+      const incTotal = systemSettings.reminderIncludeTotal !== false;
+      const incWater = systemSettings.reminderIncludeWater !== false;
+      const incElectric = systemSettings.reminderIncludeElectric !== false;
+      const incCommon = systemSettings.reminderIncludeCommon !== false;
+      const incDueDate = systemSettings.reminderIncludeDueDate !== false;
+
+      const dueDays = systemSettings.due_date_working_days || '15';
+
+      let details = '';
+      if(incUnit) details += `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;
+      if(incTotal) details += `\nยอดค้างชำระรวม: ${formatMoney(unit.notifiedAmount)} บาท`;
+      if(incWater) details += `\n  - ค่าน้ำ: ${formatMoney(unit.waterAmount)} บาท`;
+      if(incElectric) details += `\n  - ค่าไฟ: ${formatMoney(unit.electricAmount)} บาท`;
+      if(incCommon) details += `\n  - ค่าส่วนกลาง: ${formatMoney(unit.commonFee)} บาท`;
+      if(incDueDate) details += `\nกำหนดชำระภายใน: ${dueDays} วันทำการ`;
+
+      const reminderContent = `เรียน คุณ${unit.name || 'ผู้พักอาศัย'}
+
+เรื่อง: แจ้งเตือนการชำระค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}
+${details}
+
+${emailReminderNote}
+
+ขอบคุณครับ/ค่ะ
+${emailSignature}
+      `;
+
+      console.log('Send reminder from:', emailSender || 'N/A');
+      console.log('Send reminder to:', unit.email || 'N/A');
+      console.log('Content:', reminderContent);
+
+      alert(`ส่งอีเมลเตือนไปยัง ${unit.unitNumber}\n\n(หมายเหตุ: ฟังก์ชันส่งอีเมลจริงจะเปิดใช้งานเมื่อตั้งค่าอีเมล)`);
+    }
+
+    // ส่งใบเสร็จทางอีเมล
+    async function sendReceiptEmail(type, index){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit) return;
+
+      const { monthName, year } = getSelectedPeriod();
+      const sysSettings = cachedAdminSettings || {};
+      const emailSender = sysSettings.emailSender || '';
+      const emailSig = sysSettings.emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
+      const emailReceiptNote = sysSettings.emailReceiptNote || 'ขอบคุณที่ชำระตรงเวลาครับ/ค่ะ';
+      const incUnit = sysSettings.receiptIncludeUnit !== false;
+      const incTotal = sysSettings.receiptIncludeTotal !== false;
+      const incWater = sysSettings.receiptIncludeWater !== false;
+      const incElectric = sysSettings.receiptIncludeElectric !== false;
+      const incCommon = sysSettings.receiptIncludeCommon !== false;
+      const incPaid = sysSettings.receiptIncludePaid !== false;
+      const incDate = sysSettings.receiptIncludeDate !== false;
+
+      let details = '';
+      if(incUnit) details += `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;
+      details += `\nผู้ชำระ: ${unit.name || '-'}`;
+      if(incTotal) details += `\nยอดที่แจ้งชำระรวม: ${formatMoney(unit.notifiedAmount)} บาท`;
+      if(incWater) details += `\n  - ค่าน้ำ: ${formatMoney(unit.waterAmount)} บาท`;
+      if(incElectric) details += `\n  - ค่าไฟ: ${formatMoney(unit.electricAmount)} บาท`;
+      if(incCommon) details += `\n  - ค่าส่วนกลาง: ${formatMoney(unit.commonFee)} บาท`;
+      if(incPaid) details += `\nยอดที่ชำระจริง: ${formatMoney(unit.paidAmount)} บาท`;
+      if(incDate) details += `\nวันที่ชำระ: ${unit.approval ? new Date(unit.approval.approvedAt).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH')}`;
+
+      const receiptContent = `เรียน คุณ${unit.name || 'ผู้พักอาศัย'}
+
+เรื่อง: ใบเสร็จรับเงินค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}
+
+═══════════════════════════════════
+           ใบเสร็จรับเงิน
+═══════════════════════════════════
+${details}
+
+สถานะ: ✓ ได้รับชำระเรียบร้อยแล้ว
+═══════════════════════════════════
+
+${emailReceiptNote}
+${emailSig}
+      `;
+
+      // ส่งผ่าน Backend
+      if (WEB_APP_URL && unit.email) {
+        try {
+          const { year, month } = getSelectedPeriod();
+          const period = year + '-' + month;
+          const result = await callBackend('sendNotification', {
+            type: 'receipt',
+            period: period,
+            houseId: unit.unitNumber,
+            house_number: unit.unitNumber
+          });
+          if (result && result.success) {
+            alert(`📧 ส่งใบเสร็จไปยัง ${unit.email} สำเร็จ`);
+            return;
+          }
+          alert(`❌ ส่งใบเสร็จไม่สำเร็จ: ${result?.error || 'กรุณาลองใหม่'}`);
+        } catch (e) {
+          console.error('sendReceipt error:', e);
+          alert(`❌ เกิดข้อผิดพลาดในการส่งใบเสร็จ`);
+        }
+      } else if (!unit.email) {
+        alert(`⚠️ ไม่มีอีเมลของผู้พักอาศัย ${unit.unitNumber}\nกรุณาเพิ่มอีเมลในข้อมูลผู้พักอาศัย`);
+      }
+    }
+
+    // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
+    async function sendReminder(type){
+      const list = type === 'houses' ? housesData : flatsData;
+      const typeName = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
+      
+      const unpaidUnits = list.filter(u => getStatus(u) === 'unpaid');
+
+      if(unpaidUnits.length === 0){
+        alert('ไม่มีรายการที่ยังไม่ชำระ');
+        return;
+      }
+
+      if(!confirm(`ส่งอีเมลเตือน${typeName}ที่ยังไม่ชำระ จำนวน ${unpaidUnits.length} รายการ?`)){
+        return;
+      }
+
+      let sent = 0;
+      let failed = 0;
+
+      for (const unit of unpaidUnits) {
+        if (unit.email) {
+          try {
+            await sendReminderToUnit(unit);
+            sent++;
+          } catch (e) { failed++; }
+        } else {
+          failed++;
+        }
+      }
+
+      alert(`ส่งอีเมลเตือน${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ไม่สำเร็จ: ${failed} รายการ`);
+    }
+
+    // ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)
+    async function sendAllReceipts(type){
+      const list = type === 'houses' ? housesData : flatsData;
+      const typeName = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
+      
+      const approvedUnits = list.filter(u => getStatus(u) === 'approved');
+
+      if(approvedUnits.length === 0){
+        alert('ไม่มีรายการที่อนุมัติแล้ว');
+        return;
+      }
+
+      if(!confirm(`ส่งใบเสร็จทางอีเมล${typeName}ที่อนุมัติแล้ว จำนวน ${approvedUnits.length} รายการ?`)){
+        return;
+      }
+
+      let sent = 0;
+      let failed = 0;
+      const { year, month } = getSelectedPeriod();
+      const period = year + '-' + month;
+
+      for (const unit of approvedUnits) {
+        if (unit.email && WEB_APP_URL) {
+          try {
+            const result = await callBackend('sendNotification', {
+              type: 'receipt',
+              period: period,
+              houseId: unit.unitNumber,
+              house_number: unit.unitNumber
+            });
+            if (result && result.success) sent++;
+            else failed++;
+          } catch (e) { failed++; }
+        } else {
+          failed++;
+        }
+      }
+
+      alert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่สำเร็จ/ไม่มีอีเมล: ${failed} รายการ`);
+    }
+
+    // เริ่มต้น
+    function initPeriodSelectors(){
+      const monthSelect = document.getElementById('bill_month');
+      const yearSelect = document.getElementById('bill_year');
+
+      monthSelect.innerHTML = '';
+      for(let i=1; i<=12; i++){
+        const opt = document.createElement('option');
+        opt.value = String(i).padStart(2,'0');
+        opt.textContent = THAI_MONTHS[i-1];
+        monthSelect.appendChild(opt);
+      }
+
+      yearSelect.innerHTML = '';
+      const now = new Date();
+      const yearBE = toBuddhistYear(now.getFullYear());
+      [yearBE, yearBE-1, yearBE-2].forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        yearSelect.appendChild(opt);
+      });
+
+      monthSelect.value = String(now.getMonth()+1).padStart(2,'0');
+      yearSelect.value = String(yearBE);
+    }
+
+    // Sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    sidebarToggle.onclick = function(){
+      sidebar.classList.toggle('expanded');
+      document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+        ? (window.innerWidth <= 600 ? '160px' : '280px')
+        : (window.innerWidth <= 600 ? '48px' : '62px');
+    };
+    document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+    window.addEventListener('resize', function(){
+      document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+        ? (window.innerWidth <= 600 ? '160px' : '280px')
+        : (window.innerWidth <= 600 ? '48px' : '62px');
+    });
+
+    // ปิด modal เมื่อคลิกนอก
+    document.getElementById('detailModal').addEventListener('click', function(e){
+      if(e.target === this) closeModal();
+    });
+    document.getElementById('manualPayModal').addEventListener('click', function(e){
+      if(e.target === this) closeManualPayModal();
+    });
+
+    // แสดง Modal บันทึกการชำระด้วยตนเอง
+    function showManualPayment(type, index){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit) return;
+
+      currentUnit = { type, index, data: unit };
+
+      const infoHtml = `
+        <div class="info-item"><span class="info-label">เลขที่:</span><span class="info-value">${unit.unitNumber}</span></div>
+        <div class="info-item"><span class="info-label">ชื่อผู้พัก:</span><span class="info-value">${unit.name || '-'}</span></div>
+        <div class="info-item"><span class="info-label">ค่าน้ำ:</span><span class="info-value">${formatMoney(unit.waterAmount)} บาท</span></div>
+        <div class="info-item"><span class="info-label">ค่าไฟ:</span><span class="info-value">${formatMoney(unit.electricAmount)} บาท</span></div>
+        <div class="info-item"><span class="info-label">ค่าส่วนกลาง:</span><span class="info-value">${formatMoney(unit.commonFee)} บาท</span></div>
+        <div class="info-item"><span class="info-label">ยอดรวมที่ต้องชำระ:</span><span class="info-value" style="color:var(--primary);font-weight:700;">${formatMoney(unit.notifiedAmount)} บาท</span></div>
+      `;
+      document.getElementById('manualPayInfo').innerHTML = infoHtml;
+      document.getElementById('manualPayAmount').value = unit.notifiedAmount;
+      document.getElementById('manualPayNote').value = '';
+
+      document.getElementById('manualPayModal').classList.add('show');
+    }
+
+    function closeManualPayModal(){
+      document.getElementById('manualPayModal').classList.remove('show');
+      currentUnit = null;
+    }
+
+    // บันทึกการชำระด้วยตนเอง
+    async function saveManualPayment(){
+      if(!currentUnit) return;
+      
+      const unit = currentUnit.data;
+      const type = currentUnit.type;
+      const index = currentUnit.index;
+      const paidAmount = parseFloat(document.getElementById('manualPayAmount').value) || 0;
+      const payNote = document.getElementById('manualPayNote').value.trim();
+
+      if(paidAmount <= 0){
+        alert('กรุณากรอกยอดเงินที่ชำระ');
+        return;
+      }
+
+      if(!confirm(`ยืนยันบันทึกการชำระเงินของ ${unit.unitNumber}?\n\nยอดที่ชำระ: ${formatMoney(paidAmount)} บาท`)){
+        return;
+      }
+
+      const { month, year, key } = getSelectedPeriod();
+      const period = year + '-' + month;
+
+      // ส่ง Backend ก่อน
+      if (WEB_APP_URL) {
+        try {
+          // สร้าง slip record (manual)
+          const submitResult = await callBackend('submitSlip', {
+            period: period,
+            house_number: unit.unitNumber,
+            resident_name: unit.name,
+            notified_amount: unit.notifiedAmount,
+            paid_amount: paidAmount,
+            payment_method: 'cash',
+            is_manual: true,
+            slip_images: []
+          });
+          if (submitResult && submitResult.success && submitResult.slipId) {
+            // อนุมัติอัตโนมัติ
+            await callBackend('reviewSlip', {
+              slipId: submitResult.slipId,
+              status: 'approved',
+              note: payNote || 'บันทึกด้วยตนเอง',
+              is_manual: true,
+              payment_method: 'cash',
+              paid_amount: paidAmount
+            });
+            alert(`✓ บันทึกและอนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+            closeManualPayModal();
+            await loadSlipData();
+            return;
+          } else {
+            throw new Error(submitResult?.error || 'บันทึกไม่สำเร็จ');
+          }
+        } catch (e) {
+          console.error('saveManualPayment backend error:', e);
+          alert('Backend error: ' + e.message + '\n\nจะบันทึกใน localStorage แทน');
+        }
+      }
+
+      // Fallback: localStorage
+      
+      // บันทึกข้อมูลสลิป
+      const slipSubmissions = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
+      const existingIndex = slipSubmissions.findIndex(s => s.unitNumber === unit.unitNumber);
+      
+      const slipData = {
+        unitNumber: unit.unitNumber,
+        name: unit.name,
+        paidAmount: paidAmount,
+        submittedAt: new Date().toISOString(),
+        paymentMethod: 'cash',
+        note: payNote,
+        isManual: true,
+        slipImages: []
+      };
+
+      if(existingIndex !== -1){
+        slipSubmissions[existingIndex] = slipData;
+      } else {
+        slipSubmissions.push(slipData);
+      }
+      localStorage.setItem('slipSubmissions_' + key, JSON.stringify(slipSubmissions));
+
+      // บันทึกการอนุมัติอัตโนมัติ (เพราะบันทึกด้วยตนเอง)
+      const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
+      slipApprovals[unit.unitNumber] = {
+        status: 'approved',
+        approvedAt: new Date().toISOString(),
+        approvedBy: (currentUserData && currentUserData.fullname) || 'ผู้ดูแลระบบ',
+        paidAmount: paidAmount,
+        notifiedAmount: unit.notifiedAmount,
+        paymentMethod: 'cash',
+        isManual: true
+      };
+      localStorage.setItem('slipApprovals_' + key, JSON.stringify(slipApprovals));
+
+      alert(`✓ บันทึกและอนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+      closeManualPayModal();
+      loadSlipData();
+    }
+
+    window.onload = async function(){
+      const user = await checkSession();
+      if (!user) return;
+      currentUserData = user;
+
+      // ดึง adminSettings จาก Backend
+      if (WEB_APP_URL) {
+        try {
+          const settingsResult = await callBackendGet('getSettings');
+          if (settingsResult && settingsResult.success) {
+            cachedAdminSettings = settingsResult.data || {};
+          }
+        } catch (e) {
+          console.error('getSettings error:', e);
+          cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+        }
+      } else {
+        cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+      }
+
+      initPeriodSelectors();
+      await loadSlipData();
+    };
+  
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

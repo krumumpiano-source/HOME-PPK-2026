@@ -1,0 +1,5 @@
+**/*.md
+**/.clasp.json
+**/node_modules/**
+**/*.ps1
+

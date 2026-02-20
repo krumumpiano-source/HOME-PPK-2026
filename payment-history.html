@@ -1,0 +1,494 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* Main Container */
+        .dashboard-container {
+            margin-left: 62px;
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .dashboard-container { margin-left: 48px; padding: 1rem; }
+            .sidebar.expanded ~ .dashboard-container { margin-left: 160px; }
+        }
+
+        /* Header */
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 0.5rem;
+            justify-content: center;
+        }
+        .dashboard-header-icon {
+            font-size: 2.1rem;
+            color: var(--primary);
+        }
+        .dashboard-container h2 {
+            margin: 0;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .filter-section label {
+            font-size: 0.95rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .filter-section select {
+            padding: 0.6rem 0.8rem;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        .filter-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .filter-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Payment History Container */
+        .payment-history-container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--surface);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .payment-history-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        .payment-history-container th,
+        .payment-history-container td {
+            border: 1px solid var(--border);
+            padding: 0.75rem 0.6rem;
+        }
+        .payment-history-container th {
+            background: #e2e8f0;
+            color: var(--text);
+            font-weight: 700;
+        }
+        .payment-history-container tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .payment-history-container tr:hover {
+            background: #f1f5f9;
+        }
+        .payment-history-container td {
+            color: var(--text);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=upload-slip')">
+                <span class="sidebar-link-icon">📤</span>
+                <span class="sidebar-label">ส่งสลิปชำระเงิน</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+
+    <div class="dashboard-container" id="dashboardContainer">
+        <div class="dashboard-header">
+            <span class="dashboard-header-icon">💸</span>
+            <h2>ข้อมูลการชำระเงินย้อนหลัง</h2>
+        </div>
+        <div class="filter-section">
+            <label for="month">เลือกเดือน:</label>
+            <select id="month">
+                <option value="01">มกราคม</option>
+                <option value="02">กุมภาพันธ์</option>
+                <option value="03">มีนาคม</option>
+                <option value="04">เมษายน</option>
+                <option value="05">พฤษภาคม</option>
+                <option value="06">มิถุนายน</option>
+                <option value="07">กรกฎาคม</option>
+                <option value="08">สิงหาคม</option>
+                <option value="09">กันยายน</option>
+                <option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option>
+                <option value="12">ธันวาคม</option>
+            </select>
+
+            <label for="year">เลือกปี:</label>
+            <select id="year">
+                <script>
+                    (function(){
+                        var cy = new Date().getFullYear() + 543;
+                        for(var y = cy + 1; y >= cy - 5; y--){
+                            document.write('<option value="' + y + '"' + (y === cy ? ' selected' : '') + '>' + y + '</option>');
+                        }
+                    })();
+                </script>
+            </select>
+
+            <button class="filter-btn" onclick="filterHistory()">กรองข้อมูล</button>
+        </div>
+
+        <div class="payment-history-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>เดือน</th>
+                        <th>ปี</th>
+                        <th>วันที่ชำระ</th>
+                        <th>ค่าน้ำ (บาท)</th>
+                        <th>ค่าไฟ (บาท)</th>
+                        <th>ค่าส่วนกลาง (บาท)</th>
+                        <th>ยอดรวม (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody id="payment-history-body">
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.95rem; color:#888;">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+
+    <script>
+        // ============ API Configuration ============
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload), redirect: 'follow'
+                });
+                const text = await response.text();
+                const result = JSON.parse(text);
+                if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return; }
+                return result;
+            } catch (err) { console.error('Backend error:', err); throw new Error('ไม่สามารถเชื่อมต่อระบบได้'); }
+        }
+
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken');
+            const q = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+            return res.json();
+        }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { window.navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+                return result.user;
+            } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+        }
+
+        // ============ Constants ============
+        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+        let allHistoryData = []; // เก็บข้อมูลทั้งหมดที่โหลดมา
+
+        // ============ โหลดข้อมูล ============
+        async function loadPaymentHistory() {
+            const year = document.getElementById('year').value;
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+            allHistoryData = [];
+
+            // ลอง Backend ก่อน
+            if (WEB_APP_URL && user.id) {
+                try {
+                    const result = await callBackendGet('getPaymentHistory', { userId: user.id, year: year });
+                    if (result && result.success && result.data) {
+                        allHistoryData = result.data.map(row => ({
+                            month: String(row.month).padStart(2, '0'),
+                            year: String(row.year || year),
+                            paidDate: row.paid_date || row.reviewed_at || row.submitted_at || '-',
+                            water: parseFloat(row.water_amount) || 0,
+                            electric: parseFloat(row.electric_amount) || 0,
+                            common: parseFloat(row.common_fee) || 0,
+                            total: parseFloat(row.paid_amount || row.total_amount) || 0,
+                            status: row.status || ''
+                        }));
+                    }
+                } catch (e) { console.error('getPaymentHistory error:', e); }
+            }
+
+            // Fallback: localStorage
+            if (allHistoryData.length === 0) {
+                const unitNumber = localStorage.getItem('currentUserUnit') || user.house_number || '';
+                for (let m = 1; m <= 12; m++) {
+                    const mm = String(m).padStart(2, '0');
+                    const key = 'slipSubmissions_' + year + mm;
+                    const submissions = JSON.parse(localStorage.getItem(key) || '[]');
+                    const mySlip = submissions.find(s => s.unitNumber === unitNumber && s.status === 'approved');
+                    if (mySlip) {
+                        allHistoryData.push({
+                            month: mm,
+                            year: year,
+                            paidDate: mySlip.submittedAt ? new Date(mySlip.submittedAt).toLocaleDateString('th-TH') : '-',
+                            water: parseFloat(mySlip.waterAmount) || 0,
+                            electric: parseFloat(mySlip.electricAmount) || 0,
+                            common: parseFloat(mySlip.commonFee) || 0,
+                            total: parseFloat(mySlip.paidAmount) || 0,
+                            status: mySlip.status
+                        });
+                    }
+                }
+            }
+
+            renderTable(allHistoryData);
+        }
+
+        // ============ แสดงตาราง ============
+        function renderTable(data) {
+            const tbody = document.getElementById('payment-history-body');
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลการชำระเงิน</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const monthIdx = parseInt(item.month) - 1;
+                const monthName = THAI_MONTHS[monthIdx] || item.month;
+                const total = item.total || (item.water + item.electric + item.common);
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + monthName + '</td>' +
+                    '<td>' + item.year + '</td>' +
+                    '<td>' + (item.paidDate || '-') + '</td>' +
+                    '<td>' + (item.water ? item.water.toLocaleString() : '-') + '</td>' +
+                    '<td>' + (item.electric ? item.electric.toLocaleString() : '-') + '</td>' +
+                    '<td>' + (item.common ? item.common.toLocaleString() : '-') + '</td>' +
+                    '<td>' + (total ? total.toLocaleString() : '-') + '</td>';
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ============ กรอง ============
+        function filterHistory() {
+            const selectedMonth = document.getElementById('month').value;
+            const selectedYear = document.getElementById('year').value;
+
+            // ถ้าเปลี่ยนปี ต้องโหลดใหม่จาก Backend
+            loadPaymentHistory().then(() => {
+                if (selectedMonth) {
+                    const filtered = allHistoryData.filter(item => item.month === selectedMonth);
+                    renderTable(filtered);
+                }
+                // ถ้าไม่เลือกเดือน จะแสดงทั้งหมด (โหลดมาแล้ว)
+            });
+        }
+
+        // ============ Sidebar ============
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        };
+        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+        window.addEventListener('resize', function() {
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        });
+
+        // ============ Init ============
+        window.onload = async function() {
+            const user = await checkSession();
+            if (!user) return;
+            // ตั้งเดือนปัจจุบัน
+            document.getElementById('month').value = String(new Date().getMonth() + 1).padStart(2, '0');
+            await loadPaymentHistory();
+        };
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

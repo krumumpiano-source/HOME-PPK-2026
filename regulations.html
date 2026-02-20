@@ -1,0 +1,765 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระเบียบงานบ้านพักครู | HOME PPK 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            margin-left: 62px;
+            background: var(--surface);
+            padding: 2rem;
+            min-height: 100vh;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .dashboard-container { margin-left: 48px; padding: 1rem; }
+            .sidebar.expanded ~ .dashboard-container { margin-left: 160px; }
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+        .dashboard-header-icon {
+            font-size: 2.1rem;
+            color: var(--primary);
+        }
+        .dashboard-container h2 {
+            margin: 0;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #1e40af;
+            font-size: 0.95rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .info-box ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        .info-box li {
+            margin-bottom: 0.3rem;
+        }
+        
+        /* PDF Container */
+        .pdf-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .pdf-toolbar {
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        .pdf-toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .pdf-toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pdf-toolbar button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .pdf-toolbar button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .pdf-toolbar button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .page-info {
+            color: white;
+            font-size: 0.85rem;
+        }
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .zoom-controls select {
+            padding: 0.3rem;
+            border-radius: 6px;
+            border: none;
+            font-family: 'Kanit', sans-serif;
+            font-size: 0.85rem;
+        }
+        
+        .pdf-viewer {
+            background: #525659;
+            min-height: 70vh;
+            max-height: 75vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .pdf-page {
+            background: white;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .pdf-page canvas {
+            display: block;
+            max-width: 100%;
+        }
+        
+        .no-pdf-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh;
+            color: #9ca3af;
+            text-align: center;
+            padding: 2rem;
+        }
+        .no-pdf-message svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .no-pdf-message h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #6b7280;
+        }
+        .no-pdf-message p {
+            font-size: 0.95rem;
+            max-width: 400px;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Quick Links */
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .quick-link-btn {
+            background: linear-gradient(135deg, #4f8cff, #1e40af);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .quick-link-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .pdf-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .pdf-toolbar-left, .pdf-toolbar-right {
+                justify-content: center;
+            }
+            .quick-links {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0 1rem;
+            }
+            .quick-link-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=upload-slip')">
+                <span class="sidebar-link-icon">📤</span>
+                <span class="sidebar-label">ส่งสลิปชำระเงิน</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+    
+    <div class="dashboard-container" id="dashboardContainer">
+        <div class="dashboard-header">
+            <span class="dashboard-header-icon">📜</span>
+            <h2>ระเบียบว่าด้วยงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</h2>
+        </div>
+
+        <div class="info-box">
+            <strong>📋 ระเบียบนี้ครอบคลุมเรื่อง:</strong>
+            <ul>
+                <li>คุณสมบัติผู้มีสิทธิ์เข้าพักอาศัยในบ้านพักครู</li>
+                <li>หลักเกณฑ์และขั้นตอนการขอเข้าพักอาศัย</li>
+                <li>สิทธิและหน้าที่ของผู้พักอาศัย</li>
+                <li>ข้อห้ามและบทลงโทษ</li>
+                <li>การส่งคืนบ้านพักและการย้ายออก</li>
+                <li>อัตราค่าธรรมเนียมและค่าบำรุงรักษา</li>
+            </ul>
+        </div>
+
+        <div class="pdf-container">
+            <div class="pdf-toolbar" id="pdfToolbar" style="display: none;">
+                <div class="pdf-toolbar-left">
+                    <button id="prevPage" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+                        ก่อนหน้า
+                    </button>
+                    <span class="page-info">หน้า <span id="currentPage">1</span> / <span id="totalPages">1</span></span>
+                    <button id="nextPage" disabled>
+                        ถัดไป
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+                <div class="pdf-toolbar-right">
+                    <div class="zoom-controls">
+                        <button id="zoomOut">−</button>
+                        <select id="zoomSelect">
+                            <option value="0.5">50%</option>
+                            <option value="0.75">75%</option>
+                            <option value="1" selected>100%</option>
+                            <option value="1.25">125%</option>
+                            <option value="1.5">150%</option>
+                            <option value="2">200%</option>
+                            <option value="auto">พอดีหน้าจอ</option>
+                        </select>
+                        <button id="zoomIn">+</button>
+                    </div>
+                    <button id="downloadPdf">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ดาวน์โหลด
+                    </button>
+                </div>
+            </div>
+            
+            <div class="pdf-viewer" id="pdfViewer">
+                <div class="no-pdf-message" id="noPdfMessage">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <h3>ยังไม่มีระเบียบแสดง</h3>
+                    <p>กรุณารอผู้ดูแลระบบอัพโหลดไฟล์ระเบียบ หรือติดต่องานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</p>
+                    <p style="margin-top: 0.8rem; font-size: 0.9rem; color: #3b82f6;">💡 สำหรับผู้ดูแลระบบ: สามารถอัพโหลดไฟล์ระเบียบได้ที่ <a href="#" onclick="navigate('?page=admin-settings');return false;" style="color: #1d4ed8; text-decoration: underline;">หน้าตั้งค่าแอดมิน</a></p>
+                </div>
+                
+                <div class="loading" id="loadingIndicator" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>กำลังโหลดเอกสาร...</p>
+                </div>
+                
+                <div id="pdfPages"></div>
+            </div>
+        </div>
+        
+        <!-- Quick Links ถูกลบตามคำขอ -->
+
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.95rem; color:#888;">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+
+    <script>
+        // ========== Backend API Helpers ==========
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload), redirect: 'follow'
+                });
+                const text = await response.text();
+                const result = JSON.parse(text);
+                if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return; }
+                return result;
+            } catch (err) { console.error('Backend error:', err); throw new Error('ไม่สามารถเชื่อมต่อระบบได้'); }
+        }
+
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken');
+            const q = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+            const text = await res.text();
+            const result = JSON.parse(text);
+            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); window.navigate('?page=login'); return null; }
+            return result;
+        }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { window.navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+                return result.user;
+            } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+        }
+
+        // ========== PDF.js Setup ==========
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let currentPage = 1;
+        let scale = 1;
+        let pdfData = null;
+
+        // Elements
+        const pdfViewer = document.getElementById('pdfViewer');
+        const pdfPages = document.getElementById('pdfPages');
+        const noPdfMessage = document.getElementById('noPdfMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const pdfToolbar = document.getElementById('pdfToolbar');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const zoomSelect = document.getElementById('zoomSelect');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const downloadBtn = document.getElementById('downloadPdf');
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '220px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        };
+        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+        window.addEventListener('resize', function() {
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '220px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        });
+
+        // ========== Load PDF ==========
+        async function loadRegulationsPdf() {
+            // ลองดึงจาก Backend ก่อน
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getRegulationsPdf');
+                    if (result && result.success && result.downloadUrl) {
+                        await loadPdfFromUrl(result.downloadUrl);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('ดึง PDF จาก backend ไม่สำเร็จ:', e);
+                }
+            }
+            
+            // fallback: แสดงข้อความไม่มี PDF
+            noPdfMessage.style.display = 'flex';
+        }
+
+        // โหลด PDF จาก URL (Google Drive)
+        async function loadPdfFromUrl(url) {
+            noPdfMessage.style.display = 'none';
+            loadingIndicator.style.display = 'flex';
+            pdfPages.innerHTML = '';
+
+            try {
+                pdfDoc = await pdfjsLib.getDocument(url).promise;
+                totalPagesSpan.textContent = pdfDoc.numPages;
+                pdfData = url; // เก็บ URL สำหรับดาวน์โหลด
+                
+                loadingIndicator.style.display = 'none';
+                pdfToolbar.style.display = 'flex';
+                
+                await renderAllPages();
+                updatePageButtons();
+            } catch (error) {
+                console.error('Error loading PDF from URL:', error);
+                loadingIndicator.style.display = 'none';
+                noPdfMessage.style.display = 'flex';
+            }
+        }
+
+        // โหลด PDF จาก Base64 (fallback)
+        async function loadPdfFromBase64(base64Data) {
+            noPdfMessage.style.display = 'none';
+            loadingIndicator.style.display = 'flex';
+            pdfPages.innerHTML = '';
+            pdfData = base64Data;
+
+            try {
+                const pdfBytes = atob(base64Data.split(',')[1]);
+                const pdfArray = new Uint8Array(pdfBytes.length);
+                for (let i = 0; i < pdfBytes.length; i++) {
+                    pdfArray[i] = pdfBytes.charCodeAt(i);
+                }
+
+                pdfDoc = await pdfjsLib.getDocument({ data: pdfArray }).promise;
+                totalPagesSpan.textContent = pdfDoc.numPages;
+                
+                loadingIndicator.style.display = 'none';
+                pdfToolbar.style.display = 'flex';
+                
+                await renderAllPages();
+                updatePageButtons();
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                loadingIndicator.style.display = 'none';
+                noPdfMessage.style.display = 'flex';
+                alert('เกิดข้อผิดพลาดในการโหลด PDF');
+            }
+        }
+
+        // Render ทุกหน้า
+        async function renderAllPages() {
+            pdfPages.innerHTML = '';
+            
+            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                const page = await pdfDoc.getPage(pageNum);
+                
+                let viewport;
+                if (scale === 'auto') {
+                    const containerWidth = pdfViewer.clientWidth - 40;
+                    const unscaledViewport = page.getViewport({ scale: 1 });
+                    const autoScale = containerWidth / unscaledViewport.width;
+                    viewport = page.getViewport({ scale: autoScale });
+                } else {
+                    viewport = page.getViewport({ scale: scale });
+                }
+
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'pdf-page';
+                pageDiv.id = 'page-' + pageNum;
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                pageDiv.appendChild(canvas);
+                pdfPages.appendChild(pageDiv);
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+            }
+        }
+
+        // อัพเดทปุ่มหน้า
+        function updatePageButtons() {
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= pdfDoc.numPages;
+            currentPageSpan.textContent = currentPage;
+        }
+
+        // ไปหน้าก่อนหน้า
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                document.getElementById('page-' + currentPage).scrollIntoView({ behavior: 'smooth' });
+                updatePageButtons();
+            }
+        });
+
+        // ไปหน้าถัดไป
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < pdfDoc.numPages) {
+                currentPage++;
+                document.getElementById('page-' + currentPage).scrollIntoView({ behavior: 'smooth' });
+                updatePageButtons();
+            }
+        });
+
+        // เปลี่ยน zoom
+        zoomSelect.addEventListener('change', async () => {
+            const value = zoomSelect.value;
+            scale = value === 'auto' ? 'auto' : parseFloat(value);
+            if (pdfDoc) {
+                await renderAllPages();
+            }
+        });
+
+        // ซูมเข้า
+        zoomInBtn.addEventListener('click', async () => {
+            const currentIndex = zoomSelect.selectedIndex;
+            if (currentIndex < zoomSelect.options.length - 2) {
+                zoomSelect.selectedIndex = currentIndex + 1;
+                scale = parseFloat(zoomSelect.value);
+                if (pdfDoc) {
+                    await renderAllPages();
+                }
+            }
+        });
+
+        // ซูมออก
+        zoomOutBtn.addEventListener('click', async () => {
+            const currentIndex = zoomSelect.selectedIndex;
+            if (currentIndex > 0) {
+                zoomSelect.selectedIndex = currentIndex - 1;
+                scale = parseFloat(zoomSelect.value);
+                if (pdfDoc) {
+                    await renderAllPages();
+                }
+            }
+        });
+
+        // ดาวน์โหลด PDF
+        downloadBtn.addEventListener('click', () => {
+            if (pdfData) {
+                const link = document.createElement('a');
+                if (pdfData.startsWith('http')) {
+                    link.href = pdfData;
+                    link.target = '_blank';
+                } else {
+                    link.href = pdfData;
+                    link.download = 'ระเบียบงานบ้านพักครู_โรงเรียนพะเยาพิทยาคม.pdf';
+                }
+                link.click();
+            }
+        });
+
+        // ตรวจจับหน้าปัจจุบันเมื่อ scroll
+        pdfViewer.addEventListener('scroll', () => {
+            if (!pdfDoc) return;
+            
+            const pages = pdfPages.querySelectorAll('.pdf-page');
+            const viewerTop = pdfViewer.scrollTop;
+            const viewerMiddle = viewerTop + pdfViewer.clientHeight / 2;
+            
+            for (let i = 0; i < pages.length; i++) {
+                const pageTop = pages[i].offsetTop - pdfPages.offsetTop;
+                const pageBottom = pageTop + pages[i].clientHeight;
+                
+                if (viewerMiddle >= pageTop && viewerMiddle <= pageBottom) {
+                    currentPage = i + 1;
+                    currentPageSpan.textContent = currentPage;
+                    updatePageButtons();
+                    break;
+                }
+            }
+        });
+
+        // เมื่อโหลดหน้าเสร็จ
+        window.onload = async function() {
+            await checkSession();
+            await loadRegulationsPdf();
+        };
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

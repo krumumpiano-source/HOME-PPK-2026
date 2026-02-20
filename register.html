@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครใช้บริการ | HOME PPK 2026</title>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+    body {
+        font-family: 'Kanit', sans-serif;
+        background: linear-gradient(135deg, #4f8cff 0%, #38e8ff 100%);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-container {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        padding: 2.5rem 2rem 2rem 2rem;
+        max-width: 370px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .login-container h2 {
+        margin: 0 0 1rem 0;
+        color: #2563eb;
+        font-weight: 700;
+        text-align: center;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    label {
+        font-size: 1rem;
+        color: #333;
+    }
+    input, select {
+        padding: 0.7rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        outline: none;
+        transition: border 0.2s;
+    }
+    input:focus, select:focus {
+        border: 1.5px solid #2563eb;
+    }
+    .error-message {
+        color: #e11d48;
+        font-size: 0.95rem;
+        margin-top: -0.5rem;
+        margin-bottom: 0.5rem;
+        display: none;
+    }
+    .login-btn {
+        background: linear-gradient(90deg, #2563eb 0%, #38e8ff 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.8rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .login-btn:hover {
+        background: linear-gradient(90deg, #38e8ff 0%, #2563eb 100%);
+    }
+    .menu-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .menu-links a {
+        color: #2563eb;
+        text-decoration: none;
+        font-size: 0.98rem;
+        text-align: center;
+        transition: color 0.2s;
+    }
+    .menu-links a:hover {
+        color: #e11d48;
+    }
+    @media (max-width: 480px) {
+        .login-container {
+            padding: 1.5rem 0.7rem 1.2rem 0.7rem;
+            max-width: 98vw;
+        }
+    }
+    </style>
+</head>
+<body>
+    <form class="login-container" id="registerForm" autocomplete="on" onsubmit="return validateRegister();">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <div>
+                <div style="font-size:1.15rem; font-weight:700; color:#2563eb;">HOME PPK 2026</div>
+                <div style="font-size:0.98rem; color:#555;">โปรแกรมบริหารจัดการ งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
+            </div>
+        </div>
+        <h2 id="registerTitle">สมัครใช้บริการ</h2>
+        <div class="form-group">
+            <label for="email" id="emailLabel">อีเมล</label>
+            <input type="email" id="email" name="email" required placeholder="กรอกอีเมล">
+        </div>
+        <div class="form-group">
+            <label for="phone" id="phoneLabel">เบอร์โทรศัพท์</label>
+            <input type="tel" id="phone" name="phone" required placeholder="กรอกเบอร์โทรศัพท์" pattern="[0-9]{9,15}" maxlength="15" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+        </div>
+        <div class="form-group">
+            <select id="prefix" name="prefix" required>
+                <option value="">เลือกคำนำหน้า</option>
+                <option value="นาย">นาย</option>
+                <option value="นาง">นาง</option>
+                <option value="นางสาว">นางสาว</option>
+                <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="firstname" id="firstnameLabel">ชื่อ</label>
+            <input type="text" id="firstname" name="firstname" required placeholder="กรอกชื่อ">
+        </div>
+        <div class="form-group">
+            <label for="lastname" id="lastnameLabel">นามสกุล</label>
+            <input type="text" id="lastname" name="lastname" required placeholder="กรอกนามสกุล">
+        </div>
+        <div class="form-group">
+            <label for="position" id="positionLabel">ตำแหน่ง</label>
+            <select id="position" name="position" required>
+                <option value="">เลือกตำแหน่ง</option>
+                <option value="ภาษาไทย">ภาษาไทย</option>
+                <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                <option value="ศิลปะ">ศิลปะ</option>
+                <option value="การงานอาชีพ">การงานอาชีพ</option>
+                <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                <option value="ลูกจ้าง">ลูกจ้าง</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="address_no">เลขที่</label>
+            <input type="text" id="address_no" name="address_no" required placeholder="กรอกเลขที่">
+        </div>
+        <div class="form-group">
+            <label for="address_road">ถนน</label>
+            <input type="text" id="address_road" name="address_road" placeholder="กรอกถนน">
+        </div>
+        <div class="form-group">
+            <label for="address_village">หมู่บ้าน</label>
+            <input type="text" id="address_village" name="address_village" placeholder="กรอกหมู่บ้าน">
+        </div>
+        <div class="form-group">
+            <label for="subdistrict" id="subdistrictLabel">ตำบล</label>
+            <input type="text" id="subdistrict" name="subdistrict" required placeholder="กรอกตำบล" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="district" id="districtLabel">อำเภอ</label>
+            <input type="text" id="district" name="district" required placeholder="กรอกอำเภอ" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="province" id="provinceLabel">จังหวัด</label>
+            <input type="text" id="province" name="province" required placeholder="กรอกจังหวัด" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="zipcode" id="zipcodeLabel">รหัสไปรษณีย์</label>
+            <input type="text" id="zipcode" name="zipcode" required placeholder="รหัสไปรษณีย์" maxlength="5" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="password" id="passwordLabel">รหัสผ่าน</label>
+            <input type="password" id="password" name="password" required placeholder="รหัสผ่านอย่างน้อย 8 ตัว">
+        </div>
+        <div class="form-group">
+            <label for="confirmPassword" id="confirmPasswordLabel">ยืนยันรหัสผ่าน</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="ยืนยันรหัสผ่านอีกครั้ง">
+        </div>
+        <div class="form-group" style="background:#f8fafc; border-radius:8px; padding:1rem; border:1px solid #e5e7eb;">
+            <div style="font-size:0.98rem; color:#333; margin-bottom:0.5rem; font-weight:600;">ประกาศความเป็นส่วนตัว (PDPA)</div>
+            <div style="font-size:0.95rem; color:#444; margin-bottom:0.7rem;">
+                ข้อมูลส่วนบุคคลที่ท่านกรอกในระบบนี้ จะถูกใช้เพื่อวัตถุประสงค์ในการลงทะเบียนและบริหารจัดการบ้านพักครูเท่านั้น<br>
+                ข้อมูลจะไม่ถูกนำไปใช้หรือเปิดเผยต่อบุคคลภายนอกโดยไม่ได้รับอนุญาต<br>
+                ท่านมีสิทธิ์ขอเข้าถึง แก้ไข ลบ หรือถอนความยินยอมในการใช้ข้อมูลส่วนบุคคลได้ตลอดเวลา<br>
+                ติดต่อหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            </div>
+            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.97rem;">
+                <input type="checkbox" id="pdpaConsent" required style="width:1.1em; height:1.1em;">&nbsp;ข้าพเจ้ายินยอมให้เก็บและใช้ข้อมูลส่วนบุคคลตามประกาศนี้
+            </label>
+        </div>
+        <div class="error-message" id="errorMsg"></div>
+        <button type="submit" class="login-btn" id="registerBtn">สมัครสมาชิก</button>
+        <div class="menu-links">
+            <a href="#" onclick="navigate('?page=login');return false;" id="backToLogin">กลับสู่หน้าเข้าสู่ระบบ</a>
+        </div>
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;" id="footerCredit">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
+            <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </form>
+    <script>
+    // ============ API Configuration ============
+    var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+    // ============ API Helper ============
+    async function callBackend(action, data = {}) {
+        const payload = { action, ...data };
+        try {
+            const response = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload),
+                redirect: 'follow'
+            });
+            const text = await response.text();
+            return JSON.parse(text);
+        } catch (err) {
+            console.error('Backend error:', err);
+            throw new Error('ไม่สามารถเชื่อมต่อระบบได้ — กรุณาลองใหม่');
+        }
+    }
+
+    // ============ Form Validation ============
+    function validateRegister() {
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const errorMsg = document.getElementById('errorMsg');
+        const pdpaConsent = document.getElementById('pdpaConsent');
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+            errorMsg.textContent = 'กรุณากรอกอีเมลให้ถูกต้อง';
+            errorMsg.style.display = 'block';
+            return false;
+        }
+        if (!/^\d{9,15}$/.test(phone)) {
+            errorMsg.textContent = 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (9-15 หลัก)';
+            errorMsg.style.display = 'block';
+            return false;
+        }
+        if (password.length < 8) {
+            errorMsg.textContent = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+            errorMsg.style.display = 'block';
+            return false;
+        }
+        if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+            let msg = 'รหัสผ่านต้องประกอบด้วย';
+            let conds = [];
+            if (!/[A-Z]/.test(password)) conds.push('ตัวอักษรภาษาอังกฤษตัวใหญ่');
+            if (!/[a-z]/.test(password)) conds.push('ตัวอักษรภาษาอังกฤษตัวเล็ก');
+            if (!/[0-9]/.test(password)) conds.push('ตัวเลข');
+            if (!/[^A-Za-z0-9]/.test(password)) conds.push('อักขระพิเศษ');
+            errorMsg.textContent = msg + ' ' + conds.join(' , ');
+            errorMsg.style.display = 'block';
+            return false;
+        }
+        if (password !== confirmPassword) {
+            errorMsg.textContent = 'รหัสผ่านและยืนยันรหัสผ่านต้องเหมือนกัน';
+            errorMsg.style.display = 'block';
+            return false;
+        }
+        if (!pdpaConsent.checked) {
+            errorMsg.textContent = 'กรุณายินยอมให้เก็บและใช้ข้อมูลส่วนบุคคลก่อนสมัครสมาชิก';
+            errorMsg.style.display = 'block';
+            return false;
+        }
+        // Validation passed → call backend
+        handleRegister();
+        return false; // prevent form submission
+    }
+
+    // ============ Register Handler ============
+    async function handleRegister() {
+        const errorMsg = document.getElementById('errorMsg');
+        const registerBtn = document.getElementById('registerBtn');
+
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'กำลังสมัครสมาชิก...';
+        errorMsg.style.display = 'none';
+
+        try {
+            if (!WEB_APP_URL) {
+                throw new Error('ยังไม่ได้ตั้งค่า WEB_APP_URL — กรุณาติดต่อผู้ดูแลระบบ');
+            }
+
+            const data = {
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                prefix: document.getElementById('prefix').value,
+                firstname: document.getElementById('firstname').value.trim(),
+                lastname: document.getElementById('lastname').value.trim(),
+                position: document.getElementById('position').value,
+                address_no: document.getElementById('address_no').value.trim(),
+                address_road: document.getElementById('address_road').value.trim(),
+                address_village: document.getElementById('address_village').value.trim(),
+                subdistrict: document.getElementById('subdistrict').value.trim(),
+                district: document.getElementById('district').value.trim(),
+                province: document.getElementById('province').value.trim(),
+                zipcode: document.getElementById('zipcode').value.trim(),
+                password: document.getElementById('password').value,
+                pdpa_consent: document.getElementById('pdpaConsent').checked
+            };
+
+            const result = await callBackend('register', data);
+
+            if (result.success) {
+                // แสดงข้อความสำเร็จ
+                document.getElementById('registerForm').innerHTML = `
+                    <div style="text-align:center; padding:2rem 1rem;">
+                        <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
+                        <h2 style="color:#10b981; margin-bottom:1rem;">สมัครสมาชิกสำเร็จ!</h2>
+                        <p style="color:#555; font-size:1.05rem; margin-bottom:1.5rem;">
+                            ${result.message || 'กรุณารอแอดมินตรวจสอบและอนุมัติการสมัครของคุณ'}<br>
+                            <small style="color:#888;">รหัสการสมัคร: ${result.regId || '-'}</small>
+                        </p>
+                        <a href="#" onclick="navigate('?page=login');return false;" style="display:inline-block; padding:0.8rem 2rem; background:linear-gradient(90deg,#2563eb,#38e8ff); color:#fff; border-radius:8px; text-decoration:none; font-weight:700;">กลับสู่หน้าเข้าสู่ระบบ</a>
+                    </div>
+                `;
+            } else {
+                errorMsg.textContent = result.error || result.message || 'สมัครสมาชิกไม่สำเร็จ';
+                errorMsg.style.display = 'block';
+            }
+        } catch (err) {
+            errorMsg.textContent = err.message || 'ไม่สามารถเชื่อมต่อระบบได้';
+            errorMsg.style.display = 'block';
+        } finally {
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'สมัครสมาชิก';
+        }
+    }
+    </script>
+</body>
+</html>
+

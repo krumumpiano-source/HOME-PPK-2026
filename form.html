@@ -1,0 +1,506 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบฟอร์มคำร้อง | HOME PPK 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-left: 62px;
+            min-height: 100vh;
+            padding: 2rem;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .main-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .main-container { margin-left: 48px; padding: 1rem; }
+            .sidebar.expanded ~ .main-container { margin-left: 160px; }
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .back-btn:hover { background: #f1f5f9; }
+        .page-title { margin: 0; font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .tab-btn {
+            padding: 0.7rem 1.2rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .tab-btn:hover { background: #f1f5f9; border-color: var(--primary); }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .section-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+        }
+        .section-desc {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Form Cards Grid */
+        .form-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+        .form-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .form-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+            transform: translateY(-2px);
+        }
+        .form-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .form-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .form-card-desc {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .form-card-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-top: auto;
+        }
+
+        /* Info Card */
+        .info-card {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            border: 1px solid #93c5fd;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-card-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .info-card-text {
+            color: #1e40af;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Hide content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-cards-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=upload-slip')">
+                <span class="sidebar-link-icon">📤</span>
+                <span class="sidebar-label">ส่งสลิปชำระเงิน</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container" id="mainContainer">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigate('?page=dashboard')">← ย้อนกลับ</button>
+            <h1 class="page-title">📝 แบบฟอร์มคำร้อง</h1>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="residence" onclick="switchTab('residence')">
+                🏠 ขอเข้าพักอาศัย
+            </button>
+            <button class="tab-btn" data-tab="repair" onclick="switchTab('repair')">
+                🔧 แจ้งซ่อมแซม
+            </button>
+            <button class="tab-btn" data-tab="transfer" onclick="switchTab('transfer')">
+                🔄 ขอย้ายบ้านพัก
+            </button>
+            <button class="tab-btn" data-tab="return" onclick="switchTab('return')">
+                📤 ขอคืนบ้านพัก
+            </button>
+        </div>
+
+        <!-- Tab: Residence Request -->
+        <div class="tab-content active" id="tab-residence">
+            <div class="info-card">
+                <div class="info-card-title">ℹ️ คำแนะนำ</div>
+                <div class="info-card-text">
+                    แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู สำหรับบุคลากรที่ต้องการยื่นคำขอเข้าพักอาศัยในบ้านพักครูของโรงเรียน กรุณากรอกข้อมูลให้ครบถ้วนและแนบเอกสารประกอบตามที่กำหนด
+                </div>
+            </div>
+            <div class="section-card">
+                <h3 class="section-title">🏠 แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</h3>
+                <p class="section-desc">ยื่นคำร้องขอเข้าพักอาศัยในบ้านพักครูของโรงเรียนพะเยาพิทยาคม</p>
+                <div class="form-cards-grid">
+                    <div class="form-card" onclick="navigate('?page=request-form')">
+                        <div class="form-card-icon">📋</div>
+                        <div class="form-card-title">กรอกแบบฟอร์มคำร้องขอเข้าพักอาศัย</div>
+                        <div class="form-card-desc">กรอกข้อมูลส่วนตัว ข้อมูลการทำงาน และเหตุผลความจำเป็นในการขอเข้าพักอาศัย พร้อมแนบเอกสารประกอบ</div>
+                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Repair Request -->
+        <div class="tab-content" id="tab-repair">
+            <div class="info-card">
+                <div class="info-card-title">ℹ️ คำแนะนำ</div>
+                <div class="info-card-text">
+                    แบบฟอร์มแจ้งซ่อมแซมและบำรุงรักษา สำหรับแจ้งปัญหาหรือความเสียหายที่เกิดขึ้นในบ้านพัก เพื่อให้ทางโรงเรียนดำเนินการซ่อมแซมต่อไป
+                </div>
+            </div>
+            <div class="section-card">
+                <h3 class="section-title">🔧 แบบฟอร์มแจ้งซ่อมแซมและบำรุงรักษา</h3>
+                <p class="section-desc">แจ้งปัญหาหรือความเสียหายที่ต้องการให้ซ่อมแซม</p>
+                <div class="form-cards-grid">
+                    <div class="form-card" onclick="navigate('?page=repair-form')">
+                        <div class="form-card-icon">🛠️</div>
+                        <div class="form-card-title">กรอกแบบฟอร์มแจ้งซ่อมแซม</div>
+                        <div class="form-card-desc">ระบุรายละเอียดปัญหา ประเภทงานซ่อม ระดับความเร่งด่วน และแนบรูปภาพประกอบ</div>
+                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Transfer Request -->
+        <div class="tab-content" id="tab-transfer">
+            <div class="info-card">
+                <div class="info-card-title">ℹ️ คำแนะนำ</div>
+                <div class="info-card-text">
+                    แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต สำหรับผู้พักอาศัยที่ต้องการย้ายไปยังบ้านพักหลังอื่นหรือเปลี่ยนยูนิตภายในอาคารเดียวกัน
+                </div>
+            </div>
+            <div class="section-card">
+                <h3 class="section-title">🔄 แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต</h3>
+                <p class="section-desc">ยื่นคำร้องขอย้ายไปยังบ้านพักหลังอื่นหรือเปลี่ยนยูนิต</p>
+                <div class="form-cards-grid">
+                    <div class="form-card" onclick="navigate('?page=transfer-form')">
+                        <div class="form-card-icon">🏘️</div>
+                        <div class="form-card-title">กรอกแบบฟอร์มขอย้ายบ้านพัก</div>
+                        <div class="form-card-desc">ระบุบ้านพักปัจจุบัน บ้านพักที่ต้องการย้ายไป และเหตุผลความจำเป็นในการย้าย</div>
+                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Return Request -->
+        <div class="tab-content" id="tab-return">
+            <div class="info-card">
+                <div class="info-card-title">⚠️ คำเตือน</div>
+                <div class="info-card-text">
+                    การยื่นคำร้องขอคืนบ้านพักจะมีผลให้ท่านสิ้นสุดสิทธิ์การพักอาศัยในบ้านพักครูตามวันที่กำหนด กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยื่นคำร้อง
+                </div>
+            </div>
+            <div class="section-card">
+                <h3 class="section-title">📤 แบบฟอร์มคำร้องขอคืนบ้านพัก</h3>
+                <p class="section-desc">ยื่นคำร้องขอคืนบ้านพักและสิ้นสุดการพักอาศัย</p>
+                <div class="form-cards-grid">
+                    <div class="form-card" onclick="navigate('?page=return-form')">
+                        <div class="form-card-icon">🔑</div>
+                        <div class="form-card-title">กรอกแบบฟอร์มขอคืนบ้านพัก</div>
+                        <div class="form-card-desc">ระบุวันที่ต้องการย้ายออก สภาพบ้านพัก และข้อมูลการส่งมอบ</div>
+                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top:1.5rem; font-size:0.95rem; color:#888;">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+
+    <script>
+        // === Backend API Helpers ===
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+        async function callBackend(action, data = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken') || '';
+            const payload = { action, token, ...data };
+            const res = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), redirect: 'follow' });
+            const text = await res.text();
+            const result = JSON.parse(text);
+            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); navigate('?page=login'); return; }
+            return result;
+        }
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken') || '';
+            const qs = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + qs, { redirect: 'follow' });
+            const text = await res.text();
+            return JSON.parse(text);
+        }
+        // cachedCall: GET + localStorage cache
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; } } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }
+            return r;
+        }
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return null;
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); navigate('?page=login'); return null; }
+                return result.user;
+            } catch (e) { console.warn('Session check failed:', e); return null; }
+        }
+
+        // === Session check on load ===
+        window.addEventListener('DOMContentLoaded', async function() {
+            await checkSession();
+        });
+
+        // Tab switching
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // Remove active from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Show selected tab content
+            document.getElementById('tab-' + tabId).classList.add('active');
+            // Activate selected tab button
+            document.querySelector('.tab-btn[data-tab="' + tabId + '"]').classList.add('active');
+        }
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            document.getElementById('mainContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        };
+        // Set initial margin
+        document.getElementById('mainContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+        window.addEventListener('resize', function() {
+            document.getElementById('mainContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        });
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>

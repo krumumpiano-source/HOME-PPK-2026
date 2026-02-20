@@ -1,0 +1,1525 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตั้งค่าส่วนตัว | HOME PPK 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #4f8cff 0%, #38e8ff 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem 0.3rem 1.2rem 0.3rem;
+            transition: width 0.2s;
+            z-index: 100;
+        }
+        .sidebar.expanded {
+            width: 280px;
+            align-items: flex-start;
+            padding-left: 0.7rem;
+        }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            outline: none;
+            align-self: flex-end;
+            transition: color 0.2s;
+        }
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            width: 100%;
+        
+            flex: 1;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            background: none;
+            border: none;
+            font-size: 1.08rem;
+            font-family: inherit;
+            padding: 0.5rem 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover {
+            background: #fff;
+            color: #2563eb;
+        }
+        .sidebar-link-icon {
+            font-size: 1.25rem;
+            min-width: 1.5em;
+            text-align: center;
+        }
+        .sidebar-label {
+            display: none;
+            transition: opacity 0.2s;
+            white-space: normal;
+            word-wrap: break-word;
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+        .sidebar.expanded .sidebar-label {
+            display: inline;
+            opacity: 1;
+            margin-left: 0.1em;
+        }
+        
+        @media (max-width: 600px) {
+            .sidebar {
+                width: 48px;
+            }
+            .sidebar.expanded {
+                width: 160px;
+            }
+        }
+        
+        .dashboard-container {
+            margin-left: 62px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+            padding: 2.5rem 2.2rem 2rem 2.2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: flex-start;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .dashboard-container {
+            margin-left: 280px;
+        }
+        @media (max-width: 600px) {
+            .dashboard-container {
+                margin-left: 48px;
+                padding: 1.2rem 0.5rem;
+            }
+            .sidebar.expanded ~ .dashboard-container {
+                margin-left: 160px;
+            }
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 0.5rem;
+            justify-content: center;
+        }
+        .dashboard-header-icon {
+            font-size: 2.1rem;
+            color: #2563eb;
+            filter: drop-shadow(0 2px 6px #38e8ff44);
+        }
+        .dashboard-container h2 {
+            margin: 0;
+            color: #2563eb;
+            font-weight: 700;
+            font-size: 2.1rem;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+        
+        .section {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            width: 100%;
+            max-width: 600px;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Kanit', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .form-group input:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #4f8cff, #1e40af);
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Kanit', sans-serif;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(to right, #6b7280, #4b5563);
+        }
+        
+        .btn-success {
+            background: linear-gradient(to right, #10b981, #059669);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+        
+        .password-section {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .password-section h4 {
+            color: #92400e;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1rem;
+            color: #1e40af;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #065f46;
+            text-align: center;
+            display: none;
+            margin-top: 1rem;
+        }
+        .success-message.show {
+            display: block;
+        }
+        
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .password-strength-bar.weak { width: 33%; background: #ef4444; }
+        .password-strength-bar.medium { width: 66%; background: #f59e0b; }
+        .password-strength-bar.strong { width: 100%; background: #10b981; }
+        
+        .password-match {
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+        .password-match.match { color: #10b981; }
+        .password-match.no-match { color: #ef4444; }
+        
+        /* Profile Photo Styles */
+        .profile-photo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px dashed #d1d5db;
+        }
+        .profile-photo-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid #2563eb;
+            object-fit: cover;
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #6366f1;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .profile-photo-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+        }
+        .profile-photo-preview img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .photo-upload-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .photo-upload-btn {
+            background: linear-gradient(to right, #8b5cf6, #6366f1);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border: none;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .photo-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        .photo-upload-input {
+            display: none;
+        }
+        .photo-remove-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.3rem;
+            font-family: 'Kanit', sans-serif;
+        }
+        .photo-remove-btn:hover {
+            text-decoration: underline;
+        }
+        .photo-info {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: center;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        /* Co-Resident Styles */
+        .coresident-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .coresident-item {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 1rem;
+            position: relative;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .coresident-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-color: #2563eb;
+        }
+        .coresident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .coresident-number {
+            font-weight: 700;
+            color: #2563eb;
+            font-size: 0.95rem;
+        }
+        .coresident-remove {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            transition: background 0.2s;
+        }
+        .coresident-remove:hover {
+            background: #fee2e2;
+        }
+        .coresident-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.8rem;
+        }
+        .add-coresident-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: linear-gradient(to right, #10b981, #059669);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        .add-coresident-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .empty-coresident {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #9ca3af;
+            font-size: 0.95rem;
+            border: 2px dashed #e5e7eb;
+            border-radius: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-spouse { background: #fce7f3; color: #be185d; }
+        .status-child { background: #dbeafe; color: #1d4ed8; }
+        .status-father { background: #d1fae5; color: #047857; }
+        .status-mother { background: #fef3c7; color: #b45309; }
+        .status-teacher { background: #e0e7ff; color: #4338ca; }
+        
+        /* Staff Toggle Styles */
+        .staff-toggle-container {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border: 2px solid #6366f1;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .staff-toggle-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .staff-toggle-label {
+            font-weight: 600;
+            color: #4338ca;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .staff-toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #cbd5e1;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .staff-toggle-switch.active {
+            background: linear-gradient(to right, #6366f1, #4f46e5);
+        }
+        .staff-toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .staff-toggle-switch.active::after {
+            left: 27px;
+        }
+        .staff-toggle-desc {
+            font-size: 0.8rem;
+            color: #6366f1;
+            margin-left: auto;
+        }
+        .staff-fields {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #a5b4fc;
+        }
+        .staff-fields.show {
+            display: block;
+        }
+        .staff-fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.8rem;
+        }
+        .staff-notice {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 0.7rem;
+            font-size: 0.85rem;
+            color: #92400e;
+            margin-top: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .staff-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: linear-gradient(to right, #6366f1, #4f46e5);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู" aria-label="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" title="แดชบอร์ด" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" title="ข้อมูลการชำระย้อนหลัง" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link" title="ส่งสลิปชำระเงิน" onclick="navigate('?page=upload-slip')">
+                <span class="sidebar-link-icon">📤</span>
+                <span class="sidebar-label">ส่งสลิปชำระเงิน</span>
+            </button>
+            <button class="sidebar-link" title="แบบฟอร์มคำร้อง" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" title="ระเบียบ" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link active" title="ตั้งค่าส่วนตัว">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link" title="โปรแกรมจัดการคณะทำงาน" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมจัดการคณะทำงาน</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+
+        </nav>
+    </div>
+    
+    <div class="dashboard-container" id="dashboardContainer">
+        <div class="dashboard-header">
+            <span class="dashboard-header-icon">⚙️</span>
+            <h2>ตั้งค่าส่วนตัว</h2>
+        </div>
+        
+        <div class="info-box">
+            ℹ️ ข้อมูลทั้งหมดสามารถแก้ไขได้ กรุณาตรวจสอบความถูกต้องก่อนบันทึก
+        </div>
+        
+        <!-- ส่วนที่ 1: ข้อมูลส่วนตัว -->
+        <div class="section">
+            <div class="section-title">👤 ข้อมูลส่วนตัว</div>
+            
+            <!-- รูปประจำตัว -->
+            <div class="profile-photo-section">
+                <div class="profile-photo-preview" id="photoPreview">
+                    👤
+                </div>
+                <div class="photo-upload-zone">
+                    <input type="file" id="photoInput" class="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
+                    <button type="button" class="photo-upload-btn" onclick="document.getElementById('photoInput').click()">
+                        📷 เลือกรูปภาพ
+                    </button>
+                    <button type="button" class="photo-remove-btn" id="removePhotoBtn" style="display: none;" onclick="removePhoto()">
+                        ✕ ลบรูปภาพ
+                    </button>
+                    <div class="photo-info">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 2MB</div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 0.3;">
+                    <label for="prefix">คำนำหน้า</label>
+                    <select id="prefix" name="prefix">
+                        <option value="">เลือกคำนำหน้า</option>
+                        <option value="นาย">นาย</option>
+                        <option value="นาง">นาง</option>
+                        <option value="นางสาว">นางสาว</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 0.35;">
+                    <label for="firstname">ชื่อ</label>
+                    <input type="text" id="firstname" name="firstname" placeholder="กรอกชื่อ">
+                </div>
+                <div class="form-group" style="flex: 0.35;">
+                    <label for="lastname">นามสกุล</label>
+                    <input type="text" id="lastname" name="lastname" placeholder="กรอกนามสกุล">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">อีเมล</label>
+                    <input type="email" id="email" name="email" placeholder="example@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="phone">เบอร์โทรศัพท์</label>
+                    <input type="tel" id="phone" name="phone" placeholder="0XX-XXX-XXXX" maxlength="15">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="position">ตำแหน่ง</label>
+                    <select id="position" name="position">
+                        <option value="">เลือกตำแหน่ง</option>
+                        <option value="ภาษาไทย">ภาษาไทย</option>
+                        <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                        <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                        <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                        <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                        <option value="ศิลปะ">ศิลปะ</option>
+                        <option value="การงานอาชีพ">การงานอาชีพ</option>
+                        <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                        <option value="ลูกจ้าง">ลูกจ้าง</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="subject_group">กลุ่มสาระการเรียนรู้</label>
+                    <select id="subject_group" name="subject_group">
+                        <option value="">-- เลือกกลุ่มสาระ --</option>
+                        <option value="ภาษาไทย">ภาษาไทย</option>
+                        <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                        <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                        <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                        <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                        <option value="ศิลปะ">ศิลปะ</option>
+                        <option value="การงานอาชีพ">การงานอาชีพ</option>
+                        <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                        <option value="ลูกจ้าง">ลูกจ้าง</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ส่วนที่ 2: ที่อยู่ตามทะเบียนบ้าน -->
+        <div class="section">
+            <div class="section-title">📍 ที่อยู่ตามทะเบียนบ้าน</div>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 0.3;">
+                    <label for="address_no">เลขที่</label>
+                    <input type="text" id="address_no" name="address_no" placeholder="เลขที่">
+                </div>
+                <div class="form-group" style="flex: 0.35;">
+                    <label for="address_village">หมู่บ้าน</label>
+                    <input type="text" id="address_village" name="address_village" placeholder="หมู่บ้าน">
+                </div>
+                <div class="form-group" style="flex: 0.35;">
+                    <label for="address_road">ถนน</label>
+                    <input type="text" id="address_road" name="address_road" placeholder="ถนน">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="subdistrict">ตำบล/แขวง</label>
+                    <input type="text" id="subdistrict" name="subdistrict" placeholder="กรอกตำบล/แขวง">
+                </div>
+                <div class="form-group">
+                    <label for="district">อำเภอ/เขต</label>
+                    <input type="text" id="district" name="district" placeholder="กรอกอำเภอ/เขต">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="province">จังหวัด</label>
+                    <input type="text" id="province" name="province" placeholder="กรอกจังหวัด">
+                </div>
+                <div class="form-group" style="flex: 0.4;">
+                    <label for="zipcode">รหัสไปรษณีย์</label>
+                    <input type="text" id="zipcode" name="zipcode" placeholder="รหัสไปรษณีย์" maxlength="5">
+                </div>
+            </div>
+        </div>
+        
+        <!-- ส่วนที่ 3: ข้อมูลที่พักอาศัย -->
+        <div class="section">
+            <div class="section-title">🏠 ข้อมูลที่พักอาศัย (บ้านพักครู)</div>
+            
+            <div class="form-group">
+                <label for="house_number">เลขที่บ้านพักหรือแฟลตที่พักอาศัย</label>
+                <input type="text" id="house_number" name="house_number" placeholder="เลขประจำบ้านพักหรือแฟลต">
+            </div>
+            
+            <div class="form-group">
+                <label for="move_in_date">วันที่เข้าพักอาศัย</label>
+                <input type="date" id="move_in_date" name="move_in_date">
+            </div>
+        </div>
+        
+        <!-- ส่วนที่ 3.5: ข้อมูลผู้ร่วมพักอาศัย -->
+        <div class="section">
+            <div class="section-title">👨‍👩‍👧‍👦 ผู้ร่วมพักอาศัย</div>
+            
+            <div class="info-box" style="margin-bottom: 1rem;">
+                ℹ️ เพิ่มข้อมูลบุคคลที่พักอาศัยอยู่ด้วยกัน (ถ้ามี) <br>
+                <strong>หมายเหตุ:</strong> หากผู้ร่วมพักอาศัยเป็นครู/บุคลากร พค. ให้เปิดสวิตช์และกรอกข้อมูลเพิ่มเติม เพื่อให้แอดมินสามารถตั้งค่าสิทธิ์ให้ได้
+            </div>
+            
+            <div class="coresident-list" id="coresidentList">
+                <div class="empty-coresident" id="emptyCoresident">
+                    👤 ยังไม่มีข้อมูลผู้ร่วมพักอาศัย<br>
+                    <small>กดปุ่มด้านล่างเพื่อเพิ่มข้อมูล</small>
+                </div>
+            </div>
+            
+            <button type="button" class="add-coresident-btn" onclick="addCoresident()">
+                ➕ เพิ่มผู้ร่วมพักอาศัย
+            </button>
+        </div>
+        
+        <!-- ส่วนที่ 4: เปลี่ยนรหัสผ่าน -->
+        <div class="section">
+            <div class="section-title">🔐 รหัสผ่าน</div>
+            
+            <div class="password-section">
+                <h4>🔑 เปลี่ยนรหัสผ่าน</h4>
+                
+                <div class="form-group">
+                    <label for="current_password">รหัสผ่านปัจจุบัน</label>
+                    <input type="password" id="current_password" name="current_password" placeholder="กรอกรหัสผ่านปัจจุบัน">
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password">รหัสผ่านใหม่</label>
+                    <input type="password" id="new_password" name="new_password" placeholder="กรอกรหัสผ่านใหม่" oninput="checkPasswordStrength()">
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.8rem;">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">ยืนยันรหัสผ่านใหม่</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" oninput="checkPasswordMatch()">
+                    <div class="password-match" id="passwordMatch"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ปุ่มบันทึก -->
+        <div class="button-group">
+            <button class="btn btn-success" onclick="saveSettings()">💾 บันทึกข้อมูล</button>
+            <button class="btn btn-secondary" onclick="resetForm()">🔄 รีเซ็ต</button>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            ✅ บันทึกข้อมูลเรียบร้อยแล้ว!
+        </div>
+        
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+        </div>
+    </div>
+
+    <script>
+        // ============ API Configuration ============
+        var WEB_APP_URL = '<?!= scriptUrl ?>';
+        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+
+        // ============ API Helper ============
+        async function callBackend(action, data = {}) {
+            const token = localStorage.getItem('sessionToken');
+            const payload = { action, token, ...data };
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+                const text = await response.text();
+                const result = JSON.parse(text);
+                if (result.error === 'SESSION_EXPIRED') {
+                    localStorage.clear(); window.navigate('?page=login'); return;
+                }
+                return result;
+            } catch (err) {
+                console.error('Backend error:', err);
+                throw new Error('ไม่สามารถเชื่อมต่อระบบได้ — กรุณาลองใหม่');
+            }
+        }
+
+        async function callBackendGet(action, params = {}) {
+            if (!WEB_APP_URL) return null;
+            const token = localStorage.getItem('sessionToken');
+            const q = new URLSearchParams({ action, token, ...params }).toString();
+            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
+            return res.json();
+        }
+        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
+        async function cachedCall(action, params, ttlMs) {
+            ttlMs = ttlMs || 120000;
+            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
+            try {
+                var s = localStorage.getItem(ck);
+                if (s) { var p = JSON.parse(s); if (Date.now() - p.t < ttlMs) return p.d; }
+            } catch(e) {}
+            var r = await callBackendGet(action, params || {});
+            if (r && r.success !== false) {
+                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
+            }
+            return r;
+        }
+
+        async function checkSession() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) { window.navigate('?page=login'); return null; }
+            if (!WEB_APP_URL) return JSON.parse(localStorage.getItem('currentUser') || 'null');
+            try {
+                const result = await callBackendGet('getCurrentUser');
+                if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return null; }
+                localStorage.setItem('currentUser', JSON.stringify(result.user));
+                return result.user;
+            } catch { localStorage.clear(); window.navigate('?page=login'); return null; }
+        }
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.onclick = function() {
+            sidebar.classList.toggle('expanded');
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        };
+        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
+        window.addEventListener('resize', function() {
+            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
+                ? (window.innerWidth <= 600 ? '160px' : '280px')
+                : (window.innerWidth <= 600 ? '48px' : '62px');
+        });
+
+        // โหลดข้อมูลจาก Backend (fallback: localStorage)
+        async function loadUserData() {
+            let userData = {};
+
+            // Try backend first
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getUserProfile');
+                    if (result && result.success && result.data) {
+                        userData = result.data;
+                        localStorage.setItem('userData', JSON.stringify(userData));
+                    }
+                } catch (e) { console.warn('Failed to load profile from backend', e); }
+            }
+
+            // Fallback to localStorage
+            if (!userData.email) {
+                userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            }
+            
+            // ข้อมูลส่วนตัว
+            if (userData.prefix) document.getElementById('prefix').value = userData.prefix;
+            if (userData.firstname) document.getElementById('firstname').value = userData.firstname;
+            if (userData.lastname) document.getElementById('lastname').value = userData.lastname;
+            if (userData.email) document.getElementById('email').value = userData.email;
+            if (userData.phone) document.getElementById('phone').value = userData.phone;
+            if (userData.position) document.getElementById('position').value = userData.position;
+            if (userData.subject_group) document.getElementById('subject_group').value = userData.subject_group;
+            
+            // ที่อยู่ตามทะเบียนบ้าน
+            if (userData.address_no) document.getElementById('address_no').value = userData.address_no;
+            if (userData.address_village) document.getElementById('address_village').value = userData.address_village;
+            if (userData.address_road) document.getElementById('address_road').value = userData.address_road;
+            if (userData.subdistrict) document.getElementById('subdistrict').value = userData.subdistrict;
+            if (userData.district) document.getElementById('district').value = userData.district;
+            if (userData.province) document.getElementById('province').value = userData.province;
+            if (userData.zipcode) document.getElementById('zipcode').value = userData.zipcode;
+            
+            // ข้อมูลที่พักอาศัย (บ้านพักครู)
+            if (userData.house_number) document.getElementById('house_number').value = userData.house_number;
+            if (userData.move_in_date) document.getElementById('move_in_date').value = userData.move_in_date;
+            
+            // โหลดรูปประจำตัว
+            if (userData.profilePhoto) {
+                displayPhoto(userData.profilePhoto);
+            }
+        }
+        
+        // จัดการการอัปโหลดรูปภาพ
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // ตรวจสอบประเภทไฟล์
+            if (!file.type.startsWith('image/')) {
+                alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+            
+            // ตรวจสอบขนาดไฟล์ (ไม่เกิน 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('ขนาดไฟล์ต้องไม่เกิน 2MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                displayPhoto(imageData);
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // แสดงรูปภาพในกรอบ
+        function displayPhoto(imageData) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = '<img src="' + imageData + '" alt="รูปประจำตัว">';
+            document.getElementById('removePhotoBtn').style.display = 'inline-block';
+        }
+        
+        // ลบรูปภาพ
+        function removePhoto() {
+            if (confirm('ต้องการลบรูปประจำตัวหรือไม่?')) {
+                const preview = document.getElementById('photoPreview');
+                preview.innerHTML = '👤';
+                document.getElementById('photoInput').value = '';
+                document.getElementById('removePhotoBtn').style.display = 'none';
+            }
+        }
+
+        // บันทึกข้อมูล
+        async function saveSettings() {
+            // ตรวจสอบรหัสผ่าน (ถ้ามีการเปลี่ยน)
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const currentPassword = document.getElementById('current_password').value;
+            
+            if (newPassword || confirmPassword || currentPassword) {
+                if (!currentPassword) {
+                    alert('กรุณากรอกรหัสผ่านปัจจุบัน');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    alert('รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน');
+                    return;
+                }
+                if (newPassword.length < 8) {
+                    alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+                    return;
+                }
+            }
+            
+            // รวบรวมข้อมูลครบถ้วนตาม register.html
+            const userData = {
+                // ข้อมูลส่วนตัว
+                prefix: document.getElementById('prefix').value,
+                firstname: document.getElementById('firstname').value,
+                lastname: document.getElementById('lastname').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                position: document.getElementById('position').value,
+                subject_group: document.getElementById('subject_group').value,
+                
+                // ที่อยู่ตามทะเบียนบ้าน
+                address_no: document.getElementById('address_no').value,
+                address_village: document.getElementById('address_village').value,
+                address_road: document.getElementById('address_road').value,
+                subdistrict: document.getElementById('subdistrict').value,
+                district: document.getElementById('district').value,
+                province: document.getElementById('province').value,
+                zipcode: document.getElementById('zipcode').value,
+                
+                // ข้อมูลที่พักอาศัย (บ้านพักครู)
+                house_number: document.getElementById('house_number').value,
+                move_in_date: document.getElementById('move_in_date').value,
+                
+                // ผู้ร่วมพักอาศัย
+                coresidents: coresidents
+            };
+            
+            // บันทึกรูปประจำตัว
+            const profileImg = document.querySelector('#photoPreview img');
+            if (profileImg) {
+                userData.profilePhoto = profileImg.src;
+            } else {
+                userData.profilePhoto = null;
+            }
+
+            // Try Backend first
+            if (WEB_APP_URL) {
+                try {
+                    // อัปเดตโปรไฟล์
+                    const profileResult = await callBackend('updateProfile', userData);
+                    if (!profileResult || !profileResult.success) {
+                        alert(profileResult?.error || 'บันทึกข้อมูลไม่สำเร็จ');
+                        return;
+                    }
+
+                    // เปลี่ยนรหัสผ่าน (ถ้ามี)
+                    if (newPassword && currentPassword) {
+                        const pwResult = await callBackend('changePassword', {
+                            oldPassword: currentPassword,
+                            newPassword: newPassword
+                        });
+                        if (!pwResult || !pwResult.success) {
+                            alert(pwResult?.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ');
+                            return;
+                        }
+                    }
+
+                    // อัปเดต coresidents
+                    for (const c of coresidents) {
+                        if (c._isNew) {
+                            await callBackend('addCoresident', c);
+                        } else if (c._isModified) {
+                            await callBackend('updateCoresident', c);
+                        }
+                    }
+                } catch (err) {
+                    alert(err.message || 'ไม่สามารถบันทึกข้อมูลได้');
+                    return;
+                }
+            }
+            
+            // บันทึกลง localStorage (fallback + cache)
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            // บันทึกรายชื่อบุคลากรไปยัง Admin List (สำหรับการตั้งค่าสิทธิ์)
+            saveStaffToAdminList();
+            
+            // แสดงข้อความสำเร็จ
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.add('show');
+            
+            // ล้างช่องรหัสผ่าน
+            document.getElementById('current_password').value = '';
+            document.getElementById('new_password').value = '';
+            document.getElementById('confirm_password').value = '';
+            document.getElementById('passwordStrengthBar').className = 'password-strength-bar';
+            document.getElementById('passwordMatch').innerHTML = '';
+            
+            // ซ่อนข้อความหลังจาก 3 วินาที
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        // รีเซ็ตฟอร์ม
+        function resetForm() {
+            if (confirm('ต้องการรีเซ็ตข้อมูลทั้งหมดหรือไม่?')) {
+                loadUserData();
+                document.getElementById('current_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+                document.getElementById('passwordStrengthBar').className = 'password-strength-bar';
+                document.getElementById('passwordMatch').innerHTML = '';
+                document.getElementById('photoInput').value = '';
+            }
+        }
+
+        // ตรวจสอบความแข็งแรงของรหัสผ่าน
+        function checkPasswordStrength() {
+            const password = document.getElementById('new_password').value;
+            const strengthBar = document.getElementById('passwordStrengthBar');
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            strengthBar.className = 'password-strength-bar';
+            if (strength >= 4) {
+                strengthBar.classList.add('strong');
+            } else if (strength >= 2) {
+                strengthBar.classList.add('medium');
+            } else if (strength >= 1) {
+                strengthBar.classList.add('weak');
+            }
+            
+            checkPasswordMatch();
+        }
+
+        // ตรวจสอบรหัสผ่านตรงกัน
+        function checkPasswordMatch() {
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const matchDiv = document.getElementById('passwordMatch');
+            
+            if (confirmPassword === '') {
+                matchDiv.innerHTML = '';
+                matchDiv.className = 'password-match';
+            } else if (newPassword === confirmPassword) {
+                matchDiv.innerHTML = '✓ รหัสผ่านตรงกัน';
+                matchDiv.className = 'password-match match';
+            } else {
+                matchDiv.innerHTML = '✗ รหัสผ่านไม่ตรงกัน';
+                matchDiv.className = 'password-match no-match';
+            }
+        }
+
+        // ==================== ผู้ร่วมพักอาศัย ====================
+        let coresidents = [];
+        let coresidentCounter = 0;
+        
+        const CORESIDENT_STATUS = [
+            { value: 'spouse', label: 'คู่สมรส', class: 'status-spouse' },
+            { value: 'child', label: 'บุตร', class: 'status-child' },
+            { value: 'father', label: 'บิดา', class: 'status-father' },
+            { value: 'mother', label: 'มารดา', class: 'status-mother' }
+        ];
+        
+        const POSITION_OPTIONS = [
+            { value: '', label: 'เลือกตำแหน่ง' },
+            { value: 'ภาษาไทย', label: 'ภาษาไทย' },
+            { value: 'คณิตศาสตร์', label: 'คณิตศาสตร์' },
+            { value: 'วิทยาศาสตร์และเทคโนโลยี', label: 'วิทยาศาสตร์และเทคโนโลยี' },
+            { value: 'สังคมศึกษา ศาสนาและวัฒนธรรม', label: 'สังคมศึกษา ศาสนาและวัฒนธรรม' },
+            { value: 'สุขศึกษาและพลศึกษา', label: 'สุขศึกษาและพลศึกษา' },
+            { value: 'ศิลปะ', label: 'ศิลปะ' },
+            { value: 'การงานอาชีพ', label: 'การงานอาชีพ' },
+            { value: 'ภาษาต่างประเทศ', label: 'ภาษาต่างประเทศ' },
+            { value: 'เจ้าหน้าที่', label: 'เจ้าหน้าที่' },
+            { value: 'ลูกจ้าง', label: 'ลูกจ้าง' }
+        ];
+        
+        const SUBJECT_GROUP_OPTIONS = [
+            { value: '', label: '-- เลือกกลุ่มสาระ --' },
+            { value: 'ภาษาไทย', label: 'ภาษาไทย' },
+            { value: 'คณิตศาสตร์', label: 'คณิตศาสตร์' },
+            { value: 'วิทยาศาสตร์และเทคโนโลยี', label: 'วิทยาศาสตร์และเทคโนโลยี' },
+            { value: 'สังคมศึกษา ศาสนาและวัฒนธรรม', label: 'สังคมศึกษา ศาสนาและวัฒนธรรม' },
+            { value: 'สุขศึกษาและพลศึกษา', label: 'สุขศึกษาและพลศึกษา' },
+            { value: 'ศิลปะ', label: 'ศิลปะ' },
+            { value: 'การงานอาชีพ', label: 'การงานอาชีพ' },
+            { value: 'ภาษาต่างประเทศ', label: 'ภาษาต่างประเทศ' },
+            { value: 'เจ้าหน้าที่', label: 'เจ้าหน้าที่' },
+            { value: 'ลูกจ้าง', label: 'ลูกจ้าง' }
+        ];
+        
+        async function loadCoresidents() {
+            // Try backend first
+            if (WEB_APP_URL) {
+                try {
+                    const result = await callBackendGet('getCoresidents');
+                    if (result && result.success && result.data) {
+                        coresidents = result.data;
+                        coresidentCounter = coresidents.length;
+                        renderCoresidents();
+                        return;
+                    }
+                } catch (e) { console.warn('Failed to load coresidents from backend', e); }
+            }
+
+            // Fallback: localStorage
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            coresidents = userData.coresidents || [];
+            coresidentCounter = coresidents.length;
+            
+            // ตรวจสอบและซิงค์ผู้ร่วมพักอาศัยจากระบบ
+            syncCoresidentsFromSystem();
+            
+            renderCoresidents();
+        }
+        
+        // ซิงค์ข้อมูลผู้ร่วมพักอาศัยจากระบบ (เมื่อผู้ร่วมพักอาศัยสมัครใช้บริการ)
+        function syncCoresidentsFromSystem() {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const allUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+            const currentHouseNumber = userData.house_number;
+            
+            if (!currentHouseNumber) return;
+            
+            // หาผู้ใช้อื่นที่อยู่บ้านเลขเดียวกัน
+            allUsers.forEach(user => {
+                if (user.house_number === currentHouseNumber && user.email !== userData.email) {
+                    // ตรวจสอบว่ามีอยู่ใน coresidents แล้วหรือไม่
+                    const existingIndex = coresidents.findIndex(c => 
+                        c.email === user.email || 
+                        (c.firstname === user.firstname && c.lastname === user.lastname)
+                    );
+                    
+                    if (existingIndex === -1) {
+                        // เพิ่มเป็นผู้ร่วมพักอาศัยใหม่
+                        coresidents.push({
+                            id: ++coresidentCounter,
+                            status: 'spouse', // ค่าเริ่มต้น
+                            prefix: user.prefix || '',
+                            firstname: user.firstname || '',
+                            lastname: user.lastname || '',
+                            phone: user.phone || '',
+                            is_ppk_staff: true,
+                            email: user.email,
+                            position: user.position || '',
+                            subject_group: user.subject_group || '',
+                            synced_from_system: true,
+                            user_id: user.id
+                        });
+                    } else {
+                        // อัพเดทข้อมูล
+                        coresidents[existingIndex].synced_from_system = true;
+                        coresidents[existingIndex].user_id = user.id;
+                        coresidents[existingIndex].is_ppk_staff = true;
+                    }
+                }
+            });
+        }
+        
+        function renderCoresidents() {
+            const list = document.getElementById('coresidentList');
+            const emptyMsg = document.getElementById('emptyCoresident');
+            
+            // Clear existing items (except empty message)
+            const existingItems = list.querySelectorAll('.coresident-item');
+            existingItems.forEach(item => item.remove());
+            
+            if (coresidents.length === 0) {
+                emptyMsg.style.display = 'block';
+                return;
+            }
+            
+            emptyMsg.style.display = 'none';
+            
+            coresidents.forEach((person, index) => {
+                const statusInfo = CORESIDENT_STATUS.find(s => s.value === person.status) || CORESIDENT_STATUS[0];
+                const isStaff = person.is_ppk_staff || false;
+                const isSynced = person.synced_from_system || false;
+                
+                const item = document.createElement('div');
+                item.className = 'coresident-item';
+                item.innerHTML = `
+                    <div class="coresident-header">
+                        <span class="coresident-number">
+                            👤 ผู้ร่วมพักอาศัย #${index + 1}
+                            ${isStaff ? '<span class="staff-badge">🏫 บุคลากร พค.</span>' : ''}
+                            ${isSynced ? '<span class="staff-badge" style="background: #10b981;">🔗 ซิงค์จากระบบ</span>' : ''}
+                        </span>
+                        ${!isSynced ? `<button type="button" class="coresident-remove" onclick="removeCoresident(${index})">✕ ลบ</button>` : ''}
+                    </div>
+                    <div class="coresident-fields">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>สถานะ</label>
+                            <select onchange="updateCoresident(${index}, 'status', this.value)" ${isSynced ? 'disabled' : ''}>
+                                ${CORESIDENT_STATUS.map(s => 
+                                    `<option value="${s.value}" ${person.status === s.value ? 'selected' : ''}>${s.label}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>คำนำหน้า</label>
+                            <select onchange="updateCoresident(${index}, 'prefix', this.value)" ${isSynced ? 'disabled' : ''}>
+                                <option value="">เลือก...</option>
+                                <option value="นาย" ${person.prefix === 'นาย' ? 'selected' : ''}>นาย</option>
+                                <option value="นาง" ${person.prefix === 'นาง' ? 'selected' : ''}>นาง</option>
+                                <option value="นางสาว" ${person.prefix === 'นางสาว' ? 'selected' : ''}>นางสาว</option>
+                                <option value="เด็กชาย" ${person.prefix === 'เด็กชาย' ? 'selected' : ''}>เด็กชาย</option>
+                                <option value="เด็กหญิง" ${person.prefix === 'เด็กหญิง' ? 'selected' : ''}>เด็กหญิง</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>ชื่อ</label>
+                            <input type="text" value="${person.firstname || ''}" placeholder="ชื่อ" onchange="updateCoresident(${index}, 'firstname', this.value)" ${isSynced ? 'disabled' : ''}>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>นามสกุล</label>
+                            <input type="text" value="${person.lastname || ''}" placeholder="นามสกุล" onchange="updateCoresident(${index}, 'lastname', this.value)" ${isSynced ? 'disabled' : ''}>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>เบอร์โทรศัพท์</label>
+                            <input type="tel" value="${person.phone || ''}" placeholder="0XX-XXX-XXXX" maxlength="15" onchange="updateCoresident(${index}, 'phone', this.value)" ${isSynced ? 'disabled' : ''}>
+                        </div>
+                    </div>
+                    
+                    <!-- ส่วนครู/บุคลากร พค. -->
+                    <div class="staff-toggle-container">
+                        <div class="staff-toggle-header">
+                            <span class="staff-toggle-label">🏫 เป็นครู/บุคลากร โรงเรียนพะเยาพิทยาคม</span>
+                            <div class="staff-toggle-switch ${isStaff ? 'active' : ''}" 
+                                 id="staffToggle_${index}" 
+                                 onclick="toggleStaffStatus(${index})" 
+                                 ${isSynced ? 'style="pointer-events:none;opacity:0.7;"' : ''}></div>
+                            <span class="staff-toggle-desc">${isStaff ? 'เปิด' : 'ปิด'}</span>
+                        </div>
+                        
+                        <div class="staff-fields ${isStaff ? 'show' : ''}" id="staffFields_${index}">
+                            <div class="staff-fields-grid">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>📧 อีเมล</label>
+                                    <input type="email" value="${person.email || ''}" placeholder="email@example.com" 
+                                           onchange="updateCoresident(${index}, 'email', this.value)" ${isSynced ? 'disabled' : ''}>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>💼 ตำแหน่ง</label>
+                                    <select onchange="updateCoresident(${index}, 'position', this.value)" ${isSynced ? 'disabled' : ''}>
+                                        ${POSITION_OPTIONS.map(p => 
+                                            `<option value="${p.value}" ${person.position === p.value ? 'selected' : ''}>${p.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>📚 กลุ่มสาระ</label>
+                                    <select onchange="updateCoresident(${index}, 'subject_group', this.value)" ${isSynced ? 'disabled' : ''}>
+                                        ${SUBJECT_GROUP_OPTIONS.map(g => 
+                                            `<option value="${g.value}" ${person.subject_group === g.value ? 'selected' : ''}>${g.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            ${!isSynced ? `
+                            <div class="staff-notice">
+                                <span>⚠️</span>
+                                <span>เมื่อบันทึกข้อมูล รายชื่อนี้จะปรากฏในหน้าตั้งค่าสิทธิ์ของแอดมิน เพื่อให้สามารถกำหนดสิทธิ์การใช้งานระบบได้<br>
+                                <strong>หากต้องการให้เขาเข้าใช้งานได้เต็มรูปแบบ แนะนำให้สมัครสมาชิกด้วยอีเมลที่กรอกไว้</strong></span>
+                            </div>
+                            ` : `
+                            <div class="staff-notice" style="background:#d1fae5; border-color:#10b981; color:#065f46;">
+                                <span>✅</span>
+                                <span>ผู้ร่วมพักอาศัยคนนี้ได้สมัครใช้งานระบบแล้ว ข้อมูลจะถูกซิงค์อัตโนมัติ</span>
+                            </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        function toggleStaffStatus(index) {
+            if (coresidents[index]) {
+                coresidents[index].is_ppk_staff = !coresidents[index].is_ppk_staff;
+                renderCoresidents();
+            }
+        }
+        
+        function addCoresident() {
+            coresidents.push({
+                id: ++coresidentCounter,
+                status: 'spouse',
+                prefix: '',
+                firstname: '',
+                lastname: '',
+                phone: '',
+                is_ppk_staff: false,
+                email: '',
+                position: '',
+                subject_group: '',
+                synced_from_system: false
+            });
+            renderCoresidents();
+        }
+        
+        function removeCoresident(index) {
+            if (coresidents[index] && coresidents[index].synced_from_system) {
+                alert('ไม่สามารถลบผู้ร่วมพักอาศัยที่ซิงค์จากระบบได้');
+                return;
+            }
+            if (confirm('ต้องการลบข้อมูลผู้ร่วมพักอาศัยนี้หรือไม่?')) {
+                coresidents.splice(index, 1);
+                renderCoresidents();
+            }
+        }
+        
+        function updateCoresident(index, field, value) {
+            if (coresidents[index]) {
+                coresidents[index][field] = value;
+            }
+        }
+        
+        // ดึงรายชื่อผู้ร่วมพักอาศัยที่เป็นบุคลากร (สำหรับ Admin Settings)
+        function getStaffCoresidents() {
+            return coresidents.filter(c => c.is_ppk_staff === true);
+        }
+        
+        // บันทึกรายชื่อบุคลากรไปยัง localStorage สำหรับ Admin
+        function saveStaffToAdminList() {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const staffList = JSON.parse(localStorage.getItem('pendingStaffList') || '[]');
+            const houseNumber = userData.house_number;
+            
+            const staffCoresidents = getStaffCoresidents();
+            
+            staffCoresidents.forEach(staff => {
+                // ตรวจสอบว่ามีอยู่ใน list แล้วหรือไม่
+                const existingIndex = staffList.findIndex(s => 
+                    s.email === staff.email || 
+                    (s.firstname === staff.firstname && s.lastname === staff.lastname && s.house_number === houseNumber)
+                );
+                
+                const staffData = {
+                    house_number: houseNumber,
+                    prefix: staff.prefix,
+                    firstname: staff.firstname,
+                    lastname: staff.lastname,
+                    phone: staff.phone,
+                    email: staff.email,
+                    position: staff.position,
+                    subject_group: staff.subject_group,
+                    relation: staff.status,
+                    added_by: userData.email,
+                    added_at: new Date().toISOString(),
+                    status: 'pending' // รอแอดมินอนุมัติสิทธิ์
+                };
+                
+                if (existingIndex === -1) {
+                    staffList.push(staffData);
+                } else {
+                    staffList[existingIndex] = staffData;
+                }
+            });
+            
+            localStorage.setItem('pendingStaffList', JSON.stringify(staffList));
+        }
+        
+        // โหลดข้อมูลเมื่อเปิดหน้า
+        window.onload = async function() {
+            await checkSession();
+            await loadUserData();
+            await loadCoresidents();
+        };
+    
+        async function doLogout() {
+            if (!confirm('ยืนยันออกจากระบบ?')) return;
+            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
+            if (token && WEB_APP_URL) {
+                try { await callBackend('logout', {}); } catch(e) {}
+            }
+            localStorage.clear();
+            navigate('?page=login');
+        }
+        </script>
+</body>
+</html>
