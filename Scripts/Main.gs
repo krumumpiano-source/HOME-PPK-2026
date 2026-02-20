@@ -519,7 +519,12 @@ function routeGetAction(action, params) {
       case 'getUserProfile':
         return getUserProfile(params.userId || params._userId);
       case 'getCoresidents':
-        return getCoresidents(params.residentId);
+        var _coResidentId = params.residentId;
+        if (!_coResidentId && params._userId) {
+          var _coUser = findRowByValue(SPREADSHEET_IDS.MAIN, SHEET_NAMES.USERS, 'id', params._userId);
+          if (_coUser) _coResidentId = _coUser.resident_id;
+        }
+        return getCoresidents(_coResidentId);
       case 'getHousingFormat':
         return gasCache('housingFormat', function() { return getHousingFormat(); });
       case 'getWaterRate':

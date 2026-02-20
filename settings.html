@@ -774,7 +774,7 @@
             
             <div class="form-group">
                 <label for="house_number">เลขที่บ้านพักหรือแฟลตที่พักอาศัย</label>
-                <input type="text" id="house_number" name="house_number" placeholder="เลขประจำบ้านพักหรือแฟลต">
+                <input type="text" id="house_number" name="house_number" placeholder="กำหนดโดยผู้ดูแลระบบ" readonly style="background:#f1f5f9;cursor:not-allowed;color:#64748b;">
             </div>
             
             <div class="form-group">
@@ -871,12 +871,19 @@
         async function loadUserData() {
             let userData = {};
 
-            // Try backend first
+            // Try backend first — getUserProfile returns { success, user, resident }
             if (WEB_APP_URL) {
                 try {
                     const result = await callBackendGet('getUserProfile');
-                    if (result && result.success && result.data) {
-                        userData = result.data;
+                    if (result && result.success) {
+                        const u = result.user || result.data || {};
+                        const r = result.resident || {};
+                        // Merge resident (rich data) with user (email/role)
+                        userData = Object.assign({}, r, {
+                            email: u.email || r.email,
+                            phone: u.phone || r.phone,
+                            role: u.role,
+                        });
                         localStorage.setItem('userData', JSON.stringify(userData));
                     }
                 } catch (e) { console.warn('Failed to load profile from backend', e); }
@@ -1037,12 +1044,22 @@
                         }
                     }
 
-                    // อัปเดต coresidents
+                    // บันทึก coresidents ทีละรายการ (เฉพาะที่เปลี่ยนแปลง)
                     for (const c of coresidents) {
                         if (c._isNew) {
-                            await callBackend('addCoresident', c);
-                        } else if (c._isModified) {
-                            await callBackend('updateCoresident', c);
+                            try {
+                                const r = await callBackend('addCoresident', c);
+                                if (r && r.success && r.id) {
+                                    c.id = r.id;
+                                    c._isNew = false;
+                                    c._isModified = false;
+                                }
+                            } catch(e) { console.warn('addCoresident failed', e); }
+                        } else if (c._isModified && c.id) {
+                            try {
+                                await callBackend('updateCoresident', c);
+                                c._isModified = false;
+                            } catch(e) { console.warn('updateCoresident failed', e); }
                         }
                     }
                 } catch (err) {
@@ -1168,12 +1185,19 @@
         ];
         
         async function loadCoresidents() {
-            // Try backend first
+            // Try backend first — getCoresidents infers residentId from session token
             if (WEB_APP_URL) {
                 try {
                     const result = await callBackendGet('getCoresidents');
                     if (result && result.success && result.data) {
-                        coresidents = result.data;
+                        // Map GAS schema -> UI schema
+                        coresidents = result.data.map(c => ({
+                            ...c,
+                            // map 'relation' -> 'status' for UI selects
+                            status: c.status || c.relation || 'spouse',
+                            // backward compat: map old 'name' field -> firstname
+                            firstname: c.firstname || c.name || '',
+                        }));
                         coresidentCounter = coresidents.length;
                         renderCoresidents();
                         return;
@@ -1183,56 +1207,13 @@
 
             // Fallback: localStorage
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-            coresidents = userData.coresidents || [];
+            coresidents = (userData.coresidents || []).map(c => ({
+                ...c,
+                status: c.status || c.relation || 'spouse',
+                firstname: c.firstname || c.name || '',
+            }));
             coresidentCounter = coresidents.length;
-            
-            // ตรวจสอบและซิงค์ผู้ร่วมพักอาศัยจากระบบ
-            syncCoresidentsFromSystem();
-            
             renderCoresidents();
-        }
-        
-        // ซิงค์ข้อมูลผู้ร่วมพักอาศัยจากระบบ (เมื่อผู้ร่วมพักอาศัยสมัครใช้บริการ)
-        function syncCoresidentsFromSystem() {
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-            const allUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
-            const currentHouseNumber = userData.house_number;
-            
-            if (!currentHouseNumber) return;
-            
-            // หาผู้ใช้อื่นที่อยู่บ้านเลขเดียวกัน
-            allUsers.forEach(user => {
-                if (user.house_number === currentHouseNumber && user.email !== userData.email) {
-                    // ตรวจสอบว่ามีอยู่ใน coresidents แล้วหรือไม่
-                    const existingIndex = coresidents.findIndex(c => 
-                        c.email === user.email || 
-                        (c.firstname === user.firstname && c.lastname === user.lastname)
-                    );
-                    
-                    if (existingIndex === -1) {
-                        // เพิ่มเป็นผู้ร่วมพักอาศัยใหม่
-                        coresidents.push({
-                            id: ++coresidentCounter,
-                            status: 'spouse', // ค่าเริ่มต้น
-                            prefix: user.prefix || '',
-                            firstname: user.firstname || '',
-                            lastname: user.lastname || '',
-                            phone: user.phone || '',
-                            is_ppk_staff: true,
-                            email: user.email,
-                            position: user.position || '',
-                            subject_group: user.subject_group || '',
-                            synced_from_system: true,
-                            user_id: user.id
-                        });
-                    } else {
-                        // อัพเดทข้อมูล
-                        coresidents[existingIndex].synced_from_system = true;
-                        coresidents[existingIndex].user_id = user.id;
-                        coresidents[existingIndex].is_ppk_staff = true;
-                    }
-                }
-            });
         }
         
         function renderCoresidents() {
@@ -1363,7 +1344,7 @@
         
         function addCoresident() {
             coresidents.push({
-                id: ++coresidentCounter,
+                _isNew: true,
                 status: 'spouse',
                 prefix: '',
                 firstname: '',
@@ -1384,6 +1365,12 @@
                 return;
             }
             if (await ppkConfirm('ต้องการลบข้อมูลผู้ร่วมพักอาศัยนี้หรือไม่?')) {
+                const item = coresidents[index];
+                // ถ้ามี id ที่สร้างจาก GAS (ขึ้นต้นด้วย COR-) ให้ call API ลบ
+                if (item && item.id && WEB_APP_URL) {
+                    try { await callBackend('removeCoresident', { id: item.id }); }
+                    catch(e) { console.warn('removeCoresident API failed', e); }
+                }
                 coresidents.splice(index, 1);
                 renderCoresidents();
             }
@@ -1392,6 +1379,10 @@
         function updateCoresident(index, field, value) {
             if (coresidents[index]) {
                 coresidents[index][field] = value;
+                // ตั้งค่า _isModified ถ้ายังไม่ใช่ item ใหม่
+                if (!coresidents[index]._isNew) {
+                    coresidents[index]._isModified = true;
+                }
             }
         }
         

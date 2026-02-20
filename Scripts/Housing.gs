@@ -560,7 +560,11 @@ function getCoresidents(residentId) {
 function addCoresident(data) {
   var userId = data._userId || '';
   if (!userId) return { success: false, error: 'ไม่พบข้อมูลผู้ใช้' };
-  if (!data.name) return { success: false, error: 'กรุณาระบุชื่อผู้ร่วมพัก' };
+
+  // รองรับทั้ง firstname/lastname แยก และ name เดี่ยว
+  var firstname = data.firstname || data.name || '';
+  var lastname  = data.lastname || '';
+  if (!firstname) return { success: false, error: 'กรุณาระบุชื่อผู้ร่วมพัก' };
 
   // ดึง resident จาก userId
   var user = findRowByValue(SPREADSHEET_IDS.MAIN, SHEET_NAMES.USERS, 'id', userId);
@@ -577,11 +581,18 @@ function addCoresident(data) {
     coresidents = [];
   }
 
-  // เพิ่มผู้ร่วมพักใหม่
+  // เพิ่มผู้ร่วมพักใหม่ (schema เต็มรูปแบบ)
   var newCoresident = {
     id: getNextId('COR'),
-    name: data.name,
-    relation: data.relation || '',
+    relation: data.relation || data.status || '',
+    prefix: data.prefix || '',
+    firstname: firstname,
+    lastname: lastname,
+    phone: data.phone || '',
+    is_ppk_staff: data.is_ppk_staff || false,
+    email: data.email || '',
+    position: data.position || '',
+    subject_group: data.subject_group || '',
     added_at: new Date().toISOString()
   };
   coresidents.push(newCoresident);
@@ -624,12 +635,23 @@ function updateCoresident(id, data) {
     return { success: false, error: 'ข้อมูลผู้ร่วมพักเสียหาย' };
   }
 
-  // ค้นหาและอัปเดต
+  // ค้นหาและอัปเดต (รองรับ schema เต็มรูปแบบ)
   var found = false;
   for (var i = 0; i < coresidents.length; i++) {
     if (coresidents[i].id === id) {
-      if (data.name !== undefined) coresidents[i].name = data.name;
-      if (data.relation !== undefined) coresidents[i].relation = data.relation;
+      // backward compat: รองรับ name เดี่ยว
+      if (data.firstname !== undefined) coresidents[i].firstname = data.firstname;
+      if (data.lastname !== undefined) coresidents[i].lastname = data.lastname;
+      if (data.name !== undefined && !data.firstname) coresidents[i].firstname = data.name;
+      // relation รองรับทั้ง relation และ status จาก frontend
+      var newRelation = data.relation || data.status;
+      if (newRelation !== undefined) coresidents[i].relation = newRelation;
+      if (data.prefix !== undefined) coresidents[i].prefix = data.prefix;
+      if (data.phone !== undefined) coresidents[i].phone = data.phone;
+      if (data.is_ppk_staff !== undefined) coresidents[i].is_ppk_staff = data.is_ppk_staff;
+      if (data.email !== undefined) coresidents[i].email = data.email;
+      if (data.position !== undefined) coresidents[i].position = data.position;
+      if (data.subject_group !== undefined) coresidents[i].subject_group = data.subject_group;
       found = true;
       break;
     }
