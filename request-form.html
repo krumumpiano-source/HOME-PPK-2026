@@ -5,115 +5,143 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
         body {
             font-family: 'Kanit', sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f9f9f9;
         }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100vh; width: 62px;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 1.2rem 0.3rem; transition: width 0.2s; z-index: 100;
+        }
+        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
+        .sidebar-toggle {
+            background: none; border: none; color: #fff; font-size: 1.7rem;
+            margin-bottom: 1.2rem; cursor: pointer; outline: none; align-self: flex-end;
+        }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 0.9rem; color: #fff;
+            background: none; border: none; font-size: 1.08rem; font-family: inherit;
+            padding: 0.5rem; border-radius: 8px; cursor: pointer; text-align: left;
+            width: 100%; transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
+        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
+        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
+        .sidebar.expanded .sidebar-label { display: inline; }
+        @media (max-width: 600px) {
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
+        }
+
+        /* ── Main Container ── */
+        .main-container {
+            margin-left: 62px; min-height: 100vh; padding: 2rem;
+            transition: margin-left 0.2s;
+        }
+        .sidebar.expanded ~ .main-container { margin-left: 280px; }
+        @media (max-width: 600px) {
+            .main-container { margin-left: 48px; padding: 1rem; }
+            .sidebar.expanded ~ .main-container { margin-left: 160px; }
+        }
+
+        /* ── Form styles ── */
         .form-container {
             max-width: 800px;
-            margin: 2rem auto;
+            margin: 0 auto;
             background: #fff;
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .form-section {
-            margin-bottom: 1.5rem; /* ลดระยะห่างระหว่างส่วน */
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #ddd;
-        }
-        .form-section h3 {
-            color: #1e40af;
-            margin-bottom: 1rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            margin-left: 0;
-            padding-left: 0;
-        }
-        .checkbox-group label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-left: 0;
-            padding-left: 0;
-            font-weight: normal;
-        }
-        .checkbox-group label input {
-            margin: 0;
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .radio-group {
-            margin-left: 1rem;
-        }
-        .submit-btn {
-            background: linear-gradient(to right, #4f8cff, #1e40af);
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: white;
-            padding: 0.5rem 1rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .submit-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-        .submit-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        /* ปรับระยะห่างระหว่างส่วนต่าง ๆ */
-        .form-section {
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid #ddd;
         }
-        /* ปรับระยะห่างระหว่างบรรทัด */
-        .form-group label, .checkbox-group label, .radio-group label {
-            line-height: 1.5;
+        .form-section h3 { color: #1e40af; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input, select, textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid #ccc;
+            border-radius: 8px; font-size: 1rem; font-family: inherit;
         }
-        /* ปรับระยะห่างข้อความยาว */
-        textarea {
-            line-height: 1.5;
+        .name-row {
+            display: flex; gap: 0.75rem; flex-wrap: wrap;
         }
+        .name-row .prefix-group { flex: 0 0 120px; }
+        .name-row .firstname-group { flex: 1; min-width: 140px; }
+        .name-row .lastname-group { flex: 1; min-width: 140px; }
+        .checkbox-group {
+            display: flex; flex-direction: column; gap: 0.4rem;
+            margin-left: 0; padding-left: 0;
+        }
+        .checkbox-group label {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            margin-left: 0; padding-left: 0; font-weight: normal;
+        }
+        .checkbox-group label input { margin: 0; width: 16px; height: 16px; flex-shrink: 0; }
+        .radio-group { display: flex; flex-direction: column; margin-left: 1rem; }
+        .radio-group label { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .submit-btn {
+            background: linear-gradient(to right, #4f8cff, #1e40af);
+            border-radius: 12px; font-size: 1.2rem; font-weight: bold;
+            color: white; padding: 0.5rem 1rem; border: none; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s; font-family: inherit;
+        }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); }
+        .submit-btn:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .form-group label, .checkbox-group label, .radio-group label { line-height: 1.5; }
+        textarea { line-height: 1.5; }
     </style>
 </head>
 <body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
+        <nav class="sidebar-menu">
+            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
+                <span class="sidebar-link-icon">🏠</span>
+                <span class="sidebar-label">แดชบอร์ด</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
+                <span class="sidebar-link-icon">💸</span>
+                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
+            </button>
+            <button class="sidebar-link active" onclick="navigate('?page=form')">
+                <span class="sidebar-link-icon">📝</span>
+                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=regulations')">
+                <span class="sidebar-link-icon">📚</span>
+                <span class="sidebar-label">ระเบียบ</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=settings')">
+                <span class="sidebar-link-icon">⚙️</span>
+                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
+            </button>
+            <button class="sidebar-link" onclick="navigate('?page=team-management')">
+                <span class="sidebar-link-icon">👥</span>
+                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
+            </button>
+            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
+                <span class="sidebar-link-icon">🚪</span>
+                <span class="sidebar-label">ออกจากระบบ</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container" id="mainContainer">
     <div class="form-container">
         <h2>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</h2>
 
@@ -121,17 +149,24 @@
             <!-- ส่วนที่ 1: ข้อมูลส่วนตัว -->
             <div class="form-section">
                 <h3>ส่วนที่ 1: ข้อมูลส่วนตัว</h3>
-                <div class="form-group">
-                    <label>คำนำหน้า</label>
-                    <select name="prefix">
-                        <option value="นาย">นาย</option>
-                        <option value="นาง">นาง</option>
-                        <option value="นางสาว">นางสาว</option>
-                    </select>
-                </div>
+                <!-- ชื่อ จัดเป็น row เดียว: คำนำหน้า | ชื่อ | นามสกุล -->
                 <div class="form-group">
                     <label>ชื่อ-นามสกุล</label>
-                    <input type="text" name="fullname" required>
+                    <div class="name-row">
+                        <div class="prefix-group">
+                            <select name="prefix">
+                                <option value="นาย">นาย</option>
+                                <option value="นาง">นาง</option>
+                                <option value="นางสาว">นางสาว</option>
+                            </select>
+                        </div>
+                        <div class="firstname-group">
+                            <input type="text" name="firstname" placeholder="ชื่อ" required>
+                        </div>
+                        <div class="lastname-group">
+                            <input type="text" name="lastname" placeholder="นามสกุล" required>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>ที่อยู่ตามบัตรประชาชน</label>
@@ -182,10 +217,8 @@
                 </div>
                 <div class="form-group" id="residents-list-group">
                     <label>รายชื่อผู้ที่จะพักอาศัยในบ้านพักครู</label>
-                    <div id="residents-container">
-                        <!-- รายชื่อผู้พักอาศัยจะถูกเพิ่มที่นี่ -->
-                    </div>
-                    <button type="button" id="add-resident-btn" onclick="addResident()" style="background-color: #4f8cff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem;">เพิ่มรายชื่อ</button>
+                    <div id="residents-container"></div>
+                    <button type="button" id="add-resident-btn" onclick="addResident()" style="background-color: #4f8cff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem; font-family: inherit;">เพิ่มรายชื่อ</button>
                 </div>
                 <div class="form-group">
                     <label>ข้อมูลเพิ่มเติม (ถ้ามี)</label>
@@ -202,7 +235,7 @@
                     <label><input type="checkbox" name="reason" value="family_responsibility"> มีภาระครอบครัว (บุตรเล็ก ผู้สูงอายุ ผู้ป่วย)</label>
                     <label><input type="checkbox" name="reason" value="no_nearby_residence"> ไม่มีที่พักอาศัยในบริเวณใกล้เคียง</label>
                     <label><input type="checkbox" name="reason" value="other"> อื่น ๆ (โปรดระบุ)</label>
-                    <input type="text" name="other_reason" placeholder="โปรดระบุ" style="margin-left: 1.5rem; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;">
+                    <input type="text" name="other_reason" placeholder="โปรดระบุ" style="margin-left: 1.5rem; width: calc(100% - 1.5rem); padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;">
                 </div>
             </div>
 
@@ -231,7 +264,7 @@
                 <label>แนบไฟล์เอกสารที่เกี่ยวข้อง (สามารถเลือกได้หลายไฟล์)</label>
                 <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 1rem; text-align: center; background-color: #f9f9f9;">
                     <input type="file" name="attachments[]" id="file-input" multiple style="display: none;">
-                    <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem;">เลือกไฟล์</button>
+                    <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem; font-family: inherit;">เลือกไฟล์</button>
                     <p style="margin-top: 0.5rem; color: #666;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
                     <div id="file-list" style="margin-top: 1rem; text-align: left;"></div>
                 </div>
@@ -252,9 +285,9 @@
                 });
             </script>
 
-            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                <button type="button" class="back-btn" onclick="window.navigate('?page=form')" style="background: linear-gradient(to right, #d1d5db, #9ca3af); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">ย้อนกลับ</button>
-                <button type="button" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">พิมพ์คำร้อง</button>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                <button type="button" onclick="navigate('?page=form')" style="background: linear-gradient(to right, #d1d5db, #9ca3af); border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; font-family: inherit;">ย้อนกลับ</button>
+                <button type="button" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; font-family: inherit;">พิมพ์คำร้อง</button>
                 <button type="submit" class="submit-btn">ส่งคำร้อง</button>
             </div>
         </form>
@@ -263,301 +296,30 @@
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
-    </div>
+    </div><!-- end form-container -->
+    </div><!-- end main-container -->
+
     <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
-</html>
-
+    <script src="ppk-utils.js"></script>
 <script>
-    function printForm() {
-        // รวบรวมข้อมูลจากฟอร์ม
-        const prefix = document.querySelector('select[name="prefix"]').value;
-        const fullname = document.querySelector('input[name="fullname"]').value;
-        const address = document.querySelector('textarea[name="address"]').value;
-        const phone = document.querySelector('input[name="phone"]').value;
-        const email = document.querySelector('input[name="email"]').value;
-        const lineId = document.querySelector('input[name="line_id"]').value;
-        const subjectGroup = document.querySelector('select[name="subject_group"]').value;
-        const stayTypeChecked = document.querySelector('input[name="stay_type"]:checked');
-        const stayType = stayTypeChecked?.value === 'alone' ? 'พักอาศัยคนเดียว' : 'พักอาศัยพร้อมครอบครัว';
-        const totalResidents = document.querySelector('input[name="total_residents"]').value;
-        const additionalInfo = document.querySelector('textarea[name="additional_info"]').value;
+    // ── Sidebar toggle ──
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    function updateMargin() {
+        const exp = sidebar.classList.contains('expanded');
+        const mobile = window.innerWidth <= 600;
+        document.getElementById('mainContainer').style.marginLeft = exp ? (mobile ? '160px' : '280px') : (mobile ? '48px' : '62px');
+    }
+    sidebarToggle.onclick = function() { sidebar.classList.toggle('expanded'); updateMargin(); };
+    window.addEventListener('resize', updateMargin);
+    updateMargin();
 
-        // รวบรวมรายชื่อผู้พักอาศัย
-        const residentPrefixes = document.querySelectorAll('select[name="resident_prefix[]"]');
-        const residentNames = document.querySelectorAll('input[name="resident_name[]"]');
-        const residentRelations = document.querySelectorAll('select[name="resident_relation[]"]');
-        let residentsHTML = '';
-        for (let i = 0; i < residentNames.length; i++) {
-            residentsHTML += '<tr><td style="border: 1px solid #000; padding: 4px; text-align: center;">' + (i + 1) + '</td><td style="border: 1px solid #000; padding: 4px;">' + residentPrefixes[i].value + residentNames[i].value + '</td><td style="border: 1px solid #000; padding: 4px; text-align: center;">' + residentRelations[i].value + '</td></tr>';
-        }
-
-        // รวบรวมเหตุผลในการขอเข้าพัก
-        const reasons = [];
-        document.querySelectorAll('input[name="reason"]:checked').forEach(cb => {
-            const reasonText = cb.parentElement.textContent.trim();
-            reasons.push(reasonText);
-        });
-        const otherReason = document.querySelector('input[name="other_reason"]').value;
-        if (otherReason) reasons.push('อื่น ๆ: ' + otherReason);
-
-        // รวบรวมเอกสารประกอบ
-        const documents = [];
-        document.querySelectorAll('input[name="documents"]:checked').forEach(cb => {
-            documents.push(cb.parentElement.textContent.trim());
-        });
-
-        // วันที่ปัจจุบัน
-        const today = new Date();
-        const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-        const dateStr = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
-
-        // สร้างหน้าพิมพ์ตามระเบียบสารบรรณ
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</title>');
-        printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
-        printWindow.document.write('<style>');
-        // ตั้งค่าหน้ากระดาษ A4 ตามระเบียบสารบรรณ
-        printWindow.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
-        printWindow.document.write('@media print { body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
-        printWindow.document.write('* { box-sizing: border-box; }');
-        printWindow.document.write('body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 16pt; line-height: 1.4; margin: 0; padding: 2.5cm 2cm 2cm 3cm; width: 21cm; min-height: 29.7cm; }');
-        printWindow.document.write('.header { text-align: center; margin-bottom: 0.3cm; page-break-inside: avoid; }');
-        printWindow.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
-        printWindow.document.write('.header-subtitle { font-size: 16pt; }');
-        printWindow.document.write('.date-line { text-align: right; margin-bottom: 0.2cm; }');
-        printWindow.document.write('.salutation { margin-bottom: 0.2cm; }');
-        printWindow.document.write('.intro { text-indent: 2.5cm; margin-bottom: 0.2cm; text-align: justify; }');
-        printWindow.document.write('.section { margin-bottom: 0.2cm; page-break-inside: avoid; }');
-        printWindow.document.write('.section-title { font-weight: bold; text-decoration: underline; margin-bottom: 0.1cm; }');
-        printWindow.document.write('.indent { padding-left: 1cm; }');
-        printWindow.document.write('.indent2 { padding-left: 2cm; }');
-        printWindow.document.write('table { border-collapse: collapse; width: 100%; margin: 0.1cm 0; font-size: 14pt; page-break-inside: avoid; }');
-        printWindow.document.write('th, td { border: 1px solid #000; padding: 3px; }');
-        printWindow.document.write('th { background-color: #f5f5f5; font-weight: bold; }');
-        printWindow.document.write('.checkbox { display: inline-block; width: 10pt; height: 10pt; border: 1px solid #000; margin-right: 0.1cm; vertical-align: middle; text-align: center; line-height: 10pt; font-size: 8pt; }');
-        printWindow.document.write('.signature-section { margin-top: 0.3cm; display: flex; justify-content: space-between; page-break-inside: avoid; }');
-        printWindow.document.write('.signature-box { width: 45%; text-align: center; }');
-        printWindow.document.write('.signature-line { margin-top: 0.5cm; }');
-        printWindow.document.write('.small-text { font-size: 14pt; }');
-        printWindow.document.write('.approval-boxes { margin-top: 0.5cm; }');
-        printWindow.document.write('.approval-box { border: 1px solid #000; margin-bottom: 0.4cm; padding: 0.3cm; page-break-inside: avoid; }');
-        printWindow.document.write('.approval-box .approval-header { font-weight: bold; background-color: #f5f5f5; padding: 0.2cm; margin: -0.3cm -0.3cm 0.3cm -0.3cm; border-bottom: 1px solid #000; }');
-        printWindow.document.write('.approval-box .approval-content { font-size: 14pt; }');
-        printWindow.document.write('.dotted-line-long { display: inline-block; width: 80%; border-bottom: 1px dotted #000; }');
-        printWindow.document.write('.dotted-line-full { display: block; width: 100%; border-bottom: 1px dotted #000; height: 1.5em; }');
-        printWindow.document.write('.approval-table { margin-top: 0.3cm; font-size: 12pt; page-break-inside: avoid; }');
-        printWindow.document.write('.approval-table td { vertical-align: top; padding: 0.2cm; }');
-        printWindow.document.write('.approval-table .approval-header { font-weight: bold; background-color: #f5f5f5; }');
-        printWindow.document.write('.position-text { white-space: nowrap; font-size: 10pt; }');
-        printWindow.document.write('.dotted-line { display: inline-block; width: 70%; border-bottom: 1px dotted #000; margin-left: 0.1cm; }');
-        printWindow.document.write('.dotted-line-short { display: inline-block; width: 4cm; border-bottom: 1px dotted #000; }');
-        printWindow.document.write('.dotted-line-date { display: inline-block; width: 3cm; border-bottom: 1px dotted #000; }');
-        printWindow.document.write('.dotted-line-sig { display: inline-block; width: 3.5cm; border-bottom: 1px dotted #000; }');
-        printWindow.document.write('.pdf-page { max-width: 100%; margin-bottom: 0.5cm; display: block; }');
-        printWindow.document.write('</style>');
-        printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
-        printWindow.document.write('</head><body>');
-        
-        // หัวเอกสาร (ไม่มีครุฑ)
-        printWindow.document.write('<div class="header">');
-        printWindow.document.write('<div class="header-title">แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</div>');
-        printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
-        printWindow.document.write('</div>');
-        
-        // วันที่
-        printWindow.document.write('<div class="date-line">วันที่ ' + dateStr + '</div>');
-        
-        // คำขึ้นต้น
-        printWindow.document.write('<div class="salutation"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
-        
-        // คำนำ
-        printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' มีความประสงค์ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยมีรายละเอียดดังต่อไปนี้</p>');
-        
-        // ส่วนที่ 1
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 1: ข้อมูลส่วนตัว</div>');
-        printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
-        printWindow.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + address + '</div>');
-        printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + ' &nbsp;&nbsp; อีเมล: ' + email + ' &nbsp;&nbsp; ID Line: ' + lineId + '</div>');
-        printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div>');
-        printWindow.document.write('</div></div>');
-        
-        // ส่วนที่ 2
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิกที่จะพักอาศัย</div>');
-        printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div>ลักษณะการเข้าพัก: <span class="checkbox">' + (stayTypeChecked?.value === 'alone' ? '&#10003;' : '') + '</span> พักอาศัยคนเดียว &nbsp;&nbsp; <span class="checkbox">' + (stayTypeChecked?.value === 'family' ? '&#10003;' : '') + '</span> พักอาศัยพร้อมครอบครัว</div>');
-        printWindow.document.write('<div>จำนวนผู้เข้าพักทั้งหมด (รวมผู้ยื่นคำร้อง): ' + totalResidents + ' คน</div>');
-        if (residentsHTML) {
-            printWindow.document.write('<div>รายชื่อผู้ที่จะพักอาศัยในบ้านพักครู:</div>');
-            printWindow.document.write('<table><thead><tr><th style="width: 50px;">ลำดับ</th><th>ชื่อ-นามสกุล</th><th style="width: 100px;">ความสัมพันธ์</th></tr></thead><tbody>' + residentsHTML + '</tbody></table>');
-        }
-        if (additionalInfo) {
-            printWindow.document.write('<div>ข้อมูลเพิ่มเติม: ' + additionalInfo + '</div>');
-        }
-        printWindow.document.write('</div></div>');
-        
-        // ส่วนที่ 3
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 3: เหตุผลในการขอเข้าพัก</div>');
-        printWindow.document.write('<div class="indent small-text">');
-        reasons.forEach(r => {
-            printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + r + '</div>');
-        });
-        printWindow.document.write('</div></div>');
-        
-        // ส่วนที่ 4
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 4: เอกสารประกอบคำร้อง</div>');
-        printWindow.document.write('<div class="indent small-text">');
-        documents.forEach(d => {
-            printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + d + '</div>');
-        });
-        printWindow.document.write('</div></div>');
-        
-        // ส่วนที่ 5
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 5: ข้อตกลง</div>');
-        printWindow.document.write('<p class="indent small-text" style="text-align: justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p>');
-        printWindow.document.write('</div>');
-        
-        // ช่องลงชื่อ
-        printWindow.document.write('<div class="signature-section small-text">');
-        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');
-        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div>');
-        printWindow.document.write('</div>');
-        
-        // ส่วนความเห็นผู้บริหาร (เป็น 3 กล่องเรียงลงมา)
-        var _sys = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
-        var _headName = _sys.headOfPromotion || '';
-        var _viceName = _sys.viceDirector || '';
-        var _dirName = _sys.director || '';
-        printWindow.document.write('<div class="approval-boxes">');
-        
-        // กล่องที่ 1: หัวหน้างานส่งเสริมฯ
-        printWindow.document.write('<div class="approval-box">');
-        printWindow.document.write('<div class="approval-header">ความเห็นหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div>');
-        printWindow.document.write('<div class="approval-content">');
-        printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
-        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
-        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>ตำแหน่ง<span class="dotted-line-short"></span><br>วันที่<span class="dotted-line-date"></span></div>');
-        printWindow.document.write('</div></div>');
-        
-        // กล่องที่ 2: รองผู้อำนวยการกลุ่มบริหารทั่วไป
-        printWindow.document.write('<div class="approval-box">');
-        printWindow.document.write('<div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div>');
-        printWindow.document.write('<div class="approval-content">');
-        printWindow.document.write('<div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div>');
-        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
-        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_viceName || '<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div>');
-        printWindow.document.write('</div></div>');
-        
-        // กล่องที่ 3: ผู้อำนวยการ
-        printWindow.document.write('<div class="approval-box">');
-        printWindow.document.write('<div class="approval-header">คำสั่งผู้อำนวยการ</div>');
-        printWindow.document.write('<div class="approval-content">');
-        printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
-        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
-        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div>');
-        printWindow.document.write('</div></div>');
-        
-        printWindow.document.write('</div>');
-
-        // ส่วนเอกสารแนบ
-        const fileInput = document.getElementById('file-input');
-        const files = fileInput.files;
-        
-        if (files.length > 0) {
-            printWindow.document.write('<div style="page-break-before: always;"></div>');
-            printWindow.document.write('<div class="header" style="margin-top: 1cm;">');
-            printWindow.document.write('<div class="header-title">เอกสารแนบประกอบคำร้อง</div>');
-            printWindow.document.write('</div>');
-            
-            let filePromises = [];
-            
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const isImage = file.type.startsWith('image/');
-                const isPDF = file.type === 'application/pdf';
-                
-                const promise = new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        resolve({
-                            index: i + 1,
-                            dataUrl: e.target.result,
-                            isImage: isImage,
-                            isPDF: isPDF,
-                            arrayBuffer: isPDF ? e.target.result : null
-                        });
-                    };
-                    if (isPDF) {
-                        reader.readAsArrayBuffer(file);
-                    } else {
-                        reader.readAsDataURL(file);
-                    }
-                });
-                filePromises.push(promise);
-            }
-            
-            // รอให้อ่านไฟล์ทั้งหมดเสร็จ
-            Promise.all(filePromises).then(async results => {
-                for (const result of results) {
-                    if (result.isImage) {
-                        printWindow.document.write('<div style="margin-bottom: 0.5cm; text-align: center;">');
-                        printWindow.document.write('<img src="' + result.dataUrl + '" style="max-width: 100%; max-height: 25cm; display: block; margin: 0 auto;">');
-                        printWindow.document.write('</div>');
-                    } else if (result.isPDF) {
-                        // แปลง PDF เป็นรูปภาพแต่ละหน้า
-                        printWindow.document.write('<div id="pdf-container-' + result.index + '"></div>');
-                    }
-                }
-                
-                // ปิด HTML ก่อน แล้วค่อยประมวลผล PDF
-                printWindow.document.write('<script>');
-                printWindow.document.write('pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";');
-                printWindow.document.write('async function renderPDFs() {');
-                printWindow.document.write('  const pdfDataArray = ' + JSON.stringify(results.filter(r => r.isPDF).map(r => ({ index: r.index, data: Array.from(new Uint8Array(r.arrayBuffer)) }))) + ';');
-                printWindow.document.write('  for (const pdfData of pdfDataArray) {');
-                printWindow.document.write('    const typedArray = new Uint8Array(pdfData.data);');
-                printWindow.document.write('    const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;');
-                printWindow.document.write('    const container = document.getElementById("pdf-container-" + pdfData.index);');
-                printWindow.document.write('    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {');
-                printWindow.document.write('      const page = await pdf.getPage(pageNum);');
-                printWindow.document.write('      const scale = 2;');
-                printWindow.document.write('      const viewport = page.getViewport({ scale: scale });');
-                printWindow.document.write('      const canvas = document.createElement("canvas");');
-                printWindow.document.write('      canvas.width = viewport.width;');
-                printWindow.document.write('      canvas.height = viewport.height;');
-                printWindow.document.write('      canvas.style.maxWidth = "100%";');
-                printWindow.document.write('      canvas.style.marginBottom = "0.5cm";');
-                printWindow.document.write('      canvas.style.display = "block";');
-                printWindow.document.write('      if (pageNum > 1) { canvas.style.pageBreakBefore = "always"; }');
-                printWindow.document.write('      const ctx = canvas.getContext("2d");');
-                printWindow.document.write('      await page.render({ canvasContext: ctx, viewport: viewport }).promise;');
-                printWindow.document.write('      container.appendChild(canvas);');
-                printWindow.document.write('    }');
-                printWindow.document.write('  }');
-                printWindow.document.write('  setTimeout(function() { window.print(); }, 500);');
-                printWindow.document.write('}');
-                printWindow.document.write('window.onload = renderPDFs;');
-                printWindow.document.write('<\/script>    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body></html>');
-                printWindow.document.close();
-            });
-        } else {
-            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script>    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body></html>');
-            printWindow.document.close();
-        }
+    async function doLogout() {
+        if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
+        var token = localStorage.getItem('sessionToken') || '';
+        if (token && WEB_APP_URL) callBackend('logout', {}).catch(function(){});
+        localStorage.clear();
+        navigate('?page=login');
     }
 
     function toggleResidentFields() {
@@ -567,36 +329,23 @@
         const addResidentBtn = document.getElementById('add-resident-btn');
         const totalResidentsGroup = document.getElementById('total-residents-group');
         const residentsListGroup = document.getElementById('residents-list-group');
-
         if (stayAlone) {
-            // ล็อคส่วนจำนวนผู้เข้าพักและรายชื่อผู้พักอาศัย
-            totalResidentsInput.value = 1;
-            totalResidentsInput.disabled = true;
+            totalResidentsInput.value = 1; totalResidentsInput.disabled = true;
             totalResidentsInput.style.backgroundColor = '#e5e5e5';
-            addResidentBtn.disabled = true;
-            addResidentBtn.style.backgroundColor = '#9ca3af';
-            addResidentBtn.style.cursor = 'not-allowed';
+            addResidentBtn.disabled = true; addResidentBtn.style.backgroundColor = '#9ca3af'; addResidentBtn.style.cursor = 'not-allowed';
             residentsContainer.innerHTML = '';
-            totalResidentsGroup.style.opacity = '0.5';
-            residentsListGroup.style.opacity = '0.5';
+            totalResidentsGroup.style.opacity = '0.5'; residentsListGroup.style.opacity = '0.5';
         } else {
-            // ปลดล็อคส่วนจำนวนผู้เข้าพักและรายชื่อผู้พักอาศัย
-            totalResidentsInput.disabled = false;
-            totalResidentsInput.style.backgroundColor = '';
-            addResidentBtn.disabled = false;
-            addResidentBtn.style.backgroundColor = '#4f8cff';
-            addResidentBtn.style.cursor = 'pointer';
-            totalResidentsGroup.style.opacity = '1';
-            residentsListGroup.style.opacity = '1';
+            totalResidentsInput.disabled = false; totalResidentsInput.style.backgroundColor = '';
+            addResidentBtn.disabled = false; addResidentBtn.style.backgroundColor = '#4f8cff'; addResidentBtn.style.cursor = 'pointer';
+            totalResidentsGroup.style.opacity = '1'; residentsListGroup.style.opacity = '1';
         }
     }
 
     function updateResidentCount() {
-        // นับจำนวนรายชื่อผู้พักอาศัย + 1 (ผู้ยื่นคำร้อง)
         const container = document.getElementById('residents-container');
         const residentEntries = container.querySelectorAll('.resident-entry');
-        const totalCount = residentEntries.length + 1; // +1 สำหรับผู้ยื่นคำร้อง
-        document.getElementById('total_residents').value = totalCount;
+        document.getElementById('total_residents').value = residentEntries.length + 1;
     }
 
     function addResident() {
@@ -604,71 +353,73 @@
         const div = document.createElement('div');
         div.classList.add('resident-entry');
         div.innerHTML = `
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center; flex-wrap: wrap;">
-                <select name="resident_prefix[]" required style="width: 100px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;">
-                    <option value="นาย">นาย</option>
-                    <option value="นาง">นาง</option>
-                    <option value="นางสาว">นางสาว</option>
-                    <option value="เด็กชาย">เด็กชาย</option>
-                    <option value="เด็กหญิง">เด็กหญิง</option>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;align-items:center;flex-wrap:wrap;">
+                <select name="resident_prefix[]" required style="width:100px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">
+                    <option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option>
+                    <option value="เด็กชาย">เด็กชาย</option><option value="เด็กหญิง">เด็กหญิง</option>
                 </select>
-                <input type="text" name="resident_name[]" placeholder="ชื่อ-นามสกุล" required style="flex: 2; min-width: 200px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;">
-                <select name="resident_relation[]" required style="width: 120px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;">
-                    <option value="คู่สมรส">คู่สมรส</option>
-                    <option value="บุตร">บุตร</option>
-                    <option value="บิดา">บิดา</option>
-                    <option value="มารดา">มารดา</option>
+                <input type="text" name="resident_name[]" placeholder="ชื่อ-นามสกุล" required style="flex:2;min-width:200px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">
+                <select name="resident_relation[]" required style="width:120px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">
+                    <option value="คู่สมรส">คู่สมรส</option><option value="บุตร">บุตร</option>
+                    <option value="บิดา">บิดา</option><option value="มารดา">มารดา</option>
                 </select>
-                <button type="button" onclick="removeResident(this)" style="background-color: #e53e3e; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">ลบ</button>
-            </div>
-        `;
+                <button type="button" onclick="removeResident(this)" style="background-color:#e53e3e;color:white;border:none;padding:0.5rem 0.75rem;border-radius:8px;cursor:pointer;font-size:0.9rem;font-family:inherit;">ลบ</button>
+            </div>`;
         container.appendChild(div);
-        updateResidentCount(); // อัปเดตจำนวนผู้พักอาศัย
+        updateResidentCount();
     }
 
     function removeResident(button) {
         button.parentElement.parentElement.remove();
-        updateResidentCount(); // อัปเดตจำนวนผู้พักอาศัย
+        updateResidentCount();
     }
 
-    // ============ Session Check + Auto-fill ============
+    // ── Session Check + Auto-fill ──
     async function initPage() {
         const token = localStorage.getItem('sessionToken');
-        if (!token && WEB_APP_URL) { window.navigate('?page=login'); return; }
+        if (!token && WEB_APP_URL) { navigate('?page=login'); return; }
         if (!WEB_APP_URL) return;
+
+        // ลอง auto-fill จาก cache ก่อน
+        const cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (cached && cached.resident) _fillForm(cached);
 
         try {
             const result = await callBackendGet('getCurrentUser');
-            if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return; }
-
-            // Auto-fill ข้อมูลส่วนตัว
-            const user = result.user;
-            const resident = user.resident || {};
-            const form = document.querySelector('select[name="prefix"]');
-            if (form && resident.prefix) form.value = resident.prefix;
-            const fullname = document.querySelector('input[name="fullname"]');
-            if (fullname && resident.firstname) fullname.value = (resident.firstname || '') + ' ' + (resident.lastname || '');
-            const phone = document.querySelector('input[name="phone"]');
-            if (phone && resident.phone) phone.value = resident.phone;
-            const email = document.querySelector('input[name="email"]');
-            if (email && user.email) email.value = user.email;
-            const group = document.querySelector('select[name="subject_group"]');
-            if (group && resident.position) group.value = resident.position;
-        } catch (e) { console.warn('Auto-fill failed', e); }
+            if (!result || !result.success) { localStorage.clear(); navigate('?page=login'); return; }
+            const user = result.user || result.data;
+            if (user) {
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                _fillForm(user);
+            }
+        } catch (e) { console.warn('Auto-fill session failed', e); }
     }
 
-    // ============ Submit Handler ============
+    function _fillForm(user) {
+        const resident = user.resident || {};
+        const prefixEl = document.querySelector('select[name="prefix"]');
+        if (prefixEl && resident.prefix) prefixEl.value = resident.prefix;
+        const firstEl = document.querySelector('input[name="firstname"]');
+        if (firstEl && resident.firstname) firstEl.value = resident.firstname;
+        const lastEl = document.querySelector('input[name="lastname"]');
+        if (lastEl && resident.lastname) lastEl.value = resident.lastname;
+        const phoneEl = document.querySelector('input[name="phone"]');
+        if (phoneEl && (resident.phone || user.phone)) phoneEl.value = resident.phone || user.phone;
+        const emailEl = document.querySelector('input[name="email"]');
+        if (emailEl && user.email) emailEl.value = user.email;
+        const groupEl = document.querySelector('select[name="subject_group"]');
+        if (groupEl && resident.position) groupEl.value = resident.position;
+    }
+
+    // ── Submit Handler ──
     document.getElementById('requestForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-
         if (!WEB_APP_URL) { ppkAlert('ยังไม่ได้ตั้งค่า WEB_APP_URL'); return; }
 
         const submitBtn = document.querySelector('.submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'กำลังส่งคำร้อง...';
+        submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
 
         try {
-            // รวบรวมข้อมูล
             const reasons = [];
             document.querySelectorAll('input[name="reason"]:checked').forEach(cb => reasons.push(cb.value));
             const documents = [];
@@ -679,19 +430,18 @@
             const resPrefixes = document.querySelectorAll('select[name="resident_prefix[]"]');
             const resRelations = document.querySelectorAll('select[name="resident_relation[]"]');
             for (let i = 0; i < resNames.length; i++) {
-                residents.push({
-                    prefix: resPrefixes[i]?.value || '',
-                    name: resNames[i]?.value || '',
-                    relation: resRelations[i]?.value || ''
-                });
+                residents.push({ prefix: resPrefixes[i]?.value || '', name: resNames[i]?.value || '', relation: resRelations[i]?.value || '' });
             }
 
             const stayType = document.querySelector('input[name="stay_type"]:checked')?.value || '';
+            const firstname = document.querySelector('input[name="firstname"]').value.trim();
+            const lastname  = document.querySelector('input[name="lastname"]').value.trim();
 
             const data = {
                 type: 'residence',
                 prefix: document.querySelector('select[name="prefix"]').value,
-                fullname: document.querySelector('input[name="fullname"]').value,
+                firstname: firstname,
+                lastname: lastname,
                 address: document.querySelector('textarea[name="address"]').value,
                 phone: document.querySelector('input[name="phone"]').value,
                 email: document.querySelector('input[name="email"]').value,
@@ -701,7 +451,7 @@
                 total_residents: document.querySelector('input[name="total_residents"]').value,
                 residents: residents,
                 additional_info: document.querySelector('textarea[name="additional_info"]').value,
-                reasons: reasons,
+                reason: reasons.join(','),
                 other_reason: document.querySelector('input[name="other_reason"]').value,
                 documents_checked: documents
             };
@@ -709,19 +459,145 @@
             const result = await callBackend('submitRequest', data);
 
             if (result && result.success) {
-                ppkAlert('ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + (result.requestId || '-'));
-                window.navigate('?page=form');
+                const reqId = result.requestId || '-';
+                const doPrint = await ppkConfirm(
+                    'ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + reqId + '\n\nต้องการพิมพ์คำร้องเพื่อยื่นเอกสารหรือไม่?'
+                );
+                if (doPrint) printForm();
+                navigate('?page=form');
             } else {
-                ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ');
+                ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ กรุณาลองใหม่');
             }
         } catch (err) {
-            ppkAlert('ไม่สามารถเชื่อมต่อระบบได้');
+            console.error(err);
+            ppkAlert('ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่');
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'ส่งคำร้อง';
+            submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
         }
     });
 
     // Initialize
     initPage();
 </script>
+<script>
+    function printForm() {
+        const prefix = document.querySelector('select[name="prefix"]').value;
+        const firstname = document.querySelector('input[name="firstname"]').value;
+        const lastname  = document.querySelector('input[name="lastname"]').value;
+        const fullname  = firstname + ' ' + lastname;
+        const address = document.querySelector('textarea[name="address"]').value;
+        const phone = document.querySelector('input[name="phone"]').value;
+        const email = document.querySelector('input[name="email"]').value;
+        const lineId = document.querySelector('input[name="line_id"]').value;
+        const subjectGroup = document.querySelector('select[name="subject_group"]').value;
+        const stayTypeChecked = document.querySelector('input[name="stay_type"]:checked');
+        const stayType = stayTypeChecked?.value === 'alone' ? 'พักอาศัยคนเดียว' : 'พักอาศัยพร้อมครอบครัว';
+        const totalResidents = document.querySelector('input[name="total_residents"]').value;
+        const additionalInfo = document.querySelector('textarea[name="additional_info"]').value;
+
+        const residentPrefixes = document.querySelectorAll('select[name="resident_prefix[]"]');
+        const residentNames = document.querySelectorAll('input[name="resident_name[]"]');
+        const residentRelations = document.querySelectorAll('select[name="resident_relation[]"]');
+        let residentsHTML = '';
+        for (let i = 0; i < residentNames.length; i++) {
+            residentsHTML += '<tr><td style="border:1px solid #000;padding:4px;text-align:center;">' + (i + 1) + '</td><td style="border:1px solid #000;padding:4px;">' + residentPrefixes[i].value + residentNames[i].value + '</td><td style="border:1px solid #000;padding:4px;text-align:center;">' + residentRelations[i].value + '</td></tr>';
+        }
+
+        const reasons = [];
+        document.querySelectorAll('input[name="reason"]:checked').forEach(cb => { reasons.push(cb.parentElement.textContent.trim()); });
+        const otherReason = document.querySelector('input[name="other_reason"]').value;
+        if (otherReason) reasons.push('อื่น ๆ: ' + otherReason);
+
+        const documents = [];
+        document.querySelectorAll('input[name="documents"]:checked').forEach(cb => { documents.push(cb.parentElement.textContent.trim()); });
+
+        const today = new Date();
+        const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        const dateStr = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</title>');
+        printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
+        printWindow.document.write('<style>');
+        printWindow.document.write('@page{size:A4;margin:2.5cm 2cm 2cm 3cm;}@media print{body{margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}*{box-sizing:border-box;}body{font-family:"Sarabun","TH Sarabun New",sans-serif;font-size:16pt;line-height:1.4;margin:0;padding:2.5cm 2cm 2cm 3cm;width:21cm;min-height:29.7cm;}.header{text-align:center;margin-bottom:0.3cm;page-break-inside:avoid;}.header-title{font-size:18pt;font-weight:bold;}.header-subtitle{font-size:16pt;}.date-line{text-align:right;margin-bottom:0.2cm;}.salutation{margin-bottom:0.2cm;}.intro{text-indent:2.5cm;margin-bottom:0.2cm;text-align:justify;}.section{margin-bottom:0.2cm;page-break-inside:avoid;}.section-title{font-weight:bold;text-decoration:underline;margin-bottom:0.1cm;}.indent{padding-left:1cm;}table{border-collapse:collapse;width:100%;margin:0.1cm 0;font-size:14pt;page-break-inside:avoid;}th,td{border:1px solid #000;padding:3px;}th{background-color:#f5f5f5;font-weight:bold;}.checkbox{display:inline-block;width:10pt;height:10pt;border:1px solid #000;margin-right:0.1cm;vertical-align:middle;text-align:center;line-height:10pt;font-size:8pt;}.signature-section{margin-top:0.3cm;display:flex;justify-content:space-between;page-break-inside:avoid;}.signature-box{width:45%;text-align:center;}.signature-line{margin-top:0.5cm;}.small-text{font-size:14pt;}.approval-boxes{margin-top:0.5cm;}.approval-box{border:1px solid #000;margin-bottom:0.4cm;padding:0.3cm;page-break-inside:avoid;}.approval-box .approval-header{font-weight:bold;background-color:#f5f5f5;padding:0.2cm;margin:-0.3cm -0.3cm 0.3cm -0.3cm;border-bottom:1px solid #000;}.approval-box .approval-content{font-size:14pt;}.dotted-line-long{display:inline-block;width:80%;border-bottom:1px dotted #000;}.dotted-line-full{display:block;width:100%;border-bottom:1px dotted #000;height:1.5em;}.dotted-line-short{display:inline-block;width:4cm;border-bottom:1px dotted #000;}.dotted-line-date{display:inline-block;width:3cm;border-bottom:1px dotted #000;}.dotted-line-sig{display:inline-block;width:3.5cm;border-bottom:1px dotted #000;}');
+        printWindow.document.write('</style>');
+        printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script></head><body>');
+
+        printWindow.document.write('<div class="header"><div class="header-title">แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</div><div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div></div>');
+        printWindow.document.write('<div class="date-line">วันที่ ' + dateStr + '</div>');
+        printWindow.document.write('<div class="salutation"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
+        printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' มีความประสงค์ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยมีรายละเอียดดังต่อไปนี้</p>');
+
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 1: ข้อมูลส่วนตัว</div><div class="indent small-text">');
+        printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
+        printWindow.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + address + '</div>');
+        printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + ' &nbsp;&nbsp; อีเมล: ' + email + ' &nbsp;&nbsp; ID Line: ' + lineId + '</div>');
+        printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div></div></div>');
+
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิกที่จะพักอาศัย</div><div class="indent small-text">');
+        printWindow.document.write('<div>ลักษณะการเข้าพัก: <span class="checkbox">' + (stayTypeChecked?.value === 'alone' ? '&#10003;' : '') + '</span> พักอาศัยคนเดียว &nbsp;&nbsp; <span class="checkbox">' + (stayTypeChecked?.value === 'family' ? '&#10003;' : '') + '</span> พักอาศัยพร้อมครอบครัว</div>');
+        printWindow.document.write('<div>จำนวนผู้เข้าพักทั้งหมด (รวมผู้ยื่นคำร้อง): ' + totalResidents + ' คน</div>');
+        if (residentsHTML) {
+            printWindow.document.write('<div>รายชื่อผู้ที่จะพักอาศัยในบ้านพักครู:</div>');
+            printWindow.document.write('<table><thead><tr><th style="width:50px;">ลำดับ</th><th>ชื่อ-นามสกุล</th><th style="width:100px;">ความสัมพันธ์</th></tr></thead><tbody>' + residentsHTML + '</tbody></table>');
+        }
+        if (additionalInfo) printWindow.document.write('<div>ข้อมูลเพิ่มเติม: ' + additionalInfo + '</div>');
+        printWindow.document.write('</div></div>');
+
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 3: เหตุผลในการขอเข้าพัก</div><div class="indent small-text">');
+        reasons.forEach(r => { printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + r + '</div>'); });
+        printWindow.document.write('</div></div>');
+
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 4: เอกสารประกอบคำร้อง</div><div class="indent small-text">');
+        documents.forEach(d => { printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + d + '</div>'); });
+        printWindow.document.write('</div></div>');
+
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 5: ข้อตกลง</div><p class="indent small-text" style="text-align:justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p></div>');
+
+        printWindow.document.write('<div class="signature-section small-text">');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div>');
+        printWindow.document.write('</div>');
+
+        var _sys = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+        var _headName = _sys.headOfPromotion || ''; var _viceName = _sys.viceDirector || ''; var _dirName = _sys.director || '';
+        printWindow.document.write('<div class="approval-boxes">');
+        printWindow.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>ตำแหน่ง<span class="dotted-line-short"></span><br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+        printWindow.document.write('<div class="approval-box"><div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div><div class="approval-content"><div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_viceName || '<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+        printWindow.document.write('<div class="approval-box"><div class="approval-header">คำสั่งผู้อำนวยการ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+        printWindow.document.write('</div>');
+
+        const fileInput = document.getElementById('file-input');
+        const files = fileInput.files;
+        if (files.length > 0) {
+            printWindow.document.write('<div style="page-break-before:always;"></div>');
+            printWindow.document.write('<div class="header" style="margin-top:1cm;"><div class="header-title">เอกสารแนบประกอบคำร้อง</div></div>');
+            let filePromises = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isImage = file.type.startsWith('image/');
+                const isPDF = file.type === 'application/pdf';
+                filePromises.push(new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve({ index: i + 1, dataUrl: e.target.result, isImage, isPDF, arrayBuffer: isPDF ? e.target.result : null });
+                    if (isPDF) reader.readAsArrayBuffer(file); else reader.readAsDataURL(file);
+                }));
+            }
+            Promise.all(filePromises).then(async results => {
+                for (const r of results) {
+                    if (r.isImage) printWindow.document.write('<div style="margin-bottom:0.5cm;text-align:center;"><img src="' + r.dataUrl + '" style="max-width:100%;max-height:25cm;display:block;margin:0 auto;"></div>');
+                    else if (r.isPDF) printWindow.document.write('<div id="pdf-container-' + r.index + '"></div>');
+                }
+                const pdfList = results.filter(r => r.isPDF).map(r => ({ index: r.index, data: Array.from(new Uint8Array(r.arrayBuffer)) }));
+                printWindow.document.write('<script>pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";async function renderPDFs(){const pdfDataArray=' + JSON.stringify(pdfList) + ';for(const pd of pdfDataArray){const ta=new Uint8Array(pd.data);const pdf=await pdfjsLib.getDocument({data:ta}).promise;const cnt=document.getElementById("pdf-container-"+pd.index);for(let pn=1;pn<=pdf.numPages;pn++){const page=await pdf.getPage(pn);const vp=page.getViewport({scale:2});const canvas=document.createElement("canvas");canvas.width=vp.width;canvas.height=vp.height;canvas.style.maxWidth="100%";canvas.style.marginBottom="0.5cm";canvas.style.display="block";if(pn>1)canvas.style.pageBreakBefore="always";await page.render({canvasContext:canvas.getContext("2d"),viewport:vp}).promise;cnt.appendChild(canvas);}}}window.onload=async function(){await renderPDFs();setTimeout(()=>window.print(),500);};<\/script>');
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+            });
+        } else {
+            printWindow.document.write('<script>window.onload=function(){window.print();}<\/script></body></html>');
+            printWindow.document.close();
+        }
+    }
+</script>
+</body>
+</html>
