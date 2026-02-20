@@ -661,7 +661,7 @@
             const phone = document.querySelector('input[name="phone"]');
             if (phone && resident.phone) phone.value = resident.phone;
             const group = document.querySelector('select[name="subject_group"]');
-            if (group && resident.position) group.value = resident.position;
+            if (group && resident.subject_group) group.value = resident.subject_group;
             const houseNumber = document.querySelector('input[name="house_number"]');
             if (houseNumber && resident.house_number) houseNumber.value = resident.house_number;
         } catch (e) { console.warn('Auto-fill failed', e); }

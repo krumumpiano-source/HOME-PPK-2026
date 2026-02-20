@@ -144,8 +144,26 @@
                     <input type="tel" name="phone" id="phone" required>
                 </div>
                 <div class="form-group">
+                    <label>ตำแหน่งทางวิชาการ</label>
+                    <select name="position" id="position">
+                        <option value="">เลือกตำแหน่ง</option>
+                        <option value="ครูผู้ช่วย">ครูผู้ช่วย</option>
+                        <option value="ครู">ครู</option>
+                        <option value="ครูชำนาญการ">ครูชำนาญการ (คศ.2)</option>
+                        <option value="ครูชำนาญการพิเศษ">ครูชำนาญการพิเศษ (คศ.3)</option>
+                        <option value="ครูเชี่ยวชาญ">ครูเชี่ยวชาญ (คศ.4)</option>
+                        <option value="ครูเชี่ยวชาญพิเศษ">ครูเชี่ยวชาญพิเศษ (คศ.5)</option>
+                        <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
+                        <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
+                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                        <option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option>
+                        <option value="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>กลุ่มสาระการเรียนรู้</label>
                     <select name="subject_group" id="subject_group">
+                        <option value="">-- เลือกกลุ่มสาระ --</option>
                         <option value="ภาษาไทย">ภาษาไทย</option>
                         <option value="คณิตศาสตร์">คณิตศาสตร์</option>
                         <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
@@ -154,8 +172,8 @@
                         <option value="ศิลปะ">ศิลปะ</option>
                         <option value="การงานอาชีพ">การงานอาชีพ</option>
                         <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
-                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
-                        <option value="ลูกจ้าง">ลูกจ้าง</option>
+                        <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option>
+                        <option value="ไม่ระบุ">ไม่ระบุ (เจ้าหน้าที่/ลูกจ้าง)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -548,8 +566,10 @@
             if (fullname && resident.firstname) fullname.value = (resident.firstname || '') + ' ' + (resident.lastname || '');
             const phone = document.querySelector('input[name="phone"]');
             if (phone && resident.phone) phone.value = resident.phone;
+            const posElTf = document.querySelector('select[name="position"]');
+            if (posElTf && resident.position) posElTf.value = resident.position;
             const group = document.querySelector('select[name="subject_group"]');
-            if (group && resident.position) group.value = resident.position;
+            if (group && resident.subject_group) group.value = resident.subject_group;
             const currentHouse = document.querySelector('input[name="current_house"]');
             if (currentHouse && resident.house_number) currentHouse.value = resident.house_number;
         } catch (e) { console.warn('Auto-fill failed', e); }
@@ -569,6 +589,7 @@
                 prefix: document.querySelector('select[name="prefix"]').value,
                 fullname: document.querySelector('input[name="fullname"]').value,
                 phone: document.querySelector('input[name="phone"]').value,
+                position: document.querySelector('select[name="position"]').value,
                 subject_group: document.querySelector('select[name="subject_group"]').value,
                 current_house: document.querySelector('input[name="current_house"]').value,
                 transfer_type: document.querySelector('input[name="transfer_type"]:checked')?.value || '',
