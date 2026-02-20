@@ -11,5 +11,28 @@ desktop.ini
 # Logs
 *.log
 
-# PowerShell test scripts (optional - remove if you want to track them)
-# Scripts/test_*.ps1
+# Python
+.venv/
+
+# ============================================================
+# BACKEND (GAS only — ไม่ต้องขึ้น GitHub)
+# ============================================================
+Scripts/
+appsscript.json
+.clasp.json
+.claspignore
+seed-data.js
+fix_setup.ps1
+
+# ============================================================
+# Internal docs / planning files (ไม่ต้องขึ้น GitHub)
+# ============================================================
+BACKEND-READINESS-ANALYSIS.md
+BACKEND-REFERENCE.md
+DOCUMENTATION-HOME-PPK-2026.md
+README-*.md
+ข้อกำหนดมาตรฐานระบบ HOME PPK 2026.md
+ผลการวิเคราะห์ระบบ HOME PPK 2026.md
+เทมเพลตโฟลเดอร์และชีท.md
+แก้ไขวันอังคาร.md
+แพลนแบคเอ็น.md

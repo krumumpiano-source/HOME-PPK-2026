@@ -1,7 +1,0 @@
-**/*.md
-**/.clasp.json
-**/node_modules/**
-**/*.ps1
-ppk-api.js
-ppk-utils.js
-
