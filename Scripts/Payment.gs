@@ -386,7 +386,17 @@ function getPaymentHistory(userId, month, year, houseNumber) {
   var payHistSheetName = getYearSheetName('PaymentHistory', year);
 
   try {
-    var allData = readSheetData(SPREADSHEET_IDS.PAYMENTS, payHistSheetName);
+    // ── Cache 5 นาที ต่อปี — ลด Sheets read ──
+    var _cache = CacheService.getScriptCache();
+    var _cacheKey = 'payhist_' + year;
+    var allData = null;
+    var _cached = _cache.get(_cacheKey);
+    if (_cached) { try { allData = JSON.parse(_cached); } catch(e) {} }
+    if (!allData) {
+      allData = readSheetData(SPREADSHEET_IDS.PAYMENTS, payHistSheetName);
+      var _str = JSON.stringify(allData);
+      if (_str.length < 95000) _cache.put(_cacheKey, _str, 300); // 5 นาที
+    }
 
     // กรองตาม house_number (ถ้ามีจาก session → ข้าม Users/Residents lookup)
     if (houseNumber) {
@@ -431,7 +441,17 @@ function getPaymentHistory(userId, month, year, houseNumber) {
  */
 function getOutstanding(period) {
   try {
-    var allData = readSheetData(SPREADSHEET_IDS.PAYMENTS, SHEET_NAMES.OUTSTANDING);
+    // ── Cache 5 นาที — ลด Sheets read ใน PAYMENTS spreadsheet ──
+    var _cache = CacheService.getScriptCache();
+    var _cacheKey = 'outstanding';
+    var allData = null;
+    var _cached = _cache.get(_cacheKey);
+    if (_cached) { try { allData = JSON.parse(_cached); } catch(e) {} }
+    if (!allData) {
+      allData = readSheetData(SPREADSHEET_IDS.PAYMENTS, SHEET_NAMES.OUTSTANDING);
+      var _str = JSON.stringify(allData);
+      if (_str.length < 95000) _cache.put(_cacheKey, _str, 300); // 5 นาที
+    }
 
     if (period) {
       var parts = _parsePeriod(period);

@@ -352,9 +352,16 @@ function doPost(e) {
       var housingWrites = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident','cleanupDuplicateHousing'];
       var settingsWrites = ['updateSettings','saveHousingFormat'];
       var announcementWrites = ['addAnnouncement','deleteAnnouncement'];
+      var paymentWrites = ['reviewSlip','manualPayment','submitSlip','updateOutstanding'];
       if (housingWrites.indexOf(action) !== -1) invalidateCache('housing','residents');
       if (settingsWrites.indexOf(action) !== -1) invalidateCache('settings','housingFormat','waterRate','commonFee');
       if (announcementWrites.indexOf(action) !== -1) invalidateCache('announcements');
+      if (paymentWrites.indexOf(action) !== -1) {
+        var sc = CacheService.getScriptCache();
+        sc.remove('outstanding');
+        sc.remove('payhist_' + CURRENT_YEAR);
+        sc.remove('payhist_' + (CURRENT_YEAR - 1));
+      }
     }
 
     return jsonResponse(result);

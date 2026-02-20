@@ -181,13 +181,17 @@ function handleLogin(data) {
   }
   var token = createSession(user.id, user.role, user.resident_id, houseNumber);
 
-  // อัปเดต last_login
-  updateRowInSheet(SPREADSHEET_IDS.MAIN, SHEET_NAMES.USERS, 'id', user.id, {
-    last_login: new Date().toISOString()
-  });
+  // อัปเดต last_login เฉพาะเมื่อผ่านมา > 1 ชั่วโมง (ลด Sheet writes ต่อ login)
+  var _now = new Date();
+  var _lastLogin = user.last_login ? new Date(user.last_login) : null;
+  if (!_lastLogin || (_now - _lastLogin) >= 3600000) {
+    updateRowInSheet(SPREADSHEET_IDS.MAIN, SHEET_NAMES.USERS, 'id', user.id, {
+      last_login: _now.toISOString()
+    });
+  }
 
-  // Log
-  writeLog('LOGIN', user.id, 'เข้าสู่ระบบสำเร็จ: ' + email, 'Auth');
+  // Log เบาๆ ผ่าน Logger (writeLog เขียน Sheet ทุกครั้ง = ช้า)
+  Logger.log('LOGIN_OK: ' + email);
 
   // ตรวจ must_change_password flag
   var mustChange = String(user.must_change_password || '').toUpperCase() === 'TRUE';
@@ -693,15 +697,23 @@ function getCurrentUser(userId) {
     return { success: false, error: 'ไม่พบข้อมูลผู้ใช้' };
   }
 
-  var user = findRowByValue(SPREADSHEET_IDS.MAIN, SHEET_NAMES.USERS, 'id', userId);
+  // ใช้ getCachedData แทน findRowByValue → อ่าน Users/Residents จาก CacheService (6 ชม.) ถ้ามี
+  var allUsers = getCachedData('users', SPREADSHEET_IDS.MAIN, SHEET_NAMES.USERS);
+  var user = null;
+  for (var i = 0; i < allUsers.length; i++) {
+    if (String(allUsers[i].id) === String(userId)) { user = allUsers[i]; break; }
+  }
   if (!user) {
     return { success: false, error: 'ไม่พบบัญชีผู้ใช้' };
   }
 
-  // ดึงข้อมูล Resident เพิ่มเติม
+  // ดึงข้อมูล Resident เพิ่มเติม (ใช้ cache)
   var resident = null;
   if (user.resident_id) {
-    resident = findRowByValue(SPREADSHEET_IDS.MAIN, SHEET_NAMES.RESIDENTS, 'id', user.resident_id);
+    var allResidents = getCachedData('residents', SPREADSHEET_IDS.MAIN, SHEET_NAMES.RESIDENTS);
+    for (var j = 0; j < allResidents.length; j++) {
+      if (String(allResidents[j].id) === String(user.resident_id)) { resident = allResidents[j]; break; }
+    }
   }
 
   return {
