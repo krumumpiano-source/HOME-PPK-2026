@@ -1754,7 +1754,7 @@
         }
 
         function renderManageHousingCards() {
-            const data = JSON.parse(localStorage.getItem(STORAGE_KEYS.housing) || '[]');
+            const data = getHousingData();
             const residents = getResidentsData();
             const formatSettings = getHousingFormatSettings();
             const searchTerm = (document.getElementById('searchResident').value || '').toLowerCase();
@@ -1785,10 +1785,12 @@
                 `;
             }
 
-            // Sort: houses first, then flats, by number
+            // Sort: houses first, then flats, by display number
             const sorted = [...data].sort((a, b) => {
                 if (a.type !== b.type) return a.type === 'house' ? -1 : 1;
-                return parseInt(a.number) - parseInt(b.number) || a.number.localeCompare(b.number);
+                const numA = parseInt((formatHousingNumber(a, formatSettings).match(/\d+/) || ['0'])[0]);
+                const numB = parseInt((formatHousingNumber(b, formatSettings).match(/\d+/) || ['0'])[0]);
+                return numA - numB;
             });
 
             // Filter by search
@@ -2295,8 +2297,25 @@
             if (mode === 'byHouse') renderHouseCards();
             else if (mode === 'individual') renderResidentTable();
             else if (mode === 'manageHousing') {
-                // ใช้ข้อมูล localStorage ที่เคยดึงมาผ่าน batchGet แล้ว — ไม่ต้องเรียก GAS ซ้ำ
                 renderManageHousingCards();
+                // ถ้ายังไม่มีข้อมูล ให้ดึงจาก backend แล้ว render ใหม่
+                if (getHousingData().length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+                    (async () => {
+                        try {
+                            const r = await callBackendGet('getHousing', {});
+                            if (r && r.success && Array.isArray(r.data)) {
+                                const fetched = r.data.map((h, i) => ({
+                                    id: h.id || (i + 1), type: h.type || 'house',
+                                    number: h.number || '', displayNumber: h.display_number || '',
+                                    zone: h.zone || '', status: h.status || 'available', note: h.note || ''
+                                }));
+                                saveHousingData(fetched);
+                                renderManageHousingCards();
+                                renderHouseCards();
+                            }
+                        } catch(e) { console.warn(e); }
+                    })();
+                }
             }
         }
 
@@ -3723,6 +3742,7 @@
             renderHouseCards();
             renderResidentTable();
             renderHousingTable();
+            renderManageHousingCards(); // อัปเดต manage view ด้วยเสมอ
             if (_tabRendered['water']) loadWaterSettings();
             if (_tabRendered['electric']) loadElectricSettings();
             if (_tabRendered['common']) loadCommonFeeSettings();
