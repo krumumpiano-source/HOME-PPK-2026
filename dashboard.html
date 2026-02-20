@@ -169,6 +169,39 @@
             font-size: 0.95rem;
             color: var(--muted);
         }
+
+        /* Slip Send Button */
+        .slip-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.65rem 1.2rem;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.85rem;
+            transition: opacity 0.15s, transform 0.1s;
+            box-shadow: 0 2px 10px rgba(37,99,235,0.18);
+        }
+        .slip-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .slip-btn:active { transform: translateY(0); opacity: 1; }
+        .slip-btn.outstanding-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            box-shadow: 0 2px 10px rgba(239,68,68,0.18);
+        }
+        .slip-detail {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-top: 0.4rem;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -183,10 +216,6 @@
             <button class="sidebar-link" onclick="navigate('?page=payment-history')">
                 <span class="sidebar-link-icon">💸</span>
                 <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=upload-slip')">
-                <span class="sidebar-link-icon">📤</span>
-                <span class="sidebar-label">ส่งสลิปชำระเงิน</span>
             </button>
             <button class="sidebar-link" onclick="navigate('?page=form')">
                 <span class="sidebar-link-icon">📝</span>
@@ -226,10 +255,12 @@
         <div class="section">
             <div class="section-title">💳 แจ้งยอดชำระประจำเดือน</div>
             <div class="section-content">ยอดที่ต้องชำระเดือนนี้: <span class="amount" id="currentMonthAmount">0</span> บาท</div>
+            <div id="slipBtnMonth"></div>
         </div>
         <div class="section">
             <div class="section-title">🧾 แจ้งยอดคงค้าง</div>
             <div class="section-content">ยอดคงค้างสะสม: <span class="amount" id="outstandingAmount">0</span> บาท</div>
+            <div id="slipBtnOutstanding"></div>
         </div>
         <div class="footer-note">
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
@@ -263,6 +294,9 @@
         }
 
         // ========== Render Payment Info ==========
+        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+            'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
         function renderPaymentInfo(outstandingArr, recentPayments, userHouse) {
             const outstandingEl = document.getElementById('outstandingAmount');
             const currentAmountEl = document.getElementById('currentMonthAmount');
@@ -282,6 +316,31 @@
             const monthTotal = thisMonth.reduce((s, r) => s + (Number(r.total_amount || r.amount) || 0), 0);
             currentAmountEl.textContent = monthTotal > 0 ? monthTotal.toLocaleString('th-TH') : '-';
             currentAmountEl.className = monthTotal > 0 ? 'amount' : 'amount amount-ok';
+
+            // Slip button — current month
+            const periodKey = currentYear + currentMonth;
+            const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + currentYear;
+            const slipBtnMonth = document.getElementById('slipBtnMonth');
+            if (slipBtnMonth) {
+                if (monthTotal > 0) {
+                    slipBtnMonth.innerHTML =
+                        '<div class="slip-detail">📅 งวด: ' + periodDisplay + ' &nbsp;|&nbsp; 🏠 บ้าน: ' + (userHouse || '-') + '</div>' +
+                        '<button class="slip-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + monthTotal + ',false)">📤 ส่งสลิปชำระเงินประจำเดือน</button>';
+                } else {
+                    slipBtnMonth.innerHTML = '';
+                }
+            }
+
+            // Slip button — outstanding
+            const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
+            if (slipBtnOutstanding) {
+                if (totalOutstanding > 0) {
+                    slipBtnOutstanding.innerHTML =
+                        '<button class="slip-btn outstanding-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + totalOutstanding + ',true)">📤 ส่งสลิปชำระยอดคงค้าง</button>';
+                } else {
+                    slipBtnOutstanding.innerHTML = '';
+                }
+            }
         }
 
         // ========== Fallback: localStorage ==========
@@ -373,7 +432,26 @@
         window.onload = async function() {
             await loadDashboard();
         };
-    
+
+        function goToUploadSlip(periodKey, amount, isOutstanding) {
+            const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const unitNumber = localStorage.getItem('currentUserUnit')
+                || (userData.resident && userData.resident.house_number)
+                || userData.house_number || '';
+            const residentName = (userData.resident && (userData.resident.name || userData.resident.full_name))
+                || userData.name || userData.full_name || '';
+            const period = periodKey.substring(0, 4) + '-' + periodKey.substring(4, 6);
+            localStorage.setItem('pendingSlipInfo', JSON.stringify({
+                unitNumber: unitNumber,
+                periodKey: periodKey,
+                period: period,
+                notifiedAmount: amount,
+                residentName: residentName,
+                isOutstanding: isOutstanding
+            }));
+            navigate('?page=upload-slip');
+        }
+
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');

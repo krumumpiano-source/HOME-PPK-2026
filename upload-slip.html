@@ -168,8 +168,17 @@
 
         // ============ Helpers ============
         const urlParams = new URLSearchParams(window.location.search);
-        var unitNumber = urlParams.get('unit') || localStorage.getItem('currentUserUnit') || '';
-        const periodKey = urlParams.get('period') || getCurrentPeriodKey();
+
+        // ดึงข้อมูลที่ส่งมาจาก dashboard (ผ่าน pendingSlipInfo)
+        const _pendingSlip = JSON.parse(localStorage.getItem('pendingSlipInfo') || 'null');
+        if (_pendingSlip) localStorage.removeItem('pendingSlipInfo');
+
+        var unitNumber = urlParams.get('unit')
+            || (_pendingSlip && _pendingSlip.unitNumber)
+            || localStorage.getItem('currentUserUnit') || '';
+        const periodKey = urlParams.get('period')
+            || (_pendingSlip && _pendingSlip.periodKey)
+            || getCurrentPeriodKey();
 
         const THAI_MONTHS = [
             'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -229,6 +238,22 @@
 
             let totalAmount = 0;
             let residentName = '';
+
+            // ถ้ามาจาก dashboard ผ่าน pendingSlipInfo — ใช้ข้อมูลนั้นก่อนเลย (เร็วกว่า)
+            if (_pendingSlip && _pendingSlip.notifiedAmount > 0) {
+                totalAmount = _pendingSlip.notifiedAmount;
+                residentName = _pendingSlip.residentName || '';
+                document.getElementById('display-amount').textContent = formatMoney(totalAmount) + ' บาท';
+                document.getElementById('paid-amount').value = totalAmount;
+                window.billingInfo = {
+                    unitNumber: unitNumber,
+                    periodKey: periodKey,
+                    period: _pendingSlip.period || toApiPeriod(periodKey),
+                    notifiedAmount: totalAmount,
+                    residentName: residentName
+                };
+                return; // ข้ามการเรียก backend เพราะมีข้อมูลครบแล้ว
+            }
 
             // ลองจาก Backend ก่อน
             if (WEB_APP_URL) {
