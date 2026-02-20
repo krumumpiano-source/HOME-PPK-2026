@@ -917,8 +917,9 @@
             if (userData.move_in_date) document.getElementById('move_in_date').value = userData.move_in_date;
             
             // โหลดรูปประจำตัว
-            if (userData.profilePhoto) {
-                displayPhoto(userData.profilePhoto);
+            const _photo = userData.profile_photo || userData.profilePhoto;
+            if (_photo) {
+                displayPhoto(_photo);
             }
         }
         

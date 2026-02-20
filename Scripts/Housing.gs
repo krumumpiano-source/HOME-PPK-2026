@@ -487,7 +487,7 @@ function handleUpdateProfile(data) {
       'prefix', 'firstname', 'lastname', 'position', 'subject_group',
       'phone', 'email', 'address_no', 'address_road', 'address_village',
       'subdistrict', 'district', 'province', 'zipcode',
-      'profile_photo', 'cohabitants', 'cohabitant_names'
+      'move_in_date', 'profile_photo', 'cohabitants', 'cohabitant_names'
     ];
 
     for (var i = 0; i < profileFields.length; i++) {
