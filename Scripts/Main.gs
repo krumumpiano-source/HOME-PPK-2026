@@ -742,9 +742,8 @@ function routePostAction(action, data) {
 /**
  * ดึงข้อมูลทั้งหมดสำหรับหน้า Dashboard ใน 1 API call
  * แทนที่ getCurrentUser + getAnnouncements + getOutstanding + getPaymentHistory
- * กรองข้อมูลตาม role:
- *   - resident: เฉพาะข้อมูลบ้านตัวเอง
- *   - admin: ทั้งหมด
+ * กรองข้อมูลตาม houseNumber เสมอ (ทั้ง resident และ admin ที่อยู่บ้านพักด้วย)
+ * admin ที่ไม่มี resident_id จะเห็น outstanding ทั้งหมด
  * @param {Object} params - { _userId, _role, _residentId, _houseNumber }
  * @returns {Object} { success, user, announcements, outstanding, recentPayments }
  */
@@ -768,8 +767,9 @@ function getDashboardData(params) {
   try {
     var outResult = getOutstanding();
     var outData = outResult.success ? outResult.data : [];
-    if (role !== 'admin' && houseNumber) {
-      // กรองเฉพาะบ้านตัวเอง
+    if (houseNumber) {
+      // กรองเฉพาะบ้านตัวเอง (ใช้กับทุก role รวมถึง admin ที่พักอาศัยด้วย)
+      // admin ที่ไม่มี houseNumber (ไม่ได้พักอยู่) จะเห็น outstanding ทั้งหมด
       outData = outData.filter(function(r) {
         return String(r.house_number) === String(houseNumber);
       });
@@ -777,9 +777,9 @@ function getDashboardData(params) {
     result.outstanding = outData;
   } catch (e) { result.outstanding = []; }
 
-  // ── 4. Recent Payment History (เฉพาะปีปัจจุบัน, กรองตาม houseNumber) ──
+  // ── 4. Recent Payment History (เฉพาะบ้านตัวเอง) ──
   try {
-    var payResult = getPaymentHistory(userId);
+    var payResult = getPaymentHistory(userId, null, null, houseNumber);
     result.recentPayments = payResult.success ? payResult.data : [];
   } catch (e) { result.recentPayments = []; }
 
