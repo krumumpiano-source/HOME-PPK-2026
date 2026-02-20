@@ -2023,28 +2023,16 @@
             const msg = `ต้องการลบ "${displayName}" หรือไม่?${residentWarning}\nการดำเนินการนี้ไม่สามารถยกเลิกได้`;
             if (!await ppkConfirm(msg)) return;
 
-            const _doDeleteHousingFromCard = () => {
-                const data = getHousingData();
-                saveHousingData(data.filter(h => String(h.id) !== String(id)));
-                renderManageHousingCards();
-                ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
-            };
+            // Optimistic: ลบ UI ทันที
+            const data = getHousingData();
+            saveHousingData(data.filter(h => String(h.id) !== String(id)));
+            renderManageHousingCards();
+            ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
 
+            // Sync backend ใน background (ไม่รอ ไม่แสดง error)
             if (WEB_APP_URL) {
-                callBackend('deleteHousing', { id: String(id) }).then(result => {
-                    if (result && result.success) {
-                        _doDeleteHousingFromCard();
-                    } else if (result && ((result.error && result.error.includes('ไม่พบ')) || (result.message && result.message.includes('ไม่พบ')))) {
-                        // backend ไม่มีแล้ว (ถูกล้างไปแล้ว) — ลบออกจาก localStorage
-                        _doDeleteHousingFromCard();
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(() => _doDeleteHousingFromCard());
-                return;
+                callBackend('deleteHousing', { id: String(id) }).catch(e => console.warn('deleteHousing sync:', e));
             }
-
-            _doDeleteHousingFromCard();
         }
 
         async function deleteHousing(id) {
@@ -2052,29 +2040,16 @@
                 return;
             }
 
-            const _doDeleteHousing = () => {
-                const data = getHousingData();
-                saveHousingData(data.filter(h => String(h.id) !== String(id)));
-                renderManageHousingCards();
-                ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
-            };
+            // Optimistic: ลบ UI ทันที
+            const data = getHousingData();
+            saveHousingData(data.filter(h => String(h.id) !== String(id)));
+            renderManageHousingCards();
+            ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
 
-            // Delete from Backend
+            // Sync backend ใน background (ไม่รอ ไม่แสดง error)
             if (WEB_APP_URL) {
-                callBackend('deleteHousing', { id: String(id) }).then(result => {
-                    if (result && result.success) {
-                        _doDeleteHousing();
-                    } else if (result && ((result.error && result.error.includes('ไม่พบ')) || (result.message && result.message.includes('ไม่พบ')))) {
-                        // backend ไม่มีแล้ว — ลบออกจาก localStorage
-                        _doDeleteHousing();
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(() => _doDeleteHousing());
-                return;
+                callBackend('deleteHousing', { id: String(id) }).catch(e => console.warn('deleteHousing sync:', e));
             }
-
-            _doDeleteHousing();
         }
 
         function filterHousingTable() {
@@ -3062,31 +3037,17 @@
                 return;
             }
 
-            const _doDeleteResident = () => {
-                const data = getResidentsData();
-                const newData = data.filter(r => r.id !== id && String(r.id) !== String(id));
-                saveResidentsData(newData);
-                renderResidentTable();
-                renderHouseCards();
-                ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
-            };
+            // Optimistic: ลบ UI ทันที
+            const data = getResidentsData();
+            saveResidentsData(data.filter(r => String(r.id) !== String(id)));
+            renderResidentTable();
+            renderHouseCards();
+            ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
 
-            // Delete from Backend
+            // Sync backend ใน background (ไม่รอ ไม่แสดง error)
             if (WEB_APP_URL) {
-                callBackend('removeResident', { id: String(id) }).then(result => {
-                    if (result && result.success) {
-                        _doDeleteResident();
-                    } else if (result && ((result.error && result.error.includes('ไม่พบ')) || (result.message && result.message.includes('ไม่พบ')))) {
-                        // backend ไม่มีแล้ว (ถูกลบไปแล้ว) — ลบออกจาก localStorage
-                        _doDeleteResident();
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(() => _doDeleteResident());
-                return;
+                callBackend('removeResident', { id: String(id) }).catch(e => console.warn('removeResident sync:', e));
             }
-
-            _doDeleteResident();
         }
 
         function resetResidentPassword(id) {
