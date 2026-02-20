@@ -1746,15 +1746,7 @@
 
         // ========== Housing Functions ==========
         function getHousingData() {
-            const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.housing) || '[]');
-            // กรองรายการที่ display_number ไม่ตรงรูปแบบ "บ้าน N" / "แฟลต N" (ลบ duplicate เก่า)
-            // ตรวจทั้ง snake_case (จาก backend) และ camelCase (จาก localStorage เก่า)
-            const validPattern = /^(บ้าน|แฟลต) \d+$/;
-            return all.filter(h => {
-                const dn = String(h.display_number || h.displayNumber || '').trim();
-                if (!dn) return true; // ไม่มี display_number เลย → คงไว้
-                return validPattern.test(dn); // ต้องตรงรูปแบบ "บ้าน N" หรือ "แฟลต N" เท่านั้น
-            });
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS.housing) || '[]');
         }
 
         function saveHousingData(data) {
