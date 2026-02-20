@@ -2823,20 +2823,40 @@
                 return;
             }
 
-            // Delete from Backend
+            // Optimistic: ลบ UI ทันที
+            const allData = getResidentsData();
+            const toDelete = allData.find(r => String(r.id) === String(residentId));
+            saveResidentsData(allData.filter(r => String(r.id) !== String(residentId)));
+            openHouseDetails(currentHouseForDetails);
+            renderHouseCards();
+            renderResidentTable();
+
+            // รอ backend ลบจริงจาก Sheet
             if (WEB_APP_URL) {
-                callBackend('removeResident', { id: String(residentId) }).catch(err => console.warn(err));
-            }
-            
-            const data = getResidentsData();
-            const index = data.findIndex(r => r.id === residentId || String(r.id) === String(residentId));
-            
-            if (index !== -1) {
-                data.splice(index, 1);
-                saveResidentsData(data);
-                openHouseDetails(currentHouseForDetails);
-                renderHouseCards();
-                renderResidentTable();
+                try {
+                    const result = await callBackend('removeResident', { id: String(residentId) });
+                    if (!result || !result.success) {
+                        if (toDelete) {
+                            const restored = getResidentsData();
+                            restored.push(toDelete);
+                            saveResidentsData(restored);
+                            openHouseDetails(currentHouseForDetails);
+                            renderHouseCards();
+                            renderResidentTable();
+                        }
+                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
+                    }
+                } catch(e) {
+                    if (toDelete) {
+                        const restored = getResidentsData();
+                        restored.push(toDelete);
+                        saveResidentsData(restored);
+                        openHouseDetails(currentHouseForDetails);
+                        renderHouseCards();
+                        renderResidentTable();
+                    }
+                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+                }
             }
         }
 
@@ -3064,15 +3084,40 @@
             }
 
             // Optimistic: ลบ UI ทันที
-            const data = getResidentsData();
-            saveResidentsData(data.filter(r => String(r.id) !== String(id)));
+            const allData = getResidentsData();
+            const toDelete = allData.find(r => String(r.id) === String(id));
+            saveResidentsData(allData.filter(r => String(r.id) !== String(id)));
             renderResidentTable();
             renderHouseCards();
-            ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
 
-            // Sync backend ใน background (ไม่รอ ไม่แสดง error)
+            // รอ backend ลบจริงจาก Sheet
             if (WEB_APP_URL) {
-                callBackend('removeResident', { id: String(id) }).catch(e => console.warn('removeResident sync:', e));
+                try {
+                    const result = await callBackend('removeResident', { id: String(id) });
+                    if (result && result.success) {
+                        ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                    } else {
+                        if (toDelete) {
+                            const restored = getResidentsData();
+                            restored.push(toDelete);
+                            saveResidentsData(restored);
+                            renderResidentTable();
+                            renderHouseCards();
+                        }
+                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
+                    }
+                } catch(e) {
+                    if (toDelete) {
+                        const restored = getResidentsData();
+                        restored.push(toDelete);
+                        saveResidentsData(restored);
+                        renderResidentTable();
+                        renderHouseCards();
+                    }
+                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+                }
+            } else {
+                ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว (เฉพาะเครื่อง)');
             }
         }
 
