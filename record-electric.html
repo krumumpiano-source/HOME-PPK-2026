@@ -542,8 +542,8 @@
 
     <script>
         // ============ API Configuration ============
-        var WEB_APP_URL = '<?!= scriptUrl ?>';
-        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+        var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzZA4dyjggDBAs94YF62rwr68IKlKq-AuIeHVxUVvLImAXhzVzhMeZd85jvxzU9CGepPg/exec';
+        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
 
         // ============ API Helper ============
         async function callBackend(action, data = {}) {

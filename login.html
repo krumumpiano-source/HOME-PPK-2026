@@ -201,8 +201,8 @@
     </div>
     <script>
         // ============ API Configuration ============
-        var WEB_APP_URL = '<?!= scriptUrl ?>';
-        function navigate(page) { var base = WEB_APP_URL || window.top.location.href.split('?')[0]; window.top.location.href = base + page; }
+        var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzZA4dyjggDBAs94YF62rwr68IKlKq-AuIeHVxUVvLImAXhzVzhMeZd85jvxzU9CGepPg/exec';
+        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
 
         // ============ Password Toggle ============
         function togglePassword() {
@@ -300,7 +300,7 @@
 
                     // Redirect to dashboard
                     var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
-                    window.location.href = baseUrl + '?page=dashboard';
+                    window.location.href = 'dashboard.html';
                 } else {
                     errorMsg.textContent = result.error || result.message || 'เข้าสู่ระบบไม่สำเร็จ';
                     errorMsg.style.display = 'block';
@@ -338,7 +338,7 @@
                 });
                 if (result && result.success) {
                     var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
-                    window.location.href = baseUrl + '?page=dashboard';
+                    window.location.href = 'dashboard.html';
                 } else {
                     errEl.textContent = result.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
                     btn.disabled = false;
@@ -358,7 +358,7 @@
                 callBackend('getCurrentUser').then(result => {
                     if (result && result.success) {
                         var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
-                        window.location.href = baseUrl + '?page=dashboard';
+                        window.location.href = 'dashboard.html';
                     }
                 }).catch(() => {});
             }
