@@ -536,10 +536,7 @@
         <!-- Tabs -->
         <div class="tabs-container">
             <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('housing', this)">
-                    <span class="tab-btn-icon">🏠</span> ที่พักอาศัย
-                </button>
-                <button class="tab-btn" onclick="showTab('water', this)">
+                <button class="tab-btn active" onclick="showTab('water', this)">
                     <span class="tab-btn-icon">💧</span> ค่าน้ำ
                 </button>
                 <button class="tab-btn" onclick="showTab('electric', this)">
@@ -562,82 +559,8 @@
                 </button>
             </div>
 
-            <!-- Tab: Housing + Residents (merged) -->
-            <div class="tab-content active" id="tab-housing">
-                <div class="section">
-                    <div class="section-title">🏠 จัดการที่พักอาศัย</div>
-                    <div class="section-desc">จัดการบ้านพัก/แฟลต และผู้พักอาศัยทั้งหมด · บุคลากรที่ตั้งค่าไว้จะปรากฏในหน้าจัดการสิทธิ์</div>
-
-                    <!-- View Mode Toggle -->
-                    <div style="margin-top:0.75rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                        <button class="btn" id="viewModeManageHousing" onclick="setResidentViewMode('manageHousing')" style="background:var(--primary);color:#fff;">🏡 จัดการบ้านพัก</button>
-                        <button class="btn" id="viewModeIndividual" onclick="setResidentViewMode('individual')">👤 รายบุคคล</button>
-                        <div style="margin-left:auto;">
-                            <button class="btn btn-success" onclick="openModal('addHousing')" style="font-size:0.85rem;">＋ เพิ่มบ้าน/แฟลต</button>
-                            <button class="btn btn-primary" onclick="openModal('addResident')" style="font-size:0.85rem;">＋ เพิ่มผู้พักอาศัย</button>
-                        </div>
-                    </div>
-
-                    <!-- Format Settings (collapsible) -->
-                    <details style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.1rem 1rem;">
-                        <summary style="cursor:pointer; padding:0.65rem 0; font-weight:600; color:var(--muted); font-size:0.85rem; user-select:none;">⚙️ ตั้งค่ารูปแบบเลขที่ (คลิกเพื่อขยาย)</summary>
-                        <div style="padding-bottom:1rem;">
-                        <div class="form-grid" style="margin-top:0.75rem;">
-                            <div class="form-group">
-                                <label>รูปแบบเลขที่บ้านพัก</label>
-                                <select id="houseNumberFormat">
-                                    <option value="number">ตัวเลขอย่างเดียว (1, 2, 3...)</option>
-                                    <option value="prefix-number" selected>คำนำหน้า + ตัวเลข (บ้าน 1, บ้าน 2...)</option>
-                                    <option value="zone-number">โซน + ตัวเลข (A-1, A-2, B-1...)</option>
-                                    <option value="custom">กำหนดเอง</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>คำนำหน้าบ้านพัก</label>
-                                <input type="text" id="housePrefix" value="บ้าน " placeholder="เช่น บ้าน, H, House">
-                            </div>
-                            <div class="form-group">
-                                <label>รูปแบบเลขที่แฟลต</label>
-                                <select id="flatNumberFormat">
-                                    <option value="number">ตัวเลขอย่างเดียว (101, 102...)</option>
-                                    <option value="prefix-number" selected>คำนำหน้า + ตัวเลข (ห้อง 101, ห้อง 102...)</option>
-                                    <option value="floor-room">ชั้น + ห้อง (1-01, 1-02, 2-01...)</option>
-                                    <option value="building-floor-room">อาคาร + ชั้น + ห้อง (F1-101, F2-201...)</option>
-                                    <option value="custom">กำหนดเอง</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>คำนำหน้าแฟลต</label>
-                                <input type="text" id="flatPrefix" value="แฟลต" placeholder="เช่น แฟลต, ห้อง, F, Flat">
-                            </div>
-                        </div>
-                        <div class="btn-group" style="margin-top:0.5rem;">
-                            <button class="btn btn-success" onclick="saveHousingFormat()">💾 บันทึกรูปแบบ</button>
-                        </div>
-                        </div>
-                    </details>
-
-                    <!-- Unified Search -->
-                    <div class="search-box" style="margin-top:0.75rem;">
-                        <input type="text" id="searchResident" placeholder="🔍 ค้นหาผู้พักอาศัย/บ้านพัก (ชื่อ, อีเมล, เลขที่, ตำแหน่ง...)" oninput="filterResidentView();">
-                    </div>
-
-                    <!-- View: Manage Housing (default) -->
-                    <div id="residentViewManageHousing" style="margin-top:0.75rem;">
-                        <div id="manageHousingSummary" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;"></div>
-                        <div id="manageHousingGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1rem;"></div>
-                    </div>
-
-                    <!-- View: Individual (all people grouped by house) -->
-                    <div id="residentViewIndividual" style="display:none; margin-top:0.75rem;">
-                        <div id="residentIndividualContainer"></div>
-                    </div>
-
-                </div>
-            </div>
-
             <!-- Tab: Water -->
-            <div class="tab-content" id="tab-water">
+            <div class="tab-content active" id="tab-water">
                 <div class="section">
                     <div class="section-title">💧 ตั้งค่าอัตราค่าน้ำ</div>
                     <div class="section-desc">กำหนดอัตราค่าน้ำต่อหน่วย ซึ่งจะมีผลต่อการคำนวณในหน้าบันทึกค่าน้ำ</div>
@@ -3740,45 +3663,20 @@
         const _tabRendered = {};
 
         function loadAllSettings() {
-            // default view: manage housing
-            renderManageHousingCards();
-
-            // Load housing format settings into collapsible
-            const formatSettings = getHousingFormatSettings();
-            if (document.getElementById('houseNumberFormat'))
-                document.getElementById('houseNumberFormat').value = formatSettings.houseFormat;
-            if (document.getElementById('housePrefix'))
-                document.getElementById('housePrefix').value = formatSettings.housePrefix;
-            if (document.getElementById('flatNumberFormat'))
-                document.getElementById('flatNumberFormat').value = formatSettings.flatFormat;
-            if (document.getElementById('flatPrefix'))
-                document.getElementById('flatPrefix').value = formatSettings.flatPrefix;
-
-            _tabRendered['housing'] = true;
+            // default view: water (housing tab removed)
+            loadWaterSettings();
+            renderExemptionTable();
+            _tabRendered['water'] = true;
         }
 
         // เรียกหลัง batchGet กลับมา — re-render เฉพาะ tab ที่เคย render แล้ว
         function reloadAllSettingsFull() {
-            renderManageHousingCards(); // housing default view
-            if (currentResidentViewMode === 'individual') renderResidentTable();
-            if (_tabRendered['water']) loadWaterSettings();
+            if (_tabRendered['water']) { loadWaterSettings(); renderExemptionTable(); }
             if (_tabRendered['electric']) loadElectricSettings();
             if (_tabRendered['common']) loadCommonFeeSettings();
             if (_tabRendered['system']) loadSystemSettings();
             if (_tabRendered['permissions']) renderPermissionTable();
             if (_tabRendered['announcements']) renderAnnouncementsList();
-            renderExemptionTable();
-            renderAnnouncementsList();
-
-            const formatSettings = getHousingFormatSettings();
-            if (document.getElementById('houseNumberFormat'))
-                document.getElementById('houseNumberFormat').value = formatSettings.houseFormat;
-            if (document.getElementById('housePrefix'))
-                document.getElementById('housePrefix').value = formatSettings.housePrefix;
-            if (document.getElementById('flatNumberFormat'))
-                document.getElementById('flatNumberFormat').value = formatSettings.flatFormat;
-            if (document.getElementById('flatPrefix'))
-                document.getElementById('flatPrefix').value = formatSettings.flatPrefix;
         }
 
         // ========== Load from Backend & Sync to localStorage ==========
