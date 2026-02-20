@@ -2010,16 +2010,8 @@
             // รอ backend ลบจริงจาก Sheet
             if (WEB_APP_URL) {
                 try {
-                    const result = await callBackend('deleteHousing', { id: String(id) });
+                    const result = await callBackend('deleteHousing', { id: String(id), displayNumber: displayName });
                     if (!result || !result.success) {
-                        // กู้คืน
-                        if (toDelete) {
-                            const restored = getHousingData();
-                            restored.push(toDelete);
-                            saveHousingData(restored);
-                            renderManageHousingCards();
-                        }
-                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
                     }
                 } catch(e) {
                     // กู้คืน
@@ -2042,13 +2034,14 @@
             // Optimistic: ลบ UI ทันที
             const allData = getHousingData();
             const toDelete = allData.find(h => String(h.id) === String(id));
+            const displayNumber = toDelete ? (toDelete.displayNumber || toDelete.display_number || '') : '';
             saveHousingData(allData.filter(h => String(h.id) !== String(id)));
             renderManageHousingCards();
 
             // รอ backend ลบจริงจาก Sheet
             if (WEB_APP_URL) {
                 try {
-                    const result = await callBackend('deleteHousing', { id: String(id) });
+                    const result = await callBackend('deleteHousing', { id: String(id), displayNumber });
                     if (!result || !result.success) {
                         if (toDelete) {
                             const restored = getHousingData();
