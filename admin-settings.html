@@ -2298,24 +2298,38 @@
             if (!container) return;
             const row = document.createElement('div');
             row.className = 'cohabitant-row';
-            row.style.cssText = 'display:grid; grid-template-columns:90px 1fr 1fr 100px 130px 34px; gap:0.35rem; align-items:center; background:var(--bg); padding:0.5rem; border-radius:8px; border:1px solid var(--border);';
+            row.style.cssText = 'display:grid; grid-template-columns:90px 1fr 1fr 100px 130px 80px 34px; gap:0.35rem; align-items:center; background:var(--bg); padding:0.5rem; border-radius:8px; border:1px solid var(--border);';
+            // Preserve non-UI fields as dataset attributes so they survive a save round-trip
+            row.dataset.coId = data.id || '';
+            row.dataset.phone = data.phone || '';
+            row.dataset.email = data.email || '';
+            row.dataset.position = data.position || '';
+            row.dataset.subjectGroup = data.subject_group || '';
+            row.dataset.addedAt = data.added_at || '';
             const prefixOptions = ['นาย','นาง','นางสาว','เด็กชาย','เด็กหญิง','ด.ช.','ด.ญ.'];
             const relOptions = ['คู่สมรส','บุตร','บิดา','มารดา','พี่น้อง','ปู่','ย่า','ตา','ยาย','บุคลากรโรงเรียนพะเยาพิทยาคม','อื่นๆ'];
             const makePrefixOptions = (sel) => prefixOptions.map(o => `<option value="${o}" ${sel===o?'selected':''}>${o}</option>`).join('');
             const makeRelOptions = (sel) => relOptions.map(o => `<option value="${o}" ${sel===o?'selected':''}>${o}</option>`).join('');
             const bd = data.birthdate || '';
+            const isStaff = data.is_ppk_staff === true;
+            // Use data.relation (canonical) with fallback to data.relationship (old field name)
+            const relVal = data.relation || data.relationship || '';
             row.innerHTML = `
                 <select class="c-prefix" style="font-size:0.82rem; padding:0.35rem 0.2rem; border:1px solid var(--border); border-radius:6px; width:100%;">${makePrefixOptions(data.prefix||'')}</select>
                 <input class="c-firstname" type="text" value="${data.firstname||''}" placeholder="\u0e0a\u0e37\u0e48\u0e2d" style="font-size:0.82rem; padding:0.35rem; border:1px solid var(--border); border-radius:6px; width:100%;">
                 <input class="c-lastname" type="text" value="${data.lastname||''}" placeholder="\u0e19\u0e32\u0e21\u0e2a\u0e01\u0e38\u0e25" style="font-size:0.82rem; padding:0.35rem; border:1px solid var(--border); border-radius:6px; width:100%;">
-                <select class="c-relationship" style="font-size:0.82rem; padding:0.35rem 0.2rem; border:1px solid var(--border); border-radius:6px; width:100%;">${makeRelOptions(data.relationship||'')}</select>
-                <input class="c-birthdate" type="date" value="${bd}" title="\u0e27\u0e31\u0e19\u0e40\u0e01\u0e34\u0e14" style="font-size:0.82rem; padding:0.35rem; border:1px solid var(--border); border-radius:6px; width:100%;">
+                <select class="c-relationship" style="font-size:0.82rem; padding:0.35rem 0.2rem; border:1px solid var(--border); border-radius:6px; width:100%;">${makeRelOptions(relVal)}</select>
+                <input class="c-birthdate" type="date" value="${bd}" title="\u0e27\u0e31\u0e19\u0e40\u0e01\u0e14\u0e34" style="font-size:0.82rem; padding:0.35rem; border:1px solid var(--border); border-radius:6px; width:100%;">
+                <label style="display:flex; align-items:center; gap:0.25rem; font-size:0.75rem; cursor:pointer; white-space:nowrap;" title="\u0e1a\u0e38\u0e04\u0e25\u0e32\u0e01\u0e23\u0e42\u0e23\u0e07\u0e40\u0e23\u0e35\u0e22\u0e19">
+                    <input type="checkbox" class="c-is-staff" ${isStaff?'checked':''} style="cursor:pointer; width:14px; height:14px;">
+                    <span>\u0e1a\u0e38\u0e04\u0e25\u0e32\u0e01\u0e23</span>
+                </label>
                 <button type="button" onclick="this.closest('.cohabitant-row').remove()" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.35rem 0.5rem; cursor:pointer; font-size:0.85rem;">🗑️</button>
             `;
             container.appendChild(row);
         }
 
-        // Collect structured cohabitants from container
+        // Collect structured cohabitants from container — preserves all fields
         function getCohabitantsFromContainer(containerId) {
             const rows = document.querySelectorAll(`#${containerId} .cohabitant-row`);
             const result = [];
@@ -2323,9 +2337,21 @@
                 const prefix = (row.querySelector('.c-prefix')?.value || '').trim();
                 const firstname = (row.querySelector('.c-firstname')?.value || '').trim();
                 const lastname = (row.querySelector('.c-lastname')?.value || '').trim();
-                const relationship = (row.querySelector('.c-relationship')?.value || '').trim();
+                const relation = (row.querySelector('.c-relationship')?.value || '').trim();
                 const birthdate = (row.querySelector('.c-birthdate')?.value || '').trim();
-                if (firstname) result.push({ prefix, firstname, lastname, relationship, birthdate });
+                const is_ppk_staff = row.querySelector('.c-is-staff')?.checked === true;
+                if (firstname) result.push({
+                    id: row.dataset.coId || '',
+                    prefix, firstname, lastname,
+                    relation,          // canonical field name used throughout the system
+                    birthdate,
+                    is_ppk_staff,
+                    phone: row.dataset.phone || '',
+                    email: row.dataset.email || '',
+                    position: row.dataset.position || '',
+                    subject_group: row.dataset.subjectGroup || '',
+                    added_at: row.dataset.addedAt || ''
+                });
             });
             return result;
         }
@@ -2829,7 +2855,7 @@
             openModal('editResident');
         }
 
-        function updateResident() {
+        async function updateResident() {
             const id = document.getElementById('editResidentId').value; // ใช้ string ตรงๆ ไม่ parseInt เพราะ ID เป็น "RES001"
             const residentType = document.getElementById('editResidentType').value;
             const prefix = document.getElementById('editResidentPrefix').value;
@@ -2865,6 +2891,12 @@
             if (password && password.length < 8) {
                 ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                 return;
+            }
+
+            // Guard: warn admin if house_number is blank (prevent accidental house clearing)
+            if (!house) {
+                const ok = await ppkConfirm('⚠️ ไม่ได้เลือกบ้านพัก ผู้พักอาศัยจะถูกย้ายออกจากบ้านทุกหลัง\nต้องการบันทึกโดยไม่ระบุบ้านหรือไม่?');
+                if (!ok) return;
             }
 
             const updated = {
