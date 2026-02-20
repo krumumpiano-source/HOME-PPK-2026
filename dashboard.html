@@ -306,7 +306,7 @@
             outstandingEl.textContent = totalOutstanding.toLocaleString('th-TH');
             outstandingEl.className = totalOutstanding > 0 ? 'amount' : 'amount amount-ok';
 
-            // Current month total from recent payments
+            // Current month total from recent payments (paid history — may be 0 if not yet submitted)
             const now = new Date();
             const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
             const currentYear = String(now.getFullYear() + 543);
@@ -317,25 +317,23 @@
             currentAmountEl.textContent = monthTotal > 0 ? monthTotal.toLocaleString('th-TH') : '-';
             currentAmountEl.className = monthTotal > 0 ? 'amount' : 'amount amount-ok';
 
-            // Slip button — current month
             const periodKey = currentYear + currentMonth;
             const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + currentYear;
+
+            // ปุ่มส่งสลิปประจำเดือน — แสดงเสมอ (ให้ผู้ใช้ส่งสลิปได้ทุกเมื่อ)
             const slipBtnMonth = document.getElementById('slipBtnMonth');
             if (slipBtnMonth) {
-                if (monthTotal > 0) {
-                    slipBtnMonth.innerHTML =
-                        '<div class="slip-detail">📅 งวด: ' + periodDisplay + ' &nbsp;|&nbsp; 🏠 บ้าน: ' + (userHouse || '-') + '</div>' +
-                        '<button class="slip-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + monthTotal + ',false)">📤 ส่งสลิปชำระเงินประจำเดือน</button>';
-                } else {
-                    slipBtnMonth.innerHTML = '';
-                }
+                slipBtnMonth.innerHTML =
+                    '<div class="slip-detail">📅 งวด: ' + periodDisplay + (userHouse ? ' &nbsp;|&nbsp; 🏠 บ้าน: ' + userHouse : '') + '</div>' +
+                    '<button class="slip-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + monthTotal + ',false)">📤 ส่งสลิปชำระเงินประจำเดือน</button>';
             }
 
-            // Slip button — outstanding
+            // ปุ่มส่งสลิปยอดคงค้าง — แสดงเฉพาะเมื่อมียอดค้าง
             const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
             if (slipBtnOutstanding) {
                 if (totalOutstanding > 0) {
                     slipBtnOutstanding.innerHTML =
+                        '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + totalOutstanding.toLocaleString('th-TH') + ' บาท</div>' +
                         '<button class="slip-btn outstanding-btn" onclick="goToUploadSlip(\'' + periodKey + '\',' + totalOutstanding + ',true)">📤 ส่งสลิปชำระยอดคงค้าง</button>';
                 } else {
                     slipBtnOutstanding.innerHTML = '';
@@ -363,6 +361,25 @@
             });
             document.getElementById('outstandingAmount').textContent = outstandingTotal.toLocaleString('th-TH');
             document.getElementById('outstandingAmount').className = outstandingTotal > 0 ? 'amount' : 'amount amount-ok';
+
+            // ปุ่มส่งสลิปจาก fallback data
+            const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + year;
+            const slipBtnMonth = document.getElementById('slipBtnMonth');
+            if (slipBtnMonth) {
+                slipBtnMonth.innerHTML =
+                    '<div class="slip-detail">📅 งวด: ' + periodDisplay + (userHouse ? ' &nbsp;|&nbsp; 🏠 บ้าน: ' + userHouse : '') + '</div>' +
+                    '<button class="slip-btn" onclick="goToUploadSlip(\'' + key + '\',' + total + ',false)">📤 ส่งสลิปชำระเงินประจำเดือน</button>';
+            }
+            const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
+            if (slipBtnOutstanding) {
+                if (outstandingTotal > 0) {
+                    slipBtnOutstanding.innerHTML =
+                        '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + outstandingTotal.toLocaleString('th-TH') + ' บาท</div>' +
+                        '<button class="slip-btn outstanding-btn" onclick="goToUploadSlip(\'' + key + '\',' + outstandingTotal + ',true)">📤 ส่งสลิปชำระยอดคงค้าง</button>';
+                } else {
+                    slipBtnOutstanding.innerHTML = '';
+                }
+            }
         }
 
         // ========== Load Dashboard (single API call) ==========
