@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================================
  * HOME PPK 2026 - Main.gs — 🌐 Router หลัก (จุดเข้า Web App)
  * ============================================================================
@@ -189,44 +189,11 @@ const POST_ACTIONS = {
 // ============================================================================
 // HTML PAGES — รายชื่อหน้าทั้งหมดที่เสิร์ฟจาก GAS (ไม่มี .html)
 // ============================================================================
-
-var HTML_PAGES = [
-  'login', 'dashboard', 'register', 'forgot-password', 'forgot-email',
-  'form', 'request-form', 'repair-form', 'transfer-form', 'return-form',
-  'upload-slip', 'check-slip', 'payment-history', 'payment-notification',
-  'record-water', 'record-electric', 'monthly-withdraw', 'check-request',
-  'regulations', 'settings', 'team-management', 'admin-settings', 'accounting'
-];
-
-// ============================================================================
-// servePage — เสิร์ฟ HTML ผ่าน HtmlService พร้อม scriptUrl
+// GITHUB PAGES URL  Frontend ย้ายไป GitHub Pages | GAS = Backend API เท่านั้น
 // ============================================================================
 
-/**
- * เสิร์ฟ HTML page ผ่าน HtmlService.createTemplateFromFile
- * ฝัง scriptUrl ลงใน HTML อัตโนมัติ (ไม่ต้องใส่ WEB_APP_URL มือ)
- * @param {string} page - ชื่อหน้า เช่น 'login', 'dashboard'
- * @returns {HtmlOutput}
- */
-function servePage(page) {
-  var pageName = HTML_PAGES.indexOf(page) !== -1 ? page : 'login';
-  try {
-    var template = HtmlService.createTemplateFromFile(pageName);
-    template.scriptUrl = ScriptApp.getService().getUrl();
-    return template.evaluate()
-      .setTitle('HOME PPK 2026')
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  } catch (err) {
-    return HtmlService.createHtmlOutput(
-      '<div style="font-family:\'Kanit\',sans-serif;text-align:center;padding:3rem;">' +
-      '<h2 style="color:#e11d48;">ไม่พบหน้า: ' + pageName + '</h2>' +
-      '<a href="?page=login" style="color:#2563eb;">กลับหน้าเข้าสู่ระบบ</a></div>'
-    );
-  }
-}
+var GITHUB_PAGES_URL = 'https://krumumpiano-source.github.io/HOME-PPK-2026/login.html';
 
-// ============================================================================
 // doGet — รับ GET request
 // ============================================================================
 
@@ -242,10 +209,16 @@ function doGet(e) {
     var params = e ? (e.parameter || {}) : {};
     var action = params.action || '';
 
-    // ถ้าไม่มี action → เสิร์ฟ HTML App (default = login)
+    // ถ้าไม่มี action → redirect ไป GitHub Pages (Frontend ย้ายไปแล้ว)
     if (!action) {
-      var page = params.page || 'login';
-      return servePage(page);
+      return HtmlService.createHtmlOutput(
+        '<!DOCTYPE html><html><head>'
+        + '<meta http-equiv="refresh" content="0;url=' + GITHUB_PAGES_URL + '">'
+        + '<title>HOME PPK 2026</title></head><body>'
+        + '<p style="font-family:sans-serif;text-align:center;padding:2rem;">'
+        + 'กำลังนำทางไปยังระบบ... <a href="' + GITHUB_PAGES_URL + '">คลิกที่นี่</a></p>'
+        + '</body></html>'
+      ).setTitle('HOME PPK 2026');
     }
 
     // ตรวจว่า action มี route
@@ -735,6 +708,8 @@ function routePostAction(action, data) {
       // ── Admin Maintenance ──
       case 'cleanupDuplicateHousing':
         return cleanupDuplicateHousing();
+      case 'clearAllData':
+        return clearAllData();
 
       default:
         return { success: false, error: 'UNKNOWN_POST_ACTION', action: action };
