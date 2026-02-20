@@ -349,61 +349,6 @@
             <span id="noPermissionMsg" style="display:none;color:#dc2626;font-weight:bold;">คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ</span>
         </div>
         <script>
-        // ============ API Configuration ============
-        var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA9KchBb2jhanAjz7VrMesRSINa35wkdH7VXY8dTig3lSFPY0M4bBbaIjgbuMRUX-0mQ/exec';
-        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
-
-        async function callBackend(action, data = {}) {
-            const token = localStorage.getItem('sessionToken');
-            const payload = { action, token, ...data };
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
-                });
-                const text = await response.text();
-                const result = JSON.parse(text);
-                if (result.error === 'SESSION_EXPIRED') {
-                    localStorage.clear(); window.navigate('?page=login'); return;
-                }
-                return result;
-            } catch (err) { console.error('Backend error:', err); return null; }
-        }
-
-        async function callBackendGet(action, params = {}) {
-            if (!WEB_APP_URL) return null;
-            const token = localStorage.getItem('sessionToken');
-            const q = new URLSearchParams({ action, token, ...params }).toString();
-            const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
-            return res.json();
-        }
-        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
-                // cachedCall: stale-while-revalidate — แสดงทันที, refresh ใน background
-        async function cachedCall(action, params, ttlMs) {
-            ttlMs = ttlMs || 300000; // 5 นาที
-            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
-            var fresh = null;
-            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}
-            if (fresh && fresh.d) {
-                if (Date.now() - fresh.t > ttlMs) {
-                    // หมดอายุ — refresh background โดยไม่รอ
-                    callBackendGet(action, params || {}).then(function(r) {
-                        if (r && r.success !== false) {
-                            try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-                        }
-                    }).catch(function(){});
-                }
-                return fresh.d; // return ทันทีจาก cache
-            }
-            // ไม่มี cache — ต้องรอ fetch จริง
-            var r = await callBackendGet(action, params || {});
-            if (r && r.success !== false) {
-                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-            }
-            return r;
-        }
 
         // ตรวจสอบ session + สิทธิ์จาก Backend
         async function checkPermission() {
@@ -474,6 +419,7 @@
             navigate('?page=login');
         }
         </script>
+    <script src="ppk-api.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
 

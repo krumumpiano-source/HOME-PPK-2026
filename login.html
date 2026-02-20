@@ -200,9 +200,6 @@
         </div>
     </div>
     <script>
-        // ============ API Configuration ============
-        var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA9KchBb2jhanAjz7VrMesRSINa35wkdH7VXY8dTig3lSFPY0M4bBbaIjgbuMRUX-0mQ/exec';
-        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
 
         // ============ Password Toggle ============
         function togglePassword() {
@@ -216,32 +213,6 @@
                 input.type = 'password';
                 btn.textContent = '👁';
                 btn.title = 'แสดงรหัสผ่าน';
-            }
-        }
-
-        // ============ API Helper ============
-        async function callBackend(action, data = {}) {
-            const token = localStorage.getItem('sessionToken');
-            const payload = { action, token, ...data };
-            let text = '';
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
-                });
-                text = await response.text();
-                try {
-                    return JSON.parse(text);
-                } catch (parseErr) {
-                    console.error('Response not JSON. Status:', response.status, 'Body:', text.substring(0, 500));
-                    throw new Error('Server ตอบกลับไม่ถูกรูปแบบ (status ' + response.status + '): ' + text.substring(0, 200));
-                }
-            } catch (err) {
-                console.error('Backend error:', err.message, 'URL:', WEB_APP_URL, 'Raw:', text.substring(0, 200));
-                if (err.message.startsWith('Server ตอบกลับ')) throw err;
-                throw new Error('ไม่สามารถเชื่อมต่อระบบได้: ' + err.message);
             }
         }
 
@@ -364,6 +335,7 @@
             }
         })();
     </script>
+    <script src="ppk-api.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
 

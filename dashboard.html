@@ -239,77 +239,6 @@
 
     <script>
         // ========== Backend Infrastructure ==========
-        var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA9KchBb2jhanAjz7VrMesRSINa35wkdH7VXY8dTig3lSFPY0M4bBbaIjgbuMRUX-0mQ/exec';
-        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
-        function getSessionToken() { return localStorage.getItem('sessionToken') || ''; }
-
-        async function callBackend(action, data) {
-            if (!WEB_APP_URL) return null;
-            const res = await fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action, token: getSessionToken(), ...data })
-            });
-            return res.json();
-        }
-        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
-                // cachedCall: stale-while-revalidate — แสดงทันที, refresh ใน background
-        async function cachedCall(action, params, ttlMs) {
-            ttlMs = ttlMs || 300000; // 5 นาที
-            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
-            var fresh = null;
-            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}
-            if (fresh && fresh.d) {
-                if (Date.now() - fresh.t > ttlMs) {
-                    // หมดอายุ — refresh background โดยไม่รอ
-                    callBackendGet(action, params || {}).then(function(r) {
-                        if (r && r.success !== false) {
-                            try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-                        }
-                    }).catch(function(){});
-                }
-                return fresh.d; // return ทันทีจาก cache
-            }
-            // ไม่มี cache — ต้องรอ fetch จริง
-            var r = await callBackendGet(action, params || {});
-            if (r && r.success !== false) {
-                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-            }
-            return r;
-        }
-
-        async function callBackendGet(action, params) {
-            if (!WEB_APP_URL) return null;
-            const token = getSessionToken();
-            const q = new URLSearchParams({ action, token, ...params }).toString();
-            const res = await fetch(WEB_APP_URL + '?' + q);
-            return res.json();
-        }
-        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
-                // cachedCall: stale-while-revalidate — แสดงทันที, refresh ใน background
-        async function cachedCall(action, params, ttlMs) {
-            ttlMs = ttlMs || 300000; // 5 นาที
-            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});
-            var fresh = null;
-            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}
-            if (fresh && fresh.d) {
-                if (Date.now() - fresh.t > ttlMs) {
-                    // หมดอายุ — refresh background โดยไม่รอ
-                    callBackendGet(action, params || {}).then(function(r) {
-                        if (r && r.success !== false) {
-                            try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-                        }
-                    }).catch(function(){});
-                }
-                return fresh.d; // return ทันทีจาก cache
-            }
-            // ไม่มี cache — ต้องรอ fetch จริง
-            var r = await callBackendGet(action, params || {});
-            if (r && r.success !== false) {
-                try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {}
-            }
-            return r;
-        }
 
         // ========== Render Announcements ==========
         function renderAnnouncements(announcements) {
@@ -455,6 +384,7 @@
             navigate('?page=login');
         }
         </script>
+    <script src="ppk-api.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
 

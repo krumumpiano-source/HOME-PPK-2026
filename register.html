@@ -206,27 +206,6 @@
         </div>
     </form>
     <script>
-    // ============ API Configuration ============
-    var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA9KchBb2jhanAjz7VrMesRSINa35wkdH7VXY8dTig3lSFPY0M4bBbaIjgbuMRUX-0mQ/exec';
-        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
-
-    // ============ API Helper ============
-    async function callBackend(action, data = {}) {
-        const payload = { action, ...data };
-        try {
-            const response = await fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(payload),
-                redirect: 'follow'
-            });
-            const text = await response.text();
-            return JSON.parse(text);
-        } catch (err) {
-            console.error('Backend error:', err);
-            throw new Error('ไม่สามารถเชื่อมต่อระบบได้ — กรุณาลองใหม่');
-        }
-    }
 
     // ============ Form Validation ============
     function validateRegister() {
@@ -339,6 +318,7 @@
         }
     }
     </script>
+    <script src="ppk-api.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
 

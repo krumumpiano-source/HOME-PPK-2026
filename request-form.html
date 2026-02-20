@@ -264,6 +264,7 @@
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
     </div>
+    <script src="ppk-api.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
 
@@ -548,11 +549,13 @@
                 printWindow.document.write('  setTimeout(function() { window.print(); }, 500);');
                 printWindow.document.write('}');
                 printWindow.document.write('window.onload = renderPDFs;');
-                printWindow.document.write('<\/script>    <script src="ppk-utils.js"></script></body></html>');
+                printWindow.document.write('<\/script>    <script src="ppk-api.js"></script>
+    <script src="ppk-utils.js"></script></body></html>');
                 printWindow.document.close();
             });
         } else {
-            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script>    <script src="ppk-utils.js"></script></body></html>');
+            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script>    <script src="ppk-api.js"></script>
+    <script src="ppk-utils.js"></script></body></html>');
             printWindow.document.close();
         }
     }
@@ -627,39 +630,6 @@
         button.parentElement.parentElement.remove();
         updateResidentCount(); // อัปเดตจำนวนผู้พักอาศัย
     }
-
-    // ============ API Configuration ============
-    var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA9KchBb2jhanAjz7VrMesRSINa35wkdH7VXY8dTig3lSFPY0M4bBbaIjgbuMRUX-0mQ/exec';
-        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
-
-    async function callBackend(action, data = {}) {
-        const token = localStorage.getItem('sessionToken');
-        const payload = { action, token, ...data };
-        try {
-            const response = await fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(payload),
-                redirect: 'follow'
-            });
-            const text = await response.text();
-            const result = JSON.parse(text);
-            if (result.error === 'SESSION_EXPIRED') {
-                localStorage.clear(); window.navigate('?page=login'); return;
-            }
-            return result;
-        } catch (err) { console.error('Backend error:', err); throw err; }
-    }
-
-    async function callBackendGet(action, params = {}) {
-        if (!WEB_APP_URL) return null;
-        const token = localStorage.getItem('sessionToken');
-        const q = new URLSearchParams({ action, token, ...params }).toString();
-        const res = await fetch(WEB_APP_URL + '?' + q, { redirect: 'follow' });
-        return res.json();
-    }
-        //  cachedCall: GET + localStorage cache (TTL 2 นาที) 
-        // cachedCall: stale-while-revalidate  แสดงทนท, refresh ใน background`n        async function cachedCall(action, params, ttlMs) {`n            ttlMs = ttlMs || 300000;`n            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});`n            var fresh = null;`n            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}`n            if (fresh && fresh.d) {`n                if (Date.now() - fresh.t > ttlMs) {`n                    callBackendGet(action, params || {}).then(function(r) {`n                        if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }`n                    }).catch(function(){});`n                }`n                return fresh.d;`n            }`n            var r = await callBackendGet(action, params || {});`n            if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }`n            return r;`n        }
 
     // ============ Session Check + Auto-fill ============
     async function initPage() {

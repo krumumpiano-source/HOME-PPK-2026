@@ -169,37 +169,6 @@
     <div class="loading-overlay" id="loadingOverlay"><div class="loading-box"><div class="spinner"></div><div>กำลังบันทึกรูปภาพ...</div></div></div>
 
     <script>
-        // === Backend API Helpers ===
-        var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA9KchBb2jhanAjz7VrMesRSINa35wkdH7VXY8dTig3lSFPY0M4bBbaIjgbuMRUX-0mQ/exec';
-        function navigate(page) { var m = page.match(/[?&]page=([^&]+)/); window.location.href = m ? m[1] + '.html' : page; }
-        async function callBackend(action, data = {}) {
-            if (!WEB_APP_URL) return null;
-            const token = localStorage.getItem('sessionToken') || '';
-            const payload = { action, token, ...data };
-            const res = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), redirect: 'follow' });
-            const text = await res.text(); const result = JSON.parse(text);
-            if (result.error === 'SESSION_EXPIRED') { localStorage.clear(); navigate('?page=login'); return; }
-            return result;
-        }
-        async function callBackendGet(action, params = {}) {
-            if (!WEB_APP_URL) return null;
-            const token = localStorage.getItem('sessionToken') || '';
-            const qs = new URLSearchParams({ action, token, ...params }).toString();
-            const res = await fetch(WEB_APP_URL + '?' + qs, { redirect: 'follow' });
-            const text = await res.text(); return JSON.parse(text);
-        }
-        // cachedCall: stale-while-revalidate  แสดงทนท, refresh ใน background`n        async function cachedCall(action, params, ttlMs) {`n            ttlMs = ttlMs || 300000;`n            var ck = 'apicache_' + action + '_' + JSON.stringify(params || {});`n            var fresh = null;`n            try { var s = localStorage.getItem(ck); if (s) { var p = JSON.parse(s); fresh = p; } } catch(e) {}`n            if (fresh && fresh.d) {`n                if (Date.now() - fresh.t > ttlMs) {`n                    callBackendGet(action, params || {}).then(function(r) {`n                        if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }`n                    }).catch(function(){});`n                }`n                return fresh.d;`n            }`n            var r = await callBackendGet(action, params || {});`n            if (r && r.success !== false) { try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), d: r})); } catch(e) {} }`n            return r;`n        }
-        async function checkSession() {
-            const token = localStorage.getItem('sessionToken');
-            if (!token) { navigate('?page=login'); return null; }
-            if (!WEB_APP_URL) return null;
-            try {
-                const result = await callBackendGet('getCurrentUser');
-                if (!result || !result.success) { localStorage.clear(); navigate('?page=login'); return null; }
-                return result.user;
-            } catch (e) { console.warn('Session check failed:', e); return null; }
-        }
-
         // === Sidebar ===
         var sidebar = document.getElementById('sidebar');
         var sidebarToggle = document.getElementById('sidebarToggle');
@@ -423,5 +392,6 @@
             navigate('?page=login');
         }
         </script>
+    <script src="ppk-api.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
