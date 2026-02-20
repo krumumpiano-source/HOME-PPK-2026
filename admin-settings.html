@@ -3580,8 +3580,16 @@
             if (!WEB_APP_URL) return;
             
             try {
-                // Load settings from backend
-                const settingsResult = await callBackendGet('getSettings');
+                // โหลดทุก API พร้อมกัน (parallel) แทนการรอทีละตัว
+                const [settingsResult, housingResult, residentsResult, announcementsResult, pendingResult] = await Promise.all([
+                    callBackendGet('getSettings'),
+                    callBackendGet('getHousing'),
+                    callBackendGet('getResidents'),
+                    callBackendGet('getAnnouncements'),
+                    callBackendGet('getPendingRegistrations')
+                ]);
+
+                // Process settings
                 if (settingsResult && settingsResult.success && settingsResult.data) {
                     const s = settingsResult.data;
                     
@@ -3667,8 +3675,7 @@
                     }
                 }
 
-                // Load housing data from backend
-                const housingResult = await callBackendGet('getHousing');
+                // Process housing data
                 if (housingResult && housingResult.success && housingResult.data) {
                     const housingData = housingResult.data.map((h, i) => ({
                         id: h.id || (i + 1),
@@ -3682,8 +3689,7 @@
                     localStorage.setItem(STORAGE_KEYS.housing, JSON.stringify(housingData));
                 }
 
-                // Load residents data from backend
-                const residentsResult = await callBackendGet('getResidents');
+                // Process residents data
                 if (residentsResult && residentsResult.success && residentsResult.data) {
                     const residentsData = residentsResult.data.map(r => ({
                         id: r.id || '',
@@ -3704,14 +3710,23 @@
                     localStorage.setItem(STORAGE_KEYS.residents, JSON.stringify(residentsData));
                 }
 
-                // Load announcements from backend
-                const announcementsResult = await callBackendGet('getAnnouncements');
+                // Process announcements
                 if (announcementsResult && announcementsResult.success && announcementsResult.data) {
                     localStorage.setItem('announcements', JSON.stringify(announcementsResult.data));
                 }
 
-                // Load pending registrations count
-                loadPendingRegistrations();
+                // Process pending registrations (already loaded in parallel)
+                if (pendingResult && pendingResult.success) {
+                    _pendingRegistrations = pendingResult.data || [];
+                    renderPendingRegistrations();
+                    const badge = document.getElementById('pendingCount');
+                    if (_pendingRegistrations.length > 0) {
+                        badge.textContent = _pendingRegistrations.length;
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
 
             } catch (err) {
                 console.warn('Backend load failed, using localStorage:', err.message);
