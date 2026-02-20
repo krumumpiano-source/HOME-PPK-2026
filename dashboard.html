@@ -332,16 +332,16 @@
 
         // ตรวจสอบสถานะการชำระจาก recentPayments
         // คืนค่า: 'none' | 'reviewing' | 'success' | 'rejected'
+        // หมายเหตุ: recentPayments มาจาก sheet PaymentHistory_{ปีปัจจุบัน} → ไม่มี field year → filter แค่ month
         function getPaymentStatus(recentPayments, month, year) {
             const record = (recentPayments || []).find(r =>
-                String(r.month) === String(month) && String(r.year) === String(year)
+                String(r.month).padStart(2,'0') === String(month).padStart(2,'0')
             );
             if (!record) return 'none';
             const s = (record.status || '').toLowerCase().trim();
             if (s === 'approved' || s === 'match' || s === 'paid' || s === 'completed') return 'success';
             if (s === 'rejected' || s === 'mismatch') return 'rejected';
             if (s === 'pending') return 'reviewing';
-            // ค่าอื่นๆ ที่ไม่รู้จัก → reviewing ไว้ก่อน
             return 'reviewing';
         }
 
