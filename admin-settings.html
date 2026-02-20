@@ -1920,7 +1920,6 @@
                             createdAt: new Date().toISOString()
                         });
                         saveHousingData(data);
-                        renderHousingTable();
                         renderManageHousingCards();
                         closeModal('addHousing');
                         document.getElementById('housingNumber').value = '';
@@ -1947,7 +1946,6 @@
             });
 
             saveHousingData(data);
-            renderHousingTable();
             renderManageHousingCards();
             closeModal('addHousing');
             document.getElementById('housingNumber').value = '';
@@ -1996,7 +1994,6 @@
                         const data = getHousingData();
                         const index = data.findIndex(h => String(h.id) === String(id));
                         if (index !== -1) { data[index] = { ...data[index], ...updatedItem }; saveHousingData(data); }
-                        renderHousingTable();
                         renderManageHousingCards();
                         closeModal('editHousing');
                         ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
@@ -2012,7 +2009,6 @@
             if (index === -1) return;
             data[index] = { ...data[index], ...updatedItem };
             saveHousingData(data);
-            renderHousingTable();
             renderManageHousingCards();
             closeModal('editHousing');
             ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
@@ -2027,26 +2023,28 @@
             const msg = `ต้องการลบ "${displayName}" หรือไม่?${residentWarning}\nการดำเนินการนี้ไม่สามารถยกเลิกได้`;
             if (!await ppkConfirm(msg)) return;
 
+            const _doDeleteHousingFromCard = () => {
+                const data = getHousingData();
+                saveHousingData(data.filter(h => String(h.id) !== String(id)));
+                renderManageHousingCards();
+                ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
+            };
+
             if (WEB_APP_URL) {
                 callBackend('deleteHousing', { id: String(id) }).then(result => {
                     if (result && result.success) {
-                        const data = getHousingData();
-                        saveHousingData(data.filter(h => String(h.id) !== String(id)));
-                        renderManageHousingCards(); renderHouseCards();
-                        ;
-                        ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
+                        _doDeleteHousingFromCard();
+                    } else if (result && ((result.error && result.error.includes('ไม่พบ')) || (result.message && result.message.includes('ไม่พบ')))) {
+                        // backend ไม่มีแล้ว (ถูกล้างไปแล้ว) — ลบออกจาก localStorage
+                        _doDeleteHousingFromCard();
                     } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => ppkAlert(err.message));
+                }).catch(() => _doDeleteHousingFromCard());
                 return;
             }
 
-            const data = getHousingData();
-            saveHousingData(data.filter(h => String(h.id) !== String(id)));
-            renderManageHousingCards(); renderHouseCards();
-            ;
-            ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
+            _doDeleteHousingFromCard();
         }
 
         async function deleteHousing(id) {
@@ -2054,29 +2052,29 @@
                 return;
             }
 
+            const _doDeleteHousing = () => {
+                const data = getHousingData();
+                saveHousingData(data.filter(h => String(h.id) !== String(id)));
+                renderManageHousingCards();
+                ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
+            };
+
             // Delete from Backend
             if (WEB_APP_URL) {
                 callBackend('deleteHousing', { id: String(id) }).then(result => {
                     if (result && result.success) {
-                        const data = getHousingData();
-                        const newData = data.filter(h => h.id !== id && String(h.id) !== String(id));
-                        saveHousingData(newData);
-                        renderManageHousingCards(); renderHouseCards();
-                        ;
-                        ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
+                        _doDeleteHousing();
+                    } else if (result && ((result.error && result.error.includes('ไม่พบ')) || (result.message && result.message.includes('ไม่พบ')))) {
+                        // backend ไม่มีแล้ว — ลบออกจาก localStorage
+                        _doDeleteHousing();
                     } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => ppkAlert(err.message));
+                }).catch(() => _doDeleteHousing());
                 return;
             }
 
-            const data = getHousingData();
-            const newData = data.filter(h => h.id !== id);
-            saveHousingData(newData);
-            renderManageHousingCards(); renderHouseCards();
-            ;
-            ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
+            _doDeleteHousing();
         }
 
         function filterHousingTable() {
@@ -2140,7 +2138,6 @@
                 item.displayNumber = prefix + item.number;
             });
             saveHousingData(data);
-            renderHousingTable();
             renderManageHousingCards();
         }
 
@@ -2489,6 +2486,12 @@
             const housing = getHousingData();
             const formatSettings = getHousingFormatSettings();
             const container = document.getElementById('houseCardsContainer');
+            // ถ้าไม่มี container ให้ refresh view ที่ active อยู่แทน (legacy safe-guard)
+            if (!container) {
+                if (typeof currentResidentViewMode !== 'undefined' && currentResidentViewMode === 'individual') renderResidentTable();
+                else renderManageHousingCards();
+                return;
+            }
 
             // Group residents by house
             const houseGroups = {};
@@ -3059,29 +3062,31 @@
                 return;
             }
 
+            const _doDeleteResident = () => {
+                const data = getResidentsData();
+                const newData = data.filter(r => r.id !== id && String(r.id) !== String(id));
+                saveResidentsData(newData);
+                renderResidentTable();
+                renderHouseCards();
+                ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+            };
+
             // Delete from Backend
             if (WEB_APP_URL) {
                 callBackend('removeResident', { id: String(id) }).then(result => {
                     if (result && result.success) {
-                        const data = getResidentsData();
-                        const newData = data.filter(r => r.id !== id && String(r.id) !== String(id));
-                        saveResidentsData(newData);
-                        renderResidentTable();
-                        renderHouseCards();
-                        ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                        _doDeleteResident();
+                    } else if (result && ((result.error && result.error.includes('ไม่พบ')) || (result.message && result.message.includes('ไม่พบ')))) {
+                        // backend ไม่มีแล้ว (ถูกลบไปแล้ว) — ลบออกจาก localStorage
+                        _doDeleteResident();
                     } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || result?.message || 'ไม่ทราบสาเหตุ'));
                     }
-                }).catch(err => ppkAlert(err.message));
+                }).catch(() => _doDeleteResident());
                 return;
             }
 
-            const data = getResidentsData();
-            const newData = data.filter(r => r.id !== id);
-            saveResidentsData(newData);
-            renderResidentTable();
-            renderHouseCards();
-            ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+            _doDeleteResident();
         }
 
         function resetResidentPassword(id) {
@@ -3919,7 +3924,7 @@
                 }
 
                 // Process housing data
-                if (housingResult && housingResult.success && housingResult.data) {
+                if (housingResult && housingResult.success && Array.isArray(housingResult.data) && housingResult.data.length > 0) {
                     const housingData = housingResult.data.map((h, i) => ({
                         id: h.id || (i + 1),
                         type: h.type || 'house',
@@ -3933,7 +3938,7 @@
                 }
 
                 // Process residents data
-                if (residentsResult && residentsResult.success && residentsResult.data) {
+                if (residentsResult && residentsResult.success && Array.isArray(residentsResult.data) && residentsResult.data.length > 0) {
                     const residentsData = residentsResult.data.map(r => ({
                         id: r.id || '',
                         prefix: r.prefix || '',

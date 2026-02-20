@@ -173,7 +173,9 @@ function deleteHousing(id) {
   // ตรวจว่ามีผู้พักอาศัยอยู่หรือไม่
   var housing = findRowByValue(SPREADSHEET_IDS.MAIN, SHEET_NAMES.HOUSING, 'id', id);
   if (!housing) {
-    return { success: false, error: 'ไม่พบบ้านพัก ID: ' + id };
+    // ไม่พบใน sheet (อาจถูกลบไปแล้ว) — ถือว่าลบสำเร็จ
+    invalidateCache('housing');
+    return { success: true, message: 'ลบบ้านพักสำเร็จ (ไม่มีในชีท)' };
   }
 
   // อนุญาตให้ลบได้แม้มีผู้พักอาศัยอยู่ (frontend จะแจ้งเตือนผู้ใช้ก่อนแล้ว)
@@ -384,7 +386,9 @@ function removeResident(id) {
 
   var resident = findRowByValue(SPREADSHEET_IDS.MAIN, SHEET_NAMES.RESIDENTS, 'id', id);
   if (!resident) {
-    return { success: false, error: 'ไม่พบผู้พักอาศัย ID: ' + id };
+    // ไม่พบใน sheet (อาจถูกลบไปแล้ว) — ถือว่าลบสำเร็จ
+    invalidateCache('residents');
+    return { success: true, message: 'ลบผู้พักอาศัยสำเร็จ (ไม่มีในชีท)' };
   }
 
   var houseNumber = resident.house_number;
