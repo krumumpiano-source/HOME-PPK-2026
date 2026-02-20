@@ -1072,9 +1072,6 @@
             // บันทึกลง localStorage (fallback + cache)
             localStorage.setItem('userData', JSON.stringify(userData));
             
-            // บันทึกรายชื่อบุคลากรไปยัง Admin List (สำหรับการตั้งค่าสิทธิ์)
-            saveStaffToAdminList();
-            
             // แสดงข้อความสำเร็จ
             const successMessage = document.getElementById('successMessage');
             successMessage.classList.add('show');
@@ -1390,46 +1387,6 @@
         // ดึงรายชื่อผู้ร่วมพักอาศัยที่เป็นบุคลากร (สำหรับ Admin Settings)
         function getStaffCoresidents() {
             return coresidents.filter(c => c.is_ppk_staff === true);
-        }
-        
-        // บันทึกรายชื่อบุคลากรไปยัง localStorage สำหรับ Admin
-        function saveStaffToAdminList() {
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-            const staffList = JSON.parse(localStorage.getItem('pendingStaffList') || '[]');
-            const houseNumber = userData.house_number;
-            
-            const staffCoresidents = getStaffCoresidents();
-            
-            staffCoresidents.forEach(staff => {
-                // ตรวจสอบว่ามีอยู่ใน list แล้วหรือไม่
-                const existingIndex = staffList.findIndex(s => 
-                    s.email === staff.email || 
-                    (s.firstname === staff.firstname && s.lastname === staff.lastname && s.house_number === houseNumber)
-                );
-                
-                const staffData = {
-                    house_number: houseNumber,
-                    prefix: staff.prefix,
-                    firstname: staff.firstname,
-                    lastname: staff.lastname,
-                    phone: staff.phone,
-                    email: staff.email,
-                    position: staff.position,
-                    subject_group: staff.subject_group,
-                    relation: staff.status,
-                    added_by: userData.email,
-                    added_at: new Date().toISOString(),
-                    status: 'pending' // รอแอดมินอนุมัติสิทธิ์
-                };
-                
-                if (existingIndex === -1) {
-                    staffList.push(staffData);
-                } else {
-                    staffList[existingIndex] = staffData;
-                }
-            });
-            
-            localStorage.setItem('pendingStaffList', JSON.stringify(staffList));
         }
         
         // โหลดข้อมูลเมื่อเปิดหน้า

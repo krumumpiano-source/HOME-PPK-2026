@@ -525,6 +525,8 @@ function routeGetAction(action, params) {
           if (_coUser) _coResidentId = _coUser.resident_id;
         }
         return getCoresidents(_coResidentId);
+      case 'getStaffCoresidents':
+        return getStaffCoresidents();
       case 'getHousingFormat':
         return gasCache('housingFormat', function() { return getHousingFormat(); });
       case 'getWaterRate':

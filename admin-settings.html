@@ -913,6 +913,34 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- บุคลากรโรงเรียน (ผู้ร่วมพักอาศัย) -->
+                    <div class="settings-card" style="margin-top: 1.5rem;">
+                        <div class="settings-card-header" style="margin-bottom:0.75rem;">
+                            <span class="settings-card-title">🏫 บุคลากรโรงเรียน (ผู้ร่วมพักอาศัย)</span>
+                            <button class="btn btn-info" onclick="loadStaffCoresidents()" style="font-size:0.8rem;padding:0.3rem 0.8rem;">🔄 โหลดข้อมูล</button>
+                        </div>
+                        <div class="section-desc" style="margin-bottom:0.75rem;">รายชื่อผู้ร่วมพักอาศัยที่ผู้พักหลักระบุว่าเป็นครู/บุคลากรโรงเรียนพะเยาพิทยาคม — ดึงข้อมูลจริงจาก GAS</div>
+                        <div id="staffCoResidentsLoading" style="display:none; color:var(--muted); font-size:0.9rem; padding:0.5rem 0;">⏳ กำลังโหลด...</div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;">#</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>ความสัมพันธ์</th>
+                                        <th>อยู่ร่วมกับ</th>
+                                        <th>บ้าน/ห้อง</th>
+                                        <th>ตำแหน่ง</th>
+                                        <th>เบอร์โทร</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="staffCoResidentsBody">
+                                    <tr><td colspan="7" style="color:var(--muted);">กดปุ่ม 🔄 โหลดข้อมูล เพื่อดูรายชื่อ</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -4010,6 +4038,41 @@
 
         function savePermissionsData(data) {
             localStorage.setItem(STORAGE_KEYS.permissions, JSON.stringify(data));
+        }
+
+        // ── บุคลากรโรงเรียน (ผู้ร่วมพักอาศัย) ──
+        async function loadStaffCoresidents() {
+            const body = document.getElementById('staffCoResidentsBody');
+            const loading = document.getElementById('staffCoResidentsLoading');
+            if (!body || !WEB_APP_URL) return;
+            loading.style.display = 'block';
+            body.innerHTML = '';
+            const RELATION_LABELS = {
+                spouse: 'คู่สมรส', child: 'บุตร', parent: 'บิดา/มารดา',
+                sibling: 'พี่/น้อง', relative: 'ญาติ', other: 'อื่นๆ'
+            };
+            try {
+                const res = await callBackendGet('getStaffCoresidents', {});
+                loading.style.display = 'none';
+                if (!res || !res.success || !res.data || res.data.length === 0) {
+                    body.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">ไม่พบบุคลากรโรงเรียนที่เป็นผู้ร่วมพักอาศัย</td></tr>';
+                    return;
+                }
+                body.innerHTML = res.data.map((s, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${s.prefix || ''}${s.firstname || ''} ${s.lastname || ''}</td>
+                        <td>${RELATION_LABELS[s.relation] || s.relation || '-'}</td>
+                        <td style="font-size:0.85rem; color:var(--muted);">${s.resident_name || '-'}</td>
+                        <td><span class="badge badge-info">${s.house_number || '-'}</span></td>
+                        <td>${s.position || '-'}</td>
+                        <td>${s.phone || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                loading.style.display = 'none';
+                body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);">โหลดไม่สำเร็จ: ${e.message || e}</td></tr>`;
+            }
         }
 
         function renderPermissionTable() {

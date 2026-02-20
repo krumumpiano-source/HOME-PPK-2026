@@ -553,6 +553,41 @@ function getCoresidents(residentId) {
 }
 
 /**
+ * ดึงผู้ร่วมพักอาศัยที่เป็นบุคลากรโรงเรียน (is_ppk_staff === true) ทั้งหมดในระบบ
+ * สแกนทุก Resident แล้วรวบรวม coresidents ที่มี is_ppk_staff === true
+ * @returns {Object} { success, data: [...] }
+ */
+function getStaffCoresidents() {
+  var residents = readSheetData(SPREADSHEET_IDS.MAIN, SHEET_NAMES.RESIDENTS);
+  var staffList = [];
+  for (var i = 0; i < residents.length; i++) {
+    var resident = residents[i];
+    var cohabitants = [];
+    try {
+      cohabitants = JSON.parse(String(resident.cohabitant_names || '[]'));
+    } catch (e) { cohabitants = []; }
+    for (var j = 0; j < cohabitants.length; j++) {
+      if (cohabitants[j].is_ppk_staff === true) {
+        staffList.push({
+          id: cohabitants[j].id || '',
+          house_number: resident.house_number || '',
+          resident_name: (resident.prefix || '') + (resident.firstname || '') + ' ' + (resident.lastname || ''),
+          prefix: cohabitants[j].prefix || '',
+          firstname: cohabitants[j].firstname || cohabitants[j].name || '',
+          lastname: cohabitants[j].lastname || '',
+          phone: cohabitants[j].phone || '',
+          email: cohabitants[j].email || '',
+          position: cohabitants[j].position || '',
+          subject_group: cohabitants[j].subject_group || '',
+          relation: cohabitants[j].relation || cohabitants[j].status || ''
+        });
+      }
+    }
+  }
+  return { success: true, data: staffList };
+}
+
+/**
  * เพิ่มผู้ร่วมพัก
  * @param {Object} data - { _userId, name, relation }
  * @returns {Object} { success, message }
