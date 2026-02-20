@@ -2011,9 +2011,7 @@
             if (WEB_APP_URL) {
                 try {
                     const result = await callBackend('deleteHousing', { id: String(id) });
-                    if (result && result.success) {
-                        ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว`);
-                    } else {
+                    if (!result || !result.success) {
                         // กู้คืน
                         if (toDelete) {
                             const restored = getHousingData();
@@ -2033,8 +2031,6 @@
                     }
                     ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
                 }
-            } else {
-                ppkAlert(`ลบ "${displayName}" เรียบร้อยแล้ว (เฉพาะเครื่อง)`);
             }
         }
 
@@ -2053,9 +2049,7 @@
             if (WEB_APP_URL) {
                 try {
                     const result = await callBackend('deleteHousing', { id: String(id) });
-                    if (result && result.success) {
-                        ppkAlert('ลบข้อมูลเรียบร้อยแล้ว');
-                    } else {
+                    if (!result || !result.success) {
                         if (toDelete) {
                             const restored = getHousingData();
                             restored.push(toDelete);
@@ -2073,8 +2067,6 @@
                     }
                     ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
                 }
-            } else {
-                ppkAlert('ลบข้อมูลเรียบร้อยแล้ว (เฉพาะเครื่อง)');
             }
         }
 
@@ -3094,9 +3086,7 @@
             if (WEB_APP_URL) {
                 try {
                     const result = await callBackend('removeResident', { id: String(id) });
-                    if (result && result.success) {
-                        ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
-                    } else {
+                    if (!result || !result.success) {
                         if (toDelete) {
                             const restored = getResidentsData();
                             restored.push(toDelete);
@@ -3116,8 +3106,6 @@
                     }
                     ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
                 }
-            } else {
-                ppkAlert('ลบข้อมูลผู้พักอาศัยเรียบร้อยแล้ว (เฉพาะเครื่อง)');
             }
         }
 
