@@ -213,6 +213,14 @@
             background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
             box-shadow: 0 2px 10px rgba(6,182,212,0.2);
         }
+        /* ถูกปฏิเสธ → แดง, กดได้ (ส่งใหม่) */
+        .slip-btn.slip-rejected {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            box-shadow: 0 2px 10px rgba(239,68,68,0.25);
+            cursor: pointer;
+        }
+        .slip-btn.slip-rejected:hover { opacity: 0.88; transform: translateY(-1px); }
+        .slip-btn.slip-rejected:active { transform: translateY(0); }
         /* ยอดคงค้าง active → แดง-ส้ม */
         .slip-btn.slip-outstanding {
             background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
@@ -323,16 +331,18 @@
             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
         // ตรวจสอบสถานะการชำระจาก recentPayments
-        // คืนค่า: 'none' | 'reviewing' | 'success'
+        // คืนค่า: 'none' | 'reviewing' | 'success' | 'rejected'
         function getPaymentStatus(recentPayments, month, year) {
             const record = (recentPayments || []).find(r =>
                 String(r.month) === String(month) && String(r.year) === String(year)
             );
             if (!record) return 'none';
-            const s = (record.status || record.payment_status || '').toLowerCase();
-            const successWords = ['approved','paid','completed','success','สำเร็จ','อนุมัติ','ชำระแล้ว'];
-            if (successWords.some(w => s.includes(w))) return 'success';
-            return 'reviewing'; // มีรายการ = ส่งสลิปแล้วรอตรวจ
+            const s = (record.status || '').toLowerCase().trim();
+            if (s === 'approved' || s === 'match' || s === 'paid' || s === 'completed') return 'success';
+            if (s === 'rejected' || s === 'mismatch') return 'rejected';
+            if (s === 'pending') return 'reviewing';
+            // ค่าอื่นๆ ที่ไม่รู้จัก → reviewing ไว้ก่อน
+            return 'reviewing';
         }
 
         // สร้าง HTML ปุ่มตามสถานะ
@@ -342,6 +352,9 @@
             }
             if (slipStatus === 'reviewing') {
                 return '<button class="slip-btn slip-reviewing" disabled>🔍 อยู่ในระหว่างตรวจสอบ</button>';
+            }
+            if (slipStatus === 'rejected') {
+                return '<button class="slip-btn slip-rejected" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">⚠️ สลิปไม่ผ่าน — กดเพื่อส่งใหม่</button>';
             }
             if (amount <= 0) {
                 return '<button class="slip-btn slip-disabled" disabled>📋 ยังไม่มีการแจ้งยอด</button>';
