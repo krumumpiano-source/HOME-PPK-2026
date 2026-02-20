@@ -537,7 +537,7 @@
         <div class="tabs-container">
             <div class="tabs">
                 <button class="tab-btn active" onclick="showTab('housing', this)">
-                    <span class="tab-btn-icon">�</span> ที่พักอาศัย
+                    <span class="tab-btn-icon">🏠</span> ที่พักอาศัย
                 </button>
                 <button class="tab-btn" onclick="showTab('water', this)">
                     <span class="tab-btn-icon">💧</span> ค่าน้ำ
@@ -565,19 +565,22 @@
             <!-- Tab: Housing + Residents (merged) -->
             <div class="tab-content active" id="tab-housing">
                 <div class="section">
-                    <div class="section-title">🏨 จัดการที่พักอาศัย</div>
-                    <div class="section-desc">จัดการบ้านพัก/แฟลต และผู้พักอาศัยทั้งหมดในที่เดียว</div>
+                    <div class="section-title">🏠 จัดการที่พักอาศัย</div>
+                    <div class="section-desc">จัดการบ้านพัก/แฟลต และผู้พักอาศัยทั้งหมด · บุคลากรที่ตั้งค่าไว้จะปรากฏในหน้าจัดการสิทธิ์</div>
 
-                    <!-- Action Buttons -->
-                    <div class="btn-group">
-                        <button class="btn btn-success" onclick="openModal('addHousing')">&#xFF0B; เพิ่มบ้าน/แฟลต</button>
-                        <button class="btn btn-primary" onclick="openModal('addResident')">&#xFF0B; เพิ่มผู้พักอาศัย</button>
-                        <button class="btn btn-info" onclick="exportResidents()">📥 ส่งออกข้อมูล</button>
+                    <!-- View Mode Toggle -->
+                    <div style="margin-top:0.75rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                        <button class="btn" id="viewModeManageHousing" onclick="setResidentViewMode('manageHousing')" style="background:var(--primary);color:#fff;">🏡 จัดการบ้านพัก</button>
+                        <button class="btn" id="viewModeIndividual" onclick="setResidentViewMode('individual')">👤 รายบุคคล</button>
+                        <div style="margin-left:auto;">
+                            <button class="btn btn-success" onclick="openModal('addHousing')" style="font-size:0.85rem;">＋ เพิ่มบ้าน/แฟลต</button>
+                            <button class="btn btn-primary" onclick="openModal('addResident')" style="font-size:0.85rem;">＋ เพิ่มผู้พักอาศัย</button>
+                        </div>
                     </div>
 
                     <!-- Format Settings (collapsible) -->
-                    <details style="margin-top:1rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.1rem 1rem;">
-                        <summary style="cursor:pointer; padding:0.75rem 0; font-weight:600; color:var(--muted); font-size:0.9rem; user-select:none;">⚙️ ตั้งค่ารูปแบบเลขที่ (คลิกเพื่อขยาย)</summary>
+                    <details style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.1rem 1rem;">
+                        <summary style="cursor:pointer; padding:0.65rem 0; font-weight:600; color:var(--muted); font-size:0.85rem; user-select:none;">⚙️ ตั้งค่ารูปแบบเลขที่ (คลิกเพื่อขยาย)</summary>
                         <div style="padding-bottom:1rem;">
                         <div class="form-grid" style="margin-top:0.75rem;">
                             <div class="form-group">
@@ -614,54 +617,22 @@
                         </div>
                     </details>
 
-                    <!-- View Mode Toggle -->
-                    <div style="margin-top:1rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                        <span style="font-weight:600; font-size:0.9rem; color:var(--muted)">👁️ มุมมอง:</span>
-                        <button class="btn" id="viewModeByHouse" onclick="setResidentViewMode('byHouse')" style="background:var(--primary);color:#fff;">🏠 ตามบ้าน/ห้อง</button>
-                        <button class="btn" id="viewModeIndividual" onclick="setResidentViewMode('individual')">👤 รายบุคคล</button>
-                        <button class="btn" id="viewModeManageHousing" onclick="setResidentViewMode('manageHousing')">📋 จัดการบ้านพัก</button>
-                    </div>
-
                     <!-- Unified Search -->
-                    <div class="search-box" style="margin-top:1rem;">
-                        <input type="text" id="searchResident" placeholder="🔍 ค้นหาผู้พักอาศัย/บ้านพัก (ชื่อ, อีเมล, เลขที่)..." oninput="filterResidentView(); filterHousingTable();">
+                    <div class="search-box" style="margin-top:0.75rem;">
+                        <input type="text" id="searchResident" placeholder="🔍 ค้นหาผู้พักอาศัย/บ้านพัก (ชื่อ, อีเมล, เลขที่, ตำแหน่ง...)" oninput="filterResidentView();">
                     </div>
 
-                    <!-- View: By House (cards) -->
-                    <div id="residentViewByHouse" style="margin-top:1rem;">
-                        <div id="houseCardsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;"></div>
+                    <!-- View: Manage Housing (default) -->
+                    <div id="residentViewManageHousing" style="margin-top:0.75rem;">
+                        <div id="manageHousingSummary" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;"></div>
+                        <div id="manageHousingGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1rem;"></div>
                     </div>
 
-                    <!-- View: Individual Table -->
-                    <div id="residentViewIndividual" style="display:none;">
-                        <div class="table-container">
-                            <table id="residentTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width:50px;">ลำดับ</th>
-                                        <th>ชื่อ-นามสกุล</th>
-                                        <th>บ้าน/ห้อง</th>
-                                        <th>ประเภท</th>
-                                        <th>ตำแหน่ง</th>
-                                        <th>เบอร์โทร</th>
-                                        <th>สถานะ</th>
-                                        <th style="width:120px;">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="residentTableBody"></tbody>
-                            </table>
-                        </div>
+                    <!-- View: Individual (all people grouped by house) -->
+                    <div id="residentViewIndividual" style="display:none; margin-top:0.75rem;">
+                        <div id="residentIndividualContainer"></div>
                     </div>
 
-                    <!-- View: Manage Housing (cards) -->
-                    <div id="residentViewManageHousing" style="display:none;">
-                        <div style="margin-top:0.75rem;">
-                            <!-- Summary Stats -->
-                            <div id="manageHousingSummary" style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
-                            <!-- Card Grid -->
-                            <div id="manageHousingGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:1rem;"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -2225,80 +2196,165 @@
         }
 
         function renderResidentTable() {
-            const data = getResidentsData();
-            const tbody = document.getElementById('residentTableBody');
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="color:var(--muted);">ยังไม่มีข้อมูลผู้พักอาศัย กรุณาเพิ่มข้อมูล</td></tr>';
+            const residents = getResidentsData();
+            const housing = getHousingData();
+            const formatSettings = getHousingFormatSettings();
+            const searchTerm = (document.getElementById('searchResident')?.value || '').toLowerCase();
+            const container = document.getElementById('residentIndividualContainer');
+            if (!container) return;
+
+            // build house order map for sorting
+            const houseOrder = {};
+            housing.forEach(h => {
+                const dn = formatHousingNumber(h, formatSettings);
+                const rank = (h.type === 'house' ? 0 : 10000) + parseInt((dn.match(/\d+/) || [999])[0]);
+                houseOrder[dn] = rank;
+            });
+
+            // sort residents by house then lastname
+            const sorted = [...residents].sort((a, b) => {
+                const ha = houseOrder[a.house_number] ?? 99999;
+                const hb = houseOrder[b.house_number] ?? 99999;
+                return ha !== hb ? ha - hb : (a.lastname || '').localeCompare(b.lastname || '');
+            });
+
+            // filter by search
+            const filtered = sorted.filter(r => {
+                if (!searchTerm) return true;
+                const base = [r.prefix, r.firstname, r.lastname, r.house_number, r.position, r.subject_group, r.phone, r.email].join(' ').toLowerCase();
+                const cos = parseCohabitantNames(r.cohabitantNames).join(' ').toLowerCase();
+                return base.includes(searchTerm) || cos.includes(searchTerm);
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--muted); padding:2rem;">ไม่พบข้อมูลที่ตรงกับการค้นหา</div>';
                 return;
             }
 
-            tbody.innerHTML = data.map((item, index) => {
-                const fullName = `${item.prefix || ''}${item.firstname || ''} ${item.lastname || ''}`;
-                const statusBadge = item.status === 'inactive' 
-                    ? '<span class="badge badge-danger">ระงับ</span>' 
-                    : '<span class="badge badge-success">ปกติ</span>';
-                
-                // Resident type badge
-                const isStaff = item.residentType !== 'cohabitant';
-                const typeBadge = isStaff 
-                    ? '<span class="badge badge-success">👨‍🏫 บุคลากร</span>'
-                    : '<span class="badge badge-warning">👤 ผู้ร่วมพัก</span>';
-                
-                // แสดงรายชื่อผู้ร่วมพักอาศัย
-                const cohabitantList = parseCohabitantNames(item.cohabitantNames);
-                const cohabitantHtml = cohabitantList.length > 0
-                    ? `<div style="margin-top:0.3rem;">${cohabitantList.map(cn =>
-                        `<div style="font-size:0.78rem; color:var(--muted); padding-left:0.8rem;">↳ ${cn}</div>`
-                      ).join('')}</div>`
-                    : '';
+            // group by house
+            const groups = {};
+            filtered.forEach(r => {
+                const key = r.house_number || '(ไม่ระบุบ้าน)';
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(r);
+            });
 
-                return `
-                    <tr data-id="${item.id}">
-                        <td>${index + 1}</td>
-                        <td style="text-align:left;">
-                            <div style="font-weight:600;">${fullName}</div>
-                            ${cohabitantHtml}
-                        </td>
-                        <td><strong>${item.house_number || '-'}</strong></td>
-                        <td>${typeBadge}</td>
-                        <td>${item.position || '-'}</td>
-                        <td>${item.phone || '-'}</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn btn-primary" onclick="editResident('${item.id}')">✏️</button>
-                                <button class="btn btn-danger" onclick="deleteResident('${item.id}')">🗑️</button>
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                if (a === '(ไม่ระบุบ้าน)') return 1;
+                if (b === '(ไม่ระบุบ้าน)') return -1;
+                return (houseOrder[a] ?? 99998) - (houseOrder[b] ?? 99998);
+            });
+
+            let html = '';
+            sortedKeys.forEach(houseKey => {
+                const group = groups[houseKey];
+                const isUnassigned = houseKey === '(ไม่ระบุบ้าน)';
+                const houseInfo = housing.find(h => formatHousingNumber(h, formatSettings) === houseKey);
+                const typeIcon = isUnassigned ? '📍' : (houseInfo?.type === 'flat' ? '🏢' : '🏠');
+                const staffCount = group.filter(r => r.residentType !== 'cohabitant').length;
+                let totalCo = 0;
+                group.forEach(r => { try { totalCo += JSON.parse(r.cohabitantNames || '[]').length; } catch(e){} });
+
+                html += `
+                <div style="margin-bottom:1.5rem;">
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.9rem; background:linear-gradient(90deg,#eff6ff,var(--surface)); border-left:4px solid var(--primary); border-radius:0 8px 8px 0; margin-bottom:0.75rem;">
+                        <span style="font-size:1.15rem;">${typeIcon}</span>
+                        <span style="font-weight:700; font-size:1.05rem; color:var(--primary);">${houseKey}</span>
+                        <span style="font-size:0.78rem; color:var(--muted); display:flex; gap:0.4rem;">
+                            <span>👨‍🏫 ${staffCount} บุคลากร</span>
+                            ${totalCo > 0 ? `<span>· 👪 ${totalCo} ผู้ร่วมพัก</span>` : ''}
+                        </span>
+                        <button class="btn btn-primary" style="margin-left:auto; font-size:0.78rem; padding:0.2rem 0.6rem;" onclick="(async()=>{ currentHouseForDetails='${houseKey}'; document.getElementById('modal-addResident').classList.add('active'); await populateHouseDropdown('residentHouse','${houseKey}'); })()">➕ เพิ่มในบ้านนี้</button>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.6rem;">`;
+
+                group.forEach(r => {
+                    const fullName = `${r.prefix||''}${r.firstname||''} ${r.lastname||''}`.trim();
+                    const isStaff = r.residentType !== 'cohabitant';
+                    const typeBadge = isStaff
+                        ? '<span class="badge badge-success">👨&#x200D;🏫 บุคลากร</span>'
+                        : '<span class="badge badge-warning">👤 ผู้ร่วมพัก</span>';
+                    const statusBadge = (r.status === 'inactive' || r.status === 'suspended')
+                        ? '<span class="badge badge-danger">ระงับ</span>'
+                        : '<span class="badge badge-success">ปกติ</span>';
+
+                    let coHtml = '';
+                    try {
+                        const coArr = JSON.parse(r.cohabitantNames || '[]');
+                        if (Array.isArray(coArr) && coArr.length > 0) {
+                            const coItems = coArr.map(co => {
+                                if (typeof co === 'string') return `<div style="font-size:0.84rem;">↳ ${co}</div>`;
+                                const cn = `${co.prefix||''} ${co.firstname||''} ${co.lastname||''}`.trim();
+                                const rel = co.relation || co.relationship || '';
+                                const staffTag = co.is_ppk_staff ? ' <span class="badge badge-info" style="font-size:0.7rem;">🏫 PPK</span>' : '';
+                                const phone = co.phone ? ` · 📞 ${co.phone}` : '';
+                                return `<div style="font-size:0.84rem; display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+                                    <span>↳ ${cn}</span>
+                                    ${rel ? `<span style="color:var(--muted);">(${rel})</span>` : ''}
+                                    ${staffTag}
+                                    ${phone ? `<span style="color:var(--muted);">${phone}</span>` : ''}
+                                </div>`;
+                            }).join('');
+                            coHtml = `<div style="margin-top:0.5rem; padding:0.45rem 0.65rem; background:var(--hover); border-radius:6px; border-left:3px solid var(--warning);">
+                                <div style="font-size:0.73rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:0.25rem;">👪 ผู้ร่วมพัก (${coArr.length} คน)</div>
+                                ${coItems}
+                            </div>`;
+                        }
+                    } catch(e) {}
+
+                    const safeId = String(r.id).replace(/'/g, '&apos;');
+                    html += `
+                    <div style="border:1px solid var(--border); border-radius:8px; padding:0.8rem 1rem; background:var(--surface);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; margin-bottom:0.3rem;">
+                                    <span style="font-weight:700; font-size:0.97rem;">${fullName}</span>
+                                    ${typeBadge} ${statusBadge}
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:0.3rem 1.2rem; font-size:0.81rem; color:var(--muted);">
+                                    ${r.position ? `<span>💼 ${r.position}</span>` : ''}
+                                    ${r.subject_group ? `<span>📚 ${r.subject_group}</span>` : ''}
+                                    ${r.phone ? `<span>📞 <a href="tel:${r.phone}" style="color:inherit;">${r.phone}</a></span>` : ''}
+                                    ${r.email ? `<span>✉️ <a href="mailto:${r.email}" style="color:inherit;">${r.email}</a></span>` : ''}
+                                    ${r.birthdate ? `<span>🎂 ${r.birthdate}</span>` : ''}
+                                </div>
+                                ${coHtml}
                             </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+                            <div class="action-btns" style="flex-shrink:0;">
+                                <button class="btn btn-info" onclick="openMoveResidentModal('${safeId}')" title="ย้ายบ้าน">🔀</button>
+                                <button class="btn btn-primary" onclick="editResident('${safeId}')" title="แก้ไข">✏️</button>
+                                <button class="btn btn-danger" onclick="deleteResident('${safeId}')" title="ลบ">🗑️</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+
+                html += '</div></div>';
+            });
+
+            container.innerHTML = html;
         }
 
         // ========== Resident View Mode Functions ==========
-        let currentResidentViewMode = 'byHouse';
+        let currentResidentViewMode = 'manageHousing';
         let currentHouseForDetails = null;
 
         function setResidentViewMode(mode) {
             currentResidentViewMode = mode;
-
-            const modes = ['byHouse', 'individual', 'manageHousing'];
-            const btnIds = { byHouse: 'viewModeByHouse', individual: 'viewModeIndividual', manageHousing: 'viewModeManageHousing' };
-            const viewIds = { byHouse: 'residentViewByHouse', individual: 'residentViewIndividual', manageHousing: 'residentViewManageHousing' };
+            const modes = ['individual', 'manageHousing'];
+            const btnIds  = { individual: 'viewModeIndividual', manageHousing: 'viewModeManageHousing' };
+            const viewIds = { individual: 'residentViewIndividual', manageHousing: 'residentViewManageHousing' };
 
             modes.forEach(m => {
-                const btn = document.getElementById(btnIds[m]);
+                const btn  = document.getElementById(btnIds[m]);
                 const view = document.getElementById(viewIds[m]);
-                if (btn) { btn.style.background = m === mode ? 'var(--primary)' : ''; btn.style.color = m === mode ? '#fff' : ''; }
-                if (view) view.style.display = m === mode ? 'block' : 'none';
+                if (btn)  { btn.style.background = m === mode ? 'var(--primary)' : ''; btn.style.color = m === mode ? '#fff' : ''; }
+                if (view) { view.style.display = m === mode ? 'block' : 'none'; }
             });
 
-            if (mode === 'byHouse') renderHouseCards();
-            else if (mode === 'individual') renderResidentTable();
+            if (mode === 'individual') renderResidentTable();
             else if (mode === 'manageHousing') {
                 renderManageHousingCards();
-                // ถ้ายังไม่มีข้อมูล ให้ดึงจาก backend แล้ว render ใหม่
                 if (getHousingData().length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
                     (async () => {
                         try {
@@ -2781,10 +2837,10 @@
         }
 
         function filterResidentView() {
-            if (currentResidentViewMode === 'byHouse') {
-                renderHouseCards();
+            if (currentResidentViewMode === 'individual') {
+                renderResidentTable();
             } else {
-                filterResidentTable();
+                renderManageHousingCards();
             }
         }
 
@@ -3718,12 +3774,10 @@
         const _tabRendered = {};
 
         function loadAllSettings() {
-            // ── โหลดเฉพาะส่วนที่จำเป็น (active tab = housing) ──
-            renderHouseCards();
-            renderResidentTable();
-            renderHousingTable();
+            // default view: manage housing
+            renderManageHousingCards();
 
-            // Load housing format settings
+            // Load housing format settings into collapsible
             const formatSettings = getHousingFormatSettings();
             if (document.getElementById('houseNumberFormat'))
                 document.getElementById('houseNumberFormat').value = formatSettings.houseFormat;
@@ -3739,10 +3793,8 @@
 
         // เรียกหลัง batchGet กลับมา — re-render เฉพาะ tab ที่เคย render แล้ว
         function reloadAllSettingsFull() {
-            renderHouseCards();
-            renderResidentTable();
-            renderHousingTable();
-            renderManageHousingCards(); // อัปเดต manage view ด้วยเสมอ
+            renderManageHousingCards(); // housing default view
+            if (currentResidentViewMode === 'individual') renderResidentTable();
             if (_tabRendered['water']) loadWaterSettings();
             if (_tabRendered['electric']) loadElectricSettings();
             if (_tabRendered['common']) loadCommonFeeSettings();
