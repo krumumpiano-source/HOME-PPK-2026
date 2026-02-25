@@ -21,6 +21,8 @@ Scripts/
 appsscript.json
 .clasp.json
 .claspignore
+.clasprc.json
+push-gas.ps1
 seed-data.js
 fix_setup.ps1
 
