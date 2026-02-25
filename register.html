@@ -142,13 +142,15 @@
             <input type="tel" id="phone" name="phone" required placeholder="กรอกเบอร์โทรศัพท์" pattern="[0-9]{9,15}" maxlength="15" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
         </div>
         <div class="form-group">
-            <select id="prefix" name="prefix" required>
+            <label for="prefix">คำนำหน้า</label>
+            <select id="prefix" name="prefix" required onchange="onPrefixChange()">
                 <option value="">เลือกคำนำหน้า</option>
                 <option value="นาย">นาย</option>
                 <option value="นาง">นาง</option>
                 <option value="นางสาว">นางสาว</option>
                 <option value="อื่นๆ">อื่นๆ</option>
             </select>
+            <input type="text" id="prefixCustom" placeholder="ระบุคำนำหน้า เช่น ดร. / ศ. / ว่าที่ร้อยตรี" style="display:none; margin-top:0.4rem;">
         </div>
         <div class="form-group">
             <label for="firstname" id="firstnameLabel">ชื่อ</label>
@@ -262,6 +264,21 @@
         </div>
     </form>
     <script>
+
+    // ============ Prefix Custom Input ============
+    function onPrefixChange() {
+        const sel = document.getElementById('prefix');
+        const custom = document.getElementById('prefixCustom');
+        if (sel.value === 'อื่นๆ') {
+            custom.style.display = 'block';
+            custom.required = true;
+            custom.focus();
+        } else {
+            custom.style.display = 'none';
+            custom.required = false;
+            custom.value = '';
+        }
+    }
 
     // ============ Thai Geography Dependent Dropdowns ============
     let _geoProvinces = [];
@@ -444,7 +461,9 @@
             const data = {
                 email: document.getElementById('email').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
-                prefix: document.getElementById('prefix').value,
+                prefix: (document.getElementById('prefix').value === 'อื่นๆ')
+                    ? document.getElementById('prefixCustom').value.trim()
+                    : document.getElementById('prefix').value,
                 firstname: document.getElementById('firstname').value.trim(),
                 lastname: document.getElementById('lastname').value.trim(),
                 position: document.getElementById('position').value,
