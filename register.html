@@ -286,16 +286,14 @@
     let _geoTambons  = [];
     let _tambonLoaded = false;
 
-    const _CDN = 'https://cdn.jsdelivr.net/gh/kongvut/thai-province-data@master';
-
     async function loadThaiGeo() {
         const provSel = document.getElementById('province');
         provSel.innerHTML = '<option value="">-- กำลังโหลด... --</option>';
         provSel.disabled = true;
         try {
             const [pRes, aRes] = await Promise.all([
-                fetch(_CDN + '/api_province.json'),
-                fetch(_CDN + '/api_amphure.json')
+                fetch('./data/province.json'),
+                fetch('./data/amphure.json')
             ]);
             if (!pRes.ok || !aRes.ok) throw new Error('HTTP error');
             _geoProvinces = await pRes.json();
@@ -322,7 +320,7 @@
     async function ensureTambonLoaded() {
         if (_tambonLoaded) return;
         try {
-            const tRes = await fetch(_CDN + '/api_tambon.json');
+            const tRes = await fetch('./data/tambon.json');
             if (!tRes.ok) throw new Error('HTTP error');
             _geoTambons  = await tRes.json();
             _tambonLoaded = true;
