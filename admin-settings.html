@@ -1193,7 +1193,9 @@
                         <div id="approveRegInfo" style="background:var(--hover); padding:1rem; border-radius:8px; margin-bottom:1rem;"></div>
                         <div class="form-group">
                             <label>กำหนดบ้าน/ห้อง (ถ้าทราบ)</label>
-                            <input type="text" id="approveRegHouse" placeholder="เช่น บ้าน 1, แฟลต 101 (เว้นว่างได้)">
+                            <select id="approveRegHouse">
+                                <option value="">-- ไม่กำหนด (เว้นว่างได้) --</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>ประเภทผู้พักอาศัย</label>
@@ -4133,6 +4135,38 @@
                 <strong>เบอร์โทร:</strong> ${reg.phone || '-'}<br>
                 <strong>ตำแหน่ง:</strong> ${reg.position || '-'}
             `;
+
+            // Populate housing dropdown
+            const houseSelect = document.getElementById('approveRegHouse');
+            const housing = getHousingData();
+            const residents = getResidentsData();
+            const formatSettings = getHousingFormatSettings();
+
+            // Sort: บ้าน first, then แฟลต, then by number
+            const sorted = [...housing].sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'house' ? -1 : 1;
+                return (a.displayNumber || a.number || '').localeCompare(b.displayNumber || b.number || '', 'th', { numeric: true });
+            });
+
+            houseSelect.innerHTML = '<option value="">-- ไม่กำหนด (เว้นว่างได้) --</option>';
+            sorted.forEach(h => {
+                const dn = h.displayNumber || h.number || '';
+                const isOccupied = residents.some(r => r.house_number === dn);
+                const typeThai = h.type === 'house' ? 'บ้าน' : 'แฟลต';
+                const statusLabel = h.status === 'available' && !isOccupied ? '[ว่าง]'
+                    : h.status === 'maintenance' ? '[ซ่อมบำรุง]'
+                    : '[มีผู้พัก]';
+                const opt = document.createElement('option');
+                opt.value = dn;
+                opt.textContent = `${typeThai} ${dn} ${statusLabel}`;
+                if (h.status === 'maintenance') opt.style.color = '#999';
+                else if (isOccupied || h.status !== 'available') opt.style.color = '#e67e22';
+                houseSelect.appendChild(opt);
+            });
+            if (sorted.length === 0) {
+                houseSelect.innerHTML += '<option value="" disabled>⚠️ ยังไม่มีข้อมูลบ้าน/แฟลต — กรุณาสร้างในแท็บ "จัดการบ้านพัก" ก่อน</option>';
+            }
+
             openModal('approveReg');
         }
 
