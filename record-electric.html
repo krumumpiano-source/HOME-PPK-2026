@@ -565,6 +565,7 @@
         // ============ Electric Method Settings ============
         let electricMethod = 'bill'; // 'bill' = กรอกยอดตรง, 'unit' = คำนวณตามหน่วย
         let electricRate = 0;
+        let cachedAdminSettings = null; // เก็บ settings จาก Backend ไว้ใช้ใน printReport()
 
         async function loadElectricSettings() {
             if (WEB_APP_URL) {
@@ -860,6 +861,24 @@
         window.onload = async function() {
             const user = await checkSession();
             if (!user) return;
+
+            // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport (ชื่อผู้ลงนาม)
+            if (WEB_APP_URL) {
+                try {
+                    const settingsResult = await callBackendGet('getSettings');
+                    if (settingsResult && settingsResult.success) {
+                        cachedAdminSettings = settingsResult.data || {};
+                    } else {
+                        cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+                    }
+                } catch (e) {
+                    console.error('getSettings error:', e);
+                    cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+                }
+            } else {
+                cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+            }
+
             await loadElectricSettings();
             await renderResidentsTable();
         };
@@ -986,11 +1005,16 @@
             printWindow.document.write('</tr>');
             printWindow.document.write('</tbody></table>');
             
-            // ช่องลงชื่อ
+            // ช่องลงชื่อ — ดึงชื่อจาก cachedAdminSettings (โหลดจาก Backend ตอน initPage)
+            var _sys = cachedAdminSettings || {};
+            var _recorderName = _sys.meterRecorder || _sys.meter_recorder || '';
+            var _checkerName = _sys.meterChecker || _sys.meter_checker || '';
+            var _headName = _sys.headOfPromotion || _sys.head_of_promotion || '';
+
             printWindow.document.write('<div class="signature-section">');
-            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้บันทึกข้อมูล<br>(.......................................)<br>วันที่........./........./.........</div></div>');
-            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้ตรวจสอบ<br>(.......................................)<br>วันที่........./........./.........</div></div>');
-            printWindow.document.write('<div class="signature-box"><div class="signature-line">หัวหน้างานส่งเสริมฯ<br>(.......................................)<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
             printWindow.document.write('</div>');
             
             // ท้ายกระดาษ

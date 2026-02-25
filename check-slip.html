@@ -864,7 +864,7 @@
       const incCommon = systemSettings.reminderIncludeCommon !== false;
       const incDueDate = systemSettings.reminderIncludeDueDate !== false;
 
-      const dueDays = systemSettings.due_date_working_days || '15';
+      const dueDays = systemSettings.due_date || systemSettings.due_date_working_days || '15';
 
       let details = '';
       if(incUnit) details += `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;

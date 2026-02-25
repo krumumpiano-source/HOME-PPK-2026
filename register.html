@@ -52,6 +52,33 @@
     input:focus, select:focus {
         border: 1.5px solid #2563eb;
     }
+    .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .password-wrapper input {
+        flex: 1;
+        padding-right: 2.8rem;
+    }
+    .toggle-password {
+        position: absolute;
+        right: 0.6rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.15rem;
+        color: #64748b;
+        padding: 0.2rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+    }
+    .toggle-password:hover {
+        color: #2563eb;
+    }
     .error-message {
         color: #e11d48;
         font-size: 0.95rem;
@@ -177,28 +204,40 @@
             <input type="text" id="address_village" name="address_village" placeholder="กรอกหมู่บ้าน">
         </div>
         <div class="form-group">
-            <label for="subdistrict" id="subdistrictLabel">ตำบล</label>
-            <input type="text" id="subdistrict" name="subdistrict" required placeholder="กรอกตำบล" autocomplete="off">
-        </div>
-        <div class="form-group">
-            <label for="district" id="districtLabel">อำเภอ</label>
-            <input type="text" id="district" name="district" required placeholder="กรอกอำเภอ" autocomplete="off">
-        </div>
-        <div class="form-group">
             <label for="province" id="provinceLabel">จังหวัด</label>
-            <input type="text" id="province" name="province" required placeholder="กรอกจังหวัด" autocomplete="off">
+            <select id="province" name="province" required onchange="onProvinceChange()">
+                <option value="">-- กำลังโหลดข้อมูล... --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="district" id="districtLabel">อำเภอ / เขต</label>
+            <select id="district" name="district" required onchange="onDistrictChange()" disabled>
+                <option value="">-- เลือกจังหวัดก่อน --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="subdistrict" id="subdistrictLabel">ตำบล / แขวง</label>
+            <select id="subdistrict" name="subdistrict" required onchange="onSubdistrictChange()" disabled>
+                <option value="">-- เลือกอำเภอก่อน --</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="zipcode" id="zipcodeLabel">รหัสไปรษณีย์</label>
-            <input type="text" id="zipcode" name="zipcode" required placeholder="รหัสไปรษณีย์" maxlength="5" inputmode="numeric" autocomplete="off">
+            <input type="text" id="zipcode" name="zipcode" required placeholder="(กรอกอัตโนมัติ)" maxlength="5" inputmode="numeric" autocomplete="off" readonly style="background:#f1f5f9;color:#64748b;">
         </div>
         <div class="form-group">
             <label for="password" id="passwordLabel">รหัสผ่าน</label>
-            <input type="password" id="password" name="password" required placeholder="รหัสผ่านอย่างน้อย 8 ตัว">
+            <div class="password-wrapper">
+                <input type="password" id="password" name="password" required placeholder="รหัสผ่านอย่างน้อย 8 ตัว">
+                <button type="button" class="toggle-password" onclick="togglePassword('password', this)" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดงรหัสผ่าน">👁️</button>
+            </div>
         </div>
         <div class="form-group">
             <label for="confirmPassword" id="confirmPasswordLabel">ยืนยันรหัสผ่าน</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="ยืนยันรหัสผ่านอีกครั้ง">
+            <div class="password-wrapper">
+                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="ยืนยันรหัสผ่านอีกครั้ง">
+                <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดงรหัสผ่าน">👁️</button>
+            </div>
         </div>
         <div class="form-group" style="background:#f8fafc; border-radius:8px; padding:1rem; border:1px solid #e5e7eb;">
             <div style="font-size:0.98rem; color:#333; margin-bottom:0.5rem; font-weight:600;">ประกาศความเป็นส่วนตัว (PDPA)</div>
@@ -223,6 +262,119 @@
         </div>
     </form>
     <script>
+
+    // ============ Thai Geography Dependent Dropdowns ============
+    let _geoProvinces = [];
+    let _geoAmphures = [];
+    let _geoTambons  = [];
+
+    async function loadThaiGeo() {
+        const base = 'https://raw.githubusercontent.com/kongvut/thai-province-data/master';
+        try {
+            const [pRes, aRes, tRes] = await Promise.all([
+                fetch(base + '/api_province.json'),
+                fetch(base + '/api_amphure.json'),
+                fetch(base + '/api_tambon.json')
+            ]);
+            _geoProvinces = await pRes.json();
+            _geoAmphures  = await aRes.json();
+            _geoTambons   = await tRes.json();
+
+            const sel = document.getElementById('province');
+            sel.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
+            _geoProvinces
+                .sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'))
+                .forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name_th;
+                    opt.dataset.id = p.id;
+                    opt.textContent = p.name_th;
+                    sel.appendChild(opt);
+                });
+        } catch(e) {
+            console.error('โหลดข้อมูลจังหวัดล้มเหลว', e);
+            const sel = document.getElementById('province');
+            sel.innerHTML = '<option value="">-- โหลดข้อมูลไม่สำเร็จ --</option>';
+        }
+    }
+
+    function onProvinceChange() {
+        const provSel = document.getElementById('province');
+        const distSel = document.getElementById('district');
+        const subSel  = document.getElementById('subdistrict');
+        document.getElementById('zipcode').value = '';
+
+        distSel.innerHTML = '<option value="">-- เลือกอำเภอ / เขต --</option>';
+        distSel.disabled = true;
+        subSel.innerHTML  = '<option value="">-- เลือกตำบล / แขวง --</option>';
+        subSel.disabled   = true;
+
+        const selOpt = provSel.options[provSel.selectedIndex];
+        if (!selOpt || !selOpt.dataset.id) return;
+        const provId = parseInt(selOpt.dataset.id);
+
+        _geoAmphures
+            .filter(a => a.province_id === provId)
+            .sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'))
+            .forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.name_th;
+                opt.dataset.id = a.id;
+                opt.textContent = a.name_th;
+                distSel.appendChild(opt);
+            });
+        distSel.disabled = false;
+    }
+
+    function onDistrictChange() {
+        const distSel = document.getElementById('district');
+        const subSel  = document.getElementById('subdistrict');
+        document.getElementById('zipcode').value = '';
+
+        subSel.innerHTML = '<option value="">-- เลือกตำบล / แขวง --</option>';
+        subSel.disabled  = true;
+
+        const selOpt = distSel.options[distSel.selectedIndex];
+        if (!selOpt || !selOpt.dataset.id) return;
+        const amphId = parseInt(selOpt.dataset.id);
+
+        _geoTambons
+            .filter(t => t.amphure_id === amphId)
+            .sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'))
+            .forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.name_th;
+                opt.dataset.zip = t.zip_code || '';
+                opt.textContent = t.name_th;
+                subSel.appendChild(opt);
+            });
+        subSel.disabled = false;
+    }
+
+    function onSubdistrictChange() {
+        const subSel = document.getElementById('subdistrict');
+        const selOpt = subSel.options[subSel.selectedIndex];
+        if (selOpt && selOpt.dataset.zip) {
+            document.getElementById('zipcode').value = selOpt.dataset.zip;
+        }
+    }
+
+    // โหลดข้อมูลทันทีที่หน้าพร้อม
+    document.addEventListener('DOMContentLoaded', loadThaiGeo);
+
+    // ============ Password Toggle ============
+    function togglePassword(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+            btn.setAttribute('aria-label', 'ซ่อนรหัสผ่าน');
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+            btn.setAttribute('aria-label', 'แสดงรหัสผ่าน');
+        }
+    }
 
     // ============ Form Validation ============
     function validateRegister() {

@@ -270,24 +270,18 @@
                 } catch (e) { console.error('getBillSummaryAll error:', e); }
             }
 
-            // Fallback ถ้า Backend ไม่มีข้อมูล
+            // ถ้า Backend ไม่มีข้อมูล → แจ้งผู้ใช้แทนการอ่าน localStorage ที่อาจเป็นข้อมูลเก่า
             if (totalAmount === 0) {
-                const residentsData = JSON.parse(localStorage.getItem('residentsData') || '[]');
-                const waterData = JSON.parse(localStorage.getItem('waterBill_' + periodKey) || '{}');
-                const waterRecords = waterData.records || [];
-                const electricData = JSON.parse(localStorage.getItem('electricBill_' + periodKey) || '{}');
-                const electricRecords = electricData.records || [];
-                const commonFeeRate = Number(localStorage.getItem('commonFee') || '110');
-
-                const resident = residentsData.find(r => r.house_number === unitNumber);
-                const waterRecord = waterRecords.find(w => w.house === unitNumber) || {};
-                const electricRecord = electricRecords.find(e => e.house === unitNumber) || {};
-
-                const waterAmount = parseFloat(waterRecord.amount) || 0;
-                const electricAmount = parseFloat(electricRecord.amount) || 0;
-                const commonFee = resident && resident.no_resident ? 0 : commonFeeRate;
-                totalAmount = waterAmount + electricAmount + commonFee;
-                residentName = resident ? resident.resident : '';
+                document.getElementById('display-amount').textContent = 'ยังไม่มีข้อมูลบิลเดือนนี้';
+                document.getElementById('paid-amount').value = '';
+                window.billingInfo = {
+                    unitNumber: unitNumber,
+                    periodKey: periodKey,
+                    period: toApiPeriod(periodKey),
+                    notifiedAmount: 0,
+                    residentName: residentName
+                };
+                return;
             }
 
             document.getElementById('display-amount').textContent = formatMoney(totalAmount) + ' บาท';
