@@ -4152,13 +4152,12 @@
             sorted.forEach(h => {
                 const dn = h.displayNumber || h.number || '';
                 const isOccupied = residents.some(r => r.house_number === dn);
-                const typeThai = h.type === 'house' ? 'บ้าน' : 'แฟลต';
                 const statusLabel = h.status === 'available' && !isOccupied ? '[ว่าง]'
                     : h.status === 'maintenance' ? '[ซ่อมบำรุง]'
                     : '[มีผู้พัก]';
                 const opt = document.createElement('option');
                 opt.value = dn;
-                opt.textContent = `${typeThai} ${dn} ${statusLabel}`;
+                opt.textContent = `${dn} ${statusLabel}`;
                 if (h.status === 'maintenance') opt.style.color = '#999';
                 else if (isOccupied || h.status !== 'available') opt.style.color = '#e67e22';
                 houseSelect.appendChild(opt);
