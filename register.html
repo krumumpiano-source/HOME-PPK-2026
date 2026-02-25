@@ -284,21 +284,24 @@
     let _geoProvinces = [];
     let _geoAmphures = [];
     let _geoTambons  = [];
+    let _tambonLoaded = false;
+
+    const _CDN = 'https://cdn.jsdelivr.net/gh/kongvut/thai-province-data@master';
 
     async function loadThaiGeo() {
-        const base = 'https://raw.githubusercontent.com/kongvut/thai-province-data/master';
+        const provSel = document.getElementById('province');
+        provSel.innerHTML = '<option value="">-- กำลังโหลด... --</option>';
+        provSel.disabled = true;
         try {
-            const [pRes, aRes, tRes] = await Promise.all([
-                fetch(base + '/api_province.json'),
-                fetch(base + '/api_amphure.json'),
-                fetch(base + '/api_tambon.json')
+            const [pRes, aRes] = await Promise.all([
+                fetch(_CDN + '/api_province.json'),
+                fetch(_CDN + '/api_amphure.json')
             ]);
+            if (!pRes.ok || !aRes.ok) throw new Error('HTTP error');
             _geoProvinces = await pRes.json();
             _geoAmphures  = await aRes.json();
-            _geoTambons   = await tRes.json();
 
-            const sel = document.getElementById('province');
-            sel.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
+            provSel.innerHTML = '<option value="">-- เลือกจังหวัด --</option>';
             _geoProvinces
                 .sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'))
                 .forEach(p => {
@@ -306,12 +309,25 @@
                     opt.value = p.name_th;
                     opt.dataset.id = p.id;
                     opt.textContent = p.name_th;
-                    sel.appendChild(opt);
+                    provSel.appendChild(opt);
                 });
+            provSel.disabled = false;
         } catch(e) {
             console.error('โหลดข้อมูลจังหวัดล้มเหลว', e);
-            const sel = document.getElementById('province');
-            sel.innerHTML = '<option value="">-- โหลดข้อมูลไม่สำเร็จ --</option>';
+            provSel.innerHTML = '<option value="">-- โหลดไม่สำเร็จ กรุณารีเฟรช --</option>';
+            provSel.disabled = false;
+        }
+    }
+
+    async function ensureTambonLoaded() {
+        if (_tambonLoaded) return;
+        try {
+            const tRes = await fetch(_CDN + '/api_tambon.json');
+            if (!tRes.ok) throw new Error('HTTP error');
+            _geoTambons  = await tRes.json();
+            _tambonLoaded = true;
+        } catch(e) {
+            console.error('โหลดข้อมูลตำบลล้มเหลว', e);
         }
     }
 
@@ -343,18 +359,24 @@
         distSel.disabled = false;
     }
 
-    function onDistrictChange() {
+    async function onDistrictChange() {
         const distSel = document.getElementById('district');
         const subSel  = document.getElementById('subdistrict');
         document.getElementById('zipcode').value = '';
 
-        subSel.innerHTML = '<option value="">-- เลือกตำบล / แขวง --</option>';
+        subSel.innerHTML = '<option value="">-- กำลังโหลดตำบล... --</option>';
         subSel.disabled  = true;
 
         const selOpt = distSel.options[distSel.selectedIndex];
-        if (!selOpt || !selOpt.dataset.id) return;
+        if (!selOpt || !selOpt.dataset.id) {
+            subSel.innerHTML = '<option value="">-- เลือกอำเภอก่อน --</option>';
+            return;
+        }
         const amphId = parseInt(selOpt.dataset.id);
 
+        await ensureTambonLoaded();
+
+        subSel.innerHTML = '<option value="">-- เลือกตำบล / แขวง --</option>';
         _geoTambons
             .filter(t => t.amphure_id === amphId)
             .sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'))
