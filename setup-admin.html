@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตั้งค่าแอดมินครั้งแรก | HOME PPK 2026</title>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+    body {
+        font-family: 'Kanit', sans-serif;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .card {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        padding: 2.5rem 2rem;
+        max-width: 400px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .header { text-align: center; }
+    .header .icon { font-size: 3rem; margin-bottom: 0.3rem; }
+    .header h2 { margin: 0; color: #1e3a5f; font-weight: 700; font-size: 1.3rem; }
+    .header p  { margin: 0.4rem 0 0; color: #64748b; font-size: 0.92rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    label { font-size: 0.97rem; color: #333; font-weight: 500; }
+    input {
+        padding: 0.7rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: Kanit, sans-serif;
+        outline: none;
+        transition: border 0.2s;
+    }
+    input:focus { border: 1.5px solid #2563eb; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .btn {
+        background: linear-gradient(90deg, #1e3a5f 0%, #2563eb 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.85rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        font-family: Kanit, sans-serif;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        margin-top: 0.2rem;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .alert {
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        display: none;
+    }
+    .alert.error   { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .alert.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .warning-box {
+        background: #fef9c3;
+        border: 1px solid #fde047;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+        color: #713f12;
+    }
+    .back-link { text-align: center; }
+    .back-link a { color: #2563eb; text-decoration: none; font-size: 0.93rem; }
+    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 0; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="header">
+        <div class="icon">🔐</div>
+        <h2>ตั้งค่าบัญชีแอดมินครั้งแรก</h2>
+        <p>ใช้เฉพาะครั้งแรก หากระบบยังไม่มีบัญชีแอดมิน</p>
+    </div>
+
+    <div class="warning-box">
+        ⚠️ หน้านี้ใช้สร้างบัญชีแอดมินได้เพียงครั้งเดียว<br>
+        หากมีแอดมินในระบบแล้ว จะไม่สามารถดำเนินการได้
+    </div>
+
+    <div id="statusCheck" style="text-align:center; color:#64748b; font-size:0.95rem;">
+        กำลังตรวจสอบสถานะระบบ...
+    </div>
+
+    <form id="setupForm" style="display:none; flex-direction:column; gap:1rem;" onsubmit="submitSetup(event)">
+        <div class="row2">
+            <div class="form-group">
+                <label>ชื่อ</label>
+                <input type="text" id="firstname" placeholder="ชื่อ" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>นามสกุล</label>
+                <input type="text" id="lastname" placeholder="นามสกุล" autocomplete="off">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>อีเมลแอดมิน</label>
+            <input type="email" id="email" placeholder="admin@example.com" required autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</label>
+            <input type="password" id="password" placeholder="ตั้งรหัสผ่าน" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+            <label>ยืนยันรหัสผ่าน</label>
+            <input type="password" id="confirmPw" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required autocomplete="new-password">
+        </div>
+        <div class="alert error"   id="errMsg"></div>
+        <div class="alert success" id="okMsg"></div>
+        <button class="btn" id="submitBtn" type="submit">สร้างบัญชีแอดมิน</button>
+    </form>
+
+    <div id="alreadyMsg" style="display:none; text-align:center; color:#166534; font-size:1rem; font-weight:600;">
+        ✅ ระบบมีบัญชีแอดมินแล้ว<br>
+        <span style="font-size:0.92rem; color:#666; font-weight:400;">กรุณาเข้าสู่ระบบตามปกติ</span>
+    </div>
+
+    <hr class="divider">
+    <div class="back-link">
+        <a href="login.html">← กลับสู่หน้าเข้าสู่ระบบ</a>
+    </div>
+</div>
+
+<script>
+    async function checkAdmin() {
+        try {
+            const result = await callBackendGet('checkAdminExists');
+            document.getElementById('statusCheck').style.display = 'none';
+            if (result.hasAdmin) {
+                document.getElementById('alreadyMsg').style.display = 'block';
+            } else {
+                document.getElementById('setupForm').style.display = 'flex';
+            }
+        } catch(e) {
+            document.getElementById('statusCheck').textContent = 'ไม่สามารถเชื่อมต่อระบบได้ — ' + (e.message || '');
+        }
+    }
+
+    async function submitSetup(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('errMsg');
+        const okEl  = document.getElementById('okMsg');
+        const btn   = document.getElementById('submitBtn');
+        errEl.style.display = 'none';
+        okEl.style.display  = 'none';
+
+        const firstname = document.getElementById('firstname').value.trim();
+        const lastname  = document.getElementById('lastname').value.trim();
+        const email     = document.getElementById('email').value.trim();
+        const password  = document.getElementById('password').value;
+        const confirmPw = document.getElementById('confirmPw').value;
+
+        if (!firstname) { showError('กรุณากรอกชื่อ'); return; }
+        if (!email)     { showError('กรุณากรอกอีเมล'); return; }
+        if (password.length < 8) { showError('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
+        if (password !== confirmPw) { showError('รหัสผ่านไม่ตรงกัน'); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'กำลังสร้างบัญชี...';
+
+        try {
+            const result = await callBackend('setupAdmin', { email, password, firstname, lastname });
+            if (result.success) {
+                okEl.textContent = result.message || 'สร้างบัญชีแอดมินสำเร็จ! กำลังพาไปหน้าเข้าสู่ระบบ...';
+                okEl.style.display = 'block';
+                document.getElementById('setupForm').querySelectorAll('input, button').forEach(el => el.disabled = true);
+                setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+            } else {
+                showError(result.error || 'สร้างบัญชีไม่สำเร็จ');
+                btn.disabled = false;
+                btn.textContent = 'สร้างบัญชีแอดมิน';
+            }
+        } catch(err) {
+            showError(err.message || 'ไม่สามารถเชื่อมต่อระบบได้');
+            btn.disabled = false;
+            btn.textContent = 'สร้างบัญชีแอดมิน';
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('errMsg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', checkAdmin);
+</script>
+<script src="ppk-api.js"></script>
+<script src="ppk-utils.js"></script>
+</body>
+</html>
