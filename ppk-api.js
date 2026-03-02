@@ -98,6 +98,25 @@ async function sbGet(table, params) {
 }
 
 /* ──────────────────────────────────────────
+   Supabase SDK — UPSERT (insert or update)
+────────────────────────────────────────── */
+async function sbUpsert(table, body, onConflict) {
+    return new Promise(function (resolve, reject) {
+        _waitSb(async function (sb) {
+            try {
+                var q = sb.from(table).upsert(body, { onConflict: onConflict || 'id' }).select();
+                var res = await q;
+                if (res.error) reject(new Error(res.error.message));
+                else {
+                    var d = res.data;
+                    resolve(Array.isArray(d) && d.length === 1 ? d[0] : d);
+                }
+            } catch (e) { reject(e); }
+        });
+    });
+}
+
+/* ──────────────────────────────────────────
    Supabase SDK — POST (insert)
 ────────────────────────────────────────── */
 async function sbPost(table, body) {
@@ -407,15 +426,50 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'approveRegistration': {
-            var reg = (await sbGet('pending_registrations', { id: 'eq.' + data.id }))[0];
+            var regId = data.regId || data.id;
+            if (!regId) return { success: false, error: 'ไม่ระบุ regId' };
+            var reg = (await sbGet('pending_registrations', { id: 'eq.' + regId }))[0];
             if (!reg) return { success: false, error: 'ไม่พบคำขอ' };
+            // สร้าง user
             var uid = 'USR' + Date.now().toString(36).toUpperCase();
-            await sbPost('users', { id: uid, email: reg.email, phone: reg.phone, prefix: reg.prefix, firstname: reg.firstname, lastname: reg.lastname, position: reg.position, role: 'user', password_hash: reg.password_hash, pdpa_consent: reg.pdpa_consent });
-            await sbPatch('pending_registrations', { id: 'eq.' + data.id }, { status: 'approved', reviewed_by: data.reviewedBy, reviewed_at: new Date().toISOString(), review_note: data.note });
-            return { success: true };
+            await sbPost('users', {
+                id: uid, email: reg.email, phone: reg.phone, prefix: reg.prefix,
+                firstname: reg.firstname, lastname: reg.lastname, position: reg.position,
+                role: 'resident', password_hash: reg.password_hash, pdpa_consent: reg.pdpa_consent,
+                is_active: true
+            });
+            // สร้าง resident ถ้ามี house_number
+            var residentId = null;
+            if (data.house_number) {
+                var hRows = await sbGet('housing', { house_number: 'eq.' + data.house_number, select: 'id', limit: '1' });
+                var houseId = hRows && hRows[0] ? hRows[0].id : null;
+                if (houseId) {
+                    var newRes = await sbPost('residents', {
+                        user_id: uid, house_id: houseId,
+                        house_number: data.house_number || '',
+                        prefix: reg.prefix || '', firstname: reg.firstname || '',
+                        lastname: reg.lastname || '', position: reg.position || '',
+                        is_active: true
+                    });
+                    residentId = newRes ? newRes.id : null;
+                    // อัปเดต session house_number ถ้ามี
+                    await sbPatch('housing', { id: 'eq.' + houseId }, { status: 'occupied', updated_at: new Date().toISOString() });
+                }
+            }
+            // อัปเดต session ของ user ถ้า login อยู่แล้ว
+            await sbPatch('pending_registrations', { id: 'eq.' + regId }, {
+                status: 'approved', reviewed_by: data.reviewedBy || null,
+                reviewed_at: new Date().toISOString(), review_note: data.note || ''
+            });
+            return { success: true, userId: uid, residentId: residentId };
         }
         case 'rejectRegistration': {
-            await sbPatch('pending_registrations', { id: 'eq.' + data.id }, { status: 'rejected', reviewed_by: data.reviewedBy, reviewed_at: new Date().toISOString(), review_note: data.note });
+            var regId = data.regId || data.id;
+            if (!regId) return { success: false, error: 'ไม่ระบุ regId' };
+            await sbPatch('pending_registrations', { id: 'eq.' + regId }, {
+                status: 'rejected', reviewed_by: data.reviewedBy || null,
+                reviewed_at: new Date().toISOString(), review_note: data.note || ''
+            });
             return { success: true };
         }
 
@@ -516,7 +570,7 @@ async function _routeAction(action, data) {
         case 'saveSettings': {
             var entries = Object.entries(data.settings || {});
             for (var i = 0; i < entries.length; i++) {
-                await sbPatch('settings', { key: 'eq.' + entries[i][0] }, { value: String(entries[i][1]) });
+                await sbUpsert('settings', { key: entries[i][0], value: String(entries[i][1]) }, 'key');
             }
             return { success: true };
         }
@@ -663,7 +717,10 @@ async function _routeAction(action, data) {
         case 'updateSettings': {
             var entries = Object.entries(data || {});
             for (var i = 0; i < entries.length; i++) {
-                await sbPatch('settings', { key: 'eq.' + entries[i][0] }, { value: String(entries[i][1]) });
+                var sk = entries[i][0];
+                var sv = String(entries[i][1]);
+                // upsert: insert or update on conflict key
+                await sbUpsert('settings', { key: sk, value: sv }, 'key');
             }
             return { success: true };
         }
@@ -827,6 +884,20 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── batchGet: run multiple read actions in one call ── */
+        case 'batchGet': {
+            var keys = (data.keys || '').split(',').map(function(k) { return k.trim(); }).filter(Boolean);
+            var batchResults = {};
+            for (var bi = 0; bi < keys.length; bi++) {
+                try {
+                    batchResults[keys[bi]] = await _routeAction(keys[bi], {});
+                } catch(e) {
+                    batchResults[keys[bi]] = { success: false, error: e.message };
+                }
+            }
+            return { success: true, results: batchResults };
+        }
+
         /* ── Housing Format ─────────────────────── */
         case 'saveHousingFormat': {
             var fmtEntries = [
@@ -836,12 +907,7 @@ async function _routeAction(action, data) {
                 ['flat_prefix',         data.flatPrefix  || 'แฟลต']
             ];
             for (var i = 0; i < fmtEntries.length; i++) {
-                var r = await sbGet('settings', { key: 'eq.' + fmtEntries[i][0], select: 'key', limit: '1' });
-                if (r && r.length > 0) {
-                    await sbPatch('settings', { key: 'eq.' + fmtEntries[i][0] }, { value: fmtEntries[i][1] });
-                } else {
-                    await sbPost('settings', { key: fmtEntries[i][0], value: fmtEntries[i][1] });
-                }
+                await sbUpsert('settings', { key: fmtEntries[i][0], value: fmtEntries[i][1] }, 'key');
             }
             return { success: true };
         }
@@ -926,6 +992,12 @@ async function _routeAction(action, data) {
 
         /* ── Announcements CRUD ──────────────────── */
         case 'addAnnouncement': {
+            // ถ้า _toggle: true → เปลี่ยนสถานะ is_active ของประกาศที่มีอยู่
+            if (data._toggle && data.id) {
+                var newActive = data.active !== undefined ? Boolean(data.active) : true;
+                await sbPatch('announcements', { id: 'eq.' + data.id }, { is_active: newActive });
+                return { success: true };
+            }
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id', limit: '1' });
             var createdBy = sess && sess[0] ? sess[0].user_id : '';
             // type ≤ priority ค่า: info=0, warning=1, urgent=2 → map priority→type
