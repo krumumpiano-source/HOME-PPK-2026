@@ -256,10 +256,9 @@
             }
 
             // ลองจาก Backend ก่อน
-            if (WEB_APP_URL) {
-                try {
+            try {
                     const period = toApiPeriod(periodKey);
-                    const result = await callBackendGet('getBillSummaryAll', { period });
+                    const result = await cachedCall('getBillSummaryAll', { period }, 300000);
                     if (result && result.success && result.data) {
                         const row = result.data.find(r => String(r.house_number) === String(unitNumber));
                         if (row) {
@@ -268,7 +267,6 @@
                         }
                     }
                 } catch (e) { console.error('getBillSummaryAll error:', e); }
-            }
 
             // ถ้า Backend ไม่มีข้อมูล → แจ้งผู้ใช้แทนการอ่าน localStorage ที่อาจเป็นข้อมูลเก่า
             if (totalAmount === 0) {
@@ -336,48 +334,52 @@
                     resizedImages.push(resized);
                 }
 
-                // ส่งไป Backend (ถ้ามี)
-                if (WEB_APP_URL) {
-                    // อัปโหลดรูปทีละรูป
-                    const fileIds = [];
-                    for (let i = 0; i < resizedImages.length; i++) {
-                        const uploadResult = await callBackend('uploadSlipImage', {
-                            image: resizedImages[i],
-                            houseId: window.billingInfo.unitNumber,
-                            period: window.billingInfo.period,
-                            index: i
-                        });
-                        if (uploadResult && uploadResult.success) {
-                            fileIds.push(uploadResult.fileId);
-                        } else {
-                            throw new Error(uploadResult?.error || 'อัปโหลดรูปล้มเหลว');
+                // ส่งไป Supabase
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const submitEmail = isAdmin
+                    ? (document.getElementById('admin-email-input').value.trim() || user.email || '')
+                    : (user.email || '');
+
+                try {
+                    // อัปโหลดรูปสลิปไปยัง Supabase Storage ก่อน
+                    const slipUrls = [];
+                    if (window._sb && resizedImages.length > 0) {
+                        submitBtn.textContent = 'กำลังอัปโหลดรูป...';
+                        for (let i = 0; i < resizedImages.length; i++) {
+                            try {
+                                const b64 = resizedImages[i].split(',')[1];
+                                const binary = atob(b64);
+                                const bytes = new Uint8Array(binary.length);
+                                for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+                                const blob = new Blob([bytes], { type: 'image/jpeg' });
+                                const ts = Date.now() + i;
+                                const path = `slips/${window.billingInfo.unitNumber}_${window.billingInfo.period}_${ts}.jpg`;
+                                const { data: upData, error: upErr } = await window._sb.storage
+                                    .from('slips').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+                                if (!upErr) {
+                                    const { data: urlData } = window._sb.storage.from('slips').getPublicUrl(path);
+                                    slipUrls.push(urlData.publicUrl);
+                                } else {
+                                    console.warn('Upload slip image failed:', upErr.message);
+                                }
+                            } catch (upEx) { console.warn('Upload slip exception:', upEx); }
                         }
                     }
-
-                    // ส่งข้อมูลสลิป
-                    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                    // ถ้าเป็น admin mode ให้ใช้ email จากช่อง override แทน
-                    const submitEmail = isAdmin
-                        ? (document.getElementById('admin-email-input').value.trim() || user.email || '')
-                        : (user.email || '');
+                    submitBtn.textContent = 'กำลังบันทึก...';
                     const submitResult = await callBackend('submitSlip', {
-                        period: window.billingInfo.period,
-                        house_number: window.billingInfo.unitNumber,
-                        resident_name: window.billingInfo.residentName || user.name || '',
-                        email: submitEmail,
-                        notified_amount: window.billingInfo.notifiedAmount,
-                        paid_amount: paidAmount,
-                        slip_file_ids: fileIds,
-                        payment_method: 'transfer'
+                        houseNumber: window.billingInfo.unitNumber,
+                        residentId:  user.residentId || null,
+                        period:      window.billingInfo.period,
+                        amount:      paidAmount,
+                        slipUrl:     slipUrls.length > 0 ? JSON.stringify(slipUrls) : null
                     });
-
                     if (submitResult && submitResult.success) {
                         ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
-                        window.navigate('?page=dashboard');
+                        window.navigate('dashboard.html');
                         return;
-                    } else {
-                        throw new Error(submitResult?.error || 'ส่งสลิปไม่สำเร็จ');
                     }
+                } catch (submitErr) {
+                    console.warn('Supabase submitSlip failed, using localStorage:', submitErr);
                 }
 
                 // Fallback: บันทึกลง localStorage
@@ -427,9 +429,9 @@
 
             // โหลดรายการบ้าน/แฟลตทั้งหมด
             let houses = JSON.parse(localStorage.getItem('housingData') || '[]');
-            if (houses.length === 0 && WEB_APP_URL) {
+            if (houses.length === 0) {
                 try {
-                    const r = await callBackendGet('getHousingList');
+                    const r = await cachedCall('getHousingList', {}, 600000);
                     if (r && r.success) houses = r.data || [];
                 } catch(e) {}
             }
@@ -463,9 +465,9 @@
         async function fillResidentEmail(houseNumber) {
             // พยายามหา email ของผู้พักในบ้านนั้นจาก residents
             let residents = JSON.parse(localStorage.getItem('residentsData') || '[]');
-            if (residents.length === 0 && WEB_APP_URL) {
+            if (residents.length === 0) {
                 try {
-                    const r = await callBackendGet('getResidentsList');
+                    const r = await cachedCall('getResidentsList', {}, 600000);
                     if (r && r.success) residents = r.data || [];
                 } catch(e) {}
             }
@@ -500,6 +502,6 @@
             await loadBillingInfo();
         };
     </script>
-    <script src="ppk-api.js"></script>
+    <script src="ppk-app.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>

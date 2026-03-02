@@ -262,40 +262,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" title="แดชบอร์ด" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" title="ข้อมูลการชำระย้อนหลัง" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" title="แบบฟอร์มคำร้อง" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" title="ระเบียบ" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" title="ตั้งค่าส่วนตัว" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" title="โปรแกรมบริหารจัดการ">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     <div class="dashboard-container" id="dashboardContainer">
         <div class="dashboard-header">
             <span class="dashboard-header-icon">👥</span>
@@ -353,14 +320,13 @@
         // ตรวจสอบ session + สิทธิ์จาก Backend
         async function checkPermission() {
             const token = localStorage.getItem('sessionToken');
-            if (!token) { window.navigate('?page=login'); return; }
+            if (!token) { window.navigate('login.html'); return; }
 
-            if (typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
-                try {
+            try {
                     // ตรวจ session
                     const userResult = await callBackendGet('getCurrentUser');
                     if (!userResult || !userResult.success) {
-                        localStorage.clear(); window.navigate('?page=login'); return;
+                        localStorage.clear(); window.navigate('login.html'); return;
                     }
 
                     // ตรวจสิทธิ์: ต้องเป็น admin หรือ team_member
@@ -374,12 +340,6 @@
                 } catch (e) {
                     console.warn('Permission check failed', e);
                 }
-            } else {
-                // Fallback: localStorage
-                if (localStorage.getItem('noTeamAccess') === '1') {
-                    document.getElementById('noPermissionMsg').style.display = '';
-                }
-            }
         }
         checkPermission();
         </script>
@@ -391,35 +351,21 @@
     </div>
 
     <script>
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            // Responsive: force reflow for margin
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '220px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        // Set initial margin
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '220px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'team-management');
     
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
             navigate('?page=login');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>
 

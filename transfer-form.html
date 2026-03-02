@@ -264,7 +264,7 @@
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
     </div>
-    <script src="ppk-api.js"></script>
+    <script src="ppk-app.js"></script>
     <script src="ppk-utils.js"></script>
 <script>
     function printForm() {
@@ -552,8 +552,7 @@
     // ============ Session + Auto-fill ============
     async function initPage() {
         const token = localStorage.getItem('sessionToken');
-        if (!token && WEB_APP_URL) { window.navigate('?page=login'); return; }
-        if (!WEB_APP_URL) return;
+        if (!token) { window.navigate('login.html'); return; }
         try {
             const result = await callBackendGet('getCurrentUser');
             if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return; }
@@ -576,7 +575,6 @@
     // ============ Submit Handler ============
     document.getElementById('transferForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        if (!WEB_APP_URL) { ppkAlert('ยังไม่ได้ตั้งค่า WEB_APP_URL'); return; }
         const submitBtn = document.querySelector('.submit-btn');
         submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
         try {

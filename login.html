@@ -178,6 +178,10 @@
         </div>
     </form>
 
+    <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+
     <!-- First-Login Modal -->
     <div id="firstLoginOverlay">
         <div id="firstLoginBox">
@@ -249,10 +253,6 @@
             errorMsg.style.display = 'none';
 
             try {
-                if (!WEB_APP_URL) {
-                    throw new Error('ยังไม่ได้ตั้งค่า WEB_APP_URL — กรุณาติดต่อผู้ดูแลระบบ');
-                }
-
                 const result = await callBackend('login', { email, password });
 
                 if (result.success) {
@@ -270,7 +270,6 @@
                     }
 
                     // Redirect to dashboard
-                    var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
                     window.location.href = 'dashboard.html';
                 } else {
                     errorMsg.textContent = result.error || result.message || 'เข้าสู่ระบบไม่สำเร็จ';
@@ -308,7 +307,6 @@
                     newPassword: newPw
                 });
                 if (result && result.success) {
-                    var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
                     window.location.href = 'dashboard.html';
                 } else {
                     errEl.textContent = result.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
@@ -325,17 +323,15 @@
         // ============ Auto-redirect if already logged in ============
         (function() {
             const token = localStorage.getItem('sessionToken');
-            if (token && WEB_APP_URL) {
-                callBackend('getCurrentUser').then(result => {
+            if (token) {
+                callBackendGet('getCurrentUser').then(result => {
                     if (result && result.success) {
-                        var baseUrl = WEB_APP_URL || window.location.href.split('?')[0];
                         window.location.href = 'dashboard.html';
                     }
                 }).catch(() => {});
             }
         })();
     </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+</body>
 </html>
 

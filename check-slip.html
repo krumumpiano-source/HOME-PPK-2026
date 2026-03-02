@@ -156,34 +156,7 @@
   </style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู" aria-label="ขยาย/ย่อเมนู">☰</button>
-    <nav class="sidebar-menu">
-      <button class="sidebar-link" title="แดชบอร์ด" onclick="navigate('?page=dashboard')">
-        <span class="sidebar-link-icon">🏠</span><span class="sidebar-label">แดชบอร์ด</span>
-      </button>
-      <button class="sidebar-link" title="ข้อมูลการชำระย้อนหลัง" onclick="navigate('?page=payment-history')">
-        <span class="sidebar-link-icon">💸</span><span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-      </button>
-      <button class="sidebar-link" title="แบบฟอร์มคำร้อง" onclick="navigate('?page=form')">
-        <span class="sidebar-link-icon">📝</span><span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-      </button>
-      <button class="sidebar-link" title="ระเบียบ" onclick="navigate('?page=regulations')">
-        <span class="sidebar-link-icon">📚</span><span class="sidebar-label">ระเบียบ</span>
-      </button>
-      <button class="sidebar-link" title="ตั้งค่าส่วนตัว" onclick="navigate('?page=settings')">
-        <span class="sidebar-link-icon">⚙️</span><span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-      </button>
-      <button class="sidebar-link active" title="โปรแกรมจัดการคณะทำงาน" onclick="navigate('?page=team-management')">
-        <span class="sidebar-link-icon">👥</span><span class="sidebar-label">โปรแกรมจัดการคณะทำงาน</span>
-      </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-    </nav>
-  </div>
+  <div id="ppkNav"></div>
 
   <div class="dashboard-container" id="dashboardContainer">
     <button class="back-btn" onclick="navigate('?page=team-management')">← กลับ</button>
@@ -396,10 +369,9 @@
       flatsData = [];
 
       // ลอง Backend ก่อน
-      if (WEB_APP_URL) {
-        try {
+      try {
           // ดึงยอดแจ้งจาก BillSummaryAll
-          const billResult = await callBackendGet('getBillSummaryAll', { period });
+          const billResult = await cachedCall('getBillSummaryAll', { period }, 300000);
           const billData = (billResult && billResult.success) ? (billResult.data || []) : [];
 
           // ดึงสลิปที่ส่งมา
@@ -428,12 +400,8 @@
               noResident: false
             };
 
-            // ดึง URL รูปสลิป
-            if (slip && slip.slip_file_ids) {
-              String(slip.slip_file_ids).split(',').forEach(fid => {
-                fid = fid.trim();
-                if (fid) unitData.slipImages.push('https://drive.google.com/thumbnail?id=' + fid + '&sz=w800');
-              });
+            if (slip && slip.image_url) {
+              unitData.slipImages.push(slip.image_url);
             }
 
             if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
@@ -462,11 +430,8 @@
                 approval: (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
                 noResident: false
               };
-              if (slip.slip_file_ids) {
-                String(slip.slip_file_ids).split(',').forEach(fid => {
-                  fid = fid.trim();
-                  if (fid) unitData.slipImages.push('https://drive.google.com/thumbnail?id=' + fid + '&sz=w800');
-                });
+              if (slip.image_url) {
+                unitData.slipImages.push(slip.image_url);
               }
               if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
                 flatsData.push(unitData);
@@ -780,12 +745,17 @@
       }
 
       // ส่ง Backend ก่อน
-      if (WEB_APP_URL && unit.slipId) {
+      if (unit.slipId) {
         try {
+          const { month, year } = getSelectedPeriod();
+          const _period = year + '-' + month;
           const result = await callBackend('reviewSlip', {
-            slipId: unit.slipId,
+            id: unit.slipId,
             status: 'approved',
-            note: ''
+            note: '',
+            houseNumber: unit.unitNumber,
+            period: _period,
+            amount: unit.paidAmount
           });
           if (result && result.success) {
             unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
@@ -836,7 +806,7 @@
       const period = year + '-' + month;
 
       // ลองส่งผ่าน Backend ก่อน
-      if (WEB_APP_URL && unit.email) {
+      if (unit.email) {
         try {
           const result = await callBackend('sendNotification', {
             type: 'reminder',
@@ -938,7 +908,7 @@ ${emailSig}
       `;
 
       // ส่งผ่าน Backend
-      if (WEB_APP_URL && unit.email) {
+      if (unit.email) {
         try {
           const { year, month } = getSelectedPeriod();
           const period = year + '-' + month;
@@ -957,9 +927,7 @@ ${emailSig}
           console.error('sendReceipt error:', e);
           ppkAlert(`❌ เกิดข้อผิดพลาดในการส่งใบเสร็จ`);
         }
-      } else if (!unit.email) {
-        ppkAlert(`⚠️ ไม่มีอีเมลของผู้พักอาศัย ${unit.unitNumber}\nกรุณาเพิ่มอีเมลในข้อมูลผู้พักอาศัย`);
-      }
+          ppkAlert(`⚠️ ไม่มีอีเมลของผู้พักอาศัย ${unit.unitNumber}\nกรุณาเพิ่มอีเมลในข้อมูลผู้พักอาศัย`);
     }
 
     // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
@@ -1017,7 +985,7 @@ ${emailSig}
       const period = year + '-' + month;
 
       for (const unit of approvedUnits) {
-        if (unit.email && WEB_APP_URL) {
+        if (unit.email) {
           try {
             const result = await callBackend('sendNotification', {
               type: 'receipt',
@@ -1063,21 +1031,8 @@ ${emailSig}
       yearSelect.value = String(yearBE);
     }
 
-    // Sidebar toggle
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    sidebarToggle.onclick = function(){
-      sidebar.classList.toggle('expanded');
-      document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-        ? (window.innerWidth <= 600 ? '160px' : '280px')
-        : (window.innerWidth <= 600 ? '48px' : '62px');
-    };
-    document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-    window.addEventListener('resize', function(){
-      document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-        ? (window.innerWidth <= 600 ? '160px' : '280px')
-        : (window.innerWidth <= 600 ? '48px' : '62px');
-    });
+    // Sidebar — handled by ppk-nav.js
+    renderPPKNav('ppkNav', 'check-slip');
 
     // ปิด modal เมื่อคลิกนอก
     document.getElementById('detailModal').addEventListener('click', function(e){
@@ -1138,28 +1093,25 @@ ${emailSig}
       const period = year + '-' + month;
 
       // ส่ง Backend ก่อน
-      if (WEB_APP_URL) {
-        try {
+      try {
           // สร้าง slip record (manual)
           const submitResult = await callBackend('submitSlip', {
-            period: period,
-            house_number: unit.unitNumber,
-            resident_name: unit.name,
-            notified_amount: unit.notifiedAmount,
-            paid_amount: paidAmount,
-            payment_method: 'cash',
-            is_manual: true,
-            slip_images: []
+            houseNumber: unit.unitNumber,
+            residentId:  unit.residentId || null,
+            period:      period,
+            amount:      paidAmount,
+            slipUrl:     null,
+            bankName:    'เงินสด'
           });
-          if (submitResult && submitResult.success && submitResult.slipId) {
+          if (submitResult && submitResult.success && submitResult.data && submitResult.data.id) {
             // อนุมัติอัตโนมัติ
             await callBackend('reviewSlip', {
-              slipId: submitResult.slipId,
-              status: 'approved',
-              note: payNote || 'บันทึกด้วยตนเอง',
-              is_manual: true,
-              payment_method: 'cash',
-              paid_amount: paidAmount
+              id:          submitResult.data.id,
+              status:      'approved',
+              note:        payNote || 'บันทึกด้วยตนเอง',
+              houseNumber: unit.unitNumber,
+              period:      period,
+              amount:      paidAmount
             });
             ppkAlert(`✓ บันทึกและอนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
             closeManualPayModal();
@@ -1172,7 +1124,6 @@ ${emailSig}
           console.error('saveManualPayment backend error:', e);
           ppkAlert('Backend error: ' + e.message + '\n\nจะบันทึกใน localStorage แทน');
         }
-      }
 
       // Fallback: localStorage
       
@@ -1222,9 +1173,8 @@ ${emailSig}
       currentUserData = user;
 
       // ดึง adminSettings จาก Backend
-      if (WEB_APP_URL) {
-        try {
-          const settingsResult = await callBackendGet('getSettings');
+      try {
+          const settingsResult = await cachedCall('getSettings', {}, 600000);
           if (settingsResult && settingsResult.success) {
             cachedAdminSettings = settingsResult.data || {};
           }
@@ -1232,9 +1182,6 @@ ${emailSig}
           console.error('getSettings error:', e);
           cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
         }
-      } else {
-        cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
-      }
 
       initPeriodSelectors();
       await loadSlipData();
@@ -1243,13 +1190,14 @@ ${emailSig}
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
-            navigate('?page=login');
+            navigate('login.html');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

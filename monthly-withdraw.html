@@ -360,40 +360,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     
     <div class="dashboard-container" id="dashboardContainer">
         <button class="back-btn" onclick="navigate('?page=team-management')">← กลับ</button>
@@ -568,13 +535,12 @@
             let garbageFee = 310;
             additionalItems = [];
 
-            if (WEB_APP_URL) {
-                try {
+            try {
                     // ดึงข้อมูลจาก Backend ทั้งหมดพร้อมกัน
                     const [waterResult, electricResult, withdrawResult] = await Promise.all([
-                        callBackendGet('getWaterBillTotal', { period }),
-                        callBackendGet('getElectricBillPEA', { period }),
-                        callBackendGet('getMonthlyWithdraw', { period })
+                        cachedCall('getWaterBillTotal', { period }, 300000),
+                        cachedCall('getElectricBillPEA', { period }, 300000),
+                        cachedCall('getMonthlyWithdraw', { period }, 120000)
                     ]);
 
                     if (waterResult && waterResult.success) {
@@ -592,10 +558,6 @@
                     ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
                     return;
                 }
-            } else {
-                ppkAlert('กรุณาตั้งค่า Backend URL ก่อนใช้งาน');
-                return;
-            }
 
             document.getElementById('waterTotal').textContent = formatMoney(waterTotal);
             document.getElementById('electricTotal').textContent = formatMoney(electricTotal);
@@ -693,8 +655,7 @@
                 savedAt: new Date().toISOString()
             };
             
-            if (WEB_APP_URL) {
-                try {
+            try {
                     // คำนวณ totalWithdraw
                     const waterTotal = parseMoney(document.getElementById('waterTotal').textContent);
                     const electricTotal = parseMoney(document.getElementById('electricTotal').textContent);
@@ -716,9 +677,6 @@
                     console.error('บันทึกไม่สำเร็จ:', e);
                     ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
                 }
-            } else {
-                ppkAlert('กรุณาตั้งค่า Backend URL ก่อนบันทึกข้อมูล');
-            }
         }
         
         // ฟอร์แมตเงิน
@@ -731,32 +689,20 @@
             return parseFloat(str.replace(/,/g, '')) || 0;
         }
         
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'monthly-withdraw');
     
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
             navigate('?page=login');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

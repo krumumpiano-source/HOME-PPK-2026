@@ -365,40 +365,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     
     <div class="dashboard-container" id="dashboardContainer">
         <button class="back-btn" onclick="navigate('?page=team-management')">
@@ -511,21 +478,8 @@
 
     <script>
 
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'record-water');
         
         // ตั้งค่าเดือนปัจจุบัน
         const now = new Date();
@@ -536,15 +490,13 @@
         let cachedAdminSettings = null;
 
         async function getResidentsData() {
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getResidents');
+            try {
+                    const result = await cachedCall('getResidents', {}, 600000);
                     if (result && result.success && result.data) {
                         residentsCache = result.data;
                         return result.data;
                     }
                 } catch (e) { console.error('getResidents error:', e); }
-            }
             // Fallback: localStorage
             const stored = localStorage.getItem('residentsData');
             if (stored) { residentsCache = JSON.parse(stored); return residentsCache; }
@@ -560,9 +512,8 @@
             if (prevMonth < 1) { prevMonth = 12; prevYear = year - 1; }
             const prevPeriod = prevYear + '-' + String(prevMonth).padStart(2, '0');
 
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getWaterBills', { period: prevPeriod });
+            try {
+                    const result = await cachedCall('getWaterBills', { period: prevPeriod }, 1800000);
                     if (result && result.success && result.data) {
                         const meterMap = {};
                         result.data.forEach(record => {
@@ -571,7 +522,6 @@
                         return meterMap;
                     }
                 } catch (e) { console.error('getPreviousMeter error:', e); }
-            }
             // Fallback: localStorage
             const prevKey = 'waterBill_' + prevYear + String(prevMonth).padStart(2, '0');
             const prevData = localStorage.getItem(prevKey);
@@ -592,9 +542,8 @@
             const year = document.getElementById('bill_year').value;
             const period = year + '-' + month;
 
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getWaterBills', { period });
+            try {
+                    const result = await cachedCall('getWaterBills', { period }, 120000);
                     if (result && result.success && result.data && result.data.length > 0) {
                         const map = {};
                         result.data.forEach(r => {
@@ -606,7 +555,6 @@
                         return map;
                     }
                 } catch (e) { console.error('getSavedBill error:', e); }
-            }
             // Fallback: localStorage
             const key = 'waterBill_' + year + month;
             const saved = localStorage.getItem(key);
@@ -758,8 +706,7 @@
             };
 
             // บันทึกไป Backend
-            if (WEB_APP_URL) {
-                try {
+            try {
                     const result = await callBackend('submitWaterBill', waterData);
                     if (result && result.success) {
                         showSuccess('✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!');
@@ -772,7 +719,6 @@
                     console.error('Save error:', e);
                     // Fallback to localStorage
                 }
-            }
 
             // Fallback: บันทึกลง localStorage
             localStorage.setItem('waterBill_' + year + month, JSON.stringify(waterData));
@@ -792,9 +738,8 @@
             if (!user) return;
 
             // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport
-            if (WEB_APP_URL) {
-                try {
-                    const settingsResult = await callBackendGet('getSettings');
+            try {
+                    const settingsResult = await cachedCall('getSettings', {}, 600000);
                     if (settingsResult && settingsResult.success) {
                         cachedAdminSettings = settingsResult.data || {};
                     }
@@ -802,28 +747,23 @@
                     console.error('getSettings error:', e);
                     cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
                 }
-            } else {
-                cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
-            }
 
             // โหลดอัตราค่าน้ำจาก Backend
             const rateInput = document.getElementById('water_rate');
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getWaterRate');
+            try {
+                    const result = await cachedCall('getWaterRate', {}, 1800000);
                     if (result && result.success && result.rate) {
                         rateInput.value = result.rate;
                     } else {
                         rateInput.value = '';
                         rateInput.placeholder = 'ยังไม่ได้ตั้งค่า';
                     }
-                } catch (e) { console.error('getWaterRate error:', e); }
-            } else {
-                // Fallback: localStorage
-                const savedRate = localStorage.getItem('waterRate');
-                if (savedRate) rateInput.value = savedRate;
-                else { rateInput.value = ''; rateInput.placeholder = 'ยังไม่ได้ตั้งค่า'; }
-            }
+                } catch (e) {
+                    console.error('getWaterRate error:', e);
+                    const savedRate = localStorage.getItem('waterRate');
+                    if (savedRate) rateInput.value = savedRate;
+                    else { rateInput.value = ''; rateInput.placeholder = 'ยังไม่ได้ตั้งค่า'; }
+                }
 
             if (!rateInput.value) {
                 document.querySelector('.info-box').innerHTML = '⚠️ <strong>ยังไม่ได้ตั้งค่าอัตราค่าน้ำ</strong> — กรุณาตั้งค่าที่หน้า admin-settings แท็บ Water ก่อนใช้งาน หรือกรอกอัตราด้านล่าง';
@@ -970,13 +910,14 @@
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
             navigate('?page=login');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

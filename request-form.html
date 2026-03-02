@@ -106,39 +106,7 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
 
     <!-- Main Content -->
     <div class="main-container" id="mainContainer">
@@ -317,25 +285,17 @@
     </div><!-- end form-container -->
     </div><!-- end main-container -->
 
-    <script src="ppk-api.js"></script>
+    <script src="ppk-app.js"></script>
     <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script>
 <script>
-    // ── Sidebar toggle ──
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    function updateMargin() {
-        const exp = sidebar.classList.contains('expanded');
-        const mobile = window.innerWidth <= 600;
-        document.getElementById('mainContainer').style.marginLeft = exp ? (mobile ? '160px' : '280px') : (mobile ? '48px' : '62px');
-    }
-    sidebarToggle.onclick = function() { sidebar.classList.toggle('expanded'); updateMargin(); };
-    window.addEventListener('resize', updateMargin);
-    updateMargin();
+    // Sidebar — handled by ppk-nav.js
+    renderPPKNav('ppkNav', 'request-form');
 
     async function doLogout() {
         if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
         var token = localStorage.getItem('sessionToken') || '';
-        if (token && WEB_APP_URL) callBackend('logout', {}).catch(function(){});
+        if (token) callBackend('logout', {}).catch(function(){});
         localStorage.clear();
         navigate('?page=login');
     }
@@ -395,8 +355,7 @@
     // ── Session Check + Auto-fill ──
     async function initPage() {
         const token = localStorage.getItem('sessionToken');
-        if (!token && WEB_APP_URL) { navigate('?page=login'); return; }
-        if (!WEB_APP_URL) return;
+        if (!token) { navigate('login.html'); return; }
 
         // ลอง auto-fill จาก cache ก่อน
         const cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -434,8 +393,6 @@
     // ── Submit Handler ──
     document.getElementById('requestForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        if (!WEB_APP_URL) { ppkAlert('ยังไม่ได้ตั้งค่า WEB_APP_URL'); return; }
-
         const submitBtn = document.querySelector('.submit-btn');
         submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
 

@@ -326,40 +326,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     
     <div class="dashboard-container" id="dashboardContainer">
         <div class="dashboard-header">
@@ -470,27 +437,13 @@
         const zoomOutBtn = document.getElementById('zoomOut');
         const downloadBtn = document.getElementById('downloadPdf');
 
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '220px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '220px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'regulations');
 
         // ========== Load PDF ==========
         async function loadRegulationsPdf() {
             // ลองดึงจาก Backend ก่อน
-            if (WEB_APP_URL) {
-                try {
+            try {
                     const result = await callBackendGet('getRegulationsPdf');
                     if (result && result.success && result.downloadUrl) {
                         await loadPdfFromUrl(result.downloadUrl);
@@ -499,13 +452,12 @@
                 } catch (e) {
                     console.error('ดึง PDF จาก backend ไม่สำเร็จ:', e);
                 }
-            }
             
             // fallback: แสดงข้อความไม่มี PDF
             noPdfMessage.style.display = 'flex';
         }
 
-        // โหลด PDF จาก URL (Google Drive)
+        // โหลด PDF จาก URL
         async function loadPdfFromUrl(url) {
             noPdfMessage.style.display = 'none';
             loadingIndicator.style.display = 'flex';
@@ -697,13 +649,14 @@
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
             navigate('?page=login');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

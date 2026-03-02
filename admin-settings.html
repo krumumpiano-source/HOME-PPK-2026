@@ -485,41 +485,8 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <!-- Sidebar (rendered by ppk-nav.js) -->
+    <div id="ppkNav"></div>
 
     <div class="dashboard-container" id="dashboardContainer">
         <button class="back-btn" onclick="navigate('?page=team-management')">⬅ กลับ</button>
@@ -820,7 +787,7 @@
                             <span class="settings-card-title">🏫 บุคลากรโรงเรียน (ผู้ร่วมพักอาศัย)</span>
                             <button class="btn btn-info" onclick="loadStaffCoresidents()" style="font-size:0.8rem;padding:0.3rem 0.8rem;">🔄 โหลดข้อมูล</button>
                         </div>
-                        <div class="section-desc" style="margin-bottom:0.75rem;">รายชื่อผู้ร่วมพักอาศัยที่ผู้พักหลักระบุว่าเป็นครู/บุคลากรโรงเรียนพะเยาพิทยาคม — ดึงข้อมูลจริงจาก GAS</div>
+                        <div class="section-desc" style="margin-bottom:0.75rem;">รายชื่อผู้ร่วมพักอาศัยที่ผู้พักหลักระบุว่าเป็นครู/บุคลากรโรงเรียนพะเยาพิทยาคม — ดึงข้อมูลจาก Supabase</div>
                         <div id="staffCoResidentsLoading" style="display:none; color:var(--muted); font-size:0.9rem; padding:0.5rem 0;">⏳ กำลังโหลด...</div>
                         <div class="table-container">
                             <table>
@@ -1886,52 +1853,29 @@
                 return;
             }
 
-            // Save to Backend first
-            if (WEB_APP_URL) {
-                callBackend('addHousing', { type, number, zone, status, note }).then(result => {
-                    if (result && result.success) {
-                        // Add to local cache
-                        const data = getHousingData();
-                        const formatSettings = getHousingFormatSettings();
-                        const prefix = type === 'house' ? formatSettings.housePrefix : formatSettings.flatPrefix;
-                        data.push({
-                            id: result.id || (data.length > 0 ? Math.max(...data.map(h => typeof h.id === 'number' ? h.id : 0)) + 1 : 1),
-                            type, number, displayNumber: prefix + number, zone, status, note,
-                            createdAt: new Date().toISOString()
-                        });
-                        saveHousingData(data);
-                        renderManageHousingCards();
-                        closeModal('addHousing');
-                        document.getElementById('housingNumber').value = '';
-                        document.getElementById('housingZone').value = '';
-                        document.getElementById('housingNote').value = '';
-                        ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-                return;
-            }
-
-            // Fallback: localStorage only
-            const data = getHousingData();
-            const newId = data.length > 0 ? Math.max(...data.map(h => h.id)) + 1 : 1;
-            
-            const formatSettings = getHousingFormatSettings();
-            const prefix = type === 'house' ? formatSettings.housePrefix : formatSettings.flatPrefix;
-            
-            data.push({
-                id: newId, type, number, displayNumber: prefix + number, zone, status, note,
-                createdAt: new Date().toISOString()
-            });
-
-            saveHousingData(data);
-            renderManageHousingCards();
-            closeModal('addHousing');
-            document.getElementById('housingNumber').value = '';
-            document.getElementById('housingZone').value = '';
-            document.getElementById('housingNote').value = '';
-            ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว');
+            // Save to Backend
+            callBackend('addHousing', { type, number, zone, status, note }).then(result => {
+                if (result && result.success) {
+                    // Add to local cache
+                    const data = getHousingData();
+                    const formatSettings = getHousingFormatSettings();
+                    const prefix = type === 'house' ? formatSettings.housePrefix : formatSettings.flatPrefix;
+                    data.push({
+                        id: result.id || (data.length > 0 ? Math.max(...data.map(h => typeof h.id === 'number' ? h.id : 0)) + 1 : 1),
+                        type, number, displayNumber: prefix + number, zone, status, note,
+                        createdAt: new Date().toISOString()
+                    });
+                    saveHousingData(data);
+                    renderManageHousingCards();
+                    closeModal('addHousing');
+                    document.getElementById('housingNumber').value = '';
+                    document.getElementById('housingZone').value = '';
+                    document.getElementById('housingNote').value = '';
+                    ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
         }
 
         function editHousing(id) {
@@ -1968,29 +1912,18 @@
             const updatedItem = { type, number, displayNumber: prefix + number, zone, status, note, updatedAt: new Date().toISOString() };
 
             // Update via Backend
-            if (WEB_APP_URL) {
-                callBackend('updateHousing', { id: String(id), ...updatedItem }).then(result => {
-                    if (result && result.success) {
-                        const data = getHousingData();
-                        const index = data.findIndex(h => String(h.id) === String(id));
-                        if (index !== -1) { data[index] = { ...data[index], ...updatedItem }; saveHousingData(data); }
-                        renderManageHousingCards();
-                        closeModal('editHousing');
-                        ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-                return;
-            }
-
-            const data = getHousingData();
-            const index = data.findIndex(h => h.id === id);
-            if (index === -1) return;
-            data[index] = { ...data[index], ...updatedItem };
-            saveHousingData(data);
-            renderManageHousingCards();
-            closeModal('editHousing');
+            callBackend('updateHousing', { id: String(id), ...updatedItem }).then(result => {
+                if (result && result.success) {
+                    const data = getHousingData();
+                    const index = data.findIndex(h => String(h.id) === String(id));
+                    if (index !== -1) { data[index] = { ...data[index], ...updatedItem }; saveHousingData(data); }
+                    renderManageHousingCards();
+                    closeModal('editHousing');
+                    ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
             ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
         }
 
@@ -2009,22 +1942,20 @@
             saveHousingData(allData.filter(h => String(h.id) !== String(id)));
             renderManageHousingCards();
 
-            // รอ backend ลบจริงจาก Sheet
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackend('deleteHousing', { id: String(id), displayNumber: displayName });
-                    if (!result || !result.success) {
-                    }
-                } catch(e) {
-                    // กู้คืน
-                    if (toDelete) {
-                        const restored = getHousingData();
-                        restored.push(toDelete);
-                        saveHousingData(restored);
-                        renderManageHousingCards();
-                    }
-                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+            // รอ backend ลบจริง
+            try {
+                const result = await callBackend('deleteHousing', { id: String(id), displayNumber: displayName });
+                if (!result || !result.success) {
                 }
+            } catch(e) {
+                // กู้คืน
+                if (toDelete) {
+                    const restored = getHousingData();
+                    restored.push(toDelete);
+                    saveHousingData(restored);
+                    renderManageHousingCards();
+                }
+                ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
             }
         }
 
@@ -2040,28 +1971,26 @@
             saveHousingData(allData.filter(h => String(h.id) !== String(id)));
             renderManageHousingCards();
 
-            // รอ backend ลบจริงจาก Sheet
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackend('deleteHousing', { id: String(id), displayNumber });
-                    if (!result || !result.success) {
-                        if (toDelete) {
-                            const restored = getHousingData();
-                            restored.push(toDelete);
-                            saveHousingData(restored);
-                            renderManageHousingCards();
-                        }
-                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
-                    }
-                } catch(e) {
+            // รอ backend ลบจริง
+            try {
+                const result = await callBackend('deleteHousing', { id: String(id), displayNumber });
+                if (!result || !result.success) {
                     if (toDelete) {
                         const restored = getHousingData();
                         restored.push(toDelete);
                         saveHousingData(restored);
                         renderManageHousingCards();
                     }
-                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+                    ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
                 }
+            } catch(e) {
+                if (toDelete) {
+                    const restored = getHousingData();
+                    restored.push(toDelete);
+                    saveHousingData(restored);
+                    renderManageHousingCards();
+                }
+                ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
             }
         }
 
@@ -2098,24 +2027,20 @@
             };
             
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('saveHousingFormat', settings).then(result => {
-                    if (result && result.success) {
-                        // Also update settings keys
-                        callBackend('updateSettings', {
-                            house_prefix: settings.housePrefix,
-                            flat_prefix: settings.flatPrefix,
-                            house_number_format: settings.houseFormat === 'custom' ? settings.housePrefix + ' {number}' : '{prefix} {number}',
-                            flat_number_format: settings.flatFormat === 'custom' ? settings.flatPrefix + ' {number}' : '{prefix} {number}'
-                        });
-                        ppkAlert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-            } else {
-                ppkAlert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว (localStorage)');
-            }
+            callBackend('saveHousingFormat', settings).then(result => {
+                if (result && result.success) {
+                    // Also update settings keys
+                    callBackend('updateSettings', {
+                        house_prefix: settings.housePrefix,
+                        flat_prefix: settings.flatPrefix,
+                        house_number_format: settings.houseFormat === 'custom' ? settings.housePrefix + ' {number}' : '{prefix} {number}',
+                        flat_number_format: settings.flatFormat === 'custom' ? settings.flatPrefix + ' {number}' : '{prefix} {number}'
+                    });
+                    ppkAlert('บันทึกรูปแบบเลขที่บ้านพัก/แฟลตเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
             
             localStorage.setItem(STORAGE_KEYS.housingFormat, JSON.stringify(settings));
             
@@ -2144,7 +2069,7 @@
             let housing = getHousingData();
 
             // ถ้า localStorage ว่าง (batchGet ยังไม่กลับ) ดึงโดยตรงจาก backend
-            if (housing.length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+            if (housing.length === 0) {
                 select.innerHTML = '<option value="">⏳ กำลังโหลดข้อมูล...</option>';
                 try {
                     const result = await callBackendGet('getHousing', {});
@@ -2340,7 +2265,7 @@
             if (mode === 'individual') renderResidentTable();
             else if (mode === 'manageHousing') {
                 renderManageHousingCards();
-                if (getHousingData().length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+                if (getHousingData().length === 0) {
                     (async () => {
                         try {
                             const r = await callBackendGet('getHousing', {});
@@ -2732,7 +2657,7 @@
             select.innerHTML = '<option value="">เลือกบ้าน/ห้องใหม่</option>';
 
             // ถ้า housing ว่าง ให้ดึงจาก backend โดยตรง
-            if (housing.length === 0 && typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) {
+            if (housing.length === 0) {
                 select.innerHTML = '<option value="">⏳ กำลังโหลดข้อมูลบ้าน...</option>';
                 try {
                     const result = await callBackendGet('getHousing', {});
@@ -2788,9 +2713,7 @@
             data[index].house_number = newHouse;
 
             // Sync move to Backend
-            if (WEB_APP_URL) {
-                callBackend('updateResident', { id: String(residentId), house_number: newHouse }).catch(err => console.warn(err));
-            }
+            callBackend('updateResident', { id: String(residentId), house_number: newHouse }).catch(err => console.warn(err));
             
             saveResidentsData(data);
             closeModal('moveResident');
@@ -2818,9 +2741,8 @@
             renderHouseCards();
             renderResidentTable();
 
-            // รอ backend ลบจริงจาก Sheet
-            if (WEB_APP_URL) {
-                try {
+            // รอ backend ลบจริง
+            try {
                     const result = await callBackend('removeResident', { id: String(residentId) });
                     if (!result || !result.success) {
                         if (toDelete) {
@@ -2844,7 +2766,6 @@
                     }
                     ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
                 }
-            }
         }
 
         function filterResidentView() {
@@ -2927,29 +2848,19 @@
             const newResident = data[data.length - 1]; // just pushed
 
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('addResident', newResident).then(result => {
-                    if (result && result.success) {
-                        saveResidentsData(data);
-                        renderResidentTable();
-                        renderHouseCards();
-                        closeModal('addResident');
-                        clearAddForm();
-                        ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
-                    } else {
-                        data.pop(); // revert
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => { data.pop(); ppkAlert(err.message); });
-                return;
-            }
-
-            saveResidentsData(data);
-            renderResidentTable();
-            renderHouseCards();
-            closeModal('addResident');
-            clearAddForm();
-            ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+            callBackend('addResident', newResident).then(result => {
+                if (result && result.success) {
+                    saveResidentsData(data);
+                    renderResidentTable();
+                    renderHouseCards();
+                    closeModal('addResident');
+                    clearAddForm();
+                    ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                } else {
+                    data.pop(); // revert
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => { data.pop(); ppkAlert(err.message); });
         }
 
         async function editResident(id) {
@@ -3031,38 +2942,24 @@
             };
             if (password) { updated.password = btoa(password); }
 
-            // Update via Backend (ถ้ามี WEB_APP_URL — ไม่พึ่ง localStorage เป็นหลัก)
-            if (WEB_APP_URL) {
-                callBackend('updateResident', { id: String(id), ...updated }).then(result => {
-                    if (result && result.success) {
-                        // sync กับ localStorage ด้วย (cache)
-                        const data = getResidentsData();
-                        const index = data.findIndex(r => String(r.id) === String(id));
-                        if (index !== -1) {
-                            data[index] = { ...data[index], ...updated };
-                            saveResidentsData(data);
-                        }
-                        renderResidentTable();
-                        renderHouseCards();
-                        closeModal('editResident');
-                        ppkAlert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+            // Update via Backend
+            callBackend('updateResident', { id: String(id), ...updated }).then(result => {
+                if (result && result.success) {
+                    // sync กับ localStorage ด้วย (cache)
+                    const data = getResidentsData();
+                    const index = data.findIndex(r => String(r.id) === String(id));
+                    if (index !== -1) {
+                        data[index] = { ...data[index], ...updated };
+                        saveResidentsData(data);
                     }
-                }).catch(err => ppkAlert(err.message));
-                return;
-            }
-
-            // Fallback: localStorage-only mode
-            const data = getResidentsData();
-            const index = data.findIndex(r => String(r.id) === String(id));
-            if (index === -1) { ppkAlert('ไม่พบข้อมูลผู้พักอาศัย ID: ' + id); return; }
-            data[index] = { ...data[index], ...updated };
-            saveResidentsData(data);
-            renderResidentTable();
-            renderHouseCards();
-            closeModal('editResident');
-            ppkAlert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                    renderResidentTable();
+                    renderHouseCards();
+                    closeModal('editResident');
+                    ppkAlert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
         }
 
         async function deleteResident(id) {
@@ -3077,21 +2974,10 @@
             renderResidentTable();
             renderHouseCards();
 
-            // รอ backend ลบจริงจาก Sheet
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackend('removeResident', { id: String(id) });
-                    if (!result || !result.success) {
-                        if (toDelete) {
-                            const restored = getResidentsData();
-                            restored.push(toDelete);
-                            saveResidentsData(restored);
-                            renderResidentTable();
-                            renderHouseCards();
-                        }
-                        ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
-                    }
-                } catch(e) {
+            // รอ backend ลบจริง
+            try {
+                const result = await callBackend('removeResident', { id: String(id) });
+                if (!result || !result.success) {
                     if (toDelete) {
                         const restored = getResidentsData();
                         restored.push(toDelete);
@@ -3099,8 +2985,17 @@
                         renderResidentTable();
                         renderHouseCards();
                     }
-                    ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+                    ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
                 }
+            } catch(e) {
+                if (toDelete) {
+                    const restored = getResidentsData();
+                    restored.push(toDelete);
+                    saveResidentsData(restored);
+                    renderResidentTable();
+                    renderHouseCards();
+                }
+                ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
             }
         }
 
@@ -3123,9 +3018,7 @@
             data[index].updatedAt = new Date().toISOString();
 
             // Sync to Backend
-            if (WEB_APP_URL) {
-                callBackend('updateResident', { id: String(id), password: newPassword }).catch(err => console.warn(err));
-            }
+            callBackend('updateResident', { id: String(id), password: newPassword }).catch(err => console.warn(err));
 
             saveResidentsData(data);
             ppkAlert('รีเซ็ตรหัสผ่านเรียบร้อยแล้ว');
@@ -3202,21 +3095,17 @@
             };
             
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('updateSettings', {
-                    water_rate: String(settings.rate),
-                    water_min_charge: String(settings.minCharge),
-                    water_rounding: settings.rounding
-                }).then(result => {
-                    if (result && result.success) {
-                        ppkAlert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-            } else {
-                ppkAlert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว (localStorage)');
-            }
+            callBackend('updateSettings', {
+                water_rate: String(settings.rate),
+                water_min_charge: String(settings.minCharge),
+                water_rounding: settings.rounding
+            }).then(result => {
+                if (result && result.success) {
+                    ppkAlert('บันทึกการตั้งค่าค่าน้ำเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
             
             localStorage.setItem(STORAGE_KEYS.waterSettings, JSON.stringify(settings));
             localStorage.setItem('waterRate', settings.rate);
@@ -3250,22 +3139,18 @@
             };
             
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('updateSettings', {
-                    electric_method: settings.method,
-                    electric_rate: String(settings.rate),
-                    electric_rounding: settings.rounding,
-                    electric_min_charge: String(settings.minCharge)
-                }).then(result => {
-                    if (result && result.success) {
-                        ppkAlert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-            } else {
-                ppkAlert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว (localStorage)');
-            }
+            callBackend('updateSettings', {
+                electric_method: settings.method,
+                electric_rate: String(settings.rate),
+                electric_rounding: settings.rounding,
+                electric_min_charge: String(settings.minCharge)
+            }).then(result => {
+                if (result && result.success) {
+                    ppkAlert('บันทึกการตั้งค่าค่าไฟเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
             
             localStorage.setItem(STORAGE_KEYS.electricSettings, JSON.stringify(settings));
             document.getElementById('currentElectricMethod').textContent = 
@@ -3309,20 +3194,16 @@
             };
             
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('updateSettings', {
-                    common_fee_house: String(settings.house),
-                    common_fee_flat: String(settings.flat)
-                }).then(result => {
-                    if (result && result.success) {
-                        ppkAlert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-            } else {
-                ppkAlert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว (localStorage)');
-            }
+            callBackend('updateSettings', {
+                common_fee_house: String(settings.house),
+                common_fee_flat: String(settings.flat)
+            }).then(result => {
+                if (result && result.success) {
+                    ppkAlert('บันทึกการตั้งค่าค่าส่วนกลางเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
             
             localStorage.setItem(STORAGE_KEYS.commonFeeSettings, JSON.stringify(settings));
             localStorage.setItem('commonFee', settings.house);
@@ -3412,9 +3293,8 @@
             };
             
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('updateSettings', {
-                    org_name: settings.orgName,
+            callBackend('updateSettings', {
+                org_name: settings.orgName,
                     school_name: settings.schoolName,
                     admin_email: settings.adminEmail,
                     admin_phone: settings.adminPhone,
@@ -3452,9 +3332,6 @@
                         ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                     }
                 }).catch(err => ppkAlert(err.message));
-            } else {
-                ppkAlert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว (localStorage)');
-            }
             
             localStorage.setItem(STORAGE_KEYS.systemSettings, JSON.stringify(settings));
             localStorage.setItem('adminEmail', settings.adminEmail);
@@ -3664,58 +3541,32 @@
             }
 
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('addAnnouncement', { text, expiry: expiry || null, priority }).then(result => {
-                    if (result && result.success) {
-                        // Also add to local cache
-                        const announcements = getAnnouncementsData();
-                        announcements.unshift({
-                            id: result.id || Date.now(),
-                            text, expiry: expiry || null, priority,
-                            createdAt: new Date().toISOString(), active: true
-                        });
-                        saveAnnouncementsData(announcements);
-                        document.getElementById('newAnnouncementText').value = '';
-                        document.getElementById('announcementExpiry').value = '';
-                        document.getElementById('announcementPriority').value = 'normal';
-                        renderAnnouncementsList();
-                        ppkAlert('เพิ่มประกาศเรียบร้อยแล้ว!');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-                return;
-            }
-
-            const announcements = getAnnouncementsData();
-            const newAnnouncement = {
-                id: Date.now(),
-                text: text,
-                expiry: expiry || null,
-                priority: priority,
-                createdAt: new Date().toISOString(),
-                active: true
-            };
-
-            announcements.unshift(newAnnouncement);
-            saveAnnouncementsData(announcements);
-
-            // Clear form
-            document.getElementById('newAnnouncementText').value = '';
-            document.getElementById('announcementExpiry').value = '';
-            document.getElementById('announcementPriority').value = 'normal';
-
-            renderAnnouncementsList();
-            ppkAlert('เพิ่มประกาศเรียบร้อยแล้ว!');
+            callBackend('addAnnouncement', { text, expiry: expiry || null, priority }).then(result => {
+                if (result && result.success) {
+                    // Also add to local cache
+                    const announcements = getAnnouncementsData();
+                    announcements.unshift({
+                        id: result.id || Date.now(),
+                        text, expiry: expiry || null, priority,
+                        createdAt: new Date().toISOString(), active: true
+                    });
+                    saveAnnouncementsData(announcements);
+                    document.getElementById('newAnnouncementText').value = '';
+                    document.getElementById('announcementExpiry').value = '';
+                    document.getElementById('announcementPriority').value = 'normal';
+                    renderAnnouncementsList();
+                    ppkAlert('เพิ่มประกาศเรียบร้อยแล้ว!');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
         }
 
         async function deleteAnnouncement(id) {
             if (!await ppkConfirm('ต้องการลบประกาศนี้หรือไม่?')) return;
 
             // Delete from Backend
-            if (WEB_APP_URL) {
-                callBackend('deleteAnnouncement', { id: String(id) }).catch(err => console.warn(err));
-            }
+            callBackend('deleteAnnouncement', { id: String(id) }).catch(err => console.warn(err));
 
             let announcements = getAnnouncementsData();
             announcements = announcements.filter(a => a.id !== id && String(a.id) !== String(id));
@@ -3737,9 +3588,7 @@
             renderAnnouncementsList();
 
             // Sync toggle to backend (fire-and-forget)
-            if (WEB_APP_URL) {
-                callBackend('addAnnouncement', { id: String(id), active: newActive, _toggle: true }).catch(() => {});
-            }
+            callBackend('addAnnouncement', { id: String(id), active: newActive, _toggle: true }).catch(() => {});
         }
 
         function renderAnnouncementsList() {
@@ -3815,7 +3664,6 @@
         // ========== Housing Tab Loader ==========
         async function loadHousingTabData() {
             renderManageHousingCards();
-            if (typeof WEB_APP_URL === 'undefined' || !WEB_APP_URL) return;
             const grid = document.getElementById('manageHousingGrid');
             if (grid) grid.innerHTML = '<div style="padding:1rem; color:var(--muted); text-align:center;">⏳ กำลังโหลดข้อมูลจากระบบ...</div>';
             try {
@@ -3840,7 +3688,6 @@
         async function loadResidentTabData() {
             renderResidentTable();
             updateResidentTabSummary();
-            if (typeof WEB_APP_URL === 'undefined' || !WEB_APP_URL) return;
             const cont = document.getElementById('residentIndividualContainer');
             if (cont) cont.innerHTML = '<div style="padding:1rem; color:var(--muted); text-align:center;">⏳ กำลังโหลดข้อมูลจากระบบ...</div>';
             try {
@@ -3892,8 +3739,6 @@
 
         // ========== Load from Backend & Sync to localStorage ==========
         async function loadFromBackend() {
-            if (!WEB_APP_URL) return;
-            
             try {
                 // ── batchGet: 1 HTTP request แทน 5 requests ──
                 const BATCH_KEYS = 'getSettings,getHousing,getResidents,getAnnouncements,getPendingRegistrations';
@@ -4058,12 +3903,6 @@
         let _pendingRegistrations = [];
 
         async function loadPendingRegistrations() {
-            if (!WEB_APP_URL) {
-                document.getElementById('pendingRegTableBody').innerHTML = 
-                    '<tr><td colspan="7" style="color:var(--muted);">ยังไม่ได้ตั้งค่า WEB_APP_URL</td></tr>';
-                return;
-            }
-
             document.getElementById('pendingRegLoading').style.display = 'block';
             
             try {
@@ -4317,7 +4156,7 @@
         async function loadStaffCoresidents() {
             const body = document.getElementById('staffCoResidentsBody');
             const loading = document.getElementById('staffCoResidentsLoading');
-            if (!body || !WEB_APP_URL) return;
+            if (!body) return;
             loading.style.display = 'block';
             body.innerHTML = '';
             const RELATION_LABELS = {
@@ -4354,7 +4193,7 @@
             const tbody = document.getElementById('permissionTableBody');
             
             // ถ้ายังไม่มีข้อมูลเลย ลองดึงจาก backend ใหม่
-            if (allResidents.length === 0 && WEB_APP_URL) {
+            if (allResidents.length === 0) {
                 callBackendGet('getResidents').then(result => {
                     if (result && result.success && result.data) {
                         const residentsData = result.data.map(r => ({
@@ -4620,17 +4459,13 @@
             });
             
             // Save to Backend
-            if (WEB_APP_URL) {
-                callBackend('updatePermissions', { permissions }).then(result => {
-                    if (result && result.success) {
-                        ppkAlert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                }).catch(err => ppkAlert(err.message));
-            } else {
-                ppkAlert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว (localStorage)');
-            }
+            callBackend('updatePermissions', { permissions }).then(result => {
+                if (result && result.success) {
+                    ppkAlert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            }).catch(err => ppkAlert(err.message));
             
             savePermissionsData(permissions);
         }
@@ -4684,21 +4519,8 @@
             return userPerms[permissionType] === true || userPerms.admin === true;
         }
 
-        // ========== Sidebar Toggle ==========
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'admin-settings');
 
         // ========== Initialize ==========
         window.onload = async function() {
@@ -4711,21 +4533,20 @@
             updateRegulationFileStatus();
             
             // Then sync from Backend (async update)
-            if (WEB_APP_URL) {
-                await loadFromBackend();
-            }
+            await loadFromBackend();
         };
     
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
-            navigate('?page=login');
+            navigate('login.html');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

@@ -592,40 +592,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" title="แดชบอร์ด" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" title="ข้อมูลการชำระย้อนหลัง" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" title="แบบฟอร์มคำร้อง" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" title="ระเบียบ" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link active" title="ตั้งค่าส่วนตัว">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link" title="โปรแกรมจัดการคณะทำงาน" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมจัดการคณะทำงาน</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     
     <div class="dashboard-container" id="dashboardContainer">
         <div class="dashboard-header">
@@ -852,43 +819,27 @@
 
     <script>
 
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'settings');
 
         // โหลดข้อมูลจาก Backend (fallback: localStorage)
         async function loadUserData() {
             let userData = {};
 
             // Try backend first — getUserProfile returns { success, user, resident }
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getUserProfile');
-                    if (result && result.success) {
-                        const u = result.user || result.data || {};
-                        const r = result.resident || {};
-                        // Merge resident (rich data) with user (email/role)
-                        userData = Object.assign({}, r, {
-                            email: u.email || r.email,
-                            phone: u.phone || r.phone,
-                            role: u.role,
-                        });
-                        localStorage.setItem('userData', JSON.stringify(userData));
-                    }
-                } catch (e) { console.warn('Failed to load profile from backend', e); }
-            }
+            try {
+                const result = await callBackendGet('getUserProfile');
+                if (result && result.success) {
+                    const u = result.user || result.data || {};
+                    const r = result.resident || {};
+                    userData = Object.assign({}, r, {
+                        email: u.email || r.email,
+                        phone: u.phone || r.phone,
+                        role: u.role,
+                    });
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                }
+            } catch (e) { console.warn('Failed to load profile from backend', e); }
 
             // Fallback to localStorage
             if (!userData.email) {
@@ -1025,8 +976,7 @@
             }
 
             // Try Backend first
-            if (WEB_APP_URL) {
-                try {
+            try {
                     // อัปเดตโปรไฟล์
                     const profileResult = await callBackend('updateProfile', userData);
                     if (!profileResult || !profileResult.success) {
@@ -1068,9 +1018,8 @@
                     ppkAlert(err.message || 'ไม่สามารถบันทึกข้อมูลได้');
                     return;
                 }
-            }
             
-            // บันทึกลง localStorage (fallback + cache)
+            // บันทึกลง localStorage (cache)
             localStorage.setItem('userData', JSON.stringify(userData));
             
             // แสดงข้อความสำเร็จ
@@ -1186,11 +1135,9 @@
         
         async function loadCoresidents() {
             // Try backend first — getCoresidents infers residentId from session token
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getCoresidents');
+            try {
+                    const result = await cachedCall('getCoresidents', {}, 300000);
                     if (result && result.success && result.data) {
-                        // Map GAS schema -> UI schema
                         coresidents = result.data.map(c => ({
                             ...c,
                             // map 'relation' -> 'status' for UI selects
@@ -1203,7 +1150,6 @@
                         return;
                     }
                 } catch (e) { console.warn('Failed to load coresidents from backend', e); }
-            }
 
             // Fallback: localStorage
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
@@ -1366,8 +1312,7 @@
             }
             if (await ppkConfirm('ต้องการลบข้อมูลผู้ร่วมพักอาศัยนี้หรือไม่?')) {
                 const item = coresidents[index];
-                // ถ้ามี id ที่สร้างจาก GAS (ขึ้นต้นด้วย COR-) ให้ call API ลบ
-                if (item && item.id && WEB_APP_URL) {
+                if (item && item.id) {
                     try { await callBackend('removeCoresident', { id: item.id }); }
                     catch(e) { console.warn('removeCoresident API failed', e); }
                 }
@@ -1401,13 +1346,14 @@
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
             navigate('?page=login');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

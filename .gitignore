@@ -15,26 +15,18 @@ desktop.ini
 .venv/
 
 # ============================================================
-# BACKEND (GAS only — ไม่ต้องขึ้น GitHub)
+# SUPABASE — ห้าม commit credentials ลง Git เด็ดขาด!
 # ============================================================
-Scripts/
-appsscript.json
-.clasp.json
-.claspignore
-.clasprc.json
-push-gas.ps1
-seed-data.js
-fix_setup.ps1
+.env
+.env.local
+.env.*.local
+supabase/.env
+supabase/config.js
 
 # ============================================================
 # Internal docs / planning files (ไม่ต้องขึ้น GitHub)
 # ============================================================
-BACKEND-READINESS-ANALYSIS.md
-BACKEND-REFERENCE.md
 DOCUMENTATION-HOME-PPK-2026.md
 README-*.md
 ข้อกำหนดมาตรฐานระบบ HOME PPK 2026.md
-ผลการวิเคราะห์ระบบ HOME PPK 2026.md
-เทมเพลตโฟลเดอร์และชีท.md
 แก้ไขวันอังคาร.md
-แพลนแบคเอ็น.md

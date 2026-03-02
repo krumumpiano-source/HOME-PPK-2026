@@ -365,40 +365,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     
     <div class="dashboard-container" id="dashboardContainer">
         <button class="back-btn" onclick="navigate('?page=team-management')">
@@ -542,21 +509,8 @@
 
     <script>
 
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'record-electric');
         
         // ตั้งค่าเดือนปัจจุบัน
         const now = new Date();
@@ -568,24 +522,21 @@
         let cachedAdminSettings = null; // เก็บ settings จาก Backend ไว้ใช้ใน printReport()
 
         async function loadElectricSettings() {
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getSettings');
+            try {
+                    const result = await cachedCall('getSettings', {}, 600000);
                     if (result && result.success && result.data) {
                         electricMethod = result.data.electric_method || 'bill';
                         electricRate = parseFloat(result.data.electric_rate) || 0;
                     }
-                } catch (e) { console.error('loadSettings error:', e); }
-            }
-            // Fallback: localStorage
-            if (!electricMethod || electricMethod === 'bill') {
-                const stored = localStorage.getItem('adminSettings_electric');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    electricMethod = parsed.method || 'bill';
-                    electricRate = parseFloat(parsed.rate) || 0;
+                } catch (e) {
+                    console.error('loadSettings error:', e);
+                    const stored = localStorage.getItem('adminSettings_electric');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        electricMethod = parsed.method || 'bill';
+                        electricRate = parseFloat(parsed.rate) || 0;
+                    }
                 }
-            }
             updateMethodUI();
         }
 
@@ -617,12 +568,10 @@
 
         // ============ ดึงข้อมูลจาก Backend ============
         async function getResidentsData() {
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getResidents');
+            try {
+                    const result = await cachedCall('getResidents', {}, 600000);
                     if (result && result.success && result.data) return result.data;
                 } catch (e) { console.error('getResidents error:', e); }
-            }
             const stored = localStorage.getItem('residentsData');
             if (stored) return JSON.parse(stored);
             return [];
@@ -634,9 +583,8 @@
             const year = document.getElementById('bill_year').value;
             const period = year + '-' + month;
 
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getElectricBills', { period });
+            try {
+                    const result = await cachedCall('getElectricBills', { period }, 120000);
                     if (result && result.success && result.data && result.data.length > 0) {
                         // โหลดค่า PEA total + lost
                         if (result.meta) {
@@ -651,7 +599,6 @@
                         return amountMap;
                     }
                 } catch (e) { console.error('getElectricBills error:', e); }
-            }
 
             // Fallback: localStorage
             const key = 'electricBill_' + year + month;
@@ -832,8 +779,7 @@
                 savedAt: new Date().toISOString()
             };
 
-            if (WEB_APP_URL) {
-                try {
+            try {
                     const result = await callBackend('submitElectricBill', electricData);
                     if (result && result.success) {
                         showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!');
@@ -843,7 +789,6 @@
                         return;
                     }
                 } catch (e) { console.error('Save error:', e); }
-            }
 
             // Fallback: localStorage
             localStorage.setItem('electricBill_' + year + month, JSON.stringify(electricData));
@@ -863,8 +808,7 @@
             if (!user) return;
 
             // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport (ชื่อผู้ลงนาม)
-            if (WEB_APP_URL) {
-                try {
+            try {
                     const settingsResult = await callBackendGet('getSettings');
                     if (settingsResult && settingsResult.success) {
                         cachedAdminSettings = settingsResult.data || {};
@@ -875,9 +819,6 @@
                     console.error('getSettings error:', e);
                     cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
                 }
-            } else {
-                cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
-            }
 
             await loadElectricSettings();
             await renderResidentsTable();
@@ -1035,13 +976,14 @@
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
             navigate('?page=login');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

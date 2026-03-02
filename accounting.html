@@ -526,40 +526,7 @@
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
     
     <div class="dashboard-container" id="dashboardContainer">
         <button class="back-btn" onclick="navigate('?page=team-management')">← กลับ</button>
@@ -836,9 +803,8 @@
             
             const period = year + '-' + month;
 
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('loadAccountingData', { period });
+            try {
+                    const result = await cachedCall('loadAccountingData', { period }, 300000);
                     if (result && result.success) {
                         incomeItems = (result.incomeItems || []).map(item => ({
                             date: item.savedAt || new Date().toISOString().split('T')[0],
@@ -846,7 +812,7 @@
                             amount: item.amount || 0,
                             note: item.note || '',
                             auto: item.source === 'auto',
-                            image: item.receiptFileId ? ('https://drive.google.com/uc?id=' + item.receiptFileId) : null,
+                            image: item.receipt_url || null,
                             _id: item.id
                         }));
                         expenseItems = (result.expenseItems || []).map(item => ({
@@ -855,7 +821,7 @@
                             amount: item.amount || 0,
                             note: item.note || '',
                             auto: item.source === 'auto',
-                            image: item.receiptFileId ? ('https://drive.google.com/uc?id=' + item.receiptFileId) : null,
+                            image: item.receipt_url || null,
                             _id: item.id
                         }));
                         carryForwardAmount = result.carryForward || 0;
@@ -865,7 +831,6 @@
                 } catch (e) {
                     console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
                 }
-            }
             
             // ไม่มี Backend — แสดงข้อมูลว่าง
             incomeItems = [];
@@ -883,9 +848,8 @@
             const { month, year, key } = getSelectedPeriod();
             const period = year + '-' + month;
 
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('calculateAutoEntries', { period });
+            try {
+                    const result = await cachedCall('calculateAutoEntries', { period }, 300000);
                     if (result && result.success) {
                         // ล้างรายการ auto เดิม
                         incomeItems = incomeItems.filter(item => !item.auto);
@@ -922,10 +886,6 @@
                 } catch (e) {
                     console.error('คำนวณจาก backend ไม่สำเร็จ:', e);
                 }
-            }
-            
-            // ไม่มี Backend — แสดงข้อความแจ้ง
-            ppkAlert('กรุณาตั้งค่า Backend URL ก่อนใช้งานคำนวณอัตโนมัติ');
         }
 
         // calculateFromLocalStorage ถูกลบแล้ว — ใช้ Backend calculateAutoEntries แทน
@@ -1137,7 +1097,7 @@
         // UPLOAD RECEIPT IMAGE
         // ============================
         async function uploadReceiptIfNeeded(item) {
-            // ถ้ามีรูป base64 ในเครื่อง (ยังไม่ได้อัปโหลด) → ส่งไป Drive
+            // ถ้ามีรูป base64 ในเครื่อง (ยังไม่ได้อัปโหลด) → ส่งไป Supabase Storage
             if (item.image && item.image.startsWith('data:')) {
                 try {
                     const result = await callBackend('uploadReceiptImage', {
@@ -1152,13 +1112,8 @@
                     console.error('อัปโหลดรูปไม่สำเร็จ:', e);
                 }
             }
-            // ถ้าเป็น Drive URL อยู่แล้ว → ดึง fileId ออกมา
-            if (item.image && item.image.includes('drive.google.com/uc?id=')) {
-                const match = item.image.match(/id=([^&]+)/);
-                if (match) return match[1];
-            }
-            // ถ้ามี _fileId จาก Backend เดิม
-            if (item._fileId) return item._fileId;
+            // ถ้าเป็น URL อยู่แล้ว → ใช้ตรงๆ
+            if (item.image && item.image.startsWith('http')) return item.image;
             return '';
         }
 
@@ -1169,29 +1124,26 @@
             const { month, year, key } = getSelectedPeriod();
             const period = year + '-' + month;
             
-            if (WEB_APP_URL) {
-                try {
-                    // อัปโหลดรูปหลักฐานทีละรายการก่อน save
+            try {
+                    // บันทึกผ่าน Supabase
                     const backendIncome = [];
                     for (const item of incomeItems) {
-                        const fileId = await uploadReceiptIfNeeded(item);
                         backendIncome.push({
                             name: item.description,
                             amount: item.amount,
                             source: item.auto ? 'auto' : 'manual',
                             note: item.note || '',
-                            receiptFileId: fileId
+                            receiptUrl: item.image || null
                         });
                     }
                     const backendExpense = [];
                     for (const item of expenseItems) {
-                        const fileId = await uploadReceiptIfNeeded(item);
                         backendExpense.push({
                             name: item.description,
                             amount: item.amount,
                             source: item.auto ? 'auto' : 'manual',
                             note: item.note || '',
-                            receiptFileId: fileId
+                            receiptUrl: item.image || null
                         });
                     }
 
@@ -1210,9 +1162,6 @@
                     console.error('บันทึกไม่สำเร็จ:', e);
                     ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
                 }
-            } else {
-                ppkAlert('กรุณาตั้งค่า Backend URL ก่อนบันทึกข้อมูล');
-            }
         }
         
         // ============================
@@ -1310,38 +1259,20 @@
         // SIDEBAR
         // ============================
         function initSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const container = document.getElementById('dashboardContainer');
-            
-            sidebarToggle.onclick = function() {
-                sidebar.classList.toggle('expanded');
-                updateContainerMargin();
-            };
-            
-            updateContainerMargin();
-            window.addEventListener('resize', updateContainerMargin);
-            
-            function updateContainerMargin() {
-                const isMobile = window.innerWidth <= 600;
-                if (sidebar.classList.contains('expanded')) {
-                    container.style.marginLeft = isMobile ? '180px' : '280px';
-                } else {
-                    container.style.marginLeft = isMobile ? '48px' : '62px';
-                }
-            }
+            renderPPKNav('ppkNav', 'accounting');
         }
     
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
-            navigate('?page=login');
+            navigate('login.html');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

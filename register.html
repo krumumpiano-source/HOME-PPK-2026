@@ -474,10 +474,6 @@
         errorMsg.style.display = 'none';
 
         try {
-            if (!WEB_APP_URL) {
-                throw new Error('ยังไม่ได้ตั้งค่า WEB_APP_URL — กรุณาติดต่อผู้ดูแลระบบ');
-            }
-
             const data = {
                 email: document.getElementById('email').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
@@ -526,7 +522,7 @@
         }
     }
     </script>
-    <script src="ppk-api.js"></script>
+    <script src="ppk-app.js"></script>
     <script src="ppk-utils.js"></script></body>
 </html>
 

@@ -208,3 +208,152 @@
   };
 
 })();
+
+/* ══════════════════════════════════════════════════════════
+   PPK TOAST — การแจ้งเตือนแบบ non-blocking (ไม่ blocking)
+   ppkToast(message, type?, durationMs?)
+   type: 'success' | 'error' | 'warning' | 'info'
+══════════════════════════════════════════════════════════ */
+(function () {
+  var _container = null;
+
+  function _ensureContainer() {
+    if (_container && document.body.contains(_container)) return _container;
+    _container = document.createElement('div');
+    _container.id = 'ppk-toast-container';
+    _container.style.cssText = [
+      'position:fixed;',
+      'top:16px;right:16px;',
+      'z-index:999999;',
+      'display:flex;flex-direction:column;gap:8px;',
+      'pointer-events:none;',
+      'max-width:340px;width:calc(100vw - 32px);',
+    ].join('');
+    document.body.appendChild(_container);
+    return _container;
+  }
+
+  var TOAST_COLORS = {
+    success: { bg: '#f0fdf4', border: '#22c55e', icon: '✅', text: '#166534' },
+    error:   { bg: '#fef2f2', border: '#ef4444', icon: '❌', text: '#991b1b' },
+    warning: { bg: '#fffbeb', border: '#f59e0b', icon: '⚠️', text: '#92400e' },
+    info:    { bg: '#eff6ff', border: '#3b82f6', icon: 'ℹ️', text: '#1e40af' },
+  };
+
+  window.ppkToast = function (message, type, durationMs) {
+    type = type || 'success';
+    durationMs = durationMs != null ? durationMs : 3500;
+    var c = TOAST_COLORS[type] || TOAST_COLORS.info;
+    var container = _ensureContainer();
+
+    var toast = document.createElement('div');
+    toast.style.cssText = [
+      'background:' + c.bg + ';',
+      'border-left:4px solid ' + c.border + ';',
+      'border-radius:10px;',
+      'padding:12px 16px;',
+      'display:flex;align-items:flex-start;gap:10px;',
+      'box-shadow:0 4px 16px rgba(0,0,0,.12);',
+      'font-family:"Kanit","Sarabun",sans-serif;',
+      'font-size:14px;line-height:1.5;',
+      'color:' + c.text + ';',
+      'pointer-events:auto;',
+      'opacity:0;transform:translateX(40px);',
+      'transition:opacity .25s ease,transform .25s ease;',
+    ].join('');
+    toast.innerHTML =
+      '<span style="font-size:18px;flex-shrink:0;margin-top:-1px">' + c.icon + '</span>' +
+      '<span style="flex:1">' + String(message).replace(/</g, '&lt;') + '</span>' +
+      '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:' + c.text + ';font-size:16px;flex-shrink:0;padding:0;opacity:.6">✕</button>';
+
+    container.appendChild(toast);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+      });
+    });
+
+    if (durationMs > 0) {
+      setTimeout(function () {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(40px)';
+        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, durationMs);
+    }
+    return toast;
+  };
+})();
+
+/* ══════════════════════════════════════════════════════════
+   PPK LOADING — Overlay loading indicator
+   ppkLoading(show, message?)
+══════════════════════════════════════════════════════════ */
+(function () {
+  var _el = null;
+
+  window.ppkLoading = function (show, message) {
+    if (show) {
+      if (!_el || !document.body.contains(_el)) {
+        _el = document.createElement('div');
+        _el.id = 'ppk-loading';
+        _el.style.cssText = [
+          'position:fixed;inset:0;',
+          'background:rgba(15,23,42,.45);',
+          'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);',
+          'z-index:999998;',
+          'display:flex;flex-direction:column;',
+          'align-items:center;justify-content:center;',
+          'gap:16px;',
+          'font-family:"Kanit","Sarabun",sans-serif;',
+          'color:#fff;font-size:15px;',
+        ].join('');
+        _el.innerHTML =
+          '<div style="width:48px;height:48px;border:4px solid rgba(255,255,255,.25);' +
+          'border-top-color:#60a5fa;border-radius:50%;animation:ppk-spin .8s linear infinite;"></div>' +
+          '<div id="ppk-loading-msg">' + (message || 'กำลังดำเนินการ...') + '</div>';
+
+        var style = document.createElement('style');
+        style.textContent = '@keyframes ppk-spin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(style);
+        document.body.appendChild(_el);
+      } else {
+        var msgEl = _el.querySelector('#ppk-loading-msg');
+        if (msgEl) msgEl.textContent = message || 'กำลังดำเนินการ...';
+      }
+    } else {
+      if (_el && _el.parentNode) _el.parentNode.removeChild(_el);
+      _el = null;
+    }
+  };
+})();
+
+/* ══════════════════════════════════════════════════════════
+   SESSION EXPIRY WARNING
+   เรียกหลัง checkSession() สำเร็จ — แจ้งเตือน 5 นาทีก่อน หมดอายุ
+══════════════════════════════════════════════════════════ */
+(function () {
+  var _warned = false;
+  var _interval = null;
+
+  window.ppkWatchSession = function (expiresAt) {
+    if (_interval) clearInterval(_interval);
+    _warned = false;
+    var expireMs = new Date(expiresAt).getTime();
+
+    _interval = setInterval(function () {
+      var remaining = expireMs - Date.now();
+      if (remaining <= 0) {
+        clearInterval(_interval);
+        ppkToast('เซสชันหมดอายุ — กำลังนำคุณออกจากระบบ...', 'warning', 5000);
+        setTimeout(function () {
+          localStorage.clear();
+          window.location.href = 'login.html';
+        }, 3000);
+      } else if (!_warned && remaining < 5 * 60 * 1000) {
+        _warned = true;
+        ppkToast('⏰ เซสชันจะหมดอายุใน 5 นาที', 'warning', 8000);
+      }
+    }, 30000); // ตรวจทุก 30 วินาที
+  };
+})();

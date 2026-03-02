@@ -170,6 +170,48 @@
             color: var(--muted);
         }
 
+        /* Admin Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(15,23,42,.1); }
+        .stat-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+        .stat-count {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+        .stat-count.danger { color: var(--danger); }
+        .stat-count.ok { color: var(--success); }
+        .stat-label { font-size: 0.85rem; color: var(--muted); }
+
+        /* Announce item */
+        .announce-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.6;
+        }
+        .announce-item:last-child { border-bottom: none; }
+        .announce-item.urgent { color: var(--danger); }
+        .announce-item.warning { color: var(--warning); }
+        .announce-body { font-size: 0.9rem; color: var(--muted); }
+
         /* Slip Send Button — base */
         .slip-btn {
             display: inline-flex;
@@ -238,61 +280,50 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link active" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <!-- Sidebar (rendered by ppk-nav.js) -->
+    <div id="ppkNav"></div>
 
     <div class="dashboard-container" id="dashboardContainer">
         <div class="dashboard-header">
             <span class="dashboard-header-icon">🏠</span>
             <h2>แดชบอร์ด</h2>
         </div>
+
+        <!-- Admin stats (hidden for users) -->
+        <div id="adminStatsSection" style="display:none; width:100%; max-width:600px;">
+            <div class="stats-grid">
+                <div class="stat-card" onclick="navigate('?page=team-management')">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-count danger" id="statPendingReg">—</div>
+                    <div class="stat-label">คำขอสมัคร<br>รอตรวจ</div>
+                </div>
+                <div class="stat-card" onclick="navigate('?page=check-slip')">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-count danger" id="statPendingSlips">—</div>
+                    <div class="stat-label">สลิปรอ<br>ตรวจสอบ</div>
+                </div>
+                <div class="stat-card" onclick="navigate('?page=check-request')">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-count danger" id="statPendingReqs">—</div>
+                    <div class="stat-label">คำร้องรอ<br>ดำเนินการ</div>
+                </div>
+            </div>
+        </div>
+
         <div class="section">
             <div class="section-title">📢 ประกาศ</div>
-            <ul class="announce-list" id="announceList">
-                <li style="color: var(--muted);">กำลังโหลดประกาศ...</li>
-            </ul>
+            <div id="announceList">
+                <div style="color:var(--muted)">กำลังโหลด...</div>
+            </div>
         </div>
-        <div class="section">
+        <div class="section" id="paymentSection">
             <div class="section-title">💳 แจ้งยอดชำระประจำเดือน</div>
-            <div class="section-content">ยอดที่ต้องชำระเดือนนี้: <span class="amount" id="currentMonthAmount">0</span> บาท</div>
+            <div class="section-content">ยอดที่ต้องชำระเดือนนี้: <span class="amount" id="currentMonthAmount">—</span> บาท</div>
             <div id="slipBtnMonth"></div>
         </div>
-        <div class="section">
+        <div class="section" id="outstandingSection">
             <div class="section-title">🧾 แจ้งยอดคงค้าง</div>
-            <div class="section-content">ยอดคงค้างสะสม: <span class="amount" id="outstandingAmount">0</span> บาท</div>
+            <div class="section-content">ยอดคงค้างสะสม: <span class="amount" id="outstandingAmount">—</span> บาท</div>
             <div id="slipBtnOutstanding"></div>
         </div>
         <div class="footer-note">
@@ -302,248 +333,154 @@
     </div>
 
     <script>
-        // ========== Backend Infrastructure ==========
-
-        // ========== Render Announcements ==========
-        function renderAnnouncements(announcements) {
-            const announceList = document.getElementById('announceList');
-            if (!Array.isArray(announcements)) announcements = [];
-            const today = new Date();
-            const active = announcements.filter(a => {
-                if (!a.active && a.active !== undefined) return false;
-                if (a.expiry && new Date(a.expiry) < today) return false;
-                return true;
-            });
-            if (active.length === 0) {
-                announceList.innerHTML = '<li style="color: var(--muted);">ไม่มีประกาศในขณะนี้</li>';
-                return;
-            }
-            const colors = { normal: 'inherit', important: '#f59e0b', urgent: '#ef4444' };
-            announceList.innerHTML = active.map(a => {
-                const color = colors[a.priority] || 'inherit';
-                const prefix = a.priority === 'urgent' ? '🚨 ' : (a.priority === 'important' ? '⚠️ ' : '');
-                return `<li style="color: ${color};">${prefix}${a.text}</li>`;
-            }).join('');
-        }
-
-        // ========== Render Payment Info ==========
         const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-        // ตรวจสอบสถานะการชำระจาก recentPayments
-        // คืนค่า: 'none' | 'reviewing' | 'success' | 'rejected'
-        // หมายเหตุ: recentPayments มาจาก sheet PaymentHistory_{ปีปัจจุบัน} → ไม่มี field year → filter แค่ month
-        function getPaymentStatus(recentPayments, month, year) {
-            const record = (recentPayments || []).find(r =>
-                String(r.month).padStart(2,'0') === String(month).padStart(2,'0')
-            );
-            if (!record) return 'none';
-            const s = (record.status || '').toLowerCase().trim();
-            if (s === 'approved' || s === 'match' || s === 'paid' || s === 'completed') return 'success';
-            if (s === 'rejected' || s === 'mismatch') return 'rejected';
-            if (s === 'pending') return 'reviewing';
-            return 'reviewing';
+        /* ── Render Announcements (ใช้ schema: title, body, type, expires_at) ── */
+        function renderAnnouncements(rows) {
+            const el = document.getElementById('announceList');
+            if (!Array.isArray(rows) || rows.length === 0) {
+                el.innerHTML = '<div style="color:var(--muted)">ไม่มีประกาศในขณะนี้</div>';
+                return;
+            }
+            el.innerHTML = rows.map(function(a) {
+                var prefix = a.type === 'urgent' ? '🚨 ' : (a.type === 'warning' ? '⚠️ ' : 'ℹ️ ');
+                var cls = a.type === 'urgent' ? ' urgent' : (a.type === 'warning' ? ' warning' : '');
+                var body = a.body ? '<div class="announce-body">' + a.body + '</div>' : '';
+                return '<div class="announce-item' + cls + '">' + prefix + '<strong>' + (a.title || '') + '</strong>' + body + '</div>';
+            }).join('');
         }
 
-        // สร้าง HTML ปุ่มตามสถานะ
+        /* ── Slip button builder ── */
         function buildSlipBtnHTML(label, slipStatus, periodKey, amount, isOutstanding) {
-            if (slipStatus === 'success') {
+            if (slipStatus === 'success')
                 return '<button class="slip-btn slip-success" disabled>✅ ชำระสำเร็จแล้ว</button>';
-            }
-            if (slipStatus === 'reviewing') {
+            if (slipStatus === 'reviewing')
                 return '<button class="slip-btn slip-reviewing" disabled>🔍 อยู่ในระหว่างตรวจสอบ</button>';
-            }
-            if (slipStatus === 'rejected') {
+            if (slipStatus === 'rejected')
                 return '<button class="slip-btn slip-rejected" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">⚠️ สลิปไม่ผ่าน — กดเพื่อส่งใหม่</button>';
-            }
-            if (amount <= 0) {
+            if (!amount || amount <= 0)
                 return '<button class="slip-btn slip-disabled" disabled>📋 ยังไม่มีการแจ้งยอด</button>';
-            }
-            // active
-            const cls = isOutstanding ? 'slip-btn slip-outstanding' : 'slip-btn slip-active';
+            var cls = isOutstanding ? 'slip-btn slip-outstanding' : 'slip-btn slip-active';
             return '<button class="' + cls + '" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">📤 ' + label + '</button>';
         }
 
-        function renderPaymentInfo(outstandingArr, recentPayments, userHouse) {
-            const outstandingEl = document.getElementById('outstandingAmount');
-            const currentAmountEl = document.getElementById('currentMonthAmount');
+        /* ── Render User Dashboard ── */
+        function renderUserDashboard(data) {
+            document.getElementById('adminStatsSection').style.display = 'none';
+            document.getElementById('paymentSection').style.display = '';
+            document.getElementById('outstandingSection').style.display = '';
 
-            // Outstanding (backend already filtered for resident role)
-            const totalOutstanding = (outstandingArr || []).reduce((s, r) => s + (Number(r.balance) || 0), 0);
-            outstandingEl.textContent = totalOutstanding.toLocaleString('th-TH');
-            outstandingEl.className = totalOutstanding > 0 ? 'amount' : 'amount amount-ok';
+            var amount = data.currentAmount || 0;
+            var outstanding = data.totalOutstanding || 0;
+            var period = data.period || '';
+            var houseNumber = data.houseNumber || '';
+            var slipStatus = data.slipStatus || 'none';
 
-            // Current month total from recent payments (paid history — may be 0 if not yet submitted)
-            const now = new Date();
-            const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-            const currentYear = String(now.getFullYear() + 543);
-            const thisMonth = (recentPayments || []).filter(r =>
-                String(r.month) === currentMonth && String(r.year) === currentYear
-            );
-            const monthTotal = thisMonth.reduce((s, r) => s + (Number(r.total_amount || r.amount) || 0), 0);
-            currentAmountEl.textContent = monthTotal > 0 ? monthTotal.toLocaleString('th-TH') : '-';
-            currentAmountEl.className = monthTotal > 0 ? 'amount' : 'amount amount-ok';
+            // Parse period 'YYYY-MM'
+            var parts = period.split('-');
+            var monthIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
+            var yearBE = parts[0] ? String(parseInt(parts[0]) + 543) : String(new Date().getFullYear() + 543);
+            var monthStr = String((monthIdx + 1)).padStart(2, '0');
+            var periodKey = yearBE + monthStr;
+            var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
 
-            const periodKey = currentYear + currentMonth;
-            const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + currentYear;
-            const monthlyStatus = getPaymentStatus(recentPayments, currentMonth, currentYear);
+            document.getElementById('currentMonthAmount').textContent = amount > 0 ? amount.toLocaleString('th-TH') : '-';
+            document.getElementById('currentMonthAmount').className = amount > 0 ? 'amount' : 'amount amount-ok';
+            document.getElementById('outstandingAmount').textContent = outstanding > 0 ? outstanding.toLocaleString('th-TH') : '0';
+            document.getElementById('outstandingAmount').className = outstanding > 0 ? 'amount' : 'amount amount-ok';
 
-            // ปุ่มส่งสลิปประจำเดือน — แสดงเสมอ
-            const slipBtnMonth = document.getElementById('slipBtnMonth');
+            var slipBtnMonth = document.getElementById('slipBtnMonth');
             if (slipBtnMonth) {
-                slipBtnMonth.innerHTML =
-                    '<div class="slip-detail">📅 งวด: ' + periodDisplay + (userHouse ? ' &nbsp;|&nbsp; 🏠 บ้าน: ' + userHouse : '') + '</div>' +
-                    buildSlipBtnHTML('ส่งสลิปชำระเงินประจำเดือน', monthlyStatus, periodKey, monthTotal, false);
+                var detail = '<div class="slip-detail">📅 งวด: ' + periodDisplay;
+                if (data.dueDate) detail += ' &nbsp;|&nbsp; 📆 ครบกำหนด: ' + new Date(data.dueDate).toLocaleDateString('th-TH');
+                if (houseNumber) detail += ' &nbsp;|&nbsp; 🏠 บ้าน: ' + houseNumber;
+                detail += '</div>';
+                slipBtnMonth.innerHTML = detail + buildSlipBtnHTML('ส่งสลิปชำระเงินประจำเดือน', slipStatus, periodKey, amount, false);
             }
-
-            // ปุ่มส่งสลิปยอดคงค้าง — แสดงเสมอ
-            const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
-            if (slipBtnOutstanding) {
-                const outDetail = totalOutstanding > 0
-                    ? '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + totalOutstanding.toLocaleString('th-TH') + ' บาท</div>'
+            var slipBtnOut = document.getElementById('slipBtnOutstanding');
+            if (slipBtnOut) {
+                var outDetail = outstanding > 0
+                    ? '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + outstanding.toLocaleString('th-TH') + ' บาท</div>'
                     : '<div class="slip-detail">ไม่มียอดคงค้าง</div>';
-                slipBtnOutstanding.innerHTML = outDetail +
-                    buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', periodKey, totalOutstanding, true);
+                slipBtnOut.innerHTML = outDetail + buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', periodKey, outstanding, true);
             }
         }
 
-        // ========== Fallback: localStorage ==========
-        function renderPaymentInfoFromStorage(userHouse) {
-            const now = new Date();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = String(now.getFullYear() + 543);
-            const key = year + month;
-            const waterData = JSON.parse(localStorage.getItem('waterBill_' + key) || '{}');
-            const electricData = JSON.parse(localStorage.getItem('electricBill_' + key) || '{}');
-            const waterRecord = (waterData.records || []).find(w => w.house === userHouse) || {};
-            const electricRecord = (electricData.records || []).find(e => e.house === userHouse) || {};
-            const commonFee = Number(localStorage.getItem('commonFee')) || 110;
-            const total = (parseFloat(waterRecord.amount) || 0) + (parseFloat(electricRecord.amount) || 0) + commonFee;
-            document.getElementById('currentMonthAmount').textContent = total.toLocaleString('th-TH');
-            document.getElementById('currentMonthAmount').className = total > 0 ? 'amount' : 'amount amount-ok';
-            let outstandingTotal = 0;
-            JSON.parse(localStorage.getItem('paymentHistory_' + userHouse) || '[]').forEach(p => {
-                if (p.status === 'unpaid' || p.status === 'pending') outstandingTotal += parseFloat(p.amount) || 0;
-            });
-            document.getElementById('outstandingAmount').textContent = outstandingTotal.toLocaleString('th-TH');
-            document.getElementById('outstandingAmount').className = outstandingTotal > 0 ? 'amount' : 'amount amount-ok';
+        /* ── Render Admin Dashboard ── */
+        function renderAdminDashboard(data) {
+            document.getElementById('adminStatsSection').style.display = '';
+            document.getElementById('paymentSection').style.display = 'none';
+            document.getElementById('outstandingSection').style.display = 'none';
 
-            // ปุ่มส่งสลิปจาก fallback data — ไม่ทราบสถานะ ใช้ active ถ้ามียอด
-            const periodDisplay = THAI_MONTHS[now.getMonth()] + ' ' + year;
-            const slipBtnMonth = document.getElementById('slipBtnMonth');
-            if (slipBtnMonth) {
-                slipBtnMonth.innerHTML =
-                    '<div class="slip-detail">📅 งวด: ' + periodDisplay + (userHouse ? ' &nbsp;|&nbsp; 🏠 บ้าน: ' + userHouse : '') + '</div>' +
-                    buildSlipBtnHTML('ส่งสลิปชำระเงินประจำเดือน', 'none', key, total, false);
+            function _stat(id, count) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = String(count);
+                el.className = 'stat-count ' + (count > 0 ? 'danger' : 'ok');
             }
-            const slipBtnOutstanding = document.getElementById('slipBtnOutstanding');
-            if (slipBtnOutstanding) {
-                const outDetail = outstandingTotal > 0
-                    ? '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + outstandingTotal.toLocaleString('th-TH') + ' บาท</div>'
-                    : '<div class="slip-detail">ไม่มียอดคงค้าง</div>';
-                slipBtnOutstanding.innerHTML = outDetail +
-                    buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', key, outstandingTotal, true);
-            }
+            _stat('statPendingReg',   data.pendingRegistrations || 0);
+            _stat('statPendingSlips', data.pendingSlips || 0);
+            _stat('statPendingReqs',  data.pendingRequests || 0);
         }
 
-        // ========== Load Dashboard (single API call) ==========
+        /* ── Load Dashboard ── */
         async function loadDashboard() {
-            const token = getSessionToken();
-            if (!token) { navigate('?page=login'); return; }
-
-            if (!WEB_APP_URL) {
-                // Fallback local
-                const cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                const userHouse = cached.house_number || cached.resident?.house_number || '';
-                renderAnnouncements(JSON.parse(localStorage.getItem('announcements') || '[]'));
-                renderPaymentInfoFromStorage(userHouse);
-                return;
-            }
+            var token = getSessionToken ? getSessionToken() : localStorage.getItem('sessionToken');
+            if (!token) { navigate('login.html'); return; }
 
             try {
-                const result = await callBackendGet('getDashboardData', {});
-                if (!result || !result.success) { localStorage.clear(); navigate('?page=login'); return; }
-
-                // Store user data
-                const userData = result.user && result.user.user ? result.user.user : null;
-                if (userData) {
-                    localStorage.setItem('currentUser', JSON.stringify(userData));
-                    // Cache house_number แยกเป็น currentUserUnit เพื่อใช้ในหน้าอื่น
-                    var hn = (userData.resident && userData.resident.house_number)
-                             ? userData.resident.house_number
-                             : (userData.house_number || '');
-                    if (hn) localStorage.setItem('currentUserUnit', hn);
+                var result = await cachedCall('getDashboardData', {}, 60000);
+                if (!result || !result.success) {
+                    localStorage.clear(); navigate('login.html'); return;
                 }
-
-                // Cache announcements
-                if (Array.isArray(result.announcements)) {
-                    localStorage.setItem('announcements', JSON.stringify(result.announcements));
-                }
-
-                const userHouse = userData?.resident?.house_number || userData?.house_number || '';
                 renderAnnouncements(result.announcements || []);
-                renderPaymentInfo(result.outstanding || [], result.recentPayments || [], userHouse);
-
+                if (result.role === 'admin') {
+                    renderAdminDashboard(result.data || {});
+                } else {
+                    renderUserDashboard(result.data || {});
+                }
             } catch(e) {
-                console.warn('getDashboardData failed, falling back to localStorage', e);
-                const cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                const userHouse = cached.house_number || cached.resident?.house_number || '';
-                renderAnnouncements(JSON.parse(localStorage.getItem('announcements') || '[]'));
-                renderPaymentInfoFromStorage(userHouse);
+                console.warn('getDashboardData failed, fallback:', e);
+                renderAnnouncements([]);
+                var cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                if (cached.role === 'admin') renderAdminDashboard({});
+                else renderUserDashboard({});
             }
         }
 
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        };
-        document.getElementById('dashboardContainer').style.marginLeft = (window.innerWidth <= 600 ? '48px' : '62px');
-        window.addEventListener('resize', function() {
-            document.getElementById('dashboardContainer').style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        });
+        // Sidebar toggle — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'dashboard');
 
-        // Initialize on page load
-        window.onload = async function() {
-            await loadDashboard();
-        };
+        // Initialize
+        window.onload = async function() { await loadDashboard(); };
 
         function goToUploadSlip(periodKey, amount, isOutstanding) {
-            const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const unitNumber = localStorage.getItem('currentUserUnit')
-                || (userData.resident && userData.resident.house_number)
-                || userData.house_number || '';
-            const residentName = (userData.resident && (userData.resident.name || userData.resident.full_name))
-                || userData.name || userData.full_name || '';
-            const period = periodKey.substring(0, 4) + '-' + periodKey.substring(4, 6);
+            var userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            var unitNumber = userData.houseNumber || '';
+            var monthStr = periodKey.substring(4, 6);
+            var yearBE = periodKey.substring(0, 4);
+            var yearAD = String(parseInt(yearBE) - 543);
+            var period = yearAD + '-' + monthStr;
             localStorage.setItem('pendingSlipInfo', JSON.stringify({
-                unitNumber: unitNumber,
-                periodKey: periodKey,
-                period: period,
-                notifiedAmount: amount,
-                residentName: residentName,
-                isOutstanding: isOutstanding
+                unitNumber: unitNumber, periodKey: periodKey, period: period,
+                notifiedAmount: amount, isOutstanding: !!isOutstanding
             }));
             navigate('?page=upload-slip');
         }
 
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            var token = localStorage.getItem('sessionToken');
+            if (token && typeof callBackend === 'function') {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
-            navigate('?page=login');
+            navigate('login.html');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>
 

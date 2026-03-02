@@ -456,40 +456,7 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>
-        <nav class="sidebar-menu">
-            <button class="sidebar-link" onclick="navigate('?page=dashboard')">
-                <span class="sidebar-link-icon">🏠</span>
-                <span class="sidebar-label">แดชบอร์ด</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=payment-history')">
-                <span class="sidebar-link-icon">💸</span>
-                <span class="sidebar-label">ข้อมูลการชำระย้อนหลัง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=form')">
-                <span class="sidebar-link-icon">📝</span>
-                <span class="sidebar-label">แบบฟอร์มคำร้อง</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=regulations')">
-                <span class="sidebar-link-icon">📚</span>
-                <span class="sidebar-label">ระเบียบ</span>
-            </button>
-            <button class="sidebar-link" onclick="navigate('?page=settings')">
-                <span class="sidebar-link-icon">⚙️</span>
-                <span class="sidebar-label">ตั้งค่าส่วนตัว</span>
-            </button>
-            <button class="sidebar-link active" onclick="navigate('?page=team-management')">
-                <span class="sidebar-link-icon">👥</span>
-                <span class="sidebar-label">โปรแกรมบริหารจัดการ</span>
-            </button>
-            <button class="sidebar-link" onclick="doLogout()" style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">
-                <span class="sidebar-link-icon">🚪</span>
-                <span class="sidebar-label">ออกจากระบบ</span>
-            </button>
-
-        </nav>
-    </div>
+    <div id="ppkNav"></div>
 
     <!-- Main Content -->
     <div class="main-container" id="mainContainer">
@@ -833,15 +800,14 @@
 
         // โหลดข้อมูลจาก Backend
         async function loadAllRequests() {
-            if (WEB_APP_URL) {
-                try {
+            try {
                     const currentYear = new Date().getFullYear() + 543;
                     const [resResult, repResult, trfResult, retResult, queueResult] = await Promise.all([
-                        callBackendGet('getRequests', { type: 'residence', year: String(currentYear) }),
-                        callBackendGet('getRequests', { type: 'repair', year: String(currentYear) }),
-                        callBackendGet('getRequests', { type: 'transfer', year: String(currentYear) }),
-                        callBackendGet('getRequests', { type: 'return', year: String(currentYear) }),
-                        callBackendGet('getQueue')
+                        cachedCall('getRequests', { type: 'residence', year: String(currentYear) }, 120000),
+                        cachedCall('getRequests', { type: 'repair', year: String(currentYear) }, 120000),
+                        cachedCall('getRequests', { type: 'transfer', year: String(currentYear) }, 120000),
+                        cachedCall('getRequests', { type: 'return', year: String(currentYear) }, 120000),
+                        cachedCall('getQueue', {}, 300000)
                     ]);
 
                     if (resResult && resResult.success) cachedData.residence = resResult.data || [];
@@ -864,7 +830,6 @@
                 } catch (e) {
                     console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
                 }
-            }
             
             // ไม่มี Backend — แสดงข้อมูลว่าง
             cachedData.residence = [];
@@ -896,8 +861,7 @@
             }
             
             // ส่งไป Backend
-            if (WEB_APP_URL) {
-                try {
+            try {
                     await callBackend('reviewRequest', {
                         requestId: id,
                         type: type,
@@ -907,7 +871,6 @@
                 } catch (e) {
                     console.error('อัปเดตสถานะไม่สำเร็จ:', e);
                 }
-            }
         }
 
         // ========== Queue Functions ==========
@@ -927,9 +890,7 @@
             saveData('residence', data);
             
             // ส่งลำดับใหม่ไป Backend
-            if (WEB_APP_URL) {
-                callBackend('updateQueue', { orderedIds: orderedIds }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
-            }
+            callBackend('updateQueue', { orderedIds: orderedIds }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
         }
 
         function addToQueue(id) {
@@ -942,14 +903,12 @@
                 saveData('residence', data);
                 
                 // ส่งไป Backend
-                if (WEB_APP_URL) {
-                    callBackend('reviewRequest', {
+                callBackend('reviewRequest', {
                         requestId: id,
                         type: 'residence',
                         status: 'waiting',
                         queuePosition: item.queuePosition
                     }).catch(e => console.error('เพิ่มคิวไม่สำเร็จ:', e));
-                }
             }
         }
 
@@ -966,14 +925,12 @@
                 saveData('residence', data);
                 
                 // ส่งไป Backend
-                if (WEB_APP_URL) {
-                    callBackend('reviewRequest', {
+                callBackend('reviewRequest', {
                         requestId: id,
                         type: 'residence',
                         status: 'reviewing',
                         removeFromQueue: true
                     }).catch(e => console.error('ลบจากคิวไม่สำเร็จ:', e));
-                }
             }
         }
 
@@ -1622,10 +1579,10 @@
         }
 
         function viewAttachment(filename) {
-            if (WEB_APP_URL && filename.startsWith('http')) {
+            if (filename.startsWith('http')) {
                 window.open(filename, '_blank');
             } else {
-                ppkAlert(`เปิดไฟล์: ${filename}\n\n(ไฟล์จะเปิดได้เมื่อ Deploy Backend แล้ว)`);
+                ppkAlert(`เปิดไฟล์: ${filename}`);
             }
         }
 
@@ -1652,9 +1609,7 @@
             updateExpiryDisplay();
             
             // บันทึกไป Backend
-            if (WEB_APP_URL) {
-                callBackend('updateSettings', { queue_expiry_date: newDate }).catch(e => console.error(e));
-            }
+            callBackend('updateSettings', { queue_expiry_date: newDate }).catch(e => console.error(e));
             
             // ตรวจสอบและลบคิวที่หมดอายุอัตโนมัติ
             checkAndExpireQueue();
@@ -1710,16 +1665,14 @@
             const dateInput = document.getElementById('queueExpiryDate');
             
             // โหลดจาก Backend settings
-            if (WEB_APP_URL) {
-                try {
-                    const result = await callBackendGet('getSettings');
+            try {
+                    const result = await cachedCall('getSettings', {}, 600000);
                     if (result && result.success && result.data) {
                         _queueExpiryDate = result.data.queue_expiry_date || null;
                     }
                 } catch (e) {
                     console.error('โหลด queue expiry ไม่สำเร็จ:', e);
                 }
-            }
             
             const storedDate = getQueueExpiryDate();
             
@@ -1871,8 +1824,7 @@
                 saveData('residence', data);
 
                 // ส่งไป Backend
-                if (WEB_APP_URL) {
-                    try {
+                try {
                         await callBackend('reviewRequest', {
                             requestId: id,
                             type: 'residence',
@@ -1881,30 +1833,14 @@
                     } catch (e) {
                         console.error('อนุมัติไม่สำเร็จ:', e);
                     }
-                }
 
                 ppkAlert('อนุมัติเรียบร้อยแล้ว');
                 renderAll();
             }
         }
 
-        // ========== Sidebar Toggle ==========
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const mainContainer = document.getElementById('mainContainer');
-
-        sidebarToggle.onclick = function() {
-            sidebar.classList.toggle('expanded');
-            updateMainMargin();
-        };
-
-        function updateMainMargin() {
-            mainContainer.style.marginLeft = sidebar.classList.contains('expanded')
-                ? (window.innerWidth <= 600 ? '160px' : '280px')
-                : (window.innerWidth <= 600 ? '48px' : '62px');
-        }
-
-        window.addEventListener('resize', updateMainMargin);
+        // Sidebar — handled by ppk-nav.js
+        renderPPKNav('ppkNav', 'check-request');
 
         // ========== Initialize ==========
         document.addEventListener('DOMContentLoaded', async function() {
@@ -1912,19 +1848,19 @@
             await loadAllRequests();
             initQueueExpirySelector();
             renderAll();
-            updateMainMargin();
         });
     
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
             var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token && WEB_APP_URL) {
+            if (token) {
                 callBackend('logout', {}).catch(function(){});
             }
             localStorage.clear();
-            navigate('?page=login');
+            navigate('login.html');
         }
         </script>
-    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-app.js"></script>
+    <script src="ppk-utils.js"></script>
+    <script src="ppk-nav.js"></script></body>
 </html>

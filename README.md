@@ -4,7 +4,7 @@
 
 ## 📋 ภาพรวม
 
-HOME PPK 2026 เป็นระบบ Web Application สำหรับบริหารจัดการบ้านพักครูและแฟลต พัฒนาด้วย HTML/CSS/JavaScript และ Google Apps Script
+HOME PPK 2026 เป็นระบบ Web Application สำหรับบริหารจัดการบ้านพักครูและแฟลต พัฒนาด้วย HTML/CSS/JavaScript และ Supabase
 
 ## 🚀 Features หลัก
 
@@ -70,8 +70,8 @@ HOME PPK 2026/
 - **Font:** Google Fonts - Kanit
 - **PDF:** PDF.js
 - **Image:** html2canvas
-- **Backend (Planned):** Google Apps Script
-- **Database (Planned):** Google Sheets
+- **Backend:** Supabase (PostgreSQL)
+- **Database:** Supabase (PostgreSQL + Row Level Security)
 
 ## 📅 สถานะการพัฒนา
 
@@ -79,8 +79,7 @@ HOME PPK 2026/
 |-------|-------|
 | Frontend HTML/CSS/JS | ✅ เสร็จแล้ว |
 | localStorage Integration | ✅ เสร็จแล้ว |
-| Google Sheets Structure | ⏳ กำลังทำ |
-| Google Apps Script | ⏳ รอทำ |
+| Supabase Integration | ✅ เสร็จแล้ว |
 | Testing & Deploy | ⏳ รอทำ |
 
 ---
