@@ -380,7 +380,6 @@ async function _routeAction(action, data) {
             });
             return { success: true, data: row };
         }
-        }
         case 'deleteHousing': {
             await sbDelete('housing', { id: 'eq.' + data.id });
             return { success: true };
