@@ -15,7 +15,9 @@
 // ── Auto-inject: config → SDK → ppk-api → ppk-utils → ppk-nav ─────────────
 (function () {
   'use strict';
-  if (document.getElementById('_ppk_sdk')) return; // โหลดแล้ว
+  // ถ้า ppk-api.js โหลดจาก static <script> tags แล้ว → ไม่ต้อง inject ซ้ำ
+  if (document.getElementById('_ppk_sdk')) return;
+  if (typeof window._callBackendReal === 'function') return; // ppk-api.js โหลดผ่าน static tag แล้ว
 
   // คำนวณ base path จาก script src
   var basePath = (function () {
@@ -40,7 +42,7 @@
   loadScript(basePath + 'supabase/config.js', '_ppk_cfg', function () {
     // 2) Load Supabase JS SDK
     loadScript(
-      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+      basePath + 'supabase/supabase.min.js',
       '_ppk_sdk',
       function () {
         // 3) Load ppk-api.js (ใช้ SDK ที่โหลดแล้ว)
@@ -131,38 +133,45 @@ function apiCall(action, data, callback) {
  * callBackend(action, data) / callBackendGet(action, data)
  * Stub ที่พร้อมใช้ทันที — รอ ppk-api.js โหลดเสร็จโดยอัตโนมัติ (max 15s)
  */
-function callBackend(action, data) {
-  return new Promise(function (resolve, reject) {
-    var tries = 0;
-    var wait = setInterval(function () {
-      tries++;
-      if (typeof window._callBackendReal === 'function') {
-        clearInterval(wait);
-        window._callBackendReal(action, data || {}).then(resolve).catch(reject);
-      } else if (tries > 150) {
-        clearInterval(wait);
-        reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
-      }
-    }, 100);
-  });
+// callBackend / callBackendGet / cachedCall
+// ppk-api.js (โหลดก่อน ppk-app.js) จะ define ฟังก์ชันเหล่านี้จริงๆ
+// ถ้ายังไม่มี (หน้าที่ไม่มี static tag) สร้าง stub รอ _callBackendReal
+if (typeof window.callBackend !== 'function') {
+  window.callBackend = function callBackend(action, data) {
+    return new Promise(function (resolve, reject) {
+      var tries = 0;
+      var wait = setInterval(function () {
+        tries++;
+        if (typeof window._callBackendReal === 'function') {
+          clearInterval(wait);
+          window._callBackendReal(action, data || {}).then(resolve).catch(reject);
+        } else if (tries > 200) {
+          clearInterval(wait);
+          reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+        }
+      }, 100);
+    });
+  };
 }
 
-function callBackendGet(action, data) {
-  return callBackend(action, data);
+if (typeof window.callBackendGet !== 'function') {
+  window.callBackendGet = window.callBackend;
 }
 
-function cachedCall(action, data, ttl) {
-  return new Promise(function (resolve, reject) {
-    var tries = 0;
-    var wait = setInterval(function () {
-      tries++;
-      if (typeof window._cachedCallReal === 'function') {
-        clearInterval(wait);
-        window._cachedCallReal(action, data || {}, ttl).then(resolve).catch(reject);
-      } else if (tries > 150) {
-        clearInterval(wait);
-        reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
-      }
-    }, 100);
-  });
+if (typeof window.cachedCall !== 'function') {
+  window.cachedCall = function cachedCall(action, data, ttl) {
+    return new Promise(function (resolve, reject) {
+      var tries = 0;
+      var wait = setInterval(function () {
+        tries++;
+        if (typeof window._cachedCallReal === 'function') {
+          clearInterval(wait);
+          window._cachedCallReal(action, data || {}, ttl).then(resolve).catch(reject);
+        } else if (tries > 200) {
+          clearInterval(wait);
+          reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+        }
+      }, 100);
+    });
+  };
 }
