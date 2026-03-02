@@ -916,7 +916,10 @@ async function _routeAction(action, data) {
         case 'addResident': {
             var email = (data.email || '').trim().toLowerCase();
             var uid = 'USR-' + Date.now().toString(36).toUpperCase();
-            var pwRaw = data.password ? atob(data.password) : '';
+            var pwRaw = '';
+            if (data.password) {
+                try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
+            }
             var pwHash = pwRaw ? await sha256hex(pwRaw) : await sha256hex('changeme123');
             // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
             await sbPost('users', {
