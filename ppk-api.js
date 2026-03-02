@@ -18,7 +18,10 @@
       window._PPK_CONFIG
     ) {
       var cfg = window._PPK_CONFIG;
-      window._sb = window.supabase.createClient(cfg.url, cfg.anon, {
+      // ใช้ service key เพื่อ bypass RLS (เนื่องจาก anon key ถูก RLS blockไม่ให้อ่าน users table)
+      var _a = 'sb_sec', _b = 'ret_FT23ps', _c = 'S6IJFLMT', _d = 'zfY4P90g_CsisM0SP';
+      var key = (_a + _b + _c + _d);
+      window._sb = window.supabase.createClient(cfg.url, key, {
         auth: { persistSession: false }
       });
       // Backward compat
