@@ -181,6 +181,32 @@
     <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
     <script src="ppk-app.js"></script>
     <script src="ppk-utils.js"></script>
+    <!-- Fallback: ถ้า ppk-app.js เก่าไม่มี stub → สร้างเอง -->
+    <script>
+    (function() {
+        function _makeStub(fn) {
+            return function(action, data) {
+                return new Promise(function(resolve, reject) {
+                    var tries = 0;
+                    var t = setInterval(function() {
+                        tries++;
+                        var real = window._callBackendReal;
+                        if (typeof real === 'function') {
+                            clearInterval(t);
+                            real(action, data || {}).then(resolve).catch(reject);
+                        } else if (tries > 200) {
+                            clearInterval(t);
+                            reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+                        }
+                    }, 100);
+                });
+            };
+        }
+        if (typeof callBackend !== 'function')    window.callBackend    = _makeStub();
+        if (typeof callBackendGet !== 'function') window.callBackendGet = _makeStub();
+        if (typeof cachedCall !== 'function')     window.cachedCall     = function(a,d) { return _makeStub()(a,d); };
+    })();
+    </script>
 
     <!-- First-Login Modal -->
     <div id="firstLoginOverlay">

@@ -2,6 +2,49 @@
  * PPK Utils — Beautiful Modal Dialogs
  * แทนที่ confirm() และ alert() ของ Browser ด้วย Modal สวยๆ
  */
+
+/* ══════════════════════════════════════════════════════════════
+   callBackend / callBackendGet / cachedCall — Stubs
+   กำหนดที่นี่ถ้า ppk-app.js เก่าไม่ได้กำหนดไว้
+   โดย poll รอ window._callBackendReal (set โดย ppk-api.js)
+══════════════════════════════════════════════════════════════ */
+(function () {
+    function _makeApiStub() {
+        return function (action, data) {
+            return new Promise(function (resolve, reject) {
+                var tries = 0;
+                var t = setInterval(function () {
+                    tries++;
+                    if (typeof window._callBackendReal === 'function') {
+                        clearInterval(t);
+                        window._callBackendReal(action, data || {}).then(resolve).catch(reject);
+                    } else if (tries > 200) {
+                        clearInterval(t);
+                        reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+                    }
+                }, 100);
+            });
+        };
+    }
+    if (typeof window.callBackend    !== 'function') window.callBackend    = _makeApiStub();
+    if (typeof window.callBackendGet !== 'function') window.callBackendGet = _makeApiStub();
+    if (typeof window.cachedCall     !== 'function') window.cachedCall     = function (a, d) {
+        return new Promise(function (resolve, reject) {
+            var tries = 0;
+            var t = setInterval(function () {
+                tries++;
+                if (typeof window._cachedCallReal === 'function') {
+                    clearInterval(t);
+                    window._cachedCallReal(a, d || {}).then(resolve).catch(reject);
+                } else if (tries > 200) {
+                    clearInterval(t);
+                    reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+                }
+            }, 100);
+        });
+    };
+})();
+
 (function () {
   /* ──────────────────────────────────────────
      Inject CSS
