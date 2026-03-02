@@ -113,9 +113,9 @@ function apiCall(action, data, callback) {
   var tries = 0;
   var wait = setInterval(function () {
     tries++;
-    if (typeof callBackend === 'function') {
+    if (typeof window._callBackendReal === 'function') {
       clearInterval(wait);
-      callBackend(action, data || {}).then(function (r) {
+      window._callBackendReal(action, data || {}).then(function (r) {
         if (callback) callback(r);
       }).catch(function (err) {
         if (callback) callback({ success: false, message: err.message || String(err) });
@@ -125,4 +125,44 @@ function apiCall(action, data, callback) {
       if (callback) callback({ success: false, message: 'ไม่สามารถโหลด PPK API ได้ กรุณารีเฟรชหน้า' });
     }
   }, 100);
+}
+
+/**
+ * callBackend(action, data) / callBackendGet(action, data)
+ * Stub ที่พร้อมใช้ทันที — รอ ppk-api.js โหลดเสร็จโดยอัตโนมัติ (max 15s)
+ */
+function callBackend(action, data) {
+  return new Promise(function (resolve, reject) {
+    var tries = 0;
+    var wait = setInterval(function () {
+      tries++;
+      if (typeof window._callBackendReal === 'function') {
+        clearInterval(wait);
+        window._callBackendReal(action, data || {}).then(resolve).catch(reject);
+      } else if (tries > 150) {
+        clearInterval(wait);
+        reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+      }
+    }, 100);
+  });
+}
+
+function callBackendGet(action, data) {
+  return callBackend(action, data);
+}
+
+function cachedCall(action, data, ttl) {
+  return new Promise(function (resolve, reject) {
+    var tries = 0;
+    var wait = setInterval(function () {
+      tries++;
+      if (typeof window._cachedCallReal === 'function') {
+        clearInterval(wait);
+        window._cachedCallReal(action, data || {}, ttl).then(resolve).catch(reject);
+      } else if (tries > 150) {
+        clearInterval(wait);
+        reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
+      }
+    }, 100);
+  });
 }

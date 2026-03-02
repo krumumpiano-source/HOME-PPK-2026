@@ -1177,3 +1177,9 @@ async function cachedCall(action, params, ttlMs) {
     }
     return r;
 }
+
+/* ══════════════════════════════════════════
+   Register real implementations for ppk-app.js stubs
+══════════════════════════════════════════ */
+window._callBackendReal = callBackend;
+window._cachedCallReal  = cachedCall;
