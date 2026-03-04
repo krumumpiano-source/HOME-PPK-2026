@@ -7,7 +7,7 @@
  * ลำดับการโหลดอัตโนมัติ:
  *   1. supabase/config.js  — Supabase URL + anon key
  *   2. Supabase JS SDK     — จาก CDN
- *   3. ppk-api.js          — ฟังก์ชัน callBackend, ppkLogin ฯลฯ
+ *   3. ppk-api.js          — ฟังก์ชัน callBackend, callBackendGet ฯลฯ
  *   4. ppk-utils.js        — Modal dialogs (ppkAlert, ppkConfirm)
  *   5. ppk-nav.js          — Sidebar renderer (renderPPKNav)
  */

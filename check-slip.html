@@ -1170,7 +1170,6 @@ ${emailSig}
 
     window.onload = async function(){
       const user = await checkSession();
-      if (!user) return;
       currentUserData = user;
 
       // ดึง adminSettings จาก Backend

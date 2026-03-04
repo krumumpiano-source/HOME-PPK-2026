@@ -252,50 +252,23 @@ async function ppkRegister(data) {
 }
 
 /* ══════════════════════════════════════════
-   SESSION CHECK
+   SESSION CHECK — ไม่ใช้ระบบ login, คืน admin เสมอ
 ══════════════════════════════════════════ */
 async function checkSession() {
-    var token = localStorage.getItem('sessionToken');
-    if (!token) {
-        // ไม่ตรวจสอบ login — ใช้ default admin
-        return { id: 'USR-GUEST', email: 'admin@ppk.local', firstname: 'ผู้ดูแล', lastname: 'ระบบ', role: 'admin', is_active: true };
-    }
-
-    var SESSION_CACHE_TTL = 120000;
-    var ck = 'sessCache_' + token;
     try {
-        var sc = JSON.parse(localStorage.getItem(ck) || 'null');
-        if (sc && sc.t && (Date.now() - sc.t) < SESSION_CACHE_TTL) return sc.u;
+        var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        if (stored && stored.id) return stored;
     } catch(e) {}
-
-    try {
-        var sessions = await sbGet('sessions', {
-            token: 'eq.' + token,
-            select: 'user_id,role,resident_id,house_number,expires_at'
-        });
-        if (!sessions || sessions.length === 0 || new Date(sessions[0].expires_at) < new Date()) {
-            // session หมดอายุ — ใช้ currentUser จาก localStorage
-            return JSON.parse(localStorage.getItem('currentUser') || 'null');
-        }
-        var sess = sessions[0];
-        var users = await sbGet('users', { id: 'eq.' + sess.user_id, select: 'id,email,firstname,lastname,role' });
-        var user = users && users[0];
-        if (!user) { return JSON.parse(localStorage.getItem('currentUser') || 'null'); }
-        var userData = {
-            id: user.id, email: user.email, role: sess.role || user.role,
-            firstname: user.firstname, lastname: user.lastname,
-            residentId: sess.resident_id || '', houseNumber: sess.house_number || ''
-        };
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        try { localStorage.setItem(ck, JSON.stringify({ t: Date.now(), u: userData })); } catch(e) {}
-        // แจ้งเตือนใกล้หมดเซสชัน
-        if (sess.expires_at && typeof window.ppkWatchSession === 'function') {
-            window.ppkWatchSession(sess.expires_at);
-        }
-        return userData;
-    } catch(err) {
-        return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    var defaultUser = {
+        id: 'USR-GUEST', email: 'admin@ppk.local',
+        firstname: 'ผู้ดูแล', lastname: 'ระบบ',
+        role: 'admin', is_active: true
+    };
+    localStorage.setItem('currentUser', JSON.stringify(defaultUser));
+    if (!localStorage.getItem('sessionToken')) {
+        localStorage.setItem('sessionToken', 'guest-admin-session');
     }
+    return defaultUser;
 }
 
 /* ══════════════════════════════════════════
@@ -319,26 +292,19 @@ async function callBackendGet(action, params) {
 ══════════════════════════════════════════ */
 async function _routeAction(action, data) {
     switch (action) {
-        case 'login':    return ppkLogin(data.email, data.password);
         case 'logout':   return ppkLogout();
         case 'register': return ppkRegister(data);
 
         case 'getCurrentUser': {
-            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
-            if (!sess || !sess[0]) return { success: false, error: 'SESSION_EXPIRED' };
-            var u = await sbGet('users', { id: 'eq.' + sess[0].user_id });
-            return { success: true, user: u[0] };
+            // คืน user จาก localStorage (no-auth mode)
+            var u = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!u) u = await checkSession();
+            return { success: true, user: u };
         }
 
         case 'changePassword': {
-            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
-            if (!sess || !sess[0]) return { success: false, error: 'SESSION_EXPIRED' };
-            var oldHash = await sha256hex(data.oldPassword || '');
-            var u = await sbGet('users', { id: 'eq.' + sess[0].user_id, select: 'password_hash' });
-            if (!u[0] || u[0].password_hash !== oldHash) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
-            var newHash = await sha256hex(data.newPassword || '');
-            await sbPatch('users', { id: 'eq.' + sess[0].user_id }, { password_hash: newHash });
-            return { success: true };
+            // ไม่มีระบบรหัสผ่านในโหมดนี้
+            return { success: false, error: 'ระบบไม่ใช้รหัสผ่าน' };
         }
 
         case 'getHousing': {

@@ -806,7 +806,6 @@
         // โหลดข้อมูลเมื่อเปิดหน้า
         window.onload = async function() {
             const user = await checkSession();
-            if (!user) return;
 
             // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport (ชื่อผู้ลงนาม)
             try {

@@ -610,7 +610,6 @@
         // ============ Init ============
         window.onload = async function() {
             const user = await checkSession();
-            if (!user) return;
             // ตั้งเดือนปัจจุบัน
             document.getElementById('month').value = String(new Date().getMonth() + 1).padStart(2, '0');
             await loadPaymentHistory();

@@ -371,29 +371,4 @@
   };
 })();
 
-/* ══════════════════════════════════════════════════════════
-   SESSION EXPIRY WARNING
-   เรียกหลัง checkSession() สำเร็จ — แจ้งเตือน 5 นาทีก่อน หมดอายุ
-══════════════════════════════════════════════════════════ */
-(function () {
-  var _warned = false;
-  var _interval = null;
-
-  window.ppkWatchSession = function (expiresAt) {
-    if (_interval) clearInterval(_interval);
-    _warned = false;
-    var expireMs = new Date(expiresAt).getTime();
-
-    _interval = setInterval(function () {
-      var remaining = expireMs - Date.now();
-      if (remaining <= 0) {
-        clearInterval(_interval);
-        // ไม่ redirect ไป login — session ไม่หมดอายุในโหมด no-auth
-        return;
-      } else if (!_warned && remaining < 5 * 60 * 1000) {
-        _warned = true;
-        ppkToast('⏰ เซสชันจะหมดอายุใน 5 นาที', 'warning', 8000);
-      }
-    }, 30000); // ตรวจทุก 30 วินาที
-  };
-})();
+// (ppkWatchSession ถูกลบออกแล้ว — ไม่ใช้ระบบ session expiry ในโหมด no-auth)

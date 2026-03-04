@@ -4525,9 +4525,7 @@
 
         // ========== Initialize ==========
         window.onload = async function() {
-            // Check session first
             const user = await checkSession();
-            if (!user) return;
             
             // Load from localStorage first (instant UI)
             loadAllSettings();

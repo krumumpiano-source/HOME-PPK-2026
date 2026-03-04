@@ -490,7 +490,6 @@
         // โหลดข้อมูลเมื่อเปิดหน้า
         window.onload = async function(){
             const user = await checkSession();
-            if (!user) return;
             // อัปเดต unitNumber จาก user ถ้ายังว่าง
             if (!unitNumber) {
                 unitNumber = (user.resident && user.resident.house_number)
