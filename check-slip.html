@@ -1031,8 +1031,9 @@ ${emailSig}
       yearSelect.value = String(yearBE);
     }
 
-    // Sidebar — handled by ppk-nav.js
-    renderPPKNav('ppkNav', 'check-slip');
+    // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+    window._ppkNavPage = 'check-slip';
+    if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'check-slip'); }
 
     // ปิด modal เมื่อคลิกนอก
     document.getElementById('detailModal').addEventListener('click', function(e){
@@ -1189,12 +1190,8 @@ ${emailSig}
   
         async function doLogout() {
             if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('login.html');
+        async function doLogout() {
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

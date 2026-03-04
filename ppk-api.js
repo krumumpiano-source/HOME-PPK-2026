@@ -224,12 +224,8 @@ async function ppkLogin(email, password) {
 }
 
 async function ppkLogout() {
-    var token = getSessionToken();
-    if (token) {
-        try { await sbDelete('sessions', { token: 'eq.' + token }); } catch(e) {}
-    }
-    localStorage.clear();
-    window.location.href = 'login.html';
+    // ไม่ logout — redirect กลับ dashboard
+    window.location.href = 'dashboard.html';
 }
 
 async function ppkRegister(data) {
@@ -260,7 +256,10 @@ async function ppkRegister(data) {
 ══════════════════════════════════════════ */
 async function checkSession() {
     var token = localStorage.getItem('sessionToken');
-    if (!token) { navigate('login.html'); return null; }
+    if (!token) {
+        // ไม่ตรวจสอบ login — ใช้ default admin
+        return { id: 'USR-GUEST', email: 'admin@ppk.local', firstname: 'ผู้ดูแล', lastname: 'ระบบ', role: 'admin', is_active: true };
+    }
 
     var SESSION_CACHE_TTL = 120000;
     var ck = 'sessCache_' + token;
@@ -275,12 +274,13 @@ async function checkSession() {
             select: 'user_id,role,resident_id,house_number,expires_at'
         });
         if (!sessions || sessions.length === 0 || new Date(sessions[0].expires_at) < new Date()) {
-            localStorage.clear(); navigate('login.html'); return null;
+            // session หมดอายุ — ใช้ currentUser จาก localStorage
+            return JSON.parse(localStorage.getItem('currentUser') || 'null');
         }
         var sess = sessions[0];
         var users = await sbGet('users', { id: 'eq.' + sess.user_id, select: 'id,email,firstname,lastname,role' });
         var user = users && users[0];
-        if (!user) { localStorage.clear(); navigate('login.html'); return null; }
+        if (!user) { return JSON.parse(localStorage.getItem('currentUser') || 'null'); }
         var userData = {
             id: user.id, email: user.email, role: sess.role || user.role,
             firstname: user.firstname, lastname: user.lastname,

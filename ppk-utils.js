@@ -388,11 +388,8 @@
       var remaining = expireMs - Date.now();
       if (remaining <= 0) {
         clearInterval(_interval);
-        ppkToast('เซสชันหมดอายุ — กำลังนำคุณออกจากระบบ...', 'warning', 5000);
-        setTimeout(function () {
-          localStorage.clear();
-          window.location.href = 'login.html';
-        }, 3000);
+        // ไม่ redirect ไป login — session ไม่หมดอายุในโหมด no-auth
+        return;
       } else if (!_warned && remaining < 5 * 60 * 1000) {
         _warned = true;
         ppkToast('⏰ เซสชันจะหมดอายุใน 5 นาที', 'warning', 8000);

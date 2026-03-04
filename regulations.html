@@ -437,8 +437,9 @@
         const zoomOutBtn = document.getElementById('zoomOut');
         const downloadBtn = document.getElementById('downloadPdf');
 
-        // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'regulations');
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'regulations';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'regulations'); }
 
         // ========== Load PDF ==========
         async function loadRegulationsPdf() {
@@ -647,13 +648,7 @@
         };
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('?page=login');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

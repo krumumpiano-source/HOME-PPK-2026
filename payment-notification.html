@@ -154,8 +154,9 @@
     <div class="loading-overlay" id="loadingOverlay"><div class="loading-box"><div class="spinner"></div><div>กำลังบันทึกรูปภาพ...</div></div></div>
 
     <script>
-        // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'payment-notification');
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'payment-notification';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'payment-notification'); }
 
         var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
         var now = new Date();
@@ -357,13 +358,7 @@
         };
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('?page=login');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

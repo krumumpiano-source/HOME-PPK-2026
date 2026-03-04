@@ -317,16 +317,15 @@
         </div>
         <script>
 
-        // ตรวจสอบ session + สิทธิ์จาก Backend
+        // ตรวจสอบสิทธิ์จาก Backend
         async function checkPermission() {
-            const token = localStorage.getItem('sessionToken');
-            if (!token) { window.navigate('login.html'); return; }
-
+            // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
             try {
-                    // ตรวจ session
+                    // ตรวจสิทธิ์: ต้องเป็น admin หรือ team_member
                     const userResult = await callBackendGet('getCurrentUser');
                     if (!userResult || !userResult.success) {
-                        localStorage.clear(); window.navigate('login.html'); return;
+                        document.getElementById('noPermissionMsg').style.display = '';
+                        return;
                     }
 
                     // ตรวจสิทธิ์: ต้องเป็น admin หรือ team_member
@@ -351,17 +350,12 @@
     </div>
 
     <script>
-        // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'team-management');
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'team-management';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'team-management'); }
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('?page=login');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

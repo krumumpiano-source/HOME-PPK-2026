@@ -1263,13 +1263,7 @@
         }
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('login.html');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

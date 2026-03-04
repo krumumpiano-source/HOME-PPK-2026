@@ -478,8 +478,9 @@
 
     <script>
 
-        // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'record-water');
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'record-water';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'record-water'); }
         
         // ตั้งค่าเดือนปัจจุบัน
         const now = new Date();
@@ -908,13 +909,7 @@
         }
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('?page=login');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

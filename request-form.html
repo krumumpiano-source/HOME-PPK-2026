@@ -293,14 +293,11 @@
     <script src="ppk-nav.js"></script>
 <script>
     // Sidebar — handled by ppk-nav.js
-    renderPPKNav('ppkNav', 'request-form');
+    window._ppkNavPage = 'request-form';
+    if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'request-form'); }
 
     async function doLogout() {
-        if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-        var token = localStorage.getItem('sessionToken') || '';
-        if (token) callBackend('logout', {}).catch(function(){});
-        localStorage.clear();
-        navigate('?page=login');
+        window.location.replace('dashboard.html');
     }
 
     function toggleResidentFields() {
@@ -357,8 +354,7 @@
 
     // ── Session Check + Auto-fill ──
     async function initPage() {
-        const token = localStorage.getItem('sessionToken');
-        if (!token) { navigate('login.html'); return; }
+        // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
 
         // ลอง auto-fill จาก cache ก่อน
         const cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -366,7 +362,7 @@
 
         try {
             const result = await callBackendGet('getCurrentUser');
-            if (!result || !result.success) { localStorage.clear(); navigate('?page=login'); return; }
+            if (!result || !result.success) { return; }
             const user = result.user || result.data;
             if (user) {
                 localStorage.setItem('currentUser', JSON.stringify(user));

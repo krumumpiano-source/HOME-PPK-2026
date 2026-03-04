@@ -690,16 +690,11 @@
         }
         
         // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'monthly-withdraw');
+        window._ppkNavPage = 'monthly-withdraw';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'monthly-withdraw'); }
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('?page=login');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

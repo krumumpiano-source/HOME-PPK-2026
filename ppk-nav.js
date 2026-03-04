@@ -76,13 +76,8 @@ function renderPPKNav(containerId, activePage) {
     navBtn('team-management', '👥', 'โปรแกรมบริหารจัดการ')
   );
 
-  // ── ปุ่ม logout ──────────────────────────────────────────────────
-  var logoutBtn =
-    '<button class="sidebar-link" onclick="doLogout()" ' +
-      'style="margin-top:auto;border-top:1px solid rgba(255,255,255,0.12);color:#fca5a5;">' +
-      '<span class="sidebar-link-icon">🚪</span>' +
-      '<span class="sidebar-label">ออกจากระบบ</span>' +
-    '</button>';
+  // ── ปุ่ม logout — ซ่อนไว้เนื่องจากไม่ใช้ระบบ login ────────────────
+var logoutBtn = ''; // ไม่แสดงปุ่ม logout
 
   // ── user info badge ───────────────────────────────────────────────
   var userBadge = displayName
@@ -190,18 +185,20 @@ function renderPPKNav(containerId, activePage) {
   window.addEventListener('resize', updateMargin);
 }
 
-// ── doLogout helper (ถ้าหน้าไม่ได้นิยามไว้) ──────────────────────────
+// ── doLogout helper (ปิดการออกจากระบบ — ไม่ใช้ระบบ login) ────────────
 if (typeof window.doLogout === 'undefined') {
-  window.doLogout = async function () {
-    var confirmed = (typeof ppkConfirm === 'function')
-      ? await ppkConfirm('ยืนยันออกจากระบบ?', { type: 'danger' })
-      : confirm('ยืนยันออกจากระบบ?');
-    if (!confirmed) return;
-    var token = localStorage.getItem('sessionToken');
-    if (token && typeof callBackend === 'function') {
-      try { await callBackend('logout', {}); } catch (e) {}
-    }
-    localStorage.clear();
-    window.location.replace('login.html');
+  window.doLogout = function () {
+    window.location.replace('dashboard.html');
   };
 }
+
+// ── Auto-render: เรียก renderPPKNav อัตโนมัติเมื่อ ppk-nav.js โหลด ──────
+// แก้ปัญหา script order: inline scripts เรียก renderPPKNav ก่อน ppk-nav.js โหลด
+(function () {
+  var nav = document.getElementById('ppkNav');
+  if (!nav || nav.hasChildNodes()) return;
+  // ตรวจ page hint จาก inline script, fallback จาก URL
+  var page = window._ppkNavPage ||
+    (window.location.pathname.split('/').pop() || 'dashboard.html').replace('.html', '');
+  try { renderPPKNav('ppkNav', page); } catch (e) {}
+})();

@@ -560,11 +560,10 @@
 
     // ============ Session + Auto-fill ============
     async function initPage() {
-        const token = localStorage.getItem('sessionToken');
-        if (!token) { window.navigate('login.html'); return; }
+        // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
         try {
             const result = await callBackendGet('getCurrentUser');
-            if (!result || !result.success) { localStorage.clear(); window.navigate('?page=login'); return; }
+            if (!result || !result.success) { return; }
             const resident = result.user.resident || {};
             const form = document.querySelector('select[name="prefix"]');
             if (form && resident.prefix) form.value = resident.prefix;

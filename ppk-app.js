@@ -72,23 +72,38 @@ function navigate(page) {
 
 /**
  * requireAuth()
- * ตรวจสอบ session — redirect ไป login.html ถ้ายังไม่ล็อกอิน
+ * ปิดการตรวจสอบ session — เข้าใช้งานได้ทันทีโดยไม่ต้องล็อกอิน
  */
 function requireAuth() {
+  // ถ้ายังไม่มี session ให้สร้าง default admin session อัตโนมัติ
   if (!localStorage.getItem('sessionToken')) {
-    window.location.replace('login.html');
+    localStorage.setItem('sessionToken', 'guest-admin-session');
+    localStorage.setItem('currentUser', JSON.stringify({
+      id: 'USR-GUEST',
+      email: 'admin@ppk.local',
+      firstname: 'ผู้ดูแล',
+      lastname: 'ระบบ',
+      role: 'admin',
+      is_active: true
+    }));
   }
 }
 
 /**
  * getCurrentUser() → Object
- * คืนข้อมูล user จาก localStorage
+ * คืนข้อมูล user จาก localStorage — ถ้าไม่มีให้ใช้ admin เริ่มต้น
  */
 function getCurrentUser() {
   try {
-    return JSON.parse(localStorage.getItem('currentUser') || '{}');
+    var u = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!u || !u.id) {
+      u = { id: 'USR-GUEST', email: 'admin@ppk.local', firstname: 'ผู้ดูแล', lastname: 'ระบบ', role: 'admin', is_active: true };
+      localStorage.setItem('currentUser', JSON.stringify(u));
+      if (!localStorage.getItem('sessionToken')) localStorage.setItem('sessionToken', 'guest-admin-session');
+    }
+    return u;
   } catch (e) {
-    return {};
+    return { id: 'USR-GUEST', email: 'admin@ppk.local', firstname: 'ผู้ดูแล', lastname: 'ระบบ', role: 'admin', is_active: true };
   }
 }
 

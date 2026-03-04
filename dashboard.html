@@ -426,13 +426,12 @@
 
         /* ── Load Dashboard ── */
         async function loadDashboard() {
-            var token = getSessionToken ? getSessionToken() : localStorage.getItem('sessionToken');
-            if (!token) { navigate('login.html'); return; }
+            // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
 
             try {
                 var result = await cachedCall('getDashboardData', {}, 60000);
                 if (!result || !result.success) {
-                    localStorage.clear(); navigate('login.html'); return;
+                    return;
                 }
                 renderAnnouncements(result.announcements || []);
                 if (result.role === 'admin') {
@@ -449,8 +448,9 @@
             }
         }
 
-        // Sidebar toggle — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'dashboard');
+        // Sidebar toggle — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'dashboard';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'dashboard'); }
 
         // Initialize
         window.onload = async function() { await loadDashboard(); };
@@ -470,13 +470,7 @@
         }
 
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = localStorage.getItem('sessionToken');
-            if (token && typeof callBackend === 'function') {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('login.html');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

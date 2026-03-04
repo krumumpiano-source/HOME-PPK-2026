@@ -515,17 +515,12 @@
             document.querySelector('.tab-btn[data-tab="' + tabId + '"]').classList.add('active');
         }
 
-        // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'form');
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'form';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'form'); }
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('login.html');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>

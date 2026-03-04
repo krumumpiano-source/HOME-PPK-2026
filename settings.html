@@ -819,8 +819,9 @@
 
     <script>
 
-        // Sidebar — handled by ppk-nav.js
-        renderPPKNav('ppkNav', 'settings');
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        window._ppkNavPage = 'settings';
+        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'settings'); }
 
         // โหลดข้อมูลจาก Backend (fallback: localStorage)
         async function loadUserData() {
@@ -1344,13 +1345,7 @@
         };
     
         async function doLogout() {
-            if (!await ppkConfirm('ยืนยันออกจากระบบ?')) return;
-            var token = getSessionToken ? getSessionToken() : (localStorage.getItem('sessionToken') || '');
-            if (token) {
-                callBackend('logout', {}).catch(function(){});
-            }
-            localStorage.clear();
-            navigate('?page=login');
+            window.location.replace('dashboard.html');
         }
         </script>
     <script src="supabase/config.js"></script>
