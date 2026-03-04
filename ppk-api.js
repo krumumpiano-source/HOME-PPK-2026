@@ -284,8 +284,8 @@ async function _routeAction(action, data) {
                     type: h.type || 'house',
                     number: h.house_number || '',
                     house_number: h.house_number || '',
-                    display_number: h.display_number || (prefix + ' ' + (h.house_number || '')),
-                    displayNumber: h.display_number || (prefix + ' ' + (h.house_number || '')),
+                    display_number: h.display_number || h.house_number || '',
+                    displayNumber: h.display_number || h.house_number || ''
                     zone: h.building || h.zone || '',
                     building: h.building || '',
                     floor: h.floor || '',
@@ -335,12 +335,37 @@ async function _routeAction(action, data) {
             }
             var userMap = {};
             (users || []).forEach(function(u) { userMap[u.id] = u; });
+            // ดึง coresidents ทั้งหมดในคราวเดียว
+            var residentIds = (rows || []).map(function(r) { return r.id; }).filter(Boolean);
+            var allCoresidents = [];
+            if (residentIds.length > 0) {
+                try {
+                    allCoresidents = await sbGet('coresidents', {
+                        resident_id: 'in.(' + residentIds.join(',') + ')',
+                        select: 'resident_id,prefix,firstname,lastname,relation'
+                    });
+                } catch(e) { allCoresidents = []; }
+            }
+            // จัดกลุ่ม coresidents ตาม resident_id
+            var coresidentMap = {};
+            (allCoresidents || []).forEach(function(c) {
+                if (!coresidentMap[c.resident_id]) coresidentMap[c.resident_id] = [];
+                coresidentMap[c.resident_id].push({
+                    prefix: c.prefix || '',
+                    firstname: c.firstname || '',
+                    lastname: c.lastname || '',
+                    relation: c.relation || 'ครอบครัว'
+                });
+            });
             var merged = (rows || []).map(function(r) {
                 var u = userMap[r.user_id] || {};
+                var cos = coresidentMap[r.id] || [];
                 return Object.assign({}, r, {
                     email: r.email || u.email || '',
                     phone: r.phone || u.phone || '',
-                    position: r.position || u.position || ''
+                    position: r.position || u.position || '',
+                    cohabitants: cos.length,
+                    cohabitant_names: JSON.stringify(cos)
                 });
             });
             return { success: true, data: merged };
