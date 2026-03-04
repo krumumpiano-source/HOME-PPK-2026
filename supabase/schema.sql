@@ -381,7 +381,7 @@ insert into public.settings (key, value) values
   ('electric_rounding',   'ceil'),
   ('water_min_charge',    '0'),
   ('water_rounding',      'none'),
-  ('require_login',       'true'),
+  ('require_login',       'false'),  -- no-auth mode
   ('allow_reset_password','true'),
   ('allow_registration',  'true'),
   ('queue_expiry_days',   '180')

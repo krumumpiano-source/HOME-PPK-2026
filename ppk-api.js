@@ -18,10 +18,8 @@
       window._PPK_CONFIG
     ) {
       var cfg = window._PPK_CONFIG;
-      // ใช้ service key เพื่อ bypass RLS (เนื่องจาก anon key ถูก RLS blockไม่ให้อ่าน users table)
-      var _a = 'sb_sec', _b = 'ret_FT23ps', _c = 'S6IJFLMT', _d = 'zfY4P90g_CsisM0SP';
-      var key = (_a + _b + _c + _d);
-      window._sb = window.supabase.createClient(cfg.url, key, {
+      // ใช้ anon key — RLS policies เปิดให้ anon เข้าถึงได้ (no-auth mode)
+      window._sb = window.supabase.createClient(cfg.url, cfg.anon, {
         auth: { persistSession: false }
       });
       // Backward compat
@@ -189,39 +187,9 @@ async function sha256hex(str) {
 }
 
 /* ══════════════════════════════════════════
-   AUTH — Login / Logout / Register / Session
+   AUTH — Register / Logout / Session
+   (ppkLogin ถูกลบออกแล้ว — ระบบไม่ใช้การ Login)
 ══════════════════════════════════════════ */
-
-async function ppkLogin(email, password) {
-    email = (email || '').trim().toLowerCase();
-    var users = await sbGet('users', {
-        email: 'eq.' + email, is_active: 'eq.true',
-        select: 'id,email,role,firstname,lastname,password_hash'
-    });
-    if (!users || users.length === 0) throw new Error('ไม่พบบัญชีผู้ใช้');
-    var user = users[0];
-    var hash = await sha256hex(password);
-    if (hash !== user.password_hash) throw new Error('รหัสผ่านไม่ถูกต้อง');
-    var session = await sbPost('sessions', { user_id: user.id, role: user.role });
-    var residents = await sbGet('residents', {
-        user_id: 'eq.' + user.id, is_active: 'eq.true', select: 'id,house_number', limit: '1'
-    });
-    var resident = residents && residents[0];
-    if (resident) {
-        await sbPatch('sessions', { token: 'eq.' + session.token }, {
-            resident_id: resident.id, house_number: resident.house_number
-        });
-    }
-    var userData = {
-        id: user.id, email: user.email, role: user.role,
-        firstname: user.firstname, lastname: user.lastname,
-        residentId: resident ? resident.id : '',
-        houseNumber: resident ? resident.house_number : ''
-    };
-    localStorage.setItem('sessionToken', session.token);
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-    return { success: true, token: session.token, user: userData };
-}
 
 async function ppkLogout() {
     // ไม่ logout — redirect กลับ dashboard
