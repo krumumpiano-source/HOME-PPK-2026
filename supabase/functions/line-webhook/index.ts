@@ -95,11 +95,12 @@ async function handleText(sb: any, event: any, token: string, liffBase: string, 
   const t = text.toLowerCase();
   if (/^(ยอด|ยอดค้าง|balance|bill|ค่าน้ำ|ค่าไฟ)/.test(t)) { await replyBalance(sb, event, token, liffBase, uid); return; }
   if (/^(สถิติ|stat|รายงาน|summary)/.test(t))  { await replyStats(sb, event, token, uid); return; }
-  if (/^(ประวัติ|history|hist)/.test(t))  { await replyLink(token, event, '📋 ประวัติการชำระ', 'ดูรายการชำระย้อนหลังของบ้านพักคุณ', liffBase ? liffBase+'/history' : '', liffBase); return; }
-  if (/^(สลิป|ส่งสลิป|slip|จ่าย|ชำระ)/.test(t)) { await replyLink(token, event, '📤 ส่งสลิป', 'แนบรูปสลิปโอนเงินเพื่อยืนยันการชำระ', liffBase ? liffBase+'/slip' : '', liffBase); return; }
-  if (/^(ซ่อม|แจ้งซ่อม|repair)/.test(t))  { await replyLink(token, event, '🔧 แจ้งซ่อม', 'กรอกแบบฟอร์มแจ้งปัญหาในบ้านพักของคุณ', liffBase ? liffBase+'/forms' : '', liffBase); return; }
-  if (/^(ลงทะเบียน|register|เชื่อม)/.test(t)) { await replyLink(token, event, '🔗 เชื่อมบัญชี LINE', 'เชื่อม LINE กับห้องพักเพื่อรับการแจ้งเตือน', liffBase ? liffBase+'/register' : '', liffBase); return; }
+  if (/^(ประวัติ|history|hist)/.test(t))  { await replyLink(token, event, '📋 ประวัติการชำระ', 'ดูรายการชำระย้อนหลังของบ้านพักคุณ', liffBase ? liffBase+'?p=history' : '', liffBase); return; }
+  if (/^(สลิป|ส่งสลิป|slip|จ่าย|ชำระ)/.test(t)) { await replyLink(token, event, '📤 ส่งสลิป', 'แนบรูปสลิปโอนเงินเพื่อยืนยันการชำระ', liffBase ? liffBase+'?p=slip' : '', liffBase); return; }
+  if (/^(ซ่อม|แจ้งซ่อม|repair)/.test(t))  { await replyLink(token, event, '🔧 แจ้งซ่อม', 'กรอกแบบฟอร์มแจ้งปัญหาในบ้านพักของคุณ', liffBase ? liffBase+'?p=forms' : '', liffBase); return; }
+  if (/^(ลงทะเบียน|register|เชื่อม)/.test(t)) { await replyLink(token, event, '🔗 เชื่อมบัญชี LINE', 'เชื่อม LINE กับห้องพักเพื่อรับการแจ้งเตือน', liffBase || '', liffBase); return; }
   if (/^(เมนู|ช่วย|help|\?|menu)/.test(t)) { await replyMessages(token, event.replyToken, [buildMenuFlex(liffBase)], qr(liffBase)); return; }
+  if (/^(แดชบอร์ด|dashboard|หน้าหลัก)/.test(t)) { await replyLink(token, event, '📱 แดชบอร์ด', 'ดูข้อมูลสรุปบ้านพักของคุณ', liffBase ? liffBase+'?p=dashboard' : '', liffBase); return; }
   await replyMessages(token, event.replyToken,
     [{ type: 'text', text: 'คำสั่งที่ใช้ได้:\n💰 ยอดค้าง\n📤 ส่งสลิป\n📊 สถิติ\n📋 ประวัติ\n🔧 แจ้งซ่อม\nหรือพิมพ์ "เมนู"' }],
     qr(liffBase));
@@ -122,7 +123,7 @@ async function replyLink(token: string, event: any, title: string, desc: string,
 
 async function replyBalance(sb: any, event: any, token: string, liffBase: string, uid: string) {
   const { data: res } = await sb.from('residents').select('id,firstname,lastname,house_number').eq('line_user_id', uid).single();
-  if (!res) { await replyLink(token, event, '🔗 ยังไม่ได้เชื่อมบัญชี', 'กรุณาลงทะเบียนก่อนใช้งาน', liffBase ? liffBase+'/register' : '', liffBase); return; }
+  if (!res) { await replyLink(token, event, '🔗 ยังไม่ได้เชื่อมบัญชี', 'กรุณาลงทะเบียนก่อนใช้งาน', liffBase || '', liffBase); return; }
 
   const now = new Date();
   const period = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
@@ -137,7 +138,7 @@ async function replyBalance(sb: any, event: any, token: string, liffBase: string
   }
 
   await replyMessages(token, event.replyToken,
-    [buildBalanceFlex(`${res.firstname} ${res.lastname}`, res.house_number, monthName, water, elec, common, total, status, paid, liffBase ? liffBase+'/slip' : '')],
+    [buildBalanceFlex(`${res.firstname} ${res.lastname}`, res.house_number, monthName, water, elec, common, total, status, paid, liffBase ? liffBase+'?p=slip' : '')],
     qr(liffBase));
 }
 
@@ -155,7 +156,7 @@ async function replyStats(sb: any, event: any, token: string, uid: string) {
 
 /* ─── Flex Builders ─── */
 function buildWelcomeFlex(liffBase: string): any {
-  const regUrl = liffBase ? liffBase+'/register' : '';
+  const regUrl = liffBase || '';
   return { type:'flex', altText:'🏠 ยินดีต้อนรับสู่ระบบบ้านพักครู',
     contents:{ type:'bubble', size:'giga',
       header:{ type:'box', layout:'vertical', backgroundColor:'#065f46', paddingAll:'20px', contents:[
@@ -235,7 +236,7 @@ function buildStatsFlex(name:string,house:string,total:number,approved:number,pe
 function buildMenuFlex(liffBase:string):any {
   const mk=(icon:string,title:string,desc:string,ad:string,at:'uri'|'postback'):any=>({type:'box',layout:'horizontal',paddingAll:'10px',backgroundColor:'#f8fafc',cornerRadius:'8px',action:at==='uri'?{type:'uri',label:title,uri:ad}:{type:'postback',label:title,data:ad,displayText:title},contents:[{type:'text',text:icon,size:'xl',flex:0,gravity:'center'},{type:'box',layout:'vertical',flex:1,paddingStart:'12px',contents:[{type:'text',text:title,size:'sm',weight:'bold',color:'#1e293b'},{type:'text',text:desc,size:'xs',color:'#64748b'}]},{type:'text',text:'›',size:'xl',color:'#94a3b8',gravity:'center'}]});
   const rows:any[]=[mk('💰','ยอดค้างชำระ','ดูยอดเดือนนี้','action=balance','postback'),mk('📊','สถิติการชำระ','สรุปย้อนหลัง','action=stats','postback')];
-  if(liffBase){rows.push(mk('📤','ส่งสลิป','แนบสลิปโอนเงิน',liffBase+'/slip','uri'),mk('📋','ประวัติ','รายการย้อนหลัง',liffBase+'/history','uri'),mk('🔧','แจ้งซ่อม / แบบฟอร์ม','แจ้งปัญหาหรือขอบริการ',liffBase+'/forms','uri'),mk('🔗','ลงทะเบียน','เชื่อม LINE กับห้องพัก',liffBase+'/register','uri'));}
+  if(liffBase){rows.push(mk('📤','ส่งสลิป','แนบสลิปโอนเงิน',liffBase+'?p=slip','uri'),mk('📋','ประวัติ','รายการย้อนหลัง',liffBase+'?p=history','uri'),mk('🔧','แจ้งซ่อม / แบบฟอร์ม','แจ้งปัญหาหรือขอบริการ',liffBase+'?p=forms','uri'),mk('🔗','ลงทะเบียน','เชื่อม LINE กับห้องพัก',liffBase,'uri'));}
   return { type:'flex', altText:'🏠 เมนูหลัก — บ้านพักครู', contents:{ type:'bubble',size:'giga',
     header:{type:'box',layout:'vertical',backgroundColor:'#1e3a5f',paddingAll:'14px',contents:[{type:'text',text:'🏠 เมนูหลัก — ระบบบ้านพักครู',size:'md',weight:'bold',color:'#ffffff'}]},
     body:{type:'box',layout:'vertical',paddingAll:'12px',spacing:'sm',contents:rows}
@@ -250,7 +251,7 @@ function qr(liffBase:string):any[] {
     {type:'action',action:{type:'message',label:'🔧 แจ้งซ่อม',text:'แจ้งซ่อม'}},
     {type:'action',action:{type:'message',label:'📋 เมนู',text:'เมนู'}},
   ];
-  if(liffBase) items.unshift({type:'action',action:{type:'uri',label:'📤 ส่งสลิป',uri:liffBase+'/slip'}});
+  if(liffBase) items.unshift({type:'action',action:{type:'uri',label:'📤 ส่งสลิป',uri:liffBase+'?p=slip'}});
   return items;
 }
 
