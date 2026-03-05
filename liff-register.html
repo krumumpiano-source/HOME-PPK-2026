@@ -79,11 +79,7 @@
     let _lineProfile = null;
 
     async function getLiffId() {
-      try {
-        const r = await callBackend('getLineSettings');
-        if (r && r.success && r.data && r.data.lineLiffId) return r.data.lineLiffId;
-      } catch(e) {}
-      return null;
+      return '2009333832-4En2TkWD';
     }
 
     async function init() {
