@@ -30,3 +30,8 @@ DOCUMENTATION-HOME-PPK-2026.md
 README-*.md
 ข้อกำหนดมาตรฐานระบบ HOME PPK 2026.md
 แก้ไขวันอังคาร.md
+
+supabase.exe
+supabase_cli.tar.gz
+supabase/.temp/
+

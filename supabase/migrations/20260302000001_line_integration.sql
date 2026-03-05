@@ -14,8 +14,8 @@ ALTER TABLE public.slip_submissions
 
 -- 3. สร้าง line_push_log table
 CREATE TABLE IF NOT EXISTS public.line_push_log (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  resident_id TEXT REFERENCES public.residents(id) ON DELETE SET NULL,
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resident_id  TEXT REFERENCES public.residents(id) ON DELETE SET NULL,
   line_user_id TEXT NOT NULL,
   house_number TEXT,
   message_type TEXT DEFAULT 'text',   -- text | flex | image
