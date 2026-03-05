@@ -14,20 +14,11 @@ const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.
 serve(async (req: Request) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const sb = createClient(supabaseUrl, serviceKey);
-
-  const { data: settingsRows } = await sb.from('settings').select('key,value');
-  const settings: Record<string, string> = {};
-  (settingsRows || []).forEach((r: any) => { settings[r.key] = r.value; });
-
-  const channelSecret = Deno.env.get('LINE_CHANNEL_SECRET') || settings['line_channel_secret'] || '';
-  const channelToken  = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') || settings['line_channel_access_token'] || '';
-  const liffId        = settings['line_liff_id'] || '';
-
   const body = await req.text();
+  const channelSecret = Deno.env.get('LINE_CHANNEL_SECRET') || '';
+  const channelToken  = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') || '';
 
+  // Verify LINE signature
   if (channelSecret) {
     const sig = req.headers.get('x-line-signature') || '';
     const key  = await crypto.subtle.importKey('raw', new TextEncoder().encode(channelSecret),
@@ -38,8 +29,39 @@ serve(async (req: Request) => {
   }
 
   const payload = JSON.parse(body);
-  for (const event of (payload.events || [])) {
-    try { await handleEvent(sb, event, channelToken, liffId); } catch (e) { console.error(e); }
+  const events = payload.events || [];
+
+  // ตอบ 200 ทันที — process events แบบ fire-and-forget
+  const processEvents = async () => {
+    if (events.length === 0) return;
+
+    // ตรวจ LINE Verify test event (replyToken = 00000...)
+    const isVerifyTest = events.every((e: any) =>
+      e.replyToken === '00000000000000000000000000000000' || e.mode === 'standby'
+    );
+    if (isVerifyTest) return;
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const sb = createClient(supabaseUrl, serviceKey);
+
+    const { data: settingsRows } = await sb.from('settings').select('key,value');
+    const settings: Record<string, string> = {};
+    (settingsRows || []).forEach((r: any) => { settings[r.key] = r.value; });
+
+    const token  = channelToken || settings['line_channel_access_token'] || '';
+    const liffId = settings['line_liff_id'] || '';
+
+    for (const event of events) {
+      try { await handleEvent(sb, event, token, liffId); } catch (e) { console.error(e); }
+    }
+  };
+
+  // ใช้ waitUntil ถ้ามี ไม่งั้น fire-and-forget
+  try {
+    (globalThis as any).EdgeRuntime?.waitUntil(processEvents());
+  } catch {
+    processEvents().catch(console.error);
   }
 
   return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
