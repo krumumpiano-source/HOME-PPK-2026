@@ -260,6 +260,32 @@ async function callBackendGet(action, params) {
 ══════════════════════════════════════════ */
 async function _routeAction(action, data) {
     switch (action) {
+        case 'login': {
+            var email = (data.email || '').trim().toLowerCase();
+            if (!email || !data.password) return { success: false, error: 'กรุณากรอกอีเมลและรหัสผ่าน' };
+            var pwHash = await sha256hex(data.password);
+            var uRows = await sbGet('users', { email: 'eq.' + email, is_active: 'eq.true', limit: '1' });
+            if (!uRows || uRows.length === 0) return { success: false, error: 'ไม่พบบัญชีผู้ใช้ หรืออีเมลไม่ถูกต้อง' };
+            var u = uRows[0];
+            if (u.password_hash !== pwHash) return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
+            // ดึงข้อมูล resident ที่ active
+            var resident = null;
+            try {
+                var resRows = await sbGet('residents', { user_id: 'eq.' + u.id, is_active: 'eq.true', limit: '1' });
+                if (resRows && resRows[0]) resident = resRows[0];
+            } catch(e) { resident = null; }
+            var userObj = {
+                id: u.id, email: u.email,
+                prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
+                role: u.role || 'resident', is_active: true,
+                position: u.position || '',
+                houseNumber: resident ? (resident.house_number || '') : '',
+                residentId: resident ? resident.id : null,
+                must_change_password: !!(u.must_change_password)
+            };
+            var token = 'session-' + u.id + '-' + Date.now();
+            return { success: true, user: userObj, token: token };
+        }
         case 'logout':   return ppkLogout();
         case 'register': return ppkRegister(data);
 
@@ -285,7 +311,7 @@ async function _routeAction(action, data) {
                     number: h.house_number || '',
                     house_number: h.house_number || '',
                     display_number: h.display_number || h.house_number || '',
-                    displayNumber: h.display_number || h.house_number || ''
+                    displayNumber: h.display_number || h.house_number || '',
                     zone: h.building || h.zone || '',
                     building: h.building || '',
                     floor: h.floor || '',
@@ -372,9 +398,14 @@ async function _routeAction(action, data) {
         }
         case 'getUserProfile': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,resident_id' });
-            if (!sess || !sess[0]) return { success: false, error: 'SESSION_EXPIRED' };
-            var u = await sbGet('users', { id: 'eq.' + sess[0].user_id });
-            var res = sess[0].resident_id ? await sbGet('residents', { id: 'eq.' + sess[0].resident_id }) : [];
+            var sessObj = sess && sess[0] ? sess[0] : null;
+            if (!sessObj) {
+                var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (lsUser && lsUser.id) sessObj = { user_id: lsUser.id, resident_id: lsUser.resident_id || null };
+            }
+            if (!sessObj) return { success: false, error: 'SESSION_EXPIRED' };
+            var u = await sbGet('users', { id: 'eq.' + sessObj.user_id });
+            var res = sessObj.resident_id ? await sbGet('residents', { id: 'eq.' + sessObj.resident_id }) : [];
             return { success: true, user: u[0], resident: res[0] || null };
         }
         case 'getCoresidents': {
@@ -631,8 +662,13 @@ async function _routeAction(action, data) {
         /* ── Profile / Coresident ─────────────────── */
         case 'updateProfile': {
             var sessRows = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
-            if (!sessRows || !sessRows[0]) return { success: false, error: 'SESSION_EXPIRED' };
-            await sbPatch('users', { id: 'eq.' + sessRows[0].user_id }, {
+            var profileUserId = sessRows && sessRows[0] ? sessRows[0].user_id : null;
+            if (!profileUserId) {
+                var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (lsUser && lsUser.id) profileUserId = lsUser.id;
+            }
+            if (!profileUserId) return { success: false, error: 'SESSION_EXPIRED' };
+            await sbPatch('users', { id: 'eq.' + profileUserId }, {
                 prefix: data.prefix || '', firstname: data.firstname || '',
                 lastname: data.lastname || '', phone: data.phone || '',
                 position: data.position || '', updated_at: new Date().toISOString()
@@ -736,11 +772,31 @@ async function _routeAction(action, data) {
         /* ── Dashboard ────────────────────────────── */
         case 'getDashboardData': {
             var token = getSessionToken();
-            var sessions = await sbGet('sessions', { token: 'eq.' + token, select: 'user_id,role,resident_id,house_number,expires_at' });
-            var sess = sessions && sessions[0];
-            if (!sess) return { success: false, error: 'SESSION_EXPIRED' };
+            var sessRole = 'admin';
+            var sessHouseNumber = '';
 
-            // ดึง announcements ทั้ง admin และ user
+            // ① ลองดึงจาก sessions table (สำหรับ user ที่ login จริง)
+            try {
+                var sessions = await sbGet('sessions', { token: 'eq.' + token, select: 'user_id,role,resident_id,house_number,expires_at' });
+                var sess = sessions && sessions[0];
+                if (sess) {
+                    sessRole = sess.role || 'admin';
+                    sessHouseNumber = sess.house_number || '';
+                } else {
+                    throw new Error('no-session'); // fallback ไป localStorage
+                }
+            } catch(e) {
+                // ② no-auth mode — ดึงจาก localStorage currentUser
+                try {
+                    var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                    if (stored && stored.id) {
+                        sessRole = stored.role || 'admin';
+                        sessHouseNumber = stored.houseNumber || stored.house_number || '';
+                    }
+                } catch(e2) {}
+            }
+
+            // ดึง announcements
             var annRows = await sbGet('announcements', {
                 is_active: 'eq.true', order: 'created_at.desc', limit: '10'
             });
@@ -749,7 +805,7 @@ async function _routeAction(action, data) {
                 return !a.expires_at || new Date(a.expires_at) > now2;
             });
 
-            if (sess.role === 'admin') {
+            if (sessRole === 'admin') {
                 var [pendingReg, pendingSlips, pendingReqs] = await Promise.all([
                     sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }),
                     sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }),
@@ -761,7 +817,7 @@ async function _routeAction(action, data) {
                     pendingRequests: (pendingReqs || []).length
                 }};
             } else {
-                var houseNumber = sess.house_number || '';
+                var houseNumber = sessHouseNumber;
                 var period = now2.getFullYear() + '-' + String(now2.getMonth() + 1).padStart(2, '0');
                 var outRows = [], slipRows = [];
                 if (houseNumber) {
@@ -795,8 +851,12 @@ async function _routeAction(action, data) {
         /* ── Slip review ──────────────────────────── */
         case 'reviewSlip': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
-            if (!sess || !sess[0]) return { success: false, error: 'SESSION_EXPIRED' };
-            var reviewedBy = data.reviewedBy || sess[0].user_id;
+            var reviewerId = sess && sess[0] ? sess[0].user_id : null;
+            if (!reviewerId) {
+                var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (lsUser && lsUser.id) reviewerId = lsUser.id;
+            }
+            var reviewedBy = data.reviewedBy || reviewerId || '';
             await sbPatch('slip_submissions', { id: 'eq.' + data.id }, {
                 status: data.status, reviewed_by: reviewedBy,
                 reviewed_at: new Date().toISOString(), review_note: data.note || ''
@@ -829,9 +889,13 @@ async function _routeAction(action, data) {
         /* ── Request review ───────────────────────── */
         case 'reviewRequest': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
-            if (!sess || !sess[0]) return { success: false, error: 'SESSION_EXPIRED' };
+            var reqReviewerId = sess && sess[0] ? sess[0].user_id : null;
+            if (!reqReviewerId) {
+                var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (lsUser && lsUser.id) reqReviewerId = lsUser.id;
+            }
             await sbPatch('requests', { id: 'eq.' + data.id }, {
-                status: data.status, reviewed_by: data.reviewedBy || sess[0].user_id,
+                status: data.status, reviewed_by: data.reviewedBy || reqReviewerId || '',
                 reviewed_at: new Date().toISOString(), review_note: data.note || '',
                 updated_at: new Date().toISOString()
             });
@@ -1102,8 +1166,143 @@ async function _routeAction(action, data) {
             return { success: true, fileId: pubData.data.publicUrl };
         }
 
+        /* ── Email (Resend via Edge Function) ───────── */
+        case 'sendEmail': {
+            var emailResult = await _callEdge('send-email', {
+                to:      data.to,
+                subject: data.subject,
+                html:    data.html || null,
+                text:    data.text || null,
+                replyTo: data.replyTo || null
+            });
+            if (emailResult && emailResult.success) return { success: true, id: emailResult.id };
+            return { success: false, error: emailResult ? (emailResult.error || 'ส่งอีเมลไม่สำเร็จ') : 'Edge Function ไม่ตอบสนอง' };
+        }
+
+        /* ── LINE Push (via Edge Function) ──────────── */
+        case 'linePush': {
+            if (!data.lineUserId && data.houseNumber) {
+                var resRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', select: 'line_user_id,id', limit: '1' });
+                data.lineUserId = resRows && resRows[0] ? resRows[0].line_user_id : null;
+                data.residentId = resRows && resRows[0] ? resRows[0].id : null;
+            }
+            if (!data.lineUserId) return { success: false, error: 'ผู้พักยังไม่ได้เชื่อม LINE' };
+            var lineResult = await _callEdge('line-push', {
+                lineUserId:  data.lineUserId,
+                message:     data.message,
+                houseNumber: data.houseNumber || '',
+                residentId:  data.residentId  || null
+            });
+            return lineResult && lineResult.success ? { success: true, quotaUsed: lineResult.quotaUsed } : { success: false, error: (lineResult && lineResult.error) || 'ส่ง LINE ไม่สำเร็จ' };
+        }
+
+        /* ── flexPush — ส่ง Flex Message ────────────── */
+        case 'flexPush': {
+            if (!data.lineUserId && data.houseNumber) {
+                var fpRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', select: 'line_user_id,id', limit: '1' });
+                data.lineUserId  = fpRows && fpRows[0] ? fpRows[0].line_user_id : null;
+                data.residentId  = fpRows && fpRows[0] ? fpRows[0].id : null;
+            }
+            if (!data.lineUserId) return { success: false, error: 'ผู้พักยังไม่ได้เชื่อม LINE' };
+            if (!data.flexMessage) return { success: false, error: 'ต้องระบุ flexMessage' };
+            var fpResult = await _callEdge('line-push', {
+                lineUserId:   data.lineUserId,
+                flexMessage:  data.flexMessage,   // { altText, contents }
+                message:      data.altText || 'แจ้งเตือนจากระบบบ้านพักครู',
+                houseNumber:  data.houseNumber || '',
+                residentId:   data.residentId  || null,
+                messageType: 'flex'
+            });
+            return fpResult && fpResult.success ? { success: true, quotaUsed: fpResult.quotaUsed } : { success: false, error: (fpResult && fpResult.error) || 'ส่ง Flex Message ไม่สำเร็จ' };
+        }
+
+        /* ── getLineQuota ──────────────────────────── */
+        case 'getLineQuota': {
+            var qRows = await sbGet('settings', {});
+            var qMap = {};
+            (qRows || []).forEach(function(r) { qMap[r.key] = r.value; });
+            return { success: true, data: {
+                used:  parseInt(qMap['line_push_quota_used']  || '0'),
+                limit: parseInt(qMap['line_push_quota_limit'] || '200'),
+                resetDate: qMap['line_push_quota_reset_date'] || ''
+            }};
+        }
+
+        /* ── getLineSettings ───────────────────────── */
+        case 'getLineSettings': {
+            var lsRows = await sbGet('settings', {});
+            var lsMap = {};
+            (lsRows || []).forEach(function(r) { lsMap[r.key] = r.value; });
+            return { success: true, data: {
+                lineChannelToken: lsMap['line_channel_access_token'] || '',
+                lineChannelSecret: lsMap['line_channel_secret']      || '',
+                lineLiffId:        lsMap['line_liff_id']             || '',
+                lineOaName:        lsMap['line_oa_name']             || '',
+                resendApiKey:      lsMap['resend_api_key']           || '',
+                emailFrom:         lsMap['email_from']               || '',
+                emailFromName:     lsMap['email_from_name']          || ''
+            }};
+        }
+
+        /* ── saveLineSettings ──────────────────────── */
+        case 'saveLineSettings': {
+            var lsEntries = [
+                ['line_channel_access_token', data.lineChannelToken || ''],
+                ['line_channel_secret',       data.lineChannelSecret || ''],
+                ['line_liff_id',              data.lineLiffId       || ''],
+                ['line_oa_name',              data.lineOaName       || ''],
+                ['resend_api_key',            data.resendApiKey     || ''],
+                ['email_from',                data.emailFrom        || ''],
+                ['email_from_name',           data.emailFromName    || '']
+            ];
+            for (var li = 0; li < lsEntries.length; li++) {
+                await sbUpsert('settings', { key: lsEntries[li][0], value: lsEntries[li][1] }, 'key');
+            }
+            return { success: true };
+        }
+
+        /* ── linkLineAccount (LIFF ใช้) ─────────────── */
+        case 'linkLineAccount': {
+            var houseNo = data.houseNumber || data.house_number || '';
+            var lineUid  = data.lineUserId;
+            if (!houseNo || !lineUid) return { success: false, error: 'ต้องระบุ houseNumber และ lineUserId' };
+            var linkRows = await sbGet('residents', { house_number: 'eq.' + houseNo, is_active: 'eq.true', limit: '1' });
+            if (!linkRows || !linkRows[0]) return { success: false, error: 'ไม่พบข้อมูลผู้พักบ้านหมายเลขนี้' };
+            await sbPatch('residents', { id: 'eq.' + linkRows[0].id }, { line_user_id: lineUid, line_linked_at: new Date().toISOString() });
+            return { success: true, resident: linkRows[0] };
+        }
+
+        /* ── cleanupOldSlips (trigger via Edge) ─────── */
+        case 'cleanupOldSlips': {
+            var cleanResult = await _callEdge('cleanup-old-slips', {});
+            return cleanResult || { success: false, error: 'Edge Function ไม่ตอบสนอง' };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
+    }
+}
+
+/* ══════════════════════════════════════════
+   Edge Function Caller
+══════════════════════════════════════════ */
+async function _callEdge(funcName, payload) {
+    var cfg = window._PPK_CONFIG || {};
+    if (!cfg.url) return { success: false, error: 'PPK Config ไม่พร้อม' };
+    var edgeUrl = cfg.url.replace(/\/$/, '') + '/functions/v1/' + funcName;
+    try {
+        var res = await fetch(edgeUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (cfg.anon || '')
+            },
+            body: JSON.stringify(payload || {})
+        });
+        var json = await res.json();
+        return json;
+    } catch(e) {
+        return { success: false, error: e.message };
     }
 }
 

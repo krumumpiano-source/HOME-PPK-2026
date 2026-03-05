@@ -517,18 +517,24 @@
             // ลอง Backend ก่อน
             if (user.id) {
                 try {
-                    const result = await callBackendGet('getPaymentHistory', { userId: user.id, year: year });
+                    const houseNumber = user.house_number || user.houseNumber || '';
+                    const result = await callBackendGet('getPaymentHistory', { houseNumber: houseNumber });
                     if (result && result.success && result.data) {
-                        allHistoryData = result.data.map(row => ({
-                            month: String(row.month).padStart(2, '0'),
-                            year: String(row.year || year),
-                            paidDate: row.paid_date || row.reviewed_at || row.submitted_at || '-',
-                            water: parseFloat(row.water_amount) || 0,
-                            electric: parseFloat(row.electric_amount) || 0,
-                            common: parseFloat(row.common_fee) || 0,
-                            total: parseFloat(row.paid_amount || row.total_amount) || 0,
-                            status: row.status || ''
-                        }));
+                        allHistoryData = result.data
+                            .filter(row => (row.period || '').split('-')[0] === String(year))
+                            .map(row => {
+                                const parts = (row.period || '').split('-');
+                                return {
+                                    month: (parts[1] || '01').padStart(2, '0'),
+                                    year: parts[0] || String(year),
+                                    paidDate: row.payment_date || row.recorded_at || '-',
+                                    water: 0,
+                                    electric: 0,
+                                    common: 0,
+                                    total: parseFloat(row.amount_paid) || 0,
+                                    status: row.payment_method || ''
+                                };
+                            });
                     }
                 } catch (e) { console.error('getPaymentHistory error:', e); }
             }

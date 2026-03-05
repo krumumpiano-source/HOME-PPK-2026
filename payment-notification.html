@@ -129,7 +129,10 @@
             </table>
             <div class="table-footer-note" id="houseFooterNote">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ...</div>
         </div>
-        <div class="save-buttons"><button class="btn btn-house" onclick="saveAsImage('captureHouse','house')"> บันทึกรูป  บ้านพัก</button></div>
+        <div class="save-buttons">
+            <button class="btn btn-house" onclick="saveAsImage('captureHouse','house')">💾 บันทึกรูป  บ้านพัก</button>
+            <button class="btn" style="background:linear-gradient(135deg,#06c755,#00a040);color:#fff" onclick="sendLineAll('house')">💬 ส่ง LINE บ้านพัก</button>
+        </div>
 
         <!-- ตารางแฟลต -->
         <div class="table-capture-area" id="captureFlat">
@@ -145,7 +148,10 @@
             </table>
             <div class="table-footer-note" id="flatFooterNote">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ...</div>
         </div>
-        <div class="save-buttons"><button class="btn btn-flat" onclick="saveAsImage('captureFlat','flat')"> บันทึกรูป  แฟลต</button></div>
+        <div class="save-buttons">
+            <button class="btn btn-flat" onclick="saveAsImage('captureFlat','flat')">💾 บันทึกรูป  แฟลต</button>
+            <button class="btn" style="background:linear-gradient(135deg,#06c755,#00a040);color:#fff" onclick="sendLineAll('flat')">💬 ส่ง LINE แฟลต</button>
+        </div>
 
         <div class="save-buttons"><button class="btn btn-secondary" onclick="navigate('?page=team-management')"> กลับหน้าบริหารจัดการ</button></div>
         <div class="success-message" id="successMessage">บันทึกรูปภาพเรียบร้อยแล้ว!</div>
@@ -348,6 +354,44 @@
                 overlay.classList.remove('show');
                 ppkAlert('เกิดข้อผิดพลาด: '+err.message);
             });
+        }
+
+        // === ส่ง LINE แจ้งยอดทั้งหมด ===
+        async function sendLineAll(type) {
+            var tbodyId = type === 'house' ? 'houseTableBody' : 'flatTableBody';
+            var tbody = document.getElementById(tbodyId);
+            var rows = tbody.querySelectorAll('tr[data-index]');
+            if (rows.length === 0) { ppkAlert('ไม่มีข้อมูลในตาราง กรุณาดึงข้อมูลก่อน'); return; }
+            var typeName = type === 'house' ? 'บ้านพัก' : 'แฟลต';
+            var mi = parseInt(document.getElementById('bill_month').value) - 1;
+            var yearBE = document.getElementById('bill_year').value;
+            var monthName = THAI_MONTHS[mi];
+            if (!await ppkConfirm('ส่ง LINE แจ้งยอดค่าสาธารณูปโภค ' + typeName + ' ประจำเดือน ' + monthName + ' ' + yearBE + '\nจำนวน ' + rows.length + ' ห้อง?')) return;
+
+            var sent = 0, failed = 0, noLine = 0;
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var cells = row.querySelectorAll('td');
+                if (cells.length < 7) { failed++; continue; }
+                var houseNumber = cells[0].textContent.trim();
+                var water   = cells[3].textContent.trim();
+                var elec    = cells[4].textContent.trim();
+                var common  = row.querySelector('.common-input') ? (parseFloat(row.querySelector('.common-input').value)||0).toLocaleString() : cells[5].textContent.trim();
+                var total   = cells[6].textContent.trim();
+                var msg = 'แจ้งยอดค่าสาธารณูปโภค ' + typeName + '\nประจำเดือน ' + monthName + ' ' + yearBE
+                        + '\n\nบ้านพัก/ห้อง: ' + houseNumber
+                        + '\nค่าน้ำ: ' + water + ' บาท'
+                        + '\nค่าไฟ: ' + elec + ' บาท'
+                        + '\nค่าส่วนกลาง: ' + common + ' บาท'
+                        + '\nรวมทั้งสิ้น: ' + total + ' บาท'
+                        + '\n\nกรุณาชำระและส่งสลิปในระบบ';
+                try {
+                    var r = await callBackend('linePush', { houseNumber: houseNumber, message: msg });
+                    if (r && r.success) sent++;
+                    else { noLine++; }
+                } catch(e) { failed++; }
+            }
+            ppkAlert('ส่ง LINE แจ้งยอด ' + typeName + ' สำเร็จ: ' + sent + '\nไม่มี LINE: ' + noLine + '\nผิดพลาด: ' + failed);
         }
 
         window.onload = async function(){

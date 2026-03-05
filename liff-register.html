@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เชื่อม LINE — บ้านพักครู</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Kanit',sans-serif;background:#f0fdf4;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:1.5rem}
+    .card{background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.10);padding:2rem 1.5rem;width:100%;max-width:420px;text-align:center;margin-top:1rem}
+    .logo{font-size:3rem;margin-bottom:0.5rem}
+    h1{font-size:1.4rem;color:#065f46;margin-bottom:0.4rem}
+    p{font-size:0.92rem;color:#64748b;line-height:1.6}
+    .avatar{width:72px;height:72px;border-radius:50%;margin:1rem auto;border:3px solid #10b981}
+    .form-group{text-align:left;margin-top:1.25rem}
+    label{font-size:0.9rem;font-weight:600;color:#374151;display:block;margin-bottom:0.3rem}
+    input,select{width:100%;padding:0.7rem 0.9rem;border:1.5px solid #d1d5db;border-radius:10px;font-family:inherit;font-size:0.95rem;outline:none;transition:border 0.2s}
+    input:focus,select:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.12)}
+    .btn{width:100%;padding:0.85rem;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;margin-top:1.25rem;transition:all 0.2s}
+    .btn-line{background:#06c755;color:#fff}
+    .btn-line:hover{background:#05a648}
+    .status{margin-top:1rem;padding:0.75rem;border-radius:10px;font-size:0.9rem}
+    .status.success{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+    .status.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+    .loading{color:#64748b;font-size:0.85rem;margin-top:1rem}
+    .already-linked{background:#f0f9ff;border:1px solid #7dd3fc;padding:1rem;border-radius:10px;margin-top:1.25rem;text-align:left}
+    .already-linked h3{color:#0369a1;font-size:1rem;margin-bottom:0.4rem}
+    .already-linked p{font-size:0.88rem;color:#0c4a6e}
+  </style>
+</head>
+<body>
+  <div class="card" id="loadingCard">
+    <div class="logo">💬</div>
+    <h1>กำลังโหลด...</h1>
+    <p class="loading">กำลังเชื่อมต่อ LINE และฐานข้อมูล</p>
+    <div style="width:40px;height:40px;border:4px solid #e5e7eb;border-top:4px solid #10b981;border-radius:50%;animation:spin 0.8s linear infinite;margin:1rem auto"></div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
+
+  <div class="card" id="mainCard" style="display:none">
+    <div class="logo">🏠</div>
+    <img id="userAvatar" class="avatar" onerror="this.style.display='none'" alt="avatar">
+    <h1>เชื่อมบัญชี LINE</h1>
+    <p>กรอกเลขที่บ้านพักและรหัสลงทะเบียนเพื่อเชื่อมบัญชี LINE<br>รับการแจ้งเตือนและใบเสร็จโดยตรง</p>
+
+    <div id="alreadyLinkedBox" class="already-linked" style="display:none">
+      <h3>✅ บัญชีเชื่อมแล้ว</h3>
+      <p id="alreadyLinkedInfo">บ้านพักของคุณเชื่อม LINE แล้ว</p>
+    </div>
+
+    <div id="registerForm">
+      <div class="form-group">
+        <label>เลขที่บ้านพัก/ห้อง</label>
+        <input type="text" id="houseNumber" placeholder="เช่น B-01 หรือ F-101">
+      </div>
+      <div class="form-group">
+        <label>รหัสผ่านของระบบ (PIN เดิมที่ใช้ login)</label>
+        <input type="password" id="userPin" placeholder="รหัสผ่านบัญชีในระบบ">
+      </div>
+      <div id="statusBox"></div>
+      <button class="btn btn-line" onclick="linkAccount()">🔗 เชื่อมบัญชี LINE</button>
+    </div>
+  </div>
+
+  <div class="card" id="errorCard" style="display:none">
+    <div class="logo">❌</div>
+    <h1>ไม่สามารถใช้งานได้</h1>
+    <p id="errorMsg">กรุณาเปิดหน้านี้ผ่าน LINE เท่านั้น</p>
+  </div>
+
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="supabase/config.js"></script>
+  <script src="supabase/supabase.min.js"></script>
+  <script src="ppk-api.js"></script>
+  <script>
+    let _lineUserId = '';
+    let _lineProfile = null;
+
+    async function getLiffId() {
+      try {
+        const r = await callBackend('getLineSettings');
+        if (r && r.success && r.settings && r.settings.line_liff_id) return r.settings.line_liff_id;
+      } catch(e) {}
+      return null;
+    }
+
+    async function init() {
+      try {
+        const liffId = await getLiffId();
+        if (!liffId) throw new Error('ยังไม่ได้ตั้งค่า LIFF ID ในระบบ');
+        await liff.init({ liffId });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        _lineProfile = await liff.getProfile();
+        _lineUserId = _lineProfile.userId;
+        document.getElementById('userAvatar').src = _lineProfile.pictureUrl || '';
+        // ตรวจสอบว่าเชื่อมแล้วหรือยัง
+        const check = await callBackend('getResidentByLine', { lineUserId: _lineUserId });
+        if (check && check.success && check.resident) {
+          document.getElementById('alreadyLinkedBox').style.display = 'block';
+          document.getElementById('alreadyLinkedInfo').textContent = `เชื่อมกับบ้านพัก ${check.resident.house_number} แล้ว ✅`;
+          document.getElementById('registerForm').style.display = 'none';
+        }
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('mainCard').style.display = 'block';
+      } catch(e) {
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('errorCard').style.display = 'block';
+        document.getElementById('errorMsg').textContent = e.message || 'เกิดข้อผิดพลาด กรุณาเปิดใน LINE';
+      }
+    }
+
+    async function linkAccount() {
+      const house = document.getElementById('houseNumber').value.trim();
+      const pin   = document.getElementById('userPin').value.trim();
+      if (!house || !pin) { showStatus('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+      showStatus('กำลังตรวจสอบ...', '');
+      try {
+        const r = await callBackend('linkLineAccount', { houseNumber: house, password: pin, lineUserId: _lineUserId });
+        if (r && r.success) {
+          showStatus('✅ เชื่อมบัญชีสำเร็จ! คุณจะได้รับการแจ้งเตือนผ่าน LINE แล้ว', 'success');
+          setTimeout(() => liff.closeWindow(), 3000);
+        } else {
+          showStatus('❌ ' + (r?.error || 'เลขที่บ้านหรือรหัสผ่านไม่ถูกต้อง'), 'error');
+        }
+      } catch(e) { showStatus('❌ เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusBox');
+      el.className = 'status ' + type;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ส่งสลิปการชำระ — บ้านพักครู</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Kanit',sans-serif;background:#f8fafc;min-height:100vh;padding:1rem}
+    .header{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-radius:16px;padding:1.25rem;text-align:center;margin-bottom:1rem}
+    .header h1{font-size:1.25rem;font-weight:700}
+    .card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:1.25rem;margin-bottom:1rem}
+    .form-group{margin-bottom:1rem}
+    label{font-size:0.9rem;font-weight:600;color:#374151;display:block;margin-bottom:0.4rem}
+    input,select{width:100%;padding:0.7rem 0.9rem;border:1.5px solid #d1d5db;border-radius:10px;font-family:inherit;font-size:0.95rem;outline:none;transition:border 0.2s}
+    input:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.12)}
+    .upload-area{border:2px dashed #93c5fd;border-radius:12px;padding:2rem;text-align:center;cursor:pointer;background:#eff6ff;transition:all 0.2s}
+    .upload-area:hover{background:#dbeafe;border-color:#3b82f6}
+    .upload-area p{font-size:0.9rem;color:#3b82f6;margin-top:0.5rem}
+    #previewBox{display:none;margin-top:0.75rem}
+    #previewBox img{width:100%;border-radius:10px;border:2px solid #93c5fd}
+    .btn{width:100%;padding:0.85rem;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s;margin-bottom:0.75rem}
+    .btn-blue{background:#3b82f6;color:#fff}
+    .btn-blue:hover{background:#2563eb}
+    .btn-blue:disabled{background:#93c5fd;cursor:not-allowed}
+    .btn-gray{background:#f1f5f9;color:#374151}
+    .status{padding:0.75rem;border-radius:10px;font-size:0.9rem;margin-top:0.75rem;display:none}
+    .status.success{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+    .status.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+    .spinner{width:30px;height:30px;border:3px solid #e5e7eb;border-top:3px solid #3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📤 ส่งสลิปการชำระ</h1>
+  </div>
+
+  <div class="card" id="formCard">
+    <div class="form-group">
+      <label>บ้านพัก/ห้อง</label>
+      <input type="text" id="houseNumber" placeholder="กำลังโหลด..." readonly style="background:#f9fafb">
+    </div>
+    <div class="form-group">
+      <label>ยอดที่ชำระ (บาท)</label>
+      <input type="number" id="paidAmount" placeholder="กรอกยอดที่โอน" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>รูปสลิปการโอนเงิน</label>
+      <div class="upload-area" onclick="document.getElementById('slipFile').click()">
+        <span style="font-size:2rem">📷</span>
+        <p>แตะเพื่อเลือกรูปสลิปจากกล้องหรือแกลเลอรี</p>
+      </div>
+      <input type="file" id="slipFile" accept="image/*" style="display:none" onchange="previewSlip(this)">
+      <div id="previewBox"><img id="previewImg" src="" alt="preview"></div>
+    </div>
+    <div class="form-group">
+      <label>หมายเหตุ (ถ้ามี)</label>
+      <input type="text" id="note" placeholder="เพิ่มข้อความถึงผู้ดูแล">
+    </div>
+    <div id="statusBox" class="status"></div>
+    <button class="btn btn-blue" id="submitBtn" onclick="submitSlip()">✅ ส่งสลิป</button>
+    <a href="liff-dashboard.html"><button class="btn btn-gray">← กลับ</button></a>
+  </div>
+
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="supabase/config.js"></script>
+  <script src="supabase/supabase.min.js"></script>
+  <script src="ppk-api.js"></script>
+  <script>
+    let _lineUserId = '';
+    let _houseNumber = '';
+    let _slipFile = null;
+
+    async function getLiffId() {
+      try { const r = await callBackend('getLineSettings'); return r?.settings?.line_liff_id || null; } catch(e) { return null; }
+    }
+
+    function previewSlip(input) {
+      if (input.files && input.files[0]) {
+        _slipFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById('previewImg').src = e.target.result;
+          document.getElementById('previewBox').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusBox');
+      el.textContent = msg; el.className = 'status ' + type; el.style.display = 'block';
+    }
+
+    async function submitSlip() {
+      const amount = parseFloat(document.getElementById('paidAmount').value);
+      const note   = document.getElementById('note').value.trim();
+      if (!_houseNumber) { showStatus('ไม่พบข้อมูลบ้านพัก กรุณาเปิดใหม่', 'error'); return; }
+      if (!amount || amount <= 0) { showStatus('กรุณากรอกยอดที่ชำระ', 'error'); return; }
+      if (!_slipFile) { showStatus('กรุณาแนบรูปสลิปการโอนเงิน', 'error'); return; }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+      showStatus('กำลังอัพโหลดสลิป...', '');
+
+      try {
+        // อัพโหลดรูปสลิปไปยัง Supabase Storage
+        const fileName = `slips/${_houseNumber}/${Date.now()}_${_slipFile.name}`;
+        const buf = await _slipFile.arrayBuffer();
+        let slipUrl = null;
+
+        if (window._supabase && window._supabase.storage) {
+          const { data: upData, error: upErr } = await window._supabase.storage.from('slips').upload(fileName, buf, { contentType: _slipFile.type, upsert: false });
+          if (!upErr && upData) {
+            const { data: urlData } = window._supabase.storage.from('slips').getPublicUrl(fileName);
+            slipUrl = urlData?.publicUrl || null;
+          }
+        }
+
+        // ส่งข้อมูลผ่าน API
+        const today = new Date();
+        const period = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+        const r = await callBackend('submitSlip', {
+          houseNumber: _houseNumber, period, paidAmount: amount,
+          slipUrl: slipUrl ? JSON.stringify([slipUrl]) : null,
+          note, lineUserId: _lineUserId
+        });
+
+        if (r && r.success) {
+          showStatus('✅ ส่งสลิปสำเร็จ! ผู้ดูแลจะตรวจสอบและแจ้งผลให้คุณทาง LINE', 'success');
+          btn.textContent = 'ส่งแล้ว ✅';
+          liff.sendMessages([{ type: 'text', text: `✅ ส่งสลิปการชำระค่าสาธารณูปโภค ${period} เรียบร้อยแล้ว\nบ้านพัก: ${_houseNumber}\nยอด: ${amount.toLocaleString('th-TH')} บาท\n\nกรุณารอการยืนยันจากผู้ดูแล` }]).catch(()=>{});
+        } else {
+          showStatus('❌ ' + (r?.error || 'ส่งสลิปไม่สำเร็จ กรุณาลองใหม่'), 'error');
+          btn.disabled = false; btn.textContent = '✅ ส่งสลิป';
+        }
+      } catch(e) {
+        showStatus('❌ เกิดข้อผิดพลาด: ' + e.message, 'error');
+        btn.disabled = false; btn.textContent = '✅ ส่งสลิป';
+      }
+    }
+
+    async function init() {
+      try {
+        const liffId = await getLiffId();
+        if (!liffId) throw new Error('no liff');
+        await liff.init({ liffId });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile();
+        _lineUserId = profile.userId;
+        const r = await callBackend('getResidentByLine', { lineUserId: _lineUserId });
+        if (r && r.success && r.resident) {
+          _houseNumber = r.resident.house_number;
+          document.getElementById('houseNumber').value = _houseNumber;
+        } else {
+          document.getElementById('houseNumber').value = 'ไม่พบข้อมูล — กรุณาลงทะเบียนก่อน';
+        }
+      } catch(e) { console.error(e); }
+    }
+    init();
+  </script>
+</body>
+</html>

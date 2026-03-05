@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แบบฟอร์มต่างๆ — บ้านพักครู</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Kanit',sans-serif;background:#f8fafc;min-height:100vh;padding:1rem}
+    .header{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border-radius:16px;padding:1.25rem;text-align:center;margin-bottom:1rem}
+    .header h1{font-size:1.25rem;font-weight:700}
+    .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:1rem}
+    .menu-card{background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.07);padding:1.25rem;text-align:center;cursor:pointer;transition:all 0.2s;border:2px solid transparent;text-decoration:none;display:block;color:inherit}
+    .menu-card:hover{border-color:#f97316;transform:translateY(-2px)}
+    .menu-card .icon{font-size:2.25rem;margin-bottom:0.5rem}
+    .menu-card .title{font-size:0.92rem;font-weight:600;color:#1e293b;line-height:1.3}
+    .menu-card .desc{font-size:0.78rem;color:#64748b;margin-top:0.3rem;line-height:1.4}
+
+    /* Form panel */
+    .form-panel{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:1.25rem;display:none}
+    .form-panel.active{display:block}
+    .form-title{font-size:1.1rem;font-weight:700;color:#ea580c;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+    .form-group{margin-bottom:1rem}
+    label{font-size:0.9rem;font-weight:600;color:#374151;display:block;margin-bottom:0.4rem}
+    input,select,textarea{width:100%;padding:0.7rem 0.9rem;border:1.5px solid #d1d5db;border-radius:10px;font-family:inherit;font-size:0.9rem;outline:none;transition:border 0.2s;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:#f97316;box-shadow:0 0 0 3px rgba(249,115,22,0.12)}
+    .btn{width:100%;padding:0.8rem;border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;margin-bottom:0.5rem}
+    .btn-orange{background:#f97316;color:#fff}
+    .btn-orange:hover{background:#ea580c}
+    .btn-gray{background:#f1f5f9;color:#374151}
+    .status{padding:0.75rem;border-radius:10px;font-size:0.9rem;display:none;margin-top:0.5rem}
+    .status.success{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+    .status.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📝 แบบฟอร์มต่างๆ</h1>
+  </div>
+
+  <!-- Menu -->
+  <div class="menu-grid" id="menuGrid">
+    <a class="menu-card" onclick="showForm('repair'); return false" href="#">
+      <div class="icon">🔧</div>
+      <div class="title">แจ้งซ่อม</div>
+      <div class="desc">ชำรุดเสียหาย ต้องการซ่อมแซม</div>
+    </a>
+    <a class="menu-card" onclick="showForm('transfer'); return false" href="#">
+      <div class="icon">🚚</div>
+      <div class="title">ขอย้ายเข้า-ออก</div>
+      <div class="desc">ย้ายเข้าหรือย้ายออกบ้านพัก</div>
+    </a>
+    <a class="menu-card" onclick="showForm('return'); return false" href="#">
+      <div class="icon">🔑</div>
+      <div class="title">คืนบ้านพัก</div>
+      <div class="desc">แจ้งความต้องการคืนบ้านพัก</div>
+    </a>
+    <a class="menu-card" onclick="showForm('request'); return false" href="#">
+      <div class="icon">📋</div>
+      <div class="title">ขอใช้บริการ</div>
+      <div class="desc">ขอเอกสารหรือบริการอื่นๆ</div>
+    </a>
+  </div>
+
+  <!-- Repair Form -->
+  <div class="form-panel" id="form-repair">
+    <div class="form-title">🔧 แบบฟอร์มแจ้งซ่อม</div>
+    <div class="form-group">
+      <label>บ้านพัก/ห้อง</label>
+      <input type="text" id="rep-house" readonly style="background:#f9fafb">
+    </div>
+    <div class="form-group">
+      <label>ประเภทงานซ่อม</label>
+      <select id="rep-type">
+        <option value="">-- เลือกประเภท --</option>
+        <option>ระบบไฟฟ้า</option>
+        <option>ระบบประปา/น้ำ</option>
+        <option>หลังคา/ฝ้า</option>
+        <option>ประตู/หน้าต่าง</option>
+        <option>เฟอร์นิเจอร์/สิ่งของในห้อง</option>
+        <option>อื่นๆ</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>รายละเอียด</label>
+      <textarea id="rep-detail" rows="4" placeholder="อธิบายปัญหาที่พบ..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>ระดับความเร่งด่วน</label>
+      <select id="rep-urgency">
+        <option value="normal">ปกติ</option>
+        <option value="urgent">เร่งด่วน</option>
+        <option value="critical">ฉุกเฉิน</option>
+      </select>
+    </div>
+    <div id="rep-status" class="status"></div>
+    <button class="btn btn-orange" onclick="submitForm('repair')">📤 ส่งแบบฟอร์มแจ้งซ่อม</button>
+    <button class="btn btn-gray" onclick="backToMenu()">← กลับ</button>
+  </div>
+
+  <!-- Transfer Form -->
+  <div class="form-panel" id="form-transfer">
+    <div class="form-title">🚚 แบบฟอร์มขอย้าย</div>
+    <div class="form-group">
+      <label>บ้านพัก/ห้องปัจจุบัน</label>
+      <input type="text" id="tra-house" readonly style="background:#f9fafb">
+    </div>
+    <div class="form-group">
+      <label>ประเภทการย้าย</label>
+      <select id="tra-type">
+        <option value="in">ย้ายเข้า</option>
+        <option value="out">ย้ายออก</option>
+        <option value="internal">ย้ายภายใน</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>วันที่ต้องการย้าย</label>
+      <input type="date" id="tra-date">
+    </div>
+    <div class="form-group">
+      <label>เหตุผล</label>
+      <textarea id="tra-reason" rows="3" placeholder="ระบุเหตุผลการย้าย..."></textarea>
+    </div>
+    <div id="tra-status" class="status"></div>
+    <button class="btn btn-orange" onclick="submitForm('transfer')">📤 ส่งคำร้อง</button>
+    <button class="btn btn-gray" onclick="backToMenu()">← กลับ</button>
+  </div>
+
+  <!-- Return Form -->
+  <div class="form-panel" id="form-return">
+    <div class="form-title">🔑 แบบฟอร์มคืนบ้านพัก</div>
+    <div class="form-group">
+      <label>บ้านพัก/ห้อง</label>
+      <input type="text" id="ret-house" readonly style="background:#f9fafb">
+    </div>
+    <div class="form-group">
+      <label>วันที่ต้องการคืน</label>
+      <input type="date" id="ret-date">
+    </div>
+    <div class="form-group">
+      <label>สาเหตุการคืน</label>
+      <textarea id="ret-reason" rows="3" placeholder="สาเหตุที่คืนบ้านพัก..."></textarea>
+    </div>
+    <div id="ret-status" class="status"></div>
+    <button class="btn btn-orange" onclick="submitForm('return')">📤 ส่งคำร้องคืนบ้านพัก</button>
+    <button class="btn btn-gray" onclick="backToMenu()">← กลับ</button>
+  </div>
+
+  <!-- Request Form -->
+  <div class="form-panel" id="form-request">
+    <div class="form-title">📋 แบบฟอร์มขอใช้บริการ</div>
+    <div class="form-group">
+      <label>บ้านพัก/ห้อง</label>
+      <input type="text" id="req-house" readonly style="background:#f9fafb">
+    </div>
+    <div class="form-group">
+      <label>ประเภทบริการที่ขอ</label>
+      <select id="req-type">
+        <option value="">-- เลือกบริการ --</option>
+        <option>ขอสำเนาสัญญาเช่า</option>
+        <option>ขอใบรับรองการพักอาศัย</option>
+        <option>ขอประวัติการชำระ</option>
+        <option>อื่นๆ</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>รายละเอียดเพิ่มเติม</label>
+      <textarea id="req-detail" rows="3" placeholder="ระบุรายละเอียด..."></textarea>
+    </div>
+    <div id="req-status" class="status"></div>
+    <button class="btn btn-orange" onclick="submitForm('request')">📤 ส่งคำขอ</button>
+    <button class="btn btn-gray" onclick="backToMenu()">← กลับ</button>
+  </div>
+
+  <a href="liff-dashboard.html" id="backHomeBtn"><button class="btn btn-gray" style="margin-top:0.5rem">← กลับหน้าหลัก</button></a>
+
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="supabase/config.js"></script>
+  <script src="supabase/supabase.min.js"></script>
+  <script src="ppk-api.js"></script>
+  <script>
+    let _houseNumber = '';
+    let _lineUserId = '';
+    let _currentForm = '';
+
+    async function getLiffId() {
+      try { const r = await callBackend('getLineSettings'); return r?.settings?.line_liff_id || null; } catch(e) { return null; }
+    }
+
+    function showForm(name) {
+      _currentForm = name;
+      document.getElementById('menuGrid').style.display = 'none';
+      document.getElementById('backHomeBtn').style.display = 'none';
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('form-' + name).classList.add('active');
+      // set house number in form
+      const prefixMap = { repair:'rep', transfer:'tra', return:'ret', request:'req' };
+      const p = prefixMap[name];
+      if (p) { const el = document.getElementById(p+'-house'); if (el) el.value = _houseNumber; }
+    }
+
+    function backToMenu() {
+      _currentForm = '';
+      document.getElementById('menuGrid').style.display = 'grid';
+      document.getElementById('backHomeBtn').style.display = 'block';
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    }
+
+    function showStatus(prefix, msg, type) {
+      const el = document.getElementById(prefix+'-status');
+      el.textContent = msg; el.className = 'status ' + type; el.style.display = 'block';
+    }
+
+    async function submitForm(formType) {
+      const prefixMap = { repair:'rep', transfer:'tra', return:'ret', request:'req' };
+      const p = prefixMap[formType];
+      const formTypeNameMap = { repair:'แจ้งซ่อม', transfer:'ขอย้าย', return:'คืนบ้านพัก', request:'ขอใช้บริการ' };
+      const typeName = formTypeNameMap[formType] || formType;
+
+      let payload = { houseNumber: _houseNumber, lineUserId: _lineUserId, formType };
+
+      if (formType === 'repair') {
+        payload.repairType = document.getElementById('rep-type').value;
+        payload.detail = document.getElementById('rep-detail').value.trim();
+        payload.urgency = document.getElementById('rep-urgency').value;
+        if (!payload.repairType || !payload.detail) { showStatus(p, 'กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+      } else if (formType === 'transfer') {
+        payload.transferType = document.getElementById('tra-type').value;
+        payload.desiredDate = document.getElementById('tra-date').value;
+        payload.reason = document.getElementById('tra-reason').value.trim();
+        if (!payload.transferType || !payload.reason) { showStatus(p, 'กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
+      } else if (formType === 'return') {
+        payload.desiredDate = document.getElementById('ret-date').value;
+        payload.reason = document.getElementById('ret-reason').value.trim();
+        if (!payload.reason) { showStatus(p, 'กรุณาระบุสาเหตุ', 'error'); return; }
+      } else if (formType === 'request') {
+        payload.serviceType = document.getElementById('req-type').value;
+        payload.detail = document.getElementById('req-detail').value.trim();
+        if (!payload.serviceType) { showStatus(p, 'กรุณาเลือกประเภทบริการ', 'error'); return; }
+      }
+
+      showStatus(p, 'กำลังส่งแบบฟอร์ม...', '');
+      try {
+        const r = await callBackend('submitHouseForm', payload);
+        if (r && r.success) {
+          showStatus(p, '✅ ส่งคำร้อง' + typeName + 'สำเร็จ ผู้ดูแลจะติดต่อกลับทาง LINE', 'success');
+          liff.sendMessages([{ type: 'text', text: `✅ ส่งคำร้อง${typeName}เรียบร้อยแล้ว\nบ้านพัก: ${_houseNumber}\nระบบจะแจ้งผลให้คุณทาง LINE` }]).catch(()=>{});
+        } else {
+          showStatus(p, '❌ ' + (r?.error || 'ส่งไม่สำเร็จ กรุณาลองใหม่'), 'error');
+        }
+      } catch(e) { showStatus(p, '❌ เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+    }
+
+    async function init() {
+      try {
+        const liffId = await getLiffId();
+        if (!liffId) throw new Error('no liff');
+        await liff.init({ liffId });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile();
+        _lineUserId = profile.userId;
+        const r = await callBackend('getResidentByLine', { lineUserId: _lineUserId });
+        if (r && r.success && r.resident) {
+          _houseNumber = r.resident.house_number;
+        }
+      } catch(e) { console.error('liff init error:', e); }
+    }
+    init();
+  </script>
+</body>
+</html>

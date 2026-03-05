@@ -392,7 +392,7 @@
               electricAmount: parseFloat(bill.electric_amount) || 0,
               commonFee: parseFloat(bill.common_fee) || 0,
               notifiedAmount: parseFloat(bill.total_amount || 0) || ((parseFloat(bill.water_amount)||0) + (parseFloat(bill.electric_amount)||0) + (parseFloat(bill.common_fee)||0)),
-              paidAmount: slip ? parseFloat(slip.paid_amount) || 0 : null,
+              paidAmount: slip ? parseFloat(slip.amount) || 0 : null,
               slipImages: [],
               slipDate: slip ? (slip.submitted_at || null) : null,
               slipId: slip ? slip.id : null,
@@ -400,8 +400,11 @@
               noResident: false
             };
 
-            if (slip && slip.image_url) {
-              unitData.slipImages.push(slip.image_url);
+            if (slip && slip.slip_url) {
+              try {
+                var urls = JSON.parse(slip.slip_url);
+                (Array.isArray(urls) ? urls : [slip.slip_url]).forEach(function(u){ unitData.slipImages.push(u); });
+              } catch(e) { unitData.slipImages.push(slip.slip_url); }
             }
 
             if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
@@ -423,15 +426,18 @@
                 email: slip.email || '',
                 waterAmount: 0, electricAmount: 0, commonFee: 0,
                 notifiedAmount: parseFloat(slip.notified_amount) || 0,
-                paidAmount: parseFloat(slip.paid_amount) || 0,
+                paidAmount: parseFloat(slip.amount) || 0,
                 slipImages: [],
                 slipDate: slip.submitted_at || null,
                 slipId: slip.id || null,
                 approval: (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
                 noResident: false
               };
-              if (slip.image_url) {
-                unitData.slipImages.push(slip.image_url);
+              if (slip.slip_url) {
+                try {
+                  var urls2 = JSON.parse(slip.slip_url);
+                  (Array.isArray(urls2) ? urls2 : [slip.slip_url]).forEach(function(u){ unitData.slipImages.push(u); });
+                } catch(e) { unitData.slipImages.push(slip.slip_url); }
               }
               if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
                 flatsData.push(unitData);
@@ -759,6 +765,21 @@
           });
           if (result && result.success) {
             unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
+            // ส่ง LINE + อีเมลใบเสร็จอัตโนมัติ
+            const { monthName, year: yr } = getSelectedPeriod();
+            const paidDate = new Date().toLocaleDateString('th-TH');
+            try {
+              await callBackend('linePush', {
+                houseNumber: unit.unitNumber,
+                message: `✅ อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}\nบ้านพัก: ${unit.unitNumber}\nยอดชำระ: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท\nวันที่: ${paidDate}\nสถานะ: ได้รับชำระเรียบร้อยแล้ว`
+              });
+            } catch(e) {}
+            try {
+              if (unit.email) {
+                const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
+                await callBackend('sendEmail', { to: unit.email, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+              }
+            } catch(e) {}
             ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
             renderTable(type);
             return;
@@ -804,62 +825,49 @@
     async function sendReminderToUnit(unit){
       const { monthName, year, month } = getSelectedPeriod();
       const period = year + '-' + month;
-
-      // ลองส่งผ่าน Backend ก่อน
-      if (unit.email) {
-        try {
-          const result = await callBackend('sendNotification', {
-            type: 'reminder',
-            period: period,
-            house_number: unit.unitNumber,
-            recipient_email: unit.email,
-            recipient_name: unit.name
-          });
-          if (result && result.success) {
-            ppkAlert(`📧 ส่งอีเมลเตือนไปยัง ${unit.unitNumber} (${unit.email}) สำเร็จ`);
-            return;
-          }
-        } catch (e) { console.error('sendReminder backend error:', e); }
-      }
-
-      // Fallback: แสดง console + alert
       const systemSettings = cachedAdminSettings || {};
-      const emailSender = systemSettings.emailSender || '';
       const emailSignature = systemSettings.emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
       const emailReminderNote = systemSettings.emailReminderNote || 'กรุณาชำระเงินและส่งสลิปโดยเร็วที่สุด';
-      const incUnit = systemSettings.reminderIncludeUnit !== false;
-      const incTotal = systemSettings.reminderIncludeTotal !== false;
-      const incWater = systemSettings.reminderIncludeWater !== false;
-      const incElectric = systemSettings.reminderIncludeElectric !== false;
-      const incCommon = systemSettings.reminderIncludeCommon !== false;
-      const incDueDate = systemSettings.reminderIncludeDueDate !== false;
-
       const dueDays = systemSettings.due_date || systemSettings.due_date_working_days || '15';
 
-      let details = '';
-      if(incUnit) details += `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;
-      if(incTotal) details += `\nยอดค้างชำระรวม: ${formatMoney(unit.notifiedAmount)} บาท`;
-      if(incWater) details += `\n  - ค่าน้ำ: ${formatMoney(unit.waterAmount)} บาท`;
-      if(incElectric) details += `\n  - ค่าไฟ: ${formatMoney(unit.electricAmount)} บาท`;
-      if(incCommon) details += `\n  - ค่าส่วนกลาง: ${formatMoney(unit.commonFee)} บาท`;
-      if(incDueDate) details += `\nกำหนดชำระภายใน: ${dueDays} วันทำการ`;
+      let details = `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;
+      details += `\nยอดค้างชำระรวม: ${formatMoney(unit.notifiedAmount)} บาท`;
+      if (unit.waterAmount)    details += `\n  - ค่าน้ำ: ${formatMoney(unit.waterAmount)} บาท`;
+      if (unit.electricAmount) details += `\n  - ค่าไฟ: ${formatMoney(unit.electricAmount)} บาท`;
+      if (unit.commonFee)      details += `\n  - ค่าส่วนกลาง: ${formatMoney(unit.commonFee)} บาท`;
+      details += `\nกำหนดชำระภายใน: ${dueDays} วันทำการ`;
 
-      const reminderContent = `เรียน คุณ${unit.name || 'ผู้พักอาศัย'}
+      const subject = `แจ้งเตือนค่าสาธารณูปโภค ${monthName} ${year} — บ้านพัก ${unit.unitNumber}`;
+      const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">
+<p>เรียน คุณ${unit.name || 'ผู้พักอาศัย'}</p>
+<p>เรื่อง: <strong>แจ้งเตือนการชำระค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}</strong></p>
+<pre style="background:#fef9c3;padding:12px;border-radius:8px;border:1px solid #fde047">${details}</pre>
+<p>${emailReminderNote}</p>
+<p>---<br>${emailSignature}</p></div>`;
 
-เรื่อง: แจ้งเตือนการชำระค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}
-${details}
+      let emailSent = false;
+      let lineSent  = false;
 
-${emailReminderNote}
+      if (unit.email) {
+        try {
+          const er = await callBackend('sendEmail', { to: unit.email, subject, html });
+          emailSent = er && er.success;
+        } catch (e) { console.error('sendEmail reminder error:', e); }
+      }
+      try {
+        const lineMsg = `แจ้งเตือนค่าสาธารณูปโภค ${monthName} ${year}\nบ้านพัก: ${unit.unitNumber}\nยอดค้าง: ${formatMoney(unit.notifiedAmount)} บาท\nกำหนด: ${dueDays} วันทำการ\n\n${emailReminderNote}`;
+        const lr = await callBackend('linePush', { houseNumber: unit.unitNumber, message: lineMsg });
+        lineSent = lr && lr.success;
+      } catch (e) { console.error('linePush reminder error:', e); }
 
-ขอบคุณครับ/ค่ะ
-${emailSignature}
-      `;
-
-      console.log('Send reminder from:', emailSender || 'N/A');
-      console.log('Send reminder to:', unit.email || 'N/A');
-      console.log('Content:', reminderContent);
-
-      ppkAlert(`ส่งอีเมลเตือนไปยัง ${unit.unitNumber}\n\n(หมายเหตุ: ฟังก์ชันส่งอีเมลจริงจะเปิดใช้งานเมื่อตั้งค่าอีเมล)`);
+      const channels = [];
+      if (emailSent) channels.push('อีเมล');
+      if (lineSent)  channels.push('LINE');
+      if (channels.length > 0) {
+        ppkAlert(`✅ ส่งเตือนไปยัง ${unit.unitNumber} ผ่าน: ${channels.join(' + ')}`);
+      } else {
+        ppkAlert(`⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล / ยังไม่ได้เชื่อม LINE' : 'แสดงไม่สำเร็จ'}`);
+      }
     }
 
     // ส่งใบเสร็จทางอีเมล
@@ -867,67 +875,50 @@ ${emailSignature}
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
+      if(!unit.approval) { ppkAlert('ยังไม่ได้อนุมัติการชำระเงินของห้องนี้'); return; }
 
       const { monthName, year } = getSelectedPeriod();
       const sysSettings = cachedAdminSettings || {};
-      const emailSender = sysSettings.emailSender || '';
       const emailSig = sysSettings.emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
       const emailReceiptNote = sysSettings.emailReceiptNote || 'ขอบคุณที่ชำระตรงเวลาครับ/ค่ะ';
-      const incUnit = sysSettings.receiptIncludeUnit !== false;
-      const incTotal = sysSettings.receiptIncludeTotal !== false;
-      const incWater = sysSettings.receiptIncludeWater !== false;
-      const incElectric = sysSettings.receiptIncludeElectric !== false;
-      const incCommon = sysSettings.receiptIncludeCommon !== false;
-      const incPaid = sysSettings.receiptIncludePaid !== false;
-      const incDate = sysSettings.receiptIncludeDate !== false;
+      const paidDate = unit.approval?.approvedAt ? new Date(unit.approval.approvedAt).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH');
 
-      let details = '';
-      if(incUnit) details += `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;
-      details += `\nผู้ชำระ: ${unit.name || '-'}`;
-      if(incTotal) details += `\nยอดที่แจ้งชำระรวม: ${formatMoney(unit.notifiedAmount)} บาท`;
-      if(incWater) details += `\n  - ค่าน้ำ: ${formatMoney(unit.waterAmount)} บาท`;
-      if(incElectric) details += `\n  - ค่าไฟ: ${formatMoney(unit.electricAmount)} บาท`;
-      if(incCommon) details += `\n  - ค่าส่วนกลาง: ${formatMoney(unit.commonFee)} บาท`;
-      if(incPaid) details += `\nยอดที่ชำระจริง: ${formatMoney(unit.paidAmount)} บาท`;
-      if(incDate) details += `\nวันที่ชำระ: ${unit.approval ? new Date(unit.approval.approvedAt).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH')}`;
+      const subject = `ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year} - บ้านพัก ${unit.unitNumber}`;
+      const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">
+<p>เรียน คุณ${unit.name || 'ผู้พักอาศัย'}</p>
+<div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px;margin:12px 0">
+<p>✅ <strong>ใบเสร็จรับเงินค่าสาธารณูปโภค ${monthName} ${year}</strong></p>
+<p>บ้านพัก/ห้อง: <strong>${unit.unitNumber}</strong></p>
+<p>ชื่อผู้ชำระ: <strong>${unit.name || '-'}</strong></p>
+<p>ยอดที่แจ้ง: <strong>${formatMoney(unit.notifiedAmount)} บาท</strong></p>
+<p>ยอดที่ชำระ: <strong>${formatMoney(unit.paidAmount)} บาท</strong></p>
+<p>วันที่ชำระ: <strong>${paidDate}</strong></p>
+<p>สถานะ: ✓ ได้รับชำระเรียบร้อยแล้ว</p>
+</div>
+<p>${emailReceiptNote}</p>
+<p>---<br>${emailSig}</p></div>`;
 
-      const receiptContent = `เรียน คุณ${unit.name || 'ผู้พักอาศัย'}
+      let emailSent = false;
+      let lineSent  = false;
 
-เรื่อง: ใบเสร็จรับเงินค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}
-
-═══════════════════════════════════
-           ใบเสร็จรับเงิน
-═══════════════════════════════════
-${details}
-
-สถานะ: ✓ ได้รับชำระเรียบร้อยแล้ว
-═══════════════════════════════════
-
-${emailReceiptNote}
-${emailSig}
-      `;
-
-      // ส่งผ่าน Backend
       if (unit.email) {
         try {
-          const { year, month } = getSelectedPeriod();
-          const period = year + '-' + month;
-          const result = await callBackend('sendNotification', {
-            type: 'receipt',
-            period: period,
-            houseId: unit.unitNumber,
-            house_number: unit.unitNumber
-          });
-          if (result && result.success) {
-            ppkAlert(`📧 ส่งใบเสร็จไปยัง ${unit.email} สำเร็จ`);
-            return;
-          }
-          ppkAlert(`❌ ส่งใบเสร็จไม่สำเร็จ: ${result?.error || 'กรุณาลองใหม่'}`);
-        } catch (e) {
-          console.error('sendReceipt error:', e);
-          ppkAlert(`❌ เกิดข้อผิดพลาดในการส่งใบเสร็จ`);
-        }
-          ppkAlert(`⚠️ ไม่มีอีเมลของผู้พักอาศัย ${unit.unitNumber}\nกรุณาเพิ่มอีเมลในข้อมูลผู้พักอาศัย`);
+          const er = await callBackend('sendEmail', { to: unit.email, subject, html });
+          emailSent = er && er.success;
+        } catch(e) { console.error('sendReceiptEmail error:', e); }
+      }
+      try {
+        const lineMsg = `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year}\nบ้านพัก: ${unit.unitNumber}\nยอดชำระ: ${formatMoney(unit.paidAmount)} บาท\nวันที่: ${paidDate}\n\n${emailReceiptNote}`;
+        const lr = await callBackend('linePush', { houseNumber: unit.unitNumber, message: lineMsg });
+        lineSent = lr && lr.success;
+      } catch(e) { console.error('linePush receipt error:', e); }
+
+      const channels = [];
+      if (emailSent) channels.push('อีเมล');
+      if (lineSent)  channels.push('LINE');
+      ppkAlert(channels.length > 0
+        ? `✅ ส่งใบเสร็จไปยัง ${unit.unitNumber} ผ่าน: ${channels.join(' + ')}`
+        : `⚠️ ไม่มีอีเมล / ยังไม่ได้เชื่อม LINE (ตั้งค่าใน Admin Settings ก่อน)`);
     }
 
     // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
@@ -985,16 +976,10 @@ ${emailSig}
       const period = year + '-' + month;
 
       for (const unit of approvedUnits) {
-        if (unit.email) {
+        if (unit.email || unit.unitNumber) {
           try {
-            const result = await callBackend('sendNotification', {
-              type: 'receipt',
-              period: period,
-              houseId: unit.unitNumber,
-              house_number: unit.unitNumber
-            });
-            if (result && result.success) sent++;
-            else failed++;
+            await sendReceiptEmail(type, list.indexOf(unit));
+            sent++;
           } catch (e) { failed++; }
         } else {
           failed++;

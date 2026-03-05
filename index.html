@@ -2,12 +2,191 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=dashboard.html">
-  <title>HOME PPK 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOME PPK 2026 — ระบบจัดการบ้านพักครู</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Kanit', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f4c2e 100%); min-height: 100vh; color: #f1f5f9; display: flex; flex-direction: column; align-items: center; }
+
+    /* Header */
+    .hero { text-align: center; padding: 3rem 1.5rem 2rem; max-width: 680px; width: 100%; }
+    .hero-logo { font-size: 3.5rem; margin-bottom: 0.5rem; }
+    .hero-title { font-size: 1.8rem; font-weight: 700; color: #fff; line-height: 1.3; }
+    .hero-subtitle { font-size: 1rem; color: #94a3b8; margin-top: 0.5rem; }
+    .hero-badge { display: inline-block; background: rgba(16,185,129,0.2); border: 1px solid #10b981; color: #34d399; padding: 0.25rem 0.85rem; border-radius: 999px; font-size: 0.85rem; margin-top: 0.75rem; }
+
+    /* Cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; width: 100%; max-width: 760px; padding: 0 1.25rem 2rem; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 1.5rem; backdrop-filter: blur(8px); transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .card-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .card-title { font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.88rem; color: #94a3b8; line-height: 1.6; }
+
+    /* LINE Section */
+    .line-section { background: linear-gradient(135deg, rgba(6,199,85,0.15), rgba(0,160,64,0.15)); border: 1px solid rgba(6,199,85,0.3); border-radius: 20px; padding: 2rem 1.5rem; text-align: center; max-width: 460px; width: calc(100% - 2.5rem); margin-bottom: 2rem; }
+    .line-section h3 { font-size: 1.3rem; color: #4ade80; margin-bottom: 0.4rem; }
+    .line-section p  { font-size: 0.9rem; color: #94a3b8; margin-bottom: 1.25rem; line-height: 1.6; }
+    .line-add-btn { display: inline-flex; align-items: center; gap: 0.6rem; background: #06c755; color: #fff; border: none; border-radius: 10px; padding: 0.85rem 2rem; font-size: 1.05rem; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+    .line-add-btn:hover { background: #05a648; transform: scale(1.03); }
+    .line-qr-placeholder { width: 140px; height: 140px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.8rem; margin: 0 auto 1.25rem; overflow: hidden; }
+    .line-qr-placeholder img { width: 100%; height: 100%; object-fit: contain; }
+    .line-not-configured { color: #64748b; font-size: 0.85rem; margin-top: 0.75rem; }
+
+    /* Auth Buttons */
+    .auth-section { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; padding: 0 1.25rem 2.5rem; }
+    .btn-auth { display: inline-flex; align-items: center; gap: 0.5rem; border: none; border-radius: 10px; padding: 0.85rem 1.8rem; font-size: 1rem; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+    .btn-login { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+    .btn-login:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); }
+    .btn-register { background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-register:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+    .btn-dashboard { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+    .btn-dashboard:hover { background: linear-gradient(135deg, #059669, #047857); transform: translateY(-1px); }
+
+    /* Footer */
+    footer { text-align: center; color: #475569; font-size: 0.8rem; padding: 1rem; }
+    footer a { color: #64748b; }
+    .divider { width: 100%; max-width: 760px; border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 0.5rem 1.25rem 2rem; }
+
+    /* Loading */
+    #loadingMsg { color: #64748b; font-size: 0.9rem; text-align:center; padding: 0.5rem; display: none; }
+  </style>
 </head>
 <body>
-  <p style="font-family:'Kanit',sans-serif;text-align:center;padding:3rem;">
-    กำลังนำทางไปยังระบบ... <a href="dashboard.html">คลิกที่นี่</a>
-  </p>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-logo">🏠</div>
+    <div class="hero-title">HOME PPK 2026</div>
+    <div class="hero-subtitle">ระบบจัดการบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
+    <span class="hero-badge">✓ ออนไลน์</span>
+  </div>
+
+  <!-- Feature Cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">💧⚡</div>
+      <div class="card-title">บันทึกค่าน้ำ-ค่าไฟ</div>
+      <div class="card-desc">บันทึกและคำนวณค่าสาธารณูปโภครายเดือน พร้อมออกใบแจ้งยอดอัตโนมัติ</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📤</div>
+      <div class="card-title">ส่งสลิปออนไลน์</div>
+      <div class="card-desc">ผู้พักอาศัยสามารถถ่ายรูปสลิปและส่งให้ผู้ดูแลอนุมัติได้ทันที</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💬📧</div>
+      <div class="card-title">แจ้งเตือน LINE & อีเมล</div>
+      <div class="card-desc">ระบบส่งใบเสร็จและแจ้งเตือนผ่าน LINE OA และอีเมลอัตโนมัติ</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LINE Add Friend Section -->
+  <div class="line-section" id="lineSection">
+    <div class="line-qr-placeholder" id="lineQrBox">
+      <span style="color:#aaa;font-size:0.75rem;text-align:center">QR Code LINE OA<br>ตั้งค่าใน Admin</span>
+    </div>
+    <h3>💬 เพิ่มเพื่อน LINE OA</h3>
+    <p id="lineDescText">เพิ่มเพื่อนใน LINE เพื่อรับการแจ้งเตือนค่าสาธารณูปโภค ใบเสร็จ และข่าวสารจากบ้านพักครูโดยตรง</p>
+    <a id="lineAddBtn" class="line-add-btn" href="#" onclick="return handleLineAdd()">
+      <svg width="22" height="22" viewBox="0 0 512 512" fill="white"><path d="M256 48C141 48 48 128.6 48 228.6c0 75.3 50.5 141.2 126.9 176.3l-16.6 61.5c-1.4 5.3 5.1 9.5 9.7 6.2l72.6-49.4c5.1.5 10.2.8 15.4.8 115 0 208-80.6 208-180.6S371 48 256 48z"/></svg>
+      เพิ่มเพื่อน LINE
+    </a>
+    <div class="line-not-configured" id="lineNotConfigured" style="display:none">ยังไม่ได้ตั้งค่า LINE OA — ผู้ดูแลระบบตั้งค่าในหน้า Admin Settings → LINE & อีเมล</div>
+    <div id="liffBtn" style="margin-top:1rem; display:none">
+      <a id="liffLink" href="#" class="line-add-btn" style="background:#0a84ff; margin-top:0.5rem;">
+        📱 เปิด Mini App ผ่าน LINE
+      </a>
+    </div>
+  </div>
+
+  <!-- Auth Buttons -->
+  <div class="auth-section">
+    <a href="login.html" class="btn-auth btn-login">🔑 เข้าสู่ระบบ</a>
+    <a href="register.html" class="btn-auth btn-register">📝 สมัครสมาชิก</a>
+    <a href="dashboard.html" class="btn-auth btn-dashboard">📊 หน้าหลักระบบ</a>
+  </div>
+
+  <div id="loadingMsg">กำลังโหลดข้อมูล...</div>
+
+  <footer>
+    <p>HOME PPK 2026 | พัฒนาโดย ครูพงศธร โพธิแก้ว</p>
+    <p style="margin-top:0.3rem">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</p>
+  </footer>
+
+  <script src="supabase/config.js"></script>
+  <script src="supabase/supabase.min.js"></script>
+  <script src="ppk-api.js"></script>
+  <script>
+    // ตรวจสอบ session — ถ้า login แล้ว redirect ไป dashboard
+    async function checkAndRedirect() {
+      try {
+        if (typeof checkSession === 'function') {
+          // ใช้ session check จาก ppk-api.js
+        }
+        // ตรวจสอบ Supabase session โดยตรง
+        if (window._supabase) {
+          const { data } = await window._supabase.auth.getSession();
+          if (data && data.session) {
+            window.location.href = 'dashboard.html';
+            return;
+          }
+        }
+      } catch(e) {}
+    }
+
+    async function loadLineSettings() {
+      try {
+        const r = await callBackend('getLineSettings');
+        if (r && r.success && r.settings) {
+          const s = r.settings;
+          const oaName = s.line_oa_name || '';
+          const liffId = s.line_liff_id || '';
+
+          if (oaName) {
+            document.querySelector('#lineSection h3').textContent = '💬 ' + oaName;
+          }
+
+          // LINE Add Friend URL from OA name (ถ้ามี @username ใช้ได้)
+          if (oaName && oaName.startsWith('@')) {
+            const lineId = oaName.replace('@', '');
+            const lineUrl = 'https://line.me/R/ti/p/' + lineId;
+            document.getElementById('lineAddBtn').href = lineUrl;
+            document.getElementById('lineAddBtn').onclick = null;
+            // QR Code via LINE API
+            document.getElementById('lineQrBox').innerHTML = `<img src="https://qr-official.line.me/sid/M/${lineId}.png" alt="LINE QR" onerror="this.parentElement.innerHTML='<span style=color:#aaa;font-size:0.75rem;text-align:center>QR Code<br>ไม่พบ</span>'">`;
+          } else {
+            document.getElementById('lineNotConfigured').style.display = 'block';
+            document.getElementById('lineAddBtn').style.display = 'none';
+          }
+
+          if (liffId) {
+            document.getElementById('liffBtn').style.display = 'block';
+            document.getElementById('liffLink').href = 'https://liff.line.me/' + liffId;
+          }
+        } else {
+          document.getElementById('lineNotConfigured').style.display = 'block';
+          document.getElementById('lineAddBtn').style.display = 'none';
+        }
+      } catch(e) {
+        document.getElementById('lineNotConfigured').style.display = 'block';
+        document.getElementById('lineAddBtn').style.display = 'none';
+      }
+    }
+
+    function handleLineAdd() {
+      alert('กรุณาตั้งค่า LINE OA Name ใน Admin Settings ก่อน');
+      return false;
+    }
+
+    window.onload = async function() {
+      await checkAndRedirect();
+      await loadLineSettings();
+    };
+  </script>
 </body>
 </html>
