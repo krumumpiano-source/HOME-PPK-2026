@@ -71,10 +71,26 @@
 
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    // LIFF Router — redirect ไปหน้าที่ถูกต้องตาม ?p= parameter
+    // LIFF Router — redirect ไปหน้าที่ถูกต้องตาม ?p= parameter หรือ liff.state
     (function() {
       var params = new URLSearchParams(window.location.search);
       var page = params.get('p');
+
+      // LIFF converts query/path to liff.state parameter after auth redirect
+      if (!page) {
+        var liffState = params.get('liff.state');
+        if (liffState) {
+          // liff.state อาจเป็น "?p=slip" หรือ "/slip" หรือ "p=slip"
+          var cleaned = liffState.replace(/^\/?\??/, '');
+          var stateParams = new URLSearchParams(cleaned);
+          page = stateParams.get('p');
+          // กรณี liff.state เป็น path เช่น "/slip"
+          if (!page && /^[a-z]+$/.test(cleaned)) {
+            page = cleaned;
+          }
+        }
+      }
+
       var pageMap = {
         'dashboard': 'liff-dashboard.html',
         'slip': 'liff-slip.html',
