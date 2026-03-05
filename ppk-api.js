@@ -1261,6 +1261,54 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── getResidentByLine (LIFF ใช้ — ค้นหาผู้พักจาก LINE User ID) ── */
+        case 'getResidentByLine': {
+            var grlLineUid = data.lineUserId;
+            if (!grlLineUid) return { success: false, error: 'ต้องระบุ lineUserId' };
+            var grlRows = await sbGet('residents', { line_user_id: 'eq.' + grlLineUid, is_active: 'eq.true', limit: '1' });
+            if (!grlRows || !grlRows[0]) return { success: true, resident: null };
+            return { success: true, resident: grlRows[0] };
+        }
+
+        /* ── getBillForHouse (LIFF dashboard ใช้) ──── */
+        case 'getBillForHouse': {
+            var bfhHouse = data.houseNumber || '';
+            var bfhPeriod = data.period || '';
+            if (!bfhHouse) return { success: false, error: 'ต้องระบุ houseNumber' };
+            var bfhQ = { house_number: 'eq.' + bfhHouse };
+            if (bfhPeriod) bfhQ.period = 'eq.' + bfhPeriod;
+            bfhQ.order = 'period.desc';
+            bfhQ.limit = '1';
+            var bfhRows = await sbGet('outstanding', bfhQ);
+            if (!bfhRows || !bfhRows[0]) return { success: true, data: null };
+            var bfhRow = bfhRows[0];
+            return { success: true, data: {
+                waterBill: parseFloat(bfhRow.water_bill || bfhRow.water_amount || 0),
+                electricBill: parseFloat(bfhRow.electric_bill || bfhRow.electric_amount || 0),
+                commonFee: parseFloat(bfhRow.common_fee || bfhRow.common_amount || 0),
+                paymentStatus: bfhRow.status || 'unpaid',
+                period: bfhRow.period
+            }};
+        }
+
+        /* ── submitHouseForm (LIFF forms ใช้) ──────── */
+        case 'submitHouseForm': {
+            var shfPayload = {
+                house_number: data.houseNumber || '',
+                line_user_id: data.lineUserId || '',
+                form_type: data.formType || 'general',
+                detail: JSON.stringify(data),
+                status: 'pending',
+                submitted_at: new Date().toISOString()
+            };
+            try {
+                await sbPost('requests', shfPayload);
+                return { success: true };
+            } catch(shfErr) {
+                return { success: false, error: shfErr.message || 'บันทึกไม่สำเร็จ' };
+            }
+        }
+
         /* ── linkLineAccount (LIFF ใช้) ─────────────── */
         case 'linkLineAccount': {
             var houseNo = data.houseNumber || data.house_number || '';
