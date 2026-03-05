@@ -72,6 +72,7 @@
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="supabase/config.js"></script>
   <script src="supabase/supabase.min.js"></script>
+  <script src="ppk-app.js"></script>
   <script src="ppk-api.js"></script>
   <script>
     let _lineUserId = '';
@@ -79,7 +80,7 @@
 
     async function getLiffId() {
       try {
-        const r = await ppkApi('getLineSettings');
+        const r = await callBackend('getLineSettings');
         if (r && r.success && r.data && r.data.lineLiffId) return r.data.lineLiffId;
       } catch(e) {}
       return null;
@@ -95,7 +96,7 @@
         _lineUserId = _lineProfile.userId;
         document.getElementById('userAvatar').src = _lineProfile.pictureUrl || '';
         // ตรวจสอบว่าเชื่อมแล้วหรือยัง
-        const check = await ppkApi('getResidentByLine', { lineUserId: _lineUserId });
+        const check = await callBackend('getResidentByLine', { lineUserId: _lineUserId });
         if (check && check.success && check.resident) {
           document.getElementById('alreadyLinkedBox').style.display = 'block';
           document.getElementById('alreadyLinkedInfo').textContent = `เชื่อมกับบ้านพัก ${check.resident.house_number} แล้ว ✅`;
@@ -116,7 +117,7 @@
       if (!house || !pin) { showStatus('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
       showStatus('กำลังตรวจสอบ...', '');
       try {
-        const r = await ppkApi('linkLineAccount', { houseNumber: house, password: pin, lineUserId: _lineUserId });
+        const r = await callBackend('linkLineAccount', { houseNumber: house, password: pin, lineUserId: _lineUserId });
         if (r && r.success) {
           showStatus('✅ เชื่อมบัญชีสำเร็จ! คุณจะได้รับการแจ้งเตือนผ่าน LINE แล้ว', 'success');
           setTimeout(() => liff.closeWindow(), 3000);
