@@ -41,7 +41,6 @@
             flex-direction: column;
             gap: 0.2rem;
             width: 100%;
-        
             flex: 1;
         }
         .sidebar-link {
@@ -83,12 +82,8 @@
             margin-left: 0.1em;
         }
         @media (max-width: 600px) {
-            .sidebar {
-                width: 48px;
-            }
-            .sidebar.expanded {
-                width: 160px;
-            }
+            .sidebar { width: 48px; }
+            .sidebar.expanded { width: 160px; }
         }
         .dashboard-container {
             margin-left: 62px;
@@ -98,12 +93,8 @@
             margin-left: 280px;
         }
         @media (max-width: 600px) {
-            .dashboard-container {
-                margin-left: 48px;
-            }
-            .sidebar.expanded ~ .dashboard-container {
-                margin-left: 160px;
-            }
+            .dashboard-container { margin-left: 48px; }
+            .sidebar.expanded ~ .dashboard-container { margin-left: 160px; }
         }
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
     body {
@@ -122,7 +113,7 @@
         max-width: 100vw;
         display: flex;
         flex-direction: column;
-        gap: 2.2rem;
+        gap: 1.5rem;
         box-sizing: border-box;
         align-items: center;
         justify-content: flex-start;
@@ -132,7 +123,7 @@
         display: flex;
         align-items: center;
         gap: 0.7rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.2rem;
         justify-content: center;
     }
     .dashboard-header-icon {
@@ -148,12 +139,151 @@
         letter-spacing: 0.5px;
         text-align: center;
     }
+
+    /* ── KPI Overview Section ── */
+    .kpi-section {
+        width: 100%;
+        max-width: 800px;
+    }
+    .kpi-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.8rem;
+    }
+    .kpi-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 1rem 0.8rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border-left: 4px solid #e5e7eb;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .kpi-card.green  { border-left-color: #10b981; }
+    .kpi-card.orange { border-left-color: #f59e0b; }
+    .kpi-card.red    { border-left-color: #ef4444; }
+    .kpi-card.blue   { border-left-color: #3b82f6; }
+    .kpi-number {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .kpi-card.green  .kpi-number { color: #059669; }
+    .kpi-card.orange .kpi-number { color: #d97706; }
+    .kpi-card.red    .kpi-number { color: #dc2626; }
+    .kpi-card.blue   .kpi-number { color: #2563eb; }
+    .kpi-label {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-top: 0.3rem;
+    }
+    .kpi-action {
+        font-size: 0.75rem;
+        color: #2563eb;
+        margin-top: 0.3rem;
+        font-weight: 600;
+    }
+    .kpi-loading {
+        text-align: center;
+        padding: 1.5rem;
+        color: #9ca3af;
+        font-size: 0.95rem;
+    }
+    @media (max-width: 600px) {
+        .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Workflow Checklist Section ── */
+    .workflow-section {
+        width: 100%;
+        max-width: 800px;
+    }
+    .workflow-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .workflow-list {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    .workflow-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.9rem 1.2rem;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .workflow-item:last-child { border-bottom: none; }
+    .workflow-item:hover { background: #f0f7ff; }
+    .workflow-step {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .workflow-step.done     { background: #d1fae5; color: #059669; }
+    .workflow-step.current  { background: #dbeafe; color: #2563eb; animation: pulse-step 1.5s infinite; }
+    .workflow-step.pending  { background: #f3f4f6; color: #9ca3af; }
+    @keyframes pulse-step {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.3); }
+        50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+    }
+    .workflow-info { flex: 1; }
+    .workflow-name { font-weight: 600; font-size: 0.95rem; color: #1f2937; }
+    .workflow-status { font-size: 0.8rem; color: #9ca3af; margin-top: 0.15rem; }
+    .workflow-status.done    { color: #059669; }
+    .workflow-status.current { color: #2563eb; }
+    .workflow-arrow {
+        color: #d1d5db;
+        font-size: 1.1rem;
+    }
+
+    /* ── Menu Buttons Section ── */
     .form-buttons {
         display: flex;
         flex-direction: column;
         gap: 1rem;
         align-items: center;
-        margin-top: 2rem;
+        width: 100%;
+        max-width: 800px;
+    }
+    .section-divider {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e40af;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 800px;
     }
     .form-btn {
         background: linear-gradient(135deg, #4f8cff, #1e40af);
@@ -174,6 +304,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        position: relative;
     }
     .form-btn:hover {
         background: linear-gradient(135deg, #1e40af, #4f8cff);
@@ -187,6 +318,22 @@
     .form-btn-icon {
         font-size: 1.4rem;
     }
+    .form-btn-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #ef4444;
+        color: #fff;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        line-height: 20px;
+        text-align: center;
+        display: none;
+    }
     .form-row {
         display: flex;
         gap: 1rem;
@@ -199,54 +346,23 @@
             flex-direction: column;
             align-items: center;
         }
-        .form-btn {
-            max-width: 100%;
-        }
+        .form-btn { max-width: 100%; }
     }
-    
+
     /* สีปุ่มแยกตามประเภท */
-    .form-btn.water {
-        background: linear-gradient(135deg, #06b6d4, #0891b2);
-    }
-    .form-btn.water:hover {
-        background: linear-gradient(135deg, #0891b2, #06b6d4);
-    }
-    
-    .form-btn.electric {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-    }
-    .form-btn.electric:hover {
-        background: linear-gradient(135deg, #d97706, #f59e0b);
-    }
-    
-    .form-btn.notify {
-        background: linear-gradient(135deg, #10b981, #059669);
-    }
-    .form-btn.notify:hover {
-        background: linear-gradient(135deg, #059669, #10b981);
-    }
-    
-    .form-btn.slip {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    }
-    .form-btn.slip:hover {
-        background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-    }
-    
-    .form-btn.request {
-        background: linear-gradient(135deg, #ec4899, #db2777);
-    }
-    .form-btn.request:hover {
-        background: linear-gradient(135deg, #db2777, #ec4899);
-    }
-    
-    .form-btn.admin {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
-    .form-btn.admin:hover {
-        background: linear-gradient(135deg, #dc2626, #ef4444);
-    }
-    
+    .form-btn.water { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+    .form-btn.water:hover { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+    .form-btn.electric { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .form-btn.electric:hover { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .form-btn.notify { background: linear-gradient(135deg, #10b981, #059669); }
+    .form-btn.notify:hover { background: linear-gradient(135deg, #059669, #10b981); }
+    .form-btn.slip { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .form-btn.slip:hover { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+    .form-btn.request { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .form-btn.request:hover { background: linear-gradient(135deg, #db2777, #ec4899); }
+    .form-btn.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .form-btn.admin:hover { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
     .admin-notice {
         background: #fef3c7;
         border: 1px solid #f59e0b;
@@ -257,7 +373,8 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin-top: 1rem;
+        width: 100%;
+        max-width: 800px;
     }
     </style>
 </head>
@@ -268,7 +385,26 @@
             <span class="dashboard-header-icon">👥</span>
             <h2>โปรแกรมบริหารจัดการ</h2>
         </div>
-        <div class="form-buttons">
+
+        <!-- ── KPI ภาพรวมประจำเดือน ── -->
+        <div class="kpi-section" id="kpiSection">
+            <div class="kpi-title">📊 ภาพรวมประจำเดือน <span id="kpiPeriodLabel"></span></div>
+            <div id="kpiContent">
+                <div class="kpi-loading">⏳ กำลังโหลดข้อมูล...</div>
+            </div>
+        </div>
+
+        <!-- ── Workflow Checklist ── -->
+        <div class="workflow-section" id="workflowSection">
+            <div class="workflow-title">📋 ขั้นตอนประจำเดือน</div>
+            <div class="workflow-list" id="workflowList">
+                <div class="kpi-loading">⏳ กำลังตรวจสอบ...</div>
+            </div>
+        </div>
+
+        <!-- ── เมนูลัด ── -->
+        <div class="section-divider">🚀 เมนูลัด</div>
+        <div class="form-buttons" id="formButtons">
             <div class="form-row">
                 <button class="form-btn water" onclick="navigate('?page=record-water')">
                     <span class="form-btn-icon">💧</span>
@@ -287,6 +423,7 @@
                 <button class="form-btn slip" onclick="navigate('?page=check-slip')">
                     <span class="form-btn-icon">🧾</span>
                     ตรวจสลิป
+                    <span class="form-btn-badge" id="btnBadgeSlip"></span>
                 </button>
             </div>
             <div class="form-row">
@@ -303,6 +440,7 @@
                 <button class="form-btn request" onclick="navigate('?page=check-request')">
                     <span class="form-btn-icon">📋</span>
                     ตรวจคำร้อง/ลำดับคิวพักอาศัย
+                    <span class="form-btn-badge" id="btnBadgeReq"></span>
                 </button>
                 <button class="form-btn admin" onclick="navigate('?page=admin-settings')">
                     <span class="form-btn-icon">🔧</span>
@@ -310,39 +448,12 @@
                 </button>
             </div>
         </div>
-        
+
         <div class="admin-notice" id="adminNotice">
-            ⚠️ หน้านี้สำหรับเจ้าหน้าที่หรือคณะทำงานบ้านพักครูเท่านั้น กรุณาตรวจสอบสิทธิ์การเข้าถึงก่อนใช้งาน<br>
-            <span id="noPermissionMsg" style="display:none;color:#dc2626;font-weight:bold;">คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ</span>
+            ⚠️ หน้านี้สำหรับเจ้าหน้าที่หรือคณะทำงานบ้านพักครูเท่านั้น กรุณาตรวจสอบสิทธิ์การเข้าถึงก่อนใช้งาน
+            <span id="noPermissionMsg" style="display:none;color:#dc2626;font-weight:bold;"><br>คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ</span>
         </div>
-        <script>
 
-        // ตรวจสอบสิทธิ์จาก Backend
-        async function checkPermission() {
-            // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
-            try {
-                    // ตรวจสิทธิ์: ต้องเป็น admin หรือ team_member
-                    const userResult = await callBackendGet('getCurrentUser');
-                    if (!userResult || !userResult.success) {
-                        document.getElementById('noPermissionMsg').style.display = '';
-                        return;
-                    }
-
-                    // ตรวจสิทธิ์: ต้องเป็น admin หรือ team_member
-                    const user = userResult.user;
-                    if (user.role !== 'admin' && user.role !== 'team_member') {
-                        document.getElementById('noPermissionMsg').style.display = '';
-                        // ซ่อนปุ่มทั้งหมด
-                        document.querySelector('.form-buttons').style.opacity = '0.4';
-                        document.querySelector('.form-buttons').style.pointerEvents = 'none';
-                    }
-                } catch (e) {
-                    console.warn('Permission check failed', e);
-                }
-        }
-        checkPermission();
-        </script>
-        
         <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
             <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -353,16 +464,256 @@
         // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'team-management';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'team-management'); }
-    
+
         async function doLogout() {
             window.location.replace('dashboard.html');
         }
-        </script>
+    </script>
     <script src="supabase/config.js"></script>
     <script src="supabase/supabase.min.js"></script>
     <script src="ppk-api.js"></script>
     <script src="ppk-app.js"></script>
     <script src="ppk-utils.js"></script>
-    <script src="ppk-nav.js"></script></body>
+    <script src="ppk-nav.js"></script>
+    <script>
+    // ════════════════════════════════════════════════════════════
+    //  Team Management — KPI Dashboard + Workflow Checklist
+    // ════════════════════════════════════════════════════════════
+    (function () {
+        'use strict';
+
+        var THAI_MONTHS = ['', 'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                           'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+        var now = new Date();
+        var currentYear  = now.getFullYear();
+        var currentMonth = now.getMonth() + 1;
+        var currentPeriod = currentYear + '-' + String(currentMonth).padStart(2, '0');
+
+        // แสดงชื่อเดือนไทย + ปี พ.ศ.
+        var periodLabel = document.getElementById('kpiPeriodLabel');
+        if (periodLabel) {
+            periodLabel.textContent = THAI_MONTHS[currentMonth] + ' ' + (currentYear + 543);
+        }
+
+        // ── ตรวจสอบสิทธิ์ ──
+        function checkPermission() {
+            var user = getCurrentUser();
+            if (!user || (user.role !== 'admin')) {
+                document.getElementById('noPermissionMsg').style.display = '';
+                var btns = document.getElementById('formButtons');
+                if (btns) { btns.style.opacity = '0.4'; btns.style.pointerEvents = 'none'; }
+            }
+        }
+
+        // ── โหลด KPI Dashboard ──
+        async function loadKPI() {
+            try {
+                var results = await Promise.all([
+                    callBackend('getOutstanding', { status: 'paid' }),
+                    callBackend('getOutstanding', { status: 'unpaid' }),
+                    callBackend('getSlipSubmissions', { status: 'pending' }),
+                    callBackend('getRequests', { status: 'pending' }),
+                    callBackend('getHousing', {})
+                ]);
+
+                var paidAll     = (results[0] && results[0].data) || [];
+                var unpaidAll   = (results[1] && results[1].data) || [];
+                var pendSlips   = (results[2] && results[2].data) || [];
+                var pendReqs    = (results[3] && results[3].data) || [];
+                var housing     = (results[4] && results[4].data) || [];
+
+                // นับเฉพาะเดือนปัจจุบัน
+                var paidCount  = paidAll.filter(function(r) { return r.period === currentPeriod; }).length;
+                var unpaidCount = unpaidAll.filter(function(r) { return r.period === currentPeriod; }).length;
+                var totalHouses = housing.length || (paidCount + unpaidCount) || 0;
+                var pendSlipCount = pendSlips.length;
+                var pendReqCount  = pendReqs.length;
+
+                var kpiContent = document.getElementById('kpiContent');
+                kpiContent.innerHTML =
+                    '<div class="kpi-grid">' +
+                        '<div class="kpi-card green" onclick="navigate(\'?page=payment-history\')">' +
+                            '<div class="kpi-number">' + paidCount + '/' + totalHouses + '</div>' +
+                            '<div class="kpi-label">ชำระแล้ว</div>' +
+                            '<div class="kpi-action">ดูรายละเอียด →</div>' +
+                        '</div>' +
+                        '<div class="kpi-card orange" onclick="navigate(\'?page=check-slip\')">' +
+                            '<div class="kpi-number">' + pendSlipCount + '</div>' +
+                            '<div class="kpi-label">รอตรวจสลิป</div>' +
+                            '<div class="kpi-action">' + (pendSlipCount > 0 ? 'ตรวจเลย →' : 'ไม่มีรอตรวจ') + '</div>' +
+                        '</div>' +
+                        '<div class="kpi-card red" onclick="navigate(\'?page=payment-notification\')">' +
+                            '<div class="kpi-number">' + unpaidCount + '</div>' +
+                            '<div class="kpi-label">ยังไม่ชำระ</div>' +
+                            '<div class="kpi-action">' + (unpaidCount > 0 ? 'แจ้งเตือน →' : 'ครบทุกห้อง') + '</div>' +
+                        '</div>' +
+                        '<div class="kpi-card blue" onclick="navigate(\'?page=check-request\')">' +
+                            '<div class="kpi-number">' + pendReqCount + '</div>' +
+                            '<div class="kpi-label">คำร้องรอพิจารณา</div>' +
+                            '<div class="kpi-action">' + (pendReqCount > 0 ? 'พิจารณา →' : 'ไม่มีค้าง') + '</div>' +
+                        '</div>' +
+                    '</div>';
+
+                // อัพเดท badge บนปุ่มเมนูลัด
+                _setBtnBadge('btnBadgeSlip', pendSlipCount);
+                _setBtnBadge('btnBadgeReq', pendReqCount);
+
+                // ส่งข้อมูลให้ workflow ตรวจสอบ
+                return {
+                    paidCount: paidCount,
+                    unpaidCount: unpaidCount,
+                    pendSlipCount: pendSlipCount,
+                    pendReqCount: pendReqCount,
+                    totalHouses: totalHouses
+                };
+            } catch (e) {
+                console.warn('loadKPI error', e);
+                var kpiContent = document.getElementById('kpiContent');
+                kpiContent.innerHTML = '<div class="kpi-loading" style="color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า</div>';
+                return null;
+            }
+        }
+
+        function _setBtnBadge(id, count) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (count > 0) {
+                el.textContent = count > 99 ? '99+' : String(count);
+                el.style.display = '';
+            }
+        }
+
+        // ── โหลด Workflow Checklist ──
+        async function loadWorkflow(kpiData) {
+            try {
+                var results = await Promise.all([
+                    callBackend('getWaterBills', { period: currentPeriod }),
+                    callBackend('getElectricBills', { period: currentPeriod }),
+                    callBackend('getNotificationHistory', { limit: 50 }),
+                    callBackend('getSlipSubmissions', { status: 'pending' }),
+                    callBackend('getMonthlyWithdraw', { period: currentPeriod })
+                ]);
+
+                var waterBills  = (results[0] && results[0].data) || [];
+                var elecBills   = (results[1] && results[1].data) || [];
+                var notifs      = (results[2] && results[2].data) || [];
+                var pendSlips   = (results[3] && results[3].data) || [];
+                var withdraws   = (results[4] && results[4].data) || [];
+
+                // กรองเฉพาะเดือนปัจจุบัน
+                var waterCount = waterBills.filter(function(b) { return b.period === currentPeriod; }).length;
+                var elecCount  = elecBills.filter(function(b) { return b.period === currentPeriod; }).length;
+                var notifCount = notifs.filter(function(n) { return (n.period || '') === currentPeriod; }).length;
+                var pendSlipCount = pendSlips.length;
+                var withdrawCount = withdraws.filter(function(w) { return w.period === currentPeriod; }).length;
+
+                var totalHouses = (kpiData && kpiData.totalHouses) || 0;
+
+                // กำหนดสถานะแต่ละขั้นตอน
+                var steps = [
+                    {
+                        name: 'บันทึกมิเตอร์น้ำ',
+                        page: 'record-water',
+                        done: waterCount > 0,
+                        status: waterCount > 0
+                            ? '✅ บันทึกแล้ว ' + waterCount + ' ห้อง'
+                            : '⏳ ยังไม่ได้บันทึก'
+                    },
+                    {
+                        name: 'บันทึกมิเตอร์ไฟ',
+                        page: 'record-electric',
+                        done: elecCount > 0,
+                        status: elecCount > 0
+                            ? '✅ บันทึกแล้ว ' + elecCount + ' ห้อง'
+                            : '⏳ ยังไม่ได้บันทึก'
+                    },
+                    {
+                        name: 'แจ้งยอดชำระ',
+                        page: 'payment-notification',
+                        done: notifCount > 0,
+                        status: notifCount > 0
+                            ? '✅ แจ้งแล้ว ' + notifCount + ' รายการ'
+                            : '⏳ ยังไม่ได้แจ้ง'
+                    },
+                    {
+                        name: 'ตรวจสลิปการชำระ',
+                        page: 'check-slip',
+                        done: pendSlipCount === 0 && (kpiData && kpiData.paidCount > 0),
+                        status: pendSlipCount > 0
+                            ? '🔍 รอตรวจ ' + pendSlipCount + ' รายการ'
+                            : (kpiData && kpiData.paidCount > 0 ? '✅ ตรวจครบแล้ว' : '⏳ ยังไม่มีสลิปเข้า')
+                    },
+                    {
+                        name: 'บันทึกยอดเบิกประจำเดือน',
+                        page: 'monthly-withdraw',
+                        done: withdrawCount > 0,
+                        status: withdrawCount > 0
+                            ? '✅ บันทึกแล้ว ' + withdrawCount + ' รายการ'
+                            : '⏳ ยังไม่ได้บันทึก'
+                    }
+                ];
+
+                // หา step แรกที่ยังไม่เสร็จ → เป็น current
+                var firstPendingIdx = -1;
+                for (var i = 0; i < steps.length; i++) {
+                    if (!steps[i].done) { firstPendingIdx = i; break; }
+                }
+
+                var html = '';
+                for (var i = 0; i < steps.length; i++) {
+                    var s = steps[i];
+                    var stepClass = s.done ? 'done' : (i === firstPendingIdx ? 'current' : 'pending');
+                    var statusClass = s.done ? 'done' : (i === firstPendingIdx ? 'current' : '');
+                    var icon = s.done ? '✓' : String(i + 1);
+                    html +=
+                        '<div class="workflow-item" onclick="navigate(\'?page=' + s.page + '\')">' +
+                            '<div class="workflow-step ' + stepClass + '">' + icon + '</div>' +
+                            '<div class="workflow-info">' +
+                                '<div class="workflow-name">' + s.name + '</div>' +
+                                '<div class="workflow-status ' + statusClass + '">' + s.status + '</div>' +
+                            '</div>' +
+                            '<div class="workflow-arrow">›</div>' +
+                        '</div>';
+                }
+
+                document.getElementById('workflowList').innerHTML = html;
+            } catch (e) {
+                console.warn('loadWorkflow error', e);
+                document.getElementById('workflowList').innerHTML =
+                    '<div class="kpi-loading" style="color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ</div>';
+            }
+        }
+
+        // ── getWaterBills & getElectricBills action wrappers ──
+        // ถ้ายังไม่มีใน ppk-api.js ให้ fallback direct query
+        function ensureAction(action, table, period) {
+            return callBackend(action, { period: period }).catch(function() {
+                // fallback: ถ้า action ไม่รู้จัก ลองใช้ sbGet ตรง
+                return { success: true, data: [] };
+            });
+        }
+
+        // ── เริ่มโหลดข้อมูลเมื่อ API พร้อม ──
+        function waitAndLoad() {
+            if (typeof callBackend !== 'function') {
+                setTimeout(waitAndLoad, 200);
+                return;
+            }
+            checkPermission();
+            loadKPI().then(function(kpiData) {
+                loadWorkflow(kpiData);
+            });
+        }
+
+        // รอ DOM + scripts โหลดเสร็จ
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { setTimeout(waitAndLoad, 500); });
+        } else {
+            setTimeout(waitAndLoad, 500);
+        }
+    })();
+    </script>
+</body>
 </html>
 
