@@ -386,7 +386,7 @@
         window.addEventListener('DOMContentLoaded', async function() {
             await checkSession();
             const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const hasHouse = !!(user.resident && user.resident.house_number);
+            const hasHouse = !!(user.houseNumber || user.house_number);
             filterTabsByRole(hasHouse);
             loadMyRequests(user, hasHouse);
         });

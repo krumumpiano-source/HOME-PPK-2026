@@ -761,8 +761,8 @@
             const rateInput = document.getElementById('water_rate');
             try {
                     const result = await cachedCall('getWaterRate', {}, 1800000);
-                    if (result && result.success && result.rate) {
-                        rateInput.value = result.rate;
+                    if (result && result.success && result.data && result.data.length > 0) {
+                        rateInput.value = result.data[0].rate;
                     } else {
                         rateInput.value = '';
                         rateInput.placeholder = 'ยังไม่ได้ตั้งค่า';
@@ -904,8 +904,7 @@
             // ท้ายกระดาษ
             printWindow.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
             
-            printWindow.document.write('    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body></html>');
+            printWindow.document.write('</body></html>');
             printWindow.document.close();
             
             // รอโหลดฟอนต์แล้วพิมพ์

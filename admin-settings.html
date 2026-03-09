@@ -2067,7 +2067,6 @@
                     ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                 }
             }).catch(err => ppkAlert(err.message));
-            ppkAlert('อัปเดตข้อมูลเรียบร้อยแล้ว');
         }
 
         async function deleteHousingFromCard(id, displayName) {
@@ -2089,6 +2088,13 @@
             try {
                 const result = await callBackend('deleteHousing', { id: String(id), displayNumber: displayName });
                 if (!result || !result.success) {
+                    ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                    if (toDelete) {
+                        var restored2 = getHousingData();
+                        restored2.push(toDelete);
+                        saveHousingData(restored2);
+                        renderManageHousingCards();
+                    }
                 }
             } catch(e) {
                 // กู้คืน

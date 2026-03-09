@@ -860,7 +860,11 @@
             rows.forEach(row => {
                 const house = row.cells[1].textContent;
                 const resident = row.cells[2].textContent;
-                const amount = row.querySelector('.electric-amount').value || '0';
+                var amount = '0';
+                var amountInput = row.querySelector('.electric-amount');
+                var amountCell = row.querySelector('.electric-amount-cell');
+                if (amountInput) { amount = amountInput.value || '0'; }
+                else if (amountCell) { amount = amountCell.textContent || '0'; }
                 const amountNum = Math.ceil(parseFloat(amount) || 0);
                 
                 tableHTML += '<tr>';
@@ -970,8 +974,7 @@
             // ท้ายกระดาษ
             printWindow.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
             
-            printWindow.document.write('    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body></html>');
+            printWindow.document.write('</body></html>');
             printWindow.document.close();
             
             // รอโหลดฟอนต์แล้วพิมพ์

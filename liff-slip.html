@@ -123,7 +123,7 @@
         const today = new Date();
         const period = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
         const r = await callBackend('submitSlip', {
-          houseNumber: _houseNumber, period, paidAmount: amount,
+          houseNumber: _houseNumber, period, amount: amount,
           slipUrl: slipUrl ? JSON.stringify([slipUrl]) : null,
           note, lineUserId: _lineUserId
         });

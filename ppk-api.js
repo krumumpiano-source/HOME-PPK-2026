@@ -473,6 +473,23 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'submitWaterBill': {
+            // รองรับทั้ง batch (records[]) และ single record
+            if (data.records && Array.isArray(data.records)) {
+                var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+                var inserted = [];
+                for (var i = 0; i < data.records.length; i++) {
+                    var rec = data.records[i];
+                    var row = await sbPost('water_bills', {
+                        house_number: rec.house_number, period: data.period,
+                        year: data.year, month: data.month,
+                        prev_meter: rec.prev_meter, curr_meter: rec.curr_meter,
+                        units_used: rec.units, rate_per_unit: data.rate,
+                        amount: rec.amount, recorded_by: user.id || null
+                    });
+                    inserted.push(row);
+                }
+                return { success: true, data: inserted };
+            }
             var row = await sbPost('water_bills', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, year: data.year, month: data.month, prev_meter: data.prevMeter, curr_meter: data.currMeter, units_used: data.unitsUsed, rate_per_unit: data.ratePerUnit, amount: data.amount, recorded_by: data.recordedBy });
             return { success: true, data: row };
         }
@@ -484,6 +501,22 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'submitElectricBill': {
+            // รองรับทั้ง batch (records[]) และ single record
+            if (data.records && Array.isArray(data.records)) {
+                var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+                var inserted = [];
+                for (var i = 0; i < data.records.length; i++) {
+                    var rec = data.records[i];
+                    var row = await sbPost('electric_bills', {
+                        house_number: rec.house_number, period: data.period,
+                        year: data.year, month: data.month,
+                        bill_amount: rec.amount, amount: rec.amount,
+                        method: data.method || 'bill', recorded_by: user.id || null
+                    });
+                    inserted.push(row);
+                }
+                return { success: true, data: inserted };
+            }
             var row = await sbPost('electric_bills', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, year: data.year, month: data.month, prev_meter: data.prevMeter, curr_meter: data.currMeter, units_used: data.unitsUsed, rate_per_unit: data.ratePerUnit, bill_amount: data.billAmount, amount: data.amount, method: data.method || 'bill', recorded_by: data.recordedBy });
             return { success: true, data: row };
         }
