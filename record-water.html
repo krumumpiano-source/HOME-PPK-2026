@@ -201,6 +201,11 @@
         }
         
         /* ตารางบันทึกมิเตอร์ */
+        .table-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .meter-table {
             width: 100%;
             border-collapse: collapse;
@@ -209,6 +214,7 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-width: 600px;
         }
         .meter-table th {
             background: linear-gradient(135deg, #e0f7fa, #b9f6fc);
@@ -426,6 +432,7 @@
         <div class="section">
             <div class="section-title">📝 บันทึกเลขมิเตอร์</div>
             
+            <div class="table-scroll-wrapper">
             <table class="meter-table">
                 <thead>
                     <tr>
@@ -438,9 +445,10 @@
                     </tr>
                 </thead>
                 <tbody id="meterTableBody">
-                    <!-- ข้อมูลจะถูกโหลดจาก JavaScript -->
+                    <tr><td colspan="6" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
             </table>
+            </div>
             
             <!-- สรุปยอด -->
             <div class="summary-box">
@@ -572,10 +580,11 @@
         
         // สร้างตารางผู้พักอาศัย
         async function renderResidentsTable() {
+            const tbody = document.getElementById('meterTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
             const residents = await getResidentsData();
             const prevMeterData = await getPreviousMeterData();
             const savedBill = await getSavedBillData();
-            const tbody = document.getElementById('meterTableBody');
             tbody.innerHTML = '';
             
             if (residents.length === 0) {

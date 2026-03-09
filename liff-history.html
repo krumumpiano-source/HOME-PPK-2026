@@ -96,15 +96,16 @@
 
         let sumApproved = 0, sumPending = 0, totalBaht = 0;
         const html = hist.data.map(item => {
-          const amount = (item.paid_amount || item.total_amount || 0);
+          const amount = parseFloat(item.amount_paid || 0);  // แก้: paid_amount → amount_paid (ตรง schema)
           totalBaht += amount;
-          if (item.status === 'approved') sumApproved++;
-          else if (item.status === 'pending') sumPending++;
+          // payment_history ไม่มี status, ถือว่าทุกรายการที่อยู่ใน table นี้ได้รับการ approved แล้ว
+          sumApproved++;
+          const payDate = item.payment_date || item.recorded_at;
           return `<div class="entry">
             <div class="entry-left">
               <div class="entry-period">${periodToThai(item.period)}</div>
-              <div class="entry-detail">${item.submitted_at ? new Date(item.submitted_at).toLocaleDateString('th-TH') : ''}</div>
-              ${statusBadge(item.status)}
+              <div class="entry-detail">${payDate ? new Date(payDate).toLocaleDateString('th-TH') : ''}</div>
+              <span class="badge badge-approved">✅ ชำระแล้ว</span>
             </div>
             <div class="entry-amount">฿${amount.toLocaleString('th-TH')}</div>
           </div>`;

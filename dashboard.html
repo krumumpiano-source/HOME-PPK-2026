@@ -431,6 +431,7 @@
             try {
                 var result = await cachedCall('getDashboardData', {}, 60000);
                 if (!result || !result.success) {
+                    if (typeof ppkAlert === 'function') ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า');
                     return;
                 }
                 renderAnnouncements(result.announcements || []);

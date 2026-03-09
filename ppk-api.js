@@ -1293,11 +1293,17 @@ async function _routeAction(action, data) {
 
         /* ── submitHouseForm (LIFF forms ใช้) ──────── */
         case 'submitHouseForm': {
+            // หา resident จาก LINE user ID เพื่อเอา user_id
+            var shfResident = null;
+            if (data.lineUserId) {
+                var shfResRows = await sbGet('residents', { line_user_id: 'eq.' + data.lineUserId, is_active: 'eq.true', limit: '1' });
+                shfResident = shfResRows && shfResRows[0] ? shfResRows[0] : null;
+            }
             var shfPayload = {
                 house_number: data.houseNumber || '',
-                line_user_id: data.lineUserId || '',
-                form_type: data.formType || 'general',
-                detail: JSON.stringify(data),
+                user_id: shfResident ? shfResident.user_id : null,  // แก้: line_user_id → user_id
+                type: data.formType || 'general',                   // แก้: form_type → type
+                details: { ...data, lineUserId: data.lineUserId },  // แก้: detail → details, เก็บ LINE ID ใน jsonb
                 status: 'pending',
                 submitted_at: new Date().toISOString()
             };
@@ -1313,11 +1319,46 @@ async function _routeAction(action, data) {
         case 'linkLineAccount': {
             var houseNo = data.houseNumber || data.house_number || '';
             var lineUid  = data.lineUserId;
+            var pwd      = data.password || '';
             if (!houseNo || !lineUid) return { success: false, error: 'ต้องระบุ houseNumber และ lineUserId' };
+            if (!pwd) return { success: false, error: 'ต้องระบุรหัสผ่าน' };
+            
+            // ค้นหา resident
             var linkRows = await sbGet('residents', { house_number: 'eq.' + houseNo, is_active: 'eq.true', limit: '1' });
             if (!linkRows || !linkRows[0]) return { success: false, error: 'ไม่พบข้อมูลผู้พักบ้านหมายเลขนี้' };
-            await sbPatch('residents', { id: 'eq.' + linkRows[0].id }, { line_user_id: lineUid, line_linked_at: new Date().toISOString() });
-            return { success: true, resident: linkRows[0] };
+            var resident = linkRows[0];
+            
+            // ตรวจสอบรหัสผ่าน: ถ้ามี user_id ให้ตรวจกับ users.password_hash
+            if (resident.user_id) {
+                var userRows = await sbGet('users', { id: 'eq.' + resident.user_id, limit: '1' });
+                if (!userRows || !userRows[0]) return { success: false, error: 'ไม่พบข้อมูลผู้ใช้' };
+                var user = userRows[0];
+                // เข้ารหัส password ด้วย SHA-256 เทียบกับ hash ใน DB
+                var pwdHash = await sha256hex(pwd);
+                if (pwdHash !== user.password_hash) {
+                    return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
+                }
+            } else {
+                // ถ้าไม่มี user_id ให้ใช้รหัสผ่านเริ่มต้นจาก settings
+                var settingsRows = await sbGet('settings', { key: 'eq.default_resident_pin' });
+                var defaultPin = settingsRows && settingsRows[0] ? settingsRows[0].value : null;
+                if (!defaultPin) {
+                    return { success: false, error: 'ยังไม่ได้ตั้งรหัส PIN เริ่มต้นในระบบ — กรุณาติดต่อผู้ดูแลระบบ' };
+                }
+                if (pwd !== defaultPin) {
+                    return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
+                }
+            }
+            
+            // ตรวจสอบว่า LINE ID นี้ยังไม่ได้ผูกกับบ้านอื่นอยู่
+            var existingLink = await sbGet('residents', { line_user_id: 'eq.' + lineUid, limit: '1' });
+            if (existingLink && existingLink[0] && existingLink[0].id !== resident.id) {
+                return { success: false, error: 'LINE ID นี้เชื่อมกับบ้านพักอื่นอยู่แล้ว' };
+            }
+            
+            // ยืนยันการเชื่อมบัญชี
+            await sbPatch('residents', { id: 'eq.' + resident.id }, { line_user_id: lineUid, line_linked_at: new Date().toISOString() });
+            return { success: true, resident: resident };
         }
 
         /* ── cleanupOldSlips (trigger via Edge) ─────── */

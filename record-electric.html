@@ -201,6 +201,11 @@
         }
         
         /* ตารางบันทึกค่าไฟ */
+        .table-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .meter-table {
             width: 100%;
             border-collapse: collapse;
@@ -209,6 +214,7 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-width: 600px;
         }
         .meter-table th {
             background: linear-gradient(135deg, #f5e6d3, #f9e9d2);
@@ -443,6 +449,7 @@
         <div class="section">
             <div class="section-title">📝 บันทึกค่าไฟ</div>
             
+            <div class="table-scroll-wrapper">
             <table class="meter-table">
                 <thead id="electricTableHead">
                     <tr>
@@ -453,9 +460,10 @@
                     </tr>
                 </thead>
                 <tbody id="electricTableBody">
-                    <!-- ข้อมูลจะถูกโหลดจาก JavaScript -->
+                    <tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
             </table>
+            </div>
             
             <!-- สรุปยอด -->
             <div class="summary-box">
@@ -624,9 +632,10 @@
         
         // สร้างตารางผู้พักอาศัย
         async function renderResidentsTable() {
+            const tbody = document.getElementById('electricTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
             const residents = await getResidentsData();
             const savedAmounts = await getSavedElectricData();
-            const tbody = document.getElementById('electricTableBody');
             tbody.innerHTML = '';
 
             if (residents.length === 0) {

@@ -1787,23 +1787,29 @@
             const newStatus = document.getElementById('statusSelect').value;
             const note = document.getElementById('statusNote').value;
 
-            await updateRequestStatus(currentEditType, currentEditId, newStatus, note);
+            try {
+                await updateRequestStatus(currentEditType, currentEditId, newStatus, note);
 
-            // Special handling for residence queue
-            if (currentEditType === 'residence') {
-                const data = getData('residence');
-                const item = data.find(d => d.id === currentEditId);
-                if (item) {
-                    if (newStatus === 'waiting' && !item.queuePosition) {
-                        addToQueue(currentEditId);
-                    } else if (newStatus !== 'waiting' && item.queuePosition) {
-                        removeFromQueue(currentEditId);
+                // Special handling for residence queue
+                if (currentEditType === 'residence') {
+                    const data = getData('residence');
+                    const item = data.find(d => d.id === currentEditId);
+                    if (item) {
+                        if (newStatus === 'waiting' && !item.queuePosition) {
+                            addToQueue(currentEditId);
+                        } else if (newStatus !== 'waiting' && item.queuePosition) {
+                            removeFromQueue(currentEditId);
+                        }
                     }
                 }
-            }
 
-            closeModal('statusModal');
-            renderAll();
+                closeModal('statusModal');
+                renderAll();
+                ppkAlert('✅ บันทึกสถานะเรียบร้อยแล้ว');
+            } catch (e) {
+                console.error('saveStatus error', e);
+                ppkAlert('❌ บันทึกสถานะไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
+            }
         }
 
         async function approveFromQueue(id) {
@@ -1845,10 +1851,18 @@
 
         // ========== Initialize ==========
         document.addEventListener('DOMContentLoaded', async function() {
-            await checkSession();
-            await loadAllRequests();
-            initQueueExpirySelector();
-            renderAll();
+            // แสดง loading
+            var tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#64748b;">⏳ กำลังโหลดข้อมูล...</div>'; });
+            try {
+                await checkSession();
+                await loadAllRequests();
+                initQueueExpirySelector();
+                renderAll();
+            } catch(e) {
+                console.error('loadAllRequests error', e);
+                tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า</div>'; });
+            }
         });
     
         async function doLogout() {

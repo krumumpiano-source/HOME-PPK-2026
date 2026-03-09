@@ -424,11 +424,11 @@
                     <tr>
                         <td>
                             🗑️ ค่าขยะ
-                            <input type="number" id="garbageFee" value="310" min="0" step="10" 
+                            <input type="number" id="garbageFee" value="" min="0" step="10" placeholder="โหลดจากระบบ..."
                                    style="width:100px;margin-left:1rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
                                    onchange="calculateTotal()">
                         </td>
-                        <td class="amount" id="garbageDisplay">310.00</td>
+                        <td class="amount" id="garbageDisplay">0.00</td>
                     </tr>
                 </tbody>
                 <tbody id="additionalItemsBody">
@@ -532,15 +532,16 @@
 
             let waterTotal = 0;
             let electricTotal = 0;
-            let garbageFee = 310;
+            let garbageFee = 0;
             additionalItems = [];
 
             try {
                     // ดึงข้อมูลจาก Backend ทั้งหมดพร้อมกัน
-                    const [waterResult, electricResult, withdrawResult] = await Promise.all([
+                    const [waterResult, electricResult, withdrawResult, settingsResult] = await Promise.all([
                         cachedCall('getWaterBillTotal', { period }, 300000),
                         cachedCall('getElectricBillPEA', { period }, 300000),
-                        cachedCall('getMonthlyWithdraw', { period }, 120000)
+                        cachedCall('getMonthlyWithdraw', { period }, 120000),
+                        cachedCall('getSettings', {}, 300000)
                     ]);
 
                     if (waterResult && waterResult.success) {
@@ -549,8 +550,14 @@
                     if (electricResult && electricResult.success) {
                         electricTotal = electricResult.peaTotal || 0;
                     }
+                    // โหลดค่าขยะจาก settings ก่อน
+                    if (settingsResult && settingsResult.success && settingsResult.data) {
+                        garbageFee = parseFloat(settingsResult.data.garbage_fee) || 310;
+                    } else {
+                        garbageFee = 310;
+                    }
                     if (withdrawResult && withdrawResult.success && withdrawResult.data) {
-                        garbageFee = withdrawResult.data.garbageFee || 310;
+                        garbageFee = withdrawResult.data.garbageFee || garbageFee;
                         additionalItems = withdrawResult.data.additionalItems || [];
                     }
                 } catch (e) {
@@ -645,7 +652,7 @@
         // บันทึกข้อมูล
         async function saveData() {
             const { month, year, period, key } = getPeriod();
-            const garbageFee = parseFloat(document.getElementById('garbageFee').value) || 310;
+            const garbageFee = parseFloat(document.getElementById('garbageFee').value) || 0;
             
             const data = {
                 month: month,
