@@ -752,13 +752,10 @@ async function _routeAction(action, data) {
             for (var oi = 0; oi < 6; oi++) otp += Math.floor(Math.random() * 10);
             var otpHash = await sha256hex(otp + ':' + email);
             var expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 นาที
-            // เก็บ OTP ใน password_resets table (upsert by email)
-            await sbUpsert('password_resets', {
-                email: email,
-                code_hash: otpHash,
-                expires_at: expiresAt,
-                attempts: 0
-            }, 'email');
+            // เก็บ OTP ใน settings table (key = pw_reset_{email})
+            var otpKey = 'pw_reset_' + email;
+            var otpVal = JSON.stringify({ code_hash: otpHash, expires_at: expiresAt, attempts: 0 });
+            await sbUpsert('settings', { key: otpKey, value: otpVal }, 'key');
             // ส่งอีเมล OTP
             var emailSent = false;
             try {
@@ -793,21 +790,24 @@ async function _routeAction(action, data) {
             var newPassword = data.newPassword || '';
             if (!email || !code) return { success: false, error: 'กรุณากรอกอีเมลและรหัส OTP' };
             if (!newPassword || newPassword.length < 8) return { success: false, error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร' };
-            var resetRows = await sbGet('password_resets', { email: 'eq.' + email, limit: '1' });
+            var otpKey = 'pw_reset_' + email;
+            var resetRows = await sbGet('settings', { key: 'eq.' + otpKey, limit: '1' });
             if (!resetRows || !resetRows[0]) return { success: false, error: 'ไม่พบคำขอรีเซ็ต กรุณาขอรหัส OTP ใหม่' };
-            var rr = resetRows[0];
-            if (rr.attempts >= 5) return { success: false, error: 'ป้อนรหัสผิดเกินจำนวนครั้ง กรุณาขอรหัส OTP ใหม่' };
+            var rr = {};
+            try { rr = JSON.parse(resetRows[0].value); } catch(e) { return { success: false, error: 'ข้อมูล OTP ไม่สมบูรณ์ กรุณาขอใหม่' }; }
+            if ((rr.attempts || 0) >= 5) return { success: false, error: 'ป้อนรหัสผิดเกินจำนวนครั้ง กรุณาขอรหัส OTP ใหม่' };
             if (new Date(rr.expires_at) < new Date()) return { success: false, error: 'รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่' };
             var codeHash = await sha256hex(code + ':' + email);
             if (codeHash !== rr.code_hash) {
-                await sbPatch('password_resets', { email: 'eq.' + email }, { attempts: (rr.attempts || 0) + 1 });
-                return { success: false, error: 'รหัส OTP ไม่ถูกต้อง (เหลือ ' + (4 - (rr.attempts || 0)) + ' ครั้ง)' };
+                rr.attempts = (rr.attempts || 0) + 1;
+                await sbUpsert('settings', { key: otpKey, value: JSON.stringify(rr) }, 'key');
+                return { success: false, error: 'รหัส OTP ไม่ถูกต้อง (เหลือ ' + (5 - rr.attempts) + ' ครั้ง)' };
             }
             // OTP ถูกต้อง → เปลี่ยนรหัสผ่าน
             var pwHash = await sha256hex(newPassword);
             await sbPatch('users', { email: 'eq.' + email }, { password_hash: pwHash, must_change_password: false, updated_at: new Date().toISOString() });
             // ลบ OTP record
-            await sbDelete('password_resets', { email: 'eq.' + email });
+            await sbDelete('settings', { key: 'eq.' + otpKey });
             return { success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
         }
 
