@@ -351,7 +351,16 @@ async function _routeAction(action, data) {
         }
 
         case 'changePassword': {
-            var userId = data._userId;
+            var userId = data._userId || null;
+            if (!userId) {
+                // resolve from session
+                var cpSess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
+                userId = cpSess && cpSess[0] ? cpSess[0].user_id : null;
+            }
+            if (!userId) {
+                var lsU = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (lsU && lsU.id) userId = lsU.id;
+            }
             if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
             var uRows = await sbGet('users', { id: 'eq.' + userId, select: 'id,password_hash', limit: '1' });
             if (!uRows || !uRows[0]) return { success: false, error: 'ไม่พบผู้ใช้' };
@@ -771,8 +780,9 @@ async function _routeAction(action, data) {
 
         /* ── Profile / Coresident ─────────────────── */
         case 'updateProfile': {
-            var sessRows = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
+            var sessRows = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,resident_id' });
             var profileUserId = sessRows && sessRows[0] ? sessRows[0].user_id : null;
+            var profileResId = sessRows && sessRows[0] ? sessRows[0].resident_id : null;
             if (!profileUserId) {
                 var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
                 if (lsUser && lsUser.id) profileUserId = lsUser.id;
@@ -781,8 +791,22 @@ async function _routeAction(action, data) {
             await sbPatch('users', { id: 'eq.' + profileUserId }, {
                 prefix: data.prefix || '', firstname: data.firstname || '',
                 lastname: data.lastname || '', phone: data.phone || '',
-                position: data.position || '', updated_at: new Date().toISOString()
+                position: data.position || '', subject_group: data.subject_group || '',
+                updated_at: new Date().toISOString()
             });
+            // อัปเดต residents ด้วย (ถ้ามี)
+            if (!profileResId) {
+                var resFallback = await sbGet('residents', { user_id: 'eq.' + profileUserId, is_active: 'eq.true', limit: '1' });
+                if (resFallback && resFallback[0]) profileResId = resFallback[0].id;
+            }
+            if (profileResId) {
+                await sbPatch('residents', { id: 'eq.' + profileResId }, {
+                    prefix: data.prefix || '', firstname: data.firstname || '',
+                    lastname: data.lastname || '', phone: data.phone || '',
+                    position: data.position || '', subject_group: data.subject_group || '',
+                    updated_at: new Date().toISOString()
+                });
+            }
             return { success: true };
         }
         case 'addCoresident': {
