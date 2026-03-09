@@ -244,7 +244,7 @@
                     result.data.forEach(function(item) {
                         var mapped = {
                             number: item.houseNumber || item.house_number || '',
-                            residents: item.residents || item.occupantName || '',
+                            residents: item.resident_name || item.residents || item.occupantName || '',
                             prevMeter: item.prevWaterMeter || item.prev_meter,
                             currMeter: item.currWaterMeter || item.curr_meter,
                             water: item.waterBill || item.water || 0,

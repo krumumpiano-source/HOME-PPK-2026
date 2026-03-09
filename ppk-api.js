@@ -503,7 +503,14 @@ async function _routeAction(action, data) {
         case 'getSlipSubmissions': {
             var q = { order: 'submitted_at.desc' };
             if (data.status) q.status = 'eq.' + data.status;
-            var rows = await sbGet('slip_submissions', q);
+            if (data.period) q.period = 'eq.' + data.period;
+            var [rows, resRows] = await Promise.all([
+                sbGet('slip_submissions', q),
+                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' })
+            ]);
+            var resMap = {};
+            (resRows || []).forEach(function(r) { resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim(); });
+            (rows || []).forEach(function(s) { s.resident_name = resMap[s.house_number] || ''; });
             return { success: true, data: rows };
         }
         case 'getNotificationHistory': {
@@ -748,10 +755,10 @@ async function _routeAction(action, data) {
             var period = data.period || '';
             var [outRows, resRows] = await Promise.all([
                 sbGet('outstanding', { period: 'eq.' + period, order: 'house_number.asc' }),
-                sbGet('residents',   { is_active: 'eq.true', select: 'house_number,firstname,lastname,user_id' })
+                sbGet('residents',   { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,user_id' })
             ]);
             var resMap = {};
-            (resRows || []).forEach(function(r) { resMap[r.house_number] = (r.firstname || '') + ' ' + (r.lastname || ''); });
+            (resRows || []).forEach(function(r) { resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim(); });
             var result = (outRows || []).map(function(o) {
                 return Object.assign({}, o, { resident_name: resMap[o.house_number] || '' });
             });

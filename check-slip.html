@@ -503,7 +503,7 @@
         const unitData = {
           id: idx + 1,
           unitNumber: unitNumber,
-          name: resident.resident || '',
+          name: ((resident.prefix || '') + (resident.firstname || '') + ' ' + (resident.lastname || '')).trim() || resident.resident || '',
           email: resident.email || '',
           waterAmount: waterAmount,
           electricAmount: electricAmount,
@@ -543,7 +543,7 @@
           const unitData = {
             id: idx + 1,
             unitNumber: unitNumber,
-            name: w.resident || '',
+            name: w.resident_name || w.resident || '',
             email: '',
             waterAmount: waterAmount,
             electricAmount: electricAmount,
