@@ -53,31 +53,46 @@ function renderPPKNav(containerId, activePage) {
     );
   }
 
-  // ── รายการเมนูสมาชิกทั่วไป ──────────────────────────────────────
-  var memberMenu =
-    navBtn('dashboard',       '🏠', 'แดชบอร์ด') +
-    navBtn('payment-history', '💸', 'ข้อมูลการชำระย้อนหลัง') +
-    navBtn('form',            '📝', 'แบบฟอร์มคำร้อง') +
-    navBtn('regulations',     '📚', 'ระเบียบ') +
-    navBtn('settings',        '⚙️', 'ตั้งค่าส่วนตัว');
+  function sectionDivider(icon, label) {
+    return '<div class="sidebar-divider">' +
+      '<span class="sidebar-divider-icon">' + icon + '</span>' +
+      '<span class="sidebar-divider-label">' + _esc(label) + '</span>' +
+    '</div>';
+  }
 
-  // ── รายการเมนูแอดมิน ─────────────────────────────────────────────
-  var adminMenu = isAdmin ? (
-    navBtn('team-management',      '👥', 'โปรแกรมบริหารจัดการ', null, 'badge-pending-reg') +
-    navBtn('record-water',         '💧', 'บันทึกมิเตอร์น้ำ') +
-    navBtn('record-electric',      '⚡', 'บันทึกมิเตอร์ไฟ') +
-    navBtn('payment-notification', '📢', 'แจ้งยอดชำระ') +
-    navBtn('check-slip',           '🔍', 'ตรวจสลิป', null, 'badge-pending-slips') +
-    navBtn('check-request',        '📋', 'ตรวจคำร้อง', null, 'badge-pending-reqs') +
-    navBtn('accounting',           '📊', 'บัญชี') +
-    navBtn('monthly-withdraw',     '💵', 'เบิกประจำเดือน') +
-    navBtn('admin-settings',       '🔧', 'ตั้งค่าแอดมิน')
-  ) : (
-    navBtn('team-management', '👥', 'โปรแกรมบริหารจัดการ')
-  );
+  // ── รายการเมนู — จัดกลุ่มเป็นหมวดหมู่ ──────────────────────────
+  var menuHTML = '';
 
-  // ── ปุ่ม logout — ซ่อนไว้เนื่องจากไม่ใช้ระบบ login ────────────────
-var logoutBtn = ''; // ไม่แสดงปุ่ม logout
+  // 📌 หน้าหลัก
+  menuHTML += sectionDivider('📌', 'หน้าหลัก');
+  menuHTML += navBtn('dashboard', '🏠', 'แดชบอร์ด');
+
+  // 👤 สำหรับผู้พักอาศัย
+  menuHTML += sectionDivider('👤', 'ผู้พักอาศัย');
+  menuHTML += navBtn('payment-history', '💸', 'ประวัติการชำระ');
+  menuHTML += navBtn('form',            '📝', 'ยื่นคำร้อง');
+  menuHTML += navBtn('regulations',     '📚', 'ระเบียบ');
+  menuHTML += navBtn('settings',        '⚙️', 'ตั้งค่าส่วนตัว');
+
+  if (isAdmin) {
+    // 🛠️ บริหารจัดการ
+    menuHTML += sectionDivider('🛠️', 'บริหารจัดการ');
+    menuHTML += navBtn('team-management',      '👥', 'ศูนย์ควบคุม', null, 'badge-pending-reg');
+    menuHTML += navBtn('record-water',         '💧', 'บันทึกค่าน้ำ');
+    menuHTML += navBtn('record-electric',      '⚡', 'บันทึกค่าไฟ');
+    menuHTML += navBtn('payment-notification', '📢', 'แจ้งยอดชำระ');
+    menuHTML += navBtn('check-slip',           '🔍', 'ตรวจสลิป', null, 'badge-pending-slips');
+    menuHTML += navBtn('check-request',        '📋', 'ตรวจคำร้อง', null, 'badge-pending-reqs');
+
+    // 💰 การเงิน
+    menuHTML += sectionDivider('💰', 'การเงิน');
+    menuHTML += navBtn('accounting',       '📊', 'บัญชีรายรับรายจ่าย');
+    menuHTML += navBtn('monthly-withdraw', '💵', 'เบิกประจำเดือน');
+
+    // ⚙️ ระบบ
+    menuHTML += sectionDivider('⚙️', 'ระบบ');
+    menuHTML += navBtn('admin-settings', '🔧', 'ตั้งค่าแอดมิน');
+  }
 
   // ── user info badge ───────────────────────────────────────────────
   var userBadge = displayName
@@ -92,9 +107,7 @@ var logoutBtn = ''; // ไม่แสดงปุ่ม logout
       '<button class="sidebar-toggle" id="sidebarToggle" title="ขยาย/ย่อเมนู">☰</button>' +
       (userBadge ? '<div class="sidebar-user-info">' + userBadge + '</div>' : '') +
       '<nav class="sidebar-menu">' +
-        memberMenu +
-        adminMenu +
-        logoutBtn +
+        menuHTML +
       '</nav>' +
     '</div>';
 
@@ -116,6 +129,27 @@ var logoutBtn = ''; // ไม่แสดงปุ่ม logout
         'word-break:break-word;',
       '}',
       '.sidebar.expanded .sidebar-user-badge{display:block;}',
+      '.sidebar-divider{',
+        'display:flex;align-items:center;gap:0.5rem;',
+        'padding:0.5rem 0.5rem 0.25rem;',
+        'margin-top:0.4rem;',
+        'border-top:1px solid rgba(255,255,255,0.12);',
+        'pointer-events:none;',
+      '}',
+      '.sidebar-divider:first-child{border-top:none;margin-top:0;}',
+      '.sidebar-divider-icon{',
+        'font-size:0.85rem;min-width:1.5em;text-align:center;',
+        'opacity:0.7;',
+      '}',
+      '.sidebar-divider-label{',
+        'display:none;',
+        'font-size:0.72rem;font-weight:700;',
+        'color:rgba(255,255,255,0.5);',
+        'text-transform:uppercase;',
+        'letter-spacing:0.04em;',
+        'white-space:nowrap;',
+      '}',
+      '.sidebar.expanded .sidebar-divider-label{display:inline;}',
       '.ppk-nav-badge{',
         'position:absolute;top:6px;right:6px;',
         'background:#ef4444;color:#fff;',
