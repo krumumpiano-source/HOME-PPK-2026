@@ -243,13 +243,13 @@
                 if (result && result.success && result.data) {
                     result.data.forEach(function(item) {
                         var mapped = {
-                            number: item.houseNumber || item.house_number || '',
-                            residents: item.resident_name || item.residents || item.occupantName || '',
-                            prevMeter: item.prevWaterMeter || item.prev_meter,
-                            currMeter: item.currWaterMeter || item.curr_meter,
-                            water: item.waterBill || item.water || 0,
-                            electric: item.electricBill || item.electric || 0,
-                            common: item.commonFee || item.common || 0
+                            number: item.house_number || '',
+                            residents: item.resident_name || '',
+                            prevMeter: item.prev_meter,
+                            currMeter: item.curr_meter,
+                            water: parseFloat(item.water_amount) || 0,
+                            electric: parseFloat(item.electric_amount) || 0,
+                            common: parseFloat(item.common_fee) || 0
                         };
                         var num = mapped.number.toLowerCase();
                         if (num.indexOf('แฟลต') >= 0 || num.indexOf('flat') >= 0) {

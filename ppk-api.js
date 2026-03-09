@@ -786,15 +786,39 @@ async function _routeAction(action, data) {
         /* ── Bill summaries ───────────────────────── */
         case 'getBillSummaryAll': {
             var period = data.period || '';
-            var [outRows, resRows] = await Promise.all([
-                sbGet('outstanding', { period: 'eq.' + period, order: 'house_number.asc' }),
-                sbGet('residents',   { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,user_id' })
+            // ดึงข้อมูลจาก water_bills, electric_bills, residents โดยตรง (ไม่พึ่ง outstanding ที่อาจยังไม่ถูกสร้าง)
+            var [wRows, eRows, resRows, settRows] = await Promise.all([
+                sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }),
+                sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }),
+                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }),
+                sbGet('settings',       { key: 'eq.commonFee', select: 'value', limit: '1' })
             ]);
+            var commonFee = (settRows && settRows[0]) ? parseFloat(settRows[0].value) || 0 : 0;
             var resMap = {};
-            (resRows || []).forEach(function(r) { resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim(); });
-            var result = (outRows || []).map(function(o) {
-                return Object.assign({}, o, { resident_name: resMap[o.house_number] || '' });
+            (resRows || []).forEach(function(r) {
+                if (r.house_number) resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
             });
+            // รวมข้อมูลตาม house_number
+            var summaryMap = {};
+            (wRows || []).forEach(function(w) {
+                var hn = w.house_number || '';
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: commonFee, prev_meter: null, curr_meter: null };
+                summaryMap[hn].water_amount += parseFloat(w.amount) || 0;
+                summaryMap[hn].prev_meter = w.prev_meter;
+                summaryMap[hn].curr_meter = w.curr_meter;
+            });
+            (eRows || []).forEach(function(e) {
+                var hn = e.house_number || '';
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: commonFee, prev_meter: null, curr_meter: null };
+                summaryMap[hn].electric_amount += parseFloat(e.bill_amount) || parseFloat(e.amount) || 0;
+            });
+            // สร้างผลลัพธ์ — เพิ่มบ้านที่มี resident แต่ยังไม่มีบิลด้วย
+            Object.keys(resMap).forEach(function(hn) { if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: commonFee, prev_meter: null, curr_meter: null }; });
+            var result = Object.values(summaryMap).map(function(s) {
+                s.resident_name = resMap[s.house_number] || '';
+                s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
+                return s;
+            }).sort(function(a, b) { return String(a.house_number).localeCompare(String(b.house_number), 'th'); });
             return { success: true, data: result };
         }
 
