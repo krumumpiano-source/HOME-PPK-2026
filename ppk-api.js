@@ -36,6 +36,15 @@
 })();
 
 /* ──────────────────────────────────────────
+   Natural Sort สำหรับ house_number
+   "บ้าน1" < "บ้าน2" < "บ้าน10" (ไม่ใช่ "บ้าน1" < "บ้าน10" < "บ้าน2")
+────────────────────────────────────────── */
+function _naturalCmp(a, b) {
+    var sa = String(a.house_number || ''), sb = String(b.house_number || '');
+    return sa.localeCompare(sb, 'th', { numeric: true, sensitivity: 'base' });
+}
+
+/* ──────────────────────────────────────────
    Navigation
 ────────────────────────────────────────── */
 function navigate(page) {
@@ -318,7 +327,7 @@ async function _routeAction(action, data) {
                     status: h.status || 'available',
                     note: h.notes || h.note || ''
                 };
-            });
+            }).sort(_naturalCmp);
             return { success: true, data: mapped };
         }
         case 'addHousing': {
@@ -394,6 +403,7 @@ async function _routeAction(action, data) {
                     cohabitant_names: JSON.stringify(cos)
                 });
             });
+            merged.sort(_naturalCmp);
             return { success: true, data: merged };
         }
         case 'getUserProfile': {
@@ -691,11 +701,12 @@ async function _routeAction(action, data) {
             var rows = await sbGet('housing', { order: 'house_number.asc' });
             var mapped = (rows || []).map(function(h) {
                 return { id: h.id, display_number: (h.type === 'flat' ? 'แฟลต' : 'บ้าน') + h.house_number, house_number: h.house_number, type: h.type, status: h.status };
-            });
+            }).sort(_naturalCmp);
             return { success: true, data: mapped };
         }
         case 'getResidentsList': {
             var rows = await sbGet('residents', { is_active: 'eq.true', order: 'house_number.asc' });
+            (rows || []).sort(_naturalCmp);
             return { success: true, data: rows };
         }
 
@@ -818,7 +829,7 @@ async function _routeAction(action, data) {
                 s.resident_name = resMap[s.house_number] || '';
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
                 return s;
-            }).sort(function(a, b) { return String(a.house_number).localeCompare(String(b.house_number), 'th'); });
+            }).sort(_naturalCmp);
             return { success: true, data: result };
         }
 
