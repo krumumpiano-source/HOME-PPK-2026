@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลืมอีเมล | ระบบสมาชิก</title>
+    <title>???????? | ??????????</title>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
     body {
@@ -102,22 +102,22 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
             <div>
                 <div style="font-size:1.15rem; font-weight:700; color:#2563eb;">HOME PPK 2026</div>
-                <div style="font-size:0.98rem; color:#555;">โปรแกรมบริหารจัดการ งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
+                <div style="font-size:0.98rem; color:#555;">??????????????????? ??????????? ????? ???? ?????????????????? ????????????????????</div>
             </div>
         </div>
-        <h2 id="forgotEmailTitle">ลืมอีเมล</h2>
+        <h2 id="forgotEmailTitle">????????</h2>
         <div class="form-group">
-            <label for="phone" id="phoneLabel">กรอกเบอร์โทรศัพท์ที่ใช้สมัคร</label>
-            <input type="tel" id="phone" name="phone" required placeholder="กรอกเบอร์โทรศัพท์" pattern="[0-9]{9,15}" style="font-size:1.15rem; padding:1rem 1.2rem;" maxlength="15" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+            <label for="phone" id="phoneLabel">????????????????????????????</label>
+            <input type="tel" id="phone" name="phone" required placeholder="?????????????????" pattern="[0-9]{9,15}" style="font-size:1.15rem; padding:1rem 1.2rem;" maxlength="15" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
         </div>
         <div class="error-message" id="errorMsg"></div>
-        <button type="submit" class="login-btn" id="forgotEmailBtn">ขออีเมลที่ใช้สมัคร</button>
+        <button type="submit" class="login-btn" id="forgotEmailBtn">??????????????????</button>
         <div class="menu-links">
-            <a href="#" onclick="navigate('?page=login');return false;" id="backToLogin">กลับสู่หน้าเข้าสู่ระบบ</a>
+            <a href="#" onclick="navigate('?page=login');return false;" id="backToLogin">??????????????????????</a>
         </div>
         <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;" id="footerCredit">
-            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
-            <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            ????????????????? ???????? ????????
+            <br>??????????? ????? ???? ?????????????????? ????????????????????
         </div>
     </form>
     <script>
@@ -129,11 +129,11 @@
             errorMsg.style.display = 'none';
             errorMsg.textContent = '';
             if (!/^\d{9,15}$/.test(phone)) {
-                errorMsg.textContent = 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (9-15 หลัก)';
+                errorMsg.textContent = '???????????????????????????????? (9-15 ????)';
                 errorMsg.style.display = 'block';
                 return false;
             }
-            // Validation passed → call backend
+            // Validation passed ? call backend
             handleFindEmail();
             return false; // prevent form submission
         }
@@ -145,44 +145,44 @@
             const forgotEmailBtn = document.getElementById('forgotEmailBtn');
 
             forgotEmailBtn.disabled = true;
-            forgotEmailBtn.textContent = 'กำลังค้นหา...';
+            forgotEmailBtn.textContent = '??????????...';
             errorMsg.style.display = 'none';
 
             try {
                 const result = await callBackend('findEmail', { phone });
 
                 if (result.success) {
-                    // แสดงอีเมลที่ปกปิดบางส่วน
+                    // ????????????????????????
                     document.getElementById('forgotEmailForm').innerHTML = `
                         <div style="text-align:center; padding:2rem 1rem;">
-                            <div style="font-size:3rem; margin-bottom:1rem;">📧</div>
-                            <h2 style="color:#10b981; margin-bottom:1rem;">พบอีเมลที่เชื่อมกับเบอร์นี้!</h2>
+                            <div style="font-size:3rem; margin-bottom:1rem;">??</div>
+                            <h2 style="color:#10b981; margin-bottom:1rem;">???????????????????????????!</h2>
                             <p style="color:#555; font-size:1.05rem; margin-bottom:0.5rem;">
-                                ${result.message || 'อีเมลที่ใช้สมัครคือ'}
+                                ${result.message || '???????????????????'}
                             </p>
                             <p style="font-size:1.5rem; font-weight:700; color:#2563eb; margin-bottom:1.5rem; letter-spacing:1px;">
                                 ${result.email || ''}
                             </p>
-                            <a href="#" onclick="navigate('?page=login');return false;" style="display:inline-block; padding:0.8rem 2rem; background:linear-gradient(90deg,#2563eb,#38e8ff); color:#fff; border-radius:8px; text-decoration:none; font-weight:700;">กลับสู่หน้าเข้าสู่ระบบ</a>
+                            <a href="#" onclick="navigate('?page=login');return false;" style="display:inline-block; padding:0.8rem 2rem; background:linear-gradient(90deg,#2563eb,#38e8ff); color:#fff; border-radius:8px; text-decoration:none; font-weight:700;">??????????????????????</a>
                         </div>
                     `;
                 } else {
-                    errorMsg.textContent = result.error || 'ไม่พบอีเมลที่เชื่อมกับเบอร์โทรนี้';
+                    errorMsg.textContent = result.error || '?????????????????????????????????';
                     errorMsg.style.display = 'block';
                 }
             } catch (err) {
-                errorMsg.textContent = err.message || 'ไม่สามารถเชื่อมต่อระบบได้';
+                errorMsg.textContent = err.message || '?????????????????????????';
                 errorMsg.style.display = 'block';
             } finally {
                 forgotEmailBtn.disabled = false;
-                forgotEmailBtn.textContent = 'ขออีเมลที่ใช้สมัคร';
+                forgotEmailBtn.textContent = '??????????????????';
             }
         }
     </script>
     <script src="supabase/config.js"></script>
     <script src="supabase/supabase.min.js"></script>
-    <script src="ppk-api.js"></script>
+    <script src="ppk-api.js?v=20260309"></script>
     <script src="ppk-app.js"></script>
-    <script src="ppk-utils.js"></script></body>
+    <script src="ppk-utils.js?v=20260309"></script></body>
 </html>
 
