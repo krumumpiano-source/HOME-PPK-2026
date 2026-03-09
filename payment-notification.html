@@ -229,6 +229,7 @@
         }
 
         // === ดึงข้อมูลจาก Backend ===
+        var _lastLoadError = '';
         async function loadBillData(){
             updateTableTitles();
             await updateFooterNotes();
@@ -238,8 +239,9 @@
             var period = yearCE + '-' + month;
             var houses = [];
             var flats = [];
+            _lastLoadError = '';
             try {
-                var result = await cachedCall('getBillSummaryAll', { period: period }, 300000);
+                var result = await callBackend('getBillSummaryAll', { period: period });
                 if (result && result.success && result.data) {
                     result.data.forEach(function(item) {
                         var mapped = {
@@ -258,9 +260,12 @@
                             houses.push(mapped);
                         }
                     });
+                } else {
+                    _lastLoadError = (result && result.error) || 'API ส่งข้อมูลกลับมาไม่ถูกต้อง';
                 }
             } catch (e) {
-                console.warn('โหลดข้อมูลจาก Backend ไม่สำเร็จ:', e);
+                _lastLoadError = e.message || 'เชื่อมต่อ Supabase ไม่ได้';
+                console.error('โหลดข้อมูลจาก Backend ไม่สำเร็จ:', e);
             }
             renderTable('houseTableBody', houses, 'house');
             renderTable('flatTableBody', flats, 'flat');
@@ -270,7 +275,10 @@
             var tbody = document.getElementById(tbodyId);
             tbody.innerHTML = '';
             if (dataArray.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:1.5rem;">ไม่มีข้อมูล — กรุณาเชื่อมต่อ Backend หรือบันทึกค่าน้ำ/ค่าไฟก่อน</td></tr>';
+                var msg = _lastLoadError
+                    ? '❌ เชื่อมต่อ Supabase ไม่สำเร็จ: ' + _lastLoadError + '<br><small style="color:#94a3b8">ตรวจสอบ Supabase URL / anon key ใน supabase/config.js</small>'
+                    : '📭 ยังไม่มีข้อมูลค่าน้ำ/ค่าไฟ สำหรับรอบบิลนี้<br><small style="color:#94a3b8">กรุณาไปบันทึกค่าน้ำ/ค่าไฟ ที่หน้า "บันทึกค่าน้ำ" / "บันทึกค่าไฟ" ก่อน</small>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:1.5rem;">' + msg + '</td></tr>';
                 return;
             }
             for(var i=0;i<dataArray.length;i++){
