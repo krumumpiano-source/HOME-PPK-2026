@@ -547,13 +547,11 @@
                 printWindow.document.write('  setTimeout(function() { window.print(); }, 500);');
                 printWindow.document.write('}');
                 printWindow.document.write('window.onload = renderPDFs;');
-                printWindow.document.write('<\/script>    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body></html>');
+                printWindow.document.write('<\/script></body></html>');
                 printWindow.document.close();
             });
         } else {
-            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script>    <script src="ppk-api.js"></script>
-    <script src="ppk-utils.js"></script></body></html>');
+            printWindow.document.write('<script>window.onload = function() { window.print(); }<\/script></body></html>');
             printWindow.document.close();
         }
     }

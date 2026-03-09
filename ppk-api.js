@@ -1407,6 +1407,57 @@ async function _routeAction(action, data) {
             return cleanResult || { success: false, error: 'Edge Function ไม่ตอบสนอง' };
         }
 
+        /* ── getStaffCoresidents — ดึงผู้ร่วมพักอาศัยที่เป็นบุคลากร ─── */
+        case 'getStaffCoresidents': {
+            var cRows = await sbGet('coresidents', { select: '*, residents!inner(id, prefix, firstname, lastname, house_id, housing!inner(house_number)), users!inner(position, phone)' });
+            var mapped = (cRows || []).map(function (c) {
+                var r = c.residents || {};
+                var u = c.users || {};
+                var h = r.housing || {};
+                return {
+                    id: c.id,
+                    prefix: c.prefix || '',
+                    firstname: c.firstname || '',
+                    lastname: c.lastname || '',
+                    relation: c.relation || '',
+                    resident_name: (r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || ''),
+                    house_number: h.house_number || '',
+                    position: u.position || '',
+                    phone: u.phone || ''
+                };
+            });
+            return { success: true, data: mapped };
+        }
+
+        /* ── updatePermissions — บันทึกสิทธิ์ผู้ใช้ ─── */
+        case 'updatePermissions': {
+            var perms = data.permissions || {};
+            var userIds = Object.keys(perms);
+            for (var pi = 0; pi < userIds.length; pi++) {
+                var uid = userIds[pi];
+                var userPerms = perms[uid];
+                // ลบสิทธิ์เก่าของ user นี้
+                await sbDelete('permissions', { user_id: 'eq.' + uid });
+                // เพิ่มสิทธิ์ใหม่ที่ checked
+                var permKeys = Object.keys(userPerms);
+                for (var pk = 0; pk < permKeys.length; pk++) {
+                    if (userPerms[permKeys[pk]]) {
+                        await sbPost('permissions', { user_id: uid, permission: permKeys[pk] });
+                    }
+                }
+            }
+            return { success: true, message: 'บันทึกสิทธิ์เรียบร้อย' };
+        }
+
+        /* ── getRegulationsPdf — ดึง URL ไฟล์ระเบียบ ─── */
+        case 'getRegulationsPdf': {
+            var regRows = await sbGet('system_settings', { key: 'eq.regulations_pdf', select: 'value', limit: '1' });
+            if (regRows && regRows[0] && regRows[0].value) {
+                return { success: true, downloadUrl: regRows[0].value };
+            }
+            return { success: false, message: 'ไม่พบไฟล์ระเบียบ' };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
