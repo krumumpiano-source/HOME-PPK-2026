@@ -797,14 +797,25 @@ async function _routeAction(action, data) {
         /* ── Bill summaries ───────────────────────── */
         case 'getBillSummaryAll': {
             var period = data.period || '';
-            // ดึงข้อมูลจาก water_bills, electric_bills, residents โดยตรง (ไม่พึ่ง outstanding ที่อาจยังไม่ถูกสร้าง)
+            // ดึงข้อมูลจาก water_bills, electric_bills, residents + settings (common_fee_house / common_fee_flat)
             var [wRows, eRows, resRows, settRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }),
                 sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }),
-                sbGet('settings',       { key: 'eq.commonFee', select: 'value', limit: '1' })
+                sbGet('settings',       { select: 'key,value' })
             ]);
-            var commonFee = (settRows && settRows[0]) ? parseFloat(settRows[0].value) || 0 : 0;
+            // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
+            var settMap = {};
+            (settRows || []).forEach(function(s) { settMap[s.key] = s.value; });
+            var commonFeeHouse = parseFloat(settMap['common_fee_house']) || 0;
+            var commonFeeFlat  = parseFloat(settMap['common_fee_flat'])  || 0;
+            // fallback: ถ้ามี key เก่า commonFee ให้ใช้
+            if (!commonFeeHouse && settMap['commonFee']) commonFeeHouse = parseFloat(settMap['commonFee']) || 0;
+            if (!commonFeeFlat  && settMap['commonFee']) commonFeeFlat  = parseFloat(settMap['commonFee']) || 0;
+
+            function isFlat(hn) { var n = (hn || '').toLowerCase(); return n.indexOf('แฟลต') >= 0 || n.indexOf('flat') >= 0; }
+            function getCommonFee(hn) { return isFlat(hn) ? commonFeeFlat : commonFeeHouse; }
+
             var resMap = {};
             (resRows || []).forEach(function(r) {
                 if (r.house_number) resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
@@ -813,18 +824,20 @@ async function _routeAction(action, data) {
             var summaryMap = {};
             (wRows || []).forEach(function(w) {
                 var hn = w.house_number || '';
-                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: commonFee, prev_meter: null, curr_meter: null };
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonFee(hn), prev_meter: null, curr_meter: null };
                 summaryMap[hn].water_amount += parseFloat(w.amount) || 0;
                 summaryMap[hn].prev_meter = w.prev_meter;
                 summaryMap[hn].curr_meter = w.curr_meter;
             });
             (eRows || []).forEach(function(e) {
                 var hn = e.house_number || '';
-                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: commonFee, prev_meter: null, curr_meter: null };
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonFee(hn), prev_meter: null, curr_meter: null };
                 summaryMap[hn].electric_amount += parseFloat(e.bill_amount) || parseFloat(e.amount) || 0;
             });
             // สร้างผลลัพธ์ — เพิ่มบ้านที่มี resident แต่ยังไม่มีบิลด้วย
-            Object.keys(resMap).forEach(function(hn) { if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: commonFee, prev_meter: null, curr_meter: null }; });
+            Object.keys(resMap).forEach(function(hn) {
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonFee(hn), prev_meter: null, curr_meter: null };
+            });
             var result = Object.values(summaryMap).map(function(s) {
                 s.resident_name = resMap[s.house_number] || '';
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
