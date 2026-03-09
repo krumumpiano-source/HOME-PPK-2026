@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>??????? | ??????????</title>
+    <title>ล็อกอิน | ระบบสมาชิก</title>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
     body {
@@ -116,7 +116,7 @@
         }
     }
     </style>
-    <!-- First-Login Modal: ????????????????????????????? -->
+    <!-- First-Login Modal: บังคับเปลี่ยนรหัสผ่านครั้งแรก -->
     <style>
     #firstLoginOverlay {
         display: none;
@@ -150,41 +150,41 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
             <div>
                 <div style="font-size:1.15rem; font-weight:700; color:#2563eb;">HOME PPK 2026</div>
-                <div style="font-size:0.98rem; color:#555;">??????????????????? ??????????? ????? ???? ?????????????????? ????????????????????</div>
+                <div style="font-size:0.98rem; color:#555;">โปรแกรมบริหารจัดการ งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>
             </div>
         </div>
-        <h2 id="loginTitle">???????????</h2>
+        <h2 id="loginTitle">เข้าสู่ระบบ</h2>
         <div class="form-group">
-            <label for="email" id="emailLabel">?????</label>
-            <input type="email" id="email" name="email" required placeholder="?????????">
+            <label for="email" id="emailLabel">อีเมล</label>
+            <input type="email" id="email" name="email" required placeholder="กรอกอีเมล">
         </div>
         <div class="form-group">
-            <label for="password" id="passwordLabel">????????</label>
+            <label for="password" id="passwordLabel">รหัสผ่าน</label>
             <div class="pw-wrapper">
-                <input type="password" id="password" name="password" required placeholder="????????????????? 8 ???" autocomplete="current-password" class="pw-input">
-                <button type="button" class="pw-toggle" onclick="togglePassword()" id="pwToggleBtn" title="????/????????????" aria-label="????/????????????">??</button>
+                <input type="password" id="password" name="password" required placeholder="รหัสผ่านอย่างน้อย 8 ตัว" autocomplete="current-password" class="pw-input">
+                <button type="button" class="pw-toggle" onclick="togglePassword()" id="pwToggleBtn" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">👁</button>
             </div>
         </div>
         <div class="error-message" id="errorMsg"></div>
-        <button type="submit" class="login-btn" id="loginBtn">???????????</button>
+        <button type="submit" class="login-btn" id="loginBtn">เข้าสู่ระบบ</button>
         <div class="menu-links">
-            <a href="#" onclick="navigate('?page=forgot-password');return false;" id="forgotPass">????????????</a>
-            <a href="#" onclick="navigate('?page=forgot-email');return false;" id="forgotEmail">?????????</a>
-            <a href="#" onclick="navigate('?page=register');return false;" id="registerMenu">??????????????</a>
+            <a href="#" onclick="navigate('?page=forgot-password');return false;" id="forgotPass">ลืมรหัสผ่าน?</a>
+            <a href="#" onclick="navigate('?page=forgot-email');return false;" id="forgotEmail">ลืมอีเมล?</a>
+            <a href="#" onclick="navigate('?page=register');return false;" id="registerMenu">สมัครใช้บริการ</a>
         </div>
         <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;" id="footerCredit">
-            ????????????????? ???????? ????????
-            <br>??????????? ????? ???? ?????????????????? ????????????????????
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว
+            <br>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
     </form>
 
-    <!-- ???? ppk-api.js ???? inline script ???????? callBackend ???????? -->
-    <script src="supabase/config.js"></script>
-    <script src="supabase/supabase.min.js"></script>
+    <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
+    <script src="supabase/config.js?v=20260309"></script>
+    <script src="supabase/supabase.min.js?v=20260309"></script>
     <script src="ppk-api.js?v=20260309"></script>
-    <script src="ppk-app.js"></script>
+    <script src="ppk-app.js?v=20260309"></script>
     <script src="ppk-utils.js?v=20260309"></script>
-    <!-- Fallback: ??? ppk-app.js ????????? stub ? ???????? -->
+    <!-- Fallback: ถ้า ppk-app.js เก่าไม่มี stub → สร้างเอง -->
     <script>
     (function() {
         function _makeStub(fn) {
@@ -199,7 +199,7 @@
                             real(action, data || {}).then(resolve).catch(reject);
                         } else if (tries > 200) {
                             clearInterval(t);
-                            reject(new Error('PPK API ????????????? ???????????????'));
+                            reject(new Error('PPK API โหลดไม่สำเร็จ กรุณารีเฟรชหน้า'));
                         }
                     }, 100);
                 });
@@ -214,22 +214,22 @@
     <!-- First-Login Modal -->
     <div id="firstLoginOverlay">
         <div id="firstLoginBox">
-            <h3>&#128274; ???????????????????????</h3>
-            <p>???????????????????????????????????????<br>???????????????????????????????????</p>
+            <h3>&#128274; เปลี่ยนรหัสผ่านครั้งแรก</h3>
+            <p>รหัสผ่านเริ่มต้นของคุณคือวันเดือนปีเกิด<br>กรุณาตั้งรหัสผ่านใหม่ก่อนใช้งานระบบ</p>
             <div class="fl-group">
-                <label>???????????????? (?????????????? ???? 31Dec1985)</label>
-                <input type="password" id="flOldPw" placeholder="????????????????" autocomplete="current-password">
+                <label>รหัสผ่านปัจจุบัน (วันเดือนปีเกิด เช่น 31Dec1985)</label>
+                <input type="password" id="flOldPw" placeholder="รหัสผ่านเริ่มต้น" autocomplete="current-password">
             </div>
             <div class="fl-group">
-                <label>???????????? (????????? 6 ???)</label>
-                <input type="password" id="flNewPw" placeholder="????????????" autocomplete="new-password">
+                <label>รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label>
+                <input type="password" id="flNewPw" placeholder="รหัสผ่านใหม่" autocomplete="new-password">
             </div>
             <div class="fl-group">
-                <label>??????????????????</label>
-                <input type="password" id="flConfirmPw" placeholder="?????????????????????????" autocomplete="new-password">
+                <label>ยืนยันรหัสผ่านใหม่</label>
+                <input type="password" id="flConfirmPw" placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง" autocomplete="new-password">
             </div>
             <div id="flError"></div>
-            <button id="flSubmitBtn" onclick="submitFirstLoginChange()">?????????????????????</button>
+            <button id="flSubmitBtn" onclick="submitFirstLoginChange()">ยืนยันเปลี่ยนรหัสผ่าน</button>
         </div>
     </div>
     <script>
@@ -240,12 +240,12 @@
             var btn = document.getElementById('pwToggleBtn');
             if (input.type === 'password') {
                 input.type = 'text';
-                btn.textContent = '??';
-                btn.title = '????????????';
+                btn.textContent = '🙈';
+                btn.title = 'ซ่อนรหัสผ่าน';
             } else {
                 input.type = 'password';
-                btn.textContent = '??';
-                btn.title = '????????????';
+                btn.textContent = '👁';
+                btn.title = 'แสดงรหัสผ่าน';
             }
         }
 
@@ -257,12 +257,12 @@
             errorMsg.style.display = 'none';
             errorMsg.textContent = '';
             if (!email || !/\S+@\S+/.test(email)) {
-                errorMsg.textContent = '????????????????????????';
+                errorMsg.textContent = 'กรุณากรอกอีเมลให้ถูกต้อง';
                 errorMsg.style.display = 'block';
                 return false;
             }
             if (!password) {
-                errorMsg.textContent = '?????????????????';
+                errorMsg.textContent = 'กรุณากรอกรหัสผ่าน';
                 errorMsg.style.display = 'block';
                 return false;
             }
@@ -278,7 +278,7 @@
             const loginBtn = document.getElementById('loginBtn');
 
             loginBtn.disabled = true;
-            loginBtn.textContent = '????????????????...';
+            loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
             errorMsg.style.display = 'none';
 
             try {
@@ -289,27 +289,27 @@
                     localStorage.setItem('sessionToken', result.token);
                     localStorage.setItem('currentUser', JSON.stringify(result.user));
 
-                    // ?????????????????????? ? ???? modal ?????????????????????
+                    // ถ้าเป็นล็อกอินครั้งแรก → แสดง modal บังคับเปลี่ยนรหัสผ่าน
                     if (result.must_change_password || (result.user && result.user.must_change_password)) {
                         window._firstLoginUserId = result.user.id;
                         document.getElementById('firstLoginOverlay').classList.add('active');
                         loginBtn.disabled = false;
-                        loginBtn.textContent = '???????????';
+                        loginBtn.textContent = 'เข้าสู่ระบบ';
                         return;
                     }
 
                     // Redirect to dashboard
                     window.location.href = 'dashboard.html';
                 } else {
-                    errorMsg.textContent = result.error || result.message || '????????????????????';
+                    errorMsg.textContent = result.error || result.message || 'เข้าสู่ระบบไม่สำเร็จ';
                     errorMsg.style.display = 'block';
                 }
             } catch (err) {
-                errorMsg.textContent = err.message || '?????????????????????????';
+                errorMsg.textContent = err.message || 'ไม่สามารถเชื่อมต่อระบบได้';
                 errorMsg.style.display = 'block';
             } finally {
                 loginBtn.disabled = false;
-                loginBtn.textContent = '???????????';
+                loginBtn.textContent = 'เข้าสู่ระบบ';
             }
         }
 
@@ -322,13 +322,13 @@
             const btn       = document.getElementById('flSubmitBtn');
             errEl.textContent = '';
 
-            if (!oldPw) { errEl.textContent = '?????????????????????????'; return; }
-            if (!newPw || newPw.length < 6) { errEl.textContent = '??????????????????????????? 6 ???'; return; }
-            if (newPw !== confirmPw) { errEl.textContent = '?????????????????'; return; }
-            if (oldPw === newPw) { errEl.textContent = '?????????????????????????????'; return; }
+            if (!oldPw) { errEl.textContent = 'กรุณากรอกรหัสผ่านปัจจุบัน'; return; }
+            if (!newPw || newPw.length < 6) { errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว'; return; }
+            if (newPw !== confirmPw) { errEl.textContent = 'รหัสผ่านไม่ตรงกัน'; return; }
+            if (oldPw === newPw) { errEl.textContent = 'รหัสผ่านใหม่ต้องไม่ซ้ำกับเดิม'; return; }
 
             btn.disabled = true;
-            btn.textContent = '???????????...';
+            btn.textContent = 'กำลังบันทึก...';
             try {
                 const result = await callBackend('changePassword', {
                     _userId: window._firstLoginUserId,
@@ -338,14 +338,14 @@
                 if (result && result.success) {
                     window.location.href = 'dashboard.html';
                 } else {
-                    errEl.textContent = result.error || '????????????????????????';
+                    errEl.textContent = result.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
                     btn.disabled = false;
-                    btn.textContent = '?????????????????????';
+                    btn.textContent = 'ยืนยันเปลี่ยนรหัสผ่าน';
                 }
             } catch(e) {
                 errEl.textContent = e.message;
                 btn.disabled = false;
-                btn.textContent = '?????????????????????';
+                btn.textContent = 'ยืนยันเปลี่ยนรหัสผ่าน';
             }
         }
 

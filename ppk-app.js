@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HOME PPK 2026 — Core App Bootstrap
  * ดัดแปลงจากรูปแบบ Band Management By SoulCiety
  *

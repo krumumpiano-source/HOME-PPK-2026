@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>??????????/???????????????? | HOME PPK 2026</title>
+    <title>ตรวจคำร้อง/ลำดับคิวพักอาศัย | HOME PPK 2026</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -461,38 +461,38 @@
     <!-- Main Content -->
     <div class="main-container" id="mainContainer">
         <div class="page-header">
-            <button class="back-btn" onclick="navigate('?page=team-management')">? ????????</button>
-            <h1 class="page-title">?? ??????????/????????????????</h1>
+            <button class="back-btn" onclick="navigate('?page=team-management')">← ย้อนกลับ</button>
+            <h1 class="page-title">📋 ตรวจคำร้อง/ลำดับคิวพักอาศัย</h1>
         </div>
 
         <!-- Stats -->
         <div class="stats-row">
             <div class="stat-card">
-                <div class="stat-icon pending">??</div>
+                <div class="stat-icon pending">📥</div>
                 <div>
                     <div class="stat-value" id="statPending">0</div>
-                    <div class="stat-label">???????????</div>
+                    <div class="stat-label">รอดำเนินการ</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon reviewing">??</div>
+                <div class="stat-icon reviewing">🔍</div>
                 <div>
                     <div class="stat-value" id="statReviewing">0</div>
-                    <div class="stat-label">????????????</div>
+                    <div class="stat-label">กำลังตรวจสอบ</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon approved">?</div>
+                <div class="stat-icon approved">✅</div>
                 <div>
                     <div class="stat-value" id="statApproved">0</div>
-                    <div class="stat-label">???????????</div>
+                    <div class="stat-label">อนุมัติแล้ว</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon queue">??</div>
+                <div class="stat-icon queue">👥</div>
                 <div>
                     <div class="stat-value" id="statQueue">0</div>
-                    <div class="stat-label">??????????????</div>
+                    <div class="stat-label">ในคิวรอเข้าพัก</div>
                 </div>
             </div>
         </div>
@@ -500,16 +500,16 @@
         <!-- Tabs -->
         <div class="tabs-container">
             <button class="tab-btn active" data-tab="residence" onclick="switchTab('residence')">
-                ?? ?????????????? <span class="tab-badge" id="badgeResidence">0</span>
+                🏠 ขอเข้าพักอาศัย <span class="tab-badge" id="badgeResidence">0</span>
             </button>
             <button class="tab-btn" data-tab="repair" onclick="switchTab('repair')">
-                ?? ??????????? <span class="tab-badge" id="badgeRepair">0</span>
+                🔧 แจ้งซ่อมแซม <span class="tab-badge" id="badgeRepair">0</span>
             </button>
             <button class="tab-btn" data-tab="transfer" onclick="switchTab('transfer')">
-                ?? ????????????? <span class="tab-badge" id="badgeTransfer">0</span>
+                🔄 ขอย้ายบ้านพัก <span class="tab-badge" id="badgeTransfer">0</span>
             </button>
             <button class="tab-btn" data-tab="return" onclick="switchTab('return')">
-                ?? ???????????? <span class="tab-badge" id="badgeReturn">0</span>
+                📤 ขอคืนบ้านพัก <span class="tab-badge" id="badgeReturn">0</span>
             </button>
         </div>
 
@@ -517,50 +517,50 @@
         <div class="tab-content active" id="tab-residence">
             <!-- Queue Management -->
             <div class="section-card">
-                <h3 class="section-title">?? ??????????????????????</h3>
+                <h3 class="section-title">👥 ลำดับคิวรอเข้าพักอาศัย</h3>
                 <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
-                    ????????????????????? ????????????????????
+                    ลากเพื่อเรียงลำดับคิว และจัดการสถานะคำร้อง
                 </p>
                 
                 <!-- Queue Expiry Settings -->
                 <div class="queue-settings" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
                     <div style="display:flex;align-items:center;gap:0.5rem;">
-                        <span style="font-weight:600;">? ?????????????:</span>
+                        <span style="font-weight:600;">⏰ วันหมดอายุคิว:</span>
                         <input type="date" id="queueExpiryDate" style="padding:0.5rem 0.8rem;border:1px solid var(--border);border-radius:8px;font:inherit;min-width:180px;">
-                        <button class="btn btn-primary btn-sm" onclick="saveQueueExpiryDate()" style="white-space:nowrap;">?? ??????</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveQueueExpiryDate()" style="white-space:nowrap;">💾 บันทึก</button>
                     </div>
                     <div style="font-size:0.85rem;color:var(--muted);">
-                        ?? ????????????????????????????????????????? | ????????: <strong id="currentExpiryDisplay">-</strong>
+                        📌 คิวทั้งหมดจะหมดอายุพร้อมกันตามวันที่กำหนด | ปัจจุบัน: <strong id="currentExpiryDisplay">-</strong>
                     </div>
                 </div>
                 <div class="queue-container" id="queueContainer">
                     <!-- Queue items will be rendered here -->
                 </div>
                 <div class="empty-state" id="queueEmpty" style="display:none;">
-                    <div class="empty-state-icon">??</div>
-                    <div>????????????????????????????</div>
+                    <div class="empty-state-icon">📭</div>
+                    <div>ยังไม่มีคำร้องในคิวรอเข้าพัก</div>
                 </div>
             </div>
 
             <!-- Residence Requests Table -->
             <div class="section-card">
-                <h3 class="section-title">?? ???????????????????????????</h3>
+                <h3 class="section-title">📋 คำร้องขอเข้าพักอาศัยทั้งหมด</h3>
                 <div class="controls-row">
                     <div class="form-group">
-                        <label>?????????</label>
+                        <label>กรองสถานะ</label>
                         <select id="filterResidenceStatus" onchange="renderResidenceRequests()">
-                            <option value="">???????</option>
-                            <option value="pending">???????????</option>
-                            <option value="reviewing">????????????</option>
-                            <option value="waiting">????????????</option>
-                            <option value="approved">???????????</option>
-                            <option value="rejected">??????????</option>
-                            <option value="expired">???????</option>
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="waiting">รอคิวเข้าพัก</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="rejected">ไม่อนุมัติ</option>
+                            <option value="expired">หมดอายุ</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>?????</label>
-                        <input type="text" id="searchResidence" placeholder="????, ????????..." oninput="renderResidenceRequests()">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchResidence" placeholder="ชื่อ, เบอร์โทร..." oninput="renderResidenceRequests()">
                     </div>
                 </div>
                 <div class="table-container">
@@ -568,13 +568,13 @@
                         <thead>
                             <tr>
                                 <th style="width:50px;">#</th>
-                                <th>??????????</th>
-                                <th>????-???????</th>
-                                <th>?????????</th>
-                                <th>?????????????</th>
-                                <th>?????</th>
-                                <th>??????????</th>
-                                <th style="width:150px;">??????</th>
+                                <th>วันที่ยื่น</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>กลุ่มสาระ</th>
+                                <th>ลักษณะเข้าพัก</th>
+                                <th>สถานะ</th>
+                                <th>วันหมดอายุ</th>
+                                <th style="width:150px;">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="residenceTableBody"></tbody>
@@ -583,14 +583,14 @@
                 <!-- Pagination Controls -->
                 <div class="pagination-controls" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;">
                     <div style="font-size:0.9rem;color:var(--muted);">
-                        <span id="residencePaginationInfo">???? 0-0 ??? 0 ??????</span>
+                        <span id="residencePaginationInfo">แสดง 0-0 จาก 0 รายการ</span>
                     </div>
                     <div style="display:flex;gap:0.5rem;align-items:center;">
-                        <button class="btn btn-sm" onclick="changePage('residence', -1)" id="residencePrevBtn">? ????????</button>
+                        <button class="btn btn-sm" onclick="changePage('residence', -1)" id="residencePrevBtn">◀ ก่อนหน้า</button>
                         <select id="residencePage" onchange="renderResidenceRequests()" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font:inherit;">
-                            <option value="1">???? 1</option>
+                            <option value="1">หน้า 1</option>
                         </select>
-                        <button class="btn btn-sm" onclick="changePage('residence', 1)" id="residenceNextBtn">????? ?</button>
+                        <button class="btn btn-sm" onclick="changePage('residence', 1)" id="residenceNextBtn">ถัดไป ▶</button>
                     </div>
                 </div>
             </div>
@@ -599,30 +599,30 @@
         <!-- Tab: Repair Requests -->
         <div class="tab-content" id="tab-repair">
             <div class="section-card">
-                <h3 class="section-title">?? ?????????????????</h3>
+                <h3 class="section-title">🔧 คำร้องแจ้งซ่อมแซม</h3>
                 <div class="controls-row">
                     <div class="form-group">
-                        <label>?????????</label>
+                        <label>กรองสถานะ</label>
                         <select id="filterRepairStatus" onchange="renderRepairRequests()">
-                            <option value="">???????</option>
-                            <option value="pending">???????????</option>
-                            <option value="reviewing">????????????</option>
-                            <option value="approved">???????????</option>
-                            <option value="completed">??????????????</option>
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="completed">ดำเนินการเสร็จ</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>????????????????</label>
+                        <label>กรองความเร่งด่วน</label>
                         <select id="filterRepairUrgency" onchange="renderRepairRequests()">
-                            <option value="">???????</option>
-                            <option value="urgent_high">???????</option>
-                            <option value="urgent">????</option>
-                            <option value="normal">????</option>
+                            <option value="">ทั้งหมด</option>
+                            <option value="urgent_high">ด่วนมาก</option>
+                            <option value="urgent">ด่วน</option>
+                            <option value="normal">ปกติ</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>?????</label>
-                        <input type="text" id="searchRepair" placeholder="????, ???????????..." oninput="renderRepairRequests()">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchRepair" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderRepairRequests()">
                     </div>
                 </div>
                 <div class="table-container">
@@ -630,13 +630,13 @@
                         <thead>
                             <tr>
                                 <th style="width:50px;">#</th>
-                                <th>??????????</th>
-                                <th>???????</th>
-                                <th>???????????</th>
-                                <th>?????????</th>
-                                <th>????????????</th>
-                                <th>?????</th>
-                                <th style="width:150px;">??????</th>
+                                <th>วันที่แจ้ง</th>
+                                <th>ผู้แจ้ง</th>
+                                <th>หมายเลขบ้าน</th>
+                                <th>ประเภทงาน</th>
+                                <th>ความเร่งด่วน</th>
+                                <th>สถานะ</th>
+                                <th style="width:150px;">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="repairTableBody"></tbody>
@@ -648,21 +648,21 @@
         <!-- Tab: Transfer Requests -->
         <div class="tab-content" id="tab-transfer">
             <div class="section-card">
-                <h3 class="section-title">?? ???????????????????</h3>
+                <h3 class="section-title">🔄 คำร้องขอย้ายบ้านพัก</h3>
                 <div class="controls-row">
                     <div class="form-group">
-                        <label>?????????</label>
+                        <label>กรองสถานะ</label>
                         <select id="filterTransferStatus" onchange="renderTransferRequests()">
-                            <option value="">???????</option>
-                            <option value="pending">???????????</option>
-                            <option value="reviewing">????????????</option>
-                            <option value="approved">???????????</option>
-                            <option value="rejected">??????????</option>
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="rejected">ไม่อนุมัติ</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>?????</label>
-                        <input type="text" id="searchTransfer" placeholder="????, ???????????..." oninput="renderTransferRequests()">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchTransfer" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderTransferRequests()">
                     </div>
                 </div>
                 <div class="table-container">
@@ -670,13 +670,13 @@
                         <thead>
                             <tr>
                                 <th style="width:50px;">#</th>
-                                <th>??????????</th>
-                                <th>????-???????</th>
-                                <th>???????????????</th>
-                                <th>????????</th>
-                                <th>??????</th>
-                                <th>?????</th>
-                                <th style="width:150px;">??????</th>
+                                <th>วันที่ยื่น</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>บ้านพักปัจจุบัน</th>
+                                <th>ขอย้ายไป</th>
+                                <th>เหตุผล</th>
+                                <th>สถานะ</th>
+                                <th style="width:150px;">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="transferTableBody"></tbody>
@@ -688,21 +688,21 @@
         <!-- Tab: Return Requests -->
         <div class="tab-content" id="tab-return">
             <div class="section-card">
-                <h3 class="section-title">?? ??????????????????</h3>
+                <h3 class="section-title">📤 คำร้องขอคืนบ้านพัก</h3>
                 <div class="controls-row">
                     <div class="form-group">
-                        <label>?????????</label>
+                        <label>กรองสถานะ</label>
                         <select id="filterReturnStatus" onchange="renderReturnRequests()">
-                            <option value="">???????</option>
-                            <option value="pending">???????????</option>
-                            <option value="reviewing">????????????</option>
-                            <option value="approved">???????????</option>
-                            <option value="completed">??????????????</option>
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="reviewing">กำลังตรวจสอบ</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                            <option value="completed">ดำเนินการเสร็จ</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>?????</label>
-                        <input type="text" id="searchReturn" placeholder="????, ???????????..." oninput="renderReturnRequests()">
+                        <label>ค้นหา</label>
+                        <input type="text" id="searchReturn" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderReturnRequests()">
                     </div>
                 </div>
                 <div class="table-container">
@@ -710,13 +710,13 @@
                         <thead>
                             <tr>
                                 <th style="width:50px;">#</th>
-                                <th>??????????</th>
-                                <th>????-???????</th>
-                                <th>???????????</th>
-                                <th>????????????????</th>
-                                <th>??????</th>
-                                <th>?????</th>
-                                <th style="width:150px;">??????</th>
+                                <th>วันที่ยื่น</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>หมายเลขบ้าน</th>
+                                <th>วันที่ต้องการคืน</th>
+                                <th>เหตุผล</th>
+                                <th>สถานะ</th>
+                                <th style="width:150px;">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="returnTableBody"></tbody>
@@ -730,14 +730,14 @@
     <div class="modal-overlay" id="detailModal">
         <div class="modal">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">????????????????</h3>
-                <button class="modal-close" onclick="closeModal('detailModal')">�</button>
+                <h3 class="modal-title" id="modalTitle">รายละเอียดคำร้อง</h3>
+                <button class="modal-close" onclick="closeModal('detailModal')">×</button>
             </div>
             <div class="modal-body" id="modalBody">
                 <!-- Content will be dynamically inserted -->
             </div>
             <div class="modal-footer" id="modalFooter">
-                <button class="btn" onclick="closeModal('detailModal')">???</button>
+                <button class="btn" onclick="closeModal('detailModal')">ปิด</button>
             </div>
         </div>
     </div>
@@ -748,48 +748,48 @@
     <div class="modal-overlay" id="statusModal">
         <div class="modal" style="max-width:450px;">
             <div class="modal-header">
-                <h3 class="modal-title">??????????????????</h3>
-                <button class="modal-close" onclick="closeModal('statusModal')">�</button>
+                <h3 class="modal-title">เปลี่ยนสถานะคำร้อง</h3>
+                <button class="modal-close" onclick="closeModal('statusModal')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>?????</label>
+                    <label>สถานะ</label>
                     <select id="statusSelect">
-                        <option value="pending">???????????</option>
-                        <option value="reviewing">????????????</option>
-                        <option value="waiting">????????????</option>
-                        <option value="approved">???????</option>
-                        <option value="rejected">??????????</option>
-                        <option value="completed">??????????????</option>
+                        <option value="pending">รอดำเนินการ</option>
+                        <option value="reviewing">กำลังตรวจสอบ</option>
+                        <option value="waiting">รอคิวเข้าพัก</option>
+                        <option value="approved">อนุมัติ</option>
+                        <option value="rejected">ไม่อนุมัติ</option>
+                        <option value="completed">ดำเนินการเสร็จ</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>???????? (?????)</label>
+                    <label>หมายเหตุ (ถ้ามี)</label>
                     <textarea id="statusNote" rows="3" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font:inherit;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="closeModal('statusModal')">??????</button>
-                <button class="btn btn-primary" onclick="saveStatus()">??????</button>
+                <button class="btn" onclick="closeModal('statusModal')">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveStatus()">บันทึก</button>
             </div>
         </div>
     </div>
 
     <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
-        ????????????????? ???????? ????????<br>
-        ??????????? ????? ???? ?????????????????? ????????????????????
+        ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+        งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
     </div>
 
     <script>
         // ========== Backend API Helpers ==========
 
         // ========== Data Storage ==========
-        // ??? Backend ????????
+        // ใช้ Backend เป็นหลัก
 
         let currentEditId = null;
         let currentEditType = null;
 
-        // Cache ????????? Backend
+        // Cache ข้อมูลจาก Backend
         let cachedData = {
             residence: [],
             repair: [],
@@ -798,7 +798,7 @@
         };
         let dataLoaded = false;
 
-        // ????????????? Backend
+        // โหลดข้อมูลจาก Backend
         async function loadAllRequests() {
             try {
                     const currentYear = new Date().getFullYear() + 543;
@@ -828,10 +828,10 @@
                     dataLoaded = true;
                     return;
                 } catch (e) {
-                    console.error('????????????? backend ?????????:', e);
+                    console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
                 }
             
-            // ????? Backend � ??????????????
+            // ไม่มี Backend — แสดงข้อมูลว่าง
             cachedData.residence = [];
             cachedData.repair = [];
             cachedData.transfer = [];
@@ -839,7 +839,7 @@
             dataLoaded = true;
         }
 
-        // initSampleData ????????? � ?????????????????? Backend
+        // initSampleData ถูกลบแล้ว — ข้อมูลทั้งหมดมาจาก Backend
 
         // ========== Data Functions ==========
         function getData(type) {
@@ -851,7 +851,7 @@
         }
 
         async function updateRequestStatus(type, id, newStatus, note = '') {
-            // ???????? cache
+            // อัปเดตใน cache
             const data = getData(type);
             const index = data.findIndex(item => item.id === id);
             if (index !== -1) {
@@ -860,7 +860,7 @@
                 saveData(type, data);
             }
             
-            // ????? Backend
+            // ส่งไป Backend
             try {
                     await callBackend('reviewRequest', {
                         requestId: id,
@@ -869,7 +869,7 @@
                         note: note
                     });
                 } catch (e) {
-                    console.error('????????????????????:', e);
+                    console.error('อัปเดตสถานะไม่สำเร็จ:', e);
                 }
         }
 
@@ -889,8 +889,8 @@
             });
             saveData('residence', data);
             
-            // ?????????????? Backend
-            callBackend('updateQueue', { orderedIds: orderedIds }).catch(e => console.error('??????????????????:', e));
+            // ส่งลำดับใหม่ไป Backend
+            callBackend('updateQueue', { orderedIds: orderedIds }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
         }
 
         function addToQueue(id) {
@@ -902,13 +902,13 @@
                 item.queuePosition = queueItems.length + 1;
                 saveData('residence', data);
                 
-                // ????? Backend
+                // ส่งไป Backend
                 callBackend('reviewRequest', {
                         requestId: id,
                         type: 'residence',
                         status: 'waiting',
                         queuePosition: item.queuePosition
-                    }).catch(e => console.error('?????????????????:', e));
+                    }).catch(e => console.error('เพิ่มคิวไม่สำเร็จ:', e));
             }
         }
 
@@ -924,13 +924,13 @@
                 queueItems.forEach((q, index) => q.queuePosition = index + 1);
                 saveData('residence', data);
                 
-                // ????? Backend
+                // ส่งไป Backend
                 callBackend('reviewRequest', {
                         requestId: id,
                         type: 'residence',
                         status: 'reviewing',
                         removeFromQueue: true
-                    }).catch(e => console.error('?????????????????:', e));
+                    }).catch(e => console.error('ลบจากคิวไม่สำเร็จ:', e));
             }
         }
 
@@ -950,19 +950,19 @@
             const day = date.getDate().toString().padStart(2, '0');
             const month = date.getMonth() + 1;
             const year = date.getFullYear() + 543;
-            const months = ['?.?.', '?.?.', '??.?.', '??.?.', '?.?.', '??.?.', '?.?.', '?.?.', '?.?.', '?.?.', '?.?.', '?.?.'];
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             return `${day} ${months[month-1]} ${year}`;
         }
 
         function getStatusBadge(status) {
             const statuses = {
-                pending: { class: 'status-pending', text: '???????????' },
-                reviewing: { class: 'status-reviewing', text: '????????????' },
-                waiting: { class: 'status-waiting', text: '????????????' },
-                approved: { class: 'status-approved', text: '???????????' },
-                rejected: { class: 'status-rejected', text: '??????????' },
-                completed: { class: 'status-completed', text: '??????????????' },
-                expired: { class: 'status-expired', text: '???????' }
+                pending: { class: 'status-pending', text: 'รอดำเนินการ' },
+                reviewing: { class: 'status-reviewing', text: 'กำลังตรวจสอบ' },
+                waiting: { class: 'status-waiting', text: 'รอคิวเข้าพัก' },
+                approved: { class: 'status-approved', text: 'อนุมัติแล้ว' },
+                rejected: { class: 'status-rejected', text: 'ไม่อนุมัติ' },
+                completed: { class: 'status-completed', text: 'ดำเนินการเสร็จ' },
+                expired: { class: 'status-expired', text: 'หมดอายุ' }
             };
             const s = statuses[status] || { class: 'status-pending', text: status };
             return `<span class="status-badge ${s.class}">${s.text}</span>`;
@@ -970,36 +970,36 @@
 
         function getUrgencyText(urgency) {
             const urgencies = {
-                urgent_high: '<span class="priority-high">?? ???????</span>',
-                urgent: '<span class="priority-medium">?? ????</span>',
-                normal: '<span class="priority-low">?? ????</span>'
+                urgent_high: '<span class="priority-high">🔴 ด่วนมาก</span>',
+                urgent: '<span class="priority-medium">🟡 ด่วน</span>',
+                normal: '<span class="priority-low">🟢 ปกติ</span>'
             };
             return urgencies[urgency] || urgency;
         }
 
         function getStayTypeText(type) {
-            return type === 'alone' ? '??????????' : '??????????????';
+            return type === 'alone' ? 'พักคนเดียว' : 'พักกับครอบครัว';
         }
 
         function getWorkTypeText(types) {
             const workTypes = {
-                electrical: '?????????',
-                plumbing: '????????????',
-                structure: '??????????????',
-                fixtures: '?????????????',
-                utilities: '???????????????????',
-                other: '?????'
+                electrical: 'ระบบไฟฟ้า',
+                plumbing: 'ระบบน้ำประปา',
+                structure: 'โครงสร้างอาคาร',
+                fixtures: 'อุปกรณ์ตกแต่ง',
+                utilities: 'สาธารณูปโภคส่วนกลาง',
+                other: 'อื่นๆ'
             };
             return types.map(t => workTypes[t] || t).join(', ');
         }
 
         function getReasonText(reasons) {
             const reasonMap = {
-                new_position: '????????????????????',
-                far_from_home: '???????????????????????',
-                family_responsibility: '??????????????',
-                health: '???????????',
-                other: '?????'
+                new_position: 'ย้ายมาปฏิบัติหน้าที่',
+                far_from_home: 'อยู่ห่างไกลจากภูมิลำเนา',
+                family_responsibility: 'มีภาระครอบครัว',
+                health: 'ปัญหาสุขภาพ',
+                other: 'อื่นๆ'
             };
             return reasons.map(r => reasonMap[r] || r).join(', ');
         }
@@ -1043,19 +1043,19 @@
             container.innerHTML = queueItems.map((item, index) => {
                 return `
                 <div class="queue-item" draggable="true" data-id="${item.id}">
-                    <span class="drag-handle" title="??????????????????">??</span>
+                    <span class="drag-handle" title="ลากเพื่อเรียงลำดับ">⋮⋮</span>
                     <div class="queue-number">${index + 1}</div>
                     <div class="queue-info">
                         <div class="queue-name">${item.prefix}${item.fullname}</div>
                         <div class="queue-detail">
-                            ?? ${item.phone} | ?? ${item.email || '-'}<br>
-                            ?? ?????????: ${formatDate(item.submitDate)}
+                            📞 ${item.phone} | 📧 ${item.email || '-'}<br>
+                            📅 ยื่นเมื่อ: ${formatDate(item.submitDate)}
                         </div>
                     </div>
                     <div class="queue-actions">
-                        <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">?? ????????????</button>
-                        <button class="btn btn-sm btn-success" onclick="approveFromQueue('${item.id}')">? ??????????????</button>
-                        <button class="btn btn-sm btn-danger" onclick="removeFromQueue('${item.id}'); renderAll();">? ???????????</button>
+                        <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">📋 ดูรายละเอียด</button>
+                        <button class="btn btn-sm btn-success" onclick="approveFromQueue('${item.id}')">✅ อนุมัติเข้าพัก</button>
+                        <button class="btn btn-sm btn-danger" onclick="removeFromQueue('${item.id}'); renderAll();">❌ นำออกจากคิว</button>
                     </div>
                 </div>
             `;
@@ -1131,7 +1131,7 @@
             // Sort by date (newest first)
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
-            // Pagination - ?????? 50 ????????? ??????????????????????
+            // Pagination - แสดงผล 50 รายการแรก สามารถกดดูเพิ่มเติมได้
             const itemsPerPage = 50;
             const currentPage = parseInt(document.getElementById('residencePage')?.value || '1');
             const totalItems = data.length;
@@ -1142,7 +1142,7 @@
             const globalExpiryDate = getQueueExpiryDate();
 
             if (paginatedData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">?????????????????</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
                 updatePaginationInfo('residence', 0, 0, 0);
                 return;
             }
@@ -1152,7 +1152,7 @@
                 if (item.status === 'waiting' && globalExpiryDate) {
                     expiryDisplay = formatDate(globalExpiryDate);
                 } else if (item.status === 'expired' && item.expiredDate) {
-                    expiryDisplay = `<span style="color:var(--danger);">??????? ${formatDate(item.expiredDate)}</span>`;
+                    expiryDisplay = `<span style="color:var(--danger);">หมดอายุ ${formatDate(item.expiredDate)}</span>`;
                 }
                 return `
                 <tr>
@@ -1165,10 +1165,10 @@
                     <td>${expiryDisplay}</td>
                     <td>
                         <div style="display:flex;gap:0.3rem;justify-content:center;flex-wrap:wrap;">
-                            <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">??</button>
-                            <button class="btn btn-sm" onclick="openStatusModal('residence', '${item.id}')">??</button>
+                            <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('residence', '${item.id}')">📝</button>
                             ${item.status === 'pending' || item.status === 'reviewing' ? 
-                                `<button class="btn btn-sm btn-success" onclick="addToQueue('${item.id}'); renderAll();">? ???</button>` : ''}
+                                `<button class="btn btn-sm btn-success" onclick="addToQueue('${item.id}'); renderAll();">➕ คิว</button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -1198,7 +1198,7 @@
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">?????????????????</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
                 return;
             }
 
@@ -1213,8 +1213,8 @@
                     <td>${getStatusBadge(item.status)}</td>
                     <td>
                         <div style="display:flex;gap:0.3rem;justify-content:center;">
-                            <button class="btn btn-sm btn-info" onclick="showDetail('repair', '${item.id}')">??</button>
-                            <button class="btn btn-sm" onclick="openStatusModal('repair', '${item.id}')">??</button>
+                            <button class="btn btn-sm btn-info" onclick="showDetail('repair', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('repair', '${item.id}')">📝</button>
                         </div>
                     </td>
                 </tr>
@@ -1239,7 +1239,7 @@
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">?????????????????</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
                 return;
             }
 
@@ -1254,8 +1254,8 @@
                     <td>${getStatusBadge(item.status)}</td>
                     <td>
                         <div style="display:flex;gap:0.3rem;justify-content:center;">
-                            <button class="btn btn-sm btn-info" onclick="showDetail('transfer', '${item.id}')">??</button>
-                            <button class="btn btn-sm" onclick="openStatusModal('transfer', '${item.id}')">??</button>
+                            <button class="btn btn-sm btn-info" onclick="showDetail('transfer', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('transfer', '${item.id}')">📝</button>
                         </div>
                     </td>
                 </tr>
@@ -1280,7 +1280,7 @@
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">?????????????????</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
                 return;
             }
 
@@ -1295,8 +1295,8 @@
                     <td>${getStatusBadge(item.status)}</td>
                     <td>
                         <div style="display:flex;gap:0.3rem;justify-content:center;">
-                            <button class="btn btn-sm btn-info" onclick="showDetail('return', '${item.id}')">??</button>
-                            <button class="btn btn-sm" onclick="openStatusModal('return', '${item.id}')">??</button>
+                            <button class="btn btn-sm btn-info" onclick="showDetail('return', '${item.id}')">📋</button>
+                            <button class="btn btn-sm" onclick="openStatusModal('return', '${item.id}')">📝</button>
                         </div>
                     </td>
                 </tr>
@@ -1336,23 +1336,23 @@
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">รหัสคำร้อง</div>
                             <div class="detail-value">${item.id}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">วันที่ยื่น</div>
                             <div class="detail-value">${formatDate(item.submitDate)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????-???????</div>
+                            <div class="detail-label">ชื่อ-นามสกุล</div>
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????????</div>
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????</div>
+                            <div class="detail-label">อีเมล</div>
                             <div class="detail-value">${item.email || '-'}</div>
                         </div>
                         <div class="detail-item">
@@ -1360,37 +1360,37 @@
                             <div class="detail-value">${item.lineId || '-'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????????????????????</div>
+                            <div class="detail-label">กลุ่มสาระการเรียนรู้</div>
                             <div class="detail-value">${item.subjectGroup}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????????????????</div>
+                            <div class="detail-label">ลักษณะการเข้าพัก</div>
                             <div class="detail-value">${getStayTypeText(item.stayType)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">???????????????</div>
-                            <div class="detail-value">${item.totalResidents} ??</div>
+                            <div class="detail-label">จำนวนผู้เข้าพัก</div>
+                            <div class="detail-value">${item.totalResidents} คน</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????</div>
+                            <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
                         </div>
                         ${item.queuePosition ? `
                         <div class="detail-item">
-                            <div class="detail-label">????????</div>
-                            <div class="detail-value">???????? ${item.queuePosition}</div>
+                            <div class="detail-label">ลำดับคิว</div>
+                            <div class="detail-value">ลำดับที่ ${item.queuePosition}</div>
                         </div>
                         ` : ''}
                         ${item.expiryDate ? `
                         <div class="detail-item">
-                            <div class="detail-label">????????????????</div>
+                            <div class="detail-label">วันหมดอายุคำร้อง</div>
                             <div class="detail-value">${formatDate(item.expiryDate)}</div>
                         </div>
                         ` : ''}
                     </div>
                     ${item.residents && item.residents.length > 0 ? `
                     <div class="detail-item" style="margin-top:1rem;">
-                        <div class="detail-label">??????????????????????</div>
+                        <div class="detail-label">รายชื่อผู้พักอาศัยร่วม</div>
                         <div class="detail-value">
                             <ul style="margin:0.5rem 0;padding-left:1.5rem;">
                                 ${item.residents.map(r => `<li>${r}</li>`).join('')}
@@ -1399,12 +1399,12 @@
                     </div>
                     ` : ''}
                     <div class="detail-item" style="margin-top:1rem;">
-                        <div class="detail-label">????????????????????</div>
+                        <div class="detail-label">เหตุผลในการขอเข้าพัก</div>
                         <div class="detail-value">${getReasonText(item.reasons)}</div>
                     </div>
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
-                        <div class="detail-label">???????????????</div>
+                        <div class="detail-label">ข้อมูลเพิ่มเติม</div>
                         <div class="detail-value">${item.additionalInfo}</div>
                     </div>
                     ` : ''}
@@ -1413,44 +1413,44 @@
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">รหัสคำร้อง</div>
                             <div class="detail-value">${item.id}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">วันที่แจ้ง</div>
                             <div class="detail-value">${formatDate(item.submitDate)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">???????</div>
+                            <div class="detail-label">ผู้แจ้ง</div>
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????????</div>
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">??????????????</div>
+                            <div class="detail-label">หมายเลขบ้านพัก</div>
                             <div class="detail-value">${item.houseNumber}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????</div>
+                            <div class="detail-label">กลุ่มสาระ</div>
                             <div class="detail-value">${item.subjectGroup}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????</div>
+                            <div class="detail-label">ประเภทงาน</div>
                             <div class="detail-value">${getWorkTypeText(item.workTypes)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????????????</div>
+                            <div class="detail-label">ความเร่งด่วน</div>
                             <div class="detail-value">${getUrgencyText(item.urgency)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????</div>
+                            <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
                         </div>
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
-                        <div class="detail-label">???????????????</div>
+                        <div class="detail-label">รายละเอียดปัญหา</div>
                         <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.problemDetail}</div>
                     </div>
                 `;
@@ -1458,40 +1458,40 @@
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">รหัสคำร้อง</div>
                             <div class="detail-value">${item.id}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">วันที่ยื่น</div>
                             <div class="detail-value">${formatDate(item.submitDate)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????-???????</div>
+                            <div class="detail-label">ชื่อ-นามสกุล</div>
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????????</div>
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????</div>
+                            <div class="detail-label">กลุ่มสาระ</div>
                             <div class="detail-value">${item.subjectGroup}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">???????????????</div>
+                            <div class="detail-label">บ้านพักปัจจุบัน</div>
                             <div class="detail-value">${item.currentHouse}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">???????????</div>
+                            <div class="detail-label">ขอย้ายไปยัง</div>
                             <div class="detail-value">${item.requestedHouse}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????</div>
+                            <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
                         </div>
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
-                        <div class="detail-label">?????????????????</div>
+                        <div class="detail-label">เหตุผลในการขอย้าย</div>
                         <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.transferReason}</div>
                     </div>
                 `;
@@ -1499,40 +1499,40 @@
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">รหัสคำร้อง</div>
                             <div class="detail-value">${item.id}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">??????????</div>
+                            <div class="detail-label">วันที่ยื่น</div>
                             <div class="detail-value">${formatDate(item.submitDate)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????-???????</div>
+                            <div class="detail-label">ชื่อ-นามสกุล</div>
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????????</div>
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????????</div>
+                            <div class="detail-label">กลุ่มสาระ</div>
                             <div class="detail-value">${item.subjectGroup}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">??????????????</div>
+                            <div class="detail-label">หมายเลขบ้านพัก</div>
                             <div class="detail-value">${item.houseNumber}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">????????????????</div>
+                            <div class="detail-label">วันที่ต้องการคืน</div>
                             <div class="detail-value">${formatDate(item.returnDate)}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">?????</div>
+                            <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
                         </div>
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
-                        <div class="detail-label">????????????????</div>
+                        <div class="detail-label">เหตุผลในการขอคืน</div>
                         <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.returnReason}</div>
                     </div>
                 `;
@@ -1542,11 +1542,11 @@
             if (item.attachments && item.attachments.length > 0) {
                 content += `
                     <div class="detail-item" style="margin-top:1.5rem;">
-                        <div class="detail-label">???????</div>
+                        <div class="detail-label">ไฟล์แนบ</div>
                         <div class="attachments-list">
                             ${item.attachments.map(file => `
                                 <div class="attachment-item" onclick="viewAttachment('${file}')">
-                                    ?? ${file}
+                                    📎 ${file}
                                 </div>
                             `).join('')}
                         </div>
@@ -1558,7 +1558,7 @@
             if (item.notes) {
                 content += `
                     <div class="detail-item" style="margin-top:1.5rem;">
-                        <div class="detail-label">??????????????????????</div>
+                        <div class="detail-label">หมายเหตุจากเจ้าหน้าที่</div>
                         <div class="detail-value" style="background:#fef3c7;padding:0.75rem;border-radius:8px;">${item.notes}</div>
                     </div>
                 `;
@@ -1570,19 +1570,19 @@
 
         function getDetailTitle(type) {
             const titles = {
-                residence: '?? ??????????????????????????????',
-                repair: '?? ???????????????????????????',
-                transfer: '?? ?????????????????????????????',
-                return: '?? ????????????????????????????'
+                residence: '📋 รายละเอียดคำร้องขอเข้าพักอาศัย',
+                repair: '🔧 รายละเอียดคำร้องแจ้งซ่อมแซม',
+                transfer: '🔄 รายละเอียดคำร้องขอย้ายบ้านพัก',
+                return: '📤 รายละเอียดคำร้องขอคืนบ้านพัก'
             };
-            return titles[type] || '????????????????';
+            return titles[type] || 'รายละเอียดคำร้อง';
         }
 
         function viewAttachment(filename) {
             if (filename.startsWith('http')) {
                 window.open(filename, '_blank');
             } else {
-                ppkAlert(`????????: ${filename}`);
+                ppkAlert(`เปิดไฟล์: ${filename}`);
             }
         }
 
@@ -1601,21 +1601,21 @@
             const dateInput = document.getElementById('queueExpiryDate');
             const newDate = dateInput.value;
             if (!newDate) {
-                ppkAlert('???????????????????????');
+                ppkAlert('กรุณาเลือกวันหมดอายุคิว');
                 return;
             }
             
             setQueueExpiryDate(newDate);
             updateExpiryDisplay();
             
-            // ???????? Backend
+            // บันทึกไป Backend
             callBackend('updateSettings', { queue_expiry_date: newDate }).catch(e => console.error(e));
             
-            // ??????????????????????????????????
+            // ตรวจสอบและลบคิวที่หมดอายุอัตโนมัติ
             checkAndExpireQueue();
             
             renderAll();
-            ppkAlert(`????????????????????????????\n????????????????????????? ${formatDate(newDate)}`);
+            ppkAlert(`บันทึกวันหมดอายุคิวเรียบร้อย\nคิวทั้งหมดจะหมดอายุวันที่ ${formatDate(newDate)}`);
         }
 
         function updateExpiryDisplay() {
@@ -1624,9 +1624,9 @@
             if (display) {
                 if (expiryDate) {
                     const isExpired = new Date(expiryDate) < new Date();
-                    display.innerHTML = `<span style="${isExpired ? 'color:var(--danger);' : 'color:var(--success);'}">${formatDate(expiryDate)}${isExpired ? ' (???????????)' : ''}</span>`;
+                    display.innerHTML = `<span style="${isExpired ? 'color:var(--danger);' : 'color:var(--success);'}">${formatDate(expiryDate)}${isExpired ? ' (หมดอายุแล้ว)' : ''}</span>`;
                 } else {
-                    display.textContent = '??????????????';
+                    display.textContent = 'ยังไม่ได้กำหนด';
                 }
             }
         }
@@ -1641,7 +1641,7 @@
             expiry.setHours(0, 0, 0, 0);
             
             if (expiry < today) {
-                // ?????????????? - ?????????????????????????????????? expired
+                // คิวหมดอายุแล้ว - เปลี่ยนสถานะคำร้องที่อยู่ในคิวเป็น expired
                 const data = getData('residence');
                 let expiredCount = 0;
                 
@@ -1656,7 +1656,7 @@
                 
                 if (expiredCount > 0) {
                     saveData('residence', data);
-                    console.log(`??????????????? ${expiredCount} ??????`);
+                    console.log(`ลบคิวที่หมดอายุ ${expiredCount} รายการ`);
                 }
             }
         }
@@ -1664,14 +1664,14 @@
         async function initQueueExpirySelector() {
             const dateInput = document.getElementById('queueExpiryDate');
             
-            // ??????? Backend settings
+            // โหลดจาก Backend settings
             try {
                     const result = await cachedCall('getSettings', {}, 600000);
                     if (result && result.success && result.data) {
                         _queueExpiryDate = result.data.queue_expiry_date || null;
                     }
                 } catch (e) {
-                    console.error('???? queue expiry ?????????:', e);
+                    console.error('โหลด queue expiry ไม่สำเร็จ:', e);
                 }
             
             const storedDate = getQueueExpiryDate();
@@ -1680,7 +1680,7 @@
                 if (storedDate) {
                     dateInput.value = storedDate;
                 } else {
-                    // Default: 1 ???????????
+                    // Default: 1 ปีจากวันนี้
                     const defaultDate = new Date();
                     defaultDate.setFullYear(defaultDate.getFullYear() + 1);
                     dateInput.value = defaultDate.toISOString().split('T')[0];
@@ -1689,7 +1689,7 @@
             
             updateExpiryDisplay();
             
-            // ????????????????????????????????????
+            // ตรวจสอบคิวหมดอายุทุกครั้งที่โหลดหน้า
             checkAndExpireQueue();
         }
 
@@ -1704,7 +1704,7 @@
                 const itemsPerPage = 50;
                 const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
                 const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-                infoEl.textContent = `???? ${startItem}-${endItem} ??? ${totalItems} ??????`;
+                infoEl.textContent = `แสดง ${startItem}-${endItem} จาก ${totalItems} รายการ`;
             }
             
             if (pageSelect) {
@@ -1712,7 +1712,7 @@
                 for (let i = 1; i <= Math.max(1, totalPages); i++) {
                     const opt = document.createElement('option');
                     opt.value = i;
-                    opt.textContent = `???? ${i}`;
+                    opt.textContent = `หน้า ${i}`;
                     if (i === currentPage) opt.selected = true;
                     pageSelect.appendChild(opt);
                 }
@@ -1749,27 +1749,27 @@
             
             if (type === 'residence') {
                 options = `
-                    <option value="pending">???????????</option>
-                    <option value="reviewing">????????????</option>
-                    <option value="waiting">????????????</option>
-                    <option value="approved">??????????????</option>
-                    <option value="rejected">??????????</option>
-                    <option value="expired">???????</option>
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="reviewing">กำลังตรวจสอบ</option>
+                    <option value="waiting">รอคิวเข้าพัก</option>
+                    <option value="approved">อนุมัติเข้าพัก</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
+                    <option value="expired">หมดอายุ</option>
                 `;
             } else if (type === 'repair') {
                 options = `
-                    <option value="pending">???????????</option>
-                    <option value="reviewing">????????????</option>
-                    <option value="approved">???????</option>
-                    <option value="completed">??????????????</option>
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="reviewing">กำลังตรวจสอบ</option>
+                    <option value="approved">อนุมัติ</option>
+                    <option value="completed">ดำเนินการเสร็จ</option>
                 `;
             } else {
                 options = `
-                    <option value="pending">???????????</option>
-                    <option value="reviewing">????????????</option>
-                    <option value="approved">???????</option>
-                    <option value="rejected">??????????</option>
-                    <option value="completed">??????????????</option>
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="reviewing">กำลังตรวจสอบ</option>
+                    <option value="approved">อนุมัติ</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
+                    <option value="completed">ดำเนินการเสร็จ</option>
                 `;
             }
             
@@ -1805,15 +1805,15 @@
 
                 closeModal('statusModal');
                 renderAll();
-                ppkAlert('? ????????????????????????');
+                ppkAlert('✅ บันทึกสถานะเรียบร้อยแล้ว');
             } catch (e) {
                 console.error('saveStatus error', e);
-                ppkAlert('? ????????????????????: ' + (e.message || '????????????'));
+                ppkAlert('❌ บันทึกสถานะไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
             }
         }
 
         async function approveFromQueue(id) {
-            if (!await ppkConfirm('????????????????????????????????')) return;
+            if (!await ppkConfirm('ยืนยันการอนุมัติให้เข้าพักอาศัย?')) return;
             
             const data = getData('residence');
             const item = data.find(d => d.id === id);
@@ -1829,7 +1829,7 @@
                 queueItems.forEach((q, index) => q.queuePosition = index + 1);
                 saveData('residence', data);
 
-                // ????? Backend
+                // ส่งไป Backend
                 try {
                         await callBackend('reviewRequest', {
                             requestId: id,
@@ -1837,23 +1837,23 @@
                             status: 'approved'
                         });
                     } catch (e) {
-                        console.error('????????????????:', e);
+                        console.error('อนุมัติไม่สำเร็จ:', e);
                     }
 
-                ppkAlert('????????????????????');
+                ppkAlert('อนุมัติเรียบร้อยแล้ว');
                 renderAll();
             }
         }
 
-        // Sidebar � handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'check-request';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'check-request'); }
 
         // ========== Initialize ==========
         document.addEventListener('DOMContentLoaded', async function() {
-            // ???? loading
+            // แสดง loading
             var tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#64748b;">? ???????????????...</div>'; });
+            tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#64748b;">⏳ กำลังโหลดข้อมูล...</div>'; });
             try {
                 await checkSession();
                 await loadAllRequests();
@@ -1861,7 +1861,7 @@
                 renderAll();
             } catch(e) {
                 console.error('loadAllRequests error', e);
-                tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">? ??????????????????? ???????????????</div>'; });
+                tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า</div>'; });
             }
         });
     
@@ -1869,10 +1869,10 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js"></script>
-    <script src="supabase/supabase.min.js"></script>
+    <script src="supabase/config.js?v=20260309"></script>
+    <script src="supabase/supabase.min.js?v=20260309"></script>
     <script src="ppk-api.js?v=20260309"></script>
-    <script src="ppk-app.js"></script>
+    <script src="ppk-app.js?v=20260309"></script>
     <script src="ppk-utils.js?v=20260309"></script>
     <script src="ppk-nav.js?v=20260309"></script></body>
 </html>

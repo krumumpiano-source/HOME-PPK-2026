@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PPK Utils — Beautiful Modal Dialogs
  * แทนที่ confirm() และ alert() ของ Browser ด้วย Modal สวยๆ
  */

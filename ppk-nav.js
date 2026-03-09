@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HOME PPK 2026 — Navigation Renderer
  * ดัดแปลงจากรูปแบบ Band Management By SoulCiety (nav.js)
  *
