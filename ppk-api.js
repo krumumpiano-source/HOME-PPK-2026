@@ -197,18 +197,29 @@ async function sha256hex(str) {
 
 /* ══════════════════════════════════════════
    AUTH — Register / Logout / Session
-   (ppkLogin ถูกลบออกแล้ว — ระบบไม่ใช้การ Login)
 ══════════════════════════════════════════ */
 
 async function ppkLogout() {
-    // ไม่ logout — redirect กลับ dashboard
-    window.location.href = 'dashboard.html';
+    // ลบ session จาก DB ถ้ามี
+    try {
+        var tk = getSessionToken();
+        if (tk) await sbDelete('sessions', { token: 'eq.' + tk });
+    } catch(e) {}
+    localStorage.removeItem('sessionToken');
+    localStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
 }
 
 async function ppkRegister(data) {
     var hash = await sha256hex(data.password || '');
+    var email = (data.email || '').trim().toLowerCase();
+    // ตรวจสอบอีเมลซ้ำ
+    var existU = await sbGet('users', { email: 'eq.' + email, select: 'id', limit: '1' });
+    if (existU && existU.length > 0) return { success: false, error: 'อีเมลนี้มีบัญชีในระบบแล้ว' };
+    var existP = await sbGet('pending_registrations', { email: 'eq.' + email, status: 'eq.pending', select: 'id', limit: '1' });
+    if (existP && existP.length > 0) return { success: false, error: 'อีเมลนี้มีคำขอสมัครรออนุมัติอยู่แล้ว' };
     var row = await sbPost('pending_registrations', {
-        email:           (data.email || '').trim().toLowerCase(),
+        email:           email,
         phone:           data.phone || '',
         prefix:          data.prefix || '',
         firstname:       data.firstname || '',
@@ -229,13 +240,36 @@ async function ppkRegister(data) {
 }
 
 /* ══════════════════════════════════════════
-   SESSION CHECK — ไม่ใช้ระบบ login, คืน admin เสมอ
+   SESSION CHECK — ตรวจ session token กับ DB ก่อน fallback guest
 ══════════════════════════════════════════ */
 async function checkSession() {
     try {
         var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
-        if (stored && stored.id) return stored;
+        if (stored && stored.id && stored.id !== 'USR-GUEST') return stored;
     } catch(e) {}
+    // ตรวจ token กับ sessions table
+    var tk = getSessionToken();
+    if (tk && tk !== 'guest-admin-session') {
+        try {
+            var sessRows = await sbGet('sessions', { token: 'eq.' + tk, select: 'user_id,role,resident_id,house_number,expires_at', limit: '1' });
+            var sess = sessRows && sessRows[0];
+            if (sess && new Date(sess.expires_at) > new Date()) {
+                var uRows = await sbGet('users', { id: 'eq.' + sess.user_id, select: 'id,email,prefix,firstname,lastname,role,position,is_active', limit: '1' });
+                var u = uRows && uRows[0];
+                if (u && u.is_active) {
+                    var userObj = {
+                        id: u.id, email: u.email,
+                        prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
+                        role: u.role || 'resident', is_active: true, position: u.position || '',
+                        houseNumber: sess.house_number || '', residentId: sess.resident_id || null
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(userObj));
+                    return userObj;
+                }
+            }
+        } catch(e) { console.warn('checkSession DB:', e); }
+    }
+    // fallback guest admin สำหรับ admin ที่ยังไม่ได้ login (ให้เข้าดูได้)
     var defaultUser = {
         id: 'USR-GUEST', email: 'admin@ppk.local',
         firstname: 'ผู้ดูแล', lastname: 'ระบบ',
@@ -292,7 +326,18 @@ async function _routeAction(action, data) {
                 residentId: resident ? resident.id : null,
                 must_change_password: !!(u.must_change_password)
             };
+            // สร้าง session ใน DB
             var token = 'session-' + u.id + '-' + Date.now();
+            try {
+                await sbPost('sessions', {
+                    token: token,
+                    user_id: u.id,
+                    role: u.role || 'resident',
+                    resident_id: resident ? resident.id : null,
+                    house_number: resident ? (resident.house_number || '') : '',
+                    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                });
+            } catch(e) { console.warn('สร้าง session ไม่สำเร็จ:', e); }
             return { success: true, user: userObj, token: token };
         }
         case 'logout':   return ppkLogout();
@@ -306,8 +351,15 @@ async function _routeAction(action, data) {
         }
 
         case 'changePassword': {
-            // ไม่มีระบบรหัสผ่านในโหมดนี้
-            return { success: false, error: 'ระบบไม่ใช้รหัสผ่าน' };
+            var userId = data._userId;
+            if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
+            var uRows = await sbGet('users', { id: 'eq.' + userId, select: 'id,password_hash', limit: '1' });
+            if (!uRows || !uRows[0]) return { success: false, error: 'ไม่พบผู้ใช้' };
+            var oldHash = await sha256hex(data.oldPassword || '');
+            if (uRows[0].password_hash !== oldHash) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
+            var newHash = await sha256hex(data.newPassword || '');
+            await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, must_change_password: false, updated_at: new Date().toISOString() });
+            return { success: true };
         }
 
         case 'getHousing': {

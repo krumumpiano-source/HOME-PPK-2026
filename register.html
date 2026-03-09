@@ -504,7 +504,7 @@
                         <h2 style="color:#10b981; margin-bottom:1rem;">สมัครสมาชิกสำเร็จ!</h2>
                         <p style="color:#555; font-size:1.05rem; margin-bottom:1.5rem;">
                             ${result.message || 'กรุณารอแอดมินตรวจสอบและอนุมัติการสมัครของคุณ'}<br>
-                            <small style="color:#888;">รหัสการสมัคร: ${result.regId || '-'}</small>
+                            <small style="color:#888;">รหัสการสมัคร: ${(result.data && result.data.id) || '-'}</small>
                         </p>
                         <a href="#" onclick="navigate('?page=login');return false;" style="display:inline-block; padding:0.8rem 2rem; background:linear-gradient(90deg,#2563eb,#38e8ff); color:#fff; border-radius:8px; text-decoration:none; font-weight:700;">กลับสู่หน้าเข้าสู่ระบบ</a>
                     </div>
@@ -522,10 +522,10 @@
         }
     }
     </script>
-    <script src="supabase/config.js?v=20260309b"></script>
-    <script src="supabase/supabase.min.js?v=20260309b"></script>
-    <script src="ppk-api.js?v=20260309b"></script>
-    <script src="ppk-app.js?v=20260309b"></script>
-    <script src="ppk-utils.js?v=20260309b"></script></body>
+    <script src="supabase/config.js?v=20260309c"></script>
+    <script src="supabase/supabase.min.js?v=20260309c"></script>
+    <script src="ppk-api.js?v=20260309c"></script>
+    <script src="ppk-app.js?v=20260309c"></script>
+    <script src="ppk-utils.js?v=20260309c"></script></body>
 </html>
 
