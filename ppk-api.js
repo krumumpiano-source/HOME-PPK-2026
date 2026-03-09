@@ -463,11 +463,18 @@ async function _routeAction(action, data) {
             var sessObj = sess && sess[0] ? sess[0] : null;
             if (!sessObj) {
                 var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-                if (lsUser && lsUser.id) sessObj = { user_id: lsUser.id, resident_id: lsUser.resident_id || null };
+                if (lsUser && lsUser.id) sessObj = { user_id: lsUser.id, resident_id: lsUser.residentId || lsUser.resident_id || null };
             }
             if (!sessObj) return { success: false, error: 'SESSION_EXPIRED' };
             var u = await sbGet('users', { id: 'eq.' + sessObj.user_id });
-            var res = sessObj.resident_id ? await sbGet('residents', { id: 'eq.' + sessObj.resident_id }) : [];
+            var res = [];
+            if (sessObj.resident_id) {
+                res = await sbGet('residents', { id: 'eq.' + sessObj.resident_id });
+            }
+            // Fallback: ค้นหา resident จาก user_id ถ้าไม่มี resident_id ใน session
+            if ((!res || !res[0]) && sessObj.user_id) {
+                res = await sbGet('residents', { user_id: 'eq.' + sessObj.user_id, is_active: 'eq.true', limit: '1' });
+            }
             return { success: true, user: u[0], resident: res[0] || null };
         }
         case 'getCoresidents': {

@@ -834,7 +834,8 @@
                 if (result && result.success) {
                     const u = result.user || result.data || {};
                     const r = result.resident || {};
-                    userData = Object.assign({}, r, {
+                    // user เป็นฐาน, resident overlay ทับ, แล้ว email/phone/role จาก user
+                    userData = Object.assign({}, u, r, {
                         email: u.email || r.email,
                         phone: u.phone || r.phone,
                         role: u.role,
@@ -1349,10 +1350,10 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260309c"></script>
-    <script src="supabase/supabase.min.js?v=20260309c"></script>
-    <script src="ppk-api.js?v=20260309c"></script>
-    <script src="ppk-app.js?v=20260309c"></script>
-    <script src="ppk-utils.js?v=20260309c"></script>
-    <script src="ppk-nav.js?v=20260309c"></script></body>
+    <script src="supabase/config.js?v=20260309d"></script>
+    <script src="supabase/supabase.min.js?v=20260309d"></script>
+    <script src="ppk-api.js?v=20260309d"></script>
+    <script src="ppk-app.js?v=20260309d"></script>
+    <script src="ppk-utils.js?v=20260309d"></script>
+    <script src="ppk-nav.js?v=20260309d"></script></body>
 </html>
