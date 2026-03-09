@@ -411,3 +411,14 @@ alter table if exists public.residents
 
 alter table if exists public.users
   add column if not exists subject_group  text;
+
+-- ============================================================
+-- PASSWORD RESETS (OTP-based)
+-- ============================================================
+create table if not exists public.password_resets (
+  email       text primary key,
+  code_hash   text not null,
+  expires_at  timestamptz not null,
+  attempts    int default 0,
+  created_at  timestamptz default now()
+);

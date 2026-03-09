@@ -30,6 +30,7 @@ alter table public.exemptions            enable row level security;
 alter table public.settings              enable row level security;
 alter table public.announcements         enable row level security;
 alter table public.logs                  enable row level security;
+alter table public.password_resets        enable row level security;
 
 -- ============================================================
 -- ลบ policies เดิมก่อน (safe to re-run)
@@ -65,6 +66,7 @@ create policy "anon_all_exemptions"          on public.exemptions           for 
 create policy "anon_all_settings"            on public.settings             for all to anon using (true) with check (true);
 create policy "anon_all_announcements"       on public.announcements        for all to anon using (true) with check (true);
 create policy "anon_all_logs"                on public.logs                 for all to anon using (true) with check (true);
+create policy "anon_all_password_resets"      on public.password_resets       for all to anon using (true) with check (true);
 
 -- ============================================================
 -- ⚠️  วิธีใช้:

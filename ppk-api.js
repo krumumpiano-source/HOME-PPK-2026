@@ -739,17 +739,76 @@ async function _routeAction(action, data) {
             return { success: true, data: row };
         }
 
-        case 'resetPassword': {
+        case 'resetPassword':
+        case 'requestPasswordReset': {
             var email = (data.email || '').trim().toLowerCase();
-            var uRows = await sbGet('users', { email: 'eq.' + email, select: 'id,firstname', limit: '1' });
-            if (!uRows || uRows.length === 0) return { success: false, error: 'ไม่พบบัญชีผู้ใช้ที่ใช้อีเมลนี้' };
-            // สร้างรหัสผ่านชั่วคราว 8 ตัว
-            var chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
-            var tempPw = Array.from({length: 8}, function() { return chars[Math.floor(Math.random() * chars.length)]; }).join('');
-            var newHash = await sha256hex(tempPw);
-            await sbPatch('users', { id: 'eq.' + uRows[0].id }, { password_hash: newHash, updated_at: new Date().toISOString() });
-            return { success: true, tempPassword: tempPw,
-                message: 'รหัสผ่านชั่วคราวของคุณคือ: <strong style="font-size:1.3rem;letter-spacing:2px;color:#2563eb">' + tempPw + '</strong><br><br>กรุณาเข้าสู่ระบบด้วยรหัสนี้ แล้วเปลี่ยนรหัสผ่านทันที' };
+            if (!email) return { success: false, error: 'กรุณากรอกอีเมล' };
+            var uRows = await sbGet('users', { email: 'eq.' + email, select: 'id,firstname,email', limit: '1' });
+            // ส่ง success เสมอเพื่อไม่ให้คนภายนอกรู้ว่าอีเมลมีอยู่ในระบบไหม
+            if (!uRows || uRows.length === 0) return { success: true, message: 'หากอีเมลนี้มีในระบบ คุณจะได้รับรหัส OTP ภายในไม่กี่นาที' };
+            var u = uRows[0];
+            // สร้าง OTP 6 หลัก
+            var otp = '';
+            for (var oi = 0; oi < 6; oi++) otp += Math.floor(Math.random() * 10);
+            var otpHash = await sha256hex(otp + ':' + email);
+            var expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 นาที
+            // เก็บ OTP ใน password_resets table (upsert by email)
+            await sbUpsert('password_resets', {
+                email: email,
+                code_hash: otpHash,
+                expires_at: expiresAt,
+                attempts: 0
+            }, 'email');
+            // ส่งอีเมล OTP
+            var emailSent = false;
+            try {
+                var htmlBody = '<div style="font-family:Kanit,sans-serif;max-width:480px;margin:0 auto;padding:2rem;">'
+                    + '<h2 style="color:#2563eb;">HOME PPK 2026</h2>'
+                    + '<p>สวัสดีคุณ ' + (u.firstname || '') + '</p>'
+                    + '<p>คุณได้ร้องขอรีเซ็ตรหัสผ่าน กรุณาใช้รหัส OTP ด้านล่างนี้:</p>'
+                    + '<div style="text-align:center;margin:1.5rem 0;">'
+                    + '<span style="font-size:2rem;letter-spacing:8px;font-weight:700;color:#2563eb;background:#f0f5ff;padding:0.75rem 1.5rem;border-radius:12px;border:2px dashed #2563eb;">' + otp + '</span>'
+                    + '</div>'
+                    + '<p style="color:#666;font-size:0.9rem;">รหัสนี้จะหมดอายุภายใน 15 นาที</p>'
+                    + '<p style="color:#999;font-size:0.85rem;">หากคุณไม่ได้ร้องขอ กรุณาเพิกเฉยอีเมลนี้</p>'
+                    + '<hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">'
+                    + '<p style="color:#aaa;font-size:0.8rem;">ระบบบ้านพักครู โรงเรียนพะเยาพิทยาคม</p></div>';
+                var emailResult = await _callEdge('send-email', {
+                    to: email,
+                    subject: '[HOME PPK] รหัส OTP สำหรับรีเซ็ตรหัสผ่าน',
+                    html: htmlBody
+                });
+                emailSent = !!(emailResult && emailResult.success);
+            } catch(e) { emailSent = false; }
+            if (emailSent) {
+                return { success: true, emailSent: true, message: 'ส่งรหัส OTP ไปยังอีเมล ' + email + ' แล้ว กรุณาตรวจสอบกล่องจดหมาย' };
+            }
+            // Fallback: ถ้าส่งอีเมลไม่ได้ แสดง OTP บนหน้าจอ (dev mode)
+            return { success: true, emailSent: false, fallbackOtp: otp, message: 'ระบบอีเมลยังไม่พร้อม — รหัส OTP ของคุณคือ: ' + otp };
+        }
+
+        case 'verifyResetCode': {
+            var email = (data.email || '').trim().toLowerCase();
+            var code = (data.code || '').trim();
+            var newPassword = data.newPassword || '';
+            if (!email || !code) return { success: false, error: 'กรุณากรอกอีเมลและรหัส OTP' };
+            if (!newPassword || newPassword.length < 8) return { success: false, error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร' };
+            var resetRows = await sbGet('password_resets', { email: 'eq.' + email, limit: '1' });
+            if (!resetRows || !resetRows[0]) return { success: false, error: 'ไม่พบคำขอรีเซ็ต กรุณาขอรหัส OTP ใหม่' };
+            var rr = resetRows[0];
+            if (rr.attempts >= 5) return { success: false, error: 'ป้อนรหัสผิดเกินจำนวนครั้ง กรุณาขอรหัส OTP ใหม่' };
+            if (new Date(rr.expires_at) < new Date()) return { success: false, error: 'รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่' };
+            var codeHash = await sha256hex(code + ':' + email);
+            if (codeHash !== rr.code_hash) {
+                await sbPatch('password_resets', { email: 'eq.' + email }, { attempts: (rr.attempts || 0) + 1 });
+                return { success: false, error: 'รหัส OTP ไม่ถูกต้อง (เหลือ ' + (4 - (rr.attempts || 0)) + ' ครั้ง)' };
+            }
+            // OTP ถูกต้อง → เปลี่ยนรหัสผ่าน
+            var pwHash = await sha256hex(newPassword);
+            await sbPatch('users', { email: 'eq.' + email }, { password_hash: pwHash, must_change_password: false, updated_at: new Date().toISOString() });
+            // ลบ OTP record
+            await sbDelete('password_resets', { email: 'eq.' + email });
+            return { success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
         }
 
         case 'findEmail': {
