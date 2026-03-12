@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>HOME PPK 2026 — ระบบจัดการบ้านพักครู</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -227,9 +233,9 @@
     งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
   </footer>
 
-  <script src="supabase/config.js?v=20260312j"></script>
-  <script src="supabase/supabase.min.js?v=20260312j"></script>
-  <script src="ppk-api.js?v=20260312j"></script>
+  <script src="supabase/config.js?v=20260312k"></script>
+  <script src="supabase/supabase.min.js?v=20260312k"></script>
+  <script src="ppk-api.js?v=20260312k"></script>
   <script>
     async function checkAndRedirect() {
       try {
@@ -289,5 +295,6 @@
       await loadLineSettings();
     };
   </script>
+    <script src="ppk-pwa.js?v=20260312k"></script>
 </body>
 </html>
