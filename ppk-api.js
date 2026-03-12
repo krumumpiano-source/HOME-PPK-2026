@@ -367,7 +367,7 @@ async function _routeAction(action, data) {
             var oldHash = await sha256hex(data.oldPassword || '');
             if (uRows[0].password_hash !== oldHash) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
             var newHash = await sha256hex(data.newPassword || '');
-            await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, must_change_password: false, updated_at: new Date().toISOString() });
+            await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
             return { success: true };
         }
 
@@ -805,7 +805,7 @@ async function _routeAction(action, data) {
             }
             // OTP ถูกต้อง → เปลี่ยนรหัสผ่าน
             var pwHash = await sha256hex(newPassword);
-            await sbPatch('users', { email: 'eq.' + email }, { password_hash: pwHash, must_change_password: false, updated_at: new Date().toISOString() });
+            await sbPatch('users', { email: 'eq.' + email }, { password_hash: pwHash, updated_at: new Date().toISOString() });
             // ลบ OTP record
             await sbDelete('settings', { key: 'eq.' + otpKey });
             return { success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
