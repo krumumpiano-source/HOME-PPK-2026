@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แดชบอร์ด | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260312b">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260312c">
     <style>
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
         .dashboard-amount.danger { color: var(--c-danger); }
@@ -98,14 +98,15 @@
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var isAdmin = user.role === 'admin';
 
-            var items = [
+            var residentItems = [
                 { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#EEF2FF' },
                 { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#F0FDF4' },
                 { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFFBEB' },
                 { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
+            var adminItems = [];
             if (isAdmin) {
-                items.push(
+                adminItems = [
                     { page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' },
                     { page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' },
                     { page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' },
@@ -115,18 +116,29 @@
                     { page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' },
                     { page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' },
                     { page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' }
-                );
+                ];
             }
 
             var el = document.getElementById('hubGrid');
             if (!el) return;
-            el.innerHTML = items.map(function(item) {
-                var badge = item.badgeId ? '<span id="' + item.badgeId + '" class="ppk-hub-badge" style="display:none"></span>' : '';
-                return '<button class="ppk-hub-item" onclick="navigate(\'?page=' + item.page + '\')">'
-                    + '<div class="ppk-hub-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
-                    + '<span class="ppk-hub-label">' + item.label + '</span>'
-                    + badge + '</button>';
-            }).join('');
+
+            function renderItems(items) {
+                return items.map(function(item) {
+                    var badge = item.badgeId ? '<span id="' + item.badgeId + '" class="ppk-hub-badge" style="display:none"></span>' : '';
+                    return '<button class="ppk-hub-item" onclick="navigate(\'?page=' + item.page + '\')">'
+                        + '<div class="ppk-hub-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
+                        + '<span class="ppk-hub-label">' + item.label + '</span>'
+                        + badge + '</button>';
+                }).join('');
+            }
+
+            var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> ผู้พักอาศัย</div>';
+            html += renderItems(residentItems);
+            if (isAdmin && adminItems.length > 0) {
+                html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> คณะทำงาน</div>';
+                html += renderItems(adminItems);
+            }
+            el.innerHTML = html;
         }
 
         function renderAnnouncements(rows) {
@@ -256,11 +268,11 @@
             window.location.replace('login.html');
         }
     </script>
-    <script src="supabase/config.js?v=20260312b"></script>
-    <script src="supabase/supabase.min.js?v=20260312b"></script>
-    <script src="ppk-api.js?v=20260312b"></script>
-    <script src="ppk-app.js?v=20260312b"></script>
-    <script src="ppk-utils.js?v=20260312b"></script>
-    <script src="ppk-nav.js?v=20260312b"></script>
+    <script src="supabase/config.js?v=20260312c"></script>
+    <script src="supabase/supabase.min.js?v=20260312c"></script>
+    <script src="ppk-api.js?v=20260312c"></script>
+    <script src="ppk-app.js?v=20260312c"></script>
+    <script src="ppk-utils.js?v=20260312c"></script>
+    <script src="ppk-nav.js?v=20260312c"></script>
 </body>
 </html>

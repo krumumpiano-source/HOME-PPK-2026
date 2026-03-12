@@ -62,27 +62,25 @@ function renderPPKNav(containerId, activePage) {
   html += '<span class="ppk-bottom-label">\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e15\u0e34\u0e21</span></button>';
   html += '</nav>';
 
-  // Slide-up full menu
-  var allItems = [
+  // Slide-up full menu — categorized
+  var residentItems = [
     { page: 'dashboard', icon: '\ud83c\udfe0', label: '\u0e41\u0e14\u0e0a\u0e1a\u0e2d\u0e23\u0e4c\u0e14' },
     { page: 'payment-history', icon: '\ud83d\udcb3', label: '\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30' },
     { page: 'form', icon: '\ud83d\udcdd', label: '\u0e22\u0e37\u0e48\u0e19\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07' },
     { page: 'regulations', icon: '\ud83d\udcd6', label: '\u0e23\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e1a' },
     { page: 'settings', icon: '\u2699\ufe0f', label: '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e31\u0e27' }
   ];
-  if (isAdmin) {
-    allItems.push(
-      { page: 'team-management', icon: '\ud83d\udc65', label: '\u0e28\u0e39\u0e19\u0e22\u0e4c\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21' },
-      { page: 'record-water', icon: '\ud83d\udca7', label: '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e19\u0e49\u0e33' },
-      { page: 'record-electric', icon: '\u26a1', label: '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e44\u0e1f' },
-      { page: 'payment-notification', icon: '\ud83d\udce2', label: '\u0e41\u0e08\u0e49\u0e07\u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30' },
-      { page: 'check-slip', icon: '\ud83d\udd0d', label: '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e25\u0e34\u0e1b' },
-      { page: 'check-request', icon: '\ud83d\udccb', label: '\u0e15\u0e23\u0e27\u0e08\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07' },
-      { page: 'accounting', icon: '\ud83d\udcca', label: '\u0e1a\u0e31\u0e0d\u0e0a\u0e35' },
-      { page: 'monthly-withdraw', icon: '\ud83d\udcb5', label: '\u0e40\u0e1a\u0e34\u0e01\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e40\u0e14\u0e37\u0e2d\u0e19' },
-      { page: 'admin-settings', icon: '\ud83d\udd27', label: '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19' }
-    );
-  }
+  var adminItems = [
+    { page: 'team-management', icon: '\ud83d\udc65', label: '\u0e28\u0e39\u0e19\u0e22\u0e4c\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21' },
+    { page: 'record-water', icon: '\ud83d\udca7', label: '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e19\u0e49\u0e33' },
+    { page: 'record-electric', icon: '\u26a1', label: '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e44\u0e1f' },
+    { page: 'payment-notification', icon: '\ud83d\udce2', label: '\u0e41\u0e08\u0e49\u0e07\u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30' },
+    { page: 'check-slip', icon: '\ud83d\udd0d', label: '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e25\u0e34\u0e1b' },
+    { page: 'check-request', icon: '\ud83d\udccb', label: '\u0e15\u0e23\u0e27\u0e08\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07' },
+    { page: 'accounting', icon: '\ud83d\udcca', label: '\u0e1a\u0e31\u0e0d\u0e0a\u0e35' },
+    { page: 'monthly-withdraw', icon: '\ud83d\udcb5', label: '\u0e40\u0e1a\u0e34\u0e01\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e40\u0e14\u0e37\u0e2d\u0e19' },
+    { page: 'admin-settings', icon: '\ud83d\udd27', label: '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19' }
+  ];
 
   html += '<div class="ppk-mobile-overlay" id="ppkMobileOverlay" onclick="closeMobileMenu()"></div>';
   html += '<div class="ppk-mobile-menu" id="ppkMobileMenu">';
@@ -96,13 +94,27 @@ function renderPPKNav(containerId, activePage) {
   html += '</div>';
   html += '<div class="ppk-mobile-menu-grid">';
 
-  allItems.forEach(function(item) {
+  // Section: Resident
+  html += '<div class="ppk-menu-section-label"><span class="section-dot resident"></span>\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22</div>';
+  residentItems.forEach(function(item) {
     var active = activePage === item.page ? ' active' : '';
     html += '<button class="ppk-mobile-menu-item' + active + '" onclick="closeMobileMenu();navigate(\'?page=' + item.page + '\')">';
     html += '<span class="ppk-mobile-menu-item-icon">' + item.icon + '</span>';
     html += '<span class="ppk-mobile-menu-item-label">' + _esc(item.label) + '</span>';
     html += '</button>';
   });
+
+  // Section: Admin (only if admin)
+  if (isAdmin) {
+    html += '<div class="ppk-menu-section-label"><span class="section-dot admin"></span>\u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19</div>';
+    adminItems.forEach(function(item) {
+      var active = activePage === item.page ? ' active' : '';
+      html += '<button class="ppk-mobile-menu-item' + active + '" onclick="closeMobileMenu();navigate(\'?page=' + item.page + '\')">';
+      html += '<span class="ppk-mobile-menu-item-icon">' + item.icon + '</span>';
+      html += '<span class="ppk-mobile-menu-item-label">' + _esc(item.label) + '</span>';
+      html += '</button>';
+    });
+  }
 
   html += '</div>';
   html += '<div class="ppk-mobile-menu-footer">';
