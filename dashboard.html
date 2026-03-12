@@ -20,6 +20,27 @@
         </div>
 
         <div class="ppk-content">
+            <!-- Admin Stats -->
+            <div id="adminStatsSection" style="display:none; margin-bottom:1.25rem;">
+                <div class="ppk-stats">
+                    <div class="ppk-stat" onclick="navigate('?page=team-management')">
+                        <div class="ppk-stat-icon">👥</div>
+                        <div class="ppk-stat-value danger" id="statPendingReg">—</div>
+                        <div class="ppk-stat-label">คำขอสมัครรอตรวจ</div>
+                    </div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-slip')">
+                        <div class="ppk-stat-icon">🔍</div>
+                        <div class="ppk-stat-value danger" id="statPendingSlips">—</div>
+                        <div class="ppk-stat-label">สลิปรอตรวจสอบ</div>
+                    </div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-request')">
+                        <div class="ppk-stat-icon">📋</div>
+                        <div class="ppk-stat-value danger" id="statPendingReqs">—</div>
+                        <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Hub Menu Grid -->
             <div class="ppk-card" style="margin-bottom:1rem; padding:1rem;">
                 <div class="ppk-card-header" style="margin-bottom:0.75rem; padding-bottom:0.5rem;">
@@ -75,12 +96,29 @@
         function buildHubGrid() {
             var user = {};
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var isAdmin = user.role === 'admin';
+
             var residentItems = [
                 { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#EEF2FF' },
                 { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#F0FDF4' },
                 { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFFBEB' },
                 { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
+            var adminItems = [];
+            if (isAdmin) {
+                adminItems = [
+                    { page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' },
+                    { page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' },
+                    { page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' },
+                    { page: 'payment-notification', icon: '📢', label: 'แจ้งยอดชำระ', bg: '#FEF2F2' },
+                    { page: 'check-slip', icon: '🔍', label: 'ตรวจสลิป', bg: '#F0FDF4', badgeId: 'badge-pending-slips' },
+                    { page: 'check-request', icon: '📋', label: 'ตรวจคำร้อง', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' },
+                    { page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' },
+                    { page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' },
+                    { page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' }
+                ];
+            }
+
             var el = document.getElementById('hubGrid');
             if (!el) return;
 
@@ -96,6 +134,10 @@
 
             var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> ผู้พักอาศัย</div>';
             html += renderItems(residentItems);
+            if (isAdmin && adminItems.length > 0) {
+                html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> คณะทำงาน</div>';
+                html += renderItems(adminItems);
+            }
             el.innerHTML = html;
         }
 
@@ -127,6 +169,7 @@
         }
 
         function renderUserDashboard(data) {
+            document.getElementById('adminStatsSection').style.display = 'none';
             document.getElementById('paymentSection').style.display = '';
             document.getElementById('outstandingSection').style.display = '';
 
@@ -165,6 +208,22 @@
             }
         }
 
+        function renderAdminDashboard(data) {
+            document.getElementById('adminStatsSection').style.display = '';
+            document.getElementById('paymentSection').style.display = 'none';
+            document.getElementById('outstandingSection').style.display = 'none';
+
+            function _stat(id, count) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = String(count);
+                el.className = 'ppk-stat-value ' + (count > 0 ? 'danger' : 'ok');
+            }
+            _stat('statPendingReg',   data.pendingRegistrations || 0);
+            _stat('statPendingSlips', data.pendingSlips || 0);
+            _stat('statPendingReqs',  data.pendingRequests || 0);
+        }
+
         async function loadDashboard() {
             try {
                 var result = await cachedCall('getDashboardData', {}, 60000);
@@ -173,12 +232,14 @@
                     return;
                 }
                 renderAnnouncements(result.announcements || []);
-                renderUserDashboard(result.data || {});
+                if (result.role === 'admin') renderAdminDashboard(result.data || {});
+                else renderUserDashboard(result.data || {});
             } catch(e) {
                 console.warn('getDashboardData failed, fallback:', e);
                 renderAnnouncements([]);
                 var cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                renderUserDashboard({});
+                if (cached.role === 'admin') renderAdminDashboard({});
+                else renderUserDashboard({});
             }
         }
 

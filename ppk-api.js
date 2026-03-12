@@ -271,8 +271,8 @@ async function checkSession() {
     }
     // fallback guest admin สำหรับ admin ที่ยังไม่ได้ login (ให้เข้าดูได้)
     var defaultUser = {
-        id: 'USR-GUEST', email: 'admin@ppk.local',
-        firstname: 'ผู้ดูแล', lastname: 'ระบบ',
+        id: 'USR-GUEST', email: 'pongsatorn.b@ppk.ac.th',
+        firstname: 'พงศธร', lastname: 'โพธิแก้ว',
         role: 'admin', is_active: true
     };
     localStorage.setItem('currentUser', JSON.stringify(defaultUser));

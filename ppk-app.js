@@ -80,9 +80,9 @@ function requireAuth() {
     localStorage.setItem('sessionToken', 'guest-admin-session');
     localStorage.setItem('currentUser', JSON.stringify({
       id: 'USR-GUEST',
-      email: 'admin@ppk.local',
-      firstname: 'ผู้ดูแล',
-      lastname: 'ระบบ',
+      email: 'pongsatorn.b@ppk.ac.th',
+      firstname: 'พงศธร',
+      lastname: 'โพธิแก้ว',
       role: 'admin',
       is_active: true
     }));
@@ -97,13 +97,13 @@ function getCurrentUser() {
   try {
     var u = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if (!u || !u.id) {
-      u = { id: 'USR-GUEST', email: 'admin@ppk.local', firstname: 'ผู้ดูแล', lastname: 'ระบบ', role: 'admin', is_active: true };
+      u = { id: 'USR-GUEST', email: 'pongsatorn.b@ppk.ac.th', firstname: 'พงศธร', lastname: 'โพธิแก้ว', role: 'admin', is_active: true };
       localStorage.setItem('currentUser', JSON.stringify(u));
       if (!localStorage.getItem('sessionToken')) localStorage.setItem('sessionToken', 'guest-admin-session');
     }
     return u;
   } catch (e) {
-    return { id: 'USR-GUEST', email: 'admin@ppk.local', firstname: 'ผู้ดูแล', lastname: 'ระบบ', role: 'admin', is_active: true };
+    return { id: 'USR-GUEST', email: 'pongsatorn.b@ppk.ac.th', firstname: 'พงศธร', lastname: 'โพธิแก้ว', role: 'admin', is_active: true };
   }
 }
 
