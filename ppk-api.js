@@ -769,6 +769,10 @@ async function _routeAction(action, data) {
         }
 
         case 'submitSlip': {
+            var proxyNote = null;
+            if (data.submittedByName && data.submittedByHouse) {
+                proxyNote = '\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ' + data.submittedByName + ' (' + data.submittedByHouse + ')';
+            }
             var row = await sbPost('slip_submissions', {
                 house_number:  data.houseNumber  || '',
                 resident_id:   data.residentId   || null,
@@ -777,7 +781,7 @@ async function _routeAction(action, data) {
                 slip_url:      data.slipUrl      || null,
                 transfer_date: data.transferDate || null,
                 bank_name:     data.bankName     || null,
-                account_name:  data.accountName  || null,
+                account_name:  proxyNote || data.accountName || null,
                 status:        'pending'
             });
             return { success: true, data: row };

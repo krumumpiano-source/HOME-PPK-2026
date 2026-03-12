@@ -85,6 +85,38 @@
         .cost-item .form-group { flex: 1; margin-bottom: 0; }
         .cost-remove-btn { background: #FEE2E2; border: 1px solid #FECACA; color: #DC2626; padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.85rem; }
         .residents-container { display: flex; flex-direction: column; gap: 0.6rem; }
+        /* Proxy upload styles */
+        .proxy-toggle-box {
+            display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 1rem; padding: 0.7rem 1rem;
+            background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px;
+            cursor: pointer; user-select: none;
+        }
+        .proxy-toggle-box:hover { background: #F1F5F9; border-color: #94A3B8; }
+        .proxy-toggle-box input { width: 1.2em; height: 1.2em; cursor: pointer; }
+        .proxy-toggle-box label { cursor: pointer; font-size: 0.92rem; color: #475569; font-weight: 500; }
+        .proxy-panel {
+            display: none; background: #FFF7ED; border: 2px solid #FB923C;
+            border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+        }
+        .proxy-panel.active { display: block; }
+        .proxy-panel-title {
+            font-size: 0.9rem; font-weight: 700; color: #C2410C; margin-bottom: 0.7rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .proxy-confirm-banner {
+            display: none; background: #FEF3C7; border: 2px solid #F59E0B;
+            border-radius: 10px; padding: 0.8rem 1rem; margin-top: 0.8rem;
+        }
+        .proxy-confirm-banner.visible { display: block; }
+        .proxy-target-info { font-weight: 700; color: #B45309; font-size: 1rem; }
+        .proxy-my-house { color: #78716C; font-size: 0.85rem; }
+        .proxy-badge {
+            display: none; background: #F97316; color: #fff; font-size: 0.72rem;
+            padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 600;
+            margin-left: 0.5rem; vertical-align: middle;
+        }
+        .proxy-badge.visible { display: inline-block; }
     </style>
 </head>
 <body>
@@ -106,8 +138,29 @@
                 </div>
             </div>
 
+            <!-- Proxy Upload Panel (สำหรับผู้พักอาศัยส่งสลิปแทนบ้านอื่น) -->
+            <div id="proxy-toggle-container" style="display:none;">
+                <div class="proxy-toggle-box" onclick="document.getElementById('proxy-checkbox').click()">
+                    <input type="checkbox" id="proxy-checkbox" onchange="toggleProxyMode()" onclick="event.stopPropagation()">
+                    <label for="proxy-checkbox">ส่งสลิปแทนบ้านอื่น</label>
+                </div>
+                <div id="proxy-panel" class="proxy-panel">
+                    <div class="proxy-panel-title">🔄 เลือกบ้านที่ต้องการส่งสลิปแทน</div>
+                    <div class="form-group" style="margin-bottom:0.5rem;">
+                        <select id="proxy-house-select" onchange="onProxyHouseChange()" style="width:100%;padding:0.65rem 0.9rem;border:1.5px solid #FB923C;border-radius:10px;font:inherit;font-size:0.95rem;background:#fff;">
+                            <option value="">-- เลือกบ้านพัก / แฟลต --</option>
+                        </select>
+                    </div>
+                    <div id="proxy-confirm-banner" class="proxy-confirm-banner">
+                        <div>⚠️ คุณกำลังส่งสลิปให้:</div>
+                        <div class="proxy-target-info">🏠 <span id="proxy-target-text"></span></div>
+                        <div class="proxy-my-house">(บ้านของคุณ: <span id="proxy-my-house-text"></span>)</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
-                <label>บ้านพักเลขที่:</label>
+                <label>บ้านพักเลขที่: <span id="proxy-badge" class="proxy-badge">ส่งแทน</span></label>
                 <div id="display-unit" style="font-size: 1.2rem; font-weight: bold; color: #2563eb; margin-bottom: 0.5rem;">-</div>
             </div>
             <div class="form-group">
@@ -339,13 +392,40 @@
                         }
                     }
                     submitBtn.textContent = 'กำลังบันทึก...';
-                    const submitResult = await callBackend('submitSlip', {
+
+                    // ยืนยันก่อนส่ง ถ้าเป็นโหมดส่งแทน
+                    if (proxyMode && unitNumber !== myHouseNumber) {
+                        var confirmOk = await ppkConfirm(
+                            '\u26A0\uFE0F ยืนยันส่งสลิปแทน\n\n'
+                            + '\uD83C\uDFE0 ส่งให้: ' + unitNumber + ' (' + proxyTargetName + ')\n'
+                            + '\uD83D\uDC64 บ้านของคุณ: ' + myHouseNumber + '\n\n'
+                            + 'กรุณาตรวจสอบให้แน่ใจว่าเลือกถูกบ้าน'
+                        );
+                        if (!confirmOk) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'ยืนยันการส่งสลิป';
+                            return;
+                        }
+                    }
+
+                    // ข้อมูล proxy สำหรับบันทึกว่าใครส่งแทน
+                    var proxyData = {};
+                    if (proxyMode && unitNumber !== myHouseNumber) {
+                        var proxyResOpt = document.getElementById('proxy-house-select').options[document.getElementById('proxy-house-select').selectedIndex];
+                        proxyData.submittedByName = myUserName;
+                        proxyData.submittedByHouse = myHouseNumber;
+                        proxyData.residentId = proxyResOpt.getAttribute('data-resident-id') || null;
+                    }
+
+                    const submitResult = await callBackend('submitSlip', Object.assign({
                         houseNumber: window.billingInfo.unitNumber,
-                        residentId:  user.residentId || null,
+                        residentId:  proxyData.residentId || user.residentId || null,
                         period:      window.billingInfo.period,
                         amount:      paidAmount,
-                        slipUrl:     slipUrls.length > 0 ? JSON.stringify(slipUrls) : null
-                    });
+                        slipUrl:     slipUrls.length > 0 ? JSON.stringify(slipUrls) : null,
+                        submittedByName:  proxyData.submittedByName || null,
+                        submittedByHouse: proxyData.submittedByHouse || null
+                    }, {}));
                     if (submitResult && submitResult.success) {
                         ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
                         window.navigate('dashboard.html');
@@ -460,6 +540,82 @@
             await loadBillingInfo();
         }
 
+        // ============ Proxy Upload (ส่งสลิปแทนบ้านอื่น) ============
+        var proxyMode = false;
+        var myHouseNumber = '';
+        var myUserName = '';
+        var proxyTargetName = '';
+
+        async function initProxyPanel(user) {
+            if (user.role === 'admin') return; // admin ใช้ override panel ของตัวเอง
+            myHouseNumber = unitNumber;
+            myUserName = ((user.firstname || '') + ' ' + (user.lastname || '')).trim();
+            document.getElementById('proxy-toggle-container').style.display = 'block';
+
+            var houses = [], residents = [];
+            try {
+                var hRes = await cachedCall('getHousingList', {}, 600000);
+                if (hRes && hRes.success) houses = hRes.data || [];
+            } catch(e) {}
+            try {
+                var rRes = await cachedCall('getResidentsList', {}, 600000);
+                if (rRes && rRes.success) residents = rRes.data || [];
+            } catch(e) {}
+
+            houses.sort(function(a, b) {
+                var typeA = (a.display_number||'').indexOf('บ้าน') === 0 ? 0 : 1;
+                var typeB = (b.display_number||'').indexOf('บ้าน') === 0 ? 0 : 1;
+                if (typeA !== typeB) return typeA - typeB;
+                return parseInt((a.display_number||'').match(/\d+/)||[0]) - parseInt((b.display_number||'').match(/\d+/)||[0]);
+            });
+
+            var sel = document.getElementById('proxy-house-select');
+            houses.forEach(function(h) {
+                var dn = h.display_number || '';
+                if (!dn || dn === myHouseNumber) return;
+                if (h.status !== 'occupied') return;
+                var res = residents.find(function(r){ return r.house_number === dn && r.resident_type !== 'cohabitant'; });
+                var resName = res ? ((res.prefix||'') + (res.firstname||'') + ' ' + (res.lastname||'')).trim() : '';
+                var opt = document.createElement('option');
+                opt.value = dn;
+                opt.setAttribute('data-resident-name', resName);
+                opt.setAttribute('data-resident-id', res ? res.id : '');
+                opt.textContent = dn + (resName ? ' \u2014 ' + resName : '');
+                sel.appendChild(opt);
+            });
+        }
+
+        function toggleProxyMode() {
+            var cb = document.getElementById('proxy-checkbox');
+            proxyMode = cb.checked;
+            document.getElementById('proxy-panel').className = proxyMode ? 'proxy-panel active' : 'proxy-panel';
+            document.getElementById('proxy-badge').className = proxyMode ? 'proxy-badge visible' : 'proxy-badge';
+            if (!proxyMode) {
+                unitNumber = myHouseNumber;
+                proxyTargetName = '';
+                document.getElementById('proxy-house-select').value = '';
+                document.getElementById('proxy-confirm-banner').className = 'proxy-confirm-banner';
+                loadBillingInfo();
+            }
+        }
+
+        function onProxyHouseChange() {
+            var sel = document.getElementById('proxy-house-select');
+            var opt = sel.options[sel.selectedIndex];
+            if (!sel.value) {
+                document.getElementById('proxy-confirm-banner').className = 'proxy-confirm-banner';
+                unitNumber = myHouseNumber;
+                loadBillingInfo();
+                return;
+            }
+            unitNumber = sel.value;
+            proxyTargetName = opt.getAttribute('data-resident-name') || sel.value;
+            document.getElementById('proxy-target-text').textContent = sel.value + ' \u2014 ' + proxyTargetName;
+            document.getElementById('proxy-my-house-text').textContent = myHouseNumber;
+            document.getElementById('proxy-confirm-banner').className = 'proxy-confirm-banner visible';
+            loadBillingInfo();
+        }
+
         // โหลดข้อมูลเมื่อเปิดหน้า
         window.onload = async function(){
             const user = await checkSession();
@@ -471,6 +627,8 @@
             }
             // Admin mode
             await initAdminOverride(user);
+            // Proxy mode (ผู้พักอาศัยส่งสลิปแทนบ้านอื่น)
+            await initProxyPanel(user);
             await loadBillingInfo();
         };
     </script>

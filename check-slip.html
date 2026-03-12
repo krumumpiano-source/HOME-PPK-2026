@@ -403,6 +403,7 @@
               slipDate: slip ? (slip.submitted_at || null) : null,
               slipId: slip ? slip.id : null,
               approval: slip && (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
+              proxyNote: slip ? (slip.account_name || '') : '',
               noResident: false
             };
 
@@ -437,6 +438,7 @@
                 slipDate: slip.submitted_at || null,
                 slipId: slip.id || null,
                 approval: (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
+                proxyNote: slip.account_name || '',
                 noResident: false
               };
               if (slip.slip_url) {
@@ -691,6 +693,7 @@
         <div class="info-item"><span class="info-label">ค่าไฟ:</span><span class="info-value">${formatMoney(unit.electricAmount)} บาท</span></div>
         <div class="info-item"><span class="info-label">ค่าส่วนกลาง:</span><span class="info-value">${formatMoney(unit.commonFee)} บาท</span></div>
         <div class="info-item"><span class="info-label">วันที่ส่งสลิป:</span><span class="info-value">${unit.slipDate ? new Date(unit.slipDate).toLocaleString('th-TH') : '-'}</span></div>
+        ${unit.proxyNote ? '<div class="info-item"><span class="info-label">\uD83D\uDD04 \u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19:</span><span class="info-value" style="color:#C2410C;font-weight:600;">' + unit.proxyNote.replace('\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ','') + '</span></div>' : ''}
       `;
       document.getElementById('modalInfo').innerHTML = infoHtml;
 
