@@ -96,7 +96,9 @@ function renderPPKNav(containerId, activePage) {
   sidebarHTML += '<div class="ppk-sidebar-user-info">';
   sidebarHTML += '<div class="ppk-sidebar-user-name">' + _esc(displayName) + '</div>';
   sidebarHTML += '<div class="ppk-sidebar-user-role">' + (isAdmin ? '🛡️ แอดมิน' : '👤 ผู้พักอาศัย') + '</div>';
-  sidebarHTML += '</div></div>';
+  sidebarHTML += '</div>';
+  sidebarHTML += '<button class="ppk-sidebar-logout" onclick="doLogout()" title="ออกจากระบบ">🚪</button>';
+  sidebarHTML += '</div>';
   sidebarHTML += '</div>';
 
   // ── Bottom nav (mobile) ──
@@ -165,7 +167,11 @@ function renderPPKNav(containerId, activePage) {
     mobileHTML += '</button>';
   });
 
-  mobileHTML += '</div></div>';
+  mobileHTML += '</div>';
+  mobileHTML += '<div class="ppk-mobile-menu-footer">';
+  mobileHTML += '<button class="ppk-mobile-menu-logout" onclick="closeMobileMenu();doLogout()">🚪 ออกจากระบบ</button>';
+  mobileHTML += '</div>';
+  mobileHTML += '</div>';
 
   // ── Render all ──
   container.innerHTML = sidebarHTML + bottomHTML + mobileHTML;
@@ -192,8 +198,13 @@ function renderPPKNav(containerId, activePage) {
   var saved = localStorage.getItem('ppk_sidebar_open');
   if (saved === 'true') sidebar.classList.add('open');
 
+  // Body class for CSS targeting (avoids sibling-combinator issues)
+  document.body.classList.add('ppk-has-sidebar');
+  if (sidebar.classList.contains('open')) document.body.classList.add('ppk-sidebar-open');
+
   toggle.addEventListener('click', function () {
     sidebar.classList.toggle('open');
+    document.body.classList.toggle('ppk-sidebar-open');
     localStorage.setItem('ppk_sidebar_open', sidebar.classList.contains('open'));
     toggle.textContent = sidebar.classList.contains('open') ? '‹' : '›';
     updateMainMargin();
@@ -260,7 +271,11 @@ window.closeMobileMenu = function () {
 
 // ── Logout helper ──
 if (typeof window.doLogout === 'undefined') {
-  window.doLogout = function () { window.location.replace('dashboard.html'); };
+  window.doLogout = function () {
+    localStorage.removeItem('sessionToken');
+    localStorage.removeItem('currentUser');
+    window.location.replace('login.html');
+  };
 }
 
 // ── Auto-render ──
