@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260312f">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260312g">
     <style>
         body {
             margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -113,11 +113,11 @@
     </form>
 
     <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
-    <script src="supabase/config.js?v=20260312f"></script>
-    <script src="supabase/supabase.min.js?v=20260312f"></script>
-    <script src="ppk-api.js?v=20260312f"></script>
-    <script src="ppk-app.js?v=20260312f"></script>
-    <script src="ppk-utils.js?v=20260312f"></script>
+    <script src="supabase/config.js?v=20260312g"></script>
+    <script src="supabase/supabase.min.js?v=20260312g"></script>
+    <script src="ppk-api.js?v=20260312g"></script>
+    <script src="ppk-app.js?v=20260312g"></script>
+    <script src="ppk-utils.js?v=20260312g"></script>
     <!-- Fallback: ถ้า ppk-app.js เก่าไม่มี stub → สร้างเอง -->
     <script>
     (function() {
@@ -149,9 +149,9 @@
     <div id="firstLoginOverlay">
         <div id="firstLoginBox">
             <h3>&#128274; เปลี่ยนรหัสผ่านครั้งแรก</h3>
-            <p>รหัสผ่านเริ่มต้นของคุณคือวันเดือนปีเกิด<br>กรุณาตั้งรหัสผ่านใหม่ก่อนใช้งานระบบ</p>
+            <p>กรุณาตั้งรหัสผ่านใหม่ก่อนเข้าใช้งานระบบ<br>ใส่รหัสผ่านเดิมที่ได้รับจากผู้ดูแลระบบ</p>
             <div class="fl-group">
-                <label>รหัสผ่านปัจจุบัน (วันเดือนปีเกิด เช่น 31Dec1985)</label>
+                <label>รหัสผ่านปัจจุบัน (ที่ได้รับจากผู้ดูแล)</label>
                 <div class="pw-wrapper">
                     <input type="password" id="flOldPw" placeholder="รหัสผ่านเริ่มต้น" autocomplete="current-password" class="pw-input">
                     <button type="button" class="pw-toggle" onclick="togglePwById('flOldPw', this)" title="แสดง/ซ่อนรหัสผ่าน">👁</button>

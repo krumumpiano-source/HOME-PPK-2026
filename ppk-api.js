@@ -317,6 +317,12 @@ async function _routeAction(action, data) {
                 var resRows = await sbGet('residents', { user_id: 'eq.' + u.id, is_active: 'eq.true', limit: '1' });
                 if (resRows && resRows[0]) resident = resRows[0];
             } catch(e) { resident = null; }
+            // ตรวจ flag must_change_pw จาก settings table
+            var mustChangePw = false;
+            try {
+                var mcRows = await sbGet('settings', { key: 'eq.must_change_pw_' + u.id, limit: '1' });
+                mustChangePw = !!(mcRows && mcRows.length > 0);
+            } catch(e) { mustChangePw = false; }
             var userObj = {
                 id: u.id, email: u.email,
                 prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
@@ -324,7 +330,7 @@ async function _routeAction(action, data) {
                 position: u.position || '',
                 houseNumber: resident ? (resident.house_number || '') : '',
                 residentId: resident ? resident.id : null,
-                must_change_password: !!(u.must_change_password)
+                must_change_password: mustChangePw
             };
             // สร้าง session ใน DB
             var token = 'session-' + u.id + '-' + Date.now();
@@ -368,6 +374,8 @@ async function _routeAction(action, data) {
             if (uRows[0].password_hash !== oldHash) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
             var newHash = await sha256hex(data.newPassword || '');
             await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
+            // ลบ flag must_change_pw (ถ้ามี)
+            try { await sbDelete('settings', { key: 'eq.must_change_pw_' + userId }); } catch(e) {}
             return { success: true };
         }
 
@@ -1185,6 +1193,8 @@ async function _routeAction(action, data) {
                 is_active: true, pdpa_consent: false,
                 password_hash: pwHash
             });
+            // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก
+            try { await sbUpsert('settings', { key: 'must_change_pw_' + uid, value: 'true' }, 'key'); } catch(e) { console.warn('set must_change_pw flag:', e); }
             // หา house_id จาก house_number
             var houseId = null;
             if (data.house_number) {
