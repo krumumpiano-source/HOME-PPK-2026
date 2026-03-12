@@ -3,117 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต</title>
+    <title>แบบขอย้ายที่พัก | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css">
     <style>
         body {
-            font-family: 'Kanit', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
+            margin: 0; min-height: 100vh; font-family: 'Kanit', sans-serif;
+            background: var(--c-bg, #F8FAFC);
         }
         .form-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            background: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 700px; margin: 0 auto; padding: 1.5rem 1rem 2rem;
         }
+        .form-header {
+            display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 1.2rem;
+        }
+        .form-header h2 { margin: 0; color: var(--c-primary, #4F46E5); font-size: 1.3rem; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.5rem 1rem; border-radius: 10px; border: 1.5px solid var(--c-border, #E5E7EB);
+            background: var(--c-surface, #fff); font: inherit; font-weight: 600; cursor: pointer;
+            margin-bottom: 0.75rem; transition: all 0.15s;
+        }
+        .back-btn:hover { background: #F1F5F9; border-color: var(--c-primary, #4F46E5); color: var(--c-primary, #4F46E5); }
         .form-section {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #ddd;
+            background: var(--c-surface, #fff); border: 1px solid var(--c-border, #E5E7EB);
+            border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
         }
-        .form-section h3 {
-            color: #1e40af;
-            margin-bottom: 1rem;
+        .form-section-title { font-size: 1.05rem; font-weight: 700; color: var(--c-primary, #4F46E5); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.85rem; }
+        .form-group label { font-size: 0.9rem; color: #374151; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 0.65rem 0.9rem; border: 1.5px solid #E5E7EB; border-radius: 10px;
+            font: inherit; font-size: 0.92rem; transition: border-color 0.15s;
+            width: 100%; box-sizing: border-box; background: #fff;
         }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            margin-left: 0;
-            padding-left: 0;
-        }
-        .checkbox-group label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-left: 0;
-            padding-left: 0;
-            font-weight: normal;
-        }
-        .checkbox-group label input {
-            margin: 0;
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: normal;
-        }
-        .radio-group label input {
-            width: 16px;
-            height: 16px;
-        }
-        .submit-btn {
-            background: linear-gradient(to right, #4f8cff, #1e40af);
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: white;
-            padding: 0.5rem 1rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .submit-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-        .submit-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .form-group label, .checkbox-group label, .radio-group label {
-            line-height: 1.5;
-        }
-        textarea {
-            line-height: 1.5;
-        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .form-group input[readonly] { background: #F1F5F9; color: #64748B; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .checkbox-group { display: flex; align-items: flex-start; gap: 0.5rem; margin: 0.75rem 0; }
+        .checkbox-group input[type="checkbox"] { margin-top: 0.25rem; width: 1.1em; height: 1.1em; }
+        .name-row { display: flex; gap: 0.6rem; }
+        .name-row .form-group { flex: 1; }
         .auto-fill-note {
-            background-color: #e0f2fe;
-            border: 1px solid #0ea5e9;
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            color: #0369a1;
-            font-size: 0.9rem;
+            background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 8px;
+            padding: 0.6rem 0.8rem; font-size: 0.82rem; color: #3730A3; margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.4rem;
         }
+        .warning-note {
+            background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px;
+            padding: 0.6rem 0.8rem; font-size: 0.85rem; color: #92400E;
+        }
+        .file-upload-area {
+            border: 2px dashed #CBD5E1; border-radius: 12px; padding: 1.5rem;
+            text-align: center; transition: border-color 0.2s; cursor: pointer;
+        }
+        .file-upload-area:hover { border-color: #4F46E5; background: #F5F3FF; }
+        .file-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+        .file-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; color: #374151; padding: 0.3rem 0.5rem; background: #F1F5F9; border-radius: 6px; }
+        .file-remove { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 0.85rem; }
+        .submit-btn {
+            background: linear-gradient(135deg, #4F46E5, #06B6D4); color: #fff;
+            border: none; border-radius: 10px; padding: 0.85rem 2rem;
+            font: inherit; font-size: 1.05rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; width: 100%;
+        }
+        .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.35); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .print-btn {
+            background: #059669; color: #fff; border: none; border-radius: 10px;
+            padding: 0.7rem 1.5rem; font: inherit; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .print-btn:hover { background: #047857; }
+        .btn-group { display: flex; gap: 0.75rem; margin-top: 1rem; }
+        @media (max-width: 600px) {
+            .name-row { flex-direction: column; gap: 0; }
+            .btn-group { flex-direction: column; }
+        }
+        .cost-item { display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.5rem; }
+        .cost-item .form-group { flex: 1; margin-bottom: 0; }
+        .cost-remove-btn { background: #FEE2E2; border: 1px solid #FECACA; color: #DC2626; padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.85rem; }
+        .residents-container { display: flex; flex-direction: column; gap: 0.6rem; }
     </style>
 </head>
 <body>
@@ -264,11 +235,11 @@
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
     </div>
-    <script src="supabase/config.js?v=20260309d"></script>
-    <script src="supabase/supabase.min.js?v=20260309d"></script>
-    <script src="ppk-api.js?v=20260309d"></script>
-    <script src="ppk-app.js?v=20260309d"></script>
-    <script src="ppk-utils.js?v=20260309d"></script>
+    <script src="supabase/config.js?v=20260310"></script>
+    <script src="supabase/supabase.min.js?v=20260310"></script>
+    <script src="ppk-api.js?v=20260310"></script>
+    <script src="ppk-app.js?v=20260310"></script>
+    <script src="ppk-utils.js?v=20260310"></script>
 <script>
     function printForm() {
         // รวบรวมข้อมูลจากฟอร์ม

@@ -4,335 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แดชบอร์ด | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
-
-        :root {
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --border: #e5e7eb;
-            --text: #0f172a;
-            --muted: #64748b;
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #06b6d4;
-            --shadow: 0 8px 24px rgba(15,23,42,.06);
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Kanit', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 62px;
-            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
-            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.2rem 0.3rem;
-            transition: width 0.2s;
-            z-index: 100;
-        }
-        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.7rem;
-            margin-bottom: 1.2rem;
-            cursor: pointer;
-            outline: none;
-            align-self: flex-end;
-        }
-        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.9rem;
-            color: #fff;
-            background: none;
-            border: none;
-            font-size: 1.08rem;
-            font-family: inherit;
-            padding: 0.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: left;
-            width: 100%;
-            transition: background 0.15s, color 0.15s;
-        }
-        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
-        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
-        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
-        .sidebar.expanded .sidebar-label { display: inline; }
-
-        @media (max-width: 600px) {
-            .sidebar { width: 48px; }
-            .sidebar.expanded { width: 160px; }
-        }
-        @media (max-width: 768px) {
-            .sidebar { display: none !important; }
-        }
-
-        /* Main Container */
-        .dashboard-container {
-            margin-left: 62px;
-            min-height: 100vh;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            align-items: center;
-            transition: margin-left 0.2s;
-        }
-        .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
-        @media (max-width: 768px) {
-            .dashboard-container { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; }
-            .sidebar.expanded ~ .dashboard-container { margin-left: 0 !important; }
-        }
-
-        /* Header */
-        .dashboard-header {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            margin-bottom: 0.5rem;
-            justify-content: center;
-        }
-        .dashboard-header-icon {
-            font-size: 2.1rem;
-            color: var(--primary);
-        }
-        .dashboard-container h2 {
-            margin: 0;
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.8rem;
-            text-align: center;
-        }
-
-        /* Section Cards */
-        .section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            width: 100%;
-            max-width: 600px;
-        }
-        .section-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .announce-list {
-            margin: 0;
-            padding-left: 1.2em;
-            color: var(--text);
-            font-size: 1rem;
-            line-height: 1.8;
-        }
-        .amount {
-            font-size: 1.25rem;
-            color: var(--danger);
-            font-weight: 700;
-        }
-        .amount-ok {
-            color: var(--success);
-        }
-        .section-content {
-            font-size: 1.05rem;
-            color: var(--text);
-            margin-top: 0.25rem;
-        }
-
-        .footer-note {
-            text-align: center;
-            margin-top: 1rem;
-            font-size: 0.95rem;
-            color: var(--muted);
-        }
-
-        /* Admin Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; } .stat-card { padding: 0.8rem 0.5rem; } .stat-icon { font-size: 1.5rem; } .stat-count { font-size: 1.5rem; } }
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.2rem 1rem;
-            text-align: center;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            transition: transform .15s, box-shadow .15s;
-        }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(15,23,42,.1); }
-        .stat-icon { font-size: 2rem; margin-bottom: 0.4rem; }
-        .stat-count {
-            font-size: 2.2rem;
-            font-weight: 700;
-            line-height: 1;
-            margin-bottom: 0.3rem;
-        }
-        .stat-count.danger { color: var(--danger); }
-        .stat-count.ok { color: var(--success); }
-        .stat-label { font-size: 0.85rem; color: var(--muted); }
-
-        /* Announce item */
-        .announce-item {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--border);
-            line-height: 1.6;
-        }
-        .announce-item:last-child { border-bottom: none; }
-        .announce-item.urgent { color: var(--danger); }
-        .announce-item.warning { color: var(--warning); }
-        .announce-body { font-size: 0.9rem; color: var(--muted); }
-
-        /* Slip Send Button — base */
-        .slip-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            border: none;
-            border-radius: 10px;
-            padding: 0.65rem 1.2rem;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 0.85rem;
-            transition: opacity 0.15s, transform 0.1s;
-            color: #fff;
-            cursor: default;
-        }
-        /* มียอด พร้อมส่งสลิป → เขียว, กดได้ */
-        .slip-btn.slip-active {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            box-shadow: 0 2px 10px rgba(16,185,129,0.25);
-            cursor: pointer;
-        }
-        .slip-btn.slip-active:hover { opacity: 0.88; transform: translateY(-1px); }
-        .slip-btn.slip-active:active { transform: translateY(0); }
-        /* ไม่มียอด → เทา, กดไม่ได้ */
-        .slip-btn.slip-disabled {
-            background: #d1d5db;
-            color: #6b7280;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-        /* ส่งสลิปแล้ว รอตรวจสอบ → ส้ม, กดไม่ได้ */
-        .slip-btn.slip-reviewing {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            box-shadow: 0 2px 10px rgba(245,158,11,0.25);
-        }
-        /* ชำระสำเร็จ → ฟ้าเขียว, กดไม่ได้ */
-        .slip-btn.slip-success {
-            background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
-            box-shadow: 0 2px 10px rgba(6,182,212,0.2);
-        }
-        /* ถูกปฏิเสธ → แดง, กดได้ (ส่งใหม่) */
-        .slip-btn.slip-rejected {
-            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            box-shadow: 0 2px 10px rgba(239,68,68,0.25);
-            cursor: pointer;
-        }
-        .slip-btn.slip-rejected:hover { opacity: 0.88; transform: translateY(-1px); }
-        .slip-btn.slip-rejected:active { transform: translateY(0); }
-        /* ยอดคงค้าง active → แดง-ส้ม */
-        .slip-btn.slip-outstanding {
-            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-            box-shadow: 0 2px 10px rgba(239,68,68,0.18);
-            cursor: pointer;
-        }
-        .slip-btn.slip-outstanding:hover { opacity: 0.88; transform: translateY(-1px); }
-        .slip-btn.slip-outstanding:active { transform: translateY(0); }
-        .slip-detail {
-            font-size: 0.88rem;
-            color: var(--muted);
-            margin-top: 0.4rem;
-            line-height: 1.5;
-        }
+        /* Dashboard-specific overrides */
+        .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
+        .dashboard-amount.danger { color: var(--c-danger); }
+        .dashboard-amount.ok { color: var(--c-success); }
     </style>
 </head>
 <body>
-    <!-- Sidebar (rendered by ppk-nav.js) -->
     <div id="ppkNav"></div>
 
-    <div class="dashboard-container" id="dashboardContainer">
-        <div class="dashboard-header">
-            <span class="dashboard-header-icon">🏠</span>
-            <h2>แดชบอร์ด</h2>
+    <div class="ppk-main" id="dashboardContainer">
+        <div class="ppk-topbar">
+            <div class="ppk-topbar-title"><span class="icon">🏠</span> แดชบอร์ด</div>
         </div>
 
-        <!-- Admin stats (hidden for users) -->
-        <div id="adminStatsSection" style="display:none; width:100%; max-width:600px;">
-            <div class="stats-grid">
-                <div class="stat-card" onclick="navigate('?page=team-management')">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-count danger" id="statPendingReg">—</div>
-                    <div class="stat-label">คำขอสมัคร<br>รอตรวจ</div>
-                </div>
-                <div class="stat-card" onclick="navigate('?page=check-slip')">
-                    <div class="stat-icon">🔍</div>
-                    <div class="stat-count danger" id="statPendingSlips">—</div>
-                    <div class="stat-label">สลิปรอ<br>ตรวจสอบ</div>
-                </div>
-                <div class="stat-card" onclick="navigate('?page=check-request')">
-                    <div class="stat-icon">📋</div>
-                    <div class="stat-count danger" id="statPendingReqs">—</div>
-                    <div class="stat-label">คำร้องรอ<br>ดำเนินการ</div>
+        <div class="ppk-content">
+            <!-- Admin Stats -->
+            <div id="adminStatsSection" style="display:none; margin-bottom:1.25rem;">
+                <div class="ppk-stats">
+                    <div class="ppk-stat" onclick="navigate('?page=team-management')">
+                        <div class="ppk-stat-icon">👥</div>
+                        <div class="ppk-stat-value danger" id="statPendingReg">—</div>
+                        <div class="ppk-stat-label">คำขอสมัครรอตรวจ</div>
+                    </div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-slip')">
+                        <div class="ppk-stat-icon">🔍</div>
+                        <div class="ppk-stat-value danger" id="statPendingSlips">—</div>
+                        <div class="ppk-stat-label">สลิปรอตรวจสอบ</div>
+                    </div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-request')">
+                        <div class="ppk-stat-icon">📋</div>
+                        <div class="ppk-stat-value danger" id="statPendingReqs">—</div>
+                        <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <div class="section-title">📢 ประกาศ</div>
-            <div id="announceList">
-                <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">กำลังโหลดข้อมูล...</div></div>
+            <!-- Announcements -->
+            <div class="ppk-card" style="margin-bottom:1rem;">
+                <div class="ppk-card-header">
+                    <div class="ppk-card-icon" style="background:var(--c-info-bg);color:var(--c-info);">📢</div>
+                    <div class="ppk-card-title">ประกาศ</div>
+                </div>
+                <div id="announceList">
+                    <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">กำลังโหลดข้อมูล...</div></div>
+                </div>
             </div>
-        </div>
-        <div class="section" id="paymentSection">
-            <div class="section-title">💳 แจ้งยอดชำระประจำเดือน</div>
-            <div class="section-content">ยอดที่ต้องชำระเดือนนี้: <span class="amount" id="currentMonthAmount">—</span> บาท</div>
-            <div id="slipBtnMonth"></div>
-        </div>
-        <div class="section" id="outstandingSection">
-            <div class="section-title">🧾 แจ้งยอดคงค้าง</div>
-            <div class="section-content">ยอดคงค้างสะสม: <span class="amount" id="outstandingAmount">—</span> บาท</div>
-            <div id="slipBtnOutstanding"></div>
-        </div>
-        <div class="footer-note">
-            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
-            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+
+            <!-- Payment Section (user) -->
+            <div class="ppk-card" id="paymentSection" style="margin-bottom:1rem;">
+                <div class="ppk-card-header">
+                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">💳</div>
+                    <div class="ppk-card-title">แจ้งยอดชำระประจำเดือน</div>
+                </div>
+                <div>ยอดที่ต้องชำระเดือนนี้: <span class="dashboard-amount danger" id="currentMonthAmount">—</span> บาท</div>
+                <div id="slipBtnMonth"></div>
+            </div>
+
+            <!-- Outstanding Section (user) -->
+            <div class="ppk-card" id="outstandingSection" style="margin-bottom:1rem;">
+                <div class="ppk-card-header">
+                    <div class="ppk-card-icon" style="background:var(--c-warning-bg);color:var(--c-warning);">🧾</div>
+                    <div class="ppk-card-title">แจ้งยอดคงค้าง</div>
+                </div>
+                <div>ยอดคงค้างสะสม: <span class="dashboard-amount danger" id="outstandingAmount">—</span> บาท</div>
+                <div id="slipBtnOutstanding"></div>
+            </div>
+
+            <div class="ppk-footer">
+                ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+                งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            </div>
         </div>
     </div>
 
@@ -340,36 +84,33 @@
         const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-        /* ── Render Announcements (ใช้ schema: title, body, type, expires_at) ── */
         function renderAnnouncements(rows) {
             const el = document.getElementById('announceList');
             if (!Array.isArray(rows) || rows.length === 0) {
-                el.innerHTML = '<div style="color:var(--muted)">ไม่มีประกาศในขณะนี้</div>';
+                el.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">📭</div><div class="ppk-empty-text">ไม่มีประกาศในขณะนี้</div></div>';
                 return;
             }
             el.innerHTML = rows.map(function(a) {
                 var prefix = a.type === 'urgent' ? '🚨 ' : (a.type === 'warning' ? '⚠️ ' : 'ℹ️ ');
                 var cls = a.type === 'urgent' ? ' urgent' : (a.type === 'warning' ? ' warning' : '');
-                var body = a.body ? '<div class="announce-body">' + a.body + '</div>' : '';
-                return '<div class="announce-item' + cls + '">' + prefix + '<strong>' + (a.title || '') + '</strong>' + body + '</div>';
+                var body = a.body ? '<div class="ppk-announce-body">' + a.body + '</div>' : '';
+                return '<div class="ppk-announce-item' + cls + '">' + prefix + '<strong>' + (a.title || '') + '</strong>' + body + '</div>';
             }).join('');
         }
 
-        /* ── Slip button builder ── */
         function buildSlipBtnHTML(label, slipStatus, periodKey, amount, isOutstanding) {
             if (slipStatus === 'success')
-                return '<button class="slip-btn slip-success" disabled>✅ ชำระสำเร็จแล้ว</button>';
+                return '<button class="ppk-slip-btn ppk-slip-success" disabled>✅ ชำระสำเร็จแล้ว</button>';
             if (slipStatus === 'reviewing')
-                return '<button class="slip-btn slip-reviewing" disabled>🔍 อยู่ในระหว่างตรวจสอบ</button>';
+                return '<button class="ppk-slip-btn ppk-slip-reviewing" disabled>🔍 อยู่ในระหว่างตรวจสอบ</button>';
             if (slipStatus === 'rejected')
-                return '<button class="slip-btn slip-rejected" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">⚠️ สลิปไม่ผ่าน — กดเพื่อส่งใหม่</button>';
+                return '<button class="ppk-slip-btn ppk-slip-rejected" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">⚠️ สลิปไม่ผ่าน — กดเพื่อส่งใหม่</button>';
             if (!amount || amount <= 0)
-                return '<button class="slip-btn slip-disabled" disabled>📋 ยังไม่มีการแจ้งยอด</button>';
-            var cls = isOutstanding ? 'slip-btn slip-outstanding' : 'slip-btn slip-active';
+                return '<button class="ppk-slip-btn ppk-slip-disabled" disabled>📋 ยังไม่มีการแจ้งยอด</button>';
+            var cls = isOutstanding ? 'ppk-slip-btn ppk-slip-outstanding' : 'ppk-slip-btn ppk-slip-active';
             return '<button class="' + cls + '" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">📤 ' + label + '</button>';
         }
 
-        /* ── Render User Dashboard ── */
         function renderUserDashboard(data) {
             document.getElementById('adminStatsSection').style.display = 'none';
             document.getElementById('paymentSection').style.display = '';
@@ -381,7 +122,6 @@
             var houseNumber = data.houseNumber || '';
             var slipStatus = data.slipStatus || 'none';
 
-            // Parse period 'YYYY-MM'
             var parts = period.split('-');
             var monthIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
             var yearBE = parts[0] ? String(parseInt(parts[0]) + 543) : String(new Date().getFullYear() + 543);
@@ -390,13 +130,13 @@
             var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
 
             document.getElementById('currentMonthAmount').textContent = amount > 0 ? amount.toLocaleString('th-TH') : '-';
-            document.getElementById('currentMonthAmount').className = amount > 0 ? 'amount' : 'amount amount-ok';
+            document.getElementById('currentMonthAmount').className = 'dashboard-amount ' + (amount > 0 ? 'danger' : 'ok');
             document.getElementById('outstandingAmount').textContent = outstanding > 0 ? outstanding.toLocaleString('th-TH') : '0';
-            document.getElementById('outstandingAmount').className = outstanding > 0 ? 'amount' : 'amount amount-ok';
+            document.getElementById('outstandingAmount').className = 'dashboard-amount ' + (outstanding > 0 ? 'danger' : 'ok');
 
             var slipBtnMonth = document.getElementById('slipBtnMonth');
             if (slipBtnMonth) {
-                var detail = '<div class="slip-detail">📅 งวด: ' + periodDisplay;
+                var detail = '<div class="ppk-slip-detail">📅 งวด: ' + periodDisplay;
                 if (data.dueDate) detail += ' &nbsp;|&nbsp; 📆 ครบกำหนด: ' + new Date(data.dueDate).toLocaleDateString('th-TH');
                 if (houseNumber) detail += ' &nbsp;|&nbsp; 🏠 บ้าน: ' + houseNumber;
                 detail += '</div>';
@@ -405,13 +145,12 @@
             var slipBtnOut = document.getElementById('slipBtnOutstanding');
             if (slipBtnOut) {
                 var outDetail = outstanding > 0
-                    ? '<div class="slip-detail">💰 ยอดคงค้างรวม: ' + outstanding.toLocaleString('th-TH') + ' บาท</div>'
-                    : '<div class="slip-detail">ไม่มียอดคงค้าง</div>';
+                    ? '<div class="ppk-slip-detail">💰 ยอดคงค้างรวม: ' + outstanding.toLocaleString('th-TH') + ' บาท</div>'
+                    : '<div class="ppk-slip-detail">ไม่มียอดคงค้าง</div>';
                 slipBtnOut.innerHTML = outDetail + buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', periodKey, outstanding, true);
             }
         }
 
-        /* ── Render Admin Dashboard ── */
         function renderAdminDashboard(data) {
             document.getElementById('adminStatsSection').style.display = '';
             document.getElementById('paymentSection').style.display = 'none';
@@ -421,17 +160,14 @@
                 var el = document.getElementById(id);
                 if (!el) return;
                 el.textContent = String(count);
-                el.className = 'stat-count ' + (count > 0 ? 'danger' : 'ok');
+                el.className = 'ppk-stat-value ' + (count > 0 ? 'danger' : 'ok');
             }
             _stat('statPendingReg',   data.pendingRegistrations || 0);
             _stat('statPendingSlips', data.pendingSlips || 0);
             _stat('statPendingReqs',  data.pendingRequests || 0);
         }
 
-        /* ── Load Dashboard ── */
         async function loadDashboard() {
-            // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
-
             try {
                 var result = await cachedCall('getDashboardData', {}, 60000);
                 if (!result || !result.success) {
@@ -439,11 +175,8 @@
                     return;
                 }
                 renderAnnouncements(result.announcements || []);
-                if (result.role === 'admin') {
-                    renderAdminDashboard(result.data || {});
-                } else {
-                    renderUserDashboard(result.data || {});
-                }
+                if (result.role === 'admin') renderAdminDashboard(result.data || {});
+                else renderUserDashboard(result.data || {});
             } catch(e) {
                 console.warn('getDashboardData failed, fallback:', e);
                 renderAnnouncements([]);
@@ -453,11 +186,8 @@
             }
         }
 
-        // Sidebar toggle — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'dashboard';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'dashboard'); }
-
-        // Initialize
         window.onload = async function() { await loadDashboard(); };
 
         function goToUploadSlip(periodKey, amount, isOutstanding) {
@@ -474,15 +204,13 @@
             navigate('?page=upload-slip');
         }
 
-        async function doLogout() {
-            window.location.replace('dashboard.html');
-        }
-        </script>
-    <script src="supabase/config.js?v=20260309d"></script>
-    <script src="supabase/supabase.min.js?v=20260309d"></script>
-    <script src="ppk-api.js?v=20260309d"></script>
-    <script src="ppk-app.js?v=20260309d"></script>
-    <script src="ppk-utils.js?v=20260309d"></script>
-    <script src="ppk-nav.js?v=20260309d"></script></body>
+        async function doLogout() { window.location.replace('dashboard.html'); }
+    </script>
+    <script src="supabase/config.js?v=20260310"></script>
+    <script src="supabase/supabase.min.js?v=20260310"></script>
+    <script src="ppk-api.js?v=20260310"></script>
+    <script src="ppk-app.js?v=20260310"></script>
+    <script src="ppk-utils.js?v=20260310"></script>
+    <script src="ppk-nav.js?v=20260310"></script>
+</body>
 </html>
-

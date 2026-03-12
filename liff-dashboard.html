@@ -1,40 +1,23 @@
 ﻿<!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ยอดค้างชำระ — บ้านพักครู LINE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Kanit',sans-serif;background:#f8fafc;min-height:100vh;padding:1rem}
-    .header{background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border-radius:16px;padding:1.25rem;text-align:center;margin-bottom:1rem}
-    .header h1{font-size:1.25rem;font-weight:700}
-    .header p{font-size:0.85rem;opacity:0.85;margin-top:0.25rem}
-    .avatar{width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);margin-bottom:0.5rem}
-    .card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:1.25rem;margin-bottom:1rem}
-    .card-title{font-size:0.9rem;font-weight:600;color:#64748b;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.4rem}
-    .amount{font-size:2rem;font-weight:700;color:#0f172a;text-align:center;margin:0.5rem 0}
-    .amount.due{color:#dc2626}
-    .amount.ok{color:#16a34a}
-    .row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid #f1f5f9;font-size:0.9rem}
-    .row:last-child{border-bottom:none}
-    .row label{color:#64748b}
-    .row span{font-weight:600;color:#0f172a}
-    .badge{display:inline-block;padding:0.2rem 0.65rem;border-radius:999px;font-size:0.78rem;font-weight:600}
-    .badge-pending{background:#fef9c3;color:#a16207}
-    .badge-approved{background:#f0fdf4;color:#15803d}
-    .badge-unpaid{background:#fef2f2;color:#dc2626}
-    .btn{width:100%;padding:0.8rem;border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;transition:all 0.2s}
-    .btn-green{background:#06c755;color:#fff}
-    .btn-blue{background:#0a84ff;color:#fff}
-    .btn-gray{background:#f1f5f9;color:#374151}
-    .loading{text-align:center;padding:2rem;color:#94a3b8}
-    .spinner{width:40px;height:40px;border:4px solid #e5e7eb;border-top:4px solid #10b981;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .no-link{text-align:center;padding:2rem 1rem}
-    .no-link p{color:#64748b;font-size:0.9rem;line-height:1.8}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF Dashboard | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css">
+    <style>
+        body { margin: 0; font-family: 'Kanit', sans-serif; background: var(--c-bg, #F8FAFC); padding: 0.75rem; }
+        .liff-container { max-width: 480px; margin: 0 auto; }
+        .liff-card { background: var(--c-surface, #fff); border: 1px solid var(--c-border, #E5E7EB); border-radius: 14px; padding: 1.2rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .liff-header { text-align: center; margin-bottom: 1rem; }
+        .liff-header h2 { margin: 0; color: var(--c-primary, #4F46E5); font-size: 1.15rem; }
+        .liff-btn { background: linear-gradient(135deg, #4F46E5, #06B6D4); color: #fff; border: none; border-radius: 10px; padding: 0.7rem 1.2rem; font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; }
+        .liff-btn:hover { box-shadow: 0 4px 16px rgba(79,70,229,0.3); }
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
+        .form-group label { font-size: 0.85rem; color: #374151; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { padding: 0.6rem 0.8rem; border: 1.5px solid #E5E7EB; border-radius: 8px; font: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #4F46E5; }
+    </style>
 </head>
 <body>
   <!-- Loading -->
@@ -77,8 +60,8 @@
   </div>
 
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="supabase/config.js?v=20260309d"></script>
-  <script src="supabase/supabase.min.js?v=20260309d"></script>
+  <script src="supabase/config.js?v=20260310"></script>
+  <script src="supabase/supabase.min.js?v=20260310"></script>
   <script src="ppk-api.js?v=20260305"></script>
   <script>
     let _lineUserId = '';

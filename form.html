@@ -4,385 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แบบฟอร์มคำร้อง | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
-
-        :root {
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --border: #e5e7eb;
-            --text: #0f172a;
-            --muted: #64748b;
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #06b6d4;
-            --purple: #8b5cf6;
-            --pink: #ec4899;
-            --shadow: 0 8px 24px rgba(15,23,42,.06);
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Kanit', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 62px;
-            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
-            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.2rem 0.3rem;
-            transition: width 0.2s;
-            z-index: 100;
-        }
-        .sidebar.expanded { width: 280px; align-items: flex-start; padding-left: 0.7rem; }
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.7rem;
-            margin-bottom: 1.2rem;
-            cursor: pointer;
-            outline: none;
-            align-self: flex-end;
-        }
-        .sidebar-menu { display: flex; flex-direction: column; gap: 0.2rem; width: 100%; flex: 1; }
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.9rem;
-            color: #fff;
-            background: none;
-            border: none;
-            font-size: 1.08rem;
-            font-family: inherit;
-            padding: 0.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: left;
-            width: 100%;
-            transition: background 0.15s, color 0.15s;
-        }
-        .sidebar-link.active, .sidebar-link:hover { background: #fff; color: #2563eb; }
-        .sidebar-link-icon { font-size: 1.25rem; min-width: 1.5em; text-align: center; }
-        .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
-        .sidebar.expanded .sidebar-label { display: inline; }
-
-        @media (max-width: 600px) {
-            .sidebar { width: 48px; }
-            .sidebar.expanded { width: 160px; }
-        }
-
-        /* Main Container */
-        .main-container {
-            margin-left: 62px;
-            min-height: 100vh;
-            padding: 2rem;
-            transition: margin-left 0.2s;
-        }
-        .sidebar.expanded ~ .main-container { margin-left: 280px; }
-        @media (max-width: 600px) {
-            .main-container { margin-left: 48px; padding: 1rem; }
-            .sidebar.expanded ~ .main-container { margin-left: 160px; }
-        }
-
-        /* Header */
-        .page-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.6rem 1rem;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .back-btn:hover { background: #f1f5f9; }
-        .page-title { margin: 0; font-size: 1.8rem; font-weight: 700; color: var(--primary); }
-
-        /* Tabs */
-        .tabs-container {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-        .tab-btn {
-            padding: 0.7rem 1.2rem;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            background: var(--surface);
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .tab-btn:hover { background: #f1f5f9; border-color: var(--primary); }
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Section Cards */
-        .section-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow);
-        }
-        .section-title {
-            margin: 0 0 1rem 0;
-            font-size: 1.2rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--primary);
-        }
-        .section-desc {
-            color: var(--muted);
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Form Cards Grid */
         .form-cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
         }
         .form-card {
-            background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: 14px;
-            padding: 1.5rem;
+            background: var(--c-surface);
+            border: 1.5px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.25rem;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+            transition: all 0.2s var(--ease);
+            display: flex; flex-direction: column; gap: 0.6rem;
         }
         .form-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 4px 16px rgba(37,99,235,0.12);
-            transform: translateY(-2px);
+            border-color: var(--c-primary-light);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
         }
         .form-card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+            width: 48px; height: 48px; border-radius: var(--radius-md);
+            background: var(--c-primary-bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
         }
-        .form-card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-        .form-card-desc {
-            font-size: 0.9rem;
-            color: var(--muted);
-            line-height: 1.5;
-        }
+        .form-card-title { font-size: 0.95rem; font-weight: 600; color: var(--c-text); }
+        .form-card-desc { font-size: 0.82rem; color: var(--c-text-3); line-height: 1.55; }
         .form-card-action {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.95rem;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            color: var(--c-primary); font-weight: 600; font-size: 0.88rem;
             margin-top: auto;
         }
-
-        /* Info Card */
-        .info-card {
-            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
-            border: 1px solid #93c5fd;
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-        .info-card-title {
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .info-card-text {
-            color: #1e40af;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        /* Hide content */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .form-cards-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { .form-cards-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <div id="ppkNav"></div>
 
-    <!-- Main Content -->
-    <div class="main-container" id="mainContainer">
-        <div class="page-header">
-            <button class="back-btn" onclick="navigate('?page=dashboard')">← ย้อนกลับ</button>
-            <h1 class="page-title">📝 แบบฟอร์มคำร้อง</h1>
+    <div class="ppk-main" id="mainContainer">
+        <div class="ppk-topbar">
+            <button class="ppk-btn ppk-btn-ghost ppk-btn-sm" onclick="navigate('?page=dashboard')">← ย้อนกลับ</button>
+            <div class="ppk-topbar-title"><span class="icon">📝</span> แบบฟอร์มคำร้อง</div>
         </div>
 
-        <!-- My Requests Panel -->
-        <div id="my-requests-section" class="section-card" style="display:none;margin-bottom:1.5rem;">
-            <h3 class="section-title">📋 คำร้องของฉัน</h3>
-            <div id="my-requests-content" style="color:#64748b;font-size:0.95rem;">กำลังโหลด...</div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs-container">
-            <button class="tab-btn active" data-tab="residence" onclick="switchTab('residence')">
-                🏠 ขอเข้าพักอาศัย
-            </button>
-            <button class="tab-btn" data-tab="repair" onclick="switchTab('repair')">
-                🔧 แจ้งซ่อมแซม
-            </button>
-            <button class="tab-btn" data-tab="transfer" onclick="switchTab('transfer')">
-                🔄 ขอย้ายบ้านพัก
-            </button>
-            <button class="tab-btn" data-tab="return" onclick="switchTab('return')">
-                📤 ขอคืนบ้านพัก
-            </button>
-        </div>
-
-        <!-- Tab: Residence Request -->
-        <div class="tab-content active" id="tab-residence">
-            <div class="info-card">
-                <div class="info-card-title">ℹ️ คำแนะนำ</div>
-                <div class="info-card-text">
-                    แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู สำหรับบุคลากรที่ต้องการยื่นคำขอเข้าพักอาศัยในบ้านพักครูของโรงเรียน กรุณากรอกข้อมูลให้ครบถ้วนและแนบเอกสารประกอบตามที่กำหนด
+        <div class="ppk-content">
+            <!-- My Requests -->
+            <div id="my-requests-section" class="ppk-card" style="display:none; margin-bottom:1rem;">
+                <div class="ppk-card-header">
+                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">📋</div>
+                    <div class="ppk-card-title">คำร้องของฉัน</div>
                 </div>
+                <div id="my-requests-content"><div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">กำลังโหลด...</div></div></div>
             </div>
-            <div class="section-card">
-                <h3 class="section-title">🏠 แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</h3>
-                <p class="section-desc">ยื่นคำร้องขอเข้าพักอาศัยในบ้านพักครูของโรงเรียนพะเยาพิทยาคม</p>
-                <div class="form-cards-grid">
-                    <div class="form-card" onclick="navigate('?page=request-form')">
-                        <div class="form-card-icon">📋</div>
-                        <div class="form-card-title">กรอกแบบฟอร์มคำร้องขอเข้าพักอาศัย</div>
-                        <div class="form-card-desc">กรอกข้อมูลส่วนตัว ข้อมูลการทำงาน และเหตุผลความจำเป็นในการขอเข้าพักอาศัย พร้อมแนบเอกสารประกอบ</div>
-                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+
+            <!-- Tabs -->
+            <div class="ppk-tabs">
+                <button class="ppk-tab active" data-tab="residence" onclick="switchTab('residence')">
+                    <span class="ppk-tab-icon">🏠</span> ขอเข้าพักอาศัย
+                </button>
+                <button class="ppk-tab" data-tab="repair" onclick="switchTab('repair')">
+                    <span class="ppk-tab-icon">🔧</span> แจ้งซ่อมแซม
+                </button>
+                <button class="ppk-tab" data-tab="transfer" onclick="switchTab('transfer')">
+                    <span class="ppk-tab-icon">🔄</span> ขอย้ายบ้านพัก
+                </button>
+                <button class="ppk-tab" data-tab="return" onclick="switchTab('return')">
+                    <span class="ppk-tab-icon">📤</span> ขอคืนบ้านพัก
+                </button>
+            </div>
+
+            <!-- Tab: Residence -->
+            <div class="ppk-tab-content active" id="tab-residence">
+                <div class="ppk-alert ppk-alert-info" style="margin-bottom:1rem;">
+                    <span class="ppk-alert-icon">ℹ️</span>
+                    <div>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู สำหรับบุคลากรที่ต้องการยื่นคำขอ กรุณากรอกข้อมูลให้ครบถ้วนและแนบเอกสารประกอบตามที่กำหนด</div>
+                </div>
+                <div class="ppk-card">
+                    <div class="ppk-section-title">🏠 แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</div>
+                    <p style="color:var(--c-text-3);font-size:0.88rem;margin-bottom:1rem;">ยื่นคำร้องขอเข้าพักอาศัยในบ้านพักครูของโรงเรียนพะเยาพิทยาคม</p>
+                    <div class="form-cards-grid">
+                        <div class="form-card" onclick="navigate('?page=request-form')">
+                            <div class="form-card-icon">📋</div>
+                            <div class="form-card-title">กรอกแบบฟอร์มคำร้องขอเข้าพักอาศัย</div>
+                            <div class="form-card-desc">กรอกข้อมูลส่วนตัว ข้อมูลการทำงาน และเหตุผลความจำเป็นในการขอเข้าพักอาศัย พร้อมแนบเอกสารประกอบ</div>
+                            <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tab: Repair Request -->
-        <div class="tab-content" id="tab-repair">
-            <div class="info-card">
-                <div class="info-card-title">ℹ️ คำแนะนำ</div>
-                <div class="info-card-text">
-                    แบบฟอร์มแจ้งซ่อมแซมและบำรุงรักษา สำหรับแจ้งปัญหาหรือความเสียหายที่เกิดขึ้นในบ้านพัก เพื่อให้ทางโรงเรียนดำเนินการซ่อมแซมต่อไป
+            <!-- Tab: Repair -->
+            <div class="ppk-tab-content" id="tab-repair">
+                <div class="ppk-alert ppk-alert-info" style="margin-bottom:1rem;">
+                    <span class="ppk-alert-icon">ℹ️</span>
+                    <div>แบบฟอร์มแจ้งซ่อมแซมและบำรุงรักษา สำหรับแจ้งปัญหาหรือความเสียหายที่เกิดขึ้นในบ้านพัก เพื่อให้ทางโรงเรียนดำเนินการซ่อมแซมต่อไป</div>
                 </div>
-            </div>
-            <div class="section-card">
-                <h3 class="section-title">🔧 แบบฟอร์มแจ้งซ่อมแซมและบำรุงรักษา</h3>
-                <p class="section-desc">แจ้งปัญหาหรือความเสียหายที่ต้องการให้ซ่อมแซม</p>
-                <div class="form-cards-grid">
-                    <div class="form-card" onclick="navigate('?page=repair-form')">
-                        <div class="form-card-icon">🛠️</div>
-                        <div class="form-card-title">กรอกแบบฟอร์มแจ้งซ่อมแซม</div>
-                        <div class="form-card-desc">ระบุรายละเอียดปัญหา ประเภทงานซ่อม ระดับความเร่งด่วน และแนบรูปภาพประกอบ</div>
-                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                <div class="ppk-card">
+                    <div class="ppk-section-title">🔧 แบบฟอร์มแจ้งซ่อมแซมและบำรุงรักษา</div>
+                    <p style="color:var(--c-text-3);font-size:0.88rem;margin-bottom:1rem;">แจ้งปัญหาหรือความเสียหายที่ต้องการให้ซ่อมแซม</p>
+                    <div class="form-cards-grid">
+                        <div class="form-card" onclick="navigate('?page=repair-form')">
+                            <div class="form-card-icon" style="background:var(--c-warning-bg);">🛠️</div>
+                            <div class="form-card-title">กรอกแบบฟอร์มแจ้งซ่อมแซม</div>
+                            <div class="form-card-desc">ระบุรายละเอียดปัญหา ประเภทงานซ่อม ระดับความเร่งด่วน และแนบรูปภาพประกอบ</div>
+                            <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tab: Transfer Request -->
-        <div class="tab-content" id="tab-transfer">
-            <div class="info-card">
-                <div class="info-card-title">ℹ️ คำแนะนำ</div>
-                <div class="info-card-text">
-                    แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต สำหรับผู้พักอาศัยที่ต้องการย้ายไปยังบ้านพักหลังอื่นหรือเปลี่ยนยูนิตภายในอาคารเดียวกัน
+            <!-- Tab: Transfer -->
+            <div class="ppk-tab-content" id="tab-transfer">
+                <div class="ppk-alert ppk-alert-info" style="margin-bottom:1rem;">
+                    <span class="ppk-alert-icon">ℹ️</span>
+                    <div>แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต สำหรับผู้พักอาศัยที่ต้องการย้ายไปยังบ้านพักหลังอื่นหรือเปลี่ยนยูนิตภายในอาคารเดียวกัน</div>
                 </div>
-            </div>
-            <div class="section-card">
-                <h3 class="section-title">🔄 แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต</h3>
-                <p class="section-desc">ยื่นคำร้องขอย้ายไปยังบ้านพักหลังอื่นหรือเปลี่ยนยูนิต</p>
-                <div class="form-cards-grid">
-                    <div class="form-card" onclick="navigate('?page=transfer-form')">
-                        <div class="form-card-icon">🏘️</div>
-                        <div class="form-card-title">กรอกแบบฟอร์มขอย้ายบ้านพัก</div>
-                        <div class="form-card-desc">ระบุบ้านพักปัจจุบัน บ้านพักที่ต้องการย้ายไป และเหตุผลความจำเป็นในการย้าย</div>
-                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                <div class="ppk-card">
+                    <div class="ppk-section-title">🔄 แบบฟอร์มคำร้องขอย้ายบ้านพัก</div>
+                    <p style="color:var(--c-text-3);font-size:0.88rem;margin-bottom:1rem;">ยื่นคำร้องขอย้ายไปยังบ้านพักหลังอื่นหรือเปลี่ยนยูนิต</p>
+                    <div class="form-cards-grid">
+                        <div class="form-card" onclick="navigate('?page=transfer-form')">
+                            <div class="form-card-icon" style="background:var(--c-success-bg);">🏘️</div>
+                            <div class="form-card-title">กรอกแบบฟอร์มขอย้ายบ้านพัก</div>
+                            <div class="form-card-desc">ระบุบ้านพักปัจจุบัน บ้านพักที่ต้องการย้ายไป และเหตุผลความจำเป็นในการย้าย</div>
+                            <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tab: Return Request -->
-        <div class="tab-content" id="tab-return">
-            <div class="info-card">
-                <div class="info-card-title">⚠️ คำเตือน</div>
-                <div class="info-card-text">
-                    การยื่นคำร้องขอคืนบ้านพักจะมีผลให้ท่านสิ้นสุดสิทธิ์การพักอาศัยในบ้านพักครูตามวันที่กำหนด กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยื่นคำร้อง
+            <!-- Tab: Return -->
+            <div class="ppk-tab-content" id="tab-return">
+                <div class="ppk-alert ppk-alert-warning" style="margin-bottom:1rem;">
+                    <span class="ppk-alert-icon">⚠️</span>
+                    <div>การยื่นคำร้องขอคืนบ้านพักจะมีผลให้ท่านสิ้นสุดสิทธิ์การพักอาศัยในบ้านพักครูตามวันที่กำหนด กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยื่นคำร้อง</div>
                 </div>
-            </div>
-            <div class="section-card">
-                <h3 class="section-title">📤 แบบฟอร์มคำร้องขอคืนบ้านพัก</h3>
-                <p class="section-desc">ยื่นคำร้องขอคืนบ้านพักและสิ้นสุดการพักอาศัย</p>
-                <div class="form-cards-grid">
-                    <div class="form-card" onclick="navigate('?page=return-form')">
-                        <div class="form-card-icon">🔑</div>
-                        <div class="form-card-title">กรอกแบบฟอร์มขอคืนบ้านพัก</div>
-                        <div class="form-card-desc">ระบุวันที่ต้องการย้ายออก สภาพบ้านพัก และข้อมูลการส่งมอบ</div>
-                        <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                <div class="ppk-card">
+                    <div class="ppk-section-title">📤 แบบฟอร์มคำร้องขอคืนบ้านพัก</div>
+                    <p style="color:var(--c-text-3);font-size:0.88rem;margin-bottom:1rem;">ยื่นคำร้องขอคืนบ้านพักและสิ้นสุดการพักอาศัย</p>
+                    <div class="form-cards-grid">
+                        <div class="form-card" onclick="navigate('?page=return-form')">
+                            <div class="form-card-icon" style="background:var(--c-danger-bg);">🔑</div>
+                            <div class="form-card-title">กรอกแบบฟอร์มขอคืนบ้านพัก</div>
+                            <div class="form-card-desc">ระบุวันที่ต้องการย้ายออก สภาพบ้านพัก และข้อมูลการส่งมอบ</div>
+                            <div class="form-card-action">เริ่มกรอกแบบฟอร์ม →</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div style="text-align:center; margin-top:1.5rem; font-size:0.95rem; color:#888;">
-            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
-            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            <div class="ppk-footer">
+                ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+                งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            </div>
         </div>
     </div>
 
     <script>
-        // === Session check on load ===
         window.addEventListener('DOMContentLoaded', async function() {
             await checkSession();
             const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -391,19 +172,16 @@
             loadMyRequests(user, hasHouse);
         });
 
-        // ── กรองแท็บตามสิทธิ์: มีบ้าน = ซ่อม/ย้าย/คืน | ไม่มีบ้าน = ขอเข้าพัก
         function filterTabsByRole(hasHouse) {
             if (hasHouse) {
-                // ผู้อยู่อาศัย: ซ่อน tab ขอเข้าพัก + แสดง repair เป็น default
-                var resBtn = document.querySelector('.tab-btn[data-tab="residence"]');
+                var resBtn = document.querySelector('.ppk-tab[data-tab="residence"]');
                 var resContent = document.getElementById('tab-residence');
                 if (resBtn) resBtn.style.display = 'none';
                 if (resContent) resContent.classList.remove('active');
                 switchTab('repair');
             } else {
-                // ยังไม่มีบ้าน: ซ่อน tab ซ่อม/ย้าย/คืน
                 ['repair', 'transfer', 'return'].forEach(function(tab) {
-                    var btn = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
+                    var btn = document.querySelector('.ppk-tab[data-tab="' + tab + '"]');
                     var content = document.getElementById('tab-' + tab);
                     if (btn) btn.style.display = 'none';
                     if (content) content.classList.remove('active');
@@ -412,38 +190,25 @@
             }
         }
 
-        // ── โหลดสถานะคำร้องของผู้ใช้งาน
         async function loadMyRequests(user, hasHouse) {
             var section = document.getElementById('my-requests-section');
             var content = document.getElementById('my-requests-content');
             if (!section || !content) return;
-
-            // แสดงส่วนนี้สำหรับทุกคน (แต่โหลดเฉพาะ residence สำหรับผู้ยังไม่มีบ้าน)
             section.style.display = 'block';
-
             var userId = user.id || '';
-            if (!userId) {
-                content.innerHTML = '<p style="color:#94a3b8">ไม่พบข้อมูลผู้ใช้</p>';
-                return;
-            }
-
+            if (!userId) { content.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-text">ไม่พบข้อมูลผู้ใช้</div></div>'; return; }
             var year = String(new Date().getFullYear() + 543);
-            var reqType = hasHouse ? 'repair' : 'residence';
-
             var statusMap = {
-                pending:   { label: 'รอดำเนินการ',           color: '#f59e0b', icon: '⏳' },
-                reviewing: { label: 'อยู่ระหว่างพิจารณา',   color: '#06b6d4', icon: '🔍' },
-                waiting:   { label: 'อยู่ในคิวรอบ้านพัก',   color: '#8b5cf6', icon: '🔢' },
-                approved:  { label: 'อนุมัติแล้ว',           color: '#10b981', icon: '✅' },
-                completed: { label: 'เสร็จสิ้น',             color: '#10b981', icon: '🎉' },
-                rejected:  { label: 'ไม่ผ่านการอนุมัติ',    color: '#ef4444', icon: '❌' },
-                expired:   { label: 'หมดอายุ',               color: '#6b7280', icon: '⌛' }
+                pending:   { label: 'รอดำเนินการ',         color: 'var(--c-warning)', icon: '⏳' },
+                reviewing: { label: 'อยู่ระหว่างพิจารณา', color: 'var(--c-cyan)',    icon: '🔍' },
+                waiting:   { label: 'อยู่ในคิวรอบ้านพัก', color: '#8b5cf6',          icon: '🔢' },
+                approved:  { label: 'อนุมัติแล้ว',         color: 'var(--c-success)', icon: '✅' },
+                completed: { label: 'เสร็จสิ้น',           color: 'var(--c-success)', icon: '🎉' },
+                rejected:  { label: 'ไม่ผ่านการอนุมัติ',  color: 'var(--c-danger)',  icon: '❌' },
+                expired:   { label: 'หมดอายุ',             color: 'var(--c-text-3)',  icon: '⌛' }
             };
-
-            // ดึงคำร้องทุกประเภทที่เกี่ยวข้อง
             var types = hasHouse ? ['repair', 'transfer', 'return'] : ['residence'];
             var allRequests = [];
-
             try {
                 for (var i = 0; i < types.length; i++) {
                     var r = await callBackendGet('getRequests', { type: types[i], year: year, user_id: userId });
@@ -452,81 +217,54 @@
                         allRequests = allRequests.concat(r.data);
                     }
                 }
-
                 if (allRequests.length === 0) {
                     var noReqMsg = hasHouse
                         ? 'ยังไม่มีคำร้องในปีนี้ กรุณาเลือกประเภทคำร้องด้านล่าง'
                         : 'ยังไม่มีคำร้องขอเข้าพักในปีนี้ กรุณากรอกแบบฟอร์มด้านล่าง';
-                    content.innerHTML = '<p style="color:#94a3b8;margin:0;">' + noReqMsg + '</p>';
+                    content.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">📄</div><div class="ppk-empty-text">' + noReqMsg + '</div></div>';
                     return;
                 }
-
-                // เรียงลำดับล่าสุดก่อน
-                allRequests.sort(function(a, b) {
-                    return (b.submitted_at || '').localeCompare(a.submitted_at || '');
-                });
-
+                allRequests.sort(function(a, b) { return (b.submitted_at || '').localeCompare(a.submitted_at || ''); });
                 var typeLabels = { residence: 'ขอเข้าพักอาศัย', repair: 'แจ้งซ่อมแซม', transfer: 'ขอย้ายบ้านพัก', return: 'ขอคืนบ้านพัก' };
-
-                var html = '<div style="display:flex;flex-direction:column;gap:0.75rem;">';
+                var html = '<div style="display:flex;flex-direction:column;gap:0.6rem;">';
                 allRequests.forEach(function(req) {
-                    var s = statusMap[req.status] || { label: req.status || '-', color: '#6b7280', icon: '📄' };
+                    var s = statusMap[req.status] || { label: req.status || '-', color: 'var(--c-text-3)', icon: '📄' };
                     var dateStr = req.submitted_at ? req.submitted_at.replace('T', ' ').substring(0, 16) : '-';
-                    html += '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:1rem;background:#f8fafc;">';
+                    html += '<div style="border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.85rem 1rem;background:var(--c-surface-2);">';
                     html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">';
-                    html += '<div><span style="font-weight:600;">';
-                    html += (typeLabels[req._type] || req._type) + '</span>';
-                    html += '<span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">#' + (req.id || '-') + '</span></div>';
-                    html += '<span style="background:' + s.color + '22;color:' + s.color + ';border:1px solid ' + s.color + '44;';
-                    html += 'border-radius:999px;padding:0.2rem 0.75rem;font-size:0.88rem;font-weight:600;white-space:nowrap;">';
-                    html += s.icon + ' ' + s.label + '</span>';
-                    html += '</div>';
-                    if (req.queue_position) {
-                        html += '<div style="color:#8b5cf6;font-size:0.9rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
-                    }
-                    if (req.review_note) {
-                        html += '<div style="color:#64748b;font-size:0.9rem;margin-top:0.4rem;';
-                        html += 'border-top:1px solid #e5e7eb;padding-top:0.4rem;">💬 หมายเหตุจากผู้ดูแล: ' + req.review_note + '</div>';
-                    }
-                    html += '<div style="color:#94a3b8;font-size:0.82rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr + '</div>';
-                    html += '</div>';
+                    html += '<div><span style="font-weight:600;">' + (typeLabels[req._type] || req._type) + '</span>';
+                    html += '<span style="color:var(--c-text-3);font-size:0.82rem;margin-left:0.5rem;">#' + (req.id || '-') + '</span></div>';
+                    html += '<span class="ppk-badge" style="background:color-mix(in srgb, ' + s.color + ' 12%, transparent);color:' + s.color + ';border:1px solid color-mix(in srgb, ' + s.color + ' 25%, transparent);">';
+                    html += s.icon + ' ' + s.label + '</span></div>';
+                    if (req.queue_position) html += '<div style="color:#8b5cf6;font-size:0.85rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
+                    if (req.review_note) html += '<div style="color:var(--c-text-2);font-size:0.85rem;margin-top:0.4rem;border-top:1px solid var(--c-border);padding-top:0.4rem;">💬 ' + req.review_note + '</div>';
+                    html += '<div style="color:var(--c-text-3);font-size:0.78rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr + '</div></div>';
                 });
                 html += '</div>';
                 content.innerHTML = html;
-
             } catch(e) {
-                content.innerHTML = '<p style="color:#ef4444;margin:0;">ไม่สามารถโหลดข้อมูลคำร้องได้ในขณะนี้</p>';
+                content.innerHTML = '<div class="ppk-alert ppk-alert-danger">ไม่สามารถโหลดข้อมูลคำร้องได้ในขณะนี้</div>';
             }
         }
 
-        // Tab switching
         function switchTab(tabId) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            // Remove active from all tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            // Show selected tab content
-            document.getElementById('tab-' + tabId).classList.add('active');
-            // Activate selected tab button
-            document.querySelector('.tab-btn[data-tab="' + tabId + '"]').classList.add('active');
+            document.querySelectorAll('.ppk-tab-content').forEach(function(c) { c.classList.remove('active'); });
+            document.querySelectorAll('.ppk-tab').forEach(function(b) { b.classList.remove('active'); });
+            var content = document.getElementById('tab-' + tabId);
+            var btn = document.querySelector('.ppk-tab[data-tab="' + tabId + '"]');
+            if (content) content.classList.add('active');
+            if (btn) btn.classList.add('active');
         }
 
-        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'form';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'form'); }
-    
-        async function doLogout() {
-            window.location.replace('dashboard.html');
-        }
-        </script>
-    <script src="supabase/config.js?v=20260309d"></script>
-    <script src="supabase/supabase.min.js?v=20260309d"></script>
-    <script src="ppk-api.js?v=20260309d"></script>
-    <script src="ppk-app.js?v=20260309d"></script>
-    <script src="ppk-utils.js?v=20260309d"></script>
-    <script src="ppk-nav.js?v=20260309d"></script></body>
+        async function doLogout() { window.location.replace('dashboard.html'); }
+    </script>
+    <script src="supabase/config.js?v=20260310"></script>
+    <script src="supabase/supabase.min.js?v=20260310"></script>
+    <script src="ppk-api.js?v=20260310"></script>
+    <script src="ppk-app.js?v=20260310"></script>
+    <script src="ppk-utils.js?v=20260310"></script>
+    <script src="ppk-nav.js?v=20260310"></script>
+</body>
 </html>

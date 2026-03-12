@@ -1,34 +1,23 @@
 ﻿<!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ประวัติการชำระ — บ้านพักครู</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Kanit',sans-serif;background:#f8fafc;min-height:100vh;padding:1rem}
-    .header{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-radius:16px;padding:1.25rem;text-align:center;margin-bottom:1rem}
-    .header h1{font-size:1.25rem;font-weight:700}
-    .header p{font-size:0.85rem;opacity:0.85;margin-top:0.25rem}
-    .entry{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:1rem 1.25rem;margin-bottom:0.85rem;display:flex;justify-content:space-between;align-items:center;gap:0.75rem}
-    .entry-left{flex:1}
-    .entry-period{font-size:0.92rem;font-weight:600;color:#1e293b}
-    .entry-detail{font-size:0.82rem;color:#64748b;margin-top:0.2rem}
-    .entry-amount{font-size:1.1rem;font-weight:700;color:#0f172a;white-space:nowrap}
-    .badge{display:inline-block;padding:0.2rem 0.65rem;border-radius:999px;font-size:0.75rem;font-weight:600;margin-top:0.3rem}
-    .badge-approved{background:#f0fdf4;color:#15803d}
-    .badge-pending{background:#fef9c3;color:#a16207}
-    .badge-rejected{background:#fef2f2;color:#dc2626}
-    .empty{text-align:center;padding:3rem 1rem;color:#94a3b8}
-    .empty p{font-size:1.5rem;margin-bottom:0.5rem}
-    .spinner{width:40px;height:40px;border:4px solid #e5e7eb;border-top:4px solid #7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin:2rem auto}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .btn{width:100%;padding:0.8rem;border:none;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;background:#f1f5f9;color:#374151;margin-top:0.5rem}
-    .summary{background:#fff;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;justify-content:space-around;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-    .summary-item p{font-size:0.8rem;color:#64748b;margin-bottom:0.2rem}
-    .summary-item span{font-size:1.1rem;font-weight:700;color:#0f172a}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF History | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css">
+    <style>
+        body { margin: 0; font-family: 'Kanit', sans-serif; background: var(--c-bg, #F8FAFC); padding: 0.75rem; }
+        .liff-container { max-width: 480px; margin: 0 auto; }
+        .liff-card { background: var(--c-surface, #fff); border: 1px solid var(--c-border, #E5E7EB); border-radius: 14px; padding: 1.2rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .liff-header { text-align: center; margin-bottom: 1rem; }
+        .liff-header h2 { margin: 0; color: var(--c-primary, #4F46E5); font-size: 1.15rem; }
+        .liff-btn { background: linear-gradient(135deg, #4F46E5, #06B6D4); color: #fff; border: none; border-radius: 10px; padding: 0.7rem 1.2rem; font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; }
+        .liff-btn:hover { box-shadow: 0 4px 16px rgba(79,70,229,0.3); }
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
+        .form-group label { font-size: 0.85rem; color: #374151; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { padding: 0.6rem 0.8rem; border: 1.5px solid #E5E7EB; border-radius: 8px; font: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #4F46E5; }
+    </style>
 </head>
 <body>
   <div class="header">
@@ -47,8 +36,8 @@
   <a href="liff-dashboard.html"><button class="btn" style="display:none" id="backBtn">← กลับหน้าหลัก</button></a>
 
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="supabase/config.js?v=20260309d"></script>
-  <script src="supabase/supabase.min.js?v=20260309d"></script>
+  <script src="supabase/config.js?v=20260310"></script>
+  <script src="supabase/supabase.min.js?v=20260310"></script>
   <script src="ppk-api.js?v=20260305"></script>
   <script>
     const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];

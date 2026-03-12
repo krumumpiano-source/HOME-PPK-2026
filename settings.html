@@ -4,989 +4,331 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตั้งค่าส่วนตัว | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
-        
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Kanit', sans-serif;
-            background: linear-gradient(135deg, #4f8cff 0%, #38e8ff 100%);
-            min-height: 100vh;
-            margin: 0;
-        }
-        
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 62px;
-            background: linear-gradient(135deg, #2563eb 0%, #38e8ff 100%);
-            box-shadow: 2px 0 12px rgba(0,0,0,0.07);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.2rem 0.3rem 1.2rem 0.3rem;
-            transition: width 0.2s;
-            z-index: 100;
-        }
-        .sidebar.expanded {
-            width: 280px;
-            align-items: flex-start;
-            padding-left: 0.7rem;
-        }
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.7rem;
-            margin-bottom: 1.2rem;
-            cursor: pointer;
-            outline: none;
-            align-self: flex-end;
-            transition: color 0.2s;
-        }
-        .sidebar-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
-            width: 100%;
-        
-            flex: 1;
-        }
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.9rem;
-            color: #fff;
-            background: none;
-            border: none;
-            font-size: 1.08rem;
-            font-family: inherit;
-            padding: 0.5rem 0.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: left;
-            width: 100%;
-            transition: background 0.15s, color 0.15s;
-        }
-        .sidebar-link.active, .sidebar-link:hover {
-            background: #fff;
-            color: #2563eb;
-        }
-        .sidebar-link-icon {
-            font-size: 1.25rem;
-            min-width: 1.5em;
-            text-align: center;
-        }
-        .sidebar-label {
-            display: none;
-            transition: opacity 0.2s;
-            white-space: normal;
-            word-wrap: break-word;
-            font-size: 1rem;
-            line-height: 1.3;
-        }
-        .sidebar.expanded .sidebar-label {
-            display: inline;
-            opacity: 1;
-            margin-left: 0.1em;
-        }
-        
-        @media (max-width: 600px) {
-            .sidebar {
-                width: 48px;
-            }
-            .sidebar.expanded {
-                width: 160px;
-            }
-        }
-        @media (max-width: 768px) {
-            .sidebar { display: none !important; }
-            .dashboard-container, .main-container { margin-left: 0 !important; padding-bottom: 80px !important; }
-            .sidebar.expanded ~ .dashboard-container,
-            .sidebar.expanded ~ .main-container { margin-left: 0 !important; }
-        }
-        
-        .dashboard-container {
-            margin-left: 62px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
-            padding: 2.5rem 2.2rem 2rem 2.2rem;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            align-items: center;
-            justify-content: flex-start;
-            transition: margin-left 0.2s;
-        }
-        .sidebar.expanded ~ .dashboard-container {
-            margin-left: 280px;
-        }
-        @media (max-width: 600px) {
-            .dashboard-container {
-                margin-left: 48px;
-                padding: 1.2rem 0.5rem;
-            }
-            .sidebar.expanded ~ .dashboard-container {
-                margin-left: 160px;
-            }
-        }
-        
-        .dashboard-header {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            margin-bottom: 0.5rem;
-            justify-content: center;
-        }
-        .dashboard-header-icon {
-            font-size: 2.1rem;
-            color: #2563eb;
-            filter: drop-shadow(0 2px 6px #38e8ff44);
-        }
-        .dashboard-container h2 {
-            margin: 0;
-            color: #2563eb;
-            font-weight: 700;
-            font-size: 2.1rem;
-            letter-spacing: 0.5px;
-            text-align: center;
-        }
-        
-        .section {
-            background: #f8fafc;
-            border-radius: 14px;
-            padding: 1.5rem;
-            margin-bottom: 0.5rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            width: 100%;
-            max-width: 600px;
-        }
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #2563eb;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 0.5rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.4rem;
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.95rem;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 0.7rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: 'Kanit', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        .form-group input:disabled {
-            background-color: #f3f4f6;
-            cursor: not-allowed;
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 1rem;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
-        
-        .btn {
-            background: linear-gradient(to right, #4f8cff, #1e40af);
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: white;
-            padding: 0.8rem 2rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            font-family: 'Kanit', sans-serif;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(to right, #6b7280, #4b5563);
-        }
-        
-        .btn-success {
-            background: linear-gradient(to right, #10b981, #059669);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-        
-        .pw-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .pw-wrapper input {
-            flex: 1;
-            padding-right: 2.5rem !important;
-        }
-        .pw-toggle {
-            position: absolute;
-            right: 0.75rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            color: #6b7280;
-            padding: 0;
-            line-height: 1;
-            user-select: none;
-        }
-        .pw-toggle:hover { color: #2563eb; }
-
-        .password-section {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-        .password-section h4 {
-            color: #92400e;
-            margin: 0 0 1rem 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .info-box {
-            background: #eff6ff;
-            border: 1px solid #3b82f6;
-            border-radius: 8px;
-            padding: 0.8rem 1rem;
-            margin-bottom: 1rem;
-            color: #1e40af;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .success-message {
-            background: #d1fae5;
-            border: 1px solid #10b981;
-            border-radius: 8px;
-            padding: 1rem;
-            color: #065f46;
-            text-align: center;
-            display: none;
-            margin-top: 1rem;
-        }
-        .success-message.show {
-            display: block;
-        }
-        
-        .password-strength {
-            height: 4px;
-            border-radius: 2px;
-            margin-top: 0.5rem;
-            background: #e5e7eb;
-            overflow: hidden;
-        }
-        .password-strength-bar {
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s, background-color 0.3s;
-        }
-        .password-strength-bar.weak { width: 33%; background: #ef4444; }
-        .password-strength-bar.medium { width: 66%; background: #f59e0b; }
-        .password-strength-bar.strong { width: 100%; background: #10b981; }
-        
-        .password-match {
-            font-size: 0.85rem;
-            margin-top: 0.3rem;
-        }
-        .password-match.match { color: #10b981; }
-        .password-match.no-match { color: #ef4444; }
-        
-        /* Profile Photo Styles */
+        /* Settings-specific styles */
         .profile-photo-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px dashed #d1d5db;
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 1.5rem; padding-bottom: 1.5rem;
+            border-bottom: 1px dashed var(--c-border);
         }
         .profile-photo-preview {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid #2563eb;
-            object-fit: cover;
-            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-            color: #6366f1;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-            transition: transform 0.2s, box-shadow 0.2s;
+            width: 120px; height: 120px; border-radius: 50%;
+            border: 3px solid var(--c-primary); object-fit: cover;
+            background: var(--c-primary-bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; color: var(--c-primary-light);
+            margin-bottom: 0.75rem;
+            box-shadow: var(--shadow-primary);
+            transition: transform 0.2s;
         }
-        .profile-photo-preview:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
-        }
-        .profile-photo-preview img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .photo-upload-zone {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .profile-photo-preview:hover { transform: scale(1.05); }
+        .profile-photo-preview img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .photo-upload-zone { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
         .photo-upload-btn {
-            background: linear-gradient(to right, #8b5cf6, #6366f1);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: white;
-            padding: 0.6rem 1.5rem;
-            border: none;
-            cursor: pointer;
-            font-family: 'Kanit', sans-serif;
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: var(--c-primary); color: #fff; border: none; border-radius: var(--radius-sm);
+            padding: 0.5rem 1.2rem; font: inherit; font-size: 0.88rem; font-weight: 500;
+            cursor: pointer; transition: all 0.15s;
         }
-        .photo-upload-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        .photo-upload-btn:hover { background: var(--c-primary-dark); transform: translateY(-1px); }
+        .photo-upload-input { display: none; }
+        .photo-remove-btn { background: none; border: none; color: var(--c-danger); font-size: 0.82rem; cursor: pointer; font: inherit; }
+        .photo-remove-btn:hover { text-decoration: underline; }
+        .photo-info { font-size: 0.75rem; color: var(--c-text-3); }
+
+        .pw-wrapper { position: relative; display: flex; align-items: center; }
+        .pw-wrapper input { flex: 1; padding-right: 2.5rem !important; }
+        .pw-toggle { position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--c-text-3); padding: 0; }
+        .pw-toggle:hover { color: var(--c-primary); }
+
+        .password-section {
+            background: var(--c-warning-bg); border: 1px solid var(--c-warning);
+            border-radius: var(--radius-md); padding: 1rem; margin-top: 0.75rem;
         }
-        .photo-upload-input {
-            display: none;
-        }
-        .photo-remove-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            font-size: 0.85rem;
-            cursor: pointer;
-            padding: 0.3rem;
-            font-family: 'Kanit', sans-serif;
-        }
-        .photo-remove-btn:hover {
-            text-decoration: underline;
-        }
-        .photo-info {
-            font-size: 0.8rem;
-            color: #6b7280;
-            text-align: center;
-        }
-        
-        @media (max-width: 600px) {
-            .form-row {
-                flex-direction: column;
-                gap: 0;
-            }
-            .button-group {
-                flex-direction: column;
-            }
-            .btn {
-                width: 100%;
-            }
-        }
-        
-        /* Co-Resident Styles */
-        .coresident-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+        .password-section h4 { color: #92400e; margin: 0 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
+
+        .password-strength { height: 3px; border-radius: 2px; margin-top: 0.4rem; background: var(--c-border); overflow: hidden; }
+        .password-strength-bar { height: 100%; width: 0; transition: width 0.3s, background 0.3s; }
+        .password-strength-bar.weak { width: 33%; background: var(--c-danger); }
+        .password-strength-bar.medium { width: 66%; background: var(--c-warning); }
+        .password-strength-bar.strong { width: 100%; background: var(--c-success); }
+        .password-match { font-size: 0.82rem; margin-top: 0.25rem; }
+        .password-match.match { color: var(--c-success); }
+        .password-match.no-match { color: var(--c-danger); }
+
+        .coresident-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .coresident-item {
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            padding: 1rem;
-            position: relative;
-            transition: box-shadow 0.2s, border-color 0.2s;
+            background: var(--c-surface); border: 1px solid var(--c-border);
+            border-radius: var(--radius-md); padding: 1rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .coresident-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-color: #2563eb;
+        .coresident-item:hover { border-color: var(--c-primary-lighter); box-shadow: var(--shadow-md); }
+        .coresident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--c-border-light); }
+        .coresident-number { font-weight: 600; color: var(--c-primary); font-size: 0.9rem; }
+        .coresident-remove { background: var(--c-danger-bg); border: 1px solid #FECACA; color: var(--c-danger); padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.8rem; cursor: pointer; font: inherit; }
+        .coresident-remove:hover { background: #FEE2E2; }
+        .coresident-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem; }
+        .coresident-fields .form-group { margin-bottom: 0; }
+        .coresident-fields label { display: block; margin-bottom: 0.25rem; font-size: 0.82rem; font-weight: 500; color: var(--c-text-2); }
+        .coresident-fields input, .coresident-fields select {
+            width: 100%; padding: 0.5rem 0.7rem; border: 1.5px solid var(--c-border);
+            border-radius: var(--radius-sm); font: inherit; font-size: 0.88rem;
+            background: var(--c-surface); color: var(--c-text);
+            transition: border-color 0.15s;
         }
-        .coresident-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.8rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .coresident-number {
-            font-weight: 700;
-            color: #2563eb;
-            font-size: 0.95rem;
-        }
-        .coresident-remove {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 0.3rem 0.7rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            font-family: 'Kanit', sans-serif;
-            transition: background 0.2s;
-        }
-        .coresident-remove:hover {
-            background: #fee2e2;
-        }
-        .coresident-fields {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.8rem;
-        }
+        .coresident-fields input:focus, .coresident-fields select:focus { outline:none; border-color: var(--c-primary); box-shadow: 0 0 0 2px var(--c-primary-lighter); }
         .add-coresident-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            background: linear-gradient(to right, #10b981, #059669);
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border: none;
-            cursor: pointer;
-            font-family: 'Kanit', sans-serif;
-            transition: transform 0.2s, box-shadow 0.2s;
-            width: 100%;
-            margin-top: 0.5rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            background: var(--c-success); color: #fff; border: none; border-radius: var(--radius-sm);
+            padding: 0.65rem 1.2rem; font: inherit; font-size: 0.92rem; font-weight: 500;
+            cursor: pointer; width: 100%; margin-top: 0.5rem; transition: all 0.15s;
         }
-        .add-coresident-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
+        .add-coresident-btn:hover { filter: brightness(0.92); transform: translateY(-1px); }
         .empty-coresident {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: #9ca3af;
-            font-size: 0.95rem;
-            border: 2px dashed #e5e7eb;
-            border-radius: 10px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .status-spouse { background: #fce7f3; color: #be185d; }
-        .status-child { background: #dbeafe; color: #1d4ed8; }
-        .status-father { background: #d1fae5; color: #047857; }
-        .status-mother { background: #fef3c7; color: #b45309; }
-        .status-teacher { background: #e0e7ff; color: #4338ca; }
-        
-        /* Staff Toggle Styles */
-        .staff-toggle-container {
-            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-            border: 2px solid #6366f1;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 0.8rem;
-            margin-bottom: 0.5rem;
-        }
-        .staff-toggle-header {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-        .staff-toggle-label {
-            font-weight: 600;
-            color: #4338ca;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .staff-toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 26px;
-            background: #cbd5e1;
-            border-radius: 13px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .staff-toggle-switch.active {
-            background: linear-gradient(to right, #6366f1, #4f46e5);
-        }
-        .staff-toggle-switch::after {
-            content: '';
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            transition: left 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .staff-toggle-switch.active::after {
-            left: 27px;
-        }
-        .staff-toggle-desc {
-            font-size: 0.8rem;
-            color: #6366f1;
-            margin-left: auto;
-        }
-        .staff-fields {
-            display: none;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px dashed #a5b4fc;
-        }
-        .staff-fields.show {
-            display: block;
-        }
-        .staff-fields-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.8rem;
-        }
-        .staff-notice {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            padding: 0.7rem;
-            font-size: 0.85rem;
-            color: #92400e;
-            margin-top: 0.8rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
-        .staff-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: linear-gradient(to right, #6366f1, #4f46e5);
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 15px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
+            text-align: center; padding: 1.5rem 1rem; color: var(--c-text-3); font-size: 0.88rem;
+            border: 2px dashed var(--c-border); border-radius: var(--radius-md);
         }
 
-        /* ═══ Tab Navigation ═══ */
-        .settings-tabs {
-            display: flex;
-            gap: 0.25rem;
-            width: 100%;
-            max-width: 600px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            padding-bottom: 0.25rem;
+        .staff-toggle-container {
+            background: var(--c-primary-bg); border: 1.5px solid var(--c-primary-lighter);
+            border-radius: var(--radius-md); padding: 0.85rem; margin-top: 0.6rem;
         }
-        .settings-tabs::-webkit-scrollbar { display: none; }
-        .settings-tab {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.6rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px 10px 0 0;
-            background: #f1f5f9;
-            color: #64748b;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.15s;
-            border-bottom: 2px solid transparent;
+        .staff-toggle-header { display: flex; align-items: center; gap: 0.6rem; }
+        .staff-toggle-label { font-weight: 600; color: var(--c-primary-dark); font-size: 0.88rem; display: flex; align-items: center; gap: 0.4rem; }
+        .staff-toggle-switch {
+            position: relative; width: 44px; height: 24px;
+            background: var(--c-border); border-radius: 12px;
+            cursor: pointer; transition: background 0.25s; flex-shrink: 0;
         }
-        .settings-tab:hover {
-            background: #e0e7ff;
-            color: #2563eb;
+        .staff-toggle-switch.active { background: var(--c-primary); }
+        .staff-toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 20px; height: 20px; background: #fff; border-radius: 50%;
+            transition: left 0.25s; box-shadow: var(--shadow-sm);
         }
-        .settings-tab.active {
-            background: #fff;
-            color: #2563eb;
-            border-color: #2563eb;
-            border-bottom-color: #fff;
-            box-shadow: 0 -2px 8px rgba(37,99,235,0.1);
+        .staff-toggle-switch.active::after { left: 22px; }
+        .staff-toggle-desc { font-size: 0.78rem; color: var(--c-primary-light); margin-left: auto; }
+        .staff-fields { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--c-primary-lighter); }
+        .staff-fields.show { display: block; }
+        .staff-fields-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem; }
+        .staff-notice {
+            background: var(--c-warning-bg); border: 1px solid var(--c-warning);
+            border-radius: var(--radius-sm); padding: 0.6rem; font-size: 0.8rem;
+            color: #92400e; margin-top: 0.6rem; display: flex; align-items: flex-start; gap: 0.4rem;
         }
-        .settings-tab-icon { font-size: 1rem; }
-        .tab-content { display: none; width: 100%; max-width: 600px; }
-        .tab-content.active { display: block; }
-        .tab-progress {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            max-width: 600px;
-            padding: 0.5rem;
-            font-size: 0.82rem;
-            color: #64748b;
+        .staff-badge {
+            display: inline-flex; align-items: center; gap: 0.2rem;
+            background: var(--c-primary); color: #fff; padding: 0.15rem 0.5rem;
+            border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 600; margin-left: 0.4rem;
         }
-        .tab-progress-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            transition: background 0.2s;
+
+        .status-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); font-size: 0.72rem; font-weight: 600; }
+        .status-spouse { background: #FCE7F3; color: #BE185D; }
+        .status-child  { background: #DBEAFE; color: #1D4ED8; }
+        .status-father { background: #D1FAE5; color: #047857; }
+        .status-mother { background: #FEF3C7; color: #B45309; }
+
+        .success-message {
+            background: var(--c-success-bg); border: 1px solid var(--c-success);
+            border-radius: var(--radius-md); padding: 0.85rem; color: #065F46;
+            text-align: center; display: none; margin-top: 0.75rem;
         }
-        .tab-progress-dot.filled { background: #2563eb; }
-        @media (max-width: 768px) {
-            .settings-tabs { gap: 0.15rem; }
-            .settings-tab { font-size: 0.75rem; padding: 0.5rem 0.6rem; }
-            .settings-tab-icon { font-size: 0.85rem; }
+        .success-message.show { display: block; }
+
+        .button-group { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.25rem; }
+        @media (max-width: 600px) {
+            .ppk-form-row { flex-direction: column; gap: 0; }
+            .button-group { flex-direction: column; }
+            .button-group .ppk-btn { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div id="ppkNav"></div>
-    
-    <div class="dashboard-container" id="dashboardContainer">
-        <button style="align-self:flex-start;display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1rem;border-radius:10px;border:1px solid #e5e7eb;background:#fff;font:inherit;font-weight:700;cursor:pointer;margin-bottom:.5rem;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'" onclick="navigate('?page=dashboard')">← กลับ</button>
-        <div class="dashboard-header">
-            <span class="dashboard-header-icon">⚙️</span>
-            <h2>ตั้งค่าส่วนตัว</h2>
-        </div>
-        
-        <!-- Tab Navigation -->
-        <div class="settings-tabs" id="settingsTabs">
-            <button class="settings-tab active" onclick="switchTab('personal')" data-tab="personal">
-                <span class="settings-tab-icon">👤</span> ข้อมูลส่วนตัว
-            </button>
-            <button class="settings-tab" onclick="switchTab('address')" data-tab="address">
-                <span class="settings-tab-icon">📍</span> ที่อยู่
-            </button>
-            <button class="settings-tab" onclick="switchTab('housing')" data-tab="housing">
-                <span class="settings-tab-icon">🏠</span> ที่พักอาศัย
-            </button>
-            <button class="settings-tab" onclick="switchTab('coresident')" data-tab="coresident">
-                <span class="settings-tab-icon">👨‍👩‍👧‍👦</span> ผู้ร่วมพัก
-            </button>
-            <button class="settings-tab" onclick="switchTab('password')" data-tab="password">
-                <span class="settings-tab-icon">🔐</span> รหัสผ่าน
-            </button>
+
+    <div class="ppk-main" id="dashboardContainer">
+        <div class="ppk-topbar">
+            <button class="ppk-btn ppk-btn-ghost ppk-btn-sm" onclick="navigate('?page=dashboard')">← กลับ</button>
+            <div class="ppk-topbar-title"><span class="icon">⚙️</span> ตั้งค่าส่วนตัว</div>
         </div>
 
-        <!-- Tab: ข้อมูลส่วนตัว -->
-        <div class="tab-content active" id="tab-personal">
-        
-        <!-- ส่วนที่ 1: ข้อมูลส่วนตัว -->
-        <div class="section">
-            <div class="section-title">👤 ข้อมูลส่วนตัว</div>
-            
-            <!-- รูปประจำตัว -->
-            <div class="profile-photo-section">
-                <div class="profile-photo-preview" id="photoPreview">
-                    👤
-                </div>
-                <div class="photo-upload-zone">
-                    <input type="file" id="photoInput" class="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
-                    <button type="button" class="photo-upload-btn" onclick="document.getElementById('photoInput').click()">
-                        📷 เลือกรูปภาพ
-                    </button>
-                    <button type="button" class="photo-remove-btn" id="removePhotoBtn" style="display: none;" onclick="removePhoto()">
-                        ✕ ลบรูปภาพ
-                    </button>
-                    <div class="photo-info">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 2MB</div>
-                </div>
+        <div class="ppk-content">
+            <!-- Tab Navigation -->
+            <div class="ppk-tabs" id="settingsTabs">
+                <button class="ppk-tab active" onclick="switchTab('personal')" data-tab="personal">
+                    <span class="ppk-tab-icon">👤</span> ข้อมูลส่วนตัว
+                </button>
+                <button class="ppk-tab" onclick="switchTab('address')" data-tab="address">
+                    <span class="ppk-tab-icon">📍</span> ที่อยู่
+                </button>
+                <button class="ppk-tab" onclick="switchTab('housing')" data-tab="housing">
+                    <span class="ppk-tab-icon">🏠</span> ที่พักอาศัย
+                </button>
+                <button class="ppk-tab" onclick="switchTab('coresident')" data-tab="coresident">
+                    <span class="ppk-tab-icon">👨‍👩‍👧‍👦</span> ผู้ร่วมพัก
+                </button>
+                <button class="ppk-tab" onclick="switchTab('password')" data-tab="password">
+                    <span class="ppk-tab-icon">🔐</span> รหัสผ่าน
+                </button>
             </div>
-            
-            <div class="form-row">
-                <div class="form-group" style="flex: 0.3;">
-                    <label for="prefix">คำนำหน้า</label>
-                    <select id="prefix" name="prefix">
-                        <option value="">เลือกคำนำหน้า</option>
-                        <option value="นาย">นาย</option>
-                        <option value="นาง">นาง</option>
-                        <option value="นางสาว">นางสาว</option>
-                        <option value="อื่นๆ">อื่นๆ</option>
-                    </select>
-                </div>
-                <div class="form-group" style="flex: 0.35;">
-                    <label for="firstname">ชื่อ</label>
-                    <input type="text" id="firstname" name="firstname" placeholder="กรอกชื่อ">
-                </div>
-                <div class="form-group" style="flex: 0.35;">
-                    <label for="lastname">นามสกุล</label>
-                    <input type="text" id="lastname" name="lastname" placeholder="กรอกนามสกุล">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="email">อีเมล</label>
-                    <input type="email" id="email" name="email" placeholder="example@email.com">
-                </div>
-                <div class="form-group">
-                    <label for="phone">เบอร์โทรศัพท์</label>
-                    <input type="tel" id="phone" name="phone" placeholder="0XX-XXX-XXXX" maxlength="15">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="position">ตำแหน่ง</label>
-                    <select id="position" name="position">
-                        <option value="">เลือกตำแหน่ง</option>
-                        <option value="ครูผู้ช่วย">ครูผู้ช่วย</option>
-                        <option value="ครู">ครู</option>
-                        <option value="ครูชำนาญการ">ครูชำนาญการ (คศ.2)</option>
-                        <option value="ครูชำนาญการพิเศษ">ครูชำนาญการพิเศษ (คศ.3)</option>
-                        <option value="ครูเชี่ยวชาญ">ครูเชี่ยวชาญ (คศ.4)</option>
-                        <option value="ครูเชี่ยวชาญพิเศษ">ครูเชี่ยวชาญพิเศษ (คศ.5)</option>
-                        <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
-                        <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
-                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
-                        <option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option>
-                        <option value="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="subject_group">กลุ่มสาระการเรียนรู้</label>
-                    <select id="subject_group" name="subject_group">
-                        <option value="">-- เลือกกลุ่มสาระ --</option>
-                        <option value="ภาษาไทย">ภาษาไทย</option>
-                        <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                        <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
-                        <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
-                        <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
-                        <option value="ศิลปะ">ศิลปะ</option>
-                        <option value="การงานอาชีพ">การงานอาชีพ</option>
-                        <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
-                        <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option>
-                        <option value="ไม่ระบุ">ไม่ระบุ (เจ้าหน้าที่/ลูกจ้าง)</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        
-        </div><!-- /tab-personal -->
-
-        <!-- Tab: ที่อยู่ -->
-        <div class="tab-content" id="tab-address">
-        <!-- ส่วนที่ 2: ที่อยู่ตามทะเบียนบ้าน -->
-        <div class="section">
-            <div class="section-title">📍 ที่อยู่ตามทะเบียนบ้าน</div>
-            
-            <div class="form-row">
-                <div class="form-group" style="flex: 0.3;">
-                    <label for="address_no">เลขที่</label>
-                    <input type="text" id="address_no" name="address_no" placeholder="เลขที่">
-                </div>
-                <div class="form-group" style="flex: 0.35;">
-                    <label for="address_village">หมู่บ้าน</label>
-                    <input type="text" id="address_village" name="address_village" placeholder="หมู่บ้าน">
-                </div>
-                <div class="form-group" style="flex: 0.35;">
-                    <label for="address_road">ถนน</label>
-                    <input type="text" id="address_road" name="address_road" placeholder="ถนน">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="subdistrict">ตำบล/แขวง</label>
-                    <input type="text" id="subdistrict" name="subdistrict" placeholder="กรอกตำบล/แขวง">
-                </div>
-                <div class="form-group">
-                    <label for="district">อำเภอ/เขต</label>
-                    <input type="text" id="district" name="district" placeholder="กรอกอำเภอ/เขต">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="province">จังหวัด</label>
-                    <input type="text" id="province" name="province" placeholder="กรอกจังหวัด">
-                </div>
-                <div class="form-group" style="flex: 0.4;">
-                    <label for="zipcode">รหัสไปรษณีย์</label>
-                    <input type="text" id="zipcode" name="zipcode" placeholder="รหัสไปรษณีย์" maxlength="5">
-                </div>
-            </div>
-        </div>
-        
-        </div><!-- /tab-address -->
-
-        <!-- Tab: ที่พักอาศัย -->
-        <div class="tab-content" id="tab-housing">
-        <!-- ส่วนที่ 3: ข้อมูลที่พักอาศัย -->
-        <div class="section">
-            <div class="section-title">🏠 ข้อมูลที่พักอาศัย (บ้านพักครู)</div>
-            
-            <div class="form-group">
-                <label for="house_number">เลขที่บ้านพักหรือแฟลตที่พักอาศัย</label>
-                <input type="text" id="house_number" name="house_number" placeholder="กำหนดโดยผู้ดูแลระบบ" readonly style="background:#f1f5f9;cursor:not-allowed;color:#64748b;">
-            </div>
-            
-            <div class="form-group">
-                <label for="move_in_date">วันที่เข้าพักอาศัย</label>
-                <input type="date" id="move_in_date" name="move_in_date">
-            </div>
-        </div>
-        
-        </div><!-- /tab-housing -->
-
-        <!-- Tab: ผู้ร่วมพักอาศัย -->
-        <div class="tab-content" id="tab-coresident">
-        <!-- ส่วนที่ 3.5: ข้อมูลผู้ร่วมพักอาศัย -->
-        <div class="section">
-            <div class="section-title">👨‍👩‍👧‍👦 ผู้ร่วมพักอาศัย</div>
-            
-            <div class="info-box" style="margin-bottom: 1rem;">
-                ℹ️ เพิ่มข้อมูลบุคคลที่พักอาศัยอยู่ด้วยกัน (ถ้ามี) <br>
-                <strong>หมายเหตุ:</strong> หากผู้ร่วมพักอาศัยเป็นครู/บุคลากร พค. ให้เปิดสวิตช์และกรอกข้อมูลเพิ่มเติม เพื่อให้แอดมินสามารถตั้งค่าสิทธิ์ให้ได้
-            </div>
-            
-            <div class="coresident-list" id="coresidentList">
-                <div class="empty-coresident" id="emptyCoresident">
-                    👤 ยังไม่มีข้อมูลผู้ร่วมพักอาศัย<br>
-                    <small>กดปุ่มด้านล่างเพื่อเพิ่มข้อมูล</small>
-                </div>
-            </div>
-            
-            <button type="button" class="add-coresident-btn" onclick="addCoresident()">
-                ➕ เพิ่มผู้ร่วมพักอาศัย
-            </button>
-        </div>
-        
-        </div><!-- /tab-coresident -->
-
-        <!-- Tab: รหัสผ่าน -->
-        <div class="tab-content" id="tab-password">
-        <!-- ส่วนที่ 4: เปลี่ยนรหัสผ่าน -->
-        <div class="section">
-            <div class="section-title">🔐 รหัสผ่าน</div>
-            
-            <div class="password-section">
-                <h4>🔑 เปลี่ยนรหัสผ่าน</h4>
-                
-                <div class="form-group">
-                    <label for="current_password">รหัสผ่านปัจจุบัน</label>
-                    <div class="pw-wrapper">
-                        <input type="password" id="current_password" name="current_password" placeholder="กรอกรหัสผ่านปัจจุบัน">
-                        <button type="button" class="pw-toggle" onclick="togglePw('current_password', this)" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
+            <!-- Tab: ข้อมูลส่วนตัว -->
+            <div class="ppk-tab-content active" id="tab-personal">
+                <div class="ppk-card">
+                    <div class="ppk-section-title">👤 ข้อมูลส่วนตัว</div>
+                    <div class="profile-photo-section">
+                        <div class="profile-photo-preview" id="photoPreview">👤</div>
+                        <div class="photo-upload-zone">
+                            <input type="file" id="photoInput" class="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
+                            <button type="button" class="photo-upload-btn" onclick="document.getElementById('photoInput').click()">📷 เลือกรูปภาพ</button>
+                            <button type="button" class="photo-remove-btn" id="removePhotoBtn" style="display:none;" onclick="removePhoto()">✕ ลบรูปภาพ</button>
+                            <div class="photo-info">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 2MB</div>
+                        </div>
+                    </div>
+                    <div class="ppk-form-row">
+                        <div class="ppk-form-group" style="flex:0.3;"><label class="ppk-label" for="prefix">คำนำหน้า</label>
+                            <select id="prefix" name="prefix" class="ppk-select"><option value="">เลือกคำนำหน้า</option><option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option><option value="อื่นๆ">อื่นๆ</option></select>
+                        </div>
+                        <div class="ppk-form-group" style="flex:0.35;"><label class="ppk-label" for="firstname">ชื่อ</label><input class="ppk-input" type="text" id="firstname" name="firstname" placeholder="กรอกชื่อ"></div>
+                        <div class="ppk-form-group" style="flex:0.35;"><label class="ppk-label" for="lastname">นามสกุล</label><input class="ppk-input" type="text" id="lastname" name="lastname" placeholder="กรอกนามสกุล"></div>
+                    </div>
+                    <div class="ppk-form-row">
+                        <div class="ppk-form-group"><label class="ppk-label" for="email">อีเมล</label><input class="ppk-input" type="email" id="email" name="email" placeholder="example@email.com"></div>
+                        <div class="ppk-form-group"><label class="ppk-label" for="phone">เบอร์โทรศัพท์</label><input class="ppk-input" type="tel" id="phone" name="phone" placeholder="0XX-XXX-XXXX" maxlength="15"></div>
+                    </div>
+                    <div class="ppk-form-row">
+                        <div class="ppk-form-group"><label class="ppk-label" for="position">ตำแหน่ง</label>
+                            <select id="position" name="position" class="ppk-select">
+                                <option value="">เลือกตำแหน่ง</option><option value="ครูผู้ช่วย">ครูผู้ช่วย</option><option value="ครู">ครู</option>
+                                <option value="ครูชำนาญการ">ครูชำนาญการ (คศ.2)</option><option value="ครูชำนาญการพิเศษ">ครูชำนาญการพิเศษ (คศ.3)</option>
+                                <option value="ครูเชี่ยวชาญ">ครูเชี่ยวชาญ (คศ.4)</option><option value="ครูเชี่ยวชาญพิเศษ">ครูเชี่ยวชาญพิเศษ (คศ.5)</option>
+                                <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option><option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
+                                <option value="เจ้าหน้าที่">เจ้าหน้าที่</option><option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option><option value="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</option>
+                            </select>
+                        </div>
+                        <div class="ppk-form-group"><label class="ppk-label" for="subject_group">กลุ่มสาระการเรียนรู้</label>
+                            <select id="subject_group" name="subject_group" class="ppk-select">
+                                <option value="">-- เลือกกลุ่มสาระ --</option><option value="ภาษาไทย">ภาษาไทย</option><option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                                <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option><option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                                <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option><option value="ศิลปะ">ศิลปะ</option>
+                                <option value="การงานอาชีพ">การงานอาชีพ</option><option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                                <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option><option value="ไม่ระบุ">ไม่ระบุ (เจ้าหน้าที่/ลูกจ้าง)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="new_password">รหัสผ่านใหม่</label>
-                    <div class="pw-wrapper">
-                        <input type="password" id="new_password" name="new_password" placeholder="กรอกรหัสผ่านใหม่" oninput="checkPasswordStrength()">
-                        <button type="button" class="pw-toggle" onclick="togglePw('new_password', this)" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
+            </div>
+
+            <!-- Tab: ที่อยู่ -->
+            <div class="ppk-tab-content" id="tab-address">
+                <div class="ppk-card">
+                    <div class="ppk-section-title">📍 ที่อยู่ตามทะเบียนบ้าน</div>
+                    <div class="ppk-form-row">
+                        <div class="ppk-form-group" style="flex:0.3;"><label class="ppk-label" for="address_no">เลขที่</label><input class="ppk-input" type="text" id="address_no" name="address_no" placeholder="เลขที่"></div>
+                        <div class="ppk-form-group" style="flex:0.35;"><label class="ppk-label" for="address_village">หมู่บ้าน</label><input class="ppk-input" type="text" id="address_village" name="address_village" placeholder="หมู่บ้าน"></div>
+                        <div class="ppk-form-group" style="flex:0.35;"><label class="ppk-label" for="address_road">ถนน</label><input class="ppk-input" type="text" id="address_road" name="address_road" placeholder="ถนน"></div>
                     </div>
-                    <div class="password-strength">
-                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    <div class="ppk-form-row">
+                        <div class="ppk-form-group"><label class="ppk-label" for="subdistrict">ตำบล/แขวง</label><input class="ppk-input" type="text" id="subdistrict" name="subdistrict" placeholder="กรอกตำบล/แขวง"></div>
+                        <div class="ppk-form-group"><label class="ppk-label" for="district">อำเภอ/เขต</label><input class="ppk-input" type="text" id="district" name="district" placeholder="กรอกอำเภอ/เขต"></div>
                     </div>
-                    <small style="color: #6b7280; font-size: 0.8rem;">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="confirm_password">ยืนยันรหัสผ่านใหม่</label>
-                    <div class="pw-wrapper">
-                        <input type="password" id="confirm_password" name="confirm_password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" oninput="checkPasswordMatch()">
-                        <button type="button" class="pw-toggle" onclick="togglePw('confirm_password', this)" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
+                    <div class="ppk-form-row">
+                        <div class="ppk-form-group"><label class="ppk-label" for="province">จังหวัด</label><input class="ppk-input" type="text" id="province" name="province" placeholder="กรอกจังหวัด"></div>
+                        <div class="ppk-form-group" style="flex:0.4;"><label class="ppk-label" for="zipcode">รหัสไปรษณีย์</label><input class="ppk-input" type="text" id="zipcode" name="zipcode" placeholder="รหัสไปรษณีย์" maxlength="5"></div>
                     </div>
-                    <div class="password-match" id="passwordMatch"></div>
                 </div>
             </div>
-        </div>
-        
-        </div><!-- /tab-password -->
 
-        <!-- ปุ่มบันทึก -->
-        <div class="button-group">
-            <button class="btn btn-success" onclick="saveSettings()">💾 บันทึกข้อมูล</button>
-            <button class="btn btn-secondary" onclick="resetForm()">🔄 รีเซ็ต</button>
-        </div>
-        
-        <div class="success-message" id="successMessage">
-            ✅ บันทึกข้อมูลเรียบร้อยแล้ว!
-        </div>
-        
-        <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
-            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
-            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            <!-- Tab: ที่พักอาศัย -->
+            <div class="ppk-tab-content" id="tab-housing">
+                <div class="ppk-card">
+                    <div class="ppk-section-title">🏠 ข้อมูลที่พักอาศัย (บ้านพักครู)</div>
+                    <div class="ppk-form-group"><label class="ppk-label" for="house_number">เลขที่บ้านพักหรือแฟลตที่พักอาศัย</label>
+                        <input class="ppk-input" type="text" id="house_number" name="house_number" placeholder="กำหนดโดยผู้ดูแลระบบ" readonly style="background:var(--c-surface-2);cursor:not-allowed;color:var(--c-text-3);">
+                    </div>
+                    <div class="ppk-form-group"><label class="ppk-label" for="move_in_date">วันที่เข้าพักอาศัย</label>
+                        <input class="ppk-input" type="date" id="move_in_date" name="move_in_date">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: ผู้ร่วมพักอาศัย -->
+            <div class="ppk-tab-content" id="tab-coresident">
+                <div class="ppk-card">
+                    <div class="ppk-section-title">👨‍👩‍👧‍👦 ผู้ร่วมพักอาศัย</div>
+                    <div class="ppk-alert ppk-alert-info" style="margin-bottom:0.75rem;">
+                        <span class="ppk-alert-icon">ℹ️</span>
+                        <div>เพิ่มข้อมูลบุคคลที่พักอาศัยอยู่ด้วยกัน (ถ้ามี)<br><strong>หมายเหตุ:</strong> หากผู้ร่วมพักอาศัยเป็นครู/บุคลากร พค. ให้เปิดสวิตช์และกรอกข้อมูลเพิ่มเติม</div>
+                    </div>
+                    <div class="coresident-list" id="coresidentList">
+                        <div class="empty-coresident" id="emptyCoresident">👤 ยังไม่มีข้อมูลผู้ร่วมพักอาศัย<br><small>กดปุ่มด้านล่างเพื่อเพิ่มข้อมูล</small></div>
+                    </div>
+                    <button type="button" class="add-coresident-btn" onclick="addCoresident()">➕ เพิ่มผู้ร่วมพักอาศัย</button>
+                </div>
+            </div>
+
+            <!-- Tab: รหัสผ่าน -->
+            <div class="ppk-tab-content" id="tab-password">
+                <div class="ppk-card">
+                    <div class="ppk-section-title">🔐 รหัสผ่าน</div>
+                    <div class="password-section">
+                        <h4>🔑 เปลี่ยนรหัสผ่าน</h4>
+                        <div class="ppk-form-group"><label class="ppk-label" for="current_password">รหัสผ่านปัจจุบัน</label>
+                            <div class="pw-wrapper"><input class="ppk-input" type="password" id="current_password" name="current_password" placeholder="กรอกรหัสผ่านปัจจุบัน">
+                            <button type="button" class="pw-toggle" onclick="togglePw('current_password', this)">👁</button></div>
+                        </div>
+                        <div class="ppk-form-group"><label class="ppk-label" for="new_password">รหัสผ่านใหม่</label>
+                            <div class="pw-wrapper"><input class="ppk-input" type="password" id="new_password" name="new_password" placeholder="กรอกรหัสผ่านใหม่" oninput="checkPasswordStrength()">
+                            <button type="button" class="pw-toggle" onclick="togglePw('new_password', this)">👁</button></div>
+                            <div class="password-strength"><div class="password-strength-bar" id="passwordStrengthBar"></div></div>
+                            <small style="color:var(--c-text-3);font-size:0.78rem;">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ</small>
+                        </div>
+                        <div class="ppk-form-group"><label class="ppk-label" for="confirm_password">ยืนยันรหัสผ่านใหม่</label>
+                            <div class="pw-wrapper"><input class="ppk-input" type="password" id="confirm_password" name="confirm_password" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" oninput="checkPasswordMatch()">
+                            <button type="button" class="pw-toggle" onclick="togglePw('confirm_password', this)">👁</button></div>
+                            <div class="password-match" id="passwordMatch"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button class="ppk-btn ppk-btn-success ppk-btn-lg" onclick="saveSettings()">💾 บันทึกข้อมูล</button>
+                <button class="ppk-btn ppk-btn-ghost ppk-btn-lg" onclick="resetForm()">🔄 รีเซ็ต</button>
+            </div>
+
+            <div class="success-message" id="successMessage">✅ บันทึกข้อมูลเรียบร้อยแล้ว!</div>
+
+            <div class="ppk-footer">
+                ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+                งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+            </div>
         </div>
     </div>
 
+
     <script>
 
-        // ═══ Tab switching ═══
+        // Tab switching
         function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(function(el) {
+            document.querySelectorAll('.ppk-tab-content').forEach(function(el) {
                 el.classList.remove('active');
             });
-            // Deactivate all tab buttons
-            document.querySelectorAll('.settings-tab').forEach(function(el) {
+            document.querySelectorAll('#settingsTabs .ppk-tab').forEach(function(el) {
                 el.classList.remove('active');
             });
-            // Show selected tab
             var target = document.getElementById('tab-' + tabName);
             if (target) {
                 target.classList.add('active');
                 target.style.animation = 'ppk-fadein 0.25s ease-out';
             }
-            // Activate tab button
-            var btn = document.querySelector('.settings-tab[data-tab="' + tabName + '"]');
+            var btn = document.querySelector('#settingsTabs .ppk-tab[data-tab="' + tabName + '"]');
             if (btn) btn.classList.add('active');
-            // Scroll tab into view on mobile
             if (btn && window.innerWidth <= 768) {
                 btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             }
         }
 
-        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'settings';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'settings'); }
 
@@ -1528,11 +870,12 @@
         async function doLogout() {
             window.location.replace('dashboard.html');
         }
-        </script>
-    <script src="supabase/config.js?v=20260309d"></script>
-    <script src="supabase/supabase.min.js?v=20260309d"></script>
-    <script src="ppk-api.js?v=20260309d"></script>
-    <script src="ppk-app.js?v=20260309d"></script>
-    <script src="ppk-utils.js?v=20260309d"></script>
-    <script src="ppk-nav.js?v=20260309d"></script></body>
+    </script>
+    <script src="supabase/config.js?v=20260310"></script>
+    <script src="supabase/supabase.min.js?v=20260310"></script>
+    <script src="ppk-api.js?v=20260310"></script>
+    <script src="ppk-app.js?v=20260310"></script>
+    <script src="ppk-utils.js?v=20260310"></script>
+    <script src="ppk-nav.js?v=20260310"></script>
+</body>
 </html>
