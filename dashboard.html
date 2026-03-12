@@ -10,11 +10,131 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>แดชบอร์ด | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260312k">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260312L">
     <style>
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
         .dashboard-amount.danger { color: var(--c-danger); }
         .dashboard-amount.ok { color: var(--c-success); }
+
+        /* ── Hero Payment Card ── */
+        .hero-payment {
+            background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
+            border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
+            color: #fff; position: relative; overflow: hidden;
+        }
+        .hero-payment::before {
+            content: ''; position: absolute; top: -30%; right: -20%;
+            width: 200px; height: 200px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .hero-payment .hero-greeting {
+            font-size: 0.88rem; opacity: 0.85; margin-bottom: 0.2rem;
+        }
+        .hero-payment .hero-house {
+            font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .hero-payment .hero-divider {
+            border: none; border-top: 1px solid rgba(255,255,255,0.2);
+            margin: 0.8rem 0;
+        }
+        .hero-payment .hero-label {
+            font-size: 0.82rem; opacity: 0.8; margin-bottom: 0.15rem;
+        }
+        .hero-payment .hero-amount {
+            font-size: 2rem; font-weight: 700; line-height: 1.1;
+        }
+        .hero-payment .hero-amount.zero { opacity: 0.7; font-size: 1.3rem; }
+        .hero-payment .hero-period {
+            font-size: 0.8rem; opacity: 0.7; margin-top: 0.15rem;
+        }
+        .hero-payment .hero-row {
+            display: flex; gap: 1rem; margin-top: 0.3rem;
+        }
+        .hero-payment .hero-col { flex: 1; }
+
+        /* ── Big CTA Button ── */
+        .hero-cta {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; padding: 0.9rem;
+            background: rgba(255,255,255,0.95); color: #4F46E5;
+            border: none; border-radius: 14px;
+            font-family: 'Kanit', sans-serif; font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; margin-top: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .hero-cta:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+        .hero-cta:active { transform: scale(0.98); }
+        .hero-cta.reviewing { background: rgba(251,191,36,0.2); color: #F59E0B; cursor: default; }
+        .hero-cta.success { background: rgba(16,185,129,0.2); color: #10B981; cursor: default; }
+
+        /* ── Status badge ── */
+        .hero-status {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.3rem 0.7rem; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 600; margin-top: 0.5rem;
+        }
+        .hero-status.pending { background: rgba(251,191,36,0.2); color: #FCD34D; }
+        .hero-status.paid { background: rgba(16,185,129,0.2); color: #6EE7B7; }
+        .hero-status.overdue { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+
+        /* ── Outstanding banner ── */
+        .outstanding-banner {
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border: 1.5px solid #F59E0B; border-radius: 14px;
+            padding: 1rem 1.2rem; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.8rem;
+        }
+        .outstanding-banner .ob-icon { font-size: 1.8rem; }
+        .outstanding-banner .ob-info { flex: 1; }
+        .outstanding-banner .ob-label { font-size: 0.82rem; color: #92400E; }
+        .outstanding-banner .ob-amount { font-size: 1.3rem; font-weight: 700; color: #B45309; }
+        .outstanding-banner .ob-btn {
+            background: #B45309; color: #fff; border: none; border-radius: 10px;
+            padding: 0.55rem 1rem; font-family: 'Kanit', sans-serif;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .outstanding-banner .ob-btn:hover { background: #92400E; }
+
+        /* ── Quick Actions Row ── */
+        .quick-actions {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .quick-action {
+            display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+            padding: 0.8rem 0.3rem; background: var(--c-surface, #fff);
+            border: 1px solid var(--c-border, #E5E7EB);
+            border-radius: 14px; cursor: pointer; font-family: inherit;
+            transition: all 0.2s; text-decoration: none; color: inherit;
+        }
+        .quick-action:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #C7D2FE; }
+        .quick-action:active { transform: scale(0.97); }
+        .quick-action .qa-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+        .quick-action .qa-label {
+            font-size: 0.75rem; font-weight: 500; color: var(--c-text-2, #64748B);
+            text-align: center; line-height: 1.3;
+        }
+
+        @media (max-width: 480px) {
+            .hero-payment { padding: 1.2rem; border-radius: 16px; }
+            .hero-payment .hero-amount { font-size: 1.7rem; }
+            .hero-cta { font-size: 1rem; padding: 0.8rem; }
+            .outstanding-banner { flex-wrap: wrap; }
+            .outstanding-banner .ob-btn { width: 100%; text-align: center; margin-top: 0.3rem; }
+            .quick-actions { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+            .quick-action .qa-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .quick-action .qa-label { font-size: 0.7rem; }
+            .quick-action { padding: 0.65rem 0.2rem; }
+        }
+        @media (max-width: 350px) {
+            .quick-actions { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -26,7 +146,7 @@
         </div>
 
         <div class="ppk-content">
-            <!-- Admin Stats -->
+            <!-- Admin Stats (admin only) -->
             <div id="adminStatsSection" style="display:none; margin-bottom:1.25rem;">
                 <div class="ppk-stats">
                     <div class="ppk-stat" onclick="navigate('?page=team-management')">
@@ -47,11 +167,48 @@
                 </div>
             </div>
 
-            <!-- Hub Menu Grid -->
-            <div class="ppk-card" style="margin-bottom:1rem; padding:1rem;">
+            <!-- ★ HERO: Payment Card (residents see first) -->
+            <div id="paymentSection" style="display:none;">
+                <div class="hero-payment" id="heroPayment">
+                    <div class="hero-greeting" id="heroGreeting">สวัสดี</div>
+                    <div class="hero-house" id="heroHouse">🏠 บ้านพัก —</div>
+                    <hr class="hero-divider">
+                    <div class="hero-row">
+                        <div class="hero-col">
+                            <div class="hero-label">💳 ยอดชำระเดือนนี้</div>
+                            <div class="hero-amount" id="currentMonthAmount">—</div>
+                            <div class="hero-period" id="heroPeriod"></div>
+                        </div>
+                        <div class="hero-col" style="text-align:right;">
+                            <div id="heroStatusBadge"></div>
+                        </div>
+                    </div>
+                    <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
+                </div>
+            </div>
+
+            <!-- ★ Outstanding Banner (if any) -->
+            <div id="outstandingSection" style="display:none;">
+                <div class="outstanding-banner" id="outstandingBanner">
+                    <div class="ob-icon">⚠️</div>
+                    <div class="ob-info">
+                        <div class="ob-label">ยอดคงค้างสะสม</div>
+                        <div class="ob-amount" id="outstandingAmount">—</div>
+                    </div>
+                    <button class="ob-btn" id="outstandingBtn" onclick="outstandingBtnClick()">ส่งสลิป</button>
+                </div>
+            </div>
+
+            <!-- ★ Quick Actions (4 icons) -->
+            <div id="quickActionsSection">
+                <div class="quick-actions" id="quickActions"></div>
+            </div>
+
+            <!-- Hub Menu Grid (full menu) -->
+            <div class="ppk-card" id="hubMenuCard" style="margin-bottom:1rem; padding:1rem;">
                 <div class="ppk-card-header" style="margin-bottom:0.75rem; padding-bottom:0.5rem;">
                     <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">📱</div>
-                    <div class="ppk-card-title">เมนูลัด</div>
+                    <div class="ppk-card-title">เมนูทั้งหมด</div>
                 </div>
                 <div id="hubGrid" class="ppk-hub-grid"></div>
             </div>
@@ -67,26 +224,6 @@
                 </div>
             </div>
 
-            <!-- Payment Section (user) -->
-            <div class="ppk-card" id="paymentSection" style="margin-bottom:1rem;">
-                <div class="ppk-card-header">
-                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">💳</div>
-                    <div class="ppk-card-title">แจ้งยอดชำระประจำเดือน</div>
-                </div>
-                <div>ยอดที่ต้องชำระเดือนนี้: <span class="dashboard-amount danger" id="currentMonthAmount">—</span> บาท</div>
-                <div id="slipBtnMonth"></div>
-            </div>
-
-            <!-- Outstanding Section (user) -->
-            <div class="ppk-card" id="outstandingSection" style="margin-bottom:1rem;">
-                <div class="ppk-card-header">
-                    <div class="ppk-card-icon" style="background:var(--c-warning-bg);color:var(--c-warning);">🧾</div>
-                    <div class="ppk-card-title">แจ้งยอดคงค้าง</div>
-                </div>
-                <div>ยอดคงค้างสะสม: <span class="dashboard-amount danger" id="outstandingAmount">—</span> บาท</div>
-                <div id="slipBtnOutstanding"></div>
-            </div>
-
             <div class="ppk-footer">
                 ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
                 งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -98,6 +235,30 @@
         const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
+        // ── Global state for CTA buttons ──
+        var _ctaData = {};
+
+        // ── Quick actions builder ──
+        function buildQuickActions(isAdmin) {
+            var el = document.getElementById('quickActions');
+            if (!el) return;
+            if (isAdmin) {
+                document.getElementById('quickActionsSection').style.display = 'none';
+                return;
+            }
+            var items = [
+                { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#FFFBEB' },
+                { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
+            ];
+            el.innerHTML = items.map(function(item) {
+                return '<button class="quick-action" onclick="navigate(\'?page=' + item.page + '\')">'
+                    + '<div class="qa-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
+                    + '<span class="qa-label">' + item.label + '</span></button>';
+            }).join('');
+        }
+
         // Hub grid builder
         function buildHubGrid() {
             var user = {};
@@ -105,9 +266,10 @@
             var isAdmin = user.role === 'admin';
 
             var residentItems = [
-                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#EEF2FF' },
-                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#F0FDF4' },
-                { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFFBEB' },
+                { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#FFFBEB' },
+                { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFF7ED' },
                 { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
             var adminItems = [];
@@ -161,23 +323,10 @@
             }).join('');
         }
 
-        function buildSlipBtnHTML(label, slipStatus, periodKey, amount, isOutstanding) {
-            if (slipStatus === 'success')
-                return '<button class="ppk-slip-btn ppk-slip-success" disabled>✅ ชำระสำเร็จแล้ว</button>';
-            if (slipStatus === 'reviewing')
-                return '<button class="ppk-slip-btn ppk-slip-reviewing" disabled>🔍 อยู่ในระหว่างตรวจสอบ</button>';
-            if (slipStatus === 'rejected')
-                return '<button class="ppk-slip-btn ppk-slip-rejected" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">⚠️ สลิปไม่ผ่าน — กดเพื่อส่งใหม่</button>';
-            if (!amount || amount <= 0)
-                return '<button class="ppk-slip-btn ppk-slip-disabled" disabled>📋 ยังไม่มีการแจ้งยอด</button>';
-            var cls = isOutstanding ? 'ppk-slip-btn ppk-slip-outstanding' : 'ppk-slip-btn ppk-slip-active';
-            return '<button class="' + cls + '" onclick="goToUploadSlip(\'' + periodKey + '\',' + amount + ',' + isOutstanding + ')">📤 ' + label + '</button>';
-        }
-
         function renderUserDashboard(data) {
             document.getElementById('adminStatsSection').style.display = 'none';
             document.getElementById('paymentSection').style.display = '';
-            document.getElementById('outstandingSection').style.display = '';
+            document.getElementById('hubMenuCard').style.display = '';
 
             var amount = data.currentAmount || 0;
             var outstanding = data.totalOutstanding || 0;
@@ -192,26 +341,79 @@
             var periodKey = yearBE + monthStr;
             var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
 
-            document.getElementById('currentMonthAmount').textContent = amount > 0 ? amount.toLocaleString('th-TH') : '-';
-            document.getElementById('currentMonthAmount').className = 'dashboard-amount ' + (amount > 0 ? 'danger' : 'ok');
-            document.getElementById('outstandingAmount').textContent = outstanding > 0 ? outstanding.toLocaleString('th-TH') : '0';
-            document.getElementById('outstandingAmount').className = 'dashboard-amount ' + (outstanding > 0 ? 'danger' : 'ok');
+            // Save for CTA buttons
+            _ctaData = { periodKey: periodKey, amount: amount, outstanding: outstanding, houseNumber: houseNumber, slipStatus: slipStatus };
 
-            var slipBtnMonth = document.getElementById('slipBtnMonth');
-            if (slipBtnMonth) {
-                var detail = '<div class="ppk-slip-detail">📅 งวด: ' + periodDisplay;
-                if (data.dueDate) detail += ' &nbsp;|&nbsp; 📆 ครบกำหนด: ' + new Date(data.dueDate).toLocaleDateString('th-TH');
-                if (houseNumber) detail += ' &nbsp;|&nbsp; 🏠 บ้าน: ' + houseNumber;
-                detail += '</div>';
-                slipBtnMonth.innerHTML = detail + buildSlipBtnHTML('ส่งสลิปชำระเงินประจำเดือน', slipStatus, periodKey, amount, false);
+            // User info
+            var user = {};
+            try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var firstName = user.firstname || '';
+            document.getElementById('heroGreeting').textContent = 'สวัสดี' + (firstName ? ', ' + firstName : '');
+            document.getElementById('heroHouse').innerHTML = '🏠 บ้านพัก ' + (houseNumber || '—');
+
+            // Amount display
+            var amtEl = document.getElementById('currentMonthAmount');
+            if (amount > 0) {
+                amtEl.textContent = amount.toLocaleString('th-TH') + ' บาท';
+                amtEl.className = 'hero-amount';
+            } else {
+                amtEl.textContent = 'ยังไม่มียอดแจ้ง';
+                amtEl.className = 'hero-amount zero';
             }
-            var slipBtnOut = document.getElementById('slipBtnOutstanding');
-            if (slipBtnOut) {
-                var outDetail = outstanding > 0
-                    ? '<div class="ppk-slip-detail">💰 ยอดคงค้างรวม: ' + outstanding.toLocaleString('th-TH') + ' บาท</div>'
-                    : '<div class="ppk-slip-detail">ไม่มียอดคงค้าง</div>';
-                slipBtnOut.innerHTML = outDetail + buildSlipBtnHTML('ส่งสลิปชำระยอดคงค้าง', 'none', periodKey, outstanding, true);
+            document.getElementById('heroPeriod').textContent = '📅 ' + periodDisplay;
+
+            // Status badge
+            var badgeEl = document.getElementById('heroStatusBadge');
+            if (slipStatus === 'success') {
+                badgeEl.innerHTML = '<div class="hero-status paid">✅ ชำระแล้ว</div>';
+            } else if (slipStatus === 'reviewing') {
+                badgeEl.innerHTML = '<div class="hero-status pending">🔍 รอตรวจสอบ</div>';
+            } else if (amount > 0) {
+                badgeEl.innerHTML = '<div class="hero-status overdue">⏳ รอชำระ</div>';
+            } else {
+                badgeEl.innerHTML = '';
             }
+
+            // CTA button
+            var ctaEl = document.getElementById('heroCta');
+            if (slipStatus === 'success') {
+                ctaEl.innerHTML = '✅ ชำระสำเร็จแล้ว';
+                ctaEl.className = 'hero-cta success';
+                ctaEl.onclick = null;
+            } else if (slipStatus === 'reviewing') {
+                ctaEl.innerHTML = '🔍 อยู่ระหว่างตรวจสอบ';
+                ctaEl.className = 'hero-cta reviewing';
+                ctaEl.onclick = null;
+            } else if (slipStatus === 'rejected') {
+                ctaEl.innerHTML = '⚠️ สลิปไม่ผ่าน — กดส่งใหม่';
+                ctaEl.className = 'hero-cta';
+                ctaEl.style.background = '#FEE2E2';
+                ctaEl.style.color = '#DC2626';
+            } else if (amount > 0) {
+                ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
+                ctaEl.className = 'hero-cta';
+            } else {
+                ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
+                ctaEl.className = 'hero-cta';
+            }
+
+            // Outstanding
+            if (outstanding > 0) {
+                document.getElementById('outstandingSection').style.display = '';
+                document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' บาท';
+            } else {
+                document.getElementById('outstandingSection').style.display = 'none';
+            }
+        }
+
+        function heroCtaClick() {
+            var d = _ctaData;
+            if (d.slipStatus === 'success' || d.slipStatus === 'reviewing') return;
+            goToUploadSlip(d.periodKey, d.amount, false);
+        }
+        function outstandingBtnClick() {
+            var d = _ctaData;
+            goToUploadSlip(d.periodKey, d.outstanding, true);
         }
 
         function renderAdminDashboard(data) {
@@ -231,6 +433,12 @@
         }
 
         async function loadDashboard() {
+            var user = {};
+            try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var isAdmin = user.role === 'admin';
+
+            buildQuickActions(isAdmin);
+
             try {
                 var result = await cachedCall('getDashboardData', {}, 60000);
                 if (!result || !result.success) {
@@ -243,8 +451,7 @@
             } catch(e) {
                 console.warn('getDashboardData failed, fallback:', e);
                 renderAnnouncements([]);
-                var cached = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                if (cached.role === 'admin') renderAdminDashboard({});
+                if (isAdmin) renderAdminDashboard({});
                 else renderUserDashboard({});
             }
         }
@@ -274,12 +481,12 @@
             window.location.replace('login.html');
         }
     </script>
-    <script src="supabase/config.js?v=20260312k"></script>
-    <script src="supabase/supabase.min.js?v=20260312k"></script>
-    <script src="ppk-api.js?v=20260312k"></script>
-    <script src="ppk-app.js?v=20260312k"></script>
-    <script src="ppk-utils.js?v=20260312k"></script>
-    <script src="ppk-nav.js?v=20260312k"></script>
-    <script src="ppk-pwa.js?v=20260312k"></script>
+    <script src="supabase/config.js?v=20260312L"></script>
+    <script src="supabase/supabase.min.js?v=20260312L"></script>
+    <script src="ppk-api.js?v=20260312L"></script>
+    <script src="ppk-app.js?v=20260312L"></script>
+    <script src="ppk-utils.js?v=20260312L"></script>
+    <script src="ppk-nav.js?v=20260312L"></script>
+    <script src="ppk-pwa.js?v=20260312L"></script>
 </body>
 </html>
