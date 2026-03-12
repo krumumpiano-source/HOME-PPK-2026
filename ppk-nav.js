@@ -1,7 +1,7 @@
 ﻿/**
- * HOME PPK 2026 — Navigation v4.0
- * Bottom Tab Bar + Slide-up Menu (no sidebar)
- * Works the same on Desktop and Mobile
+ * HOME PPK 2026 — Navigation v5.0
+ * Sidebar (Desktop) + Topbar Hamburger & Drawer (Mobile)
+ * Inspired by BandThai nav pattern
  */
 
 function renderPPKNav(containerId, activePage) {
@@ -25,6 +25,7 @@ function renderPPKNav(containerId, activePage) {
   var lastName = user.lastname || '';
   var firstName = user.firstname || '';
   var displayName = (firstName + ' ' + lastName).trim() || '\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49';
+  var houseNumber = user.houseNumber || '';
 
   if (!activePage) {
     activePage = (window.location.pathname.split('/').pop() || 'dashboard.html')
@@ -32,102 +33,140 @@ function renderPPKNav(containerId, activePage) {
   }
 
   function _esc(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    if (!s) return '';
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
   }
 
-  // Bottom tab items (4 main + more)
-  var bottomItems = [
-    { page: 'dashboard', icon: '\ud83c\udfe0', label: '\u0e2b\u0e19\u0e49\u0e32\u0e2b\u0e25\u0e31\u0e01' },
-    { page: 'payment-history', icon: '\ud83d\udcb3', label: '\u0e0a\u0e33\u0e23\u0e30\u0e40\u0e07\u0e34\u0e19' },
-    { page: 'form', icon: '\ud83d\udcdd', label: '\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07' }
-  ];
-  if (isAdmin) {
-    bottomItems.push({ page: 'team-management', icon: '\ud83d\udc65', label: '\u0e08\u0e31\u0e14\u0e01\u0e32\u0e23' });
-  } else {
-    bottomItems.push({ page: 'settings', icon: '\u2699\ufe0f', label: '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32' });
+  function navLink(page, icon, label, desc) {
+    var isActive = activePage === page ? ' active' : '';
+    return '<li><a href="' + page + '.html" class="nav-link' + isActive + '" onclick="navigate(\'?page=' + page + '\');return false;">' +
+      icon + ' ' + label +
+      (desc ? '<span class="nav-link-desc">' + desc + '</span>' : '') +
+      '</a></li>';
   }
 
-  // Build bottom nav
-  var html = '<nav class="ppk-bottom-nav" id="ppkBottomNav">';
-  bottomItems.forEach(function(b) {
-    var active = activePage === b.page ? ' active' : '';
-    html += '<button class="ppk-bottom-btn' + active + '" onclick="navigate(\'?page=' + b.page + '\')">';
-    html += '<div class="ppk-bottom-icon-wrap"><span class="ppk-bottom-icon">' + b.icon + '</span></div>';
-    html += '<span class="ppk-bottom-label">' + _esc(b.label) + '</span>';
-    html += '</button>';
+  function navSection(label) {
+    return '<li class="nav-section-title">' + label + '</li>';
+  }
+
+  // Role label
+  var roleLabel = isAdmin
+    ? '\ud83d\udd27 \u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19'
+    : '\ud83c\udfe0 \u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22';
+  var houseBadge = houseNumber
+    ? '<div class="sidebar-user-house">\u0e1a\u0e49\u0e32\u0e19 ' + _esc(houseNumber) + '</div>'
+    : '';
+
+  // Resident menu items
+  var residentLinks =
+    navSection('\ud83c\udfe0 \u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22') +
+    navLink('dashboard',       '\ud83d\udcca', '\u0e41\u0e14\u0e0a\u0e1a\u0e2d\u0e23\u0e4c\u0e14',       '\u0e20\u0e32\u0e1e\u0e23\u0e27\u0e21\u0e41\u0e25\u0e30\u0e17\u0e32\u0e07\u0e25\u0e31\u0e14') +
+    navLink('payment-history', '\ud83d\udcb3', '\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30', '\u0e22\u0e2d\u0e14\u0e04\u0e49\u0e32\u0e07\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e30\u0e2a\u0e25\u0e34\u0e1b') +
+    navLink('form',            '\ud83d\udcdd', '\u0e22\u0e37\u0e48\u0e19\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07',      '\u0e41\u0e08\u0e49\u0e07\u0e0b\u0e48\u0e2d\u0e21 \u0e02\u0e2d\u0e22\u0e49\u0e32\u0e22 \u0e43\u0e1a\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07\u0e15\u0e48\u0e32\u0e07\u0e46') +
+    navLink('regulations',     '\ud83d\udcd6', '\u0e23\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e1a\u0e1a\u0e49\u0e32\u0e19\u0e1e\u0e31\u0e01',  '\u0e01\u0e0e\u0e23\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e1a\u0e41\u0e25\u0e30\u0e02\u0e49\u0e2d\u0e1b\u0e0f\u0e34\u0e1a\u0e31\u0e15\u0e34') +
+    navLink('settings',        '\u2699\ufe0f', '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e31\u0e27',  '\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e48\u0e32\u0e19');
+
+  // Admin menu items
+  var adminLinks = isAdmin ? (
+    navSection('\ud83d\udd27 \u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19') +
+    navLink('team-management',      '\ud83d\udc65', '\u0e28\u0e39\u0e19\u0e22\u0e4c\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21',      '\u0e2a\u0e21\u0e32\u0e0a\u0e34\u0e01\u0e41\u0e25\u0e30\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07') +
+    navLink('record-water',         '\ud83d\udca7', '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e19\u0e49\u0e33',         '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e21\u0e34\u0e40\u0e15\u0e2d\u0e23\u0e4c\u0e19\u0e49\u0e33\u0e23\u0e32\u0e22\u0e40\u0e14\u0e37\u0e2d\u0e19') +
+    navLink('record-electric',      '\u26a1', '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e44\u0e1f',         '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e2b\u0e19\u0e48\u0e27\u0e22\u0e44\u0e1f\u0e1f\u0e49\u0e32\u0e23\u0e32\u0e22\u0e40\u0e14\u0e37\u0e2d\u0e19') +
+    navLink('payment-notification', '\ud83d\udce2', '\u0e41\u0e08\u0e49\u0e07\u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30',     '\u0e2a\u0e48\u0e07\u0e43\u0e1a\u0e41\u0e08\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e32\u0e18\u0e32\u0e23\u0e13\u0e39\u0e1b\u0e42\u0e20\u0e04') +
+    navLink('check-slip',           '\ud83d\udd0d', '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e25\u0e34\u0e1b',           '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e2a\u0e25\u0e34\u0e1b\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30') +
+    navLink('check-request',        '\ud83d\udccb', '\u0e15\u0e23\u0e27\u0e08\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07',        '\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e43\u0e1a\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07\u0e15\u0e48\u0e32\u0e07\u0e46') +
+    navLink('accounting',           '\ud83d\udcca', '\u0e1a\u0e31\u0e0d\u0e0a\u0e35',               '\u0e23\u0e32\u0e22\u0e23\u0e31\u0e1a\u0e23\u0e32\u0e22\u0e08\u0e48\u0e32\u0e22\u0e1a\u0e49\u0e32\u0e19\u0e1e\u0e31\u0e01\u0e04\u0e23\u0e39') +
+    navLink('monthly-withdraw',     '\ud83d\udcb5', '\u0e40\u0e1a\u0e34\u0e01\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e40\u0e14\u0e37\u0e2d\u0e19',     '\u0e2a\u0e23\u0e38\u0e1b\u0e22\u0e2d\u0e14\u0e40\u0e1a\u0e34\u0e01\u0e08\u0e48\u0e32\u0e22') +
+    navLink('admin-settings',       '\ud83d\udd27', '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19',       '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e23\u0e30\u0e1a\u0e1a LINE \u0e2d\u0e35\u0e40\u0e21\u0e25')
+  ) : '';
+
+  container.innerHTML =
+    /* Topbar (mobile only) */
+    '<header class="nav-topbar">' +
+      '<button class="nav-hamburger" id="navHamburger" aria-label="\u0e40\u0e1b\u0e34\u0e14\u0e40\u0e21\u0e19\u0e39" aria-expanded="false">' +
+        '<span></span><span></span><span></span>' +
+      '</button>' +
+      '<a href="dashboard.html" class="nav-topbar-brand" onclick="navigate(\'?page=dashboard\');return false;">\ud83c\udfe0 HOME PPK 2026</a>' +
+      '<div class="nav-topbar-right">' +
+        '<span class="nav-user-name">' + _esc(displayName) + '</span>' +
+      '</div>' +
+    '</header>' +
+
+    /* Backdrop */
+    '<div class="nav-backdrop" id="navBackdrop"></div>' +
+
+    /* Sidebar */
+    '<aside class="nav-sidebar" id="navSidebar" aria-label="\u0e40\u0e21\u0e19\u0e39\u0e2b\u0e25\u0e31\u0e01">' +
+      '<div class="sidebar-header">' +
+        '<a href="dashboard.html" class="sidebar-brand" onclick="navigate(\'?page=dashboard\');return false;">\ud83c\udfe0 HOME PPK 2026</a>' +
+        '<button class="sidebar-close" id="navClose" aria-label="\u0e1b\u0e34\u0e14\u0e40\u0e21\u0e19\u0e39">\u2715</button>' +
+      '</div>' +
+      '<div class="sidebar-user">' +
+        '<div class="sidebar-avatar">\ud83d\udc64</div>' +
+        '<div class="sidebar-user-info">' +
+          '<div class="sidebar-user-name">' + _esc(displayName) + '</div>' +
+          houseBadge +
+          '<div class="sidebar-user-role">' + roleLabel + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<nav class="sidebar-nav">' +
+        '<ul class="nav-menu">' +
+          residentLinks +
+          adminLinks +
+        '</ul>' +
+      '</nav>' +
+      '<div class="sidebar-footer">' +
+        '<a href="login.html" class="nav-logout" onclick="doLogout();return true;">\ud83d\udeaa \u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e30\u0e1a\u0e1a</a>' +
+      '</div>' +
+    '</aside>';
+
+  // Toggle logic
+  var hamburger = document.getElementById('navHamburger');
+  var sidebar   = document.getElementById('navSidebar');
+  var backdrop  = document.getElementById('navBackdrop');
+  var closeBtn  = document.getElementById('navClose');
+
+  function navOpen() {
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    hamburger.classList.add('open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function navClose() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  if (hamburger) hamburger.addEventListener('click', function(e) {
+    e.stopPropagation();
+    sidebar.classList.contains('open') ? navClose() : navOpen();
   });
-  html += '<button class="ppk-bottom-btn" onclick="toggleMobileMenu()">';
-  html += '<div class="ppk-bottom-icon-wrap"><span class="ppk-bottom-icon">\u2630</span></div>';
-  html += '<span class="ppk-bottom-label">\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e15\u0e34\u0e21</span></button>';
-  html += '</nav>';
+  if (closeBtn)  closeBtn.addEventListener('click', navClose);
+  if (backdrop)  backdrop.addEventListener('click', navClose);
 
-  // Slide-up full menu — categorized
-  var residentItems = [
-    { page: 'dashboard', icon: '\ud83c\udfe0', label: '\u0e41\u0e14\u0e0a\u0e1a\u0e2d\u0e23\u0e4c\u0e14' },
-    { page: 'payment-history', icon: '\ud83d\udcb3', label: '\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30' },
-    { page: 'form', icon: '\ud83d\udcdd', label: '\u0e22\u0e37\u0e48\u0e19\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07' },
-    { page: 'regulations', icon: '\ud83d\udcd6', label: '\u0e23\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e1a' },
-    { page: 'settings', icon: '\u2699\ufe0f', label: '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e31\u0e27' }
-  ];
-  var adminItems = [
-    { page: 'team-management', icon: '\ud83d\udc65', label: '\u0e28\u0e39\u0e19\u0e22\u0e4c\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21' },
-    { page: 'record-water', icon: '\ud83d\udca7', label: '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e19\u0e49\u0e33' },
-    { page: 'record-electric', icon: '\u26a1', label: '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e44\u0e1f' },
-    { page: 'payment-notification', icon: '\ud83d\udce2', label: '\u0e41\u0e08\u0e49\u0e07\u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30' },
-    { page: 'check-slip', icon: '\ud83d\udd0d', label: '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e25\u0e34\u0e1b' },
-    { page: 'check-request', icon: '\ud83d\udccb', label: '\u0e15\u0e23\u0e27\u0e08\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07' },
-    { page: 'accounting', icon: '\ud83d\udcca', label: '\u0e1a\u0e31\u0e0d\u0e0a\u0e35' },
-    { page: 'monthly-withdraw', icon: '\ud83d\udcb5', label: '\u0e40\u0e1a\u0e34\u0e01\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e40\u0e14\u0e37\u0e2d\u0e19' },
-    { page: 'admin-settings', icon: '\ud83d\udd27', label: '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19' }
-  ];
-
-  html += '<div class="ppk-mobile-overlay" id="ppkMobileOverlay" onclick="closeMobileMenu()"></div>';
-  html += '<div class="ppk-mobile-menu" id="ppkMobileMenu">';
-  html += '<div class="ppk-mobile-menu-handle"></div>';
-  html += '<div class="ppk-mobile-menu-header">';
-  html += '<span class="ppk-mobile-menu-title">\u0e40\u0e21\u0e19\u0e39\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14</span>';
-  html += '<button class="ppk-mobile-menu-close" onclick="closeMobileMenu()">\u2715</button></div>';
-  html += '<div class="ppk-mobile-menu-user">\ud83d\udc64 ' + _esc(displayName);
-  if (user.houseNumber) html += ' \u2014 \u0e1a\u0e49\u0e32\u0e19 ' + _esc(user.houseNumber);
-  if (isAdmin) html += ' <span class="ppk-badge ppk-badge-primary" style="margin-left:0.5rem">\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19</span>';
-  html += '</div>';
-  html += '<div class="ppk-mobile-menu-grid">';
-
-  // Section: Resident
-  html += '<div class="ppk-menu-section-label"><span class="section-dot resident"></span>\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22</div>';
-  residentItems.forEach(function(item) {
-    var active = activePage === item.page ? ' active' : '';
-    html += '<button class="ppk-mobile-menu-item' + active + '" onclick="closeMobileMenu();navigate(\'?page=' + item.page + '\')">';
-    html += '<span class="ppk-mobile-menu-item-icon">' + item.icon + '</span>';
-    html += '<span class="ppk-mobile-menu-item-label">' + _esc(item.label) + '</span>';
-    html += '</button>';
-  });
-
-  // Section: Admin (only if admin)
-  if (isAdmin) {
-    html += '<div class="ppk-menu-section-label"><span class="section-dot admin"></span>\u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19</div>';
-    adminItems.forEach(function(item) {
-      var active = activePage === item.page ? ' active' : '';
-      html += '<button class="ppk-mobile-menu-item' + active + '" onclick="closeMobileMenu();navigate(\'?page=' + item.page + '\')">';
-      html += '<span class="ppk-mobile-menu-item-icon">' + item.icon + '</span>';
-      html += '<span class="ppk-mobile-menu-item-label">' + _esc(item.label) + '</span>';
-      html += '</button>';
+  // Close sidebar on link click (mobile)
+  if (sidebar) sidebar.querySelectorAll('a.nav-link').forEach(function(a) {
+    a.addEventListener('click', function() {
+      if (window.innerWidth < 1024) navClose();
     });
-  }
+  });
 
-  html += '</div>';
-  html += '<div class="ppk-mobile-menu-footer">';
-  html += '<button class="ppk-mobile-menu-logout" onclick="closeMobileMenu();doLogout()">\ud83d\udeaa \u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e30\u0e1a\u0e1a</button>';
-  html += '</div></div>';
-
-  container.innerHTML = html;
+  // Keyboard: Escape key closes
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') navClose();
+  });
 
   // Inject compat CSS for legacy pages
   if (!document.getElementById('_ppk_nav_css')) {
     var s = document.createElement('style');
     s.id = '_ppk_nav_css';
-    s.textContent = '.sidebar{display:none!important;}\n.dashboard-container,.main-container,.ppk-main{animation:ppk-fadein .35s ease-out;}';
+    s.textContent = '.sidebar:not(.nav-sidebar){display:none!important;}\n.dashboard-container,.main-container,.ppk-main{animation:ppk-fadein .35s ease-out;}';
     document.head.appendChild(s);
   }
 
@@ -137,36 +176,26 @@ function renderPPKNav(containerId, activePage) {
       callBackend('getDashboardData', {}).then(function (r) {
         if (!r || !r.success || r.role !== 'admin') return;
         var d = r.data || {};
-        function _badge(id, count) {
-          var el = document.getElementById(id);
-          if (!el) return;
-          if (count > 0) { el.textContent = count > 99 ? '99+' : String(count); el.style.display = ''; }
-          else el.style.display = 'none';
+        function _badge(selector, count) {
+          // Find sidebar link and add badge
+          if (count <= 0) return;
+          var links = sidebar.querySelectorAll('a.nav-link');
+          links.forEach(function(link) {
+            if (link.href && link.href.indexOf(selector) !== -1) {
+              var badge = document.createElement('span');
+              badge.className = 'nav-badge';
+              badge.textContent = count > 99 ? '99+' : String(count);
+              link.appendChild(badge);
+            }
+          });
         }
-        _badge('badge-pending-reg', d.pendingRegistrations || 0);
-        _badge('badge-pending-slips', d.pendingSlips || 0);
-        _badge('badge-pending-reqs', d.pendingRequests || 0);
+        _badge('team-management', d.pendingRegistrations || 0);
+        _badge('check-slip', d.pendingSlips || 0);
+        _badge('check-request', d.pendingRequests || 0);
       }).catch(function () {});
     }, 1500);
   }
 }
-
-// Mobile Menu Functions
-window.toggleMobileMenu = function () {
-  var overlay = document.getElementById('ppkMobileOverlay');
-  var menu = document.getElementById('ppkMobileMenu');
-  if (!overlay || !menu) return;
-  overlay.classList.add('show');
-  requestAnimationFrame(function () { menu.classList.add('show'); });
-};
-
-window.closeMobileMenu = function () {
-  var overlay = document.getElementById('ppkMobileOverlay');
-  var menu = document.getElementById('ppkMobileMenu');
-  if (!menu) return;
-  menu.classList.remove('show');
-  setTimeout(function () { if (overlay) overlay.classList.remove('show'); }, 300);
-};
 
 // Logout helper
 if (typeof window.doLogout === 'undefined') {
@@ -177,11 +206,15 @@ if (typeof window.doLogout === 'undefined') {
   };
 }
 
+// Keep legacy toggleMobileMenu and closeMobileMenu as no-ops
+window.toggleMobileMenu = function() {};
+window.closeMobileMenu = function() {};
+
 // Auto-render
 (function () {
   var nav = document.getElementById('ppkNav');
   if (!nav || nav.hasChildNodes()) return;
   var page = window._ppkNavPage ||
     (window.location.pathname.split('/').pop() || 'dashboard.html').replace('.html', '');
-  try { renderPPKNav('ppkNav', page); } catch (e) {}
+  try { renderPPKNav('ppkNav', page); } catch (e) { console.error('PPK Nav error:', e); }
 })();
