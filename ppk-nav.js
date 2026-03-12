@@ -68,19 +68,7 @@ function renderPPKNav(containerId, activePage) {
     navLink('regulations',     '\ud83d\udcd6', '\u0e23\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e1a\u0e1a\u0e49\u0e32\u0e19\u0e1e\u0e31\u0e01',  '\u0e01\u0e0e\u0e23\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e1a\u0e41\u0e25\u0e30\u0e02\u0e49\u0e2d\u0e1b\u0e0f\u0e34\u0e1a\u0e31\u0e15\u0e34') +
     navLink('settings',        '\u2699\ufe0f', '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e31\u0e27',  '\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e48\u0e32\u0e19');
 
-  // Admin menu items
-  var adminLinks = isAdmin ? (
-    navSection('\ud83d\udd27 \u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19') +
-    navLink('team-management',      '\ud83d\udc65', '\u0e28\u0e39\u0e19\u0e22\u0e4c\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21',      '\u0e2a\u0e21\u0e32\u0e0a\u0e34\u0e01\u0e41\u0e25\u0e30\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07') +
-    navLink('record-water',         '\ud83d\udca7', '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e19\u0e49\u0e33',         '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e21\u0e34\u0e40\u0e15\u0e2d\u0e23\u0e4c\u0e19\u0e49\u0e33\u0e23\u0e32\u0e22\u0e40\u0e14\u0e37\u0e2d\u0e19') +
-    navLink('record-electric',      '\u26a1', '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e04\u0e48\u0e32\u0e44\u0e1f',         '\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e2b\u0e19\u0e48\u0e27\u0e22\u0e44\u0e1f\u0e1f\u0e49\u0e32\u0e23\u0e32\u0e22\u0e40\u0e14\u0e37\u0e2d\u0e19') +
-    navLink('payment-notification', '\ud83d\udce2', '\u0e41\u0e08\u0e49\u0e07\u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30',     '\u0e2a\u0e48\u0e07\u0e43\u0e1a\u0e41\u0e08\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e32\u0e18\u0e32\u0e23\u0e13\u0e39\u0e1b\u0e42\u0e20\u0e04') +
-    navLink('check-slip',           '\ud83d\udd0d', '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e25\u0e34\u0e1b',           '\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e2a\u0e25\u0e34\u0e1b\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30') +
-    navLink('check-request',        '\ud83d\udccb', '\u0e15\u0e23\u0e27\u0e08\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07',        '\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e43\u0e1a\u0e04\u0e33\u0e23\u0e49\u0e2d\u0e07\u0e15\u0e48\u0e32\u0e07\u0e46') +
-    navLink('accounting',           '\ud83d\udcca', '\u0e1a\u0e31\u0e0d\u0e0a\u0e35',               '\u0e23\u0e32\u0e22\u0e23\u0e31\u0e1a\u0e23\u0e32\u0e22\u0e08\u0e48\u0e32\u0e22\u0e1a\u0e49\u0e32\u0e19\u0e1e\u0e31\u0e01\u0e04\u0e23\u0e39') +
-    navLink('monthly-withdraw',     '\ud83d\udcb5', '\u0e40\u0e1a\u0e34\u0e01\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e40\u0e14\u0e37\u0e2d\u0e19',     '\u0e2a\u0e23\u0e38\u0e1b\u0e22\u0e2d\u0e14\u0e40\u0e1a\u0e34\u0e01\u0e08\u0e48\u0e32\u0e22') +
-    navLink('admin-settings',       '\ud83d\udd27', '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19',       '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e23\u0e30\u0e1a\u0e1a LINE \u0e2d\u0e35\u0e40\u0e21\u0e25')
-  ) : '';
+  // Admin links removed
 
   container.innerHTML =
     /* Topbar (mobile only) */
@@ -114,7 +102,6 @@ function renderPPKNav(containerId, activePage) {
       '<nav class="sidebar-nav">' +
         '<ul class="nav-menu">' +
           residentLinks +
-          adminLinks +
         '</ul>' +
       '</nav>' +
       '<div class="sidebar-footer">' +
@@ -170,31 +157,7 @@ function renderPPKNav(containerId, activePage) {
     document.head.appendChild(s);
   }
 
-  // Load admin badge counts
-  if (isAdmin && typeof callBackend === 'function') {
-    setTimeout(function () {
-      callBackend('getDashboardData', {}).then(function (r) {
-        if (!r || !r.success || r.role !== 'admin') return;
-        var d = r.data || {};
-        function _badge(selector, count) {
-          // Find sidebar link and add badge
-          if (count <= 0) return;
-          var links = sidebar.querySelectorAll('a.nav-link');
-          links.forEach(function(link) {
-            if (link.href && link.href.indexOf(selector) !== -1) {
-              var badge = document.createElement('span');
-              badge.className = 'nav-badge';
-              badge.textContent = count > 99 ? '99+' : String(count);
-              link.appendChild(badge);
-            }
-          });
-        }
-        _badge('team-management', d.pendingRegistrations || 0);
-        _badge('check-slip', d.pendingSlips || 0);
-        _badge('check-request', d.pendingRequests || 0);
-      }).catch(function () {});
-    }, 1500);
-  }
+
 }
 
 // Logout helper
