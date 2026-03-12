@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260312g">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260312h">
     <style>
         body {
             margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -95,7 +95,7 @@
         <div class="form-group">
             <label for="password" id="passwordLabel">รหัสผ่าน</label>
             <div class="pw-wrapper">
-                <input type="password" id="password" name="password" required placeholder="รหัสผ่านอย่างน้อย 8 ตัว" autocomplete="current-password" class="pw-input">
+                <input type="password" id="password" name="password" placeholder="รหัสผ่านอย่างน้อย 8 ตัว" autocomplete="current-password" class="pw-input">
                 <button type="button" class="pw-toggle" onclick="togglePassword()" id="pwToggleBtn" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
             </div>
         </div>
@@ -113,11 +113,11 @@
     </form>
 
     <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
-    <script src="supabase/config.js?v=20260312g"></script>
-    <script src="supabase/supabase.min.js?v=20260312g"></script>
-    <script src="ppk-api.js?v=20260312g"></script>
-    <script src="ppk-app.js?v=20260312g"></script>
-    <script src="ppk-utils.js?v=20260312g"></script>
+    <script src="supabase/config.js?v=20260312h"></script>
+    <script src="supabase/supabase.min.js?v=20260312h"></script>
+    <script src="ppk-api.js?v=20260312h"></script>
+    <script src="ppk-app.js?v=20260312h"></script>
+    <script src="ppk-utils.js?v=20260312h"></script>
     <!-- Fallback: ถ้า ppk-app.js เก่าไม่มี stub → สร้างเอง -->
     <script>
     (function() {
@@ -148,15 +148,8 @@
     <!-- First-Login Modal -->
     <div id="firstLoginOverlay">
         <div id="firstLoginBox">
-            <h3>&#128274; เปลี่ยนรหัสผ่านครั้งแรก</h3>
-            <p>กรุณาตั้งรหัสผ่านใหม่ก่อนเข้าใช้งานระบบ<br>ใส่รหัสผ่านเดิมที่ได้รับจากผู้ดูแลระบบ</p>
-            <div class="fl-group">
-                <label>รหัสผ่านปัจจุบัน (ที่ได้รับจากผู้ดูแล)</label>
-                <div class="pw-wrapper">
-                    <input type="password" id="flOldPw" placeholder="รหัสผ่านเริ่มต้น" autocomplete="current-password" class="pw-input">
-                    <button type="button" class="pw-toggle" onclick="togglePwById('flOldPw', this)" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
-                </div>
-            </div>
+            <h3>&#128274; ยินดีต้อนรับ! ตั้งรหัสผ่านของคุณ</h3>
+            <p>สวัสดีคุณ <strong id="flUserName"></strong><br>กรุณาตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ</p>
             <div class="fl-group">
                 <label>รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label>
                 <div class="pw-wrapper">
@@ -172,7 +165,7 @@
                 </div>
             </div>
             <div id="flError"></div>
-            <button id="flSubmitBtn" onclick="submitFirstLoginChange()">ยืนยันเปลี่ยนรหัสผ่าน</button>
+            <button id="flSubmitBtn" onclick="submitFirstLoginChange()">ยืนยันตั้งรหัสผ่าน</button>
         </div>
     </div>
     <script>
@@ -216,11 +209,6 @@
                 errorMsg.style.display = 'block';
                 return false;
             }
-            if (!password) {
-                errorMsg.textContent = 'กรุณากรอกรหัสผ่าน';
-                errorMsg.style.display = 'block';
-                return false;
-            }
             handleLogin();
             return false;
         }
@@ -239,14 +227,27 @@
             try {
                 const result = await callBackend('login', { email, password });
 
+                if (result.success && result.must_set_password) {
+                    // เข้าใช้ครั้งแรก → แสดง modal ตั้งรหัสผ่าน
+                    window._firstLoginUserId = result.userId;
+                    var nameEl = document.getElementById('flUserName');
+                    if (nameEl) nameEl.textContent = result.userName || '';
+                    document.getElementById('firstLoginOverlay').classList.add('active');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'เข้าสู่ระบบ';
+                    return;
+                }
+
                 if (result.success) {
                     // Store session
                     localStorage.setItem('sessionToken', result.token);
                     localStorage.setItem('currentUser', JSON.stringify(result.user));
 
-                    // ถ้าเป็นล็อกอินครั้งแรก → แสดง modal บังคับเปลี่ยนรหัสผ่าน
+                    // ถ้าเป็นล็อกอินครั้งแรก → แสดง modal บังคับเปลี่ยนรหัสผ่าน (กรณี login ปกติแล้วเจอ flag)
                     if (result.must_change_password || (result.user && result.user.must_change_password)) {
                         window._firstLoginUserId = result.user.id;
+                        var nameEl2 = document.getElementById('flUserName');
+                        if (nameEl2) nameEl2.textContent = (result.user.firstname || '') + ' ' + (result.user.lastname || '');
                         document.getElementById('firstLoginOverlay').classList.add('active');
                         loginBtn.disabled = false;
                         loginBtn.textContent = 'เข้าสู่ระบบ';
@@ -270,37 +271,37 @@
 
         // ============ First-Login Change Password ============
         async function submitFirstLoginChange() {
-            const oldPw     = document.getElementById('flOldPw').value;
             const newPw     = document.getElementById('flNewPw').value;
             const confirmPw = document.getElementById('flConfirmPw').value;
             const errEl     = document.getElementById('flError');
             const btn       = document.getElementById('flSubmitBtn');
             errEl.textContent = '';
 
-            if (!oldPw) { errEl.textContent = 'กรุณากรอกรหัสผ่านปัจจุบัน'; return; }
             if (!newPw || newPw.length < 6) { errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว'; return; }
             if (newPw !== confirmPw) { errEl.textContent = 'รหัสผ่านไม่ตรงกัน'; return; }
-            if (oldPw === newPw) { errEl.textContent = 'รหัสผ่านใหม่ต้องไม่ซ้ำกับเดิม'; return; }
 
             btn.disabled = true;
             btn.textContent = 'กำลังบันทึก...';
             try {
-                const result = await callBackend('changePassword', {
-                    _userId: window._firstLoginUserId,
-                    oldPassword: oldPw,
+                const result = await callBackend('setFirstPassword', {
+                    userId: window._firstLoginUserId,
                     newPassword: newPw
                 });
                 if (result && result.success) {
+                    if (result.token) {
+                        localStorage.setItem('sessionToken', result.token);
+                        localStorage.setItem('currentUser', JSON.stringify(result.user));
+                    }
                     window.location.href = 'dashboard.html';
                 } else {
-                    errEl.textContent = result.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+                    errEl.textContent = result.error || 'ตั้งรหัสผ่านไม่สำเร็จ';
                     btn.disabled = false;
-                    btn.textContent = 'ยืนยันเปลี่ยนรหัสผ่าน';
+                    btn.textContent = 'ยืนยันตั้งรหัสผ่าน';
                 }
             } catch(e) {
                 errEl.textContent = e.message;
                 btn.disabled = false;
-                btn.textContent = 'ยืนยันเปลี่ยนรหัสผ่าน';
+                btn.textContent = 'ยืนยันตั้งรหัสผ่าน';
             }
         }
 

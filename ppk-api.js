@@ -305,11 +305,23 @@ async function _routeAction(action, data) {
     switch (action) {
         case 'login': {
             var email = (data.email || '').trim().toLowerCase();
-            if (!email || !data.password) return { success: false, error: 'กรุณากรอกอีเมลและรหัสผ่าน' };
-            var pwHash = await sha256hex(data.password);
+            if (!email) return { success: false, error: 'กรุณากรอกอีเมล' };
             var uRows = await sbGet('users', { email: 'eq.' + email, is_active: 'eq.true', limit: '1' });
             if (!uRows || uRows.length === 0) return { success: false, error: 'ไม่พบบัญชีผู้ใช้ หรืออีเมลไม่ถูกต้อง' };
             var u = uRows[0];
+            // ตรวจ flag must_change_pw จาก settings table
+            var mustChangePw = false;
+            try {
+                var mcRows = await sbGet('settings', { key: 'eq.must_change_pw_' + u.id, limit: '1' });
+                mustChangePw = !!(mcRows && mcRows.length > 0);
+            } catch(e) { mustChangePw = false; }
+            // ถ้าเป็นการเข้าใช้ครั้งแรก → ข้าม password check ให้ตั้งรหัสผ่านเอง
+            if (mustChangePw) {
+                return { success: true, must_set_password: true, userId: u.id, userName: (u.firstname || '') + ' ' + (u.lastname || '') };
+            }
+            // เข้าสู่ระบบปกติ — ตรวจรหัสผ่าน
+            if (!data.password) return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
+            var pwHash = await sha256hex(data.password);
             if (u.password_hash !== pwHash) return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
             // ดึงข้อมูล resident ที่ active
             var resident = null;
@@ -317,12 +329,6 @@ async function _routeAction(action, data) {
                 var resRows = await sbGet('residents', { user_id: 'eq.' + u.id, is_active: 'eq.true', limit: '1' });
                 if (resRows && resRows[0]) resident = resRows[0];
             } catch(e) { resident = null; }
-            // ตรวจ flag must_change_pw จาก settings table
-            var mustChangePw = false;
-            try {
-                var mcRows = await sbGet('settings', { key: 'eq.must_change_pw_' + u.id, limit: '1' });
-                mustChangePw = !!(mcRows && mcRows.length > 0);
-            } catch(e) { mustChangePw = false; }
             var userObj = {
                 id: u.id, email: u.email,
                 prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
@@ -330,7 +336,7 @@ async function _routeAction(action, data) {
                 position: u.position || '',
                 houseNumber: resident ? (resident.house_number || '') : '',
                 residentId: resident ? resident.id : null,
-                must_change_password: mustChangePw
+                must_change_password: false
             };
             // สร้าง session ใน DB
             var token = 'session-' + u.id + '-' + Date.now();
@@ -377,6 +383,36 @@ async function _routeAction(action, data) {
             // ลบ flag must_change_pw (ถ้ามี)
             try { await sbDelete('settings', { key: 'eq.must_change_pw_' + userId }); } catch(e) {}
             return { success: true };
+        }
+
+        case 'setFirstPassword': {
+            // ตั้งรหัสผ่านครั้งแรก — ใช้ได้เฉพาะ user ที่มี flag must_change_pw
+            var userId = data.userId || '';
+            if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
+            var newPassword = data.newPassword || '';
+            if (!newPassword || newPassword.length < 6) return { success: false, error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัว' };
+            // ตรวจสอบว่ามี flag must_change_pw จริง
+            var flagRows = await sbGet('settings', { key: 'eq.must_change_pw_' + userId, limit: '1' });
+            if (!flagRows || flagRows.length === 0) return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
+            var newHash = await sha256hex(newPassword);
+            await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
+            // ลบ flag
+            await sbDelete('settings', { key: 'eq.must_change_pw_' + userId });
+            // สร้าง session + return user
+            var uRows = await sbGet('users', { id: 'eq.' + userId, is_active: 'eq.true', limit: '1' });
+            var u2 = uRows && uRows[0] ? uRows[0] : null;
+            if (!u2) return { success: true };
+            var resident2 = null;
+            try {
+                var rr2 = await sbGet('residents', { user_id: 'eq.' + u2.id, is_active: 'eq.true', limit: '1' });
+                if (rr2 && rr2[0]) resident2 = rr2[0];
+            } catch(e) {}
+            var token2 = 'session-' + u2.id + '-' + Date.now();
+            try {
+                await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString() });
+            } catch(e) {}
+            var userObj2 = { id: u2.id, email: u2.email, prefix: u2.prefix || '', firstname: u2.firstname || '', lastname: u2.lastname || '', role: u2.role || 'resident', is_active: true, position: u2.position || '', houseNumber: resident2 ? (resident2.house_number || '') : '', residentId: resident2 ? resident2.id : null };
+            return { success: true, user: userObj2, token: token2 };
         }
 
         case 'getHousing': {
