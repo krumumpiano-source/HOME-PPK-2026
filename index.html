@@ -240,7 +240,11 @@
             return;
           }
         }
-      } catch(e) {}
+        // ถ้ายังไม่ได้ล็อกอิน → ไปหน้า login ทันที
+        window.location.href = 'login.html';
+      } catch(e) {
+        window.location.href = 'login.html';
+      }
     }
 
     async function loadLineSettings() {
