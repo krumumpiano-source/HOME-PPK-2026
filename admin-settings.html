@@ -6,16 +6,10 @@
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css">
     <style>
-        /* Admin page overrides - use ppk-theme.css classes with page-specific additions */
+        /* Page layout — no sidebar, bottom tab bar handled by ppk-theme.css */
         .dashboard-container, .main-container {
-            margin-left: var(--sidebar-w, 72px); min-height: 100vh;
+            min-height: 100vh;
             padding: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; align-items: center;
-            transition: margin-left 0.25s;
-        }
-        .sidebar.expanded ~ .dashboard-container,
-        .sidebar.expanded ~ .main-container { margin-left: var(--sidebar-w-open, 260px); }
-        @media (max-width: 768px) {
-            .dashboard-container, .main-container { margin-left: 0 !important; padding-bottom: 80px !important; }
         }
         .page-card {
             width: 100%; max-width: 1000px; background: var(--c-surface, #fff);
@@ -4289,7 +4283,7 @@
             return userPerms[permissionType] === true || userPerms.admin === true;
         }
 
-        // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+        // Nav — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'admin-settings';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'admin-settings'); }
 
@@ -4309,10 +4303,10 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260310"></script>
-    <script src="supabase/supabase.min.js?v=20260310"></script>
-    <script src="ppk-api.js?v=20260310"></script>
-    <script src="ppk-app.js?v=20260310"></script>
-    <script src="ppk-utils.js?v=20260310"></script>
-    <script src="ppk-nav.js?v=20260310"></script></body>
+    <script src="supabase/config.js?v=20260312"></script>
+    <script src="supabase/supabase.min.js?v=20260312"></script>
+    <script src="ppk-api.js?v=20260312"></script>
+    <script src="ppk-app.js?v=20260312"></script>
+    <script src="ppk-utils.js?v=20260312"></script>
+    <script src="ppk-nav.js?v=20260312"></script></body>
 </html>

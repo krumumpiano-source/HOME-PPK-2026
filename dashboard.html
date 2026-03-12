@@ -6,7 +6,6 @@
     <title>แดชบอร์ด | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css">
     <style>
-        /* Dashboard-specific overrides */
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
         .dashboard-amount.danger { color: var(--c-danger); }
         .dashboard-amount.ok { color: var(--c-success); }
@@ -17,7 +16,7 @@
 
     <div class="ppk-main" id="dashboardContainer">
         <div class="ppk-topbar">
-            <div class="ppk-topbar-title"><span class="icon">🏠</span> แดชบอร์ด</div>
+            <div class="ppk-topbar-title"><span class="icon">🏠</span> HOME PPK 2026</div>
         </div>
 
         <div class="ppk-content">
@@ -40,6 +39,15 @@
                         <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Hub Menu Grid -->
+            <div class="ppk-card" style="margin-bottom:1rem; padding:1rem;">
+                <div class="ppk-card-header" style="margin-bottom:0.75rem; padding-bottom:0.5rem;">
+                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">📱</div>
+                    <div class="ppk-card-title">เมนูลัด</div>
+                </div>
+                <div id="hubGrid" class="ppk-hub-grid"></div>
             </div>
 
             <!-- Announcements -->
@@ -83,6 +91,43 @@
     <script>
         const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+        // Hub grid builder
+        function buildHubGrid() {
+            var user = {};
+            try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var isAdmin = user.role === 'admin';
+
+            var items = [
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#EEF2FF' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#F0FDF4' },
+                { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFFBEB' },
+                { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
+            ];
+            if (isAdmin) {
+                items.push(
+                    { page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' },
+                    { page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' },
+                    { page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' },
+                    { page: 'payment-notification', icon: '📢', label: 'แจ้งยอดชำระ', bg: '#FEF2F2' },
+                    { page: 'check-slip', icon: '🔍', label: 'ตรวจสลิป', bg: '#F0FDF4', badgeId: 'badge-pending-slips' },
+                    { page: 'check-request', icon: '📋', label: 'ตรวจคำร้อง', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' },
+                    { page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' },
+                    { page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' },
+                    { page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' }
+                );
+            }
+
+            var el = document.getElementById('hubGrid');
+            if (!el) return;
+            el.innerHTML = items.map(function(item) {
+                var badge = item.badgeId ? '<span id="' + item.badgeId + '" class="ppk-hub-badge" style="display:none"></span>' : '';
+                return '<button class="ppk-hub-item" onclick="navigate(\'?page=' + item.page + '\')">'
+                    + '<div class="ppk-hub-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
+                    + '<span class="ppk-hub-label">' + item.label + '</span>'
+                    + badge + '</button>';
+            }).join('');
+        }
 
         function renderAnnouncements(rows) {
             const el = document.getElementById('announceList');
@@ -188,6 +233,7 @@
 
         window._ppkNavPage = 'dashboard';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'dashboard'); }
+        buildHubGrid();
         window.onload = async function() { await loadDashboard(); };
 
         function goToUploadSlip(periodKey, amount, isOutstanding) {
@@ -204,13 +250,17 @@
             navigate('?page=upload-slip');
         }
 
-        async function doLogout() { window.location.replace('dashboard.html'); }
+        async function doLogout() {
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('currentUser');
+            window.location.replace('login.html');
+        }
     </script>
-    <script src="supabase/config.js?v=20260310"></script>
-    <script src="supabase/supabase.min.js?v=20260310"></script>
-    <script src="ppk-api.js?v=20260310"></script>
-    <script src="ppk-app.js?v=20260310"></script>
-    <script src="ppk-utils.js?v=20260310"></script>
-    <script src="ppk-nav.js?v=20260310"></script>
+    <script src="supabase/config.js?v=20260312"></script>
+    <script src="supabase/supabase.min.js?v=20260312"></script>
+    <script src="ppk-api.js?v=20260312"></script>
+    <script src="ppk-app.js?v=20260312"></script>
+    <script src="ppk-utils.js?v=20260312"></script>
+    <script src="ppk-nav.js?v=20260312"></script>
 </body>
 </html>
