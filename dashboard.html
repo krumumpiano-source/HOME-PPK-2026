@@ -85,6 +85,9 @@
             .sidebar { width: 48px; }
             .sidebar.expanded { width: 160px; }
         }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+        }
 
         /* Main Container */
         .dashboard-container {
@@ -98,9 +101,9 @@
             transition: margin-left 0.2s;
         }
         .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
-        @media (max-width: 600px) {
-            .dashboard-container { margin-left: 48px; padding: 1rem; }
-            .sidebar.expanded ~ .dashboard-container { margin-left: 160px; }
+        @media (max-width: 768px) {
+            .dashboard-container { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; }
+            .sidebar.expanded ~ .dashboard-container { margin-left: 0 !important; }
         }
 
         /* Header */
@@ -179,6 +182,7 @@
             max-width: 600px;
         }
         @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; } .stat-card { padding: 0.8rem 0.5rem; } .stat-icon { font-size: 1.5rem; } .stat-count { font-size: 1.5rem; } }
         .stat-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -313,7 +317,7 @@
         <div class="section">
             <div class="section-title">📢 ประกาศ</div>
             <div id="announceList">
-                <div style="color:var(--muted)">กำลังโหลด...</div>
+                <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">กำลังโหลดข้อมูล...</div></div>
             </div>
         </div>
         <div class="section" id="paymentSection">

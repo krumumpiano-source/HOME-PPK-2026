@@ -24,6 +24,12 @@
         .sidebar-label { display: none; font-size: 1rem; line-height: 1.3; }
         .sidebar.expanded .sidebar-label { display: inline; }
         @media (max-width: 600px) { .sidebar { width: 48px; } .sidebar.expanded { width: 160px; } }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+            .dashboard-container, .main-container { margin-left: 0 !important; padding-bottom: 80px !important; }
+            .sidebar.expanded ~ .dashboard-container,
+            .sidebar.expanded ~ .main-container { margin-left: 0 !important; }
+        }
         .dashboard-container { margin-left: 62px; background: var(--surface); padding: 2rem; min-height: 100vh; display: flex; flex-direction: column; gap: 1.5rem; align-items: center; transition: margin-left 0.2s; }
         .sidebar.expanded ~ .dashboard-container { margin-left: 280px; }
         @media (max-width: 600px) { .dashboard-container { margin-left: 48px; padding: 1.2rem 0.5rem; } .sidebar.expanded ~ .dashboard-container { margin-left: 160px; } }

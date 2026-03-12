@@ -40,6 +40,12 @@
       .sidebar{width:48px;}
       .sidebar.expanded{width:160px;}
     }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+            .dashboard-container, .main-container { margin-left: 0 !important; padding-bottom: 80px !important; }
+            .sidebar.expanded ~ .dashboard-container,
+            .sidebar.expanded ~ .main-container { margin-left: 0 !important; }
+        }
 
     .dashboard-container{margin-left:62px;min-height:100vh;padding:2rem;display:flex;flex-direction:column;gap:1.2rem;align-items:center;transition:margin-left .2s;}
     .sidebar.expanded ~ .dashboard-container{margin-left:280px;}

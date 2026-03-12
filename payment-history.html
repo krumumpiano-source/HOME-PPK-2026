@@ -85,6 +85,12 @@
             .sidebar { width: 48px; }
             .sidebar.expanded { width: 160px; }
         }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+            .dashboard-container, .main-container { margin-left: 0 !important; padding-bottom: 80px !important; }
+            .sidebar.expanded ~ .dashboard-container,
+            .sidebar.expanded ~ .main-container { margin-left: 0 !important; }
+        }
 
         /* Main Container */
         .dashboard-container {

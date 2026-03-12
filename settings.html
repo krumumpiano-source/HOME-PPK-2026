@@ -104,6 +104,12 @@
                 width: 160px;
             }
         }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+            .dashboard-container, .main-container { margin-left: 0 !important; padding-bottom: 80px !important; }
+            .sidebar.expanded ~ .dashboard-container,
+            .sidebar.expanded ~ .main-container { margin-left: 0 !important; }
+        }
         
         .dashboard-container {
             margin-left: 62px;
@@ -612,6 +618,73 @@
             font-weight: 600;
             margin-left: 0.5rem;
         }
+
+        /* ═══ Tab Navigation ═══ */
+        .settings-tabs {
+            display: flex;
+            gap: 0.25rem;
+            width: 100%;
+            max-width: 600px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.25rem;
+        }
+        .settings-tabs::-webkit-scrollbar { display: none; }
+        .settings-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.6rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px 10px 0 0;
+            background: #f1f5f9;
+            color: #64748b;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+            border-bottom: 2px solid transparent;
+        }
+        .settings-tab:hover {
+            background: #e0e7ff;
+            color: #2563eb;
+        }
+        .settings-tab.active {
+            background: #fff;
+            color: #2563eb;
+            border-color: #2563eb;
+            border-bottom-color: #fff;
+            box-shadow: 0 -2px 8px rgba(37,99,235,0.1);
+        }
+        .settings-tab-icon { font-size: 1rem; }
+        .tab-content { display: none; width: 100%; max-width: 600px; }
+        .tab-content.active { display: block; }
+        .tab-progress {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 600px;
+            padding: 0.5rem;
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+        .tab-progress-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            transition: background 0.2s;
+        }
+        .tab-progress-dot.filled { background: #2563eb; }
+        @media (max-width: 768px) {
+            .settings-tabs { gap: 0.15rem; }
+            .settings-tab { font-size: 0.75rem; padding: 0.5rem 0.6rem; }
+            .settings-tab-icon { font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
@@ -624,9 +697,27 @@
             <h2>ตั้งค่าส่วนตัว</h2>
         </div>
         
-        <div class="info-box">
-            ℹ️ ข้อมูลทั้งหมดสามารถแก้ไขได้ กรุณาตรวจสอบความถูกต้องก่อนบันทึก
+        <!-- Tab Navigation -->
+        <div class="settings-tabs" id="settingsTabs">
+            <button class="settings-tab active" onclick="switchTab('personal')" data-tab="personal">
+                <span class="settings-tab-icon">👤</span> ข้อมูลส่วนตัว
+            </button>
+            <button class="settings-tab" onclick="switchTab('address')" data-tab="address">
+                <span class="settings-tab-icon">📍</span> ที่อยู่
+            </button>
+            <button class="settings-tab" onclick="switchTab('housing')" data-tab="housing">
+                <span class="settings-tab-icon">🏠</span> ที่พักอาศัย
+            </button>
+            <button class="settings-tab" onclick="switchTab('coresident')" data-tab="coresident">
+                <span class="settings-tab-icon">👨‍👩‍👧‍👦</span> ผู้ร่วมพัก
+            </button>
+            <button class="settings-tab" onclick="switchTab('password')" data-tab="password">
+                <span class="settings-tab-icon">🔐</span> รหัสผ่าน
+            </button>
         </div>
+
+        <!-- Tab: ข้อมูลส่วนตัว -->
+        <div class="tab-content active" id="tab-personal">
         
         <!-- ส่วนที่ 1: ข้อมูลส่วนตัว -->
         <div class="section">
@@ -718,6 +809,10 @@
             </div>
         </div>
         
+        </div><!-- /tab-personal -->
+
+        <!-- Tab: ที่อยู่ -->
+        <div class="tab-content" id="tab-address">
         <!-- ส่วนที่ 2: ที่อยู่ตามทะเบียนบ้าน -->
         <div class="section">
             <div class="section-title">📍 ที่อยู่ตามทะเบียนบ้าน</div>
@@ -760,6 +855,10 @@
             </div>
         </div>
         
+        </div><!-- /tab-address -->
+
+        <!-- Tab: ที่พักอาศัย -->
+        <div class="tab-content" id="tab-housing">
         <!-- ส่วนที่ 3: ข้อมูลที่พักอาศัย -->
         <div class="section">
             <div class="section-title">🏠 ข้อมูลที่พักอาศัย (บ้านพักครู)</div>
@@ -775,6 +874,10 @@
             </div>
         </div>
         
+        </div><!-- /tab-housing -->
+
+        <!-- Tab: ผู้ร่วมพักอาศัย -->
+        <div class="tab-content" id="tab-coresident">
         <!-- ส่วนที่ 3.5: ข้อมูลผู้ร่วมพักอาศัย -->
         <div class="section">
             <div class="section-title">👨‍👩‍👧‍👦 ผู้ร่วมพักอาศัย</div>
@@ -796,6 +899,10 @@
             </button>
         </div>
         
+        </div><!-- /tab-coresident -->
+
+        <!-- Tab: รหัสผ่าน -->
+        <div class="tab-content" id="tab-password">
         <!-- ส่วนที่ 4: เปลี่ยนรหัสผ่าน -->
         <div class="section">
             <div class="section-title">🔐 รหัสผ่าน</div>
@@ -834,6 +941,8 @@
             </div>
         </div>
         
+        </div><!-- /tab-password -->
+
         <!-- ปุ่มบันทึก -->
         <div class="button-group">
             <button class="btn btn-success" onclick="saveSettings()">💾 บันทึกข้อมูล</button>
@@ -851,6 +960,31 @@
     </div>
 
     <script>
+
+        // ═══ Tab switching ═══
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            // Deactivate all tab buttons
+            document.querySelectorAll('.settings-tab').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            // Show selected tab
+            var target = document.getElementById('tab-' + tabName);
+            if (target) {
+                target.classList.add('active');
+                target.style.animation = 'ppk-fadein 0.25s ease-out';
+            }
+            // Activate tab button
+            var btn = document.querySelector('.settings-tab[data-tab="' + tabName + '"]');
+            if (btn) btn.classList.add('active');
+            // Scroll tab into view on mobile
+            if (btn && window.innerWidth <= 768) {
+                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
 
         // Sidebar — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
         window._ppkNavPage = 'settings';
