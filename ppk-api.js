@@ -246,7 +246,7 @@ async function ppkRegister(data) {
 /* ══════════════════════════════════════════
    SESSION CHECK — ตรวจ session token กับ DB ก่อน fallback guest
 ══════════════════════════════════════════ */
-async function checkSession() {
+async function checkSession(autoRedirect) {
     try {
         var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
         if (stored && stored.id && stored.id !== 'USR-GUEST') return stored;
@@ -273,17 +273,13 @@ async function checkSession() {
             }
         } catch(e) { console.warn('checkSession DB:', e); }
     }
-    // fallback guest admin สำหรับ admin ที่ยังไม่ได้ login (ให้เข้าดูได้)
-    var defaultUser = {
-        id: 'USR-GUEST', email: 'pongsatorn.b@ppk.ac.th',
-        firstname: 'พงศธร', lastname: 'โพธิแก้ว',
-        role: 'admin', is_active: true
-    };
-    localStorage.setItem('currentUser', JSON.stringify(defaultUser));
-    if (!localStorage.getItem('sessionToken')) {
-        localStorage.setItem('sessionToken', 'guest-admin-session');
+    // ไม่มี session ที่ valid → redirect ไป login (ถ้าเปิด autoRedirect)
+    if (autoRedirect) {
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('currentUser');
+        window.location.replace('login.html');
     }
-    return defaultUser;
+    return null;
 }
 
 /* ══════════════════════════════════════════
@@ -579,6 +575,7 @@ async function _routeAction(action, data) {
                         house_number: data.house_number || '',
                         prefix: reg.prefix || '', firstname: reg.firstname || '',
                         lastname: reg.lastname || '', position: reg.position || '',
+                        resident_type: data.resident_type || 'teacher',
                         is_active: true
                     });
                     residentId = newRes ? newRes.id : null;

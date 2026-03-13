@@ -442,7 +442,7 @@
         
         // เริ่มต้นเมื่อโหลดหน้า
         window.onload = async function() {
-            await checkSession();
+            await checkSession(true);
             initYearSelector();
             setCurrentPeriod();
             await loadData();

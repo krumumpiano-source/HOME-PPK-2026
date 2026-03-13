@@ -1810,7 +1810,7 @@
             var tabContents = document.querySelectorAll('.tab-content');
             tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#64748b;">⏳ กำลังโหลดข้อมูล...</div>'; });
             try {
-                await checkSession();
+                await checkSession(true);
                 await loadAllRequests();
                 initQueueExpirySelector();
                 renderAll();

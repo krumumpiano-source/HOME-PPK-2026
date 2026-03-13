@@ -698,7 +698,7 @@
         // INITIALIZATION
         // ============================
         window.onload = async function() {
-            await checkSession();
+            await checkSession(true);
             initYearSelector();
             setCurrentPeriod();
             await loadMonthData();

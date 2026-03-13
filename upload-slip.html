@@ -627,7 +627,7 @@
         // โหลดข้อมูลเมื่อเปิดหน้า
         window._ppkNavPage = 'upload-slip';
         window.onload = async function(){
-            const user = await checkSession();
+            const user = await checkSession(true);
             // อัปเดต unitNumber จาก user ถ้ายังว่าง
             if (!unitNumber) {
                 unitNumber = (user.resident && user.resident.house_number)

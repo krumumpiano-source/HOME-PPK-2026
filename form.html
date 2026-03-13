@@ -171,7 +171,7 @@
 
     <script>
         window.addEventListener('DOMContentLoaded', async function() {
-            await checkSession();
+            await checkSession(true);
             const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
             const hasHouse = !!(user.houseNumber || user.house_number);
             filterTabsByRole(hasHouse);

@@ -703,7 +703,7 @@
         
         // โหลดข้อมูลเมื่อเปิดหน้า
         window.onload = async function() {
-            const user = await checkSession();
+            const user = await checkSession(true);
 
             // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport
             try {

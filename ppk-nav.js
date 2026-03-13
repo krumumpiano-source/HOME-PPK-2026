@@ -190,7 +190,7 @@ function renderPPKNav(containerId, activePage) {
             }
           });
         }
-        _badge('team-management', d.pendingRegistrations || 0);
+        _badge('admin-settings', d.pendingRegistrations || 0);
         _badge('check-slip', d.pendingSlips || 0);
         _badge('check-request', d.pendingRequests || 0);
       }).catch(function () {});

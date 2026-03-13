@@ -868,7 +868,7 @@
         
         // โหลดข้อมูลเมื่อเปิดหน้า
         window.onload = async function() {
-            await checkSession();
+            await checkSession(true);
             await loadUserData();
             await loadCoresidents();
         };

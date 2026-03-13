@@ -433,6 +433,7 @@
         }
 
         async function loadDashboard() {
+            await checkSession(true);
             var user = {};
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var isAdmin = user.role === 'admin';

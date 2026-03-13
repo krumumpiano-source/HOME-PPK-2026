@@ -1155,7 +1155,7 @@
     }
 
     window.onload = async function(){
-      const user = await checkSession();
+      const user = await checkSession(true);
       currentUserData = user;
 
       // ดึง adminSettings จาก Backend

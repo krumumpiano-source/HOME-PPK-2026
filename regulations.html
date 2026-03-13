@@ -599,7 +599,7 @@
 
         // เมื่อโหลดหน้าเสร็จ
         window.onload = async function() {
-            await checkSession();
+            await checkSession(true);
             await loadRegulationsPdf();
         };
     
