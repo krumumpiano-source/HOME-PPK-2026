@@ -126,6 +126,8 @@
     </style>
 </head>
 <body>
+    <div id="ppkNav"></div>
+    <div class="ppk-main">
     <div class="upload-slip-container">
         <h2>ส่งสลิปการชำระเงิน</h2>
         <form id="slipForm" action="#" method="post" enctype="multipart/form-data">
@@ -623,6 +625,7 @@
         }
 
         // โหลดข้อมูลเมื่อเปิดหน้า
+        window._ppkNavPage = 'upload-slip';
         window.onload = async function(){
             const user = await checkSession();
             // อัปเดต unitNumber จาก user ถ้ายังว่าง
@@ -638,10 +641,13 @@
             await loadBillingInfo();
         };
     </script>
+    </div><!-- /ppk-main -->
     <script src="supabase/config.js?v=20260312L"></script>
     <script src="supabase/supabase.min.js?v=20260312L"></script>
     <script src="ppk-api.js?v=20260312L"></script>
     <script src="ppk-app.js?v=20260312L"></script>
-    <script src="ppk-utils.js?v=20260312L"></script>    <script src="ppk-pwa.js?v=20260312L"></script>
+    <script src="ppk-utils.js?v=20260312L"></script>
+    <script src="ppk-nav.js?v=20260312L"></script>
+    <script src="ppk-pwa.js?v=20260312L"></script>
 </body>
 </html>

@@ -23,6 +23,63 @@
         .form-group label { font-size: 0.85rem; color: #374151; font-weight: 500; }
         .form-group input, .form-group select, .form-group textarea { padding: 0.6rem 0.8rem; border: 1.5px solid #E5E7EB; border-radius: 8px; font: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: #4F46E5; }
+        /* ── LIFF Shared Styles ── */
+        .loading { text-align: center; padding: 3rem 1rem; color: #64748B; font-size: 0.95rem; }
+        .spinner { width: 36px; height: 36px; border: 3px solid #E5E7EB; border-top-color: #4F46E5; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 0.8rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 1.2rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .card-title { font-size: 0.95rem; font-weight: 700; color: #1E293B; margin-bottom: 0.6rem; }
+        .no-link { text-align: center; padding: 1rem 0; color: #64748B; line-height: 1.6; }
+        .header { text-align: center; padding: 0.75rem 0 0.5rem; }
+        .header h1 { margin: 0.3rem 0 0; font-size: 1.15rem; color: #1E293B; }
+        .header p { margin: 0.15rem 0 0.5rem; color: #64748B; font-size: 0.88rem; }
+        .avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #E5E7EB; }
+        .btn { display: block; width: 100%; padding: 0.75rem; border: none; border-radius: 10px; font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-align: center; margin-bottom: 0.5rem; transition: all 0.15s; text-decoration: none; box-sizing: border-box; }
+        .btn-green { background: #10B981; color: #fff; }
+        .btn-green:hover { background: #059669; }
+        .btn-blue { background: linear-gradient(135deg, #4F46E5, #06B6D4); color: #fff; }
+        .btn-blue:hover { box-shadow: 0 4px 16px rgba(79,70,229,0.3); }
+        .btn-gray { background: #F1F5F9; color: #475569; border: 1px solid #E5E7EB; }
+        .btn-gray:hover { background: #E2E8F0; }
+        .btn-orange { background: #F59E0B; color: #fff; }
+        .btn-orange:hover { background: #D97706; }
+        .btn-line { background: #06C755; color: #fff; }
+        .btn-line:hover { background: #05A648; }
+        .amount { font-size: 1.8rem; font-weight: 700; text-align: center; margin: 0.5rem 0; }
+        .amount.due { color: #EF4444; }
+        .amount.ok { color: #10B981; }
+        .row { display: flex; justify-content: space-between; padding: 0.35rem 0; font-size: 0.88rem; color: #475569; border-bottom: 1px solid #F1F5F9; }
+        .row label { color: #64748B; }
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-unpaid { background: #FEE2E2; color: #DC2626; }
+        .badge-approved { background: #D1FAE5; color: #059669; }
+        .badge-pending { background: #FEF3C7; color: #D97706; }
+        .badge-rejected { background: #FEE2E2; color: #DC2626; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-top: 0.75rem; }
+        .menu-card { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 1rem 0.5rem; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; text-decoration: none; color: inherit; cursor: pointer; transition: all 0.15s; }
+        .menu-card:hover { border-color: #C7D2FE; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .menu-card .icon { font-size: 1.5rem; }
+        .menu-card .title { font-size: 0.88rem; font-weight: 600; color: #1E293B; }
+        .menu-card .desc { font-size: 0.75rem; color: #64748B; text-align: center; }
+        .form-panel { display: none; }
+        .form-panel.active { display: block; }
+        .form-title { font-size: 1.05rem; font-weight: 700; color: #4F46E5; margin-bottom: 0.8rem; }
+        .status { padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.88rem; margin-top: 0.6rem; text-align: center; }
+        .status.error { background: #FEE2E2; color: #DC2626; }
+        .status.success { background: #D1FAE5; color: #059669; }
+        .summary { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+        .summary-item { flex: 1; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 10px; padding: 0.6rem; text-align: center; font-size: 0.82rem; color: #475569; }
+        .summary-item strong { display: block; font-size: 1.1rem; color: #1E293B; }
+        .empty { text-align: center; padding: 2rem 1rem; color: #94A3B8; font-size: 0.9rem; }
+        .entry { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid #F1F5F9; }
+        .entry-left { flex: 1; }
+        .entry-period { font-size: 0.92rem; font-weight: 600; color: #1E293B; }
+        .entry-detail { font-size: 0.78rem; color: #64748B; margin-top: 0.1rem; }
+        .entry-amount { font-weight: 700; color: #1E293B; font-size: 0.95rem; white-space: nowrap; }
+        .upload-area { border: 2px dashed #CBD5E1; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; color: #64748B; margin-bottom: 0.8rem; transition: all 0.15s; }
+        .upload-area:hover { border-color: #4F46E5; background: #F8FAFC; }
+        .logo { text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .already-linked { text-align: center; padding: 1rem 0; color: #475569; }
     </style>
 </head>
 <body>
@@ -104,10 +161,10 @@
         const buf = await _slipFile.arrayBuffer();
         let slipUrl = null;
 
-        if (window._supabase && window._supabase.storage) {
-          const { data: upData, error: upErr } = await window._supabase.storage.from('slips').upload(fileName, buf, { contentType: _slipFile.type, upsert: false });
+        if (window._sb && window._sb.storage) {
+          const { data: upData, error: upErr } = await window._sb.storage.from('slips').upload(fileName, buf, { contentType: _slipFile.type, upsert: false });
           if (!upErr && upData) {
-            const { data: urlData } = window._supabase.storage.from('slips').getPublicUrl(fileName);
+            const { data: urlData } = window._sb.storage.from('slips').getPublicUrl(fileName);
             slipUrl = urlData?.publicUrl || null;
           }
         }

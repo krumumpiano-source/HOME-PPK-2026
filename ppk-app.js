@@ -72,38 +72,27 @@ function navigate(page) {
 
 /**
  * requireAuth()
- * ปิดการตรวจสอบ session — เข้าใช้งานได้ทันทีโดยไม่ต้องล็อกอิน
+ * ตรวจสอบว่ามี session หรือไม่ — ถ้าไม่มีให้ redirect ไปหน้า login
  */
 function requireAuth() {
-  // ถ้ายังไม่มี session ให้สร้าง default admin session อัตโนมัติ
   if (!localStorage.getItem('sessionToken')) {
-    localStorage.setItem('sessionToken', 'guest-admin-session');
-    localStorage.setItem('currentUser', JSON.stringify({
-      id: 'USR-GUEST',
-      email: 'pongsatorn.b@ppk.ac.th',
-      firstname: 'พงศธร',
-      lastname: 'โพธิแก้ว',
-      role: 'admin',
-      is_active: true
-    }));
+    window.location.replace('login.html');
   }
 }
 
 /**
  * getCurrentUser() → Object
- * คืนข้อมูล user จาก localStorage — ถ้าไม่มีให้ใช้ admin เริ่มต้น
+ * คืนข้อมูล user จาก localStorage — ถ้าไม่มีให้คืน object ว่าง
  */
 function getCurrentUser() {
   try {
     var u = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if (!u || !u.id) {
-      u = { id: 'USR-GUEST', email: 'pongsatorn.b@ppk.ac.th', firstname: 'พงศธร', lastname: 'โพธิแก้ว', role: 'admin', is_active: true };
-      localStorage.setItem('currentUser', JSON.stringify(u));
-      if (!localStorage.getItem('sessionToken')) localStorage.setItem('sessionToken', 'guest-admin-session');
+      return { id: '', email: '', firstname: '', lastname: '', role: 'resident', is_active: false };
     }
     return u;
   } catch (e) {
-    return { id: 'USR-GUEST', email: 'pongsatorn.b@ppk.ac.th', firstname: 'พงศธร', lastname: 'โพธิแก้ว', role: 'admin', is_active: true };
+    return { id: '', email: '', firstname: '', lastname: '', role: 'resident', is_active: false };
   }
 }
 
