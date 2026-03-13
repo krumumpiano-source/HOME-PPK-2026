@@ -468,6 +468,7 @@ async function _routeAction(action, data) {
                 status: data.status || 'available',
                 notes: data.notes || data.note || ''
             });
+            invalidateResidentCache();
             return { success: true, data: row };
         }
         case 'updateHousing': {
@@ -479,10 +480,12 @@ async function _routeAction(action, data) {
                 notes: data.notes || data.note || undefined,
                 updated_at: new Date().toISOString()
             });
+            invalidateResidentCache();
             return { success: true, data: row };
         }
         case 'deleteHousing': {
             await sbDelete('housing', { id: 'eq.' + data.id });
+            invalidateResidentCache();
             return { success: true };
         }
 
@@ -609,6 +612,7 @@ async function _routeAction(action, data) {
                 status: 'approved', reviewed_by: data.reviewedBy || null,
                 reviewed_at: new Date().toISOString(), review_note: data.note || ''
             });
+            invalidateResidentCache();
             return { success: true, userId: uid, residentId: residentId };
         }
         case 'rejectRegistration': {
@@ -1331,6 +1335,7 @@ async function _routeAction(action, data) {
                 houseId = hRow && hRow[0] ? hRow[0].id : null;
             }
             if (!houseId) {
+                invalidateResidentCache();
                 return { success: true, userId: uid, residentId: null, warning: 'ไม่พบเลขที่บ้าน บันทึก user สำเร็จแต่ไม่ผูกแพรมบ้าน' };
             }
             // สร้าง resident — ใช้เฉพาะ columns ที่มีใน schema
@@ -1344,6 +1349,7 @@ async function _routeAction(action, data) {
                 position:     data.position  || '',
                 is_active:    true
             });
+            invalidateResidentCache();
             return { success: true, userId: uid, residentId: newRes ? newRes.id : null };
         }
         case 'updateResident': {
@@ -1380,6 +1386,7 @@ async function _routeAction(action, data) {
                 }
                 await sbPatch('users', { id: 'eq.' + resRow[0].user_id }, userUp);
             }
+            invalidateResidentCache();
             return { success: true };
         }
         case 'removeResident': {
@@ -1389,6 +1396,7 @@ async function _routeAction(action, data) {
             if (resRows && resRows[0] && resRows[0].user_id) {
                 await sbPatch('users', { id: 'eq.' + resRows[0].user_id }, { is_active: false, updated_at: new Date().toISOString() });
             }
+            invalidateResidentCache();
             return { success: true };
         }
 
@@ -1958,22 +1966,31 @@ async function cachedCall(action, params, ttlMs) {
         if (s) fresh = JSON.parse(s);
     } catch(e) {}
 
-    if (fresh && fresh.d) {
-        if (Date.now() - fresh.t > ttlMs) {
-            callBackend(action, params || {}).then(function(r) {
-                if (r && r.success !== false) {
-                    try { localStorage.setItem(ck, JSON.stringify({ t: Date.now(), d: r })); } catch(e) {}
-                }
-            }).catch(function() {});
-        }
+    // ถ้า cache ยังไม่หมดอายุ → คืนทันที
+    if (fresh && fresh.d && (Date.now() - fresh.t <= ttlMs)) {
         return fresh.d;
     }
 
+    // cache หมดอายุ หรือไม่มี → ดึงข้อมูลใหม่ (รอ)
     var r = await callBackend(action, params || {});
     if (r && r.success !== false) {
         try { localStorage.setItem(ck, JSON.stringify({ t: Date.now(), d: r })); } catch(e) {}
+        return r;
     }
+    // ถ้า fetch ล้มเหลวแต่มี stale data → ใช้ stale เป็น fallback
+    if (fresh && fresh.d) return fresh.d;
     return r;
+}
+
+// ลบ cache ที่เกี่ยวข้องกับ residents/housing (เรียกหลัง admin แก้ไขข้อมูล)
+function invalidateResidentCache() {
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('apicache_getResidents') === 0) keys.push(k);
+        if (k && k.indexOf('apicache_getHousing') === 0) keys.push(k);
+    }
+    keys.forEach(function(k) { localStorage.removeItem(k); });
 }
 
 /* ══════════════════════════════════════════
