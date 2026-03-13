@@ -202,6 +202,24 @@ function renderPPKNav(containerId, activePage) {
       }).catch(function () {});
     }, 1500);
   }
+
+  // Auto re-render: ถ้า localStorage ยังไม่มี permissions (เช่น login ก่อน fix)
+  // รอ checkSession ดึง permissions จาก DB แล้ว render nav ใหม่อัตโนมัติ
+  if (!user.permissions && typeof checkSession === 'function' && !window._ppkNavRerendering) {
+    window._ppkNavRerendering = true;
+    var _cid = containerId || 'ppkNav';
+    var _ap = activePage;
+    setTimeout(function() {
+      checkSession(false).then(function(freshUser) {
+        window._ppkNavRerendering = false;
+        if (!freshUser) return;
+        var fp = freshUser.permissions || [];
+        if (fp.length > 0 || freshUser.role === 'admin' || freshUser.role === 'head') {
+          renderPPKNav(_cid, _ap);
+        }
+      }).catch(function() { window._ppkNavRerendering = false; });
+    }, 100);
+  }
 }
 
 // Logout helper

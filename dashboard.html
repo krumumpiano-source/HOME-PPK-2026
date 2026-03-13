@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>แดชบอร์ด | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313B">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260313C">
     <style>
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
         .dashboard-amount.danger { color: var(--c-danger); }
@@ -264,6 +264,8 @@
             var user = {};
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var isAdmin = user.role === 'admin' || user.role === 'head';
+            var perms = user.permissions || [];
+            function _hp(p) { return perms.indexOf(p) >= 0; }
 
             var residentItems = [
                 { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
@@ -273,19 +275,15 @@
                 { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
             var adminItems = [];
-            if (isAdmin) {
-                adminItems = [
-                    { page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' },
-                    { page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' },
-                    { page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' },
-                    { page: 'payment-notification', icon: '📢', label: 'แจ้งยอดชำระ', bg: '#FEF2F2' },
-                    { page: 'check-slip', icon: '🔍', label: 'ตรวจสลิป', bg: '#F0FDF4', badgeId: 'badge-pending-slips' },
-                    { page: 'check-request', icon: '📋', label: 'ตรวจคำร้อง', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' },
-                    { page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' },
-                    { page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' },
-                    { page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' }
-                ];
-            }
+            if (isAdmin) adminItems.push({ page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' });
+            if (isAdmin || _hp('water')) adminItems.push({ page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' });
+            if (isAdmin || _hp('electric')) adminItems.push({ page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' });
+            if (isAdmin || _hp('notify')) adminItems.push({ page: 'payment-notification', icon: '📢', label: 'แจ้งยอดชำระ', bg: '#FEF2F2' });
+            if (isAdmin || _hp('slip')) adminItems.push({ page: 'check-slip', icon: '🔍', label: 'ตรวจสลิป', bg: '#F0FDF4', badgeId: 'badge-pending-slips' });
+            if (isAdmin || _hp('request')) adminItems.push({ page: 'check-request', icon: '📋', label: 'ตรวจคำร้อง', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' });
+            if (isAdmin || _hp('accounting')) adminItems.push({ page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' });
+            if (isAdmin || _hp('withdraw')) adminItems.push({ page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' });
+            if (isAdmin) adminItems.push({ page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' });
 
             var el = document.getElementById('hubGrid');
             if (!el) return;
@@ -302,7 +300,7 @@
 
             var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> ผู้พักอาศัย</div>';
             html += renderItems(residentItems);
-            if (isAdmin && adminItems.length > 0) {
+            if (adminItems.length > 0) {
                 html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> คณะทำงาน</div>';
                 html += renderItems(adminItems);
             }
@@ -437,8 +435,13 @@
             var user = {};
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var isAdmin = user.role === 'admin' || user.role === 'head';
+            var perms = user.permissions || [];
+            var hasAnyPerm = isAdmin || perms.length > 0;
 
-            buildQuickActions(isAdmin);
+            buildQuickActions(hasAnyPerm);
+            buildHubGrid();
+            // re-render nav หลัง checkSession เพื่อให้ได้ permissions ล่าสุด
+            if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'dashboard');
 
             try {
                 var result = await cachedCall('getDashboardData', {}, 60000);
@@ -482,12 +485,12 @@
             window.location.replace('login.html');
         }
     </script>
-    <script src="supabase/config.js?v=20260313B"></script>
-    <script src="supabase/supabase.min.js?v=20260313B"></script>
-    <script src="ppk-api.js?v=20260313B"></script>
-    <script src="ppk-app.js?v=20260313B"></script>
-    <script src="ppk-utils.js?v=20260313B"></script>
-    <script src="ppk-nav.js?v=20260313B"></script>
-    <script src="ppk-pwa.js?v=20260313B"></script>
+    <script src="supabase/config.js?v=20260313C"></script>
+    <script src="supabase/supabase.min.js?v=20260313C"></script>
+    <script src="ppk-api.js?v=20260313C"></script>
+    <script src="ppk-app.js?v=20260313C"></script>
+    <script src="ppk-utils.js?v=20260313C"></script>
+    <script src="ppk-nav.js?v=20260313C"></script>
+    <script src="ppk-pwa.js?v=20260313C"></script>
 </body>
 </html>

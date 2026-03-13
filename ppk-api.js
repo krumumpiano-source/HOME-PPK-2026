@@ -261,10 +261,12 @@ async function _getSessionRole() {
 
 async function checkSession(autoRedirect) {
     // ตรวจ localStorage ก่อน แต่ต้อง verify กับ DB ทุก 10 นาที
+    // bypass cache ถ้ายังไม่มี permissions (เช่น login จากเวอร์ชันเก่า)
     try {
         var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
         var lastCheck = parseInt(localStorage.getItem('_sessionCheckTs') || '0');
-        if (stored && stored.id && stored.id !== 'USR-GUEST' && (Date.now() - lastCheck < 600000)) return stored;
+        var hasPerms = stored && Array.isArray(stored.permissions);
+        if (stored && stored.id && stored.id !== 'USR-GUEST' && hasPerms && (Date.now() - lastCheck < 600000)) return stored;
     } catch(e) {}
     // ตรวจ token กับ sessions table
     var tk = getSessionToken();
