@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>บันทึกค่าไฟ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260314E">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260314F">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -642,7 +642,7 @@
                         <td><input type="number" class="prev-meter" value="" placeholder="เดิม" onchange="calculateUnitRow(this)" onblur="calculateUnitRow(this)" step="1" min="0"></td>
                         <td><input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" onblur="calculateUnitRow(this)" step="1" min="0"></td>
                         <td class="units-used">0</td>
-                        <td class="electric-amount-cell">${savedAmount ? Math.ceil(savedAmount) : 0}</td>
+                        <td class="electric-amount-cell">${savedAmount ? applyRounding(savedAmount, electricRounding) : 0}</td>
                     `;
                 } else {
                     row.innerHTML = `
@@ -713,7 +713,7 @@
             
             const lostHouse = parseFloat(document.getElementById('lost_house').value) || 0;
             const lostFlat = parseFloat(document.getElementById('lost_flat').value) || 0;
-            const totalLost = Math.ceil(lostHouse) + Math.ceil(lostFlat);
+            const totalLost = applyRounding(lostHouse, electricRounding) + applyRounding(lostFlat, electricRounding);
             const grandTotal = totalAmount + totalLost;
             const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
             const diff = grandTotal - peaTotal;
@@ -831,8 +831,8 @@
             
             // ดึงค่า Lost และค่าไฟการไฟฟ้า
             const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
-            const lostHouse = Math.ceil(parseFloat(document.getElementById('lost_house').value) || 0);
-            const lostFlat = Math.ceil(parseFloat(document.getElementById('lost_flat').value) || 0);
+            const lostHouse = applyRounding(parseFloat(document.getElementById('lost_house').value) || 0, electricRounding);
+            const lostFlat = applyRounding(parseFloat(document.getElementById('lost_flat').value) || 0, electricRounding);
             const totalLost = lostHouse + lostFlat;
             
             rows.forEach(row => {
@@ -843,7 +843,7 @@
                 var amountCell = row.querySelector('.electric-amount-cell');
                 if (amountInput) { amount = amountInput.value || '0'; }
                 else if (amountCell) { amount = amountCell.textContent || '0'; }
-                const amountNum = Math.ceil(parseFloat(amount) || 0);
+                const amountNum = applyRounding(parseFloat(amount) || 0, electricRounding);
                 
                 tableHTML += '<tr>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: center;">' + rowNum + '</td>';
@@ -967,12 +967,12 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260314E"></script>
-    <script src="supabase/supabase.min.js?v=20260314E"></script>
-    <script src="ppk-api.js?v=20260314E"></script>
-    <script src="ppk-app.js?v=20260314E"></script>
-    <script src="ppk-utils.js?v=20260314E"></script>
-    <script src="ppk-nav.js?v=20260314E"></script>
-    <script src="ppk-pwa.js?v=20260314E"></script>
+    <script src="supabase/config.js?v=20260314F"></script>
+    <script src="supabase/supabase.min.js?v=20260314F"></script>
+    <script src="ppk-api.js?v=20260314F"></script>
+    <script src="ppk-app.js?v=20260314F"></script>
+    <script src="ppk-utils.js?v=20260314F"></script>
+    <script src="ppk-nav.js?v=20260314F"></script>
+    <script src="ppk-pwa.js?v=20260314F"></script>
 </body>
 </html>

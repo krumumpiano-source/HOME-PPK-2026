@@ -388,6 +388,7 @@ async function _routeAction(action, data) {
             var oldSalted = await sha256hexSalted(data.oldPassword || '', cpEmail);
             var oldLegacy = await sha256hex(data.oldPassword || '');
             if (uRows[0].password_hash !== oldSalted && uRows[0].password_hash !== oldLegacy) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
+            if (!data.newPassword || data.newPassword.length < 8) return { success: false, error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร' };
             var newHash = await sha256hexSalted(data.newPassword || '', cpEmail);
             await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
             // ลบ flag must_change_pw (ถ้ามี)
@@ -400,7 +401,7 @@ async function _routeAction(action, data) {
             var userId = data.userId || '';
             if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
             var newPassword = data.newPassword || '';
-            if (!newPassword || newPassword.length < 6) return { success: false, error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัว' };
+            if (!newPassword || newPassword.length < 8) return { success: false, error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
             // ตรวจสอบว่ามี flag must_change_pw จริง
             var flagRows = await sbGet('settings', { key: 'eq.must_change_pw_' + userId, limit: '1' });
             if (!flagRows || flagRows.length === 0) return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
@@ -581,6 +582,10 @@ async function _routeAction(action, data) {
                         prefix: reg.prefix || '', firstname: reg.firstname || '',
                         lastname: reg.lastname || '', position: reg.position || '',
                         resident_type: data.resident_type || 'teacher',
+                        address_no: reg.address_no || '', address_village: reg.address_village || '',
+                        address_road: reg.address_road || '', subdistrict: reg.subdistrict || '',
+                        district: reg.district || '', province: reg.province || '',
+                        zipcode: reg.zipcode || '',
                         is_active: true
                     });
                     residentId = newRes ? newRes.id : null;
@@ -849,9 +854,11 @@ async function _routeAction(action, data) {
             // ส่ง success เสมอเพื่อไม่ให้คนภายนอกรู้ว่าอีเมลมีอยู่ในระบบไหม
             if (!uRows || uRows.length === 0) return { success: true, message: 'หากอีเมลนี้มีในระบบ คุณจะได้รับรหัส OTP ภายในไม่กี่นาที' };
             var u = uRows[0];
-            // สร้าง OTP 6 หลัก
+            // สร้าง OTP 6 หลัก (ใช้ crypto-secure random)
             var otp = '';
-            for (var oi = 0; oi < 6; oi++) otp += Math.floor(Math.random() * 10);
+            var _otpArr = new Uint8Array(6);
+            (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(_otpArr) : _otpArr.forEach(function(v,i,a){ a[i] = Math.floor(Math.random()*256); });
+            for (var oi = 0; oi < 6; oi++) otp += (_otpArr[oi] % 10);
             var otpHash = await sha256hex(otp + ':' + email);
             var expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 นาที
             // เก็บ OTP ใน settings table (key = pw_reset_{email})
@@ -949,24 +956,31 @@ async function _routeAction(action, data) {
                 if (lsUser && lsUser.id) profileUserId = lsUser.id;
             }
             if (!profileUserId) return { success: false, error: 'SESSION_EXPIRED' };
-            await sbPatch('users', { id: 'eq.' + profileUserId }, {
+            var _userPatch = {
                 prefix: data.prefix || '', firstname: data.firstname || '',
                 lastname: data.lastname || '', phone: data.phone || '',
                 position: data.position || '', subject_group: data.subject_group || '',
                 updated_at: new Date().toISOString()
-            });
+            };
+            await sbPatch('users', { id: 'eq.' + profileUserId }, _userPatch);
             // อัปเดต residents ด้วย (ถ้ามี)
             if (!profileResId) {
                 var resFallback = await sbGet('residents', { user_id: 'eq.' + profileUserId, is_active: 'eq.true', limit: '1' });
                 if (resFallback && resFallback[0]) profileResId = resFallback[0].id;
             }
             if (profileResId) {
-                await sbPatch('residents', { id: 'eq.' + profileResId }, {
+                var _resPatch = {
                     prefix: data.prefix || '', firstname: data.firstname || '',
                     lastname: data.lastname || '', phone: data.phone || '',
                     position: data.position || '', subject_group: data.subject_group || '',
+                    address_no: data.address_no || '', address_village: data.address_village || '',
+                    address_road: data.address_road || '', subdistrict: data.subdistrict || '',
+                    district: data.district || '', province: data.province || '',
+                    zipcode: data.zipcode || '', profile_photo: data.profilePhoto || data.profile_photo || '',
                     updated_at: new Date().toISOString()
-                });
+                };
+                if (data.move_in_date) _resPatch.move_in_date = data.move_in_date;
+                await sbPatch('residents', { id: 'eq.' + profileResId }, _resPatch);
             }
             return { success: true };
         }
@@ -1277,7 +1291,13 @@ async function _routeAction(action, data) {
             if (data.password) {
                 try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
             }
-            var pwHash = pwRaw ? await sha256hexSalted(pwRaw, email || uid + '@local.ppk') : await sha256hexSalted('changeme123', email || uid + '@local.ppk');
+            // สร้าง random password ถ้าไม่ได้ระบุ (บังคับเปลี่ยนตอนเข้าครั้งแรก)
+            if (!pwRaw) {
+                var _rndArr = new Uint8Array(16);
+                (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(_rndArr) : _rndArr.forEach(function(v,i,a){ a[i] = Math.floor(Math.random()*256); });
+                pwRaw = Array.from(_rndArr, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+            }
+            var pwHash = await sha256hexSalted(pwRaw, email || uid + '@local.ppk');
             // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
             await sbPost('users', {
                 id: uid, email: email || uid + '@local.ppk',
