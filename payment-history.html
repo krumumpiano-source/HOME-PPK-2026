@@ -294,7 +294,7 @@
             // ลอง Backend ก่อน
             if (user.id) {
                 try {
-                    const houseNumber = user.house_number || user.houseNumber || '';
+                    const houseNumber = user.houseNumber || '';
                     const result = await callBackendGet('getPaymentHistory', { houseNumber: houseNumber });
                     if (result && result.success && result.data) {
                         allHistoryData = result.data
@@ -318,7 +318,7 @@
 
             // Fallback: localStorage
             if (allHistoryData.length === 0) {
-                const unitNumber = localStorage.getItem('currentUserUnit') || user.house_number || '';
+                const unitNumber = localStorage.getItem('currentUserUnit') || user.houseNumber || '';
                 for (let m = 1; m <= 12; m++) {
                     const mm = String(m).padStart(2, '0');
                     const key = 'slipSubmissions_' + year + mm;

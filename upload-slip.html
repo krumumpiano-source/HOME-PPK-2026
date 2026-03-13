@@ -634,9 +634,7 @@
             const user = await checkSession(true);
             // อัปเดต unitNumber จาก user ถ้ายังว่าง
             if (!unitNumber) {
-                unitNumber = (user.resident && user.resident.house_number)
-                    ? user.resident.house_number
-                    : (user.house_number || '');
+                unitNumber = user.houseNumber || '';
             }
             // Admin mode
             await initAdminOverride(user);
