@@ -355,6 +355,9 @@ img { max-width: 100%; height: auto; }
     border-bottom: 1px solid #312E81;
     box-shadow: 0 2px 10px rgba(0,0,0,.4);
     padding: 0 16px;
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
     z-index: 301;
   }
 }
@@ -431,6 +434,16 @@ img { max-width: 100%; height: auto; }
 .nav-backdrop.open { display: block; }
 
 /* ════════════════════════════════════════════
+   SAFE-AREA — Curved edge phones
+   ════════════════════════════════════════════ */
+.ppk-main,
+.dashboard-container,
+.main-container {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ════════════════════════════════════════════
    MAIN CONTENT AREA — Sidebar layout
    ════════════════════════════════════════════ */
 .ppk-main,
@@ -453,6 +466,8 @@ img { max-width: 100%; height: auto; }
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--c-border);
   padding: 0 1.25rem;
+  padding-left: calc(1.25rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(1.25rem + env(safe-area-inset-right, 0px));
   height: var(--header-h);
   display: flex; align-items: center; gap: 0.75rem;
 }

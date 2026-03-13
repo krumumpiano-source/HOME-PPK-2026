@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,9 +10,9 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>LIFF History | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260312L">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260313A">
     <style>
-        body { margin: 0; font-family: 'Kanit', sans-serif; background: var(--c-bg, #F8FAFC); padding: 0.75rem; }
+        body { margin: 0; font-family: 'Kanit', sans-serif; background: var(--c-bg, #F8FAFC); padding: 0.75rem; padding-left: max(0.75rem, env(safe-area-inset-left)); padding-right: max(0.75rem, env(safe-area-inset-right)); padding-bottom: env(safe-area-inset-bottom); }
         .liff-container { max-width: 480px; margin: 0 auto; }
         .liff-card { background: var(--c-surface, #fff); border: 1px solid var(--c-border, #E5E7EB); border-radius: 14px; padding: 1.2rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .liff-header { text-align: center; margin-bottom: 1rem; }
@@ -99,9 +99,9 @@
   <a href="liff-dashboard.html"><button class="btn" style="display:none" id="backBtn">← กลับหน้าหลัก</button></a>
 
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="supabase/config.js?v=20260312L"></script>
-  <script src="supabase/supabase.min.js?v=20260312L"></script>
-  <script src="ppk-api.js?v=20260312L"></script>
+  <script src="supabase/config.js?v=20260313A"></script>
+  <script src="supabase/supabase.min.js?v=20260313A"></script>
+  <script src="ppk-api.js?v=20260313A"></script>
   <script>
     const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
@@ -118,6 +118,10 @@
     }
 
     async function getLiffId() {
+      try {
+        var r = await callBackend('getLineSettings');
+        if (r && r.success && r.data && r.data.lineLiffId) return r.data.lineLiffId;
+      } catch(e) {}
       return '2009333832-4En2TkWD';
     }
 
@@ -175,6 +179,6 @@
     }
     init();
   </script>
-    <script src="ppk-pwa.js?v=20260312L"></script>
+    <script src="ppk-pwa.js?v=20260313A"></script>
 </body>
 </html>

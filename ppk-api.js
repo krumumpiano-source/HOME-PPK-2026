@@ -194,6 +194,10 @@ async function sha256hex(str) {
         return b.toString(16).padStart(2, '0');
     }).join('');
 }
+// Salted hash: sha256(email + ':' + password) — ใช้ email เป็น salt
+async function sha256hexSalted(password, email) {
+    return sha256hex((email || '').trim().toLowerCase() + ':' + password);
+}
 
 /* ══════════════════════════════════════════
    AUTH — Register / Logout / Session
@@ -211,8 +215,8 @@ async function ppkLogout() {
 }
 
 async function ppkRegister(data) {
-    var hash = await sha256hex(data.password || '');
     var email = (data.email || '').trim().toLowerCase();
+    var hash = await sha256hexSalted(data.password || '', email);
     // ตรวจสอบอีเมลซ้ำ
     var existU = await sbGet('users', { email: 'eq.' + email, select: 'id', limit: '1' });
     if (existU && existU.length > 0) return { success: false, error: 'อีเมลนี้มีบัญชีในระบบแล้ว' };
@@ -321,8 +325,16 @@ async function _routeAction(action, data) {
             }
             // เข้าสู่ระบบปกติ — ตรวจรหัสผ่าน
             if (!data.password) return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
-            var pwHash = await sha256hex(data.password);
-            if (u.password_hash !== pwHash) return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
+            var pwSalted = await sha256hexSalted(data.password, data.email);
+            var pwLegacy = await sha256hex(data.password);
+            var matched = false;
+            if (u.password_hash === pwSalted) { matched = true; }
+            else if (u.password_hash === pwLegacy) {
+                // Lazy migration: อัปเกรดเป็น salted hash
+                matched = true;
+                try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+            if (!matched) return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
             // ดึงข้อมูล resident ที่ active
             var resident = null;
             try {
@@ -374,11 +386,13 @@ async function _routeAction(action, data) {
                 if (lsU && lsU.id) userId = lsU.id;
             }
             if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
-            var uRows = await sbGet('users', { id: 'eq.' + userId, select: 'id,password_hash', limit: '1' });
+            var uRows = await sbGet('users', { id: 'eq.' + userId, select: 'id,email,password_hash', limit: '1' });
             if (!uRows || !uRows[0]) return { success: false, error: 'ไม่พบผู้ใช้' };
-            var oldHash = await sha256hex(data.oldPassword || '');
-            if (uRows[0].password_hash !== oldHash) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
-            var newHash = await sha256hex(data.newPassword || '');
+            var cpEmail = (uRows[0].email || '').trim().toLowerCase();
+            var oldSalted = await sha256hexSalted(data.oldPassword || '', cpEmail);
+            var oldLegacy = await sha256hex(data.oldPassword || '');
+            if (uRows[0].password_hash !== oldSalted && uRows[0].password_hash !== oldLegacy) return { success: false, error: 'รหัสผ่านเดิมไม่ถูกต้อง' };
+            var newHash = await sha256hexSalted(data.newPassword || '', cpEmail);
             await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
             // ลบ flag must_change_pw (ถ้ามี)
             try { await sbDelete('settings', { key: 'eq.must_change_pw_' + userId }); } catch(e) {}
@@ -394,7 +408,9 @@ async function _routeAction(action, data) {
             // ตรวจสอบว่ามี flag must_change_pw จริง
             var flagRows = await sbGet('settings', { key: 'eq.must_change_pw_' + userId, limit: '1' });
             if (!flagRows || flagRows.length === 0) return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
-            var newHash = await sha256hex(newPassword);
+            var fpUser = await sbGet('users', { id: 'eq.' + userId, select: 'email', limit: '1' });
+            var fpEmail = (fpUser && fpUser[0] ? fpUser[0].email : '').trim().toLowerCase();
+            var newHash = await sha256hexSalted(newPassword, fpEmail);
             await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
             // ลบ flag
             await sbDelete('settings', { key: 'eq.must_change_pw_' + userId });
@@ -738,11 +754,12 @@ async function _routeAction(action, data) {
         }
 
         case 'setupAdmin': {
-            var hash = await sha256hex(data.password || '');
+            var saEmail = (data.email || '').trim().toLowerCase();
+            var hash = await sha256hexSalted(data.password || '', saEmail);
             var uid = 'USR' + Date.now().toString(36).toUpperCase();
             await sbPost('users', {
                 id: uid,
-                email: (data.email || '').trim().toLowerCase(),
+                email: saEmail,
                 firstname: data.firstname || 'Admin',
                 lastname:  data.lastname  || '',
                 role: 'admin',
@@ -828,8 +845,8 @@ async function _routeAction(action, data) {
             if (emailSent) {
                 return { success: true, emailSent: true, message: 'ส่งรหัส OTP ไปยังอีเมล ' + email + ' แล้ว กรุณาตรวจสอบกล่องจดหมาย' };
             }
-            // Fallback: ถ้าส่งอีเมลไม่ได้ แสดง OTP บนหน้าจอ (dev mode)
-            return { success: true, emailSent: false, fallbackOtp: otp, message: 'ระบบอีเมลยังไม่พร้อม — รหัส OTP ของคุณคือ: ' + otp };
+            // Fallback: ถ้าส่งอีเมลไม่ได้
+            return { success: true, emailSent: false, message: 'ระบบอีเมลยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่าน' };
         }
 
         case 'verifyResetCode': {
@@ -852,7 +869,7 @@ async function _routeAction(action, data) {
                 return { success: false, error: 'รหัส OTP ไม่ถูกต้อง (เหลือ ' + (5 - rr.attempts) + ' ครั้ง)' };
             }
             // OTP ถูกต้อง → เปลี่ยนรหัสผ่าน
-            var pwHash = await sha256hex(newPassword);
+            var pwHash = await sha256hexSalted(newPassword, email);
             await sbPatch('users', { email: 'eq.' + email }, { password_hash: pwHash, updated_at: new Date().toISOString() });
             // ลบ OTP record
             await sbDelete('settings', { key: 'eq.' + otpKey });
@@ -1223,7 +1240,7 @@ async function _routeAction(action, data) {
             if (data.password) {
                 try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
             }
-            var pwHash = pwRaw ? await sha256hex(pwRaw) : await sha256hex('changeme123');
+            var pwHash = pwRaw ? await sha256hexSalted(pwRaw, email || uid + '@local.ppk') : await sha256hexSalted('changeme123', email || uid + '@local.ppk');
             // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
             await sbPost('users', {
                 id: uid, email: email || uid + '@local.ppk',
@@ -1282,7 +1299,12 @@ async function _routeAction(action, data) {
                 if (data.password) {
                     var pw2 = '';
                     try { pw2 = atob(data.password); } catch(e3) { pw2 = data.password; }
-                    userUp.password_hash = await sha256hex(pw2);
+                    var urEmail = (data.email || userUp.email || '').trim().toLowerCase();
+                    if (!urEmail) {
+                        var urU = await sbGet('users', { id: 'eq.' + resRow[0].user_id, select: 'email', limit: '1' });
+                        urEmail = urU && urU[0] ? (urU[0].email || '').trim().toLowerCase() : '';
+                    }
+                    userUp.password_hash = await sha256hexSalted(pw2, urEmail);
                 }
                 await sbPatch('users', { id: 'eq.' + resRow[0].user_id }, userUp);
             }
@@ -1614,8 +1636,9 @@ async function _routeAction(action, data) {
                 if (!userRows || !userRows[0]) return { success: false, error: 'ไม่พบข้อมูลผู้ใช้' };
                 var user = userRows[0];
                 // เข้ารหัส password ด้วย SHA-256 เทียบกับ hash ใน DB
-                var pwdHash = await sha256hex(pwd);
-                if (pwdHash !== user.password_hash) {
+                var pwdSalted = await sha256hexSalted(pwd, (user.email || '').trim().toLowerCase());
+                var pwdLegacy = await sha256hex(pwd);
+                if (pwdSalted !== user.password_hash && pwdLegacy !== user.password_hash) {
                     return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
                 }
             } else {

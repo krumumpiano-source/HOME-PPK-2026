@@ -1,5 +1,5 @@
 ﻿// HOME PPK 2026 — Service Worker v1
-var CACHE_NAME = 'ppk-v20260312L';
+var CACHE_NAME = 'ppk-v20260313A';
 var PRECACHE = [
   './',
   './dashboard.html',
@@ -9,10 +9,17 @@ var PRECACHE = [
   './ppk-app.js',
   './ppk-api.js',
   './ppk-utils.js',
+  './ppk-pwa.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './ppk-pwa.js'
+  './supabase/config.js',
+  './supabase/supabase.min.js',
+  './liff-dashboard.html',
+  './liff-forms.html',
+  './liff-history.html',
+  './liff-register.html',
+  './liff-slip.html'
 ];
 
 self.addEventListener('install', function(e) {
