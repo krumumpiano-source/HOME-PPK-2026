@@ -1920,6 +1920,8 @@ async function _routeAction(action, data) {
             var userIds = Object.keys(perms);
             for (var pi = 0; pi < userIds.length; pi++) {
                 var uid = userIds[pi];
+                // ข้าม virtual IDs ที่ไม่มีใน users table
+                if (!uid || uid.indexOf('coh_') === 0) continue;
                 var userPerms = perms[uid];
                 // ลบสิทธิ์เก่าของ user นี้
                 await sbDelete('permissions', { user_id: 'eq.' + uid });

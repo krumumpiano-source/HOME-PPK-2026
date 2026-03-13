@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313C">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -4562,6 +4562,8 @@
             document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
                 const userId = checkbox.dataset.id;
                 const perm = checkbox.dataset.perm;
+                // ข้าม virtual staff (ยังไม่มีบัญชีในระบบ)
+                if (!userId || userId.startsWith('coh_')) return;
                 
                 if (!permissions[userId]) {
                     permissions[userId] = {};
@@ -4654,12 +4656,12 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260313C"></script>
-    <script src="supabase/supabase.min.js?v=20260313C"></script>
-    <script src="ppk-api.js?v=20260313C"></script>
-    <script src="ppk-app.js?v=20260313C"></script>
-    <script src="ppk-utils.js?v=20260313C"></script>
-    <script src="ppk-nav.js?v=20260313C"></script>
-    <script src="ppk-pwa.js?v=20260313C"></script>
+    <script src="supabase/config.js?v=20260313D"></script>
+    <script src="supabase/supabase.min.js?v=20260313D"></script>
+    <script src="ppk-api.js?v=20260313D"></script>
+    <script src="ppk-app.js?v=20260313D"></script>
+    <script src="ppk-utils.js?v=20260313D"></script>
+    <script src="ppk-nav.js?v=20260313D"></script>
+    <script src="ppk-pwa.js?v=20260313D"></script>
 </body>
 </html>
