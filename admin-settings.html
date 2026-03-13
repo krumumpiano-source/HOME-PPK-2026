@@ -671,7 +671,7 @@
             <div class="tab-content" id="tab-permissions">
                 <div class="section">
                     <div class="section-title">🔐 จัดการสิทธิ์การเข้าถึง</div>
-                    <div class="section-desc">กำหนดสิทธิ์เมนูต่างๆ ให้กับบุคลากรที่มีอีเมลในระบบ — แต่ละคนมีหลายสิทธิ์พร้อมกันได้ | คลิก ⚙️ ที่หัวคอลัมน์เพื่อดูชื่อสิทธิ์</div>
+                    <div class="section-desc">เลือกบุคลากร → คลิกเปิดสิทธิ์ → กดบันทึก<br>สิทธิ์จะมีผลภายใน 1 นาทีโดยผู้รับสิทธิ์ไม่ต้องออกจากระบบ</div>
 
                     <details style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.1rem 1rem;">
                         <summary style="cursor:pointer; padding:0.6rem 0; font-weight:600; color:var(--muted); font-size:0.85rem; user-select:none;">⚙️ คำอธิบายสิทธิ์แต่ละประเภท (คลิกเพื่อขยาย)</summary>
@@ -683,61 +683,57 @@
                             <div>💰 <strong>เบิกยอด</strong> — เบิกยอดรวมประจำเดือน</div>
                             <div>📑 <strong>บัญชี</strong> — ดูและส่งออกรายงานการเงิน</div>
                             <div>📋 <strong>คำร้อง</strong> — ตรวจ/อนุมัติคำร้องซ่อมและคิว</div>
-                            <div>� <strong>หัวหน้างาน</strong> — สิทธิ์เทียบเท่าแอดมิน แสดงเมนูบริหาร</div>
-                            <div>�🔧 <strong>แอดมิน</strong> — สิทธิ์สูงสุด เข้าถึงได้ทุกส่วน</div>
+                            <div>👑 <strong>หัวหน้างาน</strong> — สิทธิ์เทียบเท่าแอดมิน แสดงเมนูบริหาร</div>
+                            <div>🔧 <strong>แอดมิน</strong> — สิทธิ์สูงสุด เข้าถึงได้ทุกส่วน</div>
                         </div>
                     </details>
 
-                    <div class="search-box" style="margin-top: 1rem;">
-                        <input type="text" id="searchPermission" placeholder="🔍 ค้นหาชื่อ/บ้าน..." oninput="filterPermissionTable()">
+                    <!-- เพิ่มผู้รับสิทธิ์ -->
+                    <div style="margin-top:1.25rem;">
+                        <label style="font-weight:700; font-size:0.92rem; color:var(--text); display:block; margin-bottom:0.4rem;">➕ เพิ่มผู้รับสิทธิ์</label>
+                        <div style="position:relative;">
+                            <input type="text" id="permSearchInput"
+                                placeholder="🔍 พิมพ์ชื่อเพื่อค้นหาบุคลากร..."
+                                oninput="filterPermSearch()" onfocus="filterPermSearch()"
+                                autocomplete="off"
+                                style="width:100%; padding:0.65rem 1rem; border:2px solid var(--border); border-radius:12px; font-size:0.9rem; background:var(--card); color:var(--text); box-sizing:border-box;">
+                            <div id="permSearchDropdown" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:220px; overflow-y:auto; background:var(--card); border:2px solid var(--primary); border-top:0; border-radius:0 0 12px 12px; z-index:100; box-shadow:0 6px 20px rgba(0,0,0,0.15);"></div>
+                        </div>
                     </div>
 
-                    <!-- Warning: staff stored as cohabitant names -->
-                    <div id="permStaffWarning" style="display:none; margin-top:0.75rem;"></div>
-
-                    <div class="table-container">
-                        <table id="permissionTable">
-                            <thead>
-                                <tr>
-                                    <th style="width:40px;">#</th>
-                                    <th style="text-align:left;">ชื่อ-นามสกุล / อีเมล</th>
-                                    <th style="width:60px;" title="ผู้บันทึกค่าน้ำ">💧</th>
-                                    <th style="width:60px;" title="ผู้บันทึกค่าไฟ">⚡</th>
-                                    <th style="width:60px;" title="ผู้แจ้งยอดชำระ">📢</th>
-                                    <th style="width:60px;" title="ผู้ตรวจสลิป">🧾</th>
-                                    <th style="width:60px;" title="ผู้เบิกยอดประจำเดือน">💰</th>
-                                    <th style="width:60px;" title="ผู้ทำบัญชี">📑</th>
-                                    <th style="width:60px;" title="ผู้ตรวจคำร้อง/ลำดับคิว">📋</th>
-                                    <th style="width:60px;" title="หัวหน้างาน">👑</th>
-                                    <th style="width:60px;" title="แอดมิน">🔧</th>
-                                </tr>
-                            </thead>
-                            <tbody id="permissionTableBody">
-                                <!-- Data will be loaded dynamically -->
-                            </tbody>
-                        </table>
+                    <!-- Cards for assigned people -->
+                    <div style="margin-top:1.5rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                            <span style="font-weight:700; font-size:0.95rem; color:var(--text);">👥 ผู้ที่มีสิทธิ์พิเศษ</span>
+                            <span id="permAssignedCount" style="background:var(--primary); color:#fff; font-size:0.78rem; font-weight:700; padding:2px 10px; border-radius:20px;">0</span>
+                        </div>
+                        <div id="permAssignedCards" style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <div style="color:var(--muted); font-size:0.9rem; text-align:center; padding:2rem 1rem;">⏳ กำลังโหลดข้อมูล...</div>
+                        </div>
                     </div>
 
-                    <div class="btn-group" style="margin-top: 1rem;">
-                        <button class="btn btn-success" onclick="savePermissions()">💾 บันทึกการตั้งค่าสิทธิ์</button>
-                        <button class="btn btn-info" onclick="exportPermissions()">📥 ส่งออกข้อมูลสิทธิ์</button>
+                    <!-- Buttons -->
+                    <div style="margin-top:1.25rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+                        <button class="btn btn-success" onclick="savePermissions()">💾 บันทึกสิทธิ์ทั้งหมด</button>
+                        <button class="btn btn-info" onclick="exportPermissions()">📥 ส่งออก</button>
                     </div>
 
-                    <div class="settings-card" style="margin-top: 1.5rem;">
+                    <!-- Summary -->
+                    <div class="settings-card" style="margin-top:1.5rem;">
                         <div class="settings-card-header">
                             <span class="settings-card-title">📊 สรุปการกำหนดสิทธิ์</span>
                         </div>
-                        <div id="permissionSummary" style="margin-top: 0.5rem;">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem;">
-                                <div>💧 ผู้บันทึกค่าน้ำ: <strong id="countWater">0</strong> คน</div>
-                                <div>⚡ ผู้บันทึกค่าไฟ: <strong id="countElectric">0</strong> คน</div>
-                                <div>📢 ผู้แจ้งยอดชำระ: <strong id="countNotify">0</strong> คน</div>
-                                <div>🧾 ผู้ตรวจสลิป: <strong id="countSlip">0</strong> คน</div>
-                                <div>💰 ผู้เบิกยอดประจำเดือน: <strong id="countWithdraw">0</strong> คน</div>
-                                <div>📑 ผู้ทำบัญชี: <strong id="countAccounting">0</strong> คน</div>
-                                <div>📋 ผู้ตรวจคำร้อง: <strong id="countRequest">0</strong> คน</div>
-                                <div>� หัวหน้างาน: <strong id="countHead">0</strong> คน</div>
-                                <div>�🔧 แอดมิน: <strong id="countAdmin">0</strong> คน</div>
+                        <div id="permissionSummary" style="margin-top:0.5rem;">
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.4rem; font-size:0.88rem;">
+                                <div>💧 ค่าน้ำ: <strong id="countWater">0</strong> คน</div>
+                                <div>⚡ ค่าไฟ: <strong id="countElectric">0</strong> คน</div>
+                                <div>📢 แจ้งยอด: <strong id="countNotify">0</strong> คน</div>
+                                <div>🧾 ตรวจสลิป: <strong id="countSlip">0</strong> คน</div>
+                                <div>💰 เบิกยอด: <strong id="countWithdraw">0</strong> คน</div>
+                                <div>📑 บัญชี: <strong id="countAccounting">0</strong> คน</div>
+                                <div>📋 คำร้อง: <strong id="countRequest">0</strong> คน</div>
+                                <div>👑 หัวหน้า: <strong id="countHead">0</strong> คน</div>
+                                <div>🔧 แอดมิน: <strong id="countAdmin">0</strong> คน</div>
                             </div>
                         </div>
                     </div>
@@ -4297,346 +4293,281 @@
             }
         }
 
-        async function renderPermissionTable() {
-            const tbody = document.getElementById('permissionTableBody');
-            tbody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">&#x23F3; กำลังโหลดข้อมูล...</td></tr>';
+        // ===== Permission Card-Based UI =====
+        var _permAllResidents = [];
+        var _permData = {};
+        var _permNewlyAdded = [];
+        var _permRemovedUsers = [];
 
-            // โหลดทั้ง residents และ permissions จาก DB เสมอ
-            let allResidents;
-            let permissions;
+        var _PERM_PILLS = [
+            { key: 'water', icon: '\uD83D\uDCA7', label: '\u0E04\u0E48\u0E32\u0E19\u0E49\u0E33', color: '#3b82f6' },
+            { key: 'electric', icon: '\u26A1', label: '\u0E04\u0E48\u0E32\u0E44\u0E1F', color: '#f59e0b' },
+            { key: 'notify', icon: '\uD83D\uDCE2', label: '\u0E41\u0E08\u0E49\u0E07\u0E22\u0E2D\u0E14', color: '#f97316' },
+            { key: 'slip', icon: '\uD83E\uDDFE', label: '\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E25\u0E34\u0E1B', color: '#22c55e' },
+            { key: 'withdraw', icon: '\uD83D\uDCB0', label: '\u0E40\u0E1A\u0E34\u0E01\u0E22\u0E2D\u0E14', color: '#a855f7' },
+            { key: 'accounting', icon: '\uD83D\uDCD1', label: '\u0E1A\u0E31\u0E0D\u0E0A\u0E35', color: '#14b8a6' },
+            { key: 'request', icon: '\uD83D\uDCCB', label: '\u0E04\u0E33\u0E23\u0E49\u0E2D\u0E07', color: '#6366f1' },
+            { key: 'head', icon: '\uD83D\uDC51', label: '\u0E2B\u0E31\u0E27\u0E2B\u0E19\u0E49\u0E32', color: '#eab308' },
+            { key: 'admin', icon: '\uD83D\uDD27', label: '\u0E41\u0E2D\u0E14\u0E21\u0E34\u0E19', color: '#ef4444' }
+        ];
+
+        function _getPermUserIds() {
+            var fromData = Object.keys(_permData).filter(function(uid) {
+                var p = _permData[uid];
+                return p && Object.keys(p).some(function(k) { return p[k]; });
+            });
+            var all = fromData.slice();
+            _permNewlyAdded.forEach(function(uid) {
+                if (all.indexOf(uid) === -1) all.push(uid);
+            });
+            return all;
+        }
+
+        async function renderPermissionTable() {
+            var cardsDiv = document.getElementById('permAssignedCards');
+            if (cardsDiv) cardsDiv.innerHTML = '<div style="color:var(--muted); font-size:0.9rem; text-align:center; padding:2rem 1rem;">\u23F3 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25...</div>';
+
             try {
-                const [resResult, permResult] = await Promise.all([
+                var results = await Promise.all([
                     callBackendGet('getResidents'),
                     callBackendGet('getAllPermissions')
                 ]);
+                var resResult = results[0], permResult = results[1];
+
                 if (resResult && resResult.success && resResult.data) {
-                    allResidents = resResult.data.map(r => ({
-                        id: r.id || '',
-                        user_id: r.user_id || '',
-                        prefix: r.prefix || '',
-                        firstname: r.firstname || '',
-                        lastname: r.lastname || '',
-                        position: r.position || '',
-                        subject_group: r.subject_group || '',
-                        phone: r.phone || '',
-                        email: r.email || '',
-                        house_number: r.house_number || '',
-                        residentType: r.resident_type || 'staff',
-                        cohabitants: r.cohabitants || 0,
-                        cohabitantNames: r.cohabitant_names || '[]',
-                        birthdate: r.birthdate || '',
-                        status: r.status || 'active'
-                    }));
-                    localStorage.setItem(STORAGE_KEYS.residents, JSON.stringify(allResidents));
+                    // Save full data to localStorage for other features
+                    var fullData = resResult.data.map(function(r) {
+                        return {
+                            id: r.id || '', user_id: r.user_id || '',
+                            prefix: r.prefix || '', firstname: r.firstname || '', lastname: r.lastname || '',
+                            position: r.position || '', subject_group: r.subject_group || '',
+                            phone: r.phone || '', email: r.email || '',
+                            house_number: r.house_number || '',
+                            residentType: r.resident_type || 'staff',
+                            cohabitants: r.cohabitants || 0,
+                            cohabitantNames: r.cohabitant_names || '[]',
+                            birthdate: r.birthdate || '', status: r.status || 'active'
+                        };
+                    });
+                    localStorage.setItem(STORAGE_KEYS.residents, JSON.stringify(fullData));
+
+                    _permAllResidents = resResult.data
+                        .filter(function(r) { return r.user_id && r.email && r.email.trim() && r.resident_type !== 'cohabitant'; })
+                        .map(function(r) {
+                            return {
+                                id: r.id || '', user_id: r.user_id || '',
+                                prefix: r.prefix || '', firstname: r.firstname || '', lastname: r.lastname || '',
+                                email: r.email || '', house_number: r.house_number || '', position: r.position || ''
+                            };
+                        });
                 } else {
-                    allResidents = getResidentsData();
+                    _permAllResidents = getResidentsData()
+                        .filter(function(r) { return r.user_id && r.email && r.email.trim() && r.residentType !== 'cohabitant'; })
+                        .map(function(r) {
+                            return { id: r.id, user_id: r.user_id, prefix: r.prefix||'', firstname: r.firstname||'',
+                                     lastname: r.lastname||'', email: r.email||'', house_number: r.house_number||'', position: r.position||'' };
+                        });
                 }
                 if (permResult && permResult.success && permResult.data) {
-                    permissions = permResult.data;
-                    savePermissionsData(permissions);
+                    _permData = permResult.data;
+                    savePermissionsData(_permData);
                 } else {
-                    permissions = getPermissionsData();
+                    _permData = getPermissionsData();
                 }
             } catch(e) {
-                allResidents = getResidentsData();
-                permissions = getPermissionsData();
-            }
-
-            if (!allResidents || allResidents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">ไม่พบข้อมูลบุคลากร</td></tr>';
-                return;
-            }
-
-            // ---- รวมบุคลากรทุกคน (staff) ไม่ว่าจะมีอีเมลหรือไม่ ----
-            // staff = residentType ไม่ใช่ cohabitant
-            const staffResidents = allResidents
-                .filter(r => r.residentType !== 'cohabitant')
-                .map(r => ({ ...r, isVirtual: !(r.email && r.email.trim()) }));
-
-            // ---- ดึงบุคลากรที่บันทึกไว้ใน cohabitantNames ด้วย relationship = บุคลากรโรงเรียนพะเยาพิทยาคม ----
-            const existingNameKeys = new Set(allResidents.map(r =>
-                (r.prefix + r.firstname + r.lastname).replace(/\s/g, '')
-            ));
-            const prefixList = ['นางสาว','นาง','นาย','เด็กชาย','เด็กหญิง','ด.ช.','ด.ญ.'];
-            const STAFF_REL_VALUES = ['บุคลากรโรงเรียนพะเยาพิทยาคม','บุคลากร','staff'];
-            const virtualStaff = [];
-            allResidents.forEach(parentRes => {
-                try {
-                    const arr = JSON.parse(parentRes.cohabitantNames || '[]');
-                    if (!Array.isArray(arr)) return;
-                    arr.forEach((item, idx) => {
-                        let pfx = '', fn = '', ln = '', isStaffCoh = false;
-                        if (typeof item === 'string' && item.includes('(บุคลากร)')) {
-                            // รูปแบบเก่า: "นางสาวXXX YYY (บุคลากร)"
-                            const namePart = item.replace(/\s*\([^)]+\)\s*/g, '').trim();
-                            let rest = namePart;
-                            for (const p of prefixList) { if (rest.startsWith(p)) { pfx = p; rest = rest.slice(p.length).trim(); break; } }
-                            const pts = rest.split(' '); fn = pts[0]||''; ln = pts.slice(1).join(' ');
-                            isStaffCoh = true;
-                        } else if (item && typeof item === 'object') {
-                            const rel = (item.relationship || '').trim();
-                            if (STAFF_REL_VALUES.includes(rel)) {
-                                pfx = item.prefix||''; fn = item.firstname||''; ln = item.lastname||'';
-                                isStaffCoh = true;
-                            }
-                        }
-                        if (!isStaffCoh || !fn) return;
-                        const nameKey = (pfx+fn+ln).replace(/\s/g, '');
-                        if (existingNameKeys.has(nameKey)) return; // มี record แล้ว
-                        const synId = `coh_${parentRes.id}_${idx}`;
-                        virtualStaff.push({
-                            id: synId, prefix: pfx, firstname: fn, lastname: ln,
-                            house_number: parentRes.house_number || '',
-                            residentType: 'staff', email: '', isVirtual: true
-                        });
-                        existingNameKeys.add(nameKey);
+                _permAllResidents = getResidentsData()
+                    .filter(function(r) { return r.user_id && r.email; })
+                    .map(function(r) {
+                        return { id: r.id, user_id: r.user_id, prefix: r.prefix||'', firstname: r.firstname||'',
+                                 lastname: r.lastname||'', email: r.email||'', house_number: r.house_number||'', position: r.position||'' };
                     });
-                } catch(e) {}
-            });
+                _permData = getPermissionsData();
+            }
+            _permNewlyAdded = [];
+            _permRemovedUsers = [];
+            renderPermCards();
+        }
 
-            // ซ่อน warning div
-            const warnDiv = document.getElementById('permStaffWarning');
-            if (warnDiv) warnDiv.style.display = 'none';
+        function renderPermCards() {
+            var cardsDiv = document.getElementById('permAssignedCards');
+            var userIds = _getPermUserIds();
 
-            const allToShow = [...staffResidents, ...virtualStaff];
-
-            if (allToShow.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">ยังไม่มีบุคลากรในระบบ</td></tr>';
+            if (userIds.length === 0) {
+                cardsDiv.innerHTML = '<div style="color:var(--muted); font-size:0.9rem; text-align:center; padding:2rem 1rem; background:var(--bg); border-radius:12px; border:2px dashed var(--border);">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1C\u0E39\u0E49\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E1E\u0E34\u0E40\u0E28\u0E29<br><span style="font-size:0.82rem;">\u0E43\u0E0A\u0E49\u0E0A\u0E48\u0E2D\u0E07\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E1A\u0E38\u0E04\u0E25\u0E32\u0E01\u0E23</span></div>';
+                document.getElementById('permAssignedCount').textContent = '0';
                 updatePermissionSummary();
                 return;
             }
 
-            // จัดกลุ่มตามบ้าน
-            const houseGroups = {};
-            allToShow.forEach(r => {
-                const hk = r.house_number || '__none__';
-                if (!houseGroups[hk]) houseGroups[hk] = [];
-                houseGroups[hk].push(r);
-            });
+            var html = '';
+            userIds.forEach(function(uid) {
+                var res = null;
+                for (var i = 0; i < _permAllResidents.length; i++) {
+                    if (_permAllResidents[i].user_id === uid) { res = _permAllResidents[i]; break; }
+                }
+                if (!res) return;
+                var name = (res.prefix||'') + (res.firstname||'') + ' ' + (res.lastname||'');
+                var house = res.house_number ? (' \u00B7 ' + res.house_number) : '';
+                var perms = _permData[uid] || {};
 
-            // เรียง: บ้าน → แฟลต → ไม่ระบุ; ภายในกลุ่มเลขน้อยไปมาก
-            const isFlat = s => /แฟลต|flat/i.test(s);
-            const numOf  = s => parseInt((s.match(/\d+/) || ['0'])[0]);
-            const sortedHouseKeys = Object.keys(houseGroups).sort((a, b) => {
-                if (a === '__none__') return 1;
-                if (b === '__none__') return -1;
-                const ta = isFlat(a) ? 1 : 0, tb = isFlat(b) ? 1 : 0;
-                if (ta !== tb) return ta - tb;
-                return numOf(a) - numOf(b);
-            });
+                html += '<div data-uid="' + uid + '" style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1rem 1.25rem; box-shadow:0 1px 3px rgba(0,0,0,0.06);">';
+                html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+                html += '<div>';
+                html += '<div style="font-weight:700; font-size:0.95rem; color:var(--text);">\uD83D\uDC64 ' + name + '</div>';
+                html += '<div style="font-size:0.8rem; color:var(--muted); margin-top:2px;">' + (res.email||'') + house + '</div>';
+                html += '</div>';
+                html += '<button onclick="removePermPerson(\'' + uid + '\')" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--muted); padding:0 0.25rem;" title="\u0E25\u0E1A\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14">\u2715</button>';
+                html += '</div>';
+                html += '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.75rem;">';
 
-            let rowNum = 0;
-            let html = '';
-
-            sortedHouseKeys.forEach(houseKey => {
-                const members = houseGroups[houseKey];
-                const houseLabel = houseKey === '__none__' ? '⚫ ยังไม่ระบุบ้าน' :
-                    (isFlat(houseKey) ? `🏢 ${houseKey}` : `🏠 ${houseKey}`);
-                const houseColor = houseKey === '__none__' ? '#64748b' :
-                    (isFlat(houseKey) ? '#0891b2' : '#1d4ed8');
-                const bgColor = houseKey === '__none__' ? '#f8fafc' :
-                    (isFlat(houseKey) ? '#e0f2fe' : '#eff6ff');
-                const hasNoEmail = members.some(m => m.isVirtual);
-
-                // Group header row
-                html += `<tr class="perm-group-header" data-house="${houseKey}"
-                    style="background:${bgColor}; border-top:2px solid ${houseColor}; border-bottom:1px solid ${houseColor}40;">
-                    <td colspan="11" style="text-align:left; padding:0.5rem 1rem; font-weight:700; color:${houseColor}; font-size:0.93rem;">
-                        ${houseLabel}
-                        <span style="font-weight:400; font-size:0.82rem; color:#64748b; margin-left:0.75rem;">${members.length} บุคลากร</span>
-                        ${hasNoEmail ? '<span style="font-size:0.78rem; color:#f59e0b; margin-left:0.5rem;">⚠️ บางท่านยังไม่มีอีเมล</span>' : ''}
-                    </td>
-                </tr>`;
-
-                // Individual member rows
-                members.forEach(resident => {
-                    rowNum++;
-                    const fullName = `${resident.prefix || ''}${resident.firstname || ''} ${resident.lastname || ''}`;
-                    const userPerms = permissions[resident.user_id || resident.id] || {};
-                    const noAccess = resident.isVirtual || !resident.user_id;
-
-                    const makeCheckbox = (perm, accentColor = '') => {
-                        if (noAccess) {
-                            const style = accentColor
-                                ? `style="accent-color:${accentColor}; width:16px; height:16px; opacity:0.3;"`
-                                : 'style="width:16px; height:16px; opacity:0.3;"';
-                            return `<input type="checkbox" disabled title="ต้องเพิ่มอีเมลก่อนจึงจะกำหนดสิทธิ์ได้" ${style}>`;
-                        }
-                        const style = accentColor
-                            ? `style="accent-color:${accentColor}; width:16px; height:16px;"`
-                            : 'style="width:16px; height:16px;"';
-                        return `<input type="checkbox" class="perm-checkbox" data-id="${resident.user_id}" data-perm="${perm}" ${userPerms[perm] ? 'checked' : ''} ${style}>`;
-                    };
-
-                    const emailNote = noAccess
-                        ? `<span style="font-size:0.72rem;color:#f59e0b;">⚠️ ยังไม่มีอีเมล — <a href="#" onclick="addMissingStaff('${fullName.replace(/'/g,"\\'")}','${(resident.house_number||'').replace(/'/g,"\\'")}');return false;" style="color:var(--primary);">เพิ่มข้อมูล</a></span>`
-                        : `<span style="font-size:0.72rem;color:var(--muted);">${resident.email}</span>`;
-
-                    html += `
-                        <tr class="perm-member-row" data-id="${resident.user_id || resident.id}" data-house="${houseKey}" ${noAccess ? 'style="opacity:0.76;"' : ''}>
-                            <td style="color:var(--muted); font-size:0.82rem;">${rowNum}</td>
-                            <td style="text-align:left; padding-left:1.75rem;">
-                                <div style="font-weight:600; font-size:0.9rem;">${fullName}</div>
-                                <div>${emailNote}</div>
-                            </td>
-                            <td>${makeCheckbox('water')}</td>
-                            <td>${makeCheckbox('electric')}</td>
-                            <td>${makeCheckbox('notify')}</td>
-                            <td>${makeCheckbox('slip')}</td>
-                            <td>${makeCheckbox('withdraw')}</td>
-                            <td>${makeCheckbox('accounting')}</td>
-                            <td>${makeCheckbox('request')}</td>
-                            <td>${makeCheckbox('head', '#eab308')}</td>
-                            <td>${makeCheckbox('admin', '#ef4444')}</td>
-                        </tr>
-                    `;
+                _PERM_PILLS.forEach(function(p) {
+                    var active = !!perms[p.key];
+                    var pillStyle = active
+                        ? 'background:' + p.color + '; color:#fff; border:2px solid ' + p.color + ';'
+                        : 'background:transparent; color:var(--muted); border:2px dashed var(--border);';
+                    html += '<span onclick="togglePerm(\'' + uid + '\',\'' + p.key + '\')" '
+                        + 'style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; cursor:pointer; user-select:none; transition:all 0.15s; ' + pillStyle + '">'
+                        + p.icon + ' ' + p.label + '</span>';
                 });
+
+                html += '</div></div>';
             });
 
-            tbody.innerHTML = html;
-            
-            document.querySelectorAll('.perm-checkbox').forEach(cb => {
-                cb.addEventListener('change', updatePermissionSummary);
-            });
-            
+            cardsDiv.innerHTML = html;
+            document.getElementById('permAssignedCount').textContent = String(userIds.length);
             updatePermissionSummary();
         }
 
-        // Pre-fill addResident modal for a staff member stored only as cohabitant name
-        function addMissingStaff(fullname, house) {
-            // Parse prefix from name
-            const prefixes = ['นางสาว','นาง','นาย','เด็กชาย','เด็กหญิง','ด.ช.','ด.ญ.'];
-            let prefix = '', rest = fullname.trim();
-            for (const p of prefixes) {
-                if (rest.startsWith(p)) { prefix = p; rest = rest.slice(p.length).trim(); break; }
+        function filterPermSearch() {
+            var input = document.getElementById('permSearchInput');
+            var dropdown = document.getElementById('permSearchDropdown');
+            var q = (input.value || '').trim().toLowerCase();
+
+            if (!q || q.length < 1) { dropdown.style.display = 'none'; return; }
+
+            var assignedSet = {};
+            _getPermUserIds().forEach(function(uid) { assignedSet[uid] = true; });
+
+            var matches = _permAllResidents.filter(function(r) {
+                if (assignedSet[r.user_id]) return false;
+                var text = ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')+' '+(r.email||'')+' '+(r.house_number||'')).toLowerCase();
+                return text.indexOf(q) >= 0;
+            }).slice(0, 8);
+
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div style="padding:0.75rem 1rem; color:var(--muted); font-size:0.85rem;">\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E38\u0E04\u0E25\u0E32\u0E01\u0E23 \u0E2B\u0E23\u0E37\u0E2D\u0E21\u0E35\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E41\u0E25\u0E49\u0E27</div>';
+            } else {
+                dropdown.innerHTML = matches.map(function(r) {
+                    var rname = (r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'');
+                    var rhouse = r.house_number || '';
+                    return '<div onclick="addPermPerson(\'' + r.user_id + '\')" '
+                        + 'style="padding:0.6rem 1rem; cursor:pointer; border-bottom:1px solid var(--border); font-size:0.88rem; transition:background 0.1s;" '
+                        + 'onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=\'\'">'
+                        + '<span style="font-weight:600;">' + rname + '</span>'
+                        + (rhouse ? '<span style="color:var(--muted); margin-left:0.5rem; font-size:0.8rem;">' + rhouse + '</span>' : '')
+                        + '<div style="font-size:0.75rem; color:var(--muted);">' + (r.email||'') + '</div>'
+                        + '</div>';
+                }).join('');
             }
-            const parts = rest.split(' ');
-            const firstname = parts[0] || '';
-            const lastname = parts.slice(1).join(' ');
-
-            // Open modal and fill fields
-            openModal('addResident');
-            setTimeout(() => {
-                document.getElementById('residentType').value = 'staff';
-                document.getElementById('residentPrefix').value = prefix;
-                document.getElementById('residentFirstName').value = firstname;
-                document.getElementById('residentLastName').value = lastname;
-                populateHouseDropdown('residentHouse');
-                setTimeout(() => {
-                    document.getElementById('residentHouse').value = house;
-                }, 150);
-            }, 100);
+            dropdown.style.display = 'block';
         }
 
-        function filterPermissionTable() {
-            const searchTerm = document.getElementById('searchPermission').value.toLowerCase();
-            // group headers hide/show based on whether any member in that house matches
-            const groupHeaders = document.querySelectorAll('#permissionTableBody tr.perm-group-header');
-            groupHeaders.forEach(headerRow => {
-                const houseKey = headerRow.dataset.house;
-                const memberRows = document.querySelectorAll(`#permissionTableBody tr.perm-member-row[data-house="${houseKey}"]`);
-                let anyVisible = false;
-                memberRows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    const show = !searchTerm || text.includes(searchTerm) || houseKey.toLowerCase().includes(searchTerm);
-                    row.style.display = show ? '' : 'none';
-                    if (show) anyVisible = true;
-                });
-                headerRow.style.display = anyVisible || !searchTerm ? '' : 'none';
-            });
-            // fallback for non-grouped rows
-            document.querySelectorAll('#permissionTableBody tr:not(.perm-group-header):not(.perm-member-row)').forEach(row => {
-                row.style.display = !searchTerm || row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
-            });
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#permSearchInput') && !e.target.closest('#permSearchDropdown')) {
+                var dd = document.getElementById('permSearchDropdown');
+                if (dd) dd.style.display = 'none';
+            }
+        });
+
+        function addPermPerson(userId) {
+            if (_permNewlyAdded.indexOf(userId) === -1) _permNewlyAdded.push(userId);
+            if (!_permData[userId]) _permData[userId] = {};
+            document.getElementById('permSearchInput').value = '';
+            document.getElementById('permSearchDropdown').style.display = 'none';
+            renderPermCards();
         }
+
+        function togglePerm(userId, perm) {
+            if (!_permData[userId]) _permData[userId] = {};
+            _permData[userId][perm] = !_permData[userId][perm];
+            renderPermCards();
+        }
+
+        function removePermPerson(userId) {
+            // Clear all perms
+            _permData[userId] = {};
+            var idx = _permNewlyAdded.indexOf(userId);
+            if (idx >= 0) _permNewlyAdded.splice(idx, 1);
+            if (_permRemovedUsers.indexOf(userId) === -1) _permRemovedUsers.push(userId);
+            renderPermCards();
+        }
+
+        // Keep for backward compatibility
+        function filterPermissionTable() {}
 
         function updatePermissionSummary() {
-            const counts = {
-                water: 0, electric: 0, notify: 0, slip: 0,
-                withdraw: 0, accounting: 0, request: 0, head: 0, admin: 0
-            };
-            
-            document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
-                const perm = cb.dataset.perm;
-                if (counts.hasOwnProperty(perm)) {
-                    counts[perm]++;
-                }
+            var counts = { water:0, electric:0, notify:0, slip:0, withdraw:0, accounting:0, request:0, head:0, admin:0 };
+            var userIds = _getPermUserIds();
+            userIds.forEach(function(uid) {
+                var perms = _permData[uid] || {};
+                Object.keys(counts).forEach(function(k) { if (perms[k]) counts[k]++; });
             });
-            
-            document.getElementById('countWater').textContent = counts.water;
-            document.getElementById('countElectric').textContent = counts.electric;
-            document.getElementById('countNotify').textContent = counts.notify;
-            document.getElementById('countSlip').textContent = counts.slip;
-            document.getElementById('countWithdraw').textContent = counts.withdraw;
-            document.getElementById('countAccounting').textContent = counts.accounting;
-            document.getElementById('countRequest').textContent = counts.request;
-            document.getElementById('countHead').textContent = counts.head;
-            document.getElementById('countAdmin').textContent = counts.admin;
+            var el;
+            el = document.getElementById('countWater'); if (el) el.textContent = counts.water;
+            el = document.getElementById('countElectric'); if (el) el.textContent = counts.electric;
+            el = document.getElementById('countNotify'); if (el) el.textContent = counts.notify;
+            el = document.getElementById('countSlip'); if (el) el.textContent = counts.slip;
+            el = document.getElementById('countWithdraw'); if (el) el.textContent = counts.withdraw;
+            el = document.getElementById('countAccounting'); if (el) el.textContent = counts.accounting;
+            el = document.getElementById('countRequest'); if (el) el.textContent = counts.request;
+            el = document.getElementById('countHead'); if (el) el.textContent = counts.head;
+            el = document.getElementById('countAdmin'); if (el) el.textContent = counts.admin;
         }
 
         function savePermissions() {
-            const permissions = {};
-            
-            document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
-                const userId = checkbox.dataset.id;
-                const perm = checkbox.dataset.perm;
-                // ข้าม virtual staff (ยังไม่มีบัญชีในระบบ)
-                if (!userId || userId.startsWith('coh_')) return;
-                
-                if (!permissions[userId]) {
-                    permissions[userId] = {};
-                }
-                permissions[userId][perm] = checkbox.checked;
+            var permsToSave = {};
+            _getPermUserIds().forEach(function(uid) {
+                permsToSave[uid] = _permData[uid] || {};
             });
-            
-            // Save to Backend
-            callBackend('updatePermissions', { permissions }).then(result => {
+            // Include removed users with empty perms to delete on server
+            _permRemovedUsers.forEach(function(uid) {
+                if (!permsToSave[uid]) permsToSave[uid] = {};
+            });
+
+            callBackend('updatePermissions', { permissions: permsToSave }).then(function(result) {
                 if (result && result.success) {
-                    ppkAlert('บันทึกการตั้งค่าสิทธิ์เรียบร้อยแล้ว');
+                    ppkAlert('\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E41\u0E25\u0E49\u0E27');
+                    _permNewlyAdded = [];
+                    _permRemovedUsers = [];
+                    renderPermissionTable();
                 } else {
-                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                    ppkAlert('\u0E40\u0E01\u0E34\u0E14\u0E02\u0E49\u0E2D\u0E1C\u0E34\u0E14\u0E1E\u0E25\u0E32\u0E14: ' + (result && result.error ? result.error : '\u0E44\u0E21\u0E48\u0E17\u0E23\u0E32\u0E1A\u0E2A\u0E32\u0E40\u0E2B\u0E15\u0E38'));
                 }
-            }).catch(err => ppkAlert(err.message));
-            
-            savePermissionsData(permissions);
+            }).catch(function(err) { ppkAlert(err.message); });
+            savePermissionsData(permsToSave);
         }
 
         function exportPermissions() {
-            const permissions = getPermissionsData();
-            const residents = getResidentsData();
-            
-            const exportData = {
-                timestamp: new Date().toISOString(),
-                permissions: permissions,
-                summary: {}
-            };
-            
-            // Build summary
-            Object.keys(PERMISSION_TYPES).forEach(perm => {
-                exportData.summary[perm] = {
-                    label: PERMISSION_TYPES[perm].label,
-                    users: []
-                };
+            var permissions = getPermissionsData();
+            var residents = getResidentsData();
+            var exportData = { timestamp: new Date().toISOString(), permissions: permissions, summary: {} };
+            Object.keys(PERMISSION_TYPES).forEach(function(perm) {
+                exportData.summary[perm] = { label: PERMISSION_TYPES[perm].label, users: [] };
             });
-            
-            residents.forEach(r => {
-                const userPerms = permissions[r.user_id || r.id] || {};
-                const fullName = `${r.prefix || ''}${r.firstname || ''} ${r.lastname || ''}`;
-                
-                Object.keys(userPerms).forEach(perm => {
+            residents.forEach(function(r) {
+                var userPerms = permissions[r.user_id || r.id] || {};
+                var fullName = (r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'');
+                Object.keys(userPerms).forEach(function(perm) {
                     if (userPerms[perm] && exportData.summary[perm]) {
-                        exportData.summary[perm].users.push({
-                            name: fullName,
-                            house: r.house_number || '-'
-                        });
+                        exportData.summary[perm].users.push({ name: fullName, house: r.house_number || '-' });
                     }
                 });
             });
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            var dataStr = JSON.stringify(exportData, null, 2);
+            var blob = new Blob([dataStr], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
             a.href = url;
             a.download = 'permissions_' + new Date().toISOString().slice(0,10) + '.json';
             a.click();
