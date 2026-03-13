@@ -21,7 +21,7 @@ function renderPPKNav(containerId, activePage) {
   var user = {};
   try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) {}
   var role = user.role || 'user';
-  var isAdmin = role === 'admin';
+  var isAdmin = role === 'admin' || role === 'head';
   var lastName = user.lastname || '';
   var firstName = user.firstname || '';
   var displayName = (firstName + ' ' + lastName).trim() || '\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49';
@@ -53,7 +53,7 @@ function renderPPKNav(containerId, activePage) {
 
   // Role label
   var roleLabel = isAdmin
-    ? '\ud83d\udd27 \u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19'
+    ? (role === 'head' ? '\ud83d\udc51 \u0e2b\u0e31\u0e27\u0e2b\u0e19\u0e49\u0e32\u0e07\u0e32\u0e19' : '\ud83d\udd27 \u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19')
     : '\ud83c\udfe0 \u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22';
   var houseBadge = houseNumber
     ? '<div class="sidebar-user-house">\u0e1a\u0e49\u0e32\u0e19 ' + _esc(houseNumber) + '</div>'
@@ -175,7 +175,7 @@ function renderPPKNav(containerId, activePage) {
   if (isAdmin && typeof callBackend === 'function') {
     setTimeout(function () {
       callBackend('getDashboardData', {}).then(function (r) {
-        if (!r || !r.success || r.role !== 'admin') return;
+        if (!r || !r.success || (r.role !== 'admin' && r.role !== 'head')) return;
         var d = r.data || {};
         function _badge(selector, count) {
           // Find sidebar link and add badge

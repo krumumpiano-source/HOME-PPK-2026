@@ -603,8 +603,22 @@ async function _routeAction(action, data) {
         case 'getWaterBills': {
             var q = { order: 'recorded_at.desc' };
             if (data.period) q.period = 'eq.' + data.period;
+            if (data.year) { q.period = 'gte.' + data.year + '-01'; q['period'] = undefined; q['period:gte'] = data.year + '-01'; delete q['period:gte']; q.period = 'gte.' + data.year + '-01'; }
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
-            var rows = await sbGet('water_bills', q);
+            var rows;
+            if (data.year && !data.period) {
+                // ดึงทั้งปี: period ตั้งแต่ YYYY-01 ถึง YYYY-12
+                var q2 = { order: 'period.asc,house_number.asc' };
+                q2['period'] = 'gte.' + data.year + '-01';
+                if (data.houseNumber) q2.house_number = 'eq.' + data.houseNumber;
+                var allRows = await sbGet('water_bills', q2);
+                rows = (allRows || []).filter(function(r) { return r.period && r.period.substring(0, 4) === String(data.year).substring(0, 4); });
+            } else {
+                var q1 = { order: 'recorded_at.desc' };
+                if (data.period) q1.period = 'eq.' + data.period;
+                if (data.houseNumber) q1.house_number = 'eq.' + data.houseNumber;
+                rows = await sbGet('water_bills', q1);
+            }
             return { success: true, data: rows };
         }
         case 'submitWaterBill': {
@@ -1097,7 +1111,7 @@ async function _routeAction(action, data) {
                 return !a.expires_at || new Date(a.expires_at) > now2;
             });
 
-            if (sessRole === 'admin') {
+            if (sessRole === 'admin' || sessRole === 'head') {
                 var [pendingReg, pendingSlips, pendingReqs] = await Promise.all([
                     sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }),
                     sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }),
@@ -1704,6 +1718,12 @@ async function _routeAction(action, data) {
                     if (userPerms[permKeys[pk]]) {
                         await sbPost('permissions', { user_id: uid, permission: permKeys[pk] });
                     }
+                }
+                // อัปเดต role ตามสิทธิ์ head / admin
+                if (userPerms['head']) {
+                    try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'head', updated_at: new Date().toISOString() }); } catch(e) {}
+                } else if (userPerms['admin']) {
+                    try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'admin', updated_at: new Date().toISOString() }); } catch(e) {}
                 }
             }
             return { success: true, message: 'บันทึกสิทธิ์เรียบร้อย' };

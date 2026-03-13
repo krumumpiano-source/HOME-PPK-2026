@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313A">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260314A">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -683,7 +683,8 @@
                             <div>💰 <strong>เบิกยอด</strong> — เบิกยอดรวมประจำเดือน</div>
                             <div>📑 <strong>บัญชี</strong> — ดูและส่งออกรายงานการเงิน</div>
                             <div>📋 <strong>คำร้อง</strong> — ตรวจ/อนุมัติคำร้องซ่อมและคิว</div>
-                            <div>🔧 <strong>แอดมิน</strong> — สิทธิ์สูงสุด เข้าถึงได้ทุกส่วน</div>
+                            <div>� <strong>หัวหน้างาน</strong> — สิทธิ์เทียบเท่าแอดมิน แสดงเมนูบริหาร</div>
+                            <div>�🔧 <strong>แอดมิน</strong> — สิทธิ์สูงสุด เข้าถึงได้ทุกส่วน</div>
                         </div>
                     </details>
 
@@ -707,6 +708,7 @@
                                     <th style="width:60px;" title="ผู้เบิกยอดประจำเดือน">💰</th>
                                     <th style="width:60px;" title="ผู้ทำบัญชี">📑</th>
                                     <th style="width:60px;" title="ผู้ตรวจคำร้อง/ลำดับคิว">📋</th>
+                                    <th style="width:60px;" title="หัวหน้างาน">👑</th>
                                     <th style="width:60px;" title="แอดมิน">🔧</th>
                                 </tr>
                             </thead>
@@ -734,7 +736,8 @@
                                 <div>💰 ผู้เบิกยอดประจำเดือน: <strong id="countWithdraw">0</strong> คน</div>
                                 <div>📑 ผู้ทำบัญชี: <strong id="countAccounting">0</strong> คน</div>
                                 <div>📋 ผู้ตรวจคำร้อง: <strong id="countRequest">0</strong> คน</div>
-                                <div>🔧 แอดมิน: <strong id="countAdmin">0</strong> คน</div>
+                                <div>� หัวหน้างาน: <strong id="countHead">0</strong> คน</div>
+                                <div>�🔧 แอดมิน: <strong id="countAdmin">0</strong> คน</div>
                             </div>
                         </div>
                     </div>
@@ -4380,7 +4383,7 @@
             const allToShow = [...staffResidents, ...virtualStaff];
 
             if (allToShow.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="color:var(--muted);">ยังไม่มีบุคลากรในระบบ</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="color:var(--muted);">ยังไม่มีบุคลากรในระบบ</td></tr>';
                 updatePermissionSummary();
                 return;
             }
@@ -4420,7 +4423,7 @@
                 // Group header row
                 html += `<tr class="perm-group-header" data-house="${houseKey}"
                     style="background:${bgColor}; border-top:2px solid ${houseColor}; border-bottom:1px solid ${houseColor}40;">
-                    <td colspan="10" style="text-align:left; padding:0.5rem 1rem; font-weight:700; color:${houseColor}; font-size:0.93rem;">
+                    <td colspan="11" style="text-align:left; padding:0.5rem 1rem; font-weight:700; color:${houseColor}; font-size:0.93rem;">
                         ${houseLabel}
                         <span style="font-weight:400; font-size:0.82rem; color:#64748b; margin-left:0.75rem;">${members.length} บุคลากร</span>
                         ${hasNoEmail ? '<span style="font-size:0.78rem; color:#f59e0b; margin-left:0.5rem;">⚠️ บางท่านยังไม่มีอีเมล</span>' : ''}
@@ -4465,6 +4468,7 @@
                             <td>${makeCheckbox('withdraw')}</td>
                             <td>${makeCheckbox('accounting')}</td>
                             <td>${makeCheckbox('request')}</td>
+                            <td>${makeCheckbox('head', '#eab308')}</td>
                             <td>${makeCheckbox('admin', '#ef4444')}</td>
                         </tr>
                     `;
@@ -4531,7 +4535,7 @@
         function updatePermissionSummary() {
             const counts = {
                 water: 0, electric: 0, notify: 0, slip: 0,
-                withdraw: 0, accounting: 0, request: 0, admin: 0
+                withdraw: 0, accounting: 0, request: 0, head: 0, admin: 0
             };
             
             document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
@@ -4548,6 +4552,7 @@
             document.getElementById('countWithdraw').textContent = counts.withdraw;
             document.getElementById('countAccounting').textContent = counts.accounting;
             document.getElementById('countRequest').textContent = counts.request;
+            document.getElementById('countHead').textContent = counts.head;
             document.getElementById('countAdmin').textContent = counts.admin;
         }
 
@@ -4645,12 +4650,12 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260313A"></script>
-    <script src="supabase/supabase.min.js?v=20260313A"></script>
-    <script src="ppk-api.js?v=20260313A"></script>
-    <script src="ppk-app.js?v=20260313A"></script>
-    <script src="ppk-utils.js?v=20260313A"></script>
-    <script src="ppk-nav.js?v=20260313A"></script>
-    <script src="ppk-pwa.js?v=20260313A"></script>
+    <script src="supabase/config.js?v=20260314A"></script>
+    <script src="supabase/supabase.min.js?v=20260314A"></script>
+    <script src="ppk-api.js?v=20260314A"></script>
+    <script src="ppk-app.js?v=20260314A"></script>
+    <script src="ppk-utils.js?v=20260314A"></script>
+    <script src="ppk-nav.js?v=20260314A"></script>
+    <script src="ppk-pwa.js?v=20260314A"></script>
 </body>
 </html>

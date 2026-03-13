@@ -101,7 +101,7 @@ function getCurrentUser() {
  */
 function isAdmin() {
   var u = getCurrentUser();
-  return u.role === 'admin';
+  return u.role === 'admin' || u.role === 'head';
 }
 
 /**
