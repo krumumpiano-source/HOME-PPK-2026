@@ -1703,6 +1703,58 @@ async function _routeAction(action, data) {
             return { success: true, data: mapped };
         }
 
+        /* ── getMemberStatus — สถานะสมาชิก + สิทธิ์ ─── */
+        case 'getMemberStatus': {
+            var residents = await sbGet('residents', { is_active: 'eq.true', order: 'house_number.asc' });
+            residents = residents || [];
+            // ดึง user accounts ที่ link กับ residents
+            var uids = residents.map(function(r) { return r.user_id; }).filter(Boolean);
+            var usersArr = [];
+            if (uids.length > 0) {
+                try { usersArr = await sbGet('users', { id: 'in.(' + uids.join(',') + ')', select: 'id,email,role,is_active,created_at' }); } catch(e) {}
+            }
+            var uMap = {};
+            (usersArr || []).forEach(function(u) { uMap[u.id] = u; });
+            // ดึง permissions ทั้งหมด
+            var allPerms = [];
+            if (uids.length > 0) {
+                try { allPerms = await sbGet('permissions', { user_id: 'in.(' + uids.join(',') + ')', select: 'user_id,permission' }); } catch(e) {}
+            }
+            var permMap = {};
+            (allPerms || []).forEach(function(p) {
+                if (!permMap[p.user_id]) permMap[p.user_id] = [];
+                permMap[p.user_id].push(p.permission);
+            });
+            // ดึง pending registrations
+            var pendRegs = [];
+            try { pendRegs = await sbGet('pending_registrations', { status: 'eq.pending', select: 'email,firstname,lastname,prefix' }); } catch(e) {}
+            var pendEmailSet = {};
+            (pendRegs || []).forEach(function(pr) { if (pr.email) pendEmailSet[pr.email.toLowerCase()] = pr; });
+            // รวมข้อมูล
+            var result = residents.map(function(r) {
+                var u = r.user_id ? uMap[r.user_id] : null;
+                var perms = (u && permMap[u.id]) ? permMap[u.id] : [];
+                var regStatus = 'not_registered';
+                if (u && u.is_active) regStatus = 'registered';
+                else if (u && !u.is_active) regStatus = 'disabled';
+                else if (r.email && pendEmailSet[r.email.toLowerCase()]) regStatus = 'pending';
+                return {
+                    house_number: r.house_number || '',
+                    prefix: r.prefix || '',
+                    firstname: r.firstname || '',
+                    lastname: r.lastname || '',
+                    position: r.position || '',
+                    email: r.email || (u ? u.email : '') || '',
+                    role: u ? u.role : '',
+                    reg_status: regStatus,
+                    permissions: perms,
+                    registered_at: u ? u.created_at : ''
+                };
+            });
+            result.sort(_naturalCmp);
+            return { success: true, data: result, pendingCount: (pendRegs || []).length };
+        }
+
         /* ── updatePermissions — บันทึกสิทธิ์ผู้ใช้ ─── */
         case 'updatePermissions': {
             var perms = data.permissions || {};

@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>จัดการทีมงาน | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260314B">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260314C">
             <style>
         @media (max-width: 600px) {
             }
@@ -305,6 +305,126 @@
         width: 100%;
         max-width: 800px;
     }
+
+    /* ── Member Status Section ── */
+    .member-section {
+        width: 100%;
+        max-width: 800px;
+    }
+    .member-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+    }
+    .member-title .toggle-icon {
+        transition: transform 0.2s;
+        font-size: 0.9rem;
+    }
+    .member-title.collapsed .toggle-icon { transform: rotate(-90deg); }
+    .member-summary-bar {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.8rem;
+    }
+    .member-summary-item {
+        background: #fff;
+        border-radius: 8px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .member-summary-item.green { color: #059669; border-left: 3px solid #10b981; }
+    .member-summary-item.red   { color: #dc2626; border-left: 3px solid #ef4444; }
+    .member-summary-item.yellow{ color: #d97706; border-left: 3px solid #f59e0b; }
+    .member-summary-item.blue  { color: #2563eb; border-left: 3px solid #3b82f6; }
+    .member-table-wrap {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .member-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        min-width: 600px;
+    }
+    .member-table th {
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 600;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+        font-size: 0.78rem;
+        border-bottom: 2px solid #e2e8f0;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .member-table th:nth-child(2) { text-align: left; }
+    .member-table td {
+        padding: 0.5rem 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .member-table td:nth-child(2) { text-align: left; }
+    .member-table tr:hover { background: #f8fafc; }
+    .member-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .member-badge.registered { background: #d1fae5; color: #065f46; }
+    .member-badge.not-reg    { background: #fee2e2; color: #991b1b; }
+    .member-badge.pending    { background: #fef3c7; color: #92400e; }
+    .member-badge.disabled   { background: #f3f4f6; color: #6b7280; }
+    .member-role-badge {
+        display: inline-block;
+        padding: 0.1rem 0.4rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+    .perm-icons { display: flex; gap: 0.15rem; flex-wrap: wrap; justify-content: center; }
+    .perm-icon {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        cursor: default;
+    }
+    .member-search-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+    }
+    .member-search-box input {
+        flex: 1;
+        padding: 0.4rem 0.7rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-family: inherit;
+    }
+    @media (max-width: 600px) {
+        .member-table { font-size: 0.78rem; min-width: 520px; }
+        .member-summary-bar { gap: 0.4rem; }
+    }
     </style>
 </head>
 <body>
@@ -328,6 +448,37 @@
             <div class="workflow-title">📋 ขั้นตอนประจำเดือน</div>
             <div class="workflow-list" id="workflowList">
                 <div class="kpi-loading">⏳ กำลังตรวจสอบ...</div>
+            </div>
+        </div>
+
+        <!-- ── สถานะสมาชิก ── -->
+        <div class="member-section" id="memberSection">
+            <div class="member-title" id="memberToggle" onclick="toggleMemberSection()">
+                <span class="toggle-icon">▼</span>
+                👤 สถานะสมาชิก &amp; สิทธิ์การเข้าถึง
+            </div>
+            <div id="memberContent">
+                <div id="memberSummary" class="member-summary-bar"></div>
+                <div class="member-search-box">
+                    <input type="text" id="memberSearch" placeholder="🔍 ค้นชื่อ, บ้านเลขที่..." oninput="filterMemberTable()">
+                </div>
+                <div class="member-table-wrap">
+                    <table class="member-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;">#</th>
+                                <th>ชื่อ-สกุล</th>
+                                <th>บ้าน</th>
+                                <th>สถานะ</th>
+                                <th>บทบาท</th>
+                                <th>สิทธิ์เข้าเมนู</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTableBody">
+                            <tr><td colspan="6" style="color:#9ca3af; padding:1.5rem;">⏳ กำลังโหลดข้อมูลสมาชิก...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -398,12 +549,12 @@
             window.location.replace('dashboard.html');
         }
     </script>
-    <script src="supabase/config.js?v=20260314B"></script>
-    <script src="supabase/supabase.min.js?v=20260314B"></script>
-    <script src="ppk-api.js?v=20260314B"></script>
-    <script src="ppk-app.js?v=20260314B"></script>
-    <script src="ppk-utils.js?v=20260314B"></script>
-    <script src="ppk-nav.js?v=20260314B"></script>
+    <script src="supabase/config.js?v=20260314C"></script>
+    <script src="supabase/supabase.min.js?v=20260314C"></script>
+    <script src="ppk-api.js?v=20260314C"></script>
+    <script src="ppk-app.js?v=20260314C"></script>
+    <script src="ppk-utils.js?v=20260314C"></script>
+    <script src="ppk-nav.js?v=20260314C"></script>
     <script>
     // ════════════════════════════════════════════════════════════
     //  Team Management — KPI Dashboard + Workflow Checklist
@@ -633,6 +784,7 @@
             loadKPI().then(function(kpiData) {
                 loadWorkflow(kpiData);
             });
+            loadMemberStatus();
         }
 
         // รอ DOM + scripts โหลดเสร็จ
@@ -642,7 +794,174 @@
             setTimeout(waitAndLoad, 500);
         }
     })();
+
+    // ════════════════════════════════════════════════════════════
+    //  Member Status — สถานะสมาชิก + สิทธิ์
+    // ════════════════════════════════════════════════════════════
+    var _memberData = [];
+
+    var PERM_ICONS = {
+        water: '💧', electric: '⚡', notify: '📢', slip: '🧾',
+        withdraw: '💰', accounting: '📑', request: '📋',
+        head: '👑', admin: '🔧'
+    };
+    var PERM_LABELS = {
+        water: 'บันทึกค่าน้ำ', electric: 'บันทึกค่าไฟ', notify: 'แจ้งยอดชำระ',
+        slip: 'ตรวจสลิป', withdraw: 'เบิกประจำเดือน', accounting: 'บัญชี',
+        request: 'ตรวจคำร้อง', head: 'หัวหน้างาน', admin: 'แอดมิน'
+    };
+    var ROLE_CONFIG = {
+        admin: { label: '🔧 แอดมิน', bg: '#fee2e2', color: '#991b1b' },
+        head:  { label: '👑 หัวหน้า', bg: '#fef3c7', color: '#92400e' },
+        user:  { label: '👤 สมาชิก', bg: '#dbeafe', color: '#1e40af' },
+        resident: { label: '🏠 ผู้พัก', bg: '#d1fae5', color: '#065f46' }
+    };
+
+    // เมนูที่ผู้พัก/สมาชิกปกติเข้าได้
+    var USER_MENUS = [
+        { icon: '📊', label: 'แดชบอร์ด' },
+        { icon: '💳', label: 'ประวัติชำระ' },
+        { icon: '📷', label: 'ส่งสลิป' },
+        { icon: '📝', label: 'ยื่นคำร้อง' },
+        { icon: '📖', label: 'ระเบียบ' },
+        { icon: '⚙️', label: 'ตั้งค่า' }
+    ];
+    // เมนูบริหาร = ต้องเป็น admin/head
+    var ADMIN_MENUS = [
+        { icon: '👥', label: 'ศูนย์ควบคุม' },
+        { icon: '💧', label: 'บันทึกน้ำ' },
+        { icon: '⚡', label: 'บันทึกไฟ' },
+        { icon: '📢', label: 'แจ้งยอด' },
+        { icon: '🔍', label: 'ตรวจสลิป' },
+        { icon: '📋', label: 'ตรวจคำร้อง' },
+        { icon: '📊', label: 'บัญชี' },
+        { icon: '💵', label: 'เบิกเดือน' },
+        { icon: '🔧', label: 'ตั้งค่าแอดมิน' }
+    ];
+
+    async function loadMemberStatus() {
+        try {
+            var result = await callBackend('getMemberStatus', {});
+            if (!result || !result.success) throw new Error(result && result.error || 'API Error');
+            _memberData = result.data || [];
+            renderMemberSummary();
+            renderMemberTable(_memberData);
+        } catch(e) {
+            console.warn('loadMemberStatus error', e);
+            document.getElementById('memberTableBody').innerHTML =
+                '<tr><td colspan="6" style="color:#ef4444; padding:1rem;">❌ โหลดข้อมูลไม่สำเร็จ</td></tr>';
+        }
+    }
+
+    function renderMemberSummary() {
+        var total = _memberData.length;
+        var registered = 0, notReg = 0, pending = 0;
+        _memberData.forEach(function(m) {
+            if (m.reg_status === 'registered') registered++;
+            else if (m.reg_status === 'pending') pending++;
+            else notReg++;
+        });
+        var html =
+            '<div class="member-summary-item blue">👥 ทั้งหมด ' + total + '</div>' +
+            '<div class="member-summary-item green">✅ สมัครแล้ว ' + registered + '</div>' +
+            '<div class="member-summary-item red">❌ ยังไม่สมัคร ' + notReg + '</div>';
+        if (pending > 0) {
+            html += '<div class="member-summary-item yellow">⏳ รออนุมัติ ' + pending + '</div>';
+        }
+        document.getElementById('memberSummary').innerHTML = html;
+    }
+
+    function renderMemberTable(data) {
+        var tbody = document.getElementById('memberTableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:#9ca3af; padding:1rem;">ไม่พบข้อมูลผู้พักอาศัย</td></tr>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var m = data[i];
+            var fullName = (m.prefix || '') + (m.firstname || '') + ' ' + (m.lastname || '');
+            var posLine = m.position ? '<div style="font-size:0.72rem; color:#9ca3af;">' + m.position + '</div>' : '';
+
+            // สถานะ badge
+            var statusBadge = '';
+            if (m.reg_status === 'registered') {
+                statusBadge = '<span class="member-badge registered">✅ สมัครแล้ว</span>';
+            } else if (m.reg_status === 'pending') {
+                statusBadge = '<span class="member-badge pending">⏳ รออนุมัติ</span>';
+            } else if (m.reg_status === 'disabled') {
+                statusBadge = '<span class="member-badge disabled">🚫 ถูกปิดใช้งาน</span>';
+            } else {
+                statusBadge = '<span class="member-badge not-reg">❌ ยังไม่สมัคร</span>';
+            }
+
+            // บทบาท badge
+            var roleBadge = '';
+            if (m.role && ROLE_CONFIG[m.role]) {
+                var rc = ROLE_CONFIG[m.role];
+                roleBadge = '<span class="member-role-badge" style="background:' + rc.bg + '; color:' + rc.color + ';">' + rc.label + '</span>';
+            } else if (m.reg_status === 'registered') {
+                roleBadge = '<span class="member-role-badge" style="background:#f3f4f6; color:#6b7280;">👤 สมาชิก</span>';
+            } else {
+                roleBadge = '<span style="color:#d1d5db;">—</span>';
+            }
+
+            // สิทธิ์เข้าเมนู
+            var menuHtml = '';
+            if (m.reg_status !== 'registered') {
+                menuHtml = '<span style="color:#d1d5db; font-size:0.75rem;">ไม่มีสิทธิ์</span>';
+            } else {
+                var isAdminRole = m.role === 'admin' || m.role === 'head';
+                var icons = '';
+                // เมนูพื้นฐาน (ทุกคนที่สมัครเข้าได้)
+                icons += '<span class="perm-icon" title="เมนูพื้นฐาน (6 เมนู)">📊💳📷📝📖⚙️</span>';
+                // สิทธิ์พิเศษ
+                if (isAdminRole) {
+                    icons += ' <span class="perm-icon" title="เมนูบริหารทั้งหมด (admin/head)">👥💧⚡📢🔍📋📑💵🔧</span>';
+                } else if (m.permissions && m.permissions.length > 0) {
+                    var permIcons = '';
+                    m.permissions.forEach(function(p) {
+                        if (PERM_ICONS[p]) {
+                            permIcons += '<span class="perm-icon" title="' + (PERM_LABELS[p] || p) + '">' + PERM_ICONS[p] + '</span>';
+                        }
+                    });
+                    if (permIcons) icons += ' ' + permIcons;
+                }
+                menuHtml = '<div class="perm-icons">' + icons + '</div>';
+            }
+
+            html += '<tr data-name="' + fullName.toLowerCase() + '" data-house="' + (m.house_number || '').toLowerCase() + '">' +
+                '<td style="color:#9ca3af; font-size:0.8rem;">' + (i + 1) + '</td>' +
+                '<td><div style="font-weight:600; font-size:0.88rem;">' + fullName + '</div>' + posLine + '</td>' +
+                '<td style="font-size:0.85rem; white-space:nowrap;">' + (m.house_number || '—') + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td>' + roleBadge + '</td>' +
+                '<td>' + menuHtml + '</td>' +
+                '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    function filterMemberTable() {
+        var q = (document.getElementById('memberSearch').value || '').toLowerCase();
+        var rows = document.querySelectorAll('#memberTableBody tr');
+        rows.forEach(function(row) {
+            if (!row.dataset.name) return;
+            var show = !q || row.dataset.name.indexOf(q) >= 0 || row.dataset.house.indexOf(q) >= 0;
+            row.style.display = show ? '' : 'none';
+        });
+    }
+
+    var _memberCollapsed = false;
+    function toggleMemberSection() {
+        _memberCollapsed = !_memberCollapsed;
+        var content = document.getElementById('memberContent');
+        var title = document.getElementById('memberToggle');
+        content.style.display = _memberCollapsed ? 'none' : '';
+        if (_memberCollapsed) title.classList.add('collapsed');
+        else title.classList.remove('collapsed');
+    }
     </script>
-    <script src="ppk-pwa.js?v=20260314B"></script>
+    <script src="ppk-pwa.js?v=20260314C"></script>
 </body>
 </html>
