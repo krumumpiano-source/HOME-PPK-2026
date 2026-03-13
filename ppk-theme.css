@@ -434,13 +434,14 @@ img { max-width: 100%; height: auto; }
 .nav-backdrop.open { display: block; }
 
 /* ════════════════════════════════════════════
-   SAFE-AREA — Curved edge phones
+   SAFE-AREA — Curved edge phones (Vivo V30 etc.)
+   Android จอโค้งมักไม่ report env(safe-area) จึงต้องมี minimum padding
    ════════════════════════════════════════════ */
 .ppk-main,
 .dashboard-container,
 .main-container {
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
 }
 
 /* ════════════════════════════════════════════
@@ -479,6 +480,8 @@ img { max-width: 100%; height: auto; }
 
 .ppk-content {
   padding: 1.25rem;
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   max-width: var(--content-max);
   margin: 0 auto;
 }
@@ -775,7 +778,7 @@ img { max-width: 100%; height: auto; }
    RESPONSIVE — Tablet (≤ 768px)
    ════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .ppk-content { padding: 1rem; }
+  .ppk-content { padding: 1rem; padding-left: max(1rem, env(safe-area-inset-left, 0px)); padding-right: max(1rem, env(safe-area-inset-right, 0px)); }
   .ppk-stats { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
   .ppk-stat { padding: 1rem 0.75rem; }
   .ppk-stat-value { font-size: 1.7rem; }
@@ -790,7 +793,7 @@ img { max-width: 100%; height: auto; }
     --header-h: 48px;
   }
   body { font-size: 15px; }
-  .ppk-content { padding: 0.75rem; }
+  .ppk-content { padding: 0.75rem; padding-left: max(0.75rem, env(safe-area-inset-left, 0px)); padding-right: max(0.75rem, env(safe-area-inset-right, 0px)); }
   .ppk-topbar { padding: 0 0.75rem; }
   .ppk-topbar-title { font-size: 0.95rem; }
   .ppk-stats { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
