@@ -637,6 +637,8 @@ async function _routeAction(action, data) {
                     });
                     inserted.push(row);
                 }
+                // Auto-sync บัญชี
+                try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
                 return { success: true, data: inserted };
             }
             var row = await sbPost('water_bills', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, year: data.year, month: data.month, prev_meter: data.prevMeter, curr_meter: data.currMeter, units_used: data.unitsUsed, rate_per_unit: data.ratePerUnit, amount: data.amount, recorded_by: data.recordedBy });
@@ -647,7 +649,15 @@ async function _routeAction(action, data) {
             if (data.period) q.period = 'eq.' + data.period;
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var rows = await sbGet('electric_bills', q);
-            return { success: true, data: rows };
+            // ดึง Lost data ถ้ามี
+            var lostInfo = null;
+            if (data.period) {
+                try {
+                    var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + data.period });
+                    if (lostRows && lostRows[0]) lostInfo = JSON.parse(lostRows[0].value);
+                } catch(e) {}
+            }
+            return { success: true, data: rows, lost: lostInfo };
         }
         case 'submitElectricBill': {
             // รองรับทั้ง batch (records[]) และ single record
@@ -664,6 +674,17 @@ async function _routeAction(action, data) {
                     });
                     inserted.push(row);
                 }
+                // บันทึก PEA total + Lost ลง settings (ต่อ period)
+                if (data.pea_total || data.lost_house || data.lost_flat) {
+                    var lostData = JSON.stringify({
+                        pea_total: data.pea_total || 0,
+                        lost_house: data.lost_house || 0,
+                        lost_flat: data.lost_flat || 0
+                    });
+                    await sbUpsert('settings', { key: 'electric_lost_' + data.period, value: lostData }, 'key');
+                }
+                // Auto-sync บัญชี
+                try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
                 return { success: true, data: inserted };
             }
             var row = await sbPost('electric_bills', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, year: data.year, month: data.month, prev_meter: data.prevMeter, curr_meter: data.currMeter, units_used: data.unitsUsed, rate_per_unit: data.ratePerUnit, bill_amount: data.billAmount, amount: data.amount, method: data.method || 'bill', recorded_by: data.recordedBy });
@@ -1792,6 +1813,71 @@ async function _routeAction(action, data) {
 
         default:
             throw new Error('Unknown action: ' + action);
+    }
+}
+
+/* ══════════════════════════════════════════
+   Auto-Sync Accounting — อัปเดตรายการ auto ในบัญชี
+   เมื่อบันทึกค่าน้ำ/ค่าไฟ จะอัปเดตเฉพาะรายการ auto
+   โดยไม่กระทบรายการ manual ที่เพิ่มด้วยมือ
+══════════════════════════════════════════ */
+async function _autoSyncAccounting(period) {
+    if (!period) return;
+    // ดึงยอดบิลล่าสุด
+    var waterRes  = await sbGet('water_bills',     { period: 'eq.' + period, select: 'amount' });
+    var elecRes   = await sbGet('electric_bills',  { period: 'eq.' + period, select: 'bill_amount,amount' });
+    var payRes    = await sbGet('payment_history', { period: 'eq.' + period, select: 'amount_paid' });
+    var waterTotal = (waterRes  || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+    var elecTotal  = (elecRes   || []).reduce(function(s, r) { return s + (parseFloat(r.bill_amount) || parseFloat(r.amount) || 0); }, 0);
+    var payTotal   = (payRes    || []).reduce(function(s, r) { return s + (parseFloat(r.amount_paid) || 0); }, 0);
+    // ดึง Lost data
+    var lostTotal = 0;
+    try {
+        var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
+        if (lostRows && lostRows[0]) {
+            var ld = JSON.parse(lostRows[0].value);
+            lostTotal = (parseFloat(ld.lost_house) || 0) + (parseFloat(ld.lost_flat) || 0);
+        }
+    } catch(e) {}
+    // ลบเฉพาะรายการ auto ของ period นี้
+    await sbDelete('accounting_entries', { period: 'eq.' + period, category: 'eq.auto' });
+    // หา year / month จาก period
+    var pParts = period.split('-');
+    var pYear  = parseInt(pParts[0]) || new Date().getFullYear();
+    var pMonth = parseInt(pParts[1]) || (new Date().getMonth() + 1);
+    // Insert รายรับ auto
+    if (payTotal > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'income', category: 'auto',
+            description: 'ยอดรับชำระค่าเช่าและค่าสาธารณูปโภค',
+            amount: payTotal, recorded_at: new Date().toISOString()
+        });
+    }
+    // Insert รายจ่าย auto
+    if (waterTotal > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าน้ำประปา', amount: waterTotal,
+            recorded_at: new Date().toISOString()
+        });
+    }
+    if (elecTotal > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าไฟ PEA', amount: elecTotal,
+            recorded_at: new Date().toISOString()
+        });
+    }
+    if (lostTotal > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่า Lost ไฟฟ้า', amount: lostTotal,
+            recorded_at: new Date().toISOString()
+        });
     }
 }
 

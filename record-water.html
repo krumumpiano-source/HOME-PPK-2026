@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>บันทึกค่าน้ำ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260314C">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260314D">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -457,6 +457,18 @@
         // ============ ดึงข้อมูลจาก Backend ============
         let residentsCache = [];
         let cachedAdminSettings = null;
+        let waterRounding = 'none'; // none, round, ceil, floor, round10
+        let waterMinCharge = 0;
+
+        // ฟังก์ชันปัดเศษตาม settings
+        function applyRounding(value, mode) {
+            if (!mode || mode === 'none') return value;
+            if (mode === 'ceil') return Math.ceil(value);
+            if (mode === 'floor') return Math.floor(value);
+            if (mode === 'round') return Math.round(value);
+            if (mode === 'round10') return Math.round(value / 10) * 10;
+            return value;
+        }
 
         async function getResidentsData() {
             try {
@@ -594,7 +606,9 @@
             const rate = parseFloat(document.getElementById('water_rate').value) || 0;
             
             const usage = Math.max(0, currMeter - prevMeter);
-            const amount = usage * rate;
+            let amount = usage * rate;
+            amount = applyRounding(amount, waterRounding);
+            if (amount > 0 && amount < waterMinCharge) amount = waterMinCharge;
             
             row.querySelector('.usage-value').textContent = usage;
             row.querySelector('.amount-value').textContent = amount.toLocaleString();
@@ -612,7 +626,9 @@
                 const rate = parseFloat(document.getElementById('water_rate').value) || 0;
                 
                 const usage = Math.max(0, currMeter - prevMeter);
-                const amount = usage * rate;
+                let amount = usage * rate;
+                amount = applyRounding(amount, waterRounding);
+                if (amount > 0 && amount < waterMinCharge) amount = waterMinCharge;
                 
                 row.querySelector('.usage-value').textContent = usage;
                 row.querySelector('.amount-value').textContent = amount.toLocaleString();
@@ -711,6 +727,8 @@
                     const settingsResult = await cachedCall('getSettings', {}, 600000);
                     if (settingsResult && settingsResult.success) {
                         cachedAdminSettings = settingsResult.data || {};
+                        waterRounding = cachedAdminSettings.water_rounding || 'none';
+                        waterMinCharge = parseFloat(cachedAdminSettings.water_min_charge) || 0;
                     }
                 } catch (e) {
                     console.error('getSettings error:', e);
@@ -1097,12 +1115,12 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260314C"></script>
-    <script src="supabase/supabase.min.js?v=20260314C"></script>
-    <script src="ppk-api.js?v=20260314C"></script>
-    <script src="ppk-app.js?v=20260314C"></script>
-    <script src="ppk-utils.js?v=20260314C"></script>
-    <script src="ppk-nav.js?v=20260314C"></script>
-    <script src="ppk-pwa.js?v=20260314C"></script>
+    <script src="supabase/config.js?v=20260314D"></script>
+    <script src="supabase/supabase.min.js?v=20260314D"></script>
+    <script src="ppk-api.js?v=20260314D"></script>
+    <script src="ppk-app.js?v=20260314D"></script>
+    <script src="ppk-utils.js?v=20260314D"></script>
+    <script src="ppk-nav.js?v=20260314D"></script>
+    <script src="ppk-pwa.js?v=20260314D"></script>
 </body>
 </html>
