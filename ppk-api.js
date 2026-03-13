@@ -315,6 +315,13 @@ async function _routeAction(action, data) {
                 var mcRows = await sbGet('settings', { key: 'eq.must_change_pw_' + u.id, limit: '1' });
                 mustChangePw = !!(mcRows && mcRows.length > 0);
             } catch(e) { mustChangePw = false; }
+            // Failsafe: ถ้าไม่มี flag แต่ไม่เคย login (ไม่มี session) → ถือเป็น first-login
+            if (!mustChangePw) {
+                try {
+                    var sesRows = await sbGet('sessions', { user_id: 'eq.' + u.id, limit: '1' });
+                    if (!sesRows || sesRows.length === 0) { mustChangePw = true; }
+                } catch(e2) { /* ignore */ }
+            }
             // ถ้าเป็นการเข้าใช้ครั้งแรก → ข้าม password check ให้ตั้งรหัสผ่านเอง
             if (mustChangePw) {
                 return { success: true, must_set_password: true, userId: u.id, userName: (u.firstname || '') + ' ' + (u.lastname || '') };
@@ -402,15 +409,19 @@ async function _routeAction(action, data) {
             if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
             var newPassword = data.newPassword || '';
             if (!newPassword || newPassword.length < 8) return { success: false, error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
-            // ตรวจสอบว่ามี flag must_change_pw จริง
+            // ตรวจสอบว่ามี flag must_change_pw หรือยังไม่เคย login (ไม่มี session)
             var flagRows = await sbGet('settings', { key: 'eq.must_change_pw_' + userId, limit: '1' });
-            if (!flagRows || flagRows.length === 0) return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
+            var hasFlag = !!(flagRows && flagRows.length > 0);
+            if (!hasFlag) {
+                var sesCheck = await sbGet('sessions', { user_id: 'eq.' + userId, limit: '1' });
+                if (sesCheck && sesCheck.length > 0) return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
+            }
             var fpUser = await sbGet('users', { id: 'eq.' + userId, select: 'email', limit: '1' });
             var fpEmail = (fpUser && fpUser[0] ? fpUser[0].email : '').trim().toLowerCase();
             var newHash = await sha256hexSalted(newPassword, fpEmail);
             await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
-            // ลบ flag
-            await sbDelete('settings', { key: 'eq.must_change_pw_' + userId });
+            // ลบ flag (ถ้ามี)
+            if (hasFlag) { try { await sbDelete('settings', { key: 'eq.must_change_pw_' + userId }); } catch(e) {} }
             // สร้าง session + return user
             var uRows = await sbGet('users', { id: 'eq.' + userId, is_active: 'eq.true', limit: '1' });
             var u2 = uRows && uRows[0] ? uRows[0] : null;
@@ -1307,8 +1318,12 @@ async function _routeAction(action, data) {
                 is_active: true, pdpa_consent: false,
                 password_hash: pwHash
             });
-            // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก
-            try { await sbUpsert('settings', { key: 'must_change_pw_' + uid, value: 'true' }, 'key'); } catch(e) { console.warn('set must_change_pw flag:', e); }
+            // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก (retry 1 ครั้งถ้า fail)
+            var _flagKey = 'must_change_pw_' + uid;
+            try { await sbUpsert('settings', { key: _flagKey, value: 'true' }, 'key'); } catch(e1) {
+                console.warn('set must_change_pw flag attempt 1 failed:', e1);
+                try { await sbPost('settings', { key: _flagKey, value: 'true' }); } catch(e2) { console.warn('set must_change_pw flag attempt 2 failed:', e2); }
+            }
             // หา house_id จาก house_number
             var houseId = null;
             if (data.house_number) {
