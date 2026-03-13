@@ -543,8 +543,13 @@ async function _routeAction(action, data) {
             return { success: true, user: u[0], resident: res[0] || null };
         }
         case 'getCoresidents': {
-            if (!data.residentId) return { success: true, data: [] };
-            var rows = await sbGet('coresidents', { resident_id: 'eq.' + data.residentId });
+            var cResId = data.residentId || null;
+            if (!cResId) {
+                var cSess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'resident_id', limit: '1' });
+                cResId = cSess && cSess[0] ? cSess[0].resident_id : null;
+            }
+            if (!cResId) return { success: true, data: [] };
+            var rows = await sbGet('coresidents', { resident_id: 'eq.' + cResId });
             return { success: true, data: rows };
         }
         case 'getPendingRegistrations': {
