@@ -1650,6 +1650,7 @@
             withdraw: { label: 'ผู้เบิกยอดประจำเดือน', page: '?page=monthly-withdraw', icon: '💰' },
             accounting: { label: 'ผู้ทำบัญชี', page: '?page=accounting', icon: '📑' },
             request: { label: 'ผู้ตรวจคำร้อง/ลำดับคิว', page: '?page=check-request', icon: '📋' },
+            head: { label: 'หัวหน้างาน', page: '?page=admin-settings', icon: '👑' },
             admin: { label: 'แอดมิน', page: '?page=admin-settings', icon: '🔧' }
         };
 
@@ -4296,17 +4297,29 @@
             }
         }
 
-        function renderPermissionTable() {
+        async function renderPermissionTable() {
             const allResidents = getResidentsData();
-            const permissions = getPermissionsData();
             const tbody = document.getElementById('permissionTableBody');
+
+            // โหลดสิทธิ์จาก DB เสมอ (แทน localStorage)
+            const loadPermsFromDB = () => callBackendGet('getAllPermissions').then(res => {
+                if (res && res.success && res.data) {
+                    savePermissionsData(res.data);
+                    return res.data;
+                }
+                return getPermissionsData();
+            }).catch(() => getPermissionsData());
             
             // ถ้ายังไม่มีข้อมูลเลย ลองดึงจาก backend ใหม่
             if (allResidents.length === 0) {
-                callBackendGet('getResidents').then(result => {
+                Promise.all([
+                    callBackendGet('getResidents'),
+                    loadPermsFromDB()
+                ]).then(([result]) => {
                     if (result && result.success && result.data) {
                         const residentsData = result.data.map(r => ({
                             id: r.id || '',
+                            user_id: r.user_id || '',
                             prefix: r.prefix || '',
                             firstname: r.firstname || '',
                             lastname: r.lastname || '',
@@ -4328,6 +4341,10 @@
                 tbody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">&#x23F3; กำลังโหลดข้อมูล...</td></tr>';
                 return;
             }
+
+            // โหลดสิทธิ์จาก DB
+            tbody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);">&#x23F3; กำลังโหลดสิทธิ์...</td></tr>';
+            const permissions = await loadPermsFromDB();
 
             // ---- รวมบุคลากรทุกคน (staff) ไม่ว่าจะมีอีเมลหรือไม่ ----
             // staff = residentType ไม่ใช่ cohabitant
@@ -4434,8 +4451,8 @@
                 members.forEach(resident => {
                     rowNum++;
                     const fullName = `${resident.prefix || ''}${resident.firstname || ''} ${resident.lastname || ''}`;
-                    const userPerms = permissions[resident.id] || {};
-                    const noAccess = resident.isVirtual;
+                    const userPerms = permissions[resident.user_id || resident.id] || {};
+                    const noAccess = resident.isVirtual || !resident.user_id;
 
                     const makeCheckbox = (perm, accentColor = '') => {
                         if (noAccess) {
@@ -4447,7 +4464,7 @@
                         const style = accentColor
                             ? `style="accent-color:${accentColor}; width:16px; height:16px;"`
                             : 'style="width:16px; height:16px;"';
-                        return `<input type="checkbox" class="perm-checkbox" data-id="${resident.id}" data-perm="${perm}" ${userPerms[perm] ? 'checked' : ''} ${style}>`;
+                        return `<input type="checkbox" class="perm-checkbox" data-id="${resident.user_id}" data-perm="${perm}" ${userPerms[perm] ? 'checked' : ''} ${style}>`;
                     };
 
                     const emailNote = noAccess
@@ -4455,7 +4472,7 @@
                         : `<span style="font-size:0.72rem;color:var(--muted);">${resident.email}</span>`;
 
                     html += `
-                        <tr class="perm-member-row" data-id="${resident.id}" data-house="${houseKey}" ${noAccess ? 'style="opacity:0.76;"' : ''}>
+                        <tr class="perm-member-row" data-id="${resident.user_id || resident.id}" data-house="${houseKey}" ${noAccess ? 'style="opacity:0.76;"' : ''}>
                             <td style="color:var(--muted); font-size:0.82rem;">${rowNum}</td>
                             <td style="text-align:left; padding-left:1.75rem;">
                                 <div style="font-weight:600; font-size:0.9rem;">${fullName}</div>
@@ -4602,7 +4619,7 @@
             });
             
             residents.forEach(r => {
-                const userPerms = permissions[r.id] || {};
+                const userPerms = permissions[r.user_id || r.id] || {};
                 const fullName = `${r.prefix || ''}${r.firstname || ''} ${r.lastname || ''}`;
                 
                 Object.keys(userPerms).forEach(perm => {

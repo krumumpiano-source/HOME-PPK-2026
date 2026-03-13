@@ -328,13 +328,14 @@ async function callBackendGet(action, params) {
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
     'approveRegistration','rejectRegistration','updatePermissions','deleteAnnouncement',
     'saveWaterRate','saveElectricRate','saveRoundingSetting','saveHousingFormat','setupAdmin',
-    'getAdminTeam','getUsersList'];
+    'getAdminTeam','getUsersList','getAllPermissions'];
 
 // Actions ที่สามารถมอบหมายให้ผู้ใช้ที่มี permission ได้
 var _PERM_ACTION_MAP = {
     submitWaterBill: 'water', submitElectricBill: 'electric',
     reviewSlip: 'slip', reviewRequest: 'request',
-    sendNotification: 'notify'
+    sendNotification: 'notify',
+    saveWithdraw: 'withdraw', saveAccounting: 'accounting'
 };
 
 async function _routeAction(action, data) {
@@ -1914,6 +1915,17 @@ async function _routeAction(action, data) {
             return { success: true, data: result, pendingCount: (pendRegs || []).length };
         }
 
+        /* ── getAllPermissions — ดึงสิทธิ์ทั้งหมดจาก DB ─── */
+        case 'getAllPermissions': {
+            var allPerms = await sbGet('permissions', { select: 'user_id,permission' });
+            var permMap = {};
+            (allPerms || []).forEach(function(p) {
+                if (!permMap[p.user_id]) permMap[p.user_id] = {};
+                permMap[p.user_id][p.permission] = true;
+            });
+            return { success: true, data: permMap };
+        }
+
         /* ── updatePermissions — บันทึกสิทธิ์ผู้ใช้ ─── */
         case 'updatePermissions': {
             var perms = data.permissions || {};
@@ -1922,6 +1934,8 @@ async function _routeAction(action, data) {
                 var uid = userIds[pi];
                 // ข้าม virtual IDs ที่ไม่มีใน users table
                 if (!uid || uid.indexOf('coh_') === 0) continue;
+                // ข้าม resident IDs (RES...) — ต้องเป็น user IDs (USR...) เท่านั้น
+                if (uid.indexOf('RES') === 0) continue;
                 var userPerms = perms[uid];
                 // ลบสิทธิ์เก่าของ user นี้
                 await sbDelete('permissions', { user_id: 'eq.' + uid });
