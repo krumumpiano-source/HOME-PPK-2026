@@ -211,6 +211,7 @@ async function ppkLogout() {
     } catch(e) {}
     localStorage.removeItem('sessionToken');
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('_sessionCheckTs');
     window.location.href = 'login.html';
 }
 
@@ -246,10 +247,24 @@ async function ppkRegister(data) {
 /* ══════════════════════════════════════════
    SESSION CHECK — ตรวจ session token กับ DB ก่อน fallback guest
 ══════════════════════════════════════════ */
+// ตรวจสอบ role จาก session ใน DB (ไม่พึ่ง localStorage)
+async function _getSessionRole() {
+    var tk = getSessionToken();
+    if (!tk || tk === 'guest-admin-session') return null;
+    try {
+        var s = await sbGet('sessions', { token: 'eq.' + tk, select: 'user_id,role,expires_at', limit: '1' });
+        var sess = s && s[0];
+        if (sess && new Date(sess.expires_at) > new Date()) return { userId: sess.user_id, role: sess.role };
+    } catch(e) {}
+    return null;
+}
+
 async function checkSession(autoRedirect) {
+    // ตรวจ localStorage ก่อน แต่ต้อง verify กับ DB ทุก 10 นาที
     try {
         var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
-        if (stored && stored.id && stored.id !== 'USR-GUEST') return stored;
+        var lastCheck = parseInt(localStorage.getItem('_sessionCheckTs') || '0');
+        if (stored && stored.id && stored.id !== 'USR-GUEST' && (Date.now() - lastCheck < 600000)) return stored;
     } catch(e) {}
     // ตรวจ token กับ sessions table
     var tk = getSessionToken();
@@ -261,13 +276,19 @@ async function checkSession(autoRedirect) {
                 var uRows = await sbGet('users', { id: 'eq.' + sess.user_id, select: 'id,email,prefix,firstname,lastname,role,position,is_active', limit: '1' });
                 var u = uRows && uRows[0];
                 if (u && u.is_active) {
+                    // ดึงสิทธิ์จาก permissions table
+                    var _csPermRows = [];
+                    try { _csPermRows = await sbGet('permissions', { user_id: 'eq.' + u.id, select: 'permission' }) || []; } catch(e) {}
+                    var _csPerms = _csPermRows.map(function(r) { return r.permission; });
                     var userObj = {
                         id: u.id, email: u.email,
                         prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
                         role: u.role || 'resident', is_active: true, position: u.position || '',
-                        houseNumber: sess.house_number || '', residentId: sess.resident_id || null
+                        houseNumber: sess.house_number || '', residentId: sess.resident_id || null,
+                        permissions: _csPerms
                     };
                     localStorage.setItem('currentUser', JSON.stringify(userObj));
+                    localStorage.setItem('_sessionCheckTs', String(Date.now()));
                     return userObj;
                 }
             }
@@ -301,7 +322,39 @@ async function callBackendGet(action, params) {
 /* ══════════════════════════════════════════
    ACTION ROUTER
 ══════════════════════════════════════════ */
+// Actions ที่ต้องเป็น admin/head เท่านั้น (ห้ามมอบหมาย)
+var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
+    'approveRegistration','rejectRegistration','updatePermissions','deleteAnnouncement',
+    'saveWaterRate','saveElectricRate','saveRoundingSetting','saveHousingFormat','setupAdmin',
+    'getAdminTeam','getUsersList'];
+
+// Actions ที่สามารถมอบหมายให้ผู้ใช้ที่มี permission ได้
+var _PERM_ACTION_MAP = {
+    submitWaterBill: 'water', submitElectricBill: 'electric',
+    reviewSlip: 'slip', reviewRequest: 'request',
+    sendNotification: 'notify'
+};
+
 async function _routeAction(action, data) {
+    // Role guard: ตรวจสิทธิ์ก่อนทำ admin actions
+    if (_STRICT_ADMIN_ACTIONS.indexOf(action) !== -1) {
+        var _sess = await _getSessionRole();
+        if (!_sess || (_sess.role !== 'admin' && _sess.role !== 'head')) {
+            return { success: false, error: 'คุณไม่มีสิทธิ์ดำเนินการนี้ (ต้องเป็น admin หรือ head)' };
+        }
+    } else if (_PERM_ACTION_MAP[action]) {
+        // ตรวจสิทธิ์: admin/head ผ่านเสมอ หรือ user ที่มี permission ที่ตรงกัน
+        var _sess2 = await _getSessionRole();
+        if (!_sess2) return { success: false, error: 'กรุณาเข้าสู่ระบบก่อน' };
+        if (_sess2.role !== 'admin' && _sess2.role !== 'head') {
+            var _reqPerm = _PERM_ACTION_MAP[action];
+            var _permRows = [];
+            try { _permRows = await sbGet('permissions', { user_id: 'eq.' + _sess2.userId, permission: 'eq.' + _reqPerm, limit: '1' }) || []; } catch(e) {}
+            if (_permRows.length === 0) {
+                return { success: false, error: 'คุณไม่มีสิทธิ์ดำเนินการนี้' };
+            }
+        }
+    }
     switch (action) {
         case 'login': {
             var email = (data.email || '').trim().toLowerCase();
@@ -344,6 +397,10 @@ async function _routeAction(action, data) {
                 var resRows = await sbGet('residents', { user_id: 'eq.' + u.id, is_active: 'eq.true', limit: '1' });
                 if (resRows && resRows[0]) resident = resRows[0];
             } catch(e) { resident = null; }
+            // ดึงสิทธิ์จาก permissions table
+            var _loginPermRows = [];
+            try { _loginPermRows = await sbGet('permissions', { user_id: 'eq.' + u.id, select: 'permission' }) || []; } catch(e) {}
+            var _loginPerms = _loginPermRows.map(function(r) { return r.permission; });
             var userObj = {
                 id: u.id, email: u.email,
                 prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
@@ -351,7 +408,8 @@ async function _routeAction(action, data) {
                 position: u.position || '',
                 houseNumber: resident ? (resident.house_number || '') : '',
                 residentId: resident ? resident.id : null,
-                must_change_password: false
+                must_change_password: false,
+                permissions: _loginPerms
             };
             // สร้าง session ใน DB
             var token = 'session-' + u.id + '-' + Date.now();
@@ -647,8 +705,15 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'submitWaterBill': {
+            if (!data.period) return { success: false, error: 'ไม่ระบุงวด' };
             // รองรับทั้ง batch (records[]) และ single record
             if (data.records && Array.isArray(data.records)) {
+                // Validate: ตรวจค่าลบ/ผิดปกติ
+                for (var vi = 0; vi < data.records.length; vi++) {
+                    var vr = data.records[vi];
+                    if (parseFloat(vr.amount) < 0) return { success: false, error: 'ยอดเงินติดลบ (' + (vr.house_number || '') + ')' };
+                    if (parseInt(vr.curr_meter) < parseInt(vr.prev_meter)) return { success: false, error: 'เลขมิเตอร์ปัจจุบันน้อยกว่าก่อนหน้า (' + (vr.house_number || '') + ')' };
+                }
                 var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
                 var inserted = [];
                 for (var i = 0; i < data.records.length; i++) {
@@ -685,8 +750,13 @@ async function _routeAction(action, data) {
             return { success: true, data: rows, lost: lostInfo };
         }
         case 'submitElectricBill': {
+            if (!data.period) return { success: false, error: 'ไม่ระบุงวด' };
             // รองรับทั้ง batch (records[]) และ single record
             if (data.records && Array.isArray(data.records)) {
+                // Validate: ตรวจค่าลบ
+                for (var ei = 0; ei < data.records.length; ei++) {
+                    if (parseFloat(data.records[ei].amount) < 0) return { success: false, error: 'ยอดเงินติดลบ (' + (data.records[ei].house_number || '') + ')' };
+                }
                 var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
                 var inserted = [];
                 for (var i = 0; i < data.records.length; i++) {
@@ -843,6 +913,24 @@ async function _routeAction(action, data) {
         }
 
         case 'submitSlip': {
+            // Validate inputs
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            if (!data.period) return { success: false, error: 'ไม่ระบุงวด' };
+            if (!data.amount || parseFloat(data.amount) <= 0) return { success: false, error: 'จำนวนเงินไม่ถูกต้อง' };
+            // ตรวจสอบว่า house_number ตรงกับ session (ป้องกันส่งแทนคนอื่น)
+            var slipSess = await _getSessionRole();
+            if (slipSess && slipSess.role !== 'admin' && slipSess.role !== 'head') {
+                var myRes = await sbGet('residents', { user_id: 'eq.' + slipSess.userId, is_active: 'eq.true', select: 'house_number', limit: '1' });
+                var myHouse = myRes && myRes[0] ? myRes[0].house_number : '';
+                if (myHouse && data.houseNumber !== myHouse) {
+                    return { success: false, error: 'คุณไม่สามารถส่งสลิปแทนบ้านอื่นได้' };
+                }
+            }
+            // ตรวจสลิปซ้ำ (ส่งแล้ว pending หรือ approved ใน period เดียวกัน)
+            var dupSlips = await sbGet('slip_submissions', { house_number: 'eq.' + data.houseNumber, period: 'eq.' + data.period, status: 'in.(pending,approved)', limit: '1' });
+            if (dupSlips && dupSlips.length > 0) {
+                return { success: false, error: 'บ้านนี้มีสลิปค้างอยู่แล้วสำหรับงวดนี้ กรุณารอผลตรวจสอบ' };
+            }
             var proxyNote = null;
             if (data.submittedByName && data.submittedByHouse) {
                 proxyNote = '\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ' + data.submittedByName + ' (' + data.submittedByHouse + ')';
@@ -1845,6 +1933,9 @@ async function _routeAction(action, data) {
                     try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'head', updated_at: new Date().toISOString() }); } catch(e) {}
                 } else if (userPerms['admin']) {
                     try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'admin', updated_at: new Date().toISOString() }); } catch(e) {}
+                } else {
+                    // ไม่ได้เป็น head/admin → revert role เป็น user
+                    try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'user', updated_at: new Date().toISOString() }); } catch(e) {}
                 }
             }
             return { success: true, message: 'บันทึกสิทธิ์เรียบร้อย' };

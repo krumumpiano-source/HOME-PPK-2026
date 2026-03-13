@@ -1,5 +1,5 @@
 ﻿// HOME PPK 2026 — Service Worker v1
-var CACHE_NAME = 'ppk-v20260314B';
+var CACHE_NAME = 'ppk-v20260313B';
 var PRECACHE = [
   './',
   './dashboard.html',
@@ -42,8 +42,23 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  // Network-first for API, cache-first for assets
+  // Skip non-GET and Supabase API calls
   if (e.request.url.includes('supabase.co') || e.request.method !== 'GET') return;
+  // JS/CSS: network-first (ป้องกัน stale code หลัง deploy)
+  var isCode = e.request.url.match(/\.(js|css)(\?|$)/);
+  if (isCode) {
+    e.respondWith(
+      fetch(e.request).then(function(resp) {
+        if (resp && resp.status === 200) {
+          var clone = resp.clone();
+          caches.open(CACHE_NAME).then(function(c) { c.put(e.request, clone); });
+        }
+        return resp;
+      }).catch(function() { return caches.match(e.request); })
+    );
+    return;
+  }
+  // HTML/images: network-first with cache fallback
   e.respondWith(
     fetch(e.request).then(function(resp) {
       if (resp && resp.status === 200) {

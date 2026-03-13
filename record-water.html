@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>บันทึกค่าน้ำ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260314F">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260313B">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -721,6 +721,12 @@
         // โหลดข้อมูลเมื่อเปิดหน้า
         window.onload = async function() {
             const user = await checkSession(true);
+            var _perms = user && user.permissions || [];
+            if (!user || (user.role !== 'admin' && user.role !== 'head' && _perms.indexOf('water') < 0)) {
+                if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+                window.location.replace('dashboard.html');
+                return;
+            }
 
             // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport
             try {
@@ -1115,12 +1121,12 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260314F"></script>
-    <script src="supabase/supabase.min.js?v=20260314F"></script>
-    <script src="ppk-api.js?v=20260314F"></script>
-    <script src="ppk-app.js?v=20260314F"></script>
-    <script src="ppk-utils.js?v=20260314F"></script>
-    <script src="ppk-nav.js?v=20260314F"></script>
-    <script src="ppk-pwa.js?v=20260314F"></script>
+    <script src="supabase/config.js?v=20260313B"></script>
+    <script src="supabase/supabase.min.js?v=20260313B"></script>
+    <script src="ppk-api.js?v=20260313B"></script>
+    <script src="ppk-app.js?v=20260313B"></script>
+    <script src="ppk-utils.js?v=20260313B"></script>
+    <script src="ppk-nav.js?v=20260313B"></script>
+    <script src="ppk-pwa.js?v=20260313B"></script>
 </body>
 </html>

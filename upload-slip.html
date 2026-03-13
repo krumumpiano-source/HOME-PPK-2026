@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>อัปโหลดสลิป | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260314F">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260313B">
     <style>
         body {
             margin: 0; min-height: 100vh; font-family: 'Kanit', sans-serif;
@@ -355,6 +355,10 @@
 
             if(files.length === 0){ ppkAlert('กรุณาแนบรูปสลิปอย่างน้อย 1 รูป'); return; }
             if(paidAmount <= 0){ ppkAlert('กรุณากรอกจำนวนเงินที่ชำระ'); return; }
+            // ตรวจขนาดไฟล์ (สูงสุด 5MB ต่อรูป)
+            for (var fi = 0; fi < files.length; fi++) {
+                if (files[fi].size > 5 * 1024 * 1024) { ppkAlert('ไฟล์ ' + files[fi].name + ' มีขนาดเกิน 5MB'); return; }
+            }
 
             const submitBtn = document.querySelector('.submit-btn');
             submitBtn.disabled = true;
@@ -642,12 +646,12 @@
         };
     </script>
     </div><!-- /ppk-main -->
-    <script src="supabase/config.js?v=20260314F"></script>
-    <script src="supabase/supabase.min.js?v=20260314F"></script>
-    <script src="ppk-api.js?v=20260314F"></script>
-    <script src="ppk-app.js?v=20260314F"></script>
-    <script src="ppk-utils.js?v=20260314F"></script>
-    <script src="ppk-nav.js?v=20260314F"></script>
-    <script src="ppk-pwa.js?v=20260314F"></script>
+    <script src="supabase/config.js?v=20260313B"></script>
+    <script src="supabase/supabase.min.js?v=20260313B"></script>
+    <script src="ppk-api.js?v=20260313B"></script>
+    <script src="ppk-app.js?v=20260313B"></script>
+    <script src="ppk-utils.js?v=20260313B"></script>
+    <script src="ppk-nav.js?v=20260313B"></script>
+    <script src="ppk-pwa.js?v=20260313B"></script>
 </body>
 </html>
