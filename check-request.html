@@ -767,6 +767,30 @@
                     row.fullname = ((row.firstname || '') + ' ' + (row.lastname || '')).trim();
                 }
             }
+            // Map snake_case DB fields → camelCase ที่ render ต้องการ
+            row.submitDate = row.submitDate || row.submitted_at || '';
+            row.subjectGroup = row.subjectGroup || row.subject_group || '';
+            row.stayType = row.stayType || row.stay_type || '';
+            row.totalResidents = row.totalResidents || row.total_residents || '';
+            row.lineId = row.lineId || row.line_id || '';
+            row.additionalInfo = row.additionalInfo || row.additional_info || '';
+            row.houseNumber = row.houseNumber || row.house_number || '';
+            row.fullname = row.fullname || '';
+            row.prefix = row.prefix || '';
+            row.phone = row.phone || '';
+            row.email = row.email || '';
+            // reason: string → reasons: array
+            if (!row.reasons && row.reason) {
+                row.reasons = row.reason.split(',').map(function(r) { return r.trim(); }).filter(Boolean);
+            }
+            if (!row.reasons) row.reasons = [];
+            // residents: array of objects → format for display
+            if (row.residents && Array.isArray(row.residents)) {
+                row.residents = row.residents.map(function(r) {
+                    if (typeof r === 'string') return r;
+                    return (r.prefix || '') + (r.name || '') + (r.relation ? ' (' + r.relation + ')' : '');
+                });
+            }
             return row;
         }
 
@@ -1823,9 +1847,6 @@
 
         // ========== Initialize ==========
         document.addEventListener('DOMContentLoaded', async function() {
-            // แสดง loading
-            var tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#64748b;">⏳ กำลังโหลดข้อมูล...</div>'; });
             try {
                 var user = await checkSession(true);
             var _perms = user && user.permissions || [];
@@ -1839,7 +1860,11 @@
                 renderAll();
             } catch(e) {
                 console.error('loadAllRequests error', e);
-                tabContents.forEach(function(tc) { tc.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า</div>'; });
+                var errMsg = '<div style="text-align:center;padding:2rem;color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า<br><small>' + (e.message||'') + '</small></div>';
+                ['residenceTableBody','repairTableBody','transferTableBody','returnTableBody'].forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.innerHTML = '<tr><td colspan="8">' + errMsg + '</td></tr>';
+                });
             }
         });
     
