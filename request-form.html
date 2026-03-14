@@ -186,14 +186,16 @@
                         <label><input type="radio" name="stay_type" value="family" onchange="toggleResidentFields()"> พักอาศัยพร้อมครอบครัว</label>
                     </div>
                 </div>
-                <div class="form-group" id="total-residents-group">
-                    <label>จำนวนผู้เข้าพักทั้งหมด (รวมผู้ยื่นคำร้อง)</label>
-                    <input type="number" name="total_residents" id="total_residents" min="1" value="1" readonly style="background-color: #f0f0f0;">
-                </div>
-                <div class="form-group" id="residents-list-group">
-                    <label>รายชื่อผู้ที่จะพักอาศัยในบ้านพักครู</label>
-                    <div id="residents-container"></div>
-                    <button type="button" id="add-resident-btn" onclick="addResident()" style="background-color: #4f8cff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem; font-family: inherit;">เพิ่มรายชื่อ</button>
+                <div id="family-section" style="display:none;">
+                    <div class="form-group" id="total-residents-group">
+                        <label>จำนวนผู้เข้าพักทั้งหมด (รวมผู้ยื่นคำร้อง)</label>
+                        <input type="number" name="total_residents" id="total_residents" min="2" value="2" onchange="generateResidentFields()" oninput="generateResidentFields()">
+                        <div style="font-size:0.82rem;color:#6b7280;margin-top:0.3rem;">ใส่จำนวนคนทั้งหมด แล้วช่องกรอกรายชื่อจะปรากฏด้านล่างอัตโนมัติ</div>
+                    </div>
+                    <div class="form-group" id="residents-list-group" style="display:none;">
+                        <label>รายชื่อผู้ที่จะพักอาศัยร่วม (ไม่รวมตัวผู้ยื่นคำร้อง)</label>
+                        <div id="residents-container"></div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>ข้อมูลเพิ่มเติม (ถ้ามี)</label>
@@ -291,54 +293,63 @@
 
     function toggleResidentFields() {
         const stayAlone = document.querySelector('input[name="stay_type"][value="alone"]').checked;
-        const totalResidentsInput = document.getElementById('total_residents');
-        const residentsContainer = document.getElementById('residents-container');
-        const addResidentBtn = document.getElementById('add-resident-btn');
-        const totalResidentsGroup = document.getElementById('total-residents-group');
-        const residentsListGroup = document.getElementById('residents-list-group');
+        const familySection = document.getElementById('family-section');
+        const totalInput = document.getElementById('total_residents');
         if (stayAlone) {
-            totalResidentsInput.value = 1; totalResidentsInput.disabled = true;
-            totalResidentsInput.style.backgroundColor = '#e5e5e5';
-            addResidentBtn.disabled = true; addResidentBtn.style.backgroundColor = '#9ca3af'; addResidentBtn.style.cursor = 'not-allowed';
-            residentsContainer.innerHTML = '';
-            totalResidentsGroup.style.opacity = '0.5'; residentsListGroup.style.opacity = '0.5';
+            familySection.style.display = 'none';
+            totalInput.value = 1;
+            document.getElementById('residents-container').innerHTML = '';
+            document.getElementById('residents-list-group').style.display = 'none';
         } else {
-            totalResidentsInput.disabled = false; totalResidentsInput.style.backgroundColor = '';
-            addResidentBtn.disabled = false; addResidentBtn.style.backgroundColor = '#4f8cff'; addResidentBtn.style.cursor = 'pointer';
-            totalResidentsGroup.style.opacity = '1'; residentsListGroup.style.opacity = '1';
+            familySection.style.display = 'block';
+            totalInput.value = 2;
+            generateResidentFields();
         }
     }
 
-    function updateResidentCount() {
+    function generateResidentFields() {
+        const total = parseInt(document.getElementById('total_residents').value) || 0;
+        const extra = total - 1; // หักผู้ยื่นคำร้อง
         const container = document.getElementById('residents-container');
-        const residentEntries = container.querySelectorAll('.resident-entry');
-        document.getElementById('total_residents').value = residentEntries.length + 1;
-    }
-
-    function addResident() {
-        const container = document.getElementById('residents-container');
-        const div = document.createElement('div');
-        div.classList.add('resident-entry');
-        div.innerHTML = `
-            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;align-items:center;flex-wrap:wrap;">
-                <select name="resident_prefix[]" required style="width:100px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">
-                    <option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option>
-                    <option value="เด็กชาย">เด็กชาย</option><option value="เด็กหญิง">เด็กหญิง</option>
-                </select>
-                <input type="text" name="resident_name[]" placeholder="ชื่อ-นามสกุล" required style="flex:2;min-width:200px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">
-                <select name="resident_relation[]" required style="width:120px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">
-                    <option value="คู่สมรส">คู่สมรส</option><option value="บุตร">บุตร</option>
-                    <option value="บิดา">บิดา</option><option value="มารดา">มารดา</option>
-                </select>
-                <button type="button" onclick="removeResident(this)" style="background-color:#e53e3e;color:white;border:none;padding:0.5rem 0.75rem;border-radius:8px;cursor:pointer;font-size:0.9rem;font-family:inherit;">ลบ</button>
-            </div>`;
-        container.appendChild(div);
-        updateResidentCount();
-    }
-
-    function removeResident(button) {
-        button.parentElement.parentElement.remove();
-        updateResidentCount();
+        const listGroup = document.getElementById('residents-list-group');
+        if (extra <= 0) {
+            container.innerHTML = '';
+            listGroup.style.display = 'none';
+            return;
+        }
+        listGroup.style.display = 'block';
+        // เก็บข้อมูลเดิมก่อน
+        var oldData = [];
+        container.querySelectorAll('.resident-entry').forEach(function(entry) {
+            oldData.push({
+                prefix: entry.querySelector('select[name="resident_prefix[]"]')?.value || 'นาย',
+                name: entry.querySelector('input[name="resident_name[]"]')?.value || '',
+                relation: entry.querySelector('select[name="resident_relation[]"]')?.value || 'คู่สมรส'
+            });
+        });
+        container.innerHTML = '';
+        for (var i = 0; i < extra; i++) {
+            var old = oldData[i] || {};
+            var div = document.createElement('div');
+            div.classList.add('resident-entry');
+            div.innerHTML = '<div style="margin-bottom:0.75rem;padding:0.6rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">'
+                + '<div style="font-size:0.82rem;color:#6b7280;margin-bottom:0.4rem;">สมาชิกคนที่ ' + (i+1) + '</div>'
+                + '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+                + '<select name="resident_prefix[]" required style="width:100px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
+                + '<option value="นาย"' + (old.prefix==='นาย'?' selected':'') + '>นาย</option>'
+                + '<option value="นาง"' + (old.prefix==='นาง'?' selected':'') + '>นาง</option>'
+                + '<option value="นางสาว"' + (old.prefix==='นางสาว'?' selected':'') + '>นางสาว</option>'
+                + '<option value="เด็กชาย"' + (old.prefix==='เด็กชาย'?' selected':'') + '>เด็กชาย</option>'
+                + '<option value="เด็กหญิง"' + (old.prefix==='เด็กหญิง'?' selected':'') + '>เด็กหญิง</option></select>'
+                + '<input type="text" name="resident_name[]" placeholder="ชื่อ-นามสกุล" value="' + (old.name||'').replace(/"/g,'&quot;') + '" required style="flex:2;min-width:180px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
+                + '<select name="resident_relation[]" required style="width:120px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
+                + '<option value="คู่สมรส"' + (old.relation==='คู่สมรส'?' selected':'') + '>คู่สมรส</option>'
+                + '<option value="บุตร"' + (old.relation==='บุตร'?' selected':'') + '>บุตร</option>'
+                + '<option value="บิดา"' + (old.relation==='บิดา'?' selected':'') + '>บิดา</option>'
+                + '<option value="มารดา"' + (old.relation==='มารดา'?' selected':'') + '>มารดา</option></select>'
+                + '</div></div>';
+            container.appendChild(div);
+        }
     }
 
     // ── Session Check + Auto-fill ──
@@ -426,11 +437,38 @@
 
             if (result && result.success) {
                 const reqId = result.requestId || '-';
-                const doPrint = await ppkConfirm(
-                    'ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + reqId + '\n\nต้องการพิมพ์คำร้องเพื่อยื่นเอกสารหรือไม่?'
-                );
-                if (doPrint) printForm();
-                navigate('?page=form');
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+
+                // ซ่อนฟอร์ม แสดงหน้าสำเร็จพร้อมตัวเลือก
+                var formContainer = document.querySelector('.form-container') || document.getElementById('requestForm').closest('div');
+                var successHTML = '<div id="submitSuccessPanel" style="background:white;border-radius:16px;padding:2rem;text-align:center;max-width:600px;margin:2rem auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">';
+                successHTML += '<div style="font-size:3rem;margin-bottom:0.5rem;">✅</div>';
+                successHTML += '<h2 style="color:#059669;margin:0 0 0.5rem;">ส่งคำร้องสำเร็จ!</h2>';
+                successHTML += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;margin-bottom:1rem;">';
+                successHTML += '<div style="font-size:0.9rem;color:#6b7280;">รหัสคำร้อง</div>';
+                successHTML += '<div style="font-size:1.5rem;font-weight:bold;color:#059669;letter-spacing:2px;">' + reqId + '</div></div>';
+                successHTML += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:1rem;margin-bottom:1.5rem;text-align:left;">';
+                successHTML += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">📌 สิ่งที่ต้องทำ</div>';
+                successHTML += '<div style="color:#78350f;font-size:0.9rem;">กรุณาพิมพ์หรือบันทึกคำร้องเป็น PDF เพื่อเก็บเป็นหลักฐาน หากใช้มือถือสามารถเลือก "บันทึกเป็น PDF" แล้วกลับมาพิมพ์จากคอมพิวเตอร์ภายหลังได้</div></div>';
+                successHTML += '<div style="display:flex;flex-direction:column;gap:0.8rem;">';
+                successHTML += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
+                successHTML += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 เลือก "Save as PDF" หรือ "บันทึกเป็น PDF" ใน dialog การพิมพ์</div>';
+                successHTML += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
+                successHTML += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">สามารถกลับมาดูสถานะและพิมพ์คำร้องได้ทุกเมื่อที่หน้า "แบบฟอร์มคำร้อง"</div>';
+                successHTML += '</div></div>';
+
+                // แทรก success panel หลังฟอร์ม
+                var mainContent = document.querySelector('#mainContainer') || document.body;
+                document.getElementById('requestForm').style.display = 'none';
+                // ซ่อนปุ่มเดิมด้วย
+                var btnRow = document.querySelector('.submit-btn')?.parentElement;
+                if (btnRow) btnRow.style.display = 'none';
+                var panel = document.createElement('div');
+                panel.innerHTML = successHTML;
+                document.getElementById('requestForm').parentElement.appendChild(panel);
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
             } else {
                 ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ กรุณาลองใหม่');
             }

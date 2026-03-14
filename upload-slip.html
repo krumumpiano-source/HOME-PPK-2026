@@ -442,12 +442,22 @@
                         ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
                         window.navigate('dashboard.html');
                         return;
+                    } else if (submitResult && !submitResult.success) {
+                        // Backend ส่งกลับ error — แจ้งผู้ใช้ชัดเจน ไม่ fallback เงียบ
+                        ppkAlert('⚠️ ' + (submitResult.error || 'ไม่สามารถบันทึกสลิปได้'));
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'ยืนยันการส่งสลิป';
+                        return;
                     }
                 } catch (submitErr) {
-                    console.warn('Supabase submitSlip failed, using localStorage:', submitErr);
+                    console.error('Supabase submitSlip failed:', submitErr);
+                    ppkAlert('❌ บันทึกสลิปไม่สำเร็จ\n\n' + (submitErr.message || 'ไม่สามารถเชื่อมต่อระบบได้') + '\n\nกรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'ยืนยันการส่งสลิป';
+                    return;
                 }
 
-                // Fallback: บันทึกลง localStorage
+                // Fallback: บันทึกลง localStorage (ปกติจะไม่ถึงจุดนี้)
                 const slipData = {
                     unitNumber: window.billingInfo.unitNumber,
                     name: window.billingInfo.residentName,

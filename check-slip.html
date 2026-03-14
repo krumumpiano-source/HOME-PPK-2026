@@ -448,6 +448,39 @@
             }
           });
 
+          // รวม localStorage slips สำหรับบ้านที่ยังไม่มีสลิปจาก backend
+          try {
+            const localSlips = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
+            const localApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
+            if (localSlips.length > 0) {
+              const allData = housesData.concat(flatsData);
+              localSlips.forEach(ls => {
+                const uNum = String(ls.unitNumber || '');
+                if (!uNum) return;
+                const existing = allData.find(u => u.unitNumber === uNum);
+                if (existing && existing.paidAmount === null) {
+                  existing.paidAmount = parseFloat(ls.paidAmount) || 0;
+                  existing.slipImages = ls.slipImages || [];
+                  existing.slipDate = ls.submittedAt || null;
+                  if (localApprovals[uNum]) existing.approval = localApprovals[uNum];
+                } else if (!existing) {
+                  const ud = {
+                    id: housesData.length + flatsData.length + 1,
+                    unitNumber: uNum, name: ls.name || '', email: '',
+                    waterAmount: 0, electricAmount: 0, commonFee: 0,
+                    notifiedAmount: parseFloat(ls.notifiedAmount) || 0,
+                    paidAmount: parseFloat(ls.paidAmount) || 0,
+                    slipImages: ls.slipImages || [], slipDate: ls.submittedAt || null,
+                    slipId: null, approval: localApprovals[uNum] || null,
+                    proxyNote: '', noResident: false
+                  };
+                  if (uNum.toLowerCase().startsWith('f') || uNum.includes('แฟลต')) { flatsData.push(ud); }
+                  else { housesData.push(ud); }
+                }
+              });
+            }
+          } catch(lsErr) { console.warn('localStorage slip merge:', lsErr); }
+
           if (housesData.length > 0 || flatsData.length > 0) {
             renderAll();
             return;

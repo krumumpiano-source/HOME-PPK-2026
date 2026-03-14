@@ -240,8 +240,13 @@
                     html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">';
                     html += '<div><span style="font-weight:600;">' + (typeLabels[req._type] || req._type) + '</span>';
                     html += '<span style="color:var(--c-text-3);font-size:0.82rem;margin-left:0.5rem;">#' + (req.id || '-') + '</span></div>';
+                    html += '<div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">';
+                    // ปุ่มพิมพ์คำร้อง — เปิดหน้าฟอร์มพร้อม pre-fill ข้อมูลจาก details
+                    if (req._type === 'residence') {
+                        html += '<button onclick="viewAndPrintRequest(\'' + (req.id || '') + '\',\'' + req._type + '\')" style="background:#10b981;color:white;border:none;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;" title="พิมพ์/บันทึก PDF">🖨️ พิมพ์</button>';
+                    }
                     html += '<span class="ppk-badge" style="background:color-mix(in srgb, ' + s.color + ' 12%, transparent);color:' + s.color + ';border:1px solid color-mix(in srgb, ' + s.color + ' 25%, transparent);">';
-                    html += s.icon + ' ' + s.label + '</span></div>';
+                    html += s.icon + ' ' + s.label + '</span></div></div>';
                     if (req.queue_position) html += '<div style="color:#8b5cf6;font-size:0.85rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
                     if (req.review_note) html += '<div style="color:var(--c-text-2);font-size:0.85rem;margin-top:0.4rem;border-top:1px solid var(--c-border);padding-top:0.4rem;">💬 ' + req.review_note + '</div>';
                     html += '<div style="color:var(--c-text-3);font-size:0.78rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr + '</div></div>';
@@ -260,6 +265,89 @@
             var btn = document.querySelector('.ppk-tab[data-tab="' + tabId + '"]');
             if (content) content.classList.add('active');
             if (btn) btn.classList.add('active');
+        }
+
+        // พิมพ์คำร้องจากข้อมูลที่บันทึกไว้ใน DB
+        async function viewAndPrintRequest(reqId, reqType) {
+            if (!reqId) return;
+            try {
+                ppkAlert && document.body.style && (document.body.style.cursor = 'wait');
+                // ดึงคำร้องจาก DB (กรอง user_id + year เพื่อความปลอดภัย)
+                var _u = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                var _yr = String(new Date().getFullYear() + 543);
+                var result = await callBackendGet('getRequests', { type: reqType, user_id: _u.id || '', year: _yr });
+                var req = null;
+                if (result && result.success && result.data) {
+                    for (var i = 0; i < result.data.length; i++) {
+                        if (result.data[i].id === reqId) { req = result.data[i]; break; }
+                    }
+                }
+                document.body.style.cursor = '';
+                if (!req) { ppkAlert('ไม่พบข้อมูลคำร้อง #' + reqId); return; }
+                // flatten details
+                var d = req.details || {};
+                if (typeof d === 'string') try { d = JSON.parse(d); } catch(e) { d = {}; }
+                // สร้างหน้าพิมพ์ A4 จากข้อมูล
+                var fullname = (d.firstname || '') + ' ' + (d.lastname || '');
+                var prefix = d.prefix || '';
+                var subDate = req.submitted_at ? new Date(req.submitted_at) : new Date();
+                var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+                var dateStr = subDate.getDate() + ' ' + thaiMonths[subDate.getMonth()] + ' ' + (subDate.getFullYear() + 543);
+                var stayAlone = d.stay_type === 'alone';
+                var reasons = (d.reason || '').split(',').filter(Boolean);
+                var reasonLabels = { 'new_position': 'บรรจุใหม่', 'far_from_home': 'บ้านไกล', 'work_convenience': 'สะดวกในการทำงาน', 'safety': 'ความปลอดภัย' };
+                var residentsHTML = '';
+                var residents = d.residents || [];
+                if (typeof residents === 'string') try { residents = JSON.parse(residents); } catch(e) { residents = []; }
+                for (var ri = 0; ri < residents.length; ri++) {
+                    residentsHTML += '<tr><td style="border:1px solid #000;padding:4px;text-align:center;">' + (ri+1) + '</td><td style="border:1px solid #000;padding:4px;">' + (residents[ri].prefix||'') + (residents[ri].name||'') + '</td><td style="border:1px solid #000;padding:4px;text-align:center;">' + (residents[ri].relation||'') + '</td></tr>';
+                }
+                var docsChecked = d.documents_checked || [];
+                if (typeof docsChecked === 'string') try { docsChecked = JSON.parse(docsChecked); } catch(e) { docsChecked = []; }
+                var _sys2 = {}; try { _sys2 = JSON.parse(localStorage.getItem('adminSettings_system') || '{}'); } catch(e) {}
+                var pw = window.open('', '_blank');
+                pw.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>คำร้อง #' + reqId + '</title>');
+                pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
+                pw.document.write('<style>@page{size:A4;margin:2.5cm 2cm 2cm 3cm;}@media print{body{margin:0;padding:0;}}*{box-sizing:border-box;}body{font-family:"Sarabun","TH Sarabun New",sans-serif;font-size:16pt;line-height:1.4;margin:0;padding:2.5cm 2cm 2cm 3cm;width:21cm;}.header{text-align:center;margin-bottom:0.3cm;}.header-title{font-size:18pt;font-weight:bold;}.header-subtitle{font-size:16pt;}.date-line{text-align:right;margin-bottom:0.2cm;}.section{margin-bottom:0.2cm;}.section-title{font-weight:bold;text-decoration:underline;margin-bottom:0.1cm;}.indent{padding-left:1cm;}.small-text{font-size:14pt;}.checkbox{display:inline-block;width:10pt;height:10pt;border:1px solid #000;margin-right:0.1cm;vertical-align:middle;text-align:center;line-height:10pt;font-size:8pt;}table{border-collapse:collapse;width:100%;font-size:14pt;}th,td{border:1px solid #000;padding:3px;}th{background:#f5f5f5;font-weight:bold;}.dotted-line-long{display:inline-block;width:80%;border-bottom:1px dotted #000;}.dotted-line-full{display:block;width:100%;border-bottom:1px dotted #000;height:1.5em;}.dotted-line-short{display:inline-block;width:4cm;border-bottom:1px dotted #000;}.dotted-line-date{display:inline-block;width:3cm;border-bottom:1px dotted #000;}.dotted-line-sig{display:inline-block;width:3.5cm;border-bottom:1px dotted #000;}.approval-box{border:1px solid #000;margin-bottom:0.4cm;padding:0.3cm;page-break-inside:avoid;}.approval-header{font-weight:bold;background:#f5f5f5;padding:0.2cm;margin:-0.3cm -0.3cm 0.3cm -0.3cm;border-bottom:1px solid #000;}.approval-content{font-size:14pt;}.no-print{margin:1rem auto;text-align:center;}@media print{.no-print{display:none;}}</style></head><body>');
+                // Toolbar สำหรับหน้าจอ (ไม่พิมพ์ออก)
+                pw.document.write('<div class="no-print" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;max-width:500px;"><div style="font-weight:bold;color:#059669;margin-bottom:0.5rem;">📄 คำร้อง #' + reqId + '</div><button onclick="window.print()" style="background:#059669;color:white;border:none;border-radius:8px;padding:0.6rem 1.5rem;font-size:14pt;cursor:pointer;font-family:inherit;">🖨️ พิมพ์ / บันทึก PDF</button><div style="font-size:12pt;color:#6b7280;margin-top:0.3rem;">กด "Save as PDF" หรือ "บันทึกเป็น PDF" ใน dialog พิมพ์</div></div>');
+                // เนื้อหาคำร้อง
+                pw.document.write('<div class="header"><div class="header-title">แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</div><div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div></div>');
+                pw.document.write('<div class="date-line">วันที่ ' + dateStr + '</div>');
+                pw.document.write('<div style="margin-bottom:0.2cm;"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
+                pw.document.write('<p style="text-indent:2.5cm;text-align:justify;margin-bottom:0.2cm;">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + (d.subject_group||'') + ' มีความประสงค์ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยมีรายละเอียดดังต่อไปนี้</p>');
+                pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 1: ข้อมูลส่วนตัว</div><div class="indent small-text">');
+                pw.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
+                pw.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + (d.address||'') + '</div>');
+                pw.document.write('<div>หมายเลขโทรศัพท์: ' + (d.phone||'') + ' &nbsp;&nbsp; อีเมล: ' + (d.email||'') + ' &nbsp;&nbsp; ID Line: ' + (d.line_id||'') + '</div>');
+                pw.document.write('<div>กลุ่มสาระการเรียนรู้: ' + (d.subject_group||'') + '</div></div></div>');
+                pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิก</div><div class="indent small-text">');
+                pw.document.write('<div>ลักษณะการเข้าพัก: <span class="checkbox">' + (stayAlone ? '&#10003;' : '') + '</span> พักอาศัยคนเดียว &nbsp;&nbsp; <span class="checkbox">' + (!stayAlone ? '&#10003;' : '') + '</span> พักอาศัยพร้อมครอบครัว</div>');
+                pw.document.write('<div>จำนวนผู้เข้าพักทั้งหมด: ' + (d.total_residents||'') + ' คน</div>');
+                if (residentsHTML) { pw.document.write('<table><thead><tr><th style="width:50px;">ลำดับ</th><th>ชื่อ-นามสกุล</th><th style="width:100px;">ความสัมพันธ์</th></tr></thead><tbody>' + residentsHTML + '</tbody></table>'); }
+                if (d.additional_info) pw.document.write('<div>ข้อมูลเพิ่มเติม: ' + d.additional_info + '</div>');
+                pw.document.write('</div></div>');
+                pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 3: เหตุผลในการขอเข้าพัก</div><div class="indent small-text">');
+                reasons.forEach(function(r) { pw.document.write('<div><span class="checkbox">&#10003;</span> ' + (reasonLabels[r.trim()]||r.trim()) + '</div>'); });
+                if (d.other_reason) pw.document.write('<div><span class="checkbox">&#10003;</span> อื่นๆ: ' + d.other_reason + '</div>');
+                pw.document.write('</div></div>');
+                pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 4: เอกสารประกอบคำร้อง</div><div class="indent small-text">');
+                var docLabels = { 'id_card': 'สำเนาบัตรประชาชน', 'house_registration': 'สำเนาทะเบียนบ้าน', 'appointment_letter': 'สำเนาคำสั่งบรรจุ/แต่งตั้ง', 'marriage_cert': 'สำเนาทะเบียนสมรส', 'birth_cert': 'สำเนาสูติบัตรบุตร' };
+                docsChecked.forEach(function(dc) { pw.document.write('<div><span class="checkbox">&#10003;</span> ' + (docLabels[dc]||dc) + '</div>'); });
+                pw.document.write('</div></div>');
+                pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 5: ข้อตกลง</div><p class="indent small-text" style="text-align:justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย</p></div>');
+                pw.document.write('<div style="display:flex;justify-content:space-between;margin-top:0.3cm;" class="small-text"><div style="width:45%;text-align:center;"><div style="margin-top:0.5cm;">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div><div style="width:45%;text-align:center;"><div style="margin-top:0.5cm;">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+                var hn = _sys2.headOfPromotion||''; var vn = _sys2.viceDirector||''; var dn = _sys2.director||'';
+                pw.document.write('<div style="margin-top:0.5cm;">');
+                pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริมฯ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (hn||'<span class="dotted-line-short"></span>') + ')<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+                pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div><div class="approval-content"><div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (vn||'<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+                pw.document.write('<div class="approval-box"><div class="approval-header">คำสั่งผู้อำนวยการ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (dn||'<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+                pw.document.write('</div></body></html>');
+                pw.document.close();
+            } catch(e) {
+                document.body.style.cursor = '';
+                ppkAlert('ไม่สามารถโหลดคำร้องได้: ' + e.message);
+            }
         }
 
         window._ppkNavPage = 'form';

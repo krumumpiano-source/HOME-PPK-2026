@@ -753,6 +753,23 @@
         };
         let dataLoaded = false;
 
+        // Flatten details jsonb เข้ามาเป็น top-level properties
+        function _flattenDetails(row) {
+            if (!row) return row;
+            var d = row.details;
+            if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { d = null; } }
+            if (d && typeof d === 'object') {
+                Object.keys(d).forEach(function(k) {
+                    if (!(k in row)) row[k] = d[k];
+                });
+                // request-form ส่ง firstname+lastname, ฟอร์มอื่นส่ง fullname
+                if (!row.fullname && (row.firstname || row.lastname)) {
+                    row.fullname = ((row.firstname || '') + ' ' + (row.lastname || '')).trim();
+                }
+            }
+            return row;
+        }
+
         // โหลดข้อมูลจาก Backend
         async function loadAllRequests() {
             try {
@@ -765,10 +782,10 @@
                         cachedCall('getQueue', {}, 300000)
                     ]);
 
-                    if (resResult && resResult.success) cachedData.residence = resResult.data || [];
-                    if (repResult && repResult.success) cachedData.repair = repResult.data || [];
-                    if (trfResult && trfResult.success) cachedData.transfer = trfResult.data || [];
-                    if (retResult && retResult.success) cachedData.return = retResult.data || [];
+                    if (resResult && resResult.success) cachedData.residence = (resResult.data || []).map(_flattenDetails);
+                    if (repResult && repResult.success) cachedData.repair = (repResult.data || []).map(_flattenDetails);
+                    if (trfResult && trfResult.success) cachedData.transfer = (trfResult.data || []).map(_flattenDetails);
+                    if (retResult && retResult.success) cachedData.return = (retResult.data || []).map(_flattenDetails);
 
                     // merge queue positions
                     if (queueResult && queueResult.success && queueResult.data) {

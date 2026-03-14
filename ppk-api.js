@@ -92,7 +92,7 @@ async function sbGet(table, params) {
                     else if (op === 'like')  q = q.like(k, v);
                     else if (op === 'ilike') q = q.ilike(k, v);
                     else if (op === 'is')    q = q.is(k, v === 'null' ? null : v === 'true');
-                    else if (op === 'in')    q = q.in(k, v.split(','));
+                    else if (op === 'in')    q = q.in(k, v.replace(/^\(|\)$/g, '').split(','));
                 });
                 if (params && params.order) {
                     var ord = params.order.split('.');
@@ -202,6 +202,32 @@ async function sha256hexSalted(password, email) {
 /* ══════════════════════════════════════════
    AUTH — Register / Logout / Session
 ══════════════════════════════════════════ */
+
+/* ── Helper: ค้นหา resident จาก user — fallback email + auto-link ── */
+async function _findResidentForUser(userId, userEmail) {
+    // 1) ค้นจาก user_id ตรงๆ
+    if (userId) {
+        try {
+            var rows = await sbGet('residents', { user_id: 'eq.' + userId, is_active: 'eq.true', limit: '1' });
+            if (rows && rows[0]) return rows[0];
+        } catch(e) {}
+    }
+    // 2) Fallback: ค้นจาก email ใน residents table → auto-link user_id
+    if (userEmail) {
+        var em = userEmail.trim().toLowerCase();
+        try {
+            var emRows = await sbGet('residents', { email: 'eq.' + em, is_active: 'eq.true', limit: '1' });
+            if (emRows && emRows[0]) {
+                if (userId && !emRows[0].user_id) {
+                    try { await sbPatch('residents', { id: 'eq.' + emRows[0].id }, { user_id: userId }); } catch(e2) {}
+                    emRows[0].user_id = userId;
+                }
+                return emRows[0];
+            }
+        } catch(e) {}
+    }
+    return null;
+}
 
 async function ppkLogout() {
     // ลบ session จาก DB ถ้ามี
@@ -394,12 +420,8 @@ async function _routeAction(action, data) {
                 try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
             }
             if (!matched) return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
-            // ดึงข้อมูล resident ที่ active
-            var resident = null;
-            try {
-                var resRows = await sbGet('residents', { user_id: 'eq.' + u.id, is_active: 'eq.true', limit: '1' });
-                if (resRows && resRows[0]) resident = resRows[0];
-            } catch(e) { resident = null; }
+            // ดึงข้อมูล resident ที่ active (fallback email + auto-link)
+            var resident = await _findResidentForUser(u.id, u.email);
             // ดึงสิทธิ์จาก permissions table
             var _loginPermRows = [];
             try { _loginPermRows = await sbGet('permissions', { user_id: 'eq.' + u.id, select: 'permission' }) || []; } catch(e) {}
@@ -487,11 +509,7 @@ async function _routeAction(action, data) {
             var uRows = await sbGet('users', { id: 'eq.' + userId, is_active: 'eq.true', limit: '1' });
             var u2 = uRows && uRows[0] ? uRows[0] : null;
             if (!u2) return { success: true };
-            var resident2 = null;
-            try {
-                var rr2 = await sbGet('residents', { user_id: 'eq.' + u2.id, is_active: 'eq.true', limit: '1' });
-                if (rr2 && rr2[0]) resident2 = rr2[0];
-            } catch(e) {}
+            var resident2 = await _findResidentForUser(u2.id, u2.email);
             var token2 = 'session-' + u2.id + '-' + Date.now();
             try {
                 await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString() });
@@ -608,15 +626,17 @@ async function _routeAction(action, data) {
             }
             if (!sessObj) return { success: false, error: 'SESSION_EXPIRED' };
             var u = await sbGet('users', { id: 'eq.' + sessObj.user_id });
-            var res = [];
+            var uObj = u && u[0] ? u[0] : null;
+            var res = null;
             if (sessObj.resident_id) {
-                res = await sbGet('residents', { id: 'eq.' + sessObj.resident_id });
+                var resArr = await sbGet('residents', { id: 'eq.' + sessObj.resident_id });
+                res = resArr && resArr[0] ? resArr[0] : null;
             }
-            // Fallback: ค้นหา resident จาก user_id ถ้าไม่มี resident_id ใน session
-            if ((!res || !res[0]) && sessObj.user_id) {
-                res = await sbGet('residents', { user_id: 'eq.' + sessObj.user_id, is_active: 'eq.true', limit: '1' });
+            // Fallback: ค้นหา resident จาก user_id หรือ email (+ auto-link)
+            if (!res && sessObj.user_id) {
+                res = await _findResidentForUser(sessObj.user_id, uObj ? uObj.email : null);
             }
-            return { success: true, user: u[0], resident: res[0] || null };
+            return { success: true, user: uObj, resident: res || null };
         }
         case 'getCoresidents': {
             var cResId = data.residentId || null;
@@ -656,6 +676,7 @@ async function _routeAction(action, data) {
                         house_number: data.house_number || '',
                         prefix: reg.prefix || '', firstname: reg.firstname || '',
                         lastname: reg.lastname || '', position: reg.position || '',
+                        email: reg.email || '', phone: reg.phone || '',
                         resident_type: data.resident_type || 'teacher',
                         address_no: reg.address_no || '', address_village: reg.address_village || '',
                         address_road: reg.address_road || '', subdistrict: reg.subdistrict || '',
@@ -827,7 +848,12 @@ async function _routeAction(action, data) {
             if (data.type)    q.type    = 'eq.' + data.type;
             if (data.status)  q.status  = 'eq.' + data.status;
             if (data.user_id) q.user_id = 'eq.' + data.user_id;
-            if (data.year)    q['submitted_at'] = 'gte.' + data.year + '-01-01T00:00:00Z';
+            if (data.year) {
+                // แปลงปี พ.ศ. → ค.ศ. ก่อนกรอง submitted_at
+                var adYear = parseInt(data.year);
+                if (adYear > 2500) adYear = adYear - 543;
+                q['submitted_at'] = 'gte.' + adYear + '-01-01T00:00:00Z';
+            }
             var rows = await sbGet('requests', q);
             return { success: true, data: rows };
         }
@@ -901,18 +927,25 @@ async function _routeAction(action, data) {
         }
 
         case 'submitRequest': {
-            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,resident_id,house_number' });
+            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number' });
             var s = sess && sess[0];
+            // สร้าง ID ตาม prefix ของ type
+            var prefixMap = { residence: 'REQ', transfer: 'TRF', return: 'RTN', repair: 'RPR' };
+            var reqPrefix = prefixMap[data.type] || 'REQ';
+            var _uid = 'xxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16); }).toUpperCase();
+            var reqId = reqPrefix + _uid;
+            // แยก type ออกจาก data แล้วเก็บที่เหลือใน details (jsonb)
+            var detailsCopy = {};
+            Object.keys(data).forEach(function(k) { if (k !== 'type') detailsCopy[k] = data[k]; });
             var row = await sbPost('requests', {
+                id:           reqId,
                 type:         data.type || 'general',
                 status:       'pending',
-                user_id:      s ? s.user_id : '',
-                resident_id:  s ? s.resident_id : '',
-                house_number: data.houseNumber || (s ? s.house_number : ''),
-                description:  data.description || '',
-                details:      data.details ? JSON.stringify(data.details) : null
+                user_id:      s ? s.user_id : null,
+                house_number: data.houseNumber || data.house_number || data.current_house || (s ? s.house_number : ''),
+                details:      detailsCopy
             });
-            return { success: true, data: row };
+            return { success: true, data: row, requestId: reqId };
         }
 
         case 'submitSlip': {
@@ -923,8 +956,10 @@ async function _routeAction(action, data) {
             // ตรวจสอบว่า house_number ตรงกับ session (ป้องกันส่งแทนคนอื่น)
             var slipSess = await _getSessionRole();
             if (slipSess && slipSess.role !== 'admin' && slipSess.role !== 'head') {
-                var myRes = await sbGet('residents', { user_id: 'eq.' + slipSess.userId, is_active: 'eq.true', select: 'house_number', limit: '1' });
-                var myHouse = myRes && myRes[0] ? myRes[0].house_number : '';
+                var myResUser = null;
+                try { var muArr = await sbGet('users', { id: 'eq.' + slipSess.userId, select: 'email', limit: '1' }); myResUser = muArr && muArr[0]; } catch(e) {}
+                var myResObj = await _findResidentForUser(slipSess.userId, myResUser ? myResUser.email : null);
+                var myHouse = myResObj ? (myResObj.house_number || '') : '';
                 if (myHouse && data.houseNumber !== myHouse) {
                     return { success: false, error: 'คุณไม่สามารถส่งสลิปแทนบ้านอื่นได้' };
                 }
@@ -938,9 +973,17 @@ async function _routeAction(action, data) {
             if (data.submittedByName && data.submittedByHouse) {
                 proxyNote = '\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ' + data.submittedByName + ' (' + data.submittedByHouse + ')';
             }
+            // ตรวจ resident_id ให้ valid ก่อน insert (ป้องกัน FK violation)
+            var validResidentId = null;
+            if (data.residentId) {
+                try {
+                    var resCheck = await sbGet('residents', { id: 'eq.' + data.residentId, select: 'id', limit: '1' });
+                    if (resCheck && resCheck.length > 0) validResidentId = data.residentId;
+                } catch(e) {}
+            }
             var row = await sbPost('slip_submissions', {
                 house_number:  data.houseNumber  || '',
-                resident_id:   data.residentId   || null,
+                resident_id:   validResidentId,
                 period:        data.period       || '',
                 amount:        data.amount       || 0,
                 slip_url:      data.slipUrl      || null,
@@ -1068,11 +1111,14 @@ async function _routeAction(action, data) {
                 position: data.position || '', subject_group: data.subject_group || '',
                 updated_at: new Date().toISOString()
             };
+            if (data.email) _userPatch.email = data.email.trim().toLowerCase();
             await sbPatch('users', { id: 'eq.' + profileUserId }, _userPatch);
             // อัปเดต residents ด้วย (ถ้ามี)
             if (!profileResId) {
-                var resFallback = await sbGet('residents', { user_id: 'eq.' + profileUserId, is_active: 'eq.true', limit: '1' });
-                if (resFallback && resFallback[0]) profileResId = resFallback[0].id;
+                var _prUser = await sbGet('users', { id: 'eq.' + profileUserId, select: 'email', limit: '1' });
+                var _prEmail = _prUser && _prUser[0] ? _prUser[0].email : null;
+                var resFb = await _findResidentForUser(profileUserId, _prEmail);
+                if (resFb) profileResId = resFb.id;
             }
             if (profileResId) {
                 var _resPatch = {
@@ -1085,6 +1131,7 @@ async function _routeAction(action, data) {
                     zipcode: data.zipcode || '', profile_photo: data.profilePhoto || data.profile_photo || '',
                     updated_at: new Date().toISOString()
                 };
+                if (data.email) _resPatch.email = data.email.trim().toLowerCase();
                 if (data.move_in_date) _resPatch.move_in_date = data.move_in_date;
                 await sbPatch('residents', { id: 'eq.' + profileResId }, _resPatch);
             }
@@ -1340,13 +1387,15 @@ async function _routeAction(action, data) {
 
         /* ── Request review ───────────────────────── */
         case 'reviewRequest': {
+            var reqIdToReview = data.id || data.requestId;
+            if (!reqIdToReview) return { success: false, error: 'ไม่ระบุ ID คำร้อง' };
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
             var reqReviewerId = sess && sess[0] ? sess[0].user_id : null;
             if (!reqReviewerId) {
                 var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
                 if (lsUser && lsUser.id) reqReviewerId = lsUser.id;
             }
-            await sbPatch('requests', { id: 'eq.' + data.id }, {
+            await sbPatch('requests', { id: 'eq.' + reqIdToReview }, {
                 status: data.status, reviewed_by: data.reviewedBy || reqReviewerId || '',
                 reviewed_at: new Date().toISOString(), review_note: data.note || '',
                 updated_at: new Date().toISOString()
@@ -1438,6 +1487,8 @@ async function _routeAction(action, data) {
                 firstname:    data.firstname || '',
                 lastname:     data.lastname  || '',
                 position:     data.position  || '',
+                email:        email || '',
+                phone:        data.phone     || '',
                 is_active:    true
             });
             invalidateResidentCache();
@@ -1482,10 +1533,16 @@ async function _routeAction(action, data) {
         }
         case 'removeResident': {
             var rid = data.id;
-            var resRows = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id', limit: '1' });
+            var resRows = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id,email', limit: '1' });
             await sbPatch('residents', { id: 'eq.' + rid }, { is_active: false, updated_at: new Date().toISOString() });
-            if (resRows && resRows[0] && resRows[0].user_id) {
-                await sbPatch('users', { id: 'eq.' + resRows[0].user_id }, { is_active: false, updated_at: new Date().toISOString() });
+            var _rmUserId = resRows && resRows[0] ? resRows[0].user_id : null;
+            // Fallback: ถ้าไม่มี user_id ให้ค้นจาก email
+            if (!_rmUserId && resRows && resRows[0] && resRows[0].email) {
+                var _rmByEmail = await sbGet('users', { email: 'eq.' + resRows[0].email.toLowerCase(), select: 'id', limit: '1' });
+                if (_rmByEmail && _rmByEmail[0]) _rmUserId = _rmByEmail[0].id;
+            }
+            if (_rmUserId) {
+                await sbPatch('users', { id: 'eq.' + _rmUserId }, { is_active: false, updated_at: new Date().toISOString() });
             }
             invalidateResidentCache();
             return { success: true };
@@ -1875,6 +1932,25 @@ async function _routeAction(action, data) {
             }
             var uMap = {};
             (usersArr || []).forEach(function(u) { uMap[u.id] = u; });
+            // Auto-link: residents ที่ไม่มี user_id แต่มี email → ค้นหา user จาก email แล้วเชื่อมอัตโนมัติ
+            var orphanEmails = residents.filter(function(r) { return !r.user_id && r.email; }).map(function(r) { return r.email.toLowerCase(); });
+            if (orphanEmails.length > 0) {
+                try {
+                    var matchedUsers = await sbGet('users', { email: 'in.(' + orphanEmails.join(',') + ')', select: 'id,email,role,is_active,created_at' });
+                    (matchedUsers || []).forEach(function(mu) {
+                        uMap[mu.id] = mu;
+                        for (var ri = 0; ri < residents.length; ri++) {
+                            if (!residents[ri].user_id && residents[ri].email && residents[ri].email.toLowerCase() === mu.email.toLowerCase()) {
+                                residents[ri].user_id = mu.id;
+                                try { sbPatch('residents', { id: 'eq.' + residents[ri].id }, { user_id: mu.id }); } catch(e2) {}
+                                break;
+                            }
+                        }
+                    });
+                    // อัปเดต uids สำหรับ permissions query
+                    uids = residents.map(function(r) { return r.user_id; }).filter(Boolean);
+                } catch(e) {}
+            }
             // ดึง permissions ทั้งหมด
             var allPerms = [];
             if (uids.length > 0) {

@@ -175,7 +175,7 @@
 
         // ส่งข้อมูลผ่าน API
         const today = new Date();
-        const period = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+        const period = (today.getFullYear() + 543) + '-' + String(today.getMonth() + 1).padStart(2, '0');
         const r = await callBackend('submitSlip', {
           houseNumber: _houseNumber, period, amount: amount,
           slipUrl: slipUrl ? JSON.stringify([slipUrl]) : null,
