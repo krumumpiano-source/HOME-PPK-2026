@@ -573,8 +573,32 @@
             };
             const result = await callBackend('submitRequest', data);
             if (result && result.success) {
-                ppkAlert('ส่งคำร้องสำเร็จ! รหัสคำร้อง: ' + (result.requestId || '-'));
-                window.navigate('?page=form');
+                const reqId = result.requestId || '-';
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                var sc = '<div style="background:white;border-radius:16px;padding:2rem;text-align:center;max-width:600px;margin:2rem auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">';
+                sc += '<div style="font-size:3rem;margin-bottom:0.5rem;">✅</div>';
+                sc += '<h2 style="color:#059669;margin:0 0 0.5rem;">บันทึกคำร้องเข้าระบบเรียบร้อยแล้ว</h2>';
+                sc += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;margin-bottom:1rem;">';
+                sc += '<div style="font-size:0.9rem;color:#6b7280;">รหัสคำร้อง</div>';
+                sc += '<div style="font-size:1.5rem;font-weight:bold;color:#059669;letter-spacing:2px;">' + reqId + '</div></div>';
+                sc += '<div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:12px;padding:1rem;margin-bottom:1rem;text-align:left;">';
+                sc += '<div style="font-weight:bold;color:#1e40af;margin-bottom:0.3rem;">📋 สถานะ: รอคณะกรรมการดำเนินการ</div>';
+                sc += '<div style="color:#1e3a5f;font-size:0.88rem;">คำร้องของท่านถูกบันทึกในระบบแล้ว ขณะนี้อยู่ระหว่างรอคณะกรรมการบ้านพักพิจารณา ท่านสามารถติดตามสถานะได้ที่หน้า "แบบฟอร์มคำร้อง"</div></div>';
+                sc += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:1rem;margin-bottom:1.5rem;text-align:left;">';
+                sc += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">🖨️ สิ่งที่ต้องทำต่อ</div>';
+                sc += '<div style="color:#78350f;font-size:0.88rem;">กรุณา <b>พิมพ์คำร้อง</b> แล้วนำเสนอเซ็นตามลำดับ ดังนี้<br>';
+                sc += '① ผู้ยื่นคำร้องเซ็นชื่อ → ② หัวหน้ากลุ่มสาระ/งาน → ③ รองผู้อำนวยการ → ④ ผู้อำนวยการ<br>';
+                sc += 'จากนั้นส่งเอกสารที่เซ็นครบแล้วให้คณะกรรมการบ้านพัก</div></div>';
+                sc += '<div style="display:flex;flex-direction:column;gap:0.8rem;">';
+                sc += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
+                sc += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 หากใช้มือถือ ให้เลือก "บันทึกเป็น PDF" แล้วพิมพ์จากคอมพิวเตอร์ภายหลัง</div>';
+                sc += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
+                sc += '</div></div>';
+                document.getElementById('transferForm').style.display = 'none';
+                var panel = document.createElement('div'); panel.innerHTML = sc;
+                document.getElementById('transferForm').parentElement.appendChild(panel);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
             } else { ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ'); }
         } catch (err) { ppkAlert('ไม่สามารถเชื่อมต่อระบบได้');
         } finally { submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง'; }

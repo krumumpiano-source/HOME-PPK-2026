@@ -465,18 +465,22 @@
                 var formContainer = document.querySelector('.form-container') || document.getElementById('requestForm').closest('div');
                 var successHTML = '<div id="submitSuccessPanel" style="background:white;border-radius:16px;padding:2rem;text-align:center;max-width:600px;margin:2rem auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">';
                 successHTML += '<div style="font-size:3rem;margin-bottom:0.5rem;">✅</div>';
-                successHTML += '<h2 style="color:#059669;margin:0 0 0.5rem;">ส่งคำร้องสำเร็จ!</h2>';
+                successHTML += '<h2 style="color:#059669;margin:0 0 0.5rem;">บันทึกคำร้องเข้าระบบเรียบร้อยแล้ว</h2>';
                 successHTML += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;margin-bottom:1rem;">';
                 successHTML += '<div style="font-size:0.9rem;color:#6b7280;">รหัสคำร้อง</div>';
                 successHTML += '<div style="font-size:1.5rem;font-weight:bold;color:#059669;letter-spacing:2px;">' + reqId + '</div></div>';
+                successHTML += '<div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:12px;padding:1rem;margin-bottom:1rem;text-align:left;">';
+                successHTML += '<div style="font-weight:bold;color:#1e40af;margin-bottom:0.3rem;">📋 สถานะ: รอคณะกรรมการดำเนินการ</div>';
+                successHTML += '<div style="color:#1e3a5f;font-size:0.88rem;">คำร้องของท่านถูกบันทึกในระบบแล้ว ขณะนี้อยู่ระหว่างรอคณะกรรมการบ้านพักพิจารณา ท่านสามารถติดตามสถานะได้ที่หน้า "แบบฟอร์มคำร้อง"</div></div>';
                 successHTML += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:1rem;margin-bottom:1.5rem;text-align:left;">';
-                successHTML += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">📌 สิ่งที่ต้องทำ</div>';
-                successHTML += '<div style="color:#78350f;font-size:0.9rem;">กรุณาพิมพ์หรือบันทึกคำร้องเป็น PDF เพื่อเก็บเป็นหลักฐาน หากใช้มือถือสามารถเลือก "บันทึกเป็น PDF" แล้วกลับมาพิมพ์จากคอมพิวเตอร์ภายหลังได้</div></div>';
+                successHTML += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">🖨️ สิ่งที่ต้องทำต่อ</div>';
+                successHTML += '<div style="color:#78350f;font-size:0.88rem;">กรุณา <b>พิมพ์คำร้อง</b> แล้วนำเสนอเซ็นตามลำดับ ดังนี้<br>';
+                successHTML += '① ผู้ยื่นคำร้องเซ็นชื่อ → ② หัวหน้ากลุ่มสาระ/งาน → ③ รองผู้อำนวยการ → ④ ผู้อำนวยการ<br>';
+                successHTML += 'จากนั้นส่งเอกสารที่เซ็นครบแล้วให้คณะกรรมการบ้านพัก</div></div>';
                 successHTML += '<div style="display:flex;flex-direction:column;gap:0.8rem;">';
                 successHTML += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
-                successHTML += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 เลือก "Save as PDF" หรือ "บันทึกเป็น PDF" ใน dialog การพิมพ์</div>';
+                successHTML += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 หากใช้มือถือ ให้เลือก "บันทึกเป็น PDF" แล้วพิมพ์จากคอมพิวเตอร์ภายหลัง</div>';
                 successHTML += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
-                successHTML += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">สามารถกลับมาดูสถานะและพิมพ์คำร้องได้ทุกเมื่อที่หน้า "แบบฟอร์มคำร้อง"</div>';
                 successHTML += '</div></div>';
 
                 // แทรก success panel หลังฟอร์ม

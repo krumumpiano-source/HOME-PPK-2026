@@ -1426,6 +1426,29 @@ async function _routeAction(action, data) {
                 reviewed_at: new Date().toISOString(), review_note: data.note || '',
                 updated_at: new Date().toISOString()
             });
+            // Auto-delete attachments when request reaches terminal status
+            var terminalStatuses = ['approved', 'completed', 'rejected'];
+            if (terminalStatuses.indexOf(data.status) !== -1) {
+                try {
+                    var reqRows = await sbGet('requests', { id: 'eq.' + reqIdToReview, select: 'details' });
+                    var reqDetails = reqRows && reqRows[0] ? reqRows[0].details : null;
+                    var attUrls = reqDetails ? (reqDetails.attachment_urls || []) : [];
+                    if (attUrls.length > 0) {
+                        var filePaths = [];
+                        for (var ai = 0; ai < attUrls.length; ai++) {
+                            var m = attUrls[ai].match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+                            if (m) filePaths.push({ bucket: m[1], path: m[2] });
+                        }
+                        for (var bi = 0; bi < filePaths.length; bi++) {
+                            await window._sb.storage.from(filePaths[bi].bucket).remove([filePaths[bi].path]);
+                        }
+                        // Clear attachment_urls from details
+                        var cleanDetails = Object.assign({}, reqDetails);
+                        delete cleanDetails.attachment_urls;
+                        await sbPatch('requests', { id: 'eq.' + reqIdToReview }, { details: cleanDetails });
+                    }
+                } catch (e) { console.warn('Auto-delete attachments failed:', e); }
+            }
             return { success: true };
         }
         case 'updateQueue': {
