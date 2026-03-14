@@ -858,7 +858,7 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'getQueue': {
-            var rows = await sbGet('queue', { status: 'eq.waiting', order: 'created_at.asc' });
+            var rows = await sbGet('queue', { status: 'eq.waiting', order: 'position.asc' });
             return { success: true, data: rows };
         }
         case 'getIncome': {
@@ -1426,6 +1426,40 @@ async function _routeAction(action, data) {
                 reviewed_at: new Date().toISOString(), review_note: data.note || '',
                 updated_at: new Date().toISOString()
             });
+
+            // ── Queue management: insert/remove from queue table ──
+            if (data.status === 'waiting') {
+                // เพิ่มลงคิว — หา user_id ของคำร้อง + position ถัดไป
+                try {
+                    var reqRow = await sbGet('requests', { id: 'eq.' + reqIdToReview, select: 'user_id' });
+                    var reqUserId = reqRow && reqRow[0] ? reqRow[0].user_id : null;
+                    // ดูว่ามี row ใน queue อยู่แล้วหรือไม่
+                    var existQ = await sbGet('queue', { request_id: 'eq.' + reqIdToReview, status: 'eq.waiting', limit: '1' });
+                    if (!existQ || existQ.length === 0) {
+                        // หา position สูงสุดปัจจุบัน
+                        var allQ = await sbGet('queue', { status: 'eq.waiting', order: 'position.desc', limit: '1' });
+                        var nextPos = (allQ && allQ[0] && allQ[0].position) ? allQ[0].position + 1 : 1;
+                        if (data.queuePosition) nextPos = data.queuePosition;
+                        await sbPost('queue', {
+                            user_id: reqUserId,
+                            request_id: reqIdToReview,
+                            position: nextPos,
+                            status: 'waiting'
+                        });
+                    }
+                } catch(qe) { console.warn('Queue insert failed:', qe); }
+            } else if (data.removeFromQueue || ['approved','rejected','reviewing','pending','completed','expired','cancelled'].indexOf(data.status) !== -1) {
+                // ลบออกจากคิว
+                try {
+                    var qRows = await sbGet('queue', { request_id: 'eq.' + reqIdToReview, status: 'eq.waiting' });
+                    if (qRows && qRows.length > 0) {
+                        for (var qi = 0; qi < qRows.length; qi++) {
+                            await sbPatch('queue', { id: 'eq.' + qRows[qi].id }, { status: 'cancelled', updated_at: new Date().toISOString() });
+                        }
+                    }
+                } catch(qe) { console.warn('Queue remove failed:', qe); }
+            }
+
             // Auto-delete attachments when request reaches terminal status
             var terminalStatuses = ['approved', 'completed', 'rejected'];
             if (terminalStatuses.indexOf(data.status) !== -1) {
@@ -1436,7 +1470,9 @@ async function _routeAction(action, data) {
                     if (attUrls.length > 0) {
                         var filePaths = [];
                         for (var ai = 0; ai < attUrls.length; ai++) {
-                            var m = attUrls[ai].match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+                            var attItem = attUrls[ai];
+                            var attUrlStr = typeof attItem === 'string' ? attItem : (attItem.url || '');
+                            var m = attUrlStr.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
                             if (m) filePaths.push({ bucket: m[1], path: m[2] });
                         }
                         for (var bi = 0; bi < filePaths.length; bi++) {
