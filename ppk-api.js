@@ -926,6 +926,32 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        case 'uploadRequestAttachment': {
+            var b64a = data.base64 || '';
+            if (!b64a.startsWith('data:')) return { success: false, error: 'ไม่ใช่ base64 file' };
+            var mimeMatchA = b64a.match(/data:([^;]+);base64,(.+)/);
+            if (!mimeMatchA) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
+            var mimeA = mimeMatchA[1];
+            var rawA  = mimeMatchA[2];
+            var binaryA = atob(rawA);
+            var bytesA  = new Uint8Array(binaryA.length);
+            for (var ka = 0; ka < binaryA.length; ka++) { bytesA[ka] = binaryA.charCodeAt(ka); }
+            var origName = (data.filename || '').replace(/[^a-zA-Z0-9._-]/g, '_');
+            var extA = origName.split('.').pop() || 'bin';
+            var pathA = 'request-attachments/' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '.' + extA;
+            var blobA = new Blob([bytesA], { type: mimeA });
+            // ลอง bucket 'receipts' ก่อน (มีอยู่แล้ว)
+            var upResA = await window._sb.storage.from('receipts').upload(pathA, blobA, { contentType: mimeA, upsert: false });
+            if (upResA.error) {
+                upResA = await window._sb.storage.from('slips').upload(pathA, blobA, { contentType: mimeA, upsert: false });
+                if (upResA.error) return { success: false, error: upResA.error.message };
+                var pubA2 = window._sb.storage.from('slips').getPublicUrl(pathA);
+                return { success: true, url: pubA2.data.publicUrl };
+            }
+            var pubA = window._sb.storage.from('receipts').getPublicUrl(pathA);
+            return { success: true, url: pubA.data.publicUrl };
+        }
+
         case 'submitRequest': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number' });
             var s = sess && sess[0];

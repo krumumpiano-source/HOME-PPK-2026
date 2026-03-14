@@ -215,11 +215,24 @@
             };
             var types = hasHouse ? ['repair', 'transfer', 'return'] : ['residence'];
             var allRequests = [];
+            var queueMap = {}; // map request_id → position
             try {
+                // ดึงข้อมูลคิว (สำหรับ merge queue_position)
+                try {
+                    var qr = await callBackendGet('getQueue', {});
+                    if (qr && qr.success && qr.data) {
+                        qr.data.forEach(function(q) { if (q.request_id) queueMap[q.request_id] = q.position; });
+                    }
+                } catch(e) {}
+
                 for (var i = 0; i < types.length; i++) {
                     var r = await callBackendGet('getRequests', { type: types[i], year: year, user_id: userId });
                     if (r && r.success && r.data) {
-                        r.data.forEach(function(req) { req._type = types[i]; });
+                        r.data.forEach(function(req) {
+                            req._type = types[i];
+                            // merge queue position
+                            if (!req.queue_position && queueMap[req.id]) req.queue_position = queueMap[req.id];
+                        });
                         allRequests = allRequests.concat(r.data);
                     }
                 }
@@ -342,7 +355,32 @@
                 pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริมฯ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (hn||'<span class="dotted-line-short"></span>') + ')<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
                 pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div><div class="approval-content"><div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (vn||'<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
                 pw.document.write('<div class="approval-box"><div class="approval-header">คำสั่งผู้อำนวยการ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (dn||'<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
-                pw.document.write('</div></body></html>');
+                pw.document.write('</div>');
+                // เอกสารแนบ (ถ้ามี)
+                var attachUrls = d.attachment_urls || [];
+                if (typeof attachUrls === 'string') try { attachUrls = JSON.parse(attachUrls); } catch(e) { attachUrls = []; }
+                if (attachUrls.length > 0) {
+                    pw.document.write('<div style="page-break-before:always;"></div>');
+                    pw.document.write('<div class="header" style="margin-top:1cm;"><div class="header-title">เอกสารแนบประกอบคำร้อง #' + reqId + '</div></div>');
+                    pw.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+                    for (var ai = 0; ai < attachUrls.length; ai++) {
+                        var att = attachUrls[ai];
+                        var attUrl = typeof att === 'string' ? att : (att.url || '');
+                        var attName = typeof att === 'string' ? '' : (att.name || '');
+                        var attType = typeof att === 'string' ? '' : (att.type || '');
+                        var isPdfAtt = attType.indexOf('pdf') >= 0 || attUrl.toLowerCase().indexOf('.pdf') >= 0;
+                        if (attName) pw.document.write('<div style="font-size:12pt;color:#6b7280;margin:0.3cm 0 0.2cm;">📎 ' + attName + '</div>');
+                        if (isPdfAtt) {
+                            pw.document.write('<div id="pdf-att-' + ai + '" data-url="' + attUrl + '"></div>');
+                        } else {
+                            pw.document.write('<div style="text-align:center;margin-bottom:0.5cm;"><img src="' + attUrl + '" style="max-width:100%;max-height:25cm;" onerror="this.outerHTML=\'<div style=color:red>ไม่สามารถโหลดรูปได้</div>\';"></div>');
+                        }
+                    }
+                    // PDF rendering script
+                    pw.document.write('<script>if(typeof pdfjsLib!=="undefined"){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";(async function(){var containers=document.querySelectorAll("[id^=pdf-att-]");for(var c of containers){var url=c.getAttribute("data-url");if(!url)continue;try{var pdf=await pdfjsLib.getDocument(url).promise;for(var p=1;p<=pdf.numPages;p++){var page=await pdf.getPage(p);var vp=page.getViewport({scale:2});var canvas=document.createElement("canvas");canvas.width=vp.width;canvas.height=vp.height;canvas.style.maxWidth="100%";canvas.style.marginBottom="0.5cm";canvas.style.display="block";if(p>1)canvas.style.pageBreakBefore="always";await page.render({canvasContext:canvas.getContext("2d"),viewport:vp}).promise;c.appendChild(canvas);}}catch(e){c.innerHTML="<div style=color:red>ไม่สามารถโหลด PDF ได้</div>";}}})();}<\/script>');
+                }
+                pw.document.write('<script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>');
+                pw.document.write('</body></html>');
                 pw.document.close();
             } catch(e) {
                 document.body.style.cursor = '';
