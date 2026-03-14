@@ -99,41 +99,77 @@
         }
         .back-btn:hover { background: var(--hover); }
 
-        /* Tabs */
+        /* Category Navigation */
         .tabs-container {
             width: 100%;
             max-width: 1200px;
         }
-        .tabs {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 0.5rem;
+        .cat-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.6rem;
+            margin-bottom: 1.2rem;
         }
-        .tab-btn {
-            padding: 0.7rem 1.2rem;
-            border: 1px solid var(--border);
-            border-radius: 10px 10px 0 0;
+        .cat-btn {
+            padding: 0.9rem 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
             background: var(--surface);
             font: inherit;
             font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--muted);
+            transition: all 0.25s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            text-align: center;
+        }
+        .cat-btn:hover { background: var(--hover); color: var(--text); border-color: #cbd5e1; }
+        .cat-btn.active { color: #fff; border-color: transparent; }
+        .cat-btn.active[data-cat="finance"] { background: linear-gradient(135deg, #2563eb, #06b6d4); }
+        .cat-btn.active[data-cat="housing"] { background: linear-gradient(135deg, #10b981, #059669); }
+        .cat-btn.active[data-cat="people"] { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+        .cat-btn.active[data-cat="system"] { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .cat-icon { font-size: 1.6rem; }
+        .cat-label { font-size: 0.85rem; line-height: 1.2; }
+
+        /* Sub-tabs */
+        .sub-tabs {
+            display: none;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            padding: 0.6rem 0.8rem;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .sub-tabs.active { display: flex; }
+        .tab-btn {
+            padding: 0.55rem 1rem;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            font: inherit;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             color: var(--muted);
             transition: all 0.2s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
-        .tab-btn:hover { background: var(--hover); color: var(--text); }
+        .tab-btn:hover { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .tab-btn.active {
-            background: var(--primary);
-            color: #fff;
+            background: #fff;
+            color: var(--primary);
             border-color: var(--primary);
+            box-shadow: 0 1px 4px rgba(37,99,235,0.15);
         }
-        .tab-btn-icon { font-size: 1.1rem; }
+        .tab-btn-icon { font-size: 1rem; }
 
         /* Tab Content */
         .tab-content {
@@ -143,8 +179,38 @@
             border-radius: 14px;
             padding: 1.5rem;
             box-shadow: var(--shadow);
+            animation: fadeIn 0.2s ease;
         }
         .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Accordion (for System tab) */
+        .accordion-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1rem;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+            font-size: 0.98rem;
+            color: var(--text);
+            transition: all 0.2s;
+            margin-bottom: 0.4rem;
+        }
+        .accordion-toggle:hover { background: #eef2f7; }
+        .accordion-toggle .acc-arrow { transition: transform 0.25s; font-size: 0.8rem; color: var(--muted); }
+        .accordion-toggle.open .acc-arrow { transform: rotate(180deg); }
+        .accordion-toggle.open { background: #eff6ff; border-color: var(--primary); color: var(--primary); }
+        .accordion-body {
+            display: none;
+            padding: 0.8rem 0.2rem;
+        }
+        .accordion-body.open { display: block; animation: fadeIn 0.2s ease; }
 
         /* Section */
         .section {
@@ -432,10 +498,17 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .tabs { flex-direction: column; }
-            .tab-btn { border-radius: 8px; }
+            .cat-nav { grid-template-columns: repeat(2, 1fr); }
+            .sub-tabs { flex-direction: column; }
+            .tab-btn { border-radius: 8px; justify-content: flex-start; }
             .form-grid { grid-template-columns: 1fr; }
             .modal { max-width: 95%; }
+        }
+        @media (max-width: 400px) {
+            .cat-nav { grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+            .cat-btn { padding: 0.6rem 0.4rem; }
+            .cat-icon { font-size: 1.3rem; }
+            .cat-label { font-size: 0.78rem; }
         }
     </style>
 </head>
@@ -455,9 +528,29 @@
             ⚠️ หน้านี้สำหรับผู้ดูแลระบบ (Admin) เท่านั้น การแก้ไขค่าต่างๆ จะส่งผลต่อระบบทั้งหมด กรุณาตรวจสอบให้ละเอียดก่อนบันทึก
         </div>
 
-        <!-- Tabs -->
+        <!-- Category Navigation -->
         <div class="tabs-container">
-            <div class="tabs">
+            <div class="cat-nav">
+                <button class="cat-btn active" data-cat="finance" onclick="showCat('finance', this)">
+                    <span class="cat-icon">💰</span>
+                    <span class="cat-label">การเงิน</span>
+                </button>
+                <button class="cat-btn" data-cat="housing" onclick="showCat('housing', this)">
+                    <span class="cat-icon">🏠</span>
+                    <span class="cat-label">ที่พัก & คำร้อง</span>
+                </button>
+                <button class="cat-btn" data-cat="people" onclick="showCat('people', this)">
+                    <span class="cat-icon">👥</span>
+                    <span class="cat-label">สิทธิ์ & ประกาศ</span>
+                </button>
+                <button class="cat-btn" data-cat="system" onclick="showCat('system', this)">
+                    <span class="cat-icon">⚙️</span>
+                    <span class="cat-label">ระบบ</span>
+                </button>
+            </div>
+
+            <!-- Sub-tabs: การเงิน -->
+            <div class="sub-tabs active" id="sub-finance">
                 <button class="tab-btn active" onclick="showTab('water', this)">
                     <span class="tab-btn-icon">💧</span> ค่าน้ำ
                 </button>
@@ -467,23 +560,35 @@
                 <button class="tab-btn" onclick="showTab('common', this)">
                     <span class="tab-btn-icon">🏢</span> ค่าส่วนกลาง
                 </button>
+            </div>
+
+            <!-- Sub-tabs: ที่พัก & คำร้อง -->
+            <div class="sub-tabs" id="sub-housing">
+                <button class="tab-btn" onclick="showTab('housing', this)">
+                    <span class="tab-btn-icon">🏠</span> จัดการที่พัก
+                </button>
+                <button class="tab-btn" onclick="showTab('resident', this)">
+                    <span class="tab-btn-icon">👤</span> ผู้พักอาศัย
+                </button>
+                <button class="tab-btn" onclick="showTab('registration', this)" id="tabBtnRegistration">
+                    <span class="tab-btn-icon">📝</span> อนุมัติการสมัคร <span class="badge badge-danger" id="pendingCount" style="margin-left:4px; display:none;">0</span>
+                </button>
+            </div>
+
+            <!-- Sub-tabs: สิทธิ์ & ประกาศ -->
+            <div class="sub-tabs" id="sub-people">
                 <button class="tab-btn" onclick="showTab('permissions', this)">
                     <span class="tab-btn-icon">🔐</span> จัดการสิทธิ์
                 </button>
                 <button class="tab-btn" onclick="showTab('announcements', this)">
                     <span class="tab-btn-icon">📢</span> ประกาศ
                 </button>
+            </div>
+
+            <!-- Sub-tabs: ระบบ -->
+            <div class="sub-tabs" id="sub-system">
                 <button class="tab-btn" onclick="showTab('system', this)">
                     <span class="tab-btn-icon">⚙️</span> ตั้งค่าระบบ
-                </button>
-                <button class="tab-btn" onclick="showTab('registration', this)" id="tabBtnRegistration">
-                    <span class="tab-btn-icon">📝</span> อนุมัติการสมัคร <span class="badge badge-danger" id="pendingCount" style="margin-left:4px; display:none;">0</span>
-                </button>
-                <button class="tab-btn" onclick="showTab('housing', this)">
-                    <span class="tab-btn-icon">🏠</span> ที่พักอาศัย
-                </button>
-                <button class="tab-btn" onclick="showTab('resident', this)">
-                    <span class="tab-btn-icon">👥</span> ผู้พักอาศัย
                 </button>
                 <button class="tab-btn" onclick="showTab('linemail', this)">
                     <span class="tab-btn-icon">💬</span> LINE & อีเมล
@@ -774,10 +879,8 @@
                     <div class="section-title">⚙️ ตั้งค่าระบบ</div>
                     <div class="section-desc">การตั้งค่าทั่วไปของระบบ</div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">🏫 ข้อมูลหน่วยงาน</span>
-                        </div>
+                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">🏫 ข้อมูลหน่วยงาน <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body open">
                         <div class="form-grid" style="margin-top: 0.5rem;">
                             <div class="form-group">
                                 <label for="orgName">ชื่อหน่วยงาน</label>
@@ -798,10 +901,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">📅 ตั้งค่าวันกำหนดชำระ</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">📅 ตั้งค่าวันกำหนดชำระ <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="form-grid" style="margin-top: 0.5rem;">
                             <div class="form-group">
                                 <label for="paymentDueWorkingDays">จำนวนวันทำการกำหนดชำระ</label>
@@ -815,10 +916,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">🔐 ตั้งค่าความปลอดภัย</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">🔐 ตั้งค่าความปลอดภัย <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="checkbox-group" style="margin-top: 0.5rem;">
                             <label class="checkbox-item">
                                 <input type="checkbox" id="requireLogin" checked>
@@ -835,10 +934,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">⏰ วันหมดอายุคิวคำร้อง</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">⏰ วันหมดอายุคิวคำร้อง <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="section-desc" style="margin-top: 0.3rem; margin-bottom: 0.5rem;">กำหนดวันหมดอายุคิวคำร้องขอเข้าพักอาศัย (ต่อ 1 ภาคเรียน)</div>
                         <div class="form-grid" style="margin-top: 0.5rem;">
                             <div class="form-group">
@@ -849,10 +946,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">👤 ข้อมูลบุคลากรในตำแหน่งผู้อนุมัติ</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">👤 ข้อมูลบุคลากรในตำแหน่งผู้อนุมัติ <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="section-desc" style="margin-top: 0.3rem; margin-bottom: 0.5rem;">ชื่อบุคลากรที่จะแสดงในแบบฟอร์มคำร้องต่างๆ</div>
                         <div class="form-grid" style="margin-top: 0.5rem;">
                             <div class="form-group">
@@ -878,10 +973,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">📧 เทมเพลตอีเมล</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">📧 เทมเพลตอีเมล <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="section-desc" style="margin-top: 0.3rem; margin-bottom: 0.5rem;">ตั้งค่าอีเมลสำหรับส่งออก และปรับแต่งข้อมูลที่จะส่งในอีเมลแจ้งเตือนและใบเสร็จ</div>
 
                         <!-- อีเมลสำหรับส่ง -->
@@ -935,10 +1028,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">💾 สำรองและกู้คืนข้อมูล</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">💾 สำรองและกู้คืนข้อมูล <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="btn-group" style="margin-top: 0.5rem;">
                             <button class="btn btn-info" onclick="backupData()">📥 สำรองข้อมูลทั้งหมด</button>
                             <button class="btn btn-warning" onclick="restoreData()">📤 กู้คืนข้อมูล</button>
@@ -946,10 +1037,8 @@
                         </div>
                     </div>
 
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">📚 จัดการไฟล์ระเบียบบ้านพักครู</span>
-                        </div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">📚 จัดการไฟล์ระเบียบบ้านพักครู <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
                         <div class="section-desc" style="margin-top: 0.3rem; margin-bottom: 0.8rem;">อัพโหลด เปลี่ยน หรือลบไฟล์ระเบียบ (PDF) ที่จะแสดงในหน้าระเบียบ</div>
                         <div style="background: #eff6ff; border: 1px solid #3b82f6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
@@ -1651,12 +1740,36 @@
         };
 
         // ========== Tab Functions ==========
+        var _catTabMap = { finance: 'water', housing: 'housing', people: 'permissions', system: 'system' };
+
+        function showCat(cat, btnEl) {
+            document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.sub-tabs').forEach(function(s) { s.classList.remove('active'); });
+            if (btnEl) btnEl.classList.add('active');
+            var subEl = document.getElementById('sub-' + cat);
+            if (subEl) subEl.classList.add('active');
+            // เลือก sub-tab แรกอัตโนมัติถ้ายังไม่มี active
+            var activeSub = subEl ? subEl.querySelector('.tab-btn.active') : null;
+            if (!activeSub && subEl) {
+                var firstBtn = subEl.querySelector('.tab-btn');
+                if (firstBtn) firstBtn.click();
+            }
+        }
+
+        function toggleAccordion(btn) {
+            var body = btn.nextElementSibling;
+            var isOpen = btn.classList.contains('open');
+            btn.classList.toggle('open', !isOpen);
+            body.classList.toggle('open', !isOpen);
+        }
+
         function showTab(tabName, btnEl) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
+            // Deactivate only sub-tab buttons (not cat buttons)
+            document.querySelectorAll('.sub-tabs .tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
 
