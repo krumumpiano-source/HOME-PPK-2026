@@ -352,7 +352,7 @@ async function callBackendGet(action, params) {
 ══════════════════════════════════════════ */
 // Actions ที่ต้องเป็น admin/head เท่านั้น (ห้ามมอบหมาย)
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
-    'approveRegistration','rejectRegistration','updatePermissions','deleteAnnouncement',
+    'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
     'saveWaterRate','saveElectricRate','saveRoundingSetting','saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions'];
 
@@ -380,7 +380,7 @@ async function _ensureBucket(name) {
 // Actions ที่สามารถมอบหมายให้ผู้ใช้ที่มี permission ได้
 var _PERM_ACTION_MAP = {
     submitWaterBill: 'water', submitElectricBill: 'electric',
-    reviewSlip: 'slip', reviewRequest: 'request',
+    reviewSlip: 'slip', reviewRequest: 'request', checkDuplicateResident: 'request',
     sendNotification: 'notify',
     saveWithdraw: 'withdraw', saveAccounting: 'accounting'
 };
@@ -1518,6 +1518,144 @@ async function _routeAction(action, data) {
                 await sbPatch('queue', { id: 'eq.' + ids[i] }, { position: i + 1, updated_at: new Date().toISOString() });
             }
             return { success: true };
+        }
+
+        /* ── Approve Residence: เลือกบ้าน + สร้าง resident อัตโนมัติ ── */
+        case 'approveResidence': {
+            var arReqId = data.requestId;
+            var arHouseNum = data.houseNumber;
+            if (!arReqId || !arHouseNum) return { success: false, error: 'กรุณาระบุ requestId และ houseNumber' };
+
+            // 1. ดึง request row
+            var arReqRows = await sbGet('requests', { id: 'eq.' + arReqId });
+            var arReq = arReqRows && arReqRows[0];
+            if (!arReq) return { success: false, error: 'ไม่พบคำร้อง' };
+            var arDetails = arReq.details || {};
+            var arUserId = arReq.user_id;
+
+            // 2. ดึง housing row + ตรวจว่ายังว่างอยู่
+            var arHouseRows = await sbGet('housing', { house_number: 'eq.' + arHouseNum, limit: '1' });
+            var arHouse = arHouseRows && arHouseRows[0];
+            if (!arHouse) return { success: false, error: 'ไม่พบบ้านเลขที่ ' + arHouseNum };
+            if (arHouse.status !== 'available') return { success: false, error: 'บ้านเลขที่ ' + arHouseNum + ' ไม่ว่างแล้ว (สถานะ: ' + arHouse.status + ')' };
+            var arHouseId = arHouse.id;
+
+            // 3. หา reviewer
+            var arSess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
+            var arReviewerId = arSess && arSess[0] ? arSess[0].user_id : null;
+            if (!arReviewerId) {
+                var arLsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (arLsUser && arLsUser.id) arReviewerId = arLsUser.id;
+            }
+
+            var arToday = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+            // 4. ตรวจว่า user มี resident record อยู่แล้วหรือไม่
+            var arExistRes = null;
+            if (arUserId) {
+                var arResRows = await sbGet('residents', { user_id: 'eq.' + arUserId, is_active: 'eq.true', limit: '1' });
+                arExistRes = arResRows && arResRows[0] ? arResRows[0] : null;
+            }
+
+            var arResidentId = null;
+            if (arExistRes) {
+                // กรณี B: มี resident อยู่แล้ว → อัปเดต house assignment
+                await sbPatch('residents', { id: 'eq.' + arExistRes.id }, {
+                    house_id: arHouseId, house_number: arHouseNum,
+                    move_in_date: arToday, start_date: arToday,
+                    is_active: true, updated_at: new Date().toISOString()
+                });
+                arResidentId = arExistRes.id;
+            } else {
+                // กรณี A: สร้าง resident ใหม่จากข้อมูลในคำร้อง
+                var arNewRes = await sbPost('residents', {
+                    user_id:       arUserId || null,
+                    house_id:      arHouseId,
+                    house_number:  arHouseNum,
+                    prefix:        arDetails.prefix || '',
+                    firstname:     arDetails.firstname || '',
+                    lastname:      arDetails.lastname || '',
+                    position:      arDetails.position || '',
+                    subject_group: arDetails.subject_group || arDetails.subjectGroup || '',
+                    phone:         arDetails.phone || '',
+                    email:         arDetails.email || '',
+                    resident_type: (arDetails.stay_type || arDetails.stayType) === 'family' ? 'family' : 'single',
+                    address_no:    arDetails.address || '',
+                    move_in_date:  arToday,
+                    start_date:    arToday,
+                    is_active:     true
+                });
+                arResidentId = arNewRes ? arNewRes.id : null;
+            }
+
+            // 5. สร้าง coresidents จาก details.residents[]
+            var arCoresidents = arDetails.residents || [];
+            if (arResidentId && arCoresidents.length > 0) {
+                for (var ci = 0; ci < arCoresidents.length; ci++) {
+                    var cr = arCoresidents[ci];
+                    var crName = (cr.name || '').trim();
+                    if (!crName) continue;
+                    // แยก firstname / lastname จาก name
+                    var crParts = crName.split(/\s+/);
+                    var crFirst = crParts[0] || crName;
+                    var crLast = crParts.slice(1).join(' ') || '';
+                    try {
+                        await sbPost('coresidents', {
+                            resident_id: arResidentId,
+                            house_id:    arHouseId,
+                            prefix:      cr.prefix || '',
+                            firstname:   crFirst,
+                            lastname:    crLast,
+                            relation:    cr.relation || ''
+                        });
+                    } catch(cre) { console.warn('สร้าง coresident ไม่สำเร็จ:', cre); }
+                }
+            }
+
+            // 6. อัปเดต housing → occupied
+            await sbPatch('housing', { id: 'eq.' + arHouseId }, { status: 'occupied', updated_at: new Date().toISOString() });
+
+            // 7. อัปเดต request → approved + บันทึก house
+            await sbPatch('requests', { id: 'eq.' + arReqId }, {
+                status: 'approved', house_id: arHouseId, house_number: arHouseNum,
+                reviewed_by: arReviewerId || '', reviewed_at: new Date().toISOString(),
+                review_note: data.note || '', updated_at: new Date().toISOString()
+            });
+
+            // 8. ลบออกจาก queue
+            try {
+                var arQRows = await sbGet('queue', { request_id: 'eq.' + arReqId, status: 'eq.waiting' });
+                if (arQRows && arQRows.length > 0) {
+                    for (var aqi = 0; aqi < arQRows.length; aqi++) {
+                        await sbPatch('queue', { id: 'eq.' + arQRows[aqi].id }, { status: 'cancelled', updated_at: new Date().toISOString() });
+                    }
+                }
+            } catch(aqe) { console.warn('Queue remove failed:', aqe); }
+
+            // 9. อัปเดต users.subject_group ถ้ามีข้อมูล
+            if (arUserId && (arDetails.subject_group || arDetails.subjectGroup)) {
+                try {
+                    await sbPatch('users', { id: 'eq.' + arUserId }, {
+                        subject_group: arDetails.subject_group || arDetails.subjectGroup,
+                        updated_at: new Date().toISOString()
+                    });
+                } catch(ue) { console.warn('อัปเดต users.subject_group ไม่สำเร็จ:', ue); }
+            }
+
+            invalidateResidentCache();
+            return { success: true, residentId: arResidentId, houseNumber: arHouseNum };
+        }
+
+        /* ── Check Duplicate Resident (ตรวจชื่อซ้ำ) ── */
+        case 'checkDuplicateResident': {
+            var cdFirst = (data.firstname || '').trim();
+            var cdLast = (data.lastname || '').trim();
+            if (!cdFirst || !cdLast) return { success: true, duplicates: [] };
+            var cdRows = await sbGet('residents', { firstname: 'eq.' + cdFirst, lastname: 'eq.' + cdLast, is_active: 'eq.true' });
+            var cdResult = (cdRows || []).map(function(r) {
+                return { id: r.id, house_number: r.house_number, prefix: r.prefix, firstname: r.firstname, lastname: r.lastname, email: r.email };
+            });
+            return { success: true, duplicates: cdResult };
         }
 
         /* ── batchGet: run multiple read actions in one call ── */

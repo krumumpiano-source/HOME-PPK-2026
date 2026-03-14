@@ -730,6 +730,41 @@
         </div>
     </div>
 
+    <!-- Approve House Selection Modal -->
+    <div class="modal-overlay" id="approveHouseModal">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">🏠 อนุมัติเข้าพัก — เลือกบ้าน</h3>
+                <button class="modal-close" onclick="closeModal('approveHouseModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>ผู้ขอเข้าพัก</label>
+                    <input type="text" id="approveReqName" readonly style="background:#f0f0f0;font-weight:600;">
+                </div>
+                <div class="form-group">
+                    <label>วันที่เข้าพัก (วันที่อนุมัติ)</label>
+                    <input type="text" id="approveMoveInDate" readonly style="background:#f0f0f0;font-weight:600;">
+                </div>
+                <div class="form-group">
+                    <label>เลือกบ้าน/ห้องที่จะจัดให้ <span style="color:var(--danger);">*</span></label>
+                    <select id="approveHouseSelect">
+                        <option value="">⏳ กำลังโหลด...</option>
+                    </select>
+                </div>
+                <div id="approveDuplicateWarning" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:0.75rem;margin-top:0.5rem;">
+                    <strong>⚠️ พบชื่อซ้ำในระบบ</strong>
+                    <div id="approveDuplicateDetail" style="margin-top:0.3rem;font-size:0.9rem;"></div>
+                    <div style="margin-top:0.3rem;font-size:0.85rem;color:#856404;">ตรวจสอบว่าเป็นคนเดียวกันหรือไม่ก่อนอนุมัติ</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('approveHouseModal')">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="confirmApproveWithHouse()">✅ ยืนยันอนุมัติ</button>
+            </div>
+        </div>
+    </div>
+
     <div style="text-align:center; margin-top:1.2rem; font-size:0.95rem; color:#888;">
         ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
         งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -1910,6 +1945,13 @@
             const newStatus = document.getElementById('statusSelect').value;
             const note = document.getElementById('statusNote').value;
 
+            // ถ้าเลือก "อนุมัติเข้าพัก" สำหรับ residence → เปิด modal เลือกบ้านแทน
+            if (currentEditType === 'residence' && newStatus === 'approved') {
+                closeModal('statusModal');
+                openApproveHouseModal(currentEditId);
+                return;
+            }
+
             try {
                 await updateRequestStatus(currentEditType, currentEditId, newStatus, note);
 
@@ -1935,37 +1977,124 @@
             }
         }
 
-        async function approveFromQueue(id) {
-            if (!await ppkConfirm('ยืนยันการอนุมัติให้เข้าพักอาศัย?')) return;
-            
+        // ========== Approve Residence — House Selection ==========
+        let _approveTargetId = null;
+
+        async function openApproveHouseModal(id) {
             const data = getData('residence');
             const item = data.find(d => d.id === id);
-            if (item) {
-                item.status = 'approved';
-                item.queuePosition = null;
-                saveData('residence', data);
+            if (!item) return;
 
-                // Reorder remaining queue
-                const queueItems = data
-                    .filter(r => r.status === 'waiting' && r.queuePosition)
-                    .sort((a, b) => a.queuePosition - b.queuePosition);
-                queueItems.forEach((q, index) => q.queuePosition = index + 1);
-                saveData('residence', data);
+            _approveTargetId = id;
 
-                // ส่งไป Backend
-                try {
-                        await callBackend('reviewRequest', {
-                            requestId: id,
-                            type: 'residence',
-                            status: 'approved'
-                        });
-                    } catch (e) {
-                        console.error('อนุมัติไม่สำเร็จ:', e);
+            // แสดงชื่อผู้ขอ
+            document.getElementById('approveReqName').value = (item.prefix || '') + (item.fullname || '');
+
+            // วันเข้าพัก = วันนี้ (readonly)
+            const today = new Date();
+            const thaiDate = today.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('approveMoveInDate').value = thaiDate;
+
+            // โหลดบ้านว่าง
+            const select = document.getElementById('approveHouseSelect');
+            select.innerHTML = '<option value="">⏳ กำลังโหลด...</option>';
+
+            // ซ่อน warning เดิม
+            document.getElementById('approveDuplicateWarning').style.display = 'none';
+
+            openModal('approveHouseModal');
+
+            try {
+                const housingResult = await callBackendGet('getHousing', {});
+                const allHouses = (housingResult && housingResult.success) ? housingResult.data : [];
+                const available = allHouses.filter(h => h.status === 'available');
+
+                if (available.length === 0) {
+                    closeModal('approveHouseModal');
+                    ppkAlert('❌ ไม่มีบ้านว่างในขณะนี้ ไม่สามารถอนุมัติได้');
+                    return;
+                }
+
+                select.innerHTML = '<option value="">— เลือกบ้าน/ห้อง —</option>';
+                available.forEach(h => {
+                    const label = (h.type === 'flat' ? 'แฟลต' : 'บ้าน') + (h.house_number || h.number || '');
+                    const opt = document.createElement('option');
+                    opt.value = h.house_number || h.number || '';
+                    opt.textContent = label;
+                    select.appendChild(opt);
+                });
+
+                // ตรวจจับชื่อซ้ำ
+                if (item.firstname && item.lastname) {
+                    const dupResult = await callBackend('checkDuplicateResident', {
+                        firstname: item.firstname, lastname: item.lastname
+                    });
+                    if (dupResult && dupResult.success && dupResult.duplicates && dupResult.duplicates.length > 0) {
+                        const dupDiv = document.getElementById('approveDuplicateDetail');
+                        dupDiv.innerHTML = dupResult.duplicates.map(d =>
+                            '• ' + (d.prefix || '') + d.firstname + ' ' + d.lastname +
+                            (d.house_number ? ' (บ้านเลขที่ ' + d.house_number + ')' : '') +
+                            (d.email ? ' — ' + d.email : '')
+                        ).join('<br>');
+                        document.getElementById('approveDuplicateWarning').style.display = 'block';
                     }
-
-                ppkAlert('อนุมัติเรียบร้อยแล้ว');
-                renderAll();
+                }
+            } catch (e) {
+                console.error('โหลดข้อมูลบ้านไม่สำเร็จ:', e);
+                select.innerHTML = '<option value="">❌ โหลดไม่สำเร็จ</option>';
             }
+        }
+
+        async function confirmApproveWithHouse() {
+            const houseNumber = document.getElementById('approveHouseSelect').value;
+            if (!houseNumber) {
+                ppkAlert('กรุณาเลือกบ้าน/ห้องก่อนอนุมัติ');
+                return;
+            }
+            if (!_approveTargetId) return;
+
+            if (!await ppkConfirm('ยืนยันอนุมัติเข้าพักบ้านเลขที่ ' + houseNumber + '?')) return;
+
+            const id = _approveTargetId;
+
+            try {
+                const result = await callBackend('approveResidence', {
+                    requestId: id,
+                    houseNumber: houseNumber
+                });
+
+                if (!result || !result.success) {
+                    ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
+                    return;
+                }
+
+                // อัปเดต local cache
+                const data = getData('residence');
+                const item = data.find(d => d.id === id);
+                if (item) {
+                    item.status = 'approved';
+                    item.queuePosition = null;
+                    saveData('residence', data);
+
+                    // Reorder remaining queue
+                    const queueItems = data
+                        .filter(r => r.status === 'waiting' && r.queuePosition)
+                        .sort((a, b) => a.queuePosition - b.queuePosition);
+                    queueItems.forEach((q, index) => q.queuePosition = index + 1);
+                    saveData('residence', data);
+                }
+
+                closeModal('approveHouseModal');
+                renderAll();
+                ppkAlert('✅ อนุมัติเรียบร้อยแล้ว — บ้านเลขที่ ' + houseNumber);
+            } catch (e) {
+                console.error('อนุมัติไม่สำเร็จ:', e);
+                ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
+            }
+        }
+
+        async function approveFromQueue(id) {
+            openApproveHouseModal(id);
         }
 
         // Nav — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
