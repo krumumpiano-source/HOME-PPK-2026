@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOME PPK 2026 — Storage Setup</title>
+<style>
+body { font-family: 'Prompt','Sarabun',sans-serif; background:#f0f4f8; margin:0; padding:2rem; }
+.container { max-width:600px; margin:0 auto; background:white; border-radius:16px; padding:2rem; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+h1 { color:#1e3a5f; font-size:1.5rem; text-align:center; }
+.log { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.85rem; min-height:200px; max-height:400px; overflow-y:auto; white-space:pre-wrap; }
+.ok { color:#059669; } .err { color:#dc2626; } .info { color:#2563eb; }
+#runBtn { display:block; margin:1.5rem auto 1rem; background:linear-gradient(to right,#4f8cff,#1e40af); color:white; border:none; padding:0.8rem 2rem; border-radius:12px; font-size:1.1rem; cursor:pointer; font-family:inherit; }
+#runBtn:disabled { opacity:0.5; cursor:default; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🏠 HOME PPK 2026 — ตั้งค่า Storage</h1>
+    <p style="text-align:center;color:#6b7280;">สร้าง Storage Bucket สำหรับเก็บเอกสารแนบ</p>
+    <button id="runBtn" onclick="runSetup()">🚀 เริ่มตั้งค่า</button>
+    <div id="logBox" class="log"></div>
+</div>
+
+<script src="supabase/supabase.min.js"></script>
+<script src="supabase/config.js"></script>
+<script>
+var logBox = document.getElementById('logBox');
+function log(msg, cls) {
+    var span = document.createElement('span');
+    span.className = cls || '';
+    span.textContent = msg + '\n';
+    logBox.appendChild(span);
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+async function runSetup() {
+    var btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    btn.textContent = 'กำลังตั้งค่า...';
+    logBox.innerHTML = '';
+
+    try {
+        // Init Supabase
+        log('🔌 เชื่อมต่อ Supabase...', 'info');
+        var sb = window.supabase
+            ? window.supabase.createClient(window._PPK_CONFIG.url, window._PPK_CONFIG.anon)
+            : null;
+        if (!sb) { log('❌ ไม่พบ Supabase SDK', 'err'); return; }
+        log('✅ เชื่อมต่อสำเร็จ', 'ok');
+
+        // 1. Create bucket 'receipts'
+        log('\n📦 สร้าง Bucket "receipts"...', 'info');
+        var createRes = await sb.storage.createBucket('receipts', {
+            public: true,
+            fileSizeLimit: 10485760,
+            allowedMimeTypes: ['image/jpeg','image/png','image/gif','image/webp','application/pdf']
+        });
+        if (createRes.error) {
+            if (createRes.error.message && createRes.error.message.indexOf('already exists') >= 0) {
+                log('ℹ️ Bucket "receipts" มีอยู่แล้ว — ข้าม', 'info');
+            } else {
+                log('❌ สร้าง Bucket ไม่สำเร็จ: ' + createRes.error.message, 'err');
+                log('\n💡 คุณอาจต้องรัน SQL ใน Supabase Dashboard → SQL Editor:', 'info');
+                log('INSERT INTO storage.buckets (id, name, public, file_size_limit)', '');
+                log("VALUES ('receipts', 'receipts', true, 10485760)", '');
+                log('ON CONFLICT (id) DO NOTHING;', '');
+                log('\n-- แล้วสร้าง Policies:', '');
+                log("CREATE POLICY \"anon_insert\" ON storage.objects FOR INSERT TO anon WITH CHECK (bucket_id='receipts');", '');
+                log("CREATE POLICY \"anon_select\" ON storage.objects FOR SELECT TO anon USING (bucket_id='receipts');", '');
+                log("CREATE POLICY \"anon_delete\" ON storage.objects FOR DELETE TO anon USING (bucket_id='receipts');", '');
+                btn.disabled = false;
+                btn.textContent = '🚀 ลองใหม่';
+                return;
+            }
+        } else {
+            log('✅ สร้าง Bucket "receipts" สำเร็จ!', 'ok');
+        }
+
+        // 2. Test upload
+        log('\n📤 ทดสอบอัปโหลดไฟล์...', 'info');
+        var testBlob = new Blob(['test'], { type: 'text/plain' });
+        var testPath = '_setup_test_' + Date.now() + '.txt';
+        var upRes = await sb.storage.from('receipts').upload(testPath, testBlob, { contentType: 'text/plain', upsert: true });
+        if (upRes.error) {
+            log('❌ อัปโหลดทดสอบไม่สำเร็จ: ' + upRes.error.message, 'err');
+            log('\n💡 อาจต้องเพิ่ม Storage Policies ใน Supabase Dashboard:', 'info');
+            log("CREATE POLICY \"anon_insert\" ON storage.objects FOR INSERT TO anon WITH CHECK (bucket_id='receipts');", '');
+            log("CREATE POLICY \"anon_select\" ON storage.objects FOR SELECT TO anon USING (bucket_id='receipts');", '');
+            btn.disabled = false;
+            btn.textContent = '🚀 ลองใหม่';
+            return;
+        }
+        log('✅ อัปโหลดทดสอบสำเร็จ!', 'ok');
+
+        // 3. Test public read
+        log('\n👁️ ทดสอบอ่านไฟล์ public...', 'info');
+        var pubUrl = sb.storage.from('receipts').getPublicUrl(testPath);
+        if (pubUrl && pubUrl.data && pubUrl.data.publicUrl) {
+            log('✅ Public URL: ' + pubUrl.data.publicUrl, 'ok');
+        } else {
+            log('⚠️ ไม่สามารถสร้าง Public URL', 'err');
+        }
+
+        // 4. Clean up test file
+        log('\n🧹 ลบไฟล์ทดสอบ...', 'info');
+        var delRes = await sb.storage.from('receipts').remove([testPath]);
+        if (delRes.error) {
+            log('⚠️ ลบไม่สำเร็จ (ไม่ร้ายแรง): ' + delRes.error.message, 'info');
+        } else {
+            log('✅ ลบไฟล์ทดสอบสำเร็จ', 'ok');
+        }
+
+        log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'ok');
+        log('🎉 ตั้งค่า Storage เรียบร้อย!', 'ok');
+        log('ตอนนี้สามารถแนบไฟล์ในคำร้องได้แล้ว', 'ok');
+        log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'ok');
+
+        btn.textContent = '✅ ตั้งค่าเสร็จแล้ว';
+    } catch(e) {
+        log('❌ Error: ' + e.message, 'err');
+        btn.disabled = false;
+        btn.textContent = '🚀 ลองใหม่';
+    }
+}
+</script>
+</body>
+</html>
