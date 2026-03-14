@@ -831,7 +831,7 @@
       slipApprovals[unit.unitNumber] = {
         status: 'approved',
         approvedAt: new Date().toISOString(),
-        approvedBy: (currentUserData && currentUserData.fullname) || 'ผู้ดูแลระบบ',
+        approvedBy: currentUserData ? ((currentUserData.prefix||'') + (currentUserData.firstname||'') + ' ' + (currentUserData.lastname||'')).trim() : 'ผู้ดูแลระบบ',
         paidAmount: unit.paidAmount,
         notifiedAmount: unit.notifiedAmount
       };
@@ -1174,7 +1174,7 @@
       slipApprovals[unit.unitNumber] = {
         status: 'approved',
         approvedAt: new Date().toISOString(),
-        approvedBy: (currentUserData && currentUserData.fullname) || 'ผู้ดูแลระบบ',
+        approvedBy: currentUserData ? ((currentUserData.prefix||'') + (currentUserData.firstname||'') + ' ' + (currentUserData.lastname||'')).trim() : 'ผู้ดูแลระบบ',
         paidAmount: paidAmount,
         notifiedAmount: unit.notifiedAmount,
         paymentMethod: 'cash',
