@@ -474,6 +474,53 @@
             color: var(--primary);
         }
 
+        /* Housing Filter Pills */
+        .filter-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .filter-pill {
+            padding: 0.35rem 0.8rem; border-radius: 20px; border: 1px solid var(--border);
+            background: white; cursor: pointer; font: inherit; font-size: 0.82rem;
+            font-weight: 600; color: var(--muted); transition: all 0.2s;
+        }
+        .filter-pill:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .filter-pill .pill-count { background: rgba(0,0,0,0.08); padding: 0.1rem 0.4rem; border-radius: 10px; font-size: 0.75rem; margin-left: 0.3rem; }
+        .filter-pill.active .pill-count { background: rgba(255,255,255,0.25); }
+
+        /* Housing Table */
+        .housing-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.88rem; }
+        .housing-table thead th {
+            background: #f8fafc; padding: 0.5rem 0.6rem; text-align: left; font-weight: 700;
+            color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
+            border-bottom: 2px solid var(--border); white-space: nowrap;
+        }
+        .housing-table tbody tr { transition: background 0.15s; }
+        .housing-table tbody tr:hover { background: #f0f7ff; }
+        .housing-table tbody td { padding: 0.55rem 0.6rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .housing-table .ht-name { font-weight: 700; color: var(--primary); white-space: nowrap; }
+        .housing-table .ht-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 600;
+            padding: 0.15rem 0.55rem; border-radius: 12px; white-space: nowrap;
+        }
+        .housing-table .ht-badge.available { background: #dcfce7; color: #15803d; }
+        .housing-table .ht-badge.occupied { background: #dbeafe; color: #1d4ed8; }
+        .housing-table .ht-badge.maintenance { background: #fef3c7; color: #b45309; }
+        .housing-table .ht-actions { display: flex; gap: 0.3rem; }
+        .housing-table .ht-actions button {
+            padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border);
+            background: white; cursor: pointer; font-size: 0.78rem; transition: all 0.15s;
+        }
+        .housing-table .ht-actions button:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+        .housing-table .ht-actions .act-del:hover { border-color: var(--danger); color: var(--danger); background: #fef2f2; }
+
+        @media (max-width: 640px) {
+            .housing-table { font-size: 0.82rem; }
+            .housing-table thead { display: none; }
+            .housing-table tbody tr { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.6rem; border-bottom: 1px solid var(--border); }
+            .housing-table tbody td { padding: 0.1rem 0; border: none; }
+            .housing-table tbody td:first-child { font-size: 1rem; width: 100%; }
+            .housing-table .ht-actions { width: 100%; margin-top: 0.3rem; }
+        }
+
         /* Search Box */
         .search-box {
             display: flex;
@@ -1154,20 +1201,21 @@
                     <div class="section-title">🏠 จัดการที่พักอาศัย</div>
                     <div class="section-desc">เพิ่ม ลบ แก้ไขบ้านพักและแฟลต และตั้งสถานะของที่พักอาศัยแต่ละหลัง</div>
 
-                    <div class="btn-group" style="margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
                         <button class="btn btn-primary" onclick="openModal('addHousing')">➕ เพิ่มบ้านพัก/แฟลต</button>
-                        <button class="btn" onclick="loadHousingTabData()">🔄 โหลดข้อมูลจากระบบ</button>
+                        <button class="btn" onclick="loadHousingTabData()">🔄 โหลดข้อมูล</button>
                     </div>
 
-                    <div id="manageHousingSummary" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
+                    <div id="manageHousingSummary" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;"></div>
 
-                    <div style="margin-bottom:1rem;">
-                        <input type="text" id="searchHousing" placeholder="🔍 ค้นหาบ้าน แฟลต โซน..."
-                               style="width:100%; max-width:360px; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;"
+                    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                        <div class="filter-pills" id="housingFilterPills"></div>
+                        <input type="text" id="searchHousing" placeholder="🔍 ค้นหา..."
+                               style="flex:1; min-width:160px; max-width:280px; padding:0.4rem 0.7rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.88rem;"
                                oninput="renderManageHousingCards()">
                     </div>
 
-                    <div id="manageHousingGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem;"></div>
+                    <div id="manageHousingTable"></div>
                 </div>
             </div>
 
@@ -1881,119 +1929,113 @@
             localStorage.setItem(STORAGE_KEYS.housing, JSON.stringify(data));
         }
 
+        var _housingFilterStatus = 'all';
+        function setHousingFilter(status) {
+            _housingFilterStatus = status;
+            document.querySelectorAll('#housingFilterPills .filter-pill').forEach(function(p) {
+                p.classList.toggle('active', p.dataset.status === status);
+            });
+            renderManageHousingCards();
+        }
+
         function renderManageHousingCards() {
-            const data = getHousingData();
-            const residents = getResidentsData();
-            const formatSettings = getHousingFormatSettings();
-            const searchEl = document.getElementById('searchHousing') || document.getElementById('searchResident');
-            const searchTerm = (searchEl ? searchEl.value : '').toLowerCase();
+            var data = getHousingData();
+            var residents = getResidentsData();
+            var formatSettings = getHousingFormatSettings();
+            var searchEl = document.getElementById('searchHousing');
+            var searchTerm = (searchEl ? searchEl.value : '').toLowerCase();
 
-            const grid = document.getElementById('manageHousingGrid');
-            const summary = document.getElementById('manageHousingSummary');
-            if (!grid) return;
+            var tableEl = document.getElementById('manageHousingTable');
+            var summary = document.getElementById('manageHousingSummary');
+            var pillsEl = document.getElementById('housingFilterPills');
+            if (!tableEl) return;
 
-            // Summary stats
-            const totalHouses = data.filter(h => h.type === 'house').length;
-            const totalFlats = data.filter(h => h.type === 'flat').length;
-            const occupied = data.filter(h => {
-                const dn = formatHousingNumber(h, formatSettings);
-                return residents.some(r => r.house_number === dn);
-            }).length;
-            const vacant = data.length - occupied;
+            // Compute status based on actual residents
+            data.forEach(function(h) {
+                var dn = formatHousingNumber(h, formatSettings);
+                var hasRes = residents.some(function(r) { return r.house_number === dn; });
+                if (h.status !== 'maintenance') h._realStatus = hasRes ? 'occupied' : 'available';
+                else h._realStatus = 'maintenance';
+            });
+
+            var totalHouses = data.filter(function(h) { return h.type === 'house'; }).length;
+            var totalFlats = data.filter(function(h) { return h.type === 'flat'; }).length;
+            var countOccupied = data.filter(function(h) { return h._realStatus === 'occupied'; }).length;
+            var countVacant = data.filter(function(h) { return h._realStatus === 'available'; }).length;
+            var countMaint = data.filter(function(h) { return h._realStatus === 'maintenance'; }).length;
+
             if (summary) {
-                summary.innerHTML = `
-                    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
-                        🏠 บ้านพัก <strong>${totalHouses}</strong> หลัง
-                    </div>
-                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
-                        🏢 แฟลต <strong>${totalFlats}</strong> ห้อง
-                    </div>
-                    <div style="background:#fef9c3; border:1px solid #fde68a; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">
-                        ✅ มีผู้พัก <strong>${occupied}</strong> &nbsp;|&nbsp; ⬜ ว่าง <strong>${vacant}</strong>
-                    </div>
-                `;
+                summary.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.82rem;">🏠 บ้านพัก <strong>' + totalHouses + '</strong></div>' +
+                    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.82rem;">🏢 แฟลต <strong>' + totalFlats + '</strong></div>' +
+                    '<div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.82rem;">มีผู้พัก <strong>' + countOccupied + '</strong></div>' +
+                    '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.82rem;">ว่าง <strong>' + countVacant + '</strong></div>';
             }
 
-            // Sort: houses first, then flats, by display number
-            const sorted = [...data].sort((a, b) => {
+            // Filter pills
+            if (pillsEl) {
+                var f = _housingFilterStatus;
+                pillsEl.innerHTML =
+                    '<button class="filter-pill' + (f==='all'?' active':'') + '" data-status="all" onclick="setHousingFilter(\'all\')">ทั้งหมด<span class="pill-count">' + data.length + '</span></button>' +
+                    '<button class="filter-pill' + (f==='occupied'?' active':'') + '" data-status="occupied" onclick="setHousingFilter(\'occupied\')">มีผู้พัก<span class="pill-count">' + countOccupied + '</span></button>' +
+                    '<button class="filter-pill' + (f==='available'?' active':'') + '" data-status="available" onclick="setHousingFilter(\'available\')">ว่าง<span class="pill-count">' + countVacant + '</span></button>' +
+                    (countMaint > 0 ? '<button class="filter-pill' + (f==='maintenance'?' active':'') + '" data-status="maintenance" onclick="setHousingFilter(\'maintenance\')">ซ่อมบำรุง<span class="pill-count">' + countMaint + '</span></button>' : '');
+            }
+
+            // Sort
+            var sorted = data.slice().sort(function(a, b) {
                 if (a.type !== b.type) return a.type === 'house' ? -1 : 1;
-                const numA = parseInt((formatHousingNumber(a, formatSettings).match(/\d+/) || ['0'])[0]);
-                const numB = parseInt((formatHousingNumber(b, formatSettings).match(/\d+/) || ['0'])[0]);
+                var numA = parseInt((formatHousingNumber(a, formatSettings).match(/\d+/) || ['0'])[0]);
+                var numB = parseInt((formatHousingNumber(b, formatSettings).match(/\d+/) || ['0'])[0]);
                 return numA - numB;
             });
 
-            // Filter by search
-            const filtered = sorted.filter(h => {
+            // Filter by status pill
+            var filtered = sorted.filter(function(h) {
+                if (_housingFilterStatus !== 'all' && h._realStatus !== _housingFilterStatus) return false;
                 if (!searchTerm) return true;
-                const dn = formatHousingNumber(h, formatSettings).toLowerCase();
-                return dn.includes(searchTerm) || (h.zone || '').toLowerCase().includes(searchTerm) || (h.note || '').toLowerCase().includes(searchTerm);
+                var dn = formatHousingNumber(h, formatSettings).toLowerCase();
+                return dn.indexOf(searchTerm) !== -1 || (h.zone || '').toLowerCase().indexOf(searchTerm) !== -1 || (h.note || '').toLowerCase().indexOf(searchTerm) !== -1;
             });
 
-            const statusColors = {
-                available:   { bg: '#f0fdf4', border: '#86efac', dot: '#22c55e', label: 'ว่าง' },
-                occupied:    { bg: '#eff6ff', border: '#93c5fd', dot: '#3b82f6', label: 'มีผู้พัก' },
-                maintenance: { bg: '#fffbeb', border: '#fcd34d', dot: '#f59e0b', label: 'ซ่อมบำรุง' }
+            var statusMap = {
+                available:   { cls: 'available', label: 'ว่าง' },
+                occupied:    { cls: 'occupied', label: 'มีผู้พัก' },
+                maintenance: { cls: 'maintenance', label: 'ซ่อมบำรุง' }
             };
 
-            let html = '';
+            var html = '<table class="housing-table"><thead><tr>' +
+                '<th>ที่พัก</th><th>ประเภท</th><th>สถานะ</th><th>ผู้พักอาศัย</th><th>หมายเหตุ</th><th style="width:130px;">จัดการ</th>' +
+                '</tr></thead><tbody>';
 
-            filtered.forEach(h => {
-                const dn = formatHousingNumber(h, formatSettings);
-                const s = statusColors[h.status] || statusColors.available;
-                const typeIcon = h.type === 'house' ? '🏠' : '🏢';
-                const typeLabel = h.type === 'house' ? 'บ้านพัก' : 'แฟลต';
-                const occupants = residents.filter(r => r.house_number === dn);
-                const occupantCount = occupants.length;
-                const safeId = String(h.id).replace(/'/g, '&apos;');
-                const safeDn = dn.replace(/'/g, '&apos;');
+            if (filtered.length === 0) {
+                html += '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.5rem;">ไม่พบข้อมูล</td></tr>';
+            } else {
+                filtered.forEach(function(h) {
+                    var dn = formatHousingNumber(h, formatSettings);
+                    var s = statusMap[h._realStatus] || statusMap.available;
+                    var typeIcon = h.type === 'house' ? '🏠' : '🏢';
+                    var typeLabel = h.type === 'house' ? 'บ้านพัก' : 'แฟลต';
+                    var occupants = residents.filter(function(r) { return r.house_number === dn; });
+                    var occStr = occupants.length > 0 ? occupants.map(function(r) { return (r.firstname||'') + ' ' + (r.lastname||''); }).join(', ') : '<span style="color:var(--muted);">-</span>';
+                    var safeId = String(h.id).replace(/'/g, '&apos;');
+                    var safeDn = dn.replace(/'/g, '&apos;');
 
-                html += `
-                <div style="background:${s.bg}; border:1.5px solid ${s.border}; border-radius:12px; padding:1rem; display:flex; flex-direction:column; gap:0.6rem; position:relative; transition:box-shadow 0.2s;"
-                     onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.10)'"
-                     onmouseout="this.style.boxShadow=''">
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <div style="font-size:1.25rem; font-weight:700; color:var(--primary); line-height:1.2;">${typeIcon} ${dn}</div>
-                            <div style="font-size:0.75rem; color:var(--muted); margin-top:0.1rem;">${typeLabel}${h.zone ? ' · ' + h.zone : ''}</div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:0.3rem; background:white; border-radius:20px; padding:0.2rem 0.6rem; font-size:0.75rem; border:1px solid ${s.border};">
-                            <span style="width:7px;height:7px;border-radius:50%;background:${s.dot};display:inline-block;"></span>
-                            ${s.label}
-                        </div>
-                    </div>
+                    html += '<tr>' +
+                        '<td class="ht-name">' + typeIcon + ' ' + dn + (h.zone ? ' <span style="font-weight:400;color:var(--muted);font-size:0.78rem;">(' + h.zone + ')</span>' : '') + '</td>' +
+                        '<td>' + typeLabel + '</td>' +
+                        '<td><span class="ht-badge ' + s.cls + '">' + s.label + '</span></td>' +
+                        '<td style="max-width:200px;">' + occStr + '</td>' +
+                        '<td style="max-width:140px;color:var(--muted);font-size:0.82rem;">' + (h.note || '-') + '</td>' +
+                        '<td class="ht-actions">' +
+                            '<button onclick="openHouseDetails(\'' + safeDn + '\')" title="ดูผู้พัก">👁️</button>' +
+                            '<button onclick="editHousing(\'' + safeId + '\')" title="แก้ไข">✏️</button>' +
+                            '<button class="act-del" onclick="deleteHousing(\'' + safeId + '\')" title="ลบ">🗑️</button>' +
+                        '</td></tr>';
+                });
+            }
 
-                    <!-- Occupants count -->
-                    <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text);">
-                        <span style="font-size:1.1rem;">👥</span>
-                        <span><strong>${occupantCount}</strong> คน${occupantCount > 0 ? ': ' + occupants.slice(0,2).map(r=>`${r.firstname||''} ${r.lastname||''}`).join(', ') + (occupantCount > 2 ? '...' : '') : ' (ว่าง)'}</span>
-                    </div>
-
-                    ${h.note ? `<div style="font-size:0.78rem; color:var(--muted); background:rgba(255,255,255,0.7); padding:0.3rem 0.5rem; border-radius:6px;">📝 ${h.note}</div>` : ''}
-
-                    <!-- Action buttons -->
-                    <div style="display:flex; gap:0.5rem; margin-top:0.2rem; border-top:1px solid ${s.border}; padding-top:0.6rem;">
-                        <button class="btn btn-info" style="flex:1; font-size:0.82rem; padding:0.35rem;"
-                            onclick="openHouseDetails('${safeDn}')">👁️ ดูผู้พัก</button>
-                        <button class="btn btn-primary" style="flex:1; font-size:0.82rem; padding:0.35rem;"
-                            onclick="editHousing('${safeId}')">✏️ แก้ไข</button>
-                        <button class="btn btn-danger" style="flex:1; font-size:0.82rem; padding:0.35rem;"
-                            onclick="deleteHousing('${safeId}')">🗑️ ลบ</button>
-                    </div>
-                </div>`;
-            });
-
-            // "+" Add new card
-            html += `
-                <div style="border:2px dashed var(--border); border-radius:12px; padding:1rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; cursor:pointer; min-height:140px; color:var(--muted); transition:all 0.2s;"
-                     onclick="openModal('addHousing')"
-                     onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'; this.style.background='#eff6ff';"
-                     onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--muted)'; this.style.background='';">
-                    <div style="font-size:2rem; line-height:1;">＋</div>
-                    <div style="font-size:0.9rem; font-weight:600;">เพิ่มบ้าน/แฟลต</div>
-                </div>`;
-
-            grid.innerHTML = html || `<div style="grid-column:1/-1; text-align:center; color:var(--muted); padding:2rem;">ไม่พบข้อมูลที่ตรงกับการค้นหา</div>`;
+            html += '</tbody></table>';
+            tableEl.innerHTML = html;
         }
 
         function renderHousingTable() {
@@ -3880,9 +3922,8 @@
 
         // ========== Housing Tab Loader ==========
         async function loadHousingTabData() {
-            renderManageHousingCards();
-            const grid = document.getElementById('manageHousingGrid');
-            if (grid) grid.innerHTML = '<div style="padding:1rem; color:var(--muted); text-align:center;">⏳ กำลังโหลดข้อมูลจากระบบ...</div>';
+            var tableEl = document.getElementById('manageHousingTable');
+            if (tableEl) tableEl.innerHTML = '<div style="padding:1rem; color:var(--muted); text-align:center;">⏳ กำลังโหลดข้อมูลจากระบบ...</div>';
             try {
                 const result = await callBackendGet('getHousing', {});
                 if (result && result.success && Array.isArray(result.data)) {
