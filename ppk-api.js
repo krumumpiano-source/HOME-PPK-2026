@@ -957,35 +957,24 @@ async function _routeAction(action, data) {
             var binaryA = atob(rawA);
             var bytesA  = new Uint8Array(binaryA.length);
             for (var ka = 0; ka < binaryA.length; ka++) { bytesA[ka] = binaryA.charCodeAt(ka); }
-            var origName = (data.filename || '').replace(/[^a-zA-Z0-9._-]/g, '_');
-            var extA = origName.split('.').pop() || 'bin';
-            var pathA = 'request-attachments/' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '.' + extA;
+            // ── Bucket แยกตามประเภทคำร้อง ──
+            var _bucketMap = { residence: 'attach-residence', repair: 'attach-repair', transfer: 'attach-transfer', 'return': 'attach-return' };
+            var bucketA = _bucketMap[data.requestType] || 'attach-residence';
+            // ── ตั้งชื่อไฟล์: {บ้านเลขที่}/{วันที่}/{requestId}_{ชื่อไฟล์เดิม} ──
+            var houseNum = (data.houseNumber || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+            var dateStr = new Date().toISOString().slice(0, 10);
+            var reqIdA = (data.requestId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            var origName = (data.filename || 'file').replace(/[^a-zA-Z0-9._\-\u0E00-\u0E7F]/g, '_');
+            var safeOrigName = origName.length > 80 ? origName.substring(0, 80) : origName;
+            var tsA = Date.now();
+            var pathA = houseNum + '/' + dateStr + '/' + (reqIdA ? reqIdA + '_' : '') + tsA + '_' + safeOrigName;
             var blobA = new Blob([bytesA], { type: mimeA });
-            // Auto-create bucket ถ้ายังไม่มี
-            var bucketA = await _ensureBucket('receipts');
-            if (!bucketA) {
-                bucketA = await _ensureBucket('slips');
-                if (!bucketA) return { success: false, error: 'ไม่สามารถสร้าง Storage bucket ได้ กรุณาแจ้งผู้ดูแลระบบ' };
-            }
             var upResA = await window._sb.storage.from(bucketA).upload(pathA, blobA, { contentType: mimeA, upsert: false });
             if (upResA.error) {
-                // ลอง bucket สำรอง
-                var altBucket = bucketA === 'receipts' ? 'slips' : 'receipts';
-                var altReady = await _ensureBucket(altBucket);
-                if (altReady) {
-                    upResA = await window._sb.storage.from(altBucket).upload(pathA, blobA, { contentType: mimeA, upsert: false });
-                    if (!upResA.error) {
-                        var pubA2 = window._sb.storage.from(altBucket).getPublicUrl(pathA);
-                        return { success: true, url: pubA2.data.publicUrl };
-                    }
-                }
                 return { success: false, error: 'อัปโหลดไม่สำเร็จ: ' + (upResA.error.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ') };
             }
             var pubA = window._sb.storage.from(bucketA).getPublicUrl(pathA);
-            return { success: true, url: pubA.data.publicUrl };
-            }
-            var pubA = window._sb.storage.from('receipts').getPublicUrl(pathA);
-            return { success: true, url: pubA.data.publicUrl };
+            return { success: true, url: pubA.data.publicUrl, bucket: bucketA, path: pathA };
         }
 
         case 'submitRequest': {
@@ -1802,29 +1791,16 @@ async function _routeAction(action, data) {
             var bytes  = new Uint8Array(binary.length);
             for (var k = 0; k < binary.length; k++) { bytes[k] = binary.charCodeAt(k); }
             var ext  = mime.includes('png') ? 'png' : 'jpg';
-            var path = 'receipts/' + Date.now() + '.' + ext;
+            // ── เก็บใน bucket 'slips' โฟลเดอร์: {บ้านเลขที่}/{YYYY-MM}/{timestamp}.ext ──
+            var slipHouse = (data.houseNumber || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+            var slipMonth = new Date().toISOString().slice(0, 7);
+            var path = slipHouse + '/' + slipMonth + '/' + Date.now() + '.' + ext;
             var blob = new Blob([bytes], { type: mime });
-            // Auto-create bucket ถ้ายังไม่มี
-            var bucketR = await _ensureBucket('receipts');
-            if (!bucketR) {
-                bucketR = await _ensureBucket('slips');
-                if (!bucketR) return { success: false, error: 'ไม่สามารถสร้าง Storage bucket ได้ กรุณาแจ้งผู้ดูแลระบบ' };
-            }
-            var upRes = await window._sb.storage.from(bucketR).upload(path, blob, { contentType: mime, upsert: false });
+            var upRes = await window._sb.storage.from('slips').upload(path, blob, { contentType: mime, upsert: false });
             if (upRes.error) {
-                var altB = bucketR === 'receipts' ? 'slips' : 'receipts';
-                var altBR = await _ensureBucket(altB);
-                if (altBR) {
-                    path = 'receipts/' + Date.now() + '.' + ext;
-                    upRes = await window._sb.storage.from(altB).upload(path, blob, { contentType: mime, upsert: false });
-                    if (!upRes.error) {
-                        var pubData2 = window._sb.storage.from(altB).getPublicUrl(path);
-                        return { success: true, fileId: pubData2.data.publicUrl };
-                    }
-                }
                 return { success: false, error: 'อัปโหลดไม่สำเร็จ: ' + (upRes.error.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ') };
             }
-            var pubData = window._sb.storage.from(bucketR).getPublicUrl(path);
+            var pubData = window._sb.storage.from('slips').getPublicUrl(path);
             return { success: true, fileId: pubData.data.publicUrl };
         }
 

@@ -391,7 +391,9 @@
                                 for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
                                 const blob = new Blob([bytes], { type: 'image/jpeg' });
                                 const ts = Date.now() + i;
-                                const path = `slips/${window.billingInfo.unitNumber}_${window.billingInfo.period}_${ts}.jpg`;
+                                const houseDir = (window.billingInfo.unitNumber || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+                                const periodDir = (window.billingInfo.period || new Date().toISOString().slice(0, 7)).replace(/[^a-zA-Z0-9_-]/g, '_');
+                                const path = `${houseDir}/${periodDir}/${ts}.jpg`;
                                 const { data: upData, error: upErr } = await window._sb.storage
                                     .from('slips').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
                                 if (!upErr) {

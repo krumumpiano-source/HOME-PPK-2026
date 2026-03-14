@@ -447,7 +447,7 @@
                             reader.onload = function(ev) { resolve(ev.target.result); };
                             reader.readAsDataURL(f);
                         });
-                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name });
+                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: cached.house_number || 'new' });
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
                         } else {
