@@ -779,6 +779,38 @@
             row.prefix = row.prefix || '';
             row.phone = row.phone || '';
             row.email = row.email || '';
+            row.address = row.address || '';
+            row.position = row.position || '';
+            // repair fields
+            row.workTypes = row.workTypes || row.work_types || [];
+            row.problemDetail = row.problemDetail || row.problem_detail || '';
+            row.otherWorkType = row.otherWorkType || row.other_work_type || '';
+            row.costResponsibility = row.costResponsibility || row.cost_responsibility || '';
+            row.costItems = row.costItems || row.cost_items || [];
+            row.totalCost = row.totalCost || row.total_cost || '';
+            // transfer fields
+            row.currentHouse = row.currentHouse || row.current_house || row.houseNumber || '';
+            row.requestedHouse = row.requestedHouse || row.target_house || '';
+            row.transferType = row.transferType || row.transfer_type || '';
+            // return fields
+            row.returnDate = row.returnDate || row.return_date || '';
+            row.moveInDate = row.moveInDate || row.move_in_date || '';
+            // documents & attachments
+            row.documentsChecked = row.documentsChecked || row.documents_checked || [];
+            row.attachmentUrls = row.attachmentUrls || row.attachment_urls || [];
+            // computed reason text for table display
+            if (!row.transferReason && row.reasons && row.reasons.length) {
+                row.transferReason = row.reasons.join(', ') + (row.otherReason ? ' (' + row.otherReason + ')' : '');
+            }
+            if (!row.returnReason && row.reasons && row.reasons.length) {
+                row.returnReason = row.reasons.join(', ') + (row.otherReason ? ' (' + row.otherReason + ')' : '');
+            }
+            row.transferReason = row.transferReason || '';
+            row.returnReason = row.returnReason || '';
+            // other reason
+            row.otherReason = row.otherReason || row.other_reason || '';
+            // review note
+            row.reviewNote = row.reviewNote || row.review_note || '';
             // reason: string → reasons: array
             if (!row.reasons && row.reason) {
                 row.reasons = row.reason.split(',').map(function(r) { return r.trim(); }).filter(Boolean);
@@ -958,6 +990,7 @@
                 approved: { class: 'status-approved', text: 'อนุมัติแล้ว' },
                 rejected: { class: 'status-rejected', text: 'ไม่อนุมัติ' },
                 completed: { class: 'status-completed', text: 'ดำเนินการเสร็จ' },
+                cancelled: { class: 'status-rejected', text: 'ยกเลิกแล้ว' },
                 expired: { class: 'status-expired', text: 'หมดอายุ' }
             };
             const s = statuses[status] || { class: 'status-pending', text: status };
@@ -994,7 +1027,19 @@
                 new_position: 'ย้ายมาปฏิบัติหน้าที่',
                 far_from_home: 'อยู่ห่างไกลจากภูมิลำเนา',
                 family_responsibility: 'มีภาระครอบครัว',
+                no_nearby_residence: 'ไม่มีที่พักอาศัยในบริเวณใกล้เคียง',
                 health: 'ปัญหาสุขภาพ',
+                work_convenience: 'สะดวกในการทำงาน',
+                safety: 'ความปลอดภัย',
+                // transfer reasons
+                family_space: 'ต้องการพื้นที่เหมาะสมกับจำนวนสมาชิก',
+                health_issue: 'ปัญหาด้านสุขภาพหรือข้อจำกัดส่วนตัว',
+                // return reasons
+                transfer: 'ย้ายสถานศึกษา/ปฏิบัติราชการ ณ หน่วยงานอื่น',
+                resign: 'พ้นจากตำแหน่ง (ลาออก/เกษียณ/ถึงแก่กรรม)',
+                disqualified: 'พ้นคุณสมบัติตามระเบียบบ้านพัก',
+                mou_violation: 'ฝ่าฝืนข้อตกลง MOU',
+                revoked: 'ถูกเพิกถอนสิทธิการพักอาศัย',
                 other: 'อื่นๆ'
             };
             return reasons.map(r => reasonMap[r] || r).join(', ');
@@ -1329,6 +1374,7 @@
             let content = '';
             
             if (type === 'residence') {
+                var docLabels = { 'id_card': 'สำเนาบัตรประชาชน', 'house_registration': 'สำเนาทะเบียนบ้าน', 'appointment_letter': 'สำเนาคำสั่งบรรจุ/แต่งตั้ง', 'marriage_cert': 'สำเนาทะเบียนสมรส', 'birth_cert': 'สำเนาสูติบัตรบุตร', 'appointment_proof': 'หลักฐานการบรรจุ/แต่งตั้ง', 'special_documents': 'เอกสารพิเศษ' };
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
@@ -1344,6 +1390,14 @@
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
+                            <div class="detail-label">ตำแหน่ง</div>
+                            <div class="detail-value">${item.position || '-'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">กลุ่มสาระการเรียนรู้</div>
+                            <div class="detail-value">${item.subjectGroup}</div>
+                        </div>
+                        <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
@@ -1355,9 +1409,9 @@
                             <div class="detail-label">LINE ID</div>
                             <div class="detail-value">${item.lineId || '-'}</div>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">กลุ่มสาระการเรียนรู้</div>
-                            <div class="detail-value">${item.subjectGroup}</div>
+                        <div class="detail-item full-width">
+                            <div class="detail-label">ที่อยู่ตามบัตรประชาชน</div>
+                            <div class="detail-value">${item.address || '-'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ลักษณะการเข้าพัก</div>
@@ -1396,16 +1450,35 @@
                     ` : ''}
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอเข้าพัก</div>
-                        <div class="detail-value">${getReasonText(item.reasons)}</div>
+                        <div class="detail-value">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + item.otherReason : ''}</div>
                     </div>
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
-                        <div class="detail-value">${item.additionalInfo}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.additionalInfo}</div>
+                    </div>
+                    ` : ''}
+                    ${item.documentsChecked && item.documentsChecked.length > 0 ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">เอกสารที่แนบ</div>
+                        <div class="detail-value">
+                            <ul style="margin:0.5rem 0;padding-left:1.5rem;">
+                                ${item.documentsChecked.map(dc => '<li>' + (docLabels[dc] || dc) + '</li>').join('')}
+                            </ul>
+                        </div>
                     </div>
                     ` : ''}
                 `;
             } else if (type === 'repair') {
+                var costHTML = '';
+                if (item.costItems && item.costItems.length > 0) {
+                    costHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:0.5rem;"><thead><tr><th style="border:1px solid #ddd;padding:0.4rem;background:#f8fafc;">รายการ</th><th style="border:1px solid #ddd;padding:0.4rem;background:#f8fafc;width:120px;">ราคา (บาท)</th></tr></thead><tbody>';
+                    item.costItems.forEach(function(ci) {
+                        costHTML += '<tr><td style="border:1px solid #ddd;padding:0.4rem;">' + (ci.item || '-') + '</td><td style="border:1px solid #ddd;padding:0.4rem;text-align:right;">' + (ci.price || '0') + '</td></tr>';
+                    });
+                    costHTML += '</tbody></table>';
+                }
+                var costResp = { 'school': 'โรงเรียน', 'personal': 'ผู้พักอาศัย', 'shared': 'รับผิดชอบร่วม' };
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
@@ -1434,12 +1507,21 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ประเภทงาน</div>
-                            <div class="detail-value">${getWorkTypeText(item.workTypes)}</div>
+                            <div class="detail-value">${getWorkTypeText(item.workTypes)}${item.otherWorkType ? ' (' + item.otherWorkType + ')' : ''}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ความเร่งด่วน</div>
                             <div class="detail-value">${getUrgencyText(item.urgency)}</div>
                         </div>
+                        <div class="detail-item">
+                            <div class="detail-label">ผู้รับผิดชอบค่าใช้จ่าย</div>
+                            <div class="detail-value">${costResp[item.costResponsibility] || item.costResponsibility || '-'}</div>
+                        </div>
+                        ${item.totalCost ? `
+                        <div class="detail-item">
+                            <div class="detail-label">ประมาณการค่าใช้จ่ายรวม</div>
+                            <div class="detail-value">${Number(item.totalCost).toLocaleString()} บาท</div>
+                        </div>` : ''}
                         <div class="detail-item">
                             <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
@@ -1447,10 +1529,16 @@
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">รายละเอียดปัญหา</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.problemDetail}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.problemDetail || '-'}</div>
                     </div>
+                    ${costHTML ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">รายการประมาณการค่าใช้จ่าย</div>
+                        <div class="detail-value">${costHTML}</div>
+                    </div>` : ''}
                 `;
             } else if (type === 'transfer') {
+                var tTypeText = { 'swap': 'สลับบ้าน', 'move': 'ย้ายบ้าน' };
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
@@ -1466,6 +1554,10 @@
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
+                            <div class="detail-label">ตำแหน่ง</div>
+                            <div class="detail-value">${item.position || '-'}</div>
+                        </div>
+                        <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
@@ -1479,8 +1571,13 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ขอย้ายไปยัง</div>
-                            <div class="detail-value">${item.requestedHouse}</div>
+                            <div class="detail-value">${item.requestedHouse || '-'}</div>
                         </div>
+                        ${item.transferType ? `
+                        <div class="detail-item">
+                            <div class="detail-label">ลักษณะการย้าย</div>
+                            <div class="detail-value">${tTypeText[item.transferType] || item.transferType}</div>
+                        </div>` : ''}
                         <div class="detail-item">
                             <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
@@ -1488,8 +1585,13 @@
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอย้าย</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.transferReason}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + item.otherReason : ''}</div>
                     </div>
+                    ${item.additionalInfo ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">ข้อมูลเพิ่มเติม</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.additionalInfo}</div>
+                    </div>` : ''}
                 `;
             } else if (type === 'return') {
                 content = `
@@ -1507,6 +1609,10 @@
                             <div class="detail-value">${item.prefix}${item.fullname}</div>
                         </div>
                         <div class="detail-item">
+                            <div class="detail-label">ตำแหน่ง</div>
+                            <div class="detail-value">${item.position || '-'}</div>
+                        </div>
+                        <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
                             <div class="detail-value">${item.phone}</div>
                         </div>
@@ -1518,6 +1624,11 @@
                             <div class="detail-label">หมายเลขบ้านพัก</div>
                             <div class="detail-value">${item.houseNumber}</div>
                         </div>
+                        ${item.moveInDate ? `
+                        <div class="detail-item">
+                            <div class="detail-label">วันที่เข้าพัก</div>
+                            <div class="detail-value">${formatDate(item.moveInDate)}</div>
+                        </div>` : ''}
                         <div class="detail-item">
                             <div class="detail-label">วันที่ต้องการคืน</div>
                             <div class="detail-value">${formatDate(item.returnDate)}</div>
@@ -1529,33 +1640,49 @@
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอคืน</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.returnReason}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + item.otherReason : ''}</div>
                     </div>
+                    ${item.additionalInfo ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">ข้อมูลเพิ่มเติม</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.additionalInfo}</div>
+                    </div>` : ''}
                 `;
             }
 
-            // Add attachments section
-            if (item.attachments && item.attachments.length > 0) {
-                content += `
-                    <div class="detail-item" style="margin-top:1.5rem;">
-                        <div class="detail-label">ไฟล์แนบ</div>
-                        <div class="attachments-list">
-                            ${item.attachments.map(file => `
-                                <div class="attachment-item" onclick="viewAttachment('${file}')">
-                                    📎 ${file}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+            // Attachment section (attachment_urls from details)
+            var attUrls = item.attachmentUrls || [];
+            if (typeof attUrls === 'string') try { attUrls = JSON.parse(attUrls); } catch(e) { attUrls = []; }
+            if (attUrls.length > 0) {
+                content += `<div class="detail-item" style="margin-top:1.5rem;">
+                    <div class="detail-label">📎 เอกสารแนบ (${attUrls.length} ไฟล์)</div>
+                    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem;">`;
+                attUrls.forEach(function(att, idx) {
+                    var aUrl = typeof att === 'string' ? att : (att.url || '');
+                    var aName = typeof att === 'string' ? ('ไฟล์แนบ ' + (idx+1)) : (att.name || 'ไฟล์แนบ ' + (idx+1));
+                    var aType = typeof att === 'string' ? '' : (att.type || '');
+                    var isImg = aType.indexOf('image') >= 0 || /\.(jpg|jpeg|png|gif|webp)$/i.test(aUrl);
+                    if (isImg) {
+                        content += `<div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                            <div style="padding:0.4rem 0.6rem;background:#f8fafc;font-size:0.85rem;color:#4b5563;">${aName}</div>
+                            <img src="${aUrl}" style="max-width:100%;max-height:400px;display:block;cursor:pointer;" onclick="window.open('${aUrl}','_blank')" title="คลิกเพื่อดูขนาดเต็ม">
+                        </div>`;
+                    } else {
+                        content += `<a href="${aUrl}" target="_blank" style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;text-decoration:none;color:#0369a1;font-size:0.9rem;">
+                            📄 ${aName}
+                            <span style="margin-left:auto;font-size:0.78rem;color:#6b7280;">เปิดไฟล์ →</span>
+                        </a>`;
+                    }
+                });
+                content += `</div></div>`;
             }
 
-            // Add notes section
-            if (item.notes) {
+            // Review note
+            if (item.reviewNote) {
                 content += `
                     <div class="detail-item" style="margin-top:1.5rem;">
-                        <div class="detail-label">หมายเหตุจากเจ้าหน้าที่</div>
-                        <div class="detail-value" style="background:#fef3c7;padding:0.75rem;border-radius:8px;">${item.notes}</div>
+                        <div class="detail-label">💬 หมายเหตุจากเจ้าหน้าที่</div>
+                        <div class="detail-value" style="background:#fef3c7;padding:0.75rem;border-radius:8px;">${item.reviewNote}</div>
                     </div>
                 `;
             }
