@@ -659,8 +659,29 @@
                 urgency: document.querySelector('input[name="urgency"]:checked')?.value || '',
                 cost_responsibility: document.querySelector('input[name="cost_responsibility"]:checked')?.value || '',
                 cost_items: costItems,
-                total_cost: document.querySelector('input[name="total_cost"]')?.value || '0'
+                total_cost: document.querySelector('input[name="total_cost"]')?.value || '0',
+                attachment_urls: []
             };
+            // อัปโหลดไฟล์แนบไปยัง Storage
+            const fileInput = document.getElementById('file-input');
+            if (fileInput.files.length > 0) {
+                submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ...';
+                for (let fi = 0; fi < fileInput.files.length; fi++) {
+                    try {
+                        var f = fileInput.files[fi];
+                        var b64 = await new Promise(function(resolve) {
+                            var reader = new FileReader();
+                            reader.onload = function(ev) { resolve(ev.target.result); };
+                            reader.readAsDataURL(f);
+                        });
+                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name });
+                        if (upResult && upResult.success && upResult.url) {
+                            data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
+                        }
+                    } catch(ue) { console.warn('upload attachment failed', fi, ue); }
+                }
+            }
+            submitBtn.textContent = 'กำลังส่งคำร้อง...';
             const result = await callBackend('submitRequest', data);
             if (result && result.success) {
                 const reqId = result.requestId || '-';
