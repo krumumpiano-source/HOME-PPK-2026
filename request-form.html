@@ -435,6 +435,7 @@
             };
 
             // อัปโหลดไฟล์แนบไปยัง Storage
+            var uploadErrors = [];
             const fileInput = document.getElementById('file-input');
             if (fileInput && fileInput.files.length > 0) {
                 submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ...';
@@ -449,8 +450,15 @@
                         var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name });
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
+                        } else {
+                            uploadErrors.push(f.name + ': ' + (upResult ? upResult.error : 'ไม่ทราบสาเหตุ'));
                         }
-                    } catch(ue) { console.warn('upload attachment failed', fi, ue); }
+                    } catch(ue) { uploadErrors.push(f.name + ': ' + (ue.message || 'ข้อผิดพลาด')); }
+                }
+                if (uploadErrors.length > 0 && data.attachment_urls.length === 0) {
+                    submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                    ppkAlert('อัปโหลดไฟล์ไม่สำเร็จ:\n' + uploadErrors.join('\n') + '\n\nกรุณาลองใหม่อีกครั้ง หรือแจ้งผู้ดูแลระบบ', 'error');
+                    return;
                 }
                 submitBtn.textContent = 'กำลังส่งคำร้อง...';
             }
