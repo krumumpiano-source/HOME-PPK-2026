@@ -211,7 +211,8 @@
                 approved:  { label: 'อนุมัติแล้ว',         color: 'var(--c-success)', icon: '✅' },
                 completed: { label: 'เสร็จสิ้น',           color: 'var(--c-success)', icon: '🎉' },
                 rejected:  { label: 'ไม่ผ่านการอนุมัติ',  color: 'var(--c-danger)',  icon: '❌' },
-                expired:   { label: 'หมดอายุ',             color: 'var(--c-text-3)',  icon: '⌛' }
+                expired:   { label: 'หมดอายุ',             color: 'var(--c-text-3)',  icon: '⌛' },
+                cancelled: { label: 'ยกเลิกแล้ว',           color: 'var(--c-text-3)',  icon: '🚫' }
             };
             var types = hasHouse ? ['repair', 'transfer', 'return'] : ['residence'];
             var allRequests = [];
@@ -258,6 +259,11 @@
                     if (req._type === 'residence') {
                         html += '<button onclick="viewAndPrintRequest(\'' + (req.id || '') + '\',\'' + req._type + '\')" style="background:#10b981;color:white;border:none;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;" title="พิมพ์/บันทึก PDF">🖨️ พิมพ์</button>';
                     }
+                    // ปุ่มยกเลิกคำร้อง (เฉพาะสถานะที่ยังไม่สิ้นสุด)
+                    var cancellable = ['pending','reviewing','waiting'];
+                    if (cancellable.indexOf(req.status) !== -1) {
+                        html += '<button onclick="cancelMyRequest(\'' + (req.id || '') + '\',\'' + (typeLabels[req._type] || req._type) + '\')" style="background:none;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;" title="ยกเลิกคำร้อง">✕ ยกเลิก</button>';
+                    }
                     html += '<span class="ppk-badge" style="background:color-mix(in srgb, ' + s.color + ' 12%, transparent);color:' + s.color + ';border:1px solid color-mix(in srgb, ' + s.color + ' 25%, transparent);">';
                     html += s.icon + ' ' + s.label + '</span></div></div>';
                     if (req.queue_position) html += '<div style="color:#8b5cf6;font-size:0.85rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
@@ -268,6 +274,35 @@
                 content.innerHTML = html;
             } catch(e) {
                 content.innerHTML = '<div class="ppk-alert ppk-alert-danger">ไม่สามารถโหลดข้อมูลคำร้องได้ในขณะนี้</div>';
+            }
+        }
+
+        // ยกเลิกคำร้อง
+        async function cancelMyRequest(reqId, typeName) {
+            if (!reqId) return;
+            var ok = await ppkConfirm(
+                '⚠️ ยืนยันยกเลิกคำร้อง?\n\n' +
+                '📄 คำร้อง: ' + typeName + '\n' +
+                '🔖 รหัส: #' + reqId + '\n\n' +
+                'หากยกเลิกแล้ว คำร้องจะไม่ถูกพิจารณาต่อ\nหากต้องการยื่นใหม่ ท่านต้องกรอกแบบฟอร์มอีกครั้ง'
+            );
+            if (!ok) return;
+            try {
+                document.body.style.cursor = 'wait';
+                var result = await callBackend('reviewRequest', { requestId: reqId, status: 'cancelled', note: 'ผู้ยื่นคำร้องขอยกเลิกด้วยตนเอง' });
+                document.body.style.cursor = '';
+                if (result && result.success) {
+                    ppkAlert('✅ ยกเลิกคำร้อง #' + reqId + ' เรียบร้อยแล้ว');
+                    // รีโหลดรายการ
+                    var _u = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                    var _hasHouse = !!(_u.house_number || _u.houseNumber);
+                    loadMyRequests(_u, _hasHouse);
+                } else {
+                    ppkAlert('❌ ไม่สามารถยกเลิกได้: ' + (result?.error || 'กรุณาลองใหม่'));
+                }
+            } catch(e) {
+                document.body.style.cursor = '';
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
