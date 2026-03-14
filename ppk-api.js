@@ -1461,7 +1461,7 @@ async function _routeAction(action, data) {
             }
 
             // Auto-delete attachments when request reaches terminal status
-            var terminalStatuses = ['approved', 'completed', 'rejected'];
+            var terminalStatuses = ['approved', 'completed', 'rejected', 'cancelled'];
             if (terminalStatuses.indexOf(data.status) !== -1) {
                 try {
                     var reqRows = await sbGet('requests', { id: 'eq.' + reqIdToReview, select: 'details' });
