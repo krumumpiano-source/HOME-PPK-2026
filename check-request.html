@@ -846,7 +846,7 @@
                     // merge queue positions
                     if (queueResult && queueResult.success && queueResult.data) {
                         queueResult.data.forEach(function(q) {
-                            const item = cachedData.residence.find(r => r.id === q.id);
+                            const item = cachedData.residence.find(r => r.id === q.request_id);
                             if (item) {
                                 item.queuePosition = q.position;
                             }
@@ -1060,10 +1060,10 @@
             document.getElementById('statQueue').textContent = residence.filter(d => d.status === 'waiting').length;
 
             // Update badges
-            document.getElementById('badgeResidence').textContent = residence.filter(d => d.status !== 'approved' && d.status !== 'rejected').length;
-            document.getElementById('badgeRepair').textContent = repair.filter(d => d.status !== 'completed').length;
-            document.getElementById('badgeTransfer').textContent = transfer.filter(d => d.status !== 'approved' && d.status !== 'rejected').length;
-            document.getElementById('badgeReturn').textContent = returnData.filter(d => d.status !== 'completed').length;
+            document.getElementById('badgeResidence').textContent = residence.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
+            document.getElementById('badgeRepair').textContent = repair.filter(d => d.status !== 'completed' && d.status !== 'cancelled').length;
+            document.getElementById('badgeTransfer').textContent = transfer.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
+            document.getElementById('badgeReturn').textContent = returnData.filter(d => d.status !== 'completed' && d.status !== 'cancelled').length;
         }
 
         function renderQueue() {
