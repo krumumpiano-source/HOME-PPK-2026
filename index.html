@@ -108,33 +108,6 @@
       margin: 0 1.25rem 2rem;
     }
 
-    /* ── LINE Section ── */
-    .line-section {
-      background: rgba(6,199,85,0.06);
-      border: 1px solid rgba(6,199,85,0.15);
-      border-radius: 20px; padding: 2rem 1.5rem;
-      text-align: center; max-width: 460px;
-      width: calc(100% - 2.5rem); margin-bottom: 2rem;
-      animation: fadeUp 0.6s ease-out 0.3s both;
-    }
-    .line-section h3 { font-size: 1.15rem; color: #4ADE80; margin-bottom: 0.4rem; font-weight: 600; }
-    .line-section p { font-size: 0.88rem; color: #94A3B8; margin-bottom: 1.25rem; line-height: 1.6; }
-    .line-add-btn {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      background: #06C755; color: #FFF; border: none; border-radius: 10px;
-      padding: 0.75rem 1.8rem; font-size: 0.95rem; font-weight: 600;
-      font-family: inherit; cursor: pointer; text-decoration: none;
-      transition: all 0.2s;
-    }
-    .line-add-btn:hover { background: #05A648; transform: translateY(-2px); }
-    .line-qr-placeholder {
-      width: 120px; height: 120px; border-radius: 14px;
-      background: #FFF; display: flex; align-items: center; justify-content: center;
-      color: #999; font-size: 0.7rem; margin: 0 auto 1rem; overflow: hidden;
-    }
-    .line-qr-placeholder img { width: 100%; height: 100%; object-fit: contain; }
-    .line-not-configured { color: #475569; font-size: 0.82rem; margin-top: 0.75rem; }
-
     /* ── Auth Buttons ── */
     .auth-section {
       display: flex; gap: 0.75rem; flex-wrap: wrap;
@@ -194,31 +167,13 @@
       <div class="card-desc">ผู้พักอาศัยสามารถถ่ายรูปสลิปและส่งให้ผู้ดูแลอนุมัติได้ทันที</div>
     </div>
     <div class="card">
-      <div class="card-icon green">💬</div>
-      <div class="card-title">แจ้งเตือน LINE & อีเมล</div>
-      <div class="card-desc">ระบบส่งใบเสร็จและแจ้งเตือนผ่าน LINE OA และอีเมลอัตโนมัติ</div>
+      <div class="card-icon green">�</div>
+      <div class="card-title">แจ้งเตือนอีเมล</div>
+      <div class="card-desc">ระบบส่งใบเสร็จและแจ้งเตือนพร้อมอีเมลอัตโนมัติ</div>
     </div>
   </div>
 
   <hr class="divider">
-
-  <div class="line-section" id="lineSection">
-    <div class="line-qr-placeholder" id="lineQrBox">
-      <span style="color:#aaa;font-size:0.7rem;text-align:center">QR Code LINE OA<br>ตั้งค่าใน Admin</span>
-    </div>
-    <h3>💬 เพิ่มเพื่อน LINE OA</h3>
-    <p id="lineDescText">เพิ่มเพื่อนใน LINE เพื่อรับการแจ้งเตือนค่าสาธารณูปโภค ใบเสร็จ และข่าวสารจากบ้านพักครูโดยตรง</p>
-    <a id="lineAddBtn" class="line-add-btn" href="#" onclick="return handleLineAdd()">
-      <svg width="20" height="20" viewBox="0 0 512 512" fill="white"><path d="M256 48C141 48 48 128.6 48 228.6c0 75.3 50.5 141.2 126.9 176.3l-16.6 61.5c-1.4 5.3 5.1 9.5 9.7 6.2l72.6-49.4c5.1.5 10.2.8 15.4.8 115 0 208-80.6 208-180.6S371 48 256 48z"/></svg>
-      เพิ่มเพื่อน LINE
-    </a>
-    <div class="line-not-configured" id="lineNotConfigured" style="display:none">ยังไม่ได้ตั้งค่า LINE OA — ผู้ดูแลระบบตั้งค่าในหน้า Admin Settings → LINE & อีเมล</div>
-    <div id="liffBtn" style="margin-top:0.75rem; display:none">
-      <a id="liffLink" href="#" class="line-add-btn" style="background:#0a84ff; margin-top:0.5rem;">
-        📱 เปิด Mini App ผ่าน LINE
-      </a>
-    </div>
-  </div>
 
   <div class="auth-section">
     <a href="login.html" class="btn-auth btn-login">🔑 เข้าสู่ระบบ</a>
@@ -253,46 +208,8 @@
       }
     }
 
-    async function loadLineSettings() {
-      try {
-        const r = await callBackend('getLineSettings');
-        if (r && r.success && r.settings) {
-          const s = r.settings;
-          const oaName = s.line_oa_name || '';
-          const liffId = s.line_liff_id || '';
-          if (oaName) document.querySelector('#lineSection h3').textContent = '💬 ' + oaName;
-          if (oaName && oaName.startsWith('@')) {
-            const lineId = oaName.replace('@', '');
-            const lineUrl = 'https://line.me/R/ti/p/' + lineId;
-            document.getElementById('lineAddBtn').href = lineUrl;
-            document.getElementById('lineAddBtn').onclick = null;
-            document.getElementById('lineQrBox').innerHTML = '<img src="https://qr-official.line.me/sid/M/' + lineId + '.png" alt="LINE QR" onerror="this.parentElement.innerHTML=\'<span style=color:#aaa;font-size:0.7rem;text-align:center>QR Code<br>ไม่พบ</span>\'">';
-          } else {
-            document.getElementById('lineNotConfigured').style.display = 'block';
-            document.getElementById('lineAddBtn').style.display = 'none';
-          }
-          if (liffId) {
-            document.getElementById('liffBtn').style.display = 'block';
-            document.getElementById('liffLink').href = 'https://liff.line.me/' + liffId;
-          }
-        } else {
-          document.getElementById('lineNotConfigured').style.display = 'block';
-          document.getElementById('lineAddBtn').style.display = 'none';
-        }
-      } catch(e) {
-        document.getElementById('lineNotConfigured').style.display = 'block';
-        document.getElementById('lineAddBtn').style.display = 'none';
-      }
-    }
-
-    function handleLineAdd() {
-      alert('กรุณาตั้งค่า LINE OA Name ใน Admin Settings ก่อน');
-      return false;
-    }
-
     window.onload = async function() {
       await checkAndRedirect();
-      await loadLineSettings();
     };
   </script>
     <script src="ppk-pwa.js?v=20260313D"></script>

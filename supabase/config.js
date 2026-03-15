@@ -15,8 +15,7 @@
 // ──────────────────────────────────────────
 window._PPK_CONFIG = {
   url:  'https://mwigdgxrfpcmfjuztmip.supabase.co',
-  anon: 'sb_publishable_DInAJWyKXTwcxC79jNiS9A_PDxjKWHL',
-  liffId: '2009333832-4En2TkWD'
+  anon: 'sb_publishable_DInAJWyKXTwcxC79jNiS9A_PDxjKWHL'
 };
 
 // ──────────────────────────────────────────

@@ -1969,192 +1969,29 @@ async function _routeAction(action, data) {
             return { success: false, error: emailResult ? (emailResult.error || 'ส่งอีเมลไม่สำเร็จ') : 'Edge Function ไม่ตอบสนอง' };
         }
 
-        /* ── LINE Push (via Edge Function) ──────────── */
-        case 'linePush': {
-            if (!data.lineUserId && data.houseNumber) {
-                var resRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', select: 'line_user_id,id', limit: '1' });
-                data.lineUserId = resRows && resRows[0] ? resRows[0].line_user_id : null;
-                data.residentId = resRows && resRows[0] ? resRows[0].id : null;
-            }
-            if (!data.lineUserId) return { success: false, error: 'ผู้พักยังไม่ได้เชื่อม LINE' };
-            var lineResult = await _callEdge('line-push', {
-                lineUserId:  data.lineUserId,
-                message:     data.message,
-                houseNumber: data.houseNumber || '',
-                residentId:  data.residentId  || null
-            });
-            return lineResult && lineResult.success ? { success: true, quotaUsed: lineResult.quotaUsed } : { success: false, error: (lineResult && lineResult.error) || 'ส่ง LINE ไม่สำเร็จ' };
-        }
-
-        /* ── flexPush — ส่ง Flex Message ────────────── */
-        case 'flexPush': {
-            if (!data.lineUserId && data.houseNumber) {
-                var fpRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', select: 'line_user_id,id', limit: '1' });
-                data.lineUserId  = fpRows && fpRows[0] ? fpRows[0].line_user_id : null;
-                data.residentId  = fpRows && fpRows[0] ? fpRows[0].id : null;
-            }
-            if (!data.lineUserId) return { success: false, error: 'ผู้พักยังไม่ได้เชื่อม LINE' };
-            if (!data.flexMessage) return { success: false, error: 'ต้องระบุ flexMessage' };
-            var fpResult = await _callEdge('line-push', {
-                lineUserId:   data.lineUserId,
-                flexMessage:  data.flexMessage,   // { altText, contents }
-                message:      data.altText || 'แจ้งเตือนจากระบบบ้านพักครู',
-                houseNumber:  data.houseNumber || '',
-                residentId:   data.residentId  || null,
-                messageType: 'flex'
-            });
-            return fpResult && fpResult.success ? { success: true, quotaUsed: fpResult.quotaUsed } : { success: false, error: (fpResult && fpResult.error) || 'ส่ง Flex Message ไม่สำเร็จ' };
-        }
-
-        /* ── getLineQuota ──────────────────────────── */
-        case 'getLineQuota': {
-            var qRows = await sbGet('settings', {});
-            var qMap = {};
-            (qRows || []).forEach(function(r) { qMap[r.key] = r.value; });
-            return { success: true, data: {
-                used:  parseInt(qMap['line_push_quota_used']  || '0'),
-                limit: parseInt(qMap['line_push_quota_limit'] || '200'),
-                resetDate: qMap['line_push_quota_reset_date'] || ''
-            }};
-        }
-
-        /* ── getLineSettings ───────────────────────── */
-        case 'getLineSettings': {
+        /* ── getEmailSettings ─────────────────────────── */
+        case 'getEmailSettings': {
             var lsRows = await sbGet('settings', {});
             var lsMap = {};
             (lsRows || []).forEach(function(r) { lsMap[r.key] = r.value; });
-            return { success: true, data: {
-                lineChannelToken: lsMap['line_channel_access_token'] || '',
-                lineChannelSecret: lsMap['line_channel_secret']      || '',
-                lineLiffId:        lsMap['line_liff_id']             || '',
-                lineOaName:        lsMap['line_oa_name']             || '',
-                resendApiKey:      lsMap['resend_api_key']           || '',
-                emailFrom:         lsMap['email_from']               || '',
-                emailFromName:     lsMap['email_from_name']          || ''
+            return { success: true, settings: {
+                resend_api_key:  lsMap['resend_api_key']  || '',
+                email_from:      lsMap['email_from']      || '',
+                email_from_name: lsMap['email_from_name'] || ''
             }};
         }
 
-        /* ── saveLineSettings ──────────────────────── */
-        case 'saveLineSettings': {
-            var lsEntries = [
-                ['line_channel_access_token', data.lineChannelToken || ''],
-                ['line_channel_secret',       data.lineChannelSecret || ''],
-                ['line_liff_id',              data.lineLiffId       || ''],
-                ['line_oa_name',              data.lineOaName       || ''],
-                ['resend_api_key',            data.resendApiKey     || ''],
-                ['email_from',                data.emailFrom        || ''],
-                ['email_from_name',           data.emailFromName    || '']
+        /* ── saveEmailSettings ─────────────────────────── */
+        case 'saveEmailSettings': {
+            var esEntries = [
+                ['resend_api_key',   data.resend_api_key   || ''],
+                ['email_from',       data.email_from       || ''],
+                ['email_from_name',  data.email_from_name  || '']
             ];
-            for (var li = 0; li < lsEntries.length; li++) {
-                await sbUpsert('settings', { key: lsEntries[li][0], value: lsEntries[li][1] }, 'key');
+            for (var ei = 0; ei < esEntries.length; ei++) {
+                await sbUpsert('settings', { key: esEntries[ei][0], value: esEntries[ei][1] }, 'key');
             }
             return { success: true };
-        }
-
-        /* ── getResidentByLine (LIFF ใช้ — ค้นหาผู้พักจาก LINE User ID) ── */
-        case 'getResidentByLine': {
-            var grlLineUid = data.lineUserId;
-            if (!grlLineUid) return { success: false, error: 'ต้องระบุ lineUserId' };
-            var grlRows = await sbGet('residents', { line_user_id: 'eq.' + grlLineUid, is_active: 'eq.true', limit: '1' });
-            if (!grlRows || !grlRows[0]) return { success: true, resident: null };
-            return { success: true, resident: grlRows[0] };
-        }
-
-        /* ── getBillForHouse (LIFF dashboard ใช้) ──── */
-        case 'getBillForHouse': {
-            var bfhHouse = data.houseNumber || '';
-            var bfhPeriod = data.period || '';
-            if (!bfhHouse) return { success: false, error: 'ต้องระบุ houseNumber' };
-            var bfhQ = { house_number: 'eq.' + bfhHouse };
-            if (bfhPeriod) bfhQ.period = 'eq.' + bfhPeriod;
-            bfhQ.order = 'period.desc';
-            bfhQ.limit = '1';
-            var bfhRows = await sbGet('outstanding', bfhQ);
-            if (!bfhRows || !bfhRows[0]) return { success: true, data: null };
-            var bfhRow = bfhRows[0];
-            return { success: true, data: {
-                waterBill: parseFloat(bfhRow.water_bill || bfhRow.water_amount || 0),
-                electricBill: parseFloat(bfhRow.electric_bill || bfhRow.electric_amount || 0),
-                commonFee: parseFloat(bfhRow.common_fee || bfhRow.common_amount || 0),
-                paymentStatus: bfhRow.status || 'unpaid',
-                period: bfhRow.period
-            }};
-        }
-
-        /* ── submitHouseForm (LIFF forms ใช้) ──────── */
-        case 'submitHouseForm': {
-            // หา resident จาก LINE user ID เพื่อเอา user_id
-            var shfResident = null;
-            if (data.lineUserId) {
-                var shfResRows = await sbGet('residents', { line_user_id: 'eq.' + data.lineUserId, is_active: 'eq.true', limit: '1' });
-                shfResident = shfResRows && shfResRows[0] ? shfResRows[0] : null;
-            }
-            // สร้าง request ID (requests.id เป็น primary key ไม่มี DEFAULT)
-            var shfPrefixMap = { repair: 'RPR', transfer: 'TRF', 'return': 'RTN', residence: 'REQ' };
-            var shfReqPrefix = shfPrefixMap[data.formType] || 'REQ';
-            var shfUid = 'xxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16).toUpperCase(); });
-            var shfPayload = {
-                id: shfReqPrefix + shfUid,
-                house_number: data.houseNumber || '',
-                user_id: shfResident ? shfResident.user_id : null,  // line_user_id → user_id
-                type: data.formType || 'general',                   // form_type → type
-                details: { ...data, lineUserId: data.lineUserId },  // detail → details, เก็บ LINE ID ใน jsonb
-                status: 'pending',
-                submitted_at: new Date().toISOString()
-            };
-            try {
-                await sbPost('requests', shfPayload);
-                return { success: true };
-            } catch(shfErr) {
-                return { success: false, error: shfErr.message || 'บันทึกไม่สำเร็จ' };
-            }
-        }
-
-        /* ── linkLineAccount (LIFF ใช้) ─────────────── */
-        case 'linkLineAccount': {
-            var houseNo = data.houseNumber || data.house_number || '';
-            var lineUid  = data.lineUserId;
-            var pwd      = data.password || '';
-            if (!houseNo || !lineUid) return { success: false, error: 'ต้องระบุ houseNumber และ lineUserId' };
-            if (!pwd) return { success: false, error: 'ต้องระบุรหัสผ่าน' };
-            
-            // ค้นหา resident
-            var linkRows = await sbGet('residents', { house_number: 'eq.' + houseNo, is_active: 'eq.true', limit: '1' });
-            if (!linkRows || !linkRows[0]) return { success: false, error: 'ไม่พบข้อมูลผู้พักบ้านหมายเลขนี้' };
-            var resident = linkRows[0];
-            
-            // ตรวจสอบรหัสผ่าน: ถ้ามี user_id ให้ตรวจกับ users.password_hash
-            if (resident.user_id) {
-                var userRows = await sbGet('users', { id: 'eq.' + resident.user_id, limit: '1' });
-                if (!userRows || !userRows[0]) return { success: false, error: 'ไม่พบข้อมูลผู้ใช้' };
-                var user = userRows[0];
-                // เข้ารหัส password ด้วย SHA-256 เทียบกับ hash ใน DB
-                var pwdSalted = await sha256hexSalted(pwd, (user.email || '').trim().toLowerCase());
-                var pwdLegacy = await sha256hex(pwd);
-                if (pwdSalted !== user.password_hash && pwdLegacy !== user.password_hash) {
-                    return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
-                }
-            } else {
-                // ถ้าไม่มี user_id ให้ใช้รหัสผ่านเริ่มต้นจาก settings
-                var settingsRows = await sbGet('settings', { key: 'eq.default_resident_pin' });
-                var defaultPin = settingsRows && settingsRows[0] ? settingsRows[0].value : null;
-                if (!defaultPin) {
-                    return { success: false, error: 'ยังไม่ได้ตั้งรหัส PIN เริ่มต้นในระบบ — กรุณาติดต่อผู้ดูแลระบบ' };
-                }
-                if (pwd !== defaultPin) {
-                    return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
-                }
-            }
-            
-            // ตรวจสอบว่า LINE ID นี้ยังไม่ได้ผูกกับบ้านอื่นอยู่
-            var existingLink = await sbGet('residents', { line_user_id: 'eq.' + lineUid, limit: '1' });
-            if (existingLink && existingLink[0] && existingLink[0].id !== resident.id) {
-                return { success: false, error: 'LINE ID นี้เชื่อมกับบ้านพักอื่นอยู่แล้ว' };
-            }
-            
-            // ยืนยันการเชื่อมบัญชี
-            await sbPatch('residents', { id: 'eq.' + resident.id }, { line_user_id: lineUid, line_linked_at: new Date().toISOString() });
-            return { success: true, resident: resident };
         }
 
         /* ── cleanupOldSlips (trigger via Edge) ─────── */

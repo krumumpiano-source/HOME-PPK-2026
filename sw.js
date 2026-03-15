@@ -14,12 +14,7 @@ var PRECACHE = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './supabase/config.js',
-  './supabase/supabase.min.js',
-  './liff-dashboard.html',
-  './liff-forms.html',
-  './liff-history.html',
-  './liff-register.html',
-  './liff-slip.html'
+  './supabase/supabase.min.js'
 ];
 
 self.addEventListener('install', function(e) {

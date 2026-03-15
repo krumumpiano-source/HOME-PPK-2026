@@ -638,7 +638,7 @@
                     <span class="tab-btn-icon">⚙️</span> ตั้งค่าระบบ
                 </button>
                 <button class="tab-btn" onclick="showTab('linemail', this)">
-                    <span class="tab-btn-icon">💬</span> LINE & อีเมล
+                    <span class="tab-btn-icon">�</span> อีเมล
                 </button>
             </div>
 
@@ -1258,57 +1258,14 @@
                 </div>
             </div>
 
-            <!-- Tab: LINE & Email -->
+            <!-- Tab: Email Settings -->
             <div class="tab-content" id="tab-linemail">
                 <div class="section">
-                    <div class="section-title">💬 LINE & อีเมล</div>
-                    <div class="section-desc">ตั้งค่าการแจ้งเตือนผ่าน LINE Official Account และระบบอีเมล</div>
+                    <div class="section-title">📧 อีเมล</div>
+                    <div class="section-desc">ตั้งค่าระบบส่งอีเมลแจ้งเตือนและใบเสร็จอัตโนมัติ</div>
 
-                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">💬 LINE Official Account <span class="acc-arrow">▼</span></button>
+                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Resend.com) <span class="acc-arrow">▼</span></button>
                     <div class="accordion-body open" style="padding:0.6rem 0.1rem;">
-                    <div class="section-desc" style="margin-bottom:0.75rem;">กรอกข้อมูล LINE OA เพื่อส่งการแจ้งเตือนผ่าน LINE Push Message ให้ผู้พักอาศัยที่เชื่อมบัญชีแล้ว</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>LINE Channel Access Token</label>
-                            <input type="password" id="line_channel_access_token" placeholder="วางโทเคนจาก LINE Developers Console">
-                            <span class="hint">ขอได้จาก developers.line.biz → Messaging API → Channel access token</span>
-                        </div>
-                        <div class="form-group">
-                            <label>LINE Channel Secret</label>
-                            <input type="password" id="line_channel_secret" placeholder="Channel Secret">
-                            <span class="hint">ใช้ยืนยัน Webhook signature</span>
-                        </div>
-                        <div class="form-group">
-                            <label>LINE LIFF ID</label>
-                            <input type="text" id="line_liff_id" placeholder="เช่น 2007654321-AbCdEfGh">
-                            <span class="hint">สร้าง LIFF App ที่ developers.line.biz แล้วนำ ID มาใส่</span>
-                        </div>
-                        <div class="form-group">
-                            <label>LINE OA Name (แสดงเพื่อ UI)</label>
-                            <input type="text" id="line_oa_name" placeholder="เช่น บ้านพักครู พะเยาพิทยาคม">
-                        </div>
-                    </div>
-                    <div class="settings-card" style="margin:1rem 0;">
-                        <div class="settings-card-header">
-                            <span class="settings-card-title">📊 โควต้า LINE Push</span>
-                            <span class="settings-card-value" id="linePushQuotaDisplay">กำลังโหลด...</span>
-                        </div>
-                        <div style="padding:0.5rem 1rem; font-size:0.9rem; color:var(--text-muted);">
-                            LINE Free Plan: 200 ข้อความ/เดือน — โควต้าจะรีเซ็ตต้นเดือนอัตโนมัติ
-                        </div>
-                        <div style="padding:0.5rem 1rem;">
-                            <label>จำกัดโควต้าต่อเดือน</label>
-                            <input type="number" id="line_push_quota_limit" value="200" min="1" max="10000" style="width:100px; margin-left:0.5rem;">
-                        </div>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-primary" onclick="saveLineEmailSettings()">💾 บันทึกการตั้งค่า LINE & อีเมล</button>
-                        <button class="btn" onclick="testLinePush()">🧪 ทดสอบส่ง LINE (ห้องที่ระบุ)</button>
-                    </div>
-                    </div>
-
-                    <button class="accordion-toggle" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Resend.com) <span class="acc-arrow">▼</span></button>
-                    <div class="accordion-body" style="padding:0.6rem 0.1rem;">
                     <div class="section-desc" style="margin-bottom:0.75rem;">ใช้ส่งอีเมลแจ้งเตือนและใบเสร็จ — สมัครฟรีที่ <a href="https://resend.com" target="_blank" style="color:var(--primary)">resend.com</a> (3,000 อีเมล/เดือน ฟรี)</div>
                     <div class="form-grid">
                         <div class="form-group">
@@ -1327,20 +1284,8 @@
                         </div>
                     </div>
                     <div class="btn-group">
+                        <button class="btn btn-primary" onclick="saveEmailSettings()">💾 บันทึกการตั้งค่าอีเมล</button>
                         <button class="btn" onclick="testEmailSend()">🧪 ทดสอบส่งอีเมล</button>
-                    </div>
-                    </div>
-
-                    <button class="accordion-toggle" onclick="toggleAccordion(this)">🔗 LINE Webhook URL <span class="acc-arrow">▼</span></button>
-                    <div class="accordion-body" style="padding:0.6rem 0.1rem;">
-                    <div class="section-desc" style="margin-bottom:0.75rem;">นำ URL ด้านล่างไปตั้งค่าใน LINE Developers Console → Messaging API → Webhook URL</div>
-                    <div class="settings-card" style="background:var(--hover);">
-                        <div style="padding:0.75rem 1rem; font-family:monospace; font-size:0.92rem; word-break:break-all;" id="webhookUrlDisplay">
-                            กำลังโหลด URL...
-                        </div>
-                    </div>
-                    <div class="btn-group" style="margin-top:0.5rem;">
-                        <button class="btn btn-secondary" onclick="copyWebhookUrl()">📋 คัดลอก URL</button>
                     </div>
                     </div>
                 </div>
@@ -1859,46 +1804,34 @@
                 else if (tabName === 'registration') loadPendingRegistrations();
                 else if (tabName === 'housing') loadHousingTabData();
                 else if (tabName === 'resident') loadResidentTabData();
-                else if (tabName === 'linemail') loadLineEmailSettings();
+                else if (tabName === 'linemail') loadEmailSettings();
             }
         }
 
-        // ========== LINE & Email Settings ==========
-        async function loadLineEmailSettings() {
+        // ========== Email Settings ==========
+        async function loadEmailSettings() {
             try {
-                const r = await callBackend('getLineSettings');
+                const r = await callBackend('getEmailSettings');
                 if (r && r.success && r.settings) {
                     const s = r.settings;
-                    const fields = ['line_channel_access_token','line_channel_secret','line_liff_id','line_oa_name','resend_api_key','email_from','email_from_name','line_push_quota_limit'];
-                    fields.forEach(k => { const el = document.getElementById(k); if (el && s[k]) el.value = s[k]; });
-                    const used = s.line_push_quota_used || 0;
-                    const limit = s.line_push_quota_limit || 200;
-                    document.getElementById('linePushQuotaDisplay').textContent = used + ' / ' + limit + ' ข้อความเดือนนี้';
+                    ['resend_api_key','email_from','email_from_name'].forEach(k => {
+                        const el = document.getElementById(k);
+                        if (el && s[k]) el.value = s[k];
+                    });
                 }
             } catch(e) { console.error(e); }
-            // แสดง Webhook URL
-            const cfg = window._PPK_CONFIG || {};
-            const webhookUrl = (cfg.url || '').replace(/\/$/, '') + '/functions/v1/line-webhook';
-            document.getElementById('webhookUrlDisplay').textContent = webhookUrl || 'ยังไม่ได้ตั้งค่า Supabase URL (ตรวจสอบ supabase/config.js)';
         }
 
-        async function saveLineEmailSettings() {
-            const fields = ['line_channel_access_token','line_channel_secret','line_liff_id','line_oa_name','resend_api_key','email_from','email_from_name','line_push_quota_limit'];
+        async function saveEmailSettings() {
             const settings = {};
-            fields.forEach(k => { const el = document.getElementById(k); if (el) settings[k] = el.value.trim(); });
+            ['resend_api_key','email_from','email_from_name'].forEach(k => {
+                const el = document.getElementById(k);
+                if (el) settings[k] = el.value.trim();
+            });
             try {
-                const r = await callBackend('saveLineSettings', settings);
-                if (r && r.success) { ppkAlert('✅ บันทึกการตั้งค่า LINE & อีเมล สำเร็จ'); }
+                const r = await callBackend('saveEmailSettings', settings);
+                if (r && r.success) { ppkAlert('✅ บันทึกการตั้งค่าอีเมล สำเร็จ'); }
                 else { ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (r?.error || 'กรุณาลองใหม่')); }
-            } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message); }
-        }
-
-        async function testLinePush() {
-            const house = prompt('ระบุเลขที่บ้านพักที่ต้องการทดสอบ (ต้องเชื่อม LINE แล้ว):');
-            if (!house) return;
-            try {
-                const r = await callBackend('linePush', { houseNumber: house.trim(), message: '🧪 ทดสอบการส่ง LINE Push Message จากระบบบ้านพักครู\nหากได้รับข้อความนี้ แสดงว่าระบบพร้อมใช้งาน ✅' });
-                ppkAlert(r && r.success ? '✅ ส่งทดสอบสำเร็จ! ตรวจสอบ LINE ของห้อง ' + house : '❌ ไม่สำเร็จ: ' + (r?.error || 'ตรวจสอบ Token ใน LINE Developers'));
             } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message); }
         }
 
@@ -1915,11 +1848,6 @@
             } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message); }
         }
 
-        function copyWebhookUrl() {
-            const url = document.getElementById('webhookUrlDisplay').textContent;
-            if (navigator.clipboard) { navigator.clipboard.writeText(url).then(() => ppkAlert('📋 คัดลอก URL แล้ว')); }
-            else { prompt('คัดลอก URL:', url); }
-        }
         function openModal(modalName) {
             document.getElementById('modal-' + modalName).classList.add('active');
             // editResident ควบคุม dropdown ตัวเอง (async await) ไม่ต้องเรียกซ้ำที่นี่
