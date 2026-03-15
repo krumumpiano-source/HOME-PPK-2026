@@ -138,10 +138,6 @@
                     <input type="email" name="email" required>
                 </div>
                 <div class="form-group">
-                    <label>ID Line</label>
-                    <input type="text" name="line_id">
-                </div>
-                <div class="form-group">
                     <label>ตำแหน่งทางวิชาการ</label>
                     <select name="position">
                         <option value="">เลือกตำแหน่ง</option>
@@ -396,6 +392,22 @@
         submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
 
         try {
+            // ตรวจสอบความครบถ้วนของข้อมูล
+            if (!document.querySelector('input[name="stay_type"]:checked')) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกลักษณะการเข้าพัก', 'error');
+                return;
+            }
+            if (!document.querySelector('input[name="reason"]:checked')) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกเหตุผลในการขอเข้าพักอย่างน้อย 1 รายการ', 'error');
+                return;
+            }
+            if (!document.querySelector('input[name="documents"]:checked')) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกเอกสารประกอบคำร้องที่จะแนบมาอย่างน้อย 1 รายการ', 'error');
+                return;
+            }
             const reasons = [];
             document.querySelectorAll('input[name="reason"]:checked').forEach(cb => reasons.push(cb.value));
             const documents = [];
@@ -421,7 +433,6 @@
                 address: document.querySelector('textarea[name="address"]').value,
                 phone: document.querySelector('input[name="phone"]').value,
                 email: document.querySelector('input[name="email"]').value,
-                line_id: document.querySelector('input[name="line_id"]').value,
                 position: document.querySelector('select[name="position"]').value,
                 subject_group: document.querySelector('select[name="subject_group"]').value,
                 stay_type: stayType,
@@ -526,7 +537,6 @@
         const address = document.querySelector('textarea[name="address"]').value;
         const phone = document.querySelector('input[name="phone"]').value;
         const email = document.querySelector('input[name="email"]').value;
-        const lineId = document.querySelector('input[name="line_id"]').value;
         const subjectGroup = document.querySelector('select[name="subject_group"]').value;
         const stayTypeChecked = document.querySelector('input[name="stay_type"]:checked');
         const stayType = stayTypeChecked?.value === 'alone' ? 'พักอาศัยคนเดียว' : 'พักอาศัยพร้อมครอบครัว';
@@ -557,19 +567,20 @@
         printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</title>');
         printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
         printWindow.document.write('<style>');
-        printWindow.document.write('@page{size:A4;margin:2.5cm 2cm 2cm 3cm;}@media print{body{margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}*{box-sizing:border-box;}body{font-family:"Sarabun","TH Sarabun New",sans-serif;font-size:16pt;line-height:1.4;margin:0;padding:2.5cm 2cm 2cm 3cm;width:21cm;min-height:29.7cm;}.header{text-align:center;margin-bottom:0.3cm;page-break-inside:avoid;}.header-title{font-size:18pt;font-weight:bold;}.header-subtitle{font-size:16pt;}.date-line{text-align:right;margin-bottom:0.2cm;}.salutation{margin-bottom:0.2cm;}.intro{text-indent:2.5cm;margin-bottom:0.2cm;text-align:justify;}.section{margin-bottom:0.2cm;page-break-inside:avoid;}.section-title{font-weight:bold;text-decoration:underline;margin-bottom:0.1cm;}.indent{padding-left:1cm;}table{border-collapse:collapse;width:100%;margin:0.1cm 0;font-size:14pt;page-break-inside:avoid;}th,td{border:1px solid #000;padding:3px;}th{background-color:#f5f5f5;font-weight:bold;}.checkbox{display:inline-block;width:10pt;height:10pt;border:1px solid #000;margin-right:0.1cm;vertical-align:middle;text-align:center;line-height:10pt;font-size:8pt;}.signature-section{margin-top:0.3cm;display:flex;justify-content:space-between;page-break-inside:avoid;}.signature-box{width:45%;text-align:center;}.signature-line{margin-top:0.5cm;}.small-text{font-size:14pt;}.approval-boxes{margin-top:0.5cm;}.approval-box{border:1px solid #000;margin-bottom:0.4cm;padding:0.3cm;page-break-inside:avoid;}.approval-box .approval-header{font-weight:bold;background-color:#f5f5f5;padding:0.2cm;margin:-0.3cm -0.3cm 0.3cm -0.3cm;border-bottom:1px solid #000;}.approval-box .approval-content{font-size:14pt;}.dotted-line-long{display:inline-block;width:80%;border-bottom:1px dotted #000;}.dotted-line-full{display:block;width:100%;border-bottom:1px dotted #000;height:1.5em;}.dotted-line-short{display:inline-block;width:4cm;border-bottom:1px dotted #000;}.dotted-line-date{display:inline-block;width:3cm;border-bottom:1px dotted #000;}.dotted-line-sig{display:inline-block;width:3.5cm;border-bottom:1px dotted #000;}');
+        printWindow.document.write('@page{size:A4;margin:2.5cm 2cm 2cm 3cm;}@media print{body{margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}*{box-sizing:border-box;}body{font-family:"Sarabun","TH Sarabun New",sans-serif;font-size:16pt;line-height:1.4;margin:0;padding:2.5cm 2cm 2cm 3cm;width:21cm;min-height:29.7cm;}.header{text-align:center;margin-bottom:0.3cm;page-break-inside:avoid;}.header-title{font-size:18pt;font-weight:bold;}.header-subtitle{font-size:16pt;}.date-line{text-align:right;margin-bottom:0.2cm;}.salutation{margin-bottom:0.2cm;}.intro{text-indent:2.5cm;margin-bottom:0.2cm;text-align:justify;}.section{margin-bottom:0.2cm;page-break-inside:avoid;}.section-title{font-weight:bold;text-decoration:underline;margin-bottom:0.1cm;}.indent{padding-left:1cm;}table{border-collapse:collapse;width:100%;margin:0.1cm 0;font-size:14pt;page-break-inside:avoid;}th,td{border:1px solid #000;padding:3px;}th{background-color:#f5f5f5;font-weight:bold;}.checkbox{display:inline-block;width:10pt;height:10pt;border:1px solid #000;margin-right:0.1cm;vertical-align:middle;text-align:center;line-height:10pt;font-size:8pt;}.signature-section{margin-top:0.3cm;display:flex;justify-content:space-between;page-break-inside:avoid;}.signature-box{width:45%;text-align:center;}.signature-line{margin-top:0.5cm;}.small-text{font-size:14pt;}.approval-boxes{margin-top:0.5cm;}.approval-box{border:1px solid #000;margin-bottom:0.4cm;padding:0.3cm;page-break-inside:avoid;}.approval-box .approval-header{font-weight:bold;background-color:#f5f5f5;padding:0.2cm;margin:-0.3cm -0.3cm 0.3cm -0.3cm;border-bottom:1px solid #000;}.approval-box .approval-content{font-size:14pt;}.dotted-line-long{display:inline-block;width:80%;border-bottom:1px dotted #000;}.dotted-line-full{display:block;width:100%;border-bottom:1px dotted #000;height:1.5em;}.dotted-line-short{display:inline-block;width:4cm;border-bottom:1px dotted #000;}.dotted-line-date{display:inline-block;width:3cm;border-bottom:1px dotted #000;}.dotted-line-sig{display:inline-block;width:3.5cm;border-bottom:1px dotted #000;}.memo-title{font-size:20pt;font-weight:bold;text-align:center;margin-bottom:0.3cm;letter-spacing:0.2cm;}.memo-table{width:100%;border:none;border-collapse:collapse;font-size:16pt;margin-bottom:0.1cm;}.memo-table td{border:none!important;padding:0.1cm 0;}.memo-divider{border:none;border-top:1.5px solid #000;margin:0.2cm 0 0.3cm 0;}');
         printWindow.document.write('</style>');
         printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script></head><body>');
 
-        printWindow.document.write('<div class="header"><div class="header-title">แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</div><div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div></div>');
-        printWindow.document.write('<div class="date-line">วันที่ ' + dateStr + '</div>');
-        printWindow.document.write('<div class="salutation"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
+        printWindow.document.write('<div class="memo-title">บันทึกข้อความ</div>');
+        printWindow.document.write('<table class="memo-table"><tr><td colspan="2"><b>ส่วนราชการ</b>&emsp;งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&emsp;โรงเรียนพะเยาพิทยาคม</td></tr><tr><td style="width:60%;"><b>ที่</b>&emsp;พย./พก.&nbsp;<span class="dotted-line-short"></span>/<span class="dotted-line-short"></span></td><td><b>วันที่</b>&emsp;' + dateStr + '</td></tr><tr><td colspan="2"><b>เรื่อง</b>&emsp;ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม</td></tr></table>');
+        printWindow.document.write('<hr class="memo-divider">');
+        printWindow.document.write('<div class="salutation"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
         printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' มีความประสงค์ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยมีรายละเอียดดังต่อไปนี้</p>');
 
         printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 1: ข้อมูลส่วนตัว</div><div class="indent small-text">');
         printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
         printWindow.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + address + '</div>');
-        printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + ' &nbsp;&nbsp; อีเมล: ' + email + ' &nbsp;&nbsp; ID Line: ' + lineId + '</div>');
+        printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + ' &nbsp;&nbsp; อีเมล: ' + email + '</div>');
         printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div></div></div>');
 
         printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิกที่จะพักอาศัย</div><div class="indent small-text">');

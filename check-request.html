@@ -1440,10 +1440,6 @@
                             <div class="detail-label">อีเมล</div>
                             <div class="detail-value">${item.email || '-'}</div>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">LINE ID</div>
-                            <div class="detail-value">${item.lineId || '-'}</div>
-                        </div>
                         <div class="detail-item full-width">
                             <div class="detail-label">ที่อยู่ตามบัตรประชาชน</div>
                             <div class="detail-value">${item.address || '-'}</div>
@@ -1573,7 +1569,7 @@
                     </div>` : ''}
                 `;
             } else if (type === 'transfer') {
-                var tTypeText = { 'swap': 'สลับบ้าน', 'move': 'ย้ายบ้าน' };
+                var tTypeText = { 'flat_to_house': 'ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว', 'house_to_flat': 'ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต', 'change_unit': 'เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน' };
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">

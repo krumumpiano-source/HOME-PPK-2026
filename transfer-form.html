@@ -322,21 +322,23 @@
         printWindow.document.write('.dotted-line-date { display: inline-block; width: 3cm; border-bottom: 1px dotted #000; }');
         printWindow.document.write('.dotted-line-sig { display: inline-block; width: 3.5cm; border-bottom: 1px dotted #000; }');
         printWindow.document.write('.pdf-page { max-width: 100%; margin-bottom: 0.5cm; display: block; }');
+        printWindow.document.write('.memo-title { font-size: 20pt; font-weight: bold; text-align: center; margin-bottom: 0.3cm; letter-spacing: 0.2cm; }');
+        printWindow.document.write('.memo-table { width: 100%; border: none; border-collapse: collapse; font-size: 16pt; margin-bottom: 0.1cm; }');
+        printWindow.document.write('.memo-table td { border: none !important; padding: 0.1cm 0; }');
+        printWindow.document.write('.memo-divider { border: none; border-top: 1.5px solid #000; margin: 0.2cm 0 0.3cm 0; }');
         printWindow.document.write('</style>');
         printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
         printWindow.document.write('</head><body>');
         
-        // หัวเอกสาร
-        printWindow.document.write('<div class="header">');
-        printWindow.document.write('<div class="header-title">แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต</div>');
-        printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
-        printWindow.document.write('</div>');
-        
-        // วันที่
-        printWindow.document.write('<div class="date-line">วันที่ ' + dateStr + '</div>');
-        
-        // คำขึ้นต้น
-        printWindow.document.write('<div class="salutation"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
+        // หัวเอกสาร บันทึกข้อความ
+        printWindow.document.write('<div class="memo-title">บันทึกข้อความ</div>');
+        printWindow.document.write('<table class="memo-table">');
+        printWindow.document.write('<tr><td colspan="2"><b>ส่วนราชการ</b>&emsp;งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&emsp;โรงเรียนพะเยาพิทยาคม</td></tr>');
+        printWindow.document.write('<tr><td style="width:60%;"><b>ที่</b>&emsp;พย./พก.&nbsp;<span class="dotted-line-short"></span>/<span class="dotted-line-short"></span></td><td><b>วันที่</b>&emsp;' + dateStr + '</td></tr>');
+        printWindow.document.write('<tr><td colspan="2"><b>เรื่อง</b>&emsp;ขอย้ายบ้านพักหรือเปลี่ยนยูนิต</td></tr>');
+        printWindow.document.write('</table>');
+        printWindow.document.write('<hr class="memo-divider">');
+        printWindow.document.write('<div class="salutation"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
         
         // คำนำ
         printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' ผู้พักอาศัย ' + currentHouse + ' มีความประสงค์ขอย้ายบ้านพัก/เปลี่ยนยูนิต โดยมีรายละเอียดดังต่อไปนี้</p>');
@@ -555,6 +557,23 @@
         const submitBtn = document.querySelector('.submit-btn');
         submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
         try {
+            // ตรวจสอบความครบถ้วนของข้อมูล
+            if (!document.querySelector('input[name="transfer_type"]:checked')) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกประเภทการขอย้าย', 'error');
+                return;
+            }
+            if (!document.querySelector('input[name="reason"]:checked')) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกเหตุผลในการขอย้ายอย่างน้อย 1 รายการ', 'error');
+                return;
+            }
+            const _otherCbTf = document.querySelector('input[name="reason"][value="other"]');
+            if (_otherCbTf && _otherCbTf.checked && !document.getElementById('other_reason').value.trim()) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาระบุเหตุผลอื่น ๆ', 'error');
+                return;
+            }
             const reasons = [];
             document.querySelectorAll('input[name="reason"]:checked').forEach(cb => reasons.push(cb.value));
             const data = {
