@@ -692,6 +692,7 @@
                 <!-- Content will be dynamically inserted -->
             </div>
             <div class="modal-footer" id="modalFooter">
+                <button class="btn btn-danger" id="deleteRequestBtn" onclick="confirmDeleteRequest()" style="background:#ef4444;color:#fff;border-color:#ef4444;display:none;">🗑️ ลบคำร้องนี้</button>
                 <button class="btn" onclick="closeModal('detailModal')">ปิด</button>
             </div>
         </div>
@@ -1719,7 +1720,32 @@
             }
 
             document.getElementById('modalBody').innerHTML = content;
+            // เก็บข้อมูล item ปัจจุบันสำหรับปุ่มลบ
+            window._currentDetailId = id;
+            window._currentDetailType = type;
+            document.getElementById('deleteRequestBtn').style.display = 'inline-flex';
             openModal('detailModal');
+        }
+
+        async function confirmDeleteRequest() {
+            const id = window._currentDetailId;
+            const type = window._currentDetailType;
+            if (!id) return;
+            if (!confirm('⚠️ ยืนยันการลบคำร้อง ' + id + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้')) return;
+            try {
+                const result = await callBackend('deleteRequest', { id: id });
+                if (result && result.success) {
+                    closeModal('detailModal');
+                    ppkAlert('ลบคำร้อง ' + id + ' เรียบร้อยแล้ว', 'success');
+                    // รีโหลดข้อมูลใหม่
+                    await loadAllRequests();
+                    renderAll();
+                } else {
+                    ppkAlert('ลบคำร้องไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'), 'error');
+                }
+            } catch(e) {
+                ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error');
+            }
         }
 
         function getDetailTitle(type) {

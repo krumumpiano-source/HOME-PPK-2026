@@ -1533,6 +1533,20 @@ async function _routeAction(action, data) {
             }
             return { success: true };
         }
+        case 'deleteRequest': {
+            var delReqId = data.id || data.requestId;
+            if (!delReqId) return { success: false, error: 'ไม่ระบุ ID คำร้อง' };
+            // ลบ queue ที่เชื่อมกับคำร้องนี้ก่อน
+            try {
+                var delQRows = await sbGet('queue', { request_id: 'eq.' + delReqId });
+                for (var dqi = 0; delQRows && dqi < delQRows.length; dqi++) {
+                    await sbDelete('queue', { id: 'eq.' + delQRows[dqi].id });
+                }
+            } catch(e) { console.warn('Delete queue rows failed:', e); }
+            // ลบคำร้อง
+            await sbDelete('requests', { id: 'eq.' + delReqId });
+            return { success: true };
+        }
 
         /* ── Approve Residence: เลือกบ้าน + สร้าง resident อัตโนมัติ ── */
         case 'approveResidence': {
