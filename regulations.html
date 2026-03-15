@@ -408,6 +408,13 @@
                     }
                 } catch (e) {
                     console.error('ดึง PDF จาก backend ไม่สำเร็จ:', e);
+                    // แสดงข้อความแยกแยะ network error กับ ไม่มีไฟล์
+                    var h3el = noPdfMessage.querySelector('h3');
+                    var p1el = noPdfMessage.querySelector('p');
+                    if (h3el) h3el.textContent = 'ไม่สามารถโหลดระเบียบได้';
+                    if (p1el) p1el.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่';
+                    noPdfMessage.style.display = 'flex';
+                    return;
                 }
             
             // fallback: แสดงข้อความไม่มี PDF
@@ -433,6 +440,10 @@
             } catch (error) {
                 console.error('Error loading PDF from URL:', error);
                 loadingIndicator.style.display = 'none';
+                var h3el = noPdfMessage.querySelector('h3');
+                var p1el = noPdfMessage.querySelector('p');
+                if (h3el) h3el.textContent = 'โหลดไฟล์ PDF ไม่สำเร็จ';
+                if (p1el) p1el.textContent = 'ไม่สามารถแสดงไฟล์ระเบียบได้ อาจเกิดจากการเชื่อมต่อขัดข้องหรือไฟล์เสียหาย กรุณาลองใหม่อีกครั้ง';
                 noPdfMessage.style.display = 'flex';
             }
         }

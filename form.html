@@ -246,8 +246,11 @@
                 }
                 allRequests.sort(function(a, b) { return (b.submitted_at || '').localeCompare(a.submitted_at || ''); });
                 var typeLabels = { residence: 'ขอเข้าพักอาศัย', repair: 'แจ้งซ่อมแซม', transfer: 'ขอย้ายบ้านพัก', return: 'ขอคืนบ้านพัก' };
-                var html = '<div style="display:flex;flex-direction:column;gap:0.6rem;">';
-                allRequests.forEach(function(req) {
+                var DISPLAY_LIMIT = 10;
+                var showAll = allRequests.length <= DISPLAY_LIMIT;
+                var displayRequests = showAll ? allRequests : allRequests.slice(0, DISPLAY_LIMIT);
+                var html = '<div style="display:flex;flex-direction:column;gap:0.6rem;" id="req-list-inner">';
+                displayRequests.forEach(function(req) {
                     var s = statusMap[req.status] || { label: req.status || '-', color: 'var(--c-text-3)', icon: '📄' };
                     var dateStr = req.submitted_at ? req.submitted_at.replace('T', ' ').substring(0, 16) : '-';
                     html += '<div style="border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.85rem 1rem;background:var(--c-surface-2);">';
@@ -271,7 +274,42 @@
                     html += '<div style="color:var(--c-text-3);font-size:0.78rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr + '</div></div>';
                 });
                 html += '</div>';
+                if (!showAll) {
+                    window._myRequestsAll = allRequests;
+                    window._myRequestsMeta = { content: content, typeLabels: typeLabels, statusMap: statusMap };
+                    html += '<button id="req-show-all-btn" style="margin-top:0.5rem;width:100%;background:none;border:1px dashed var(--c-border);border-radius:var(--radius-md);padding:0.6rem;color:var(--c-text-2);font-size:0.88rem;cursor:pointer;font-family:inherit;">แสดงทั้งหมด (' + allRequests.length + ' รายการ)</button>';
+                }
                 content.innerHTML = html;
+                if (!showAll) {
+                    var btn = document.getElementById('req-show-all-btn');
+                    if (btn) btn.addEventListener('click', function() {
+                        var m = window._myRequestsMeta;
+                        if (!m) return;
+                        var full = '<div style="display:flex;flex-direction:column;gap:0.6rem;">';
+                        (window._myRequestsAll || []).forEach(function(req) {
+                            var s = m.statusMap[req.status] || { label: req.status || '-', color: 'var(--c-text-3)', icon: '📄' };
+                            var dateStr2 = req.submitted_at ? req.submitted_at.replace('T', ' ').substring(0, 16) : '-';
+                            full += '<div style="border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.85rem 1rem;background:var(--c-surface-2);">';
+                            full += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">';
+                            full += '<div><span style="font-weight:600;">' + (m.typeLabels[req._type] || req._type) + '</span>';
+                            full += '<span style="color:var(--c-text-3);font-size:0.82rem;margin-left:0.5rem;">#' + (req.id || '-') + '</span></div>';
+                            full += '<div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">';
+                            if (req._type === 'residence') {
+                                full += '<button onclick="viewAndPrintRequest(\'' + (req.id || '') + '\',\'' + req._type + '\')" style="background:#10b981;color:white;border:none;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;">🖨️ พิมพ์</button>';
+                            }
+                            var cancellable = ['pending','reviewing','waiting'];
+                            if (cancellable.indexOf(req.status) !== -1) {
+                                full += '<button onclick="cancelMyRequest(\'' + (req.id || '') + '\',\'' + (m.typeLabels[req._type] || req._type) + '\')" style="background:none;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;">✕ ยกเลิก</button>';
+                            }
+                            full += '<span class="ppk-badge" style="background:color-mix(in srgb, ' + s.color + ' 12%, transparent);color:' + s.color + ';border:1px solid color-mix(in srgb, ' + s.color + ' 25%, transparent);">' + s.icon + ' ' + s.label + '</span></div></div>';
+                            if (req.queue_position) full += '<div style="color:#8b5cf6;font-size:0.85rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
+                            if (req.review_note) full += '<div style="color:var(--c-text-2);font-size:0.85rem;margin-top:0.4rem;border-top:1px solid var(--c-border);padding-top:0.4rem;">💬 ' + req.review_note + '</div>';
+                            full += '<div style="color:var(--c-text-3);font-size:0.78rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr2 + '</div></div>';
+                        });
+                        full += '</div>';
+                        m.content.innerHTML = full;
+                    });
+                }
             } catch(e) {
                 content.innerHTML = '<div class="ppk-alert ppk-alert-danger">ไม่สามารถโหลดข้อมูลคำร้องได้ในขณะนี้</div>';
             }
