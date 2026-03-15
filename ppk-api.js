@@ -760,10 +760,17 @@ async function _routeAction(action, data) {
                     if (parseInt(vr.curr_meter) < parseInt(vr.prev_meter)) return { success: false, error: 'เลขมิเตอร์ปัจจุบันน้อยกว่าก่อนหน้า (' + (vr.house_number || '') + ')' };
                 }
                 var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+                // Pre-fetch house_id map (house_id is required FK in water_bills)
+                var _wHouseMap = {};
+                try {
+                    var _wHouseRows = await sbGet('housing', { select: 'id,house_number' });
+                    (_wHouseRows || []).forEach(function(h) { _wHouseMap[h.house_number] = h.id; });
+                } catch(e) {}
                 var inserted = [];
                 for (var i = 0; i < data.records.length; i++) {
                     var rec = data.records[i];
                     var row = await sbPost('water_bills', {
+                        house_id: _wHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
                         year: data.year, month: data.month,
                         prev_meter: rec.prev_meter, curr_meter: rec.curr_meter,
@@ -803,10 +810,17 @@ async function _routeAction(action, data) {
                     if (parseFloat(data.records[ei].amount) < 0) return { success: false, error: 'ยอดเงินติดลบ (' + (data.records[ei].house_number || '') + ')' };
                 }
                 var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+                // Pre-fetch house_id map (house_id is required FK in electric_bills)
+                var _eHouseMap = {};
+                try {
+                    var _eHouseRows = await sbGet('housing', { select: 'id,house_number' });
+                    (_eHouseRows || []).forEach(function(h) { _eHouseMap[h.house_number] = h.id; });
+                } catch(e) {}
                 var inserted = [];
                 for (var i = 0; i < data.records.length; i++) {
                     var rec = data.records[i];
                     var row = await sbPost('electric_bills', {
+                        house_id: _eHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
                         year: data.year, month: data.month,
                         bill_amount: rec.amount, amount: rec.amount,
@@ -2075,11 +2089,16 @@ async function _routeAction(action, data) {
                 var shfResRows = await sbGet('residents', { line_user_id: 'eq.' + data.lineUserId, is_active: 'eq.true', limit: '1' });
                 shfResident = shfResRows && shfResRows[0] ? shfResRows[0] : null;
             }
+            // สร้าง request ID (requests.id เป็น primary key ไม่มี DEFAULT)
+            var shfPrefixMap = { repair: 'RPR', transfer: 'TRF', 'return': 'RTN', residence: 'REQ' };
+            var shfReqPrefix = shfPrefixMap[data.formType] || 'REQ';
+            var shfUid = 'xxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16).toUpperCase(); });
             var shfPayload = {
+                id: shfReqPrefix + shfUid,
                 house_number: data.houseNumber || '',
-                user_id: shfResident ? shfResident.user_id : null,  // แก้: line_user_id → user_id
-                type: data.formType || 'general',                   // แก้: form_type → type
-                details: { ...data, lineUserId: data.lineUserId },  // แก้: detail → details, เก็บ LINE ID ใน jsonb
+                user_id: shfResident ? shfResident.user_id : null,  // line_user_id → user_id
+                type: data.formType || 'general',                   // form_type → type
+                details: { ...data, lineUserId: data.lineUserId },  // detail → details, เก็บ LINE ID ใน jsonb
                 status: 'pending',
                 submitted_at: new Date().toISOString()
             };
@@ -2281,9 +2300,45 @@ async function _routeAction(action, data) {
             return { success: true, message: 'บันทึกสิทธิ์เรียบร้อย' };
         }
 
+        /* ── getExemptions — ดึงการยกเว้นค่าส่วนกลางจาก DB ─── */
+        case 'getExemptions': {
+            var exRows = await sbGet('exemptions', { type: 'eq.common_fee' });
+            var exMap = {};
+            (exRows || []).forEach(function(e) { exMap[e.house_id] = { exempt: true, note: e.reason || '' }; });
+            return { success: true, data: exMap };
+        }
+
+        /* ── saveExemptions — บันทึกการยกเว้นค่าส่วนกลางลง DB ─── */
+        case 'saveExemptions': {
+            var exData = data.exemptions || {};
+            var exHouseIds = Object.keys(exData);
+            var exSess = await _getSessionRole();
+            var exBy = exSess ? exSess.userId : null;
+            var exToday = new Date().toISOString().split('T')[0];
+            for (var exi = 0; exi < exHouseIds.length; exi++) {
+                var exHid = exHouseIds[exi];
+                var exItem = exData[exHid];
+                try { await sbDelete('exemptions', { house_id: 'eq.' + exHid, type: 'eq.common_fee' }); } catch(e) {}
+                if (exItem.exempt) {
+                    try {
+                        await sbPost('exemptions', {
+                            house_id:     exHid,
+                            house_number: exItem.house_number || '',
+                            type:         'common_fee',
+                            reason:       exItem.note || '',
+                            start_date:   exToday,
+                            created_by:   exBy
+                        });
+                    } catch(e) { console.warn('insert exemption:', e); }
+                }
+            }
+            return { success: true };
+        }
+
         /* ── getRegulationsPdf — ดึง URL ไฟล์ระเบียบ ─── */
         case 'getRegulationsPdf': {
-            var regRows = await sbGet('system_settings', { key: 'eq.regulations_pdf', select: 'value', limit: '1' });
+            // ใช้ settings table (ไม่มี system_settings ใน schema)
+            var regRows = await sbGet('settings', { key: 'eq.regulations_pdf', select: 'value', limit: '1' });
             if (regRows && regRows[0] && regRows[0].value) {
                 return { success: true, downloadUrl: regRows[0].value };
             }

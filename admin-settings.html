@@ -1850,7 +1850,7 @@
             // Lazy-load tab content on first open
             if (!_tabRendered[tabName]) {
                 _tabRendered[tabName] = true;
-                if (tabName === 'water') { loadWaterSettings(); renderExemptionTable(); }
+                if (tabName === 'water') { loadWaterSettings(); loadAndRenderExemptions(); }
                 else if (tabName === 'electric') loadElectricSettings();
                 else if (tabName === 'common') loadCommonFeeSettings();
                 else if (tabName === 'system') loadSystemSettings();
@@ -3929,13 +3929,13 @@
         function loadAllSettings() {
             // default view: water (housing tab removed)
             loadWaterSettings();
-            renderExemptionTable();
+            loadAndRenderExemptions();
             _tabRendered['water'] = true;
         }
 
         // เรียกหลัง batchGet กลับมา — re-render เฉพาะ tab ที่เคย render แล้ว
         function reloadAllSettingsFull() {
-            if (_tabRendered['water']) { loadWaterSettings(); renderExemptionTable(); }
+            if (_tabRendered['water']) { loadWaterSettings(); loadAndRenderExemptions(); }
             if (_tabRendered['electric']) loadElectricSettings();
             if (_tabRendered['common']) loadCommonFeeSettings();
             if (_tabRendered['system']) loadSystemSettings();
@@ -4431,6 +4431,10 @@
 
         function saveExemptions() {
             const exemptions = {};
+            const exemptionsForDB = {};
+            var housing = getHousingData();
+            var houseMap = {};
+            housing.forEach(function(h) { houseMap[h.id] = h.number || h.house_number || ''; });
             
             document.querySelectorAll('.exemption-checkbox').forEach(checkbox => {
                 const id = checkbox.dataset.id;
@@ -4439,10 +4443,29 @@
                     exempt: checkbox.checked,
                     note: noteInput ? noteInput.value : ''
                 };
+                exemptionsForDB[id] = {
+                    exempt: checkbox.checked,
+                    note: noteInput ? noteInput.value : '',
+                    house_number: houseMap[id] || ''
+                };
             });
             
             saveExemptionsData(exemptions);
+            // บันทึกลง DB ด้วย
+            callBackend('saveExemptions', { exemptions: exemptionsForDB })
+                .catch(function(e) { console.warn('saveExemptions DB:', e); });
             ppkAlert('บันทึกการยกเว้นค่าส่วนกลางเรียบร้อยแล้ว');
+        }
+
+        // โหลด exemptions จาก DB แล้ว render ตาราง
+        async function loadAndRenderExemptions() {
+            try {
+                var res = await callBackendGet('getExemptions', {});
+                if (res && res.success && res.data) {
+                    saveExemptionsData(res.data);
+                }
+            } catch(e) { /* ใช้ localStorage fallback */ }
+            renderExemptionTable();
         }
 
         // ========== Permission Functions ==========
