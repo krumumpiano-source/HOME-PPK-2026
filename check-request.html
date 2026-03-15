@@ -1241,7 +1241,7 @@
                     <td>${getStatusBadge(item.status)}</td>
                     <td>${expiryDisplay}</td>
                     <td>
-                        <div style="display:flex;gap:0.3rem;justify-content:center;flex-wrap:wrap;">
+                        <div style="display:flex;gap:0.3rem;justify-content:center;align-items:center;">
                             <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">📋</button>
                             <button class="btn btn-sm" onclick="openStatusModal('residence', '${item.id}')">📝</button>
                             ${item.status === 'pending' || item.status === 'reviewing' ? 
@@ -1731,12 +1731,20 @@
             openModal('detailModal');
         }
 
+        function _clearRequestsCache() {
+            for (var i = localStorage.length - 1; i >= 0; i--) {
+                var k = localStorage.key(i);
+                if (k && k.indexOf('apicache_getRequests') === 0) localStorage.removeItem(k);
+            }
+        }
+
         async function deleteRequestDirect(type, id) {
             if (!confirm('⚠️ ยืนยันการลบคำร้อง ' + id + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้')) return;
             try {
                 const result = await callBackend('deleteRequest', { id: id });
                 if (result && result.success) {
                     ppkAlert('ลบคำร้อง ' + id + ' เรียบร้อยแล้ว', 'success');
+                    _clearRequestsCache();
                     await loadAllRequests();
                     renderAll();
                 } else {
@@ -1758,6 +1766,7 @@
                     closeModal('detailModal');
                     ppkAlert('ลบคำร้อง ' + id + ' เรียบร้อยแล้ว', 'success');
                     // รีโหลดข้อมูลใหม่
+                    _clearRequestsCache();
                     await loadAllRequests();
                     renderAll();
                 } else {
