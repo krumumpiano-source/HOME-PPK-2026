@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Migration: แก้ house_id ให้ nullable ใน water_bills / electric_bills
 -- วันที่: 2026-03-15
 -- สาเหตุ: batch insert จาก record-water.html / record-electric.html
