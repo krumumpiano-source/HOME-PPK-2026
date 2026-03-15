@@ -793,8 +793,15 @@
                         <div class="section-desc" style="margin-top: 0.5rem; margin-bottom: 1rem;">
                             กำหนดบ้านพัก/แฟลตที่ได้รับการยกเว้นค่าส่วนกลาง เช่น กรณีไม่มีผู้พักอาศัย หรือตามเงื่อนไขพิเศษ
                         </div>
-                        <div class="search-box">
-                            <input type="text" id="searchExemption" placeholder="🔍 ค้นหาบ้านพัก/แฟลต..." oninput="filterExemptionTable()">
+                        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                            <div class="filter-pills">
+                                <button class="filter-pill active" id="exemptPillAll" onclick="setExemptionFilter('all')">ทั้งหมด<span class="pill-count" id="exemptCountAll">0</span></button>
+                                <button class="filter-pill" id="exemptPillYes" onclick="setExemptionFilter('yes')">ยกเว้น<span class="pill-count" id="exemptCountYes">0</span></button>
+                                <button class="filter-pill" id="exemptPillNo" onclick="setExemptionFilter('no')">ไม่ยกเว้น<span class="pill-count" id="exemptCountNo">0</span></button>
+                            </div>
+                            <input type="text" id="searchExemption" placeholder="🔍 ค้นหา..."
+                                style="flex:1; min-width:140px; max-width:240px; padding:0.4rem 0.7rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.88rem;"
+                                oninput="filterExemptionTable()">
                         </div>
                         <div class="table-container">
                             <table id="exemptionTable">
@@ -1146,8 +1153,16 @@
                     </div>
 
                     <div class="settings-card">
-                        <div class="settings-card-header">
+                        <div class="settings-card-header" style="flex-wrap:wrap; gap:0.4rem;">
                             <span class="settings-card-title">📋 รายการประกาศ</span>
+                            <div style="display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
+                                <div class="filter-pills" style="gap:0.3rem;">
+                                    <button class="filter-pill active" id="annPillAll" onclick="setAnnouncementFilter('all')">ทั้งหมด<span class="pill-count" id="annCountAll">0</span></button>
+                                    <button class="filter-pill" id="annPillActive" onclick="setAnnouncementFilter('active')">เปิดอยู่<span class="pill-count" id="annCountActive">0</span></button>
+                                    <button class="filter-pill" id="annPillExpired" onclick="setAnnouncementFilter('expired')">หมดอายุ<span class="pill-count" id="annCountExpired">0</span></button>
+                                </div>
+                                <button class="btn btn-danger" style="font-size:0.8rem; padding:0.25rem 0.65rem;" onclick="deleteExpiredAnnouncements()">🗑️ ลบที่หมดอายุ</button>
+                            </div>
                         </div>
                         <div id="announcementsList" style="margin-top: 0.5rem;">
                             <!-- Announcements will be rendered here -->
@@ -1225,16 +1240,17 @@
                     <div class="section-title">👥 จัดการผู้พักอาศัย</div>
                     <div class="section-desc">เพิ่ม แก้ไข ย้าย ผู้พักอาศัยและผู้ร่วมพักอาศัย กำหนดให้ลงบ้านหรือแฟลตที่ต้องการ</div>
 
-                    <div class="btn-group" style="margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
                         <button class="btn btn-primary" onclick="openModal('addResident')">➕ เพิ่มผู้พักอาศัย</button>
-                        <button class="btn" onclick="loadResidentTabData()">🔄 โหลดข้อมูลจากระบบ</button>
+                        <button class="btn" onclick="loadResidentTabData()">🔄 โหลดข้อมูล</button>
                     </div>
 
-                    <div id="residentTabSummary" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
+                    <div id="residentTabSummary" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;"></div>
 
-                    <div style="margin-bottom:1rem;">
-                        <input type="text" id="searchResident" placeholder="🔍 ค้นหาชื่อ บ้าน ตำแหน่ง..."
-                               style="width:100%; max-width:360px; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;"
+                    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                        <div class="filter-pills" id="residentFilterPills"></div>
+                        <input type="text" id="searchResident" placeholder="🔍 ค้นหา..."
+                               style="flex:1; min-width:160px; max-width:280px; padding:0.4rem 0.7rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.88rem;"
                                oninput="renderResidentTable()">
                     </div>
 
@@ -1245,8 +1261,12 @@
             <!-- Tab: LINE & Email -->
             <div class="tab-content" id="tab-linemail">
                 <div class="section">
-                    <div class="section-title">💬 ตั้งค่า LINE Official Account</div>
-                    <div class="section-desc">กรอกข้อมูล LINE OA เพื่อส่งการแจ้งเตือนผ่าน LINE Push Message ให้ผู้พักอาศัยที่เชื่อมบัญชีแล้ว</div>
+                    <div class="section-title">💬 LINE & อีเมล</div>
+                    <div class="section-desc">ตั้งค่าการแจ้งเตือนผ่าน LINE Official Account และระบบอีเมล</div>
+
+                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">💬 LINE Official Account <span class="acc-arrow">▼</span></button>
+                    <div class="accordion-body open" style="padding:0.6rem 0.1rem;">
+                    <div class="section-desc" style="margin-bottom:0.75rem;">กรอกข้อมูล LINE OA เพื่อส่งการแจ้งเตือนผ่าน LINE Push Message ให้ผู้พักอาศัยที่เชื่อมบัญชีแล้ว</div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>LINE Channel Access Token</label>
@@ -1285,11 +1305,11 @@
                         <button class="btn btn-primary" onclick="saveLineEmailSettings()">💾 บันทึกการตั้งค่า LINE & อีเมล</button>
                         <button class="btn" onclick="testLinePush()">🧪 ทดสอบส่ง LINE (ห้องที่ระบุ)</button>
                     </div>
-                </div>
+                    </div>
 
-                <div class="section">
-                    <div class="section-title">📧 ตั้งค่าอีเมล (Resend.com)</div>
-                    <div class="section-desc">ใช้ส่งอีเมลแจ้งเตือนและใบเสร็จ — สมัครฟรีที่ <a href="https://resend.com" target="_blank" style="color:var(--primary)">resend.com</a> (3,000 อีเมล/เดือน ฟรี)</div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Resend.com) <span class="acc-arrow">▼</span></button>
+                    <div class="accordion-body" style="padding:0.6rem 0.1rem;">
+                    <div class="section-desc" style="margin-bottom:0.75rem;">ใช้ส่งอีเมลแจ้งเตือนและใบเสร็จ — สมัครฟรีที่ <a href="https://resend.com" target="_blank" style="color:var(--primary)">resend.com</a> (3,000 อีเมล/เดือน ฟรี)</div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Resend API Key</label>
@@ -1309,11 +1329,11 @@
                     <div class="btn-group">
                         <button class="btn" onclick="testEmailSend()">🧪 ทดสอบส่งอีเมล</button>
                     </div>
-                </div>
+                    </div>
 
-                <div class="section">
-                    <div class="section-title">🔗 LINE Webhook URL</div>
-                    <div class="section-desc">นำ URL ด้านล่างไปตั้งค่าใน LINE Developers Console → Messaging API → Webhook URL</div>
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">🔗 LINE Webhook URL <span class="acc-arrow">▼</span></button>
+                    <div class="accordion-body" style="padding:0.6rem 0.1rem;">
+                    <div class="section-desc" style="margin-bottom:0.75rem;">นำ URL ด้านล่างไปตั้งค่าใน LINE Developers Console → Messaging API → Webhook URL</div>
                     <div class="settings-card" style="background:var(--hover);">
                         <div style="padding:0.75rem 1rem; font-family:monospace; font-size:0.92rem; word-break:break-all;" id="webhookUrlDisplay">
                             กำลังโหลด URL...
@@ -1321,6 +1341,7 @@
                     </div>
                     <div class="btn-group" style="margin-top:0.5rem;">
                         <button class="btn btn-secondary" onclick="copyWebhookUrl()">📋 คัดลอก URL</button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -2364,35 +2385,61 @@
             });
         }
 
+        var _residentFilterType = 'all';
+        function setResidentFilter(type) {
+            _residentFilterType = type;
+            document.querySelectorAll('#residentFilterPills .filter-pill').forEach(function(p) {
+                p.classList.toggle('active', p.dataset.type === type);
+            });
+            renderResidentTable();
+        }
+
         function renderResidentTable() {
-            const residents = getResidentsData();
-            const housing = getHousingData();
-            const formatSettings = getHousingFormatSettings();
-            const searchTerm = (document.getElementById('searchResident')?.value || '').toLowerCase();
-            const container = document.getElementById('residentIndividualContainer');
+            var residents = getResidentsData();
+            var housing = getHousingData();
+            var formatSettings = getHousingFormatSettings();
+            var searchTerm = (document.getElementById('searchResident') ? document.getElementById('searchResident').value : '').toLowerCase();
+            var container = document.getElementById('residentIndividualContainer');
+            var pillsEl = document.getElementById('residentFilterPills');
             if (!container) return;
 
-            // build house order map for sorting
-            const houseOrder = {};
-            housing.forEach(h => {
-                const dn = formatHousingNumber(h, formatSettings);
-                const rank = (h.type === 'house' ? 0 : 10000) + parseInt((dn.match(/\d+/) || [999])[0]);
+            // build house order map
+            var houseOrder = {};
+            housing.forEach(function(h) {
+                var dn = formatHousingNumber(h, formatSettings);
+                var rank = (h.type === 'house' ? 0 : 10000) + parseInt((dn.match(/\d+/) || [999])[0]);
                 houseOrder[dn] = rank;
             });
 
-            // sort residents by house then lastname
-            const sorted = [...residents].sort((a, b) => {
-                const ha = houseOrder[a.house_number] ?? 99999;
-                const hb = houseOrder[b.house_number] ?? 99999;
+            var allStaff = residents.filter(function(r) { return r.residentType !== 'cohabitant'; });
+            var countStaff = allStaff.length;
+            var countActive = allStaff.filter(function(r) { return r.status !== 'inactive' && r.status !== 'suspended'; }).length;
+            var countSuspended = allStaff.filter(function(r) { return r.status === 'inactive' || r.status === 'suspended'; }).length;
+
+            // filter pills
+            if (pillsEl) {
+                var f = _residentFilterType;
+                pillsEl.innerHTML =
+                    '<button class="filter-pill' + (f==='all'?' active':'') + '" data-type="all" onclick="setResidentFilter(\'all\')">ทั้งหมด<span class="pill-count">' + countStaff + '</span></button>' +
+                    '<button class="filter-pill' + (f==='active'?' active':'') + '" data-type="active" onclick="setResidentFilter(\'active\')">ปกติ<span class="pill-count">' + countActive + '</span></button>' +
+                    (countSuspended > 0 ? '<button class="filter-pill' + (f==='suspended'?' active':'') + '" data-type="suspended" onclick="setResidentFilter(\'suspended\')">ระงับ<span class="pill-count">' + countSuspended + '</span></button>' : '');
+            }
+
+            // sort
+            var sorted = residents.slice().sort(function(a, b) {
+                var ha = houseOrder[a.house_number] !== undefined ? houseOrder[a.house_number] : 99999;
+                var hb = houseOrder[b.house_number] !== undefined ? houseOrder[b.house_number] : 99999;
                 return ha !== hb ? ha - hb : (a.lastname || '').localeCompare(b.lastname || '');
             });
 
-            // filter by search
-            const filtered = sorted.filter(r => {
+            // apply filter + search
+            var filtered = sorted.filter(function(r) {
+                if (_residentFilterType === 'active' && (r.status === 'inactive' || r.status === 'suspended')) return false;
+                if (_residentFilterType === 'suspended' && r.status !== 'inactive' && r.status !== 'suspended') return false;
                 if (!searchTerm) return true;
-                const base = [r.prefix, r.firstname, r.lastname, r.house_number, r.position, r.subject_group, r.phone, r.email].join(' ').toLowerCase();
-                const cos = parseCohabitantNames(r.cohabitantNames).join(' ').toLowerCase();
-                return base.includes(searchTerm) || cos.includes(searchTerm);
+                var base = [r.prefix, r.firstname, r.lastname, r.house_number, r.position, r.subject_group, r.phone, r.email].join(' ').toLowerCase();
+                var cos = parseCohabitantNames(r.cohabitantNames).join(' ').toLowerCase();
+                return base.indexOf(searchTerm) !== -1 || cos.indexOf(searchTerm) !== -1;
             });
 
             if (filtered.length === 0) {
@@ -2400,107 +2447,53 @@
                 return;
             }
 
-            // group by house
-            const groups = {};
-            filtered.forEach(r => {
-                const key = r.house_number || '(ไม่ระบุบ้าน)';
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(r);
+            // build table
+            var html = '<table class="housing-table"><thead><tr>' +
+                '<th>ชื่อ-นามสกุล</th><th>ที่พัก</th><th>ตำแหน่ง</th><th>ผู้ร่วมพัก</th><th>สถานะ</th><th style="width:100px;">จัดการ</th>' +
+                '</tr></thead><tbody>';
+
+            filtered.forEach(function(r) {
+                var fullName = (r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'');
+                fullName = fullName.trim();
+                var houseIcon = '📍';
+                if (r.house_number) {
+                    var hi = housing.find(function(h) { return formatHousingNumber(h, formatSettings) === r.house_number; });
+                    houseIcon = hi ? (hi.type === 'flat' ? '🏢' : '🏠') : '🏠';
+                }
+                var isSuspended = r.status === 'inactive' || r.status === 'suspended';
+                var statusBadge = isSuspended
+                    ? '<span class="ht-badge maintenance">ระงับ</span>'
+                    : '<span class="ht-badge available">ปกติ</span>';
+
+                // co-habitants summary
+                var coStr = '-';
+                try {
+                    var coArr = JSON.parse(r.cohabitantNames || '[]');
+                    if (Array.isArray(coArr) && coArr.length > 0) {
+                        coStr = coArr.map(function(co) {
+                            if (typeof co === 'string') return co;
+                            return ((co.prefix||'') + ' ' + (co.firstname||'') + ' ' + (co.lastname||'')).trim();
+                        }).join(', ');
+                    }
+                } catch(e) {}
+
+                var safeId = String(r.id).replace(/'/g, '&apos;');
+                var safeHouse = (r.house_number || '').replace(/'/g, '&apos;');
+
+                html += '<tr' + (isSuspended ? ' style="opacity:0.6;"' : '') + '>' +
+                    '<td class="ht-name">' + fullName + '</td>' +
+                    '<td>' + (r.house_number ? houseIcon + ' ' + r.house_number : '<span style="color:var(--muted);">-</span>') + '</td>' +
+                    '<td style="max-width:160px;">' + (r.position || '-') + (r.subject_group ? '<br><span style="font-size:0.78rem;color:var(--muted);">' + r.subject_group + '</span>' : '') + '</td>' +
+                    '<td style="max-width:180px; font-size:0.82rem; color:var(--muted);">' + coStr + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td class="ht-actions">' +
+                        '<button onclick="openMoveResidentModal(\'' + safeId + '\')" title="ย้ายบ้าน">🔀</button>' +
+                        '<button onclick="editResident(\'' + safeId + '\')" title="แก้ไข">✏️</button>' +
+                        '<button class="act-del" onclick="deleteResident(\'' + safeId + '\')" title="ลบ">🗑️</button>' +
+                    '</td></tr>';
             });
 
-            const sortedKeys = Object.keys(groups).sort((a, b) => {
-                if (a === '(ไม่ระบุบ้าน)') return 1;
-                if (b === '(ไม่ระบุบ้าน)') return -1;
-                return (houseOrder[a] ?? 99998) - (houseOrder[b] ?? 99998);
-            });
-
-            let html = '';
-            sortedKeys.forEach(houseKey => {
-                const group = groups[houseKey];
-                const isUnassigned = houseKey === '(ไม่ระบุบ้าน)';
-                const houseInfo = housing.find(h => formatHousingNumber(h, formatSettings) === houseKey);
-                const typeIcon = isUnassigned ? '📍' : (houseInfo?.type === 'flat' ? '🏢' : '🏠');
-                const staffCount = group.filter(r => r.residentType !== 'cohabitant').length;
-                let totalCo = 0;
-                group.forEach(r => { try { totalCo += JSON.parse(r.cohabitantNames || '[]').length; } catch(e){} });
-
-                html += `
-                <div style="margin-bottom:1.5rem;">
-                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.9rem; background:linear-gradient(90deg,#eff6ff,var(--surface)); border-left:4px solid var(--primary); border-radius:0 8px 8px 0; margin-bottom:0.75rem;">
-                        <span style="font-size:1.15rem;">${typeIcon}</span>
-                        <span style="font-weight:700; font-size:1.05rem; color:var(--primary);">${houseKey}</span>
-                        <span style="font-size:0.78rem; color:var(--muted); display:flex; gap:0.4rem;">
-                            <span>👨‍🏫 ${staffCount} บุคลากร</span>
-                            ${totalCo > 0 ? `<span>· 👪 ${totalCo} ผู้ร่วมพัก</span>` : ''}
-                        </span>
-                        <button class="btn btn-primary" style="margin-left:auto; font-size:0.78rem; padding:0.2rem 0.6rem;" onclick="(async()=>{ currentHouseForDetails='${houseKey}'; document.getElementById('modal-addResident').classList.add('active'); await populateHouseDropdown('residentHouse','${houseKey}'); })()">➕ เพิ่มในบ้านนี้</button>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.6rem;">`;
-
-                group.forEach(r => {
-                    const fullName = `${r.prefix||''}${r.firstname||''} ${r.lastname||''}`.trim();
-                    const isStaff = r.residentType !== 'cohabitant';
-                    const typeBadge = isStaff
-                        ? '<span class="badge badge-success">👨&#x200D;🏫 บุคลากร</span>'
-                        : '<span class="badge badge-warning">👤 ผู้ร่วมพัก</span>';
-                    const statusBadge = (r.status === 'inactive' || r.status === 'suspended')
-                        ? '<span class="badge badge-danger">ระงับ</span>'
-                        : '<span class="badge badge-success">ปกติ</span>';
-
-                    let coHtml = '';
-                    try {
-                        const coArr = JSON.parse(r.cohabitantNames || '[]');
-                        if (Array.isArray(coArr) && coArr.length > 0) {
-                            const coItems = coArr.map(co => {
-                                if (typeof co === 'string') return `<div style="font-size:0.84rem;">↳ ${co}</div>`;
-                                const cn = `${co.prefix||''} ${co.firstname||''} ${co.lastname||''}`.trim();
-                                const rel = co.relation || co.relationship || '';
-                                const staffTag = co.is_ppk_staff ? ' <span class="badge badge-info" style="font-size:0.7rem;">🏫 PPK</span>' : '';
-                                const phone = co.phone ? ` · 📞 ${co.phone}` : '';
-                                return `<div style="font-size:0.84rem; display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
-                                    <span>↳ ${cn}</span>
-                                    ${rel ? `<span style="color:var(--muted);">(${rel})</span>` : ''}
-                                    ${staffTag}
-                                    ${phone ? `<span style="color:var(--muted);">${phone}</span>` : ''}
-                                </div>`;
-                            }).join('');
-                            coHtml = `<div style="margin-top:0.5rem; padding:0.45rem 0.65rem; background:var(--hover); border-radius:6px; border-left:3px solid var(--warning);">
-                                <div style="font-size:0.73rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:0.25rem;">👪 ผู้ร่วมพัก (${coArr.length} คน)</div>
-                                ${coItems}
-                            </div>`;
-                        }
-                    } catch(e) {}
-
-                    const safeId = String(r.id).replace(/'/g, '&apos;');
-                    html += `
-                    <div style="border:1px solid var(--border); border-radius:8px; padding:0.8rem 1rem; background:var(--surface);">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem;">
-                            <div style="flex:1; min-width:0;">
-                                <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; margin-bottom:0.3rem;">
-                                    <span style="font-weight:700; font-size:0.97rem;">${fullName}</span>
-                                    ${typeBadge} ${statusBadge}
-                                </div>
-                                <div style="display:flex; flex-wrap:wrap; gap:0.3rem 1.2rem; font-size:0.81rem; color:var(--muted);">
-                                    ${r.position ? `<span>💼 ${r.position}</span>` : ''}
-                                    ${r.subject_group ? `<span>📚 ${r.subject_group}</span>` : ''}
-                                    ${r.phone ? `<span>📞 <a href="tel:${r.phone}" style="color:inherit;">${r.phone}</a></span>` : ''}
-                                    ${r.email ? `<span>✉️ <a href="mailto:${r.email}" style="color:inherit;">${r.email}</a></span>` : ''}
-                                    ${r.birthdate ? `<span>🎂 ${r.birthdate}</span>` : ''}
-                                </div>
-                                ${coHtml}
-                            </div>
-                            <div class="action-btns" style="flex-shrink:0;">
-                                <button class="btn btn-info" onclick="openMoveResidentModal('${safeId}')" title="ย้ายบ้าน">🔀</button>
-                                <button class="btn btn-primary" onclick="editResident('${safeId}')" title="แก้ไข">✏️</button>
-                                <button class="btn btn-danger" onclick="deleteResident('${safeId}')" title="ลบ">🗑️</button>
-                            </div>
-                        </div>
-                    </div>`;
-                });
-
-                html += '</div></div>';
-            });
-
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
@@ -3850,50 +3843,82 @@
             callBackend('addAnnouncement', { id: String(id), active: newActive, _toggle: true }).catch(() => {});
         }
 
+        var _announcementFilter = 'all';
+        function setAnnouncementFilter(mode) {
+            _announcementFilter = mode;
+            ['All','Active','Expired'].forEach(function(k) {
+                var el = document.getElementById('annPill' + k);
+                if (el) el.classList.toggle('active', k.toLowerCase() === mode);
+            });
+            renderAnnouncementsList();
+        }
+
+        function deleteExpiredAnnouncements() {
+            var announcements = getAnnouncementsData();
+            var now = new Date();
+            var kept = announcements.filter(function(a) { return !(a.expiry && new Date(a.expiry) < now); });
+            if (kept.length === announcements.length) { ppkAlert('ไม่มีประกาศที่หมดอายุแล้ว'); return; }
+            if (!confirm('ลบประกาศที่หมดอายุ ' + (announcements.length - kept.length) + ' รายการ?')) return;
+            saveAnnouncementsData(kept);
+            renderAnnouncementsList();
+            ppkAlert('ลบแล้ว');
+        }
+
         function renderAnnouncementsList() {
-            const container = document.getElementById('announcementsList');
-            const announcements = getAnnouncementsData();
+            var container = document.getElementById('announcementsList');
+            var announcements = getAnnouncementsData();
+            var now = new Date();
+
+            var countAll = announcements.length;
+            var countActive = announcements.filter(function(a) { return a.active && !(a.expiry && new Date(a.expiry) < now); }).length;
+            var countExpired = announcements.filter(function(a) { return a.expiry && new Date(a.expiry) < now; }).length;
+
+            var ca = document.getElementById('annCountAll'); if (ca) ca.textContent = countAll;
+            var cac = document.getElementById('annCountActive'); if (cac) cac.textContent = countActive;
+            var ce = document.getElementById('annCountExpired'); if (ce) ce.textContent = countExpired;
 
             if (announcements.length === 0) {
                 container.innerHTML = '<div style="color: var(--muted); text-align: center; padding: 1rem;">ยังไม่มีประกาศ</div>';
                 return;
             }
 
-            const priorityColors = {
-                'normal': '#64748b',
-                'important': '#f59e0b',
-                'urgent': '#ef4444'
-            };
-            const priorityLabels = {
-                'normal': 'ปกติ',
-                'important': '⚠️ สำคัญ',
-                'urgent': '🚨 ด่วนมาก'
-            };
+            var priorityColors = { 'normal': '#64748b', 'important': '#f59e0b', 'urgent': '#ef4444' };
+            var priorityLabels = { 'normal': 'ปกติ', 'important': '⚠️ สำคัญ', 'urgent': '🚨 ด่วนมาก' };
 
-            container.innerHTML = announcements.map(a => {
-                const isExpired = a.expiry && new Date(a.expiry) < new Date();
-                const expiryText = a.expiry ? `หมดอายุ: ${new Date(a.expiry).toLocaleDateString('th-TH')}` : 'ไม่หมดอายุ';
-                const createdText = new Date(a.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-                
-                return `
-                    <div style="background: ${a.active && !isExpired ? '#f0fdf4' : '#f1f5f9'}; border: 1px solid ${a.active && !isExpired ? '#22c55e' : '#e5e7eb'}; border-left: 4px solid ${priorityColors[a.priority]}; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.5rem; opacity: ${a.active && !isExpired ? 1 : 0.6};">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 0.3rem;">${a.text}</div>
-                                <div style="font-size: 0.85rem; color: var(--muted);">
-                                    <span style="color: ${priorityColors[a.priority]};">${priorityLabels[a.priority]}</span>
-                                    · สร้างเมื่อ: ${createdText}
-                                    · ${expiryText}
-                                    ${isExpired ? '<span style="color: #ef4444;">· หมดอายุแล้ว</span>' : ''}
-                                </div>
-                            </div>
-                            <div class="action-btns">
-                                <button class="btn ${a.active ? 'btn-warning' : 'btn-success'}" onclick="toggleAnnouncement(${a.id})">${a.active ? '⏸️ ปิด' : '▶️ เปิด'}</button>
-                                <button class="btn btn-danger" onclick="deleteAnnouncement(${a.id})">🗑️ ลบ</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            var filtered = announcements.filter(function(a) {
+                var isExpired = a.expiry && new Date(a.expiry) < now;
+                var isActive = a.active && !isExpired;
+                if (_announcementFilter === 'active') return isActive;
+                if (_announcementFilter === 'expired') return isExpired;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="color: var(--muted); text-align: center; padding: 1rem;">ไม่พบประกาศ</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(function(a) {
+                var isExpired = a.expiry && new Date(a.expiry) < now;
+                var expiryText = a.expiry ? 'หมดอายุ: ' + new Date(a.expiry).toLocaleDateString('th-TH') : 'ไม่หมดอายุ';
+                var createdText = new Date(a.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                return '<div style="background: ' + (a.active && !isExpired ? '#f0fdf4' : '#f1f5f9') + '; border: 1px solid ' + (a.active && !isExpired ? '#22c55e' : '#e5e7eb') + '; border-left: 4px solid ' + (priorityColors[a.priority] || '#64748b') + '; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.5rem; opacity: ' + (a.active && !isExpired ? 1 : 0.65) + ';">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">' +
+                        '<div style="flex: 1;">' +
+                            '<div style="font-weight: 600; margin-bottom: 0.3rem;">' + a.text + '</div>' +
+                            '<div style="font-size: 0.82rem; color: var(--muted);">' +
+                                '<span style="color: ' + (priorityColors[a.priority] || '#64748b') + ';">' + (priorityLabels[a.priority] || 'ปกติ') + '</span>' +
+                                ' · สร้างเมื่อ: ' + createdText +
+                                ' · ' + expiryText +
+                                (isExpired ? ' <span style="color: #ef4444; font-weight:600;">· ✘ หมดอายุแล้ว</span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="action-btns">' +
+                            '<button class="btn ' + (a.active ? 'btn-warning' : 'btn-success') + '" onclick="toggleAnnouncement(' + a.id + ')">' + (a.active ? '⏸️ ปิด' : '▶️ เปิด') + '</button>' +
+                            '<button class="btn btn-danger" onclick="deleteAnnouncement(' + a.id + ')">🗑️ ลบ</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
 
@@ -4343,47 +4368,64 @@
             localStorage.setItem(STORAGE_KEYS.exemptions, JSON.stringify(data));
         }
 
+        var _exemptionFilter = 'all';
+        function setExemptionFilter(mode) {
+            _exemptionFilter = mode;
+            document.querySelectorAll('#exemptPillAll,#exemptPillYes,#exemptPillNo').forEach(function(b) { b.classList.remove('active'); });
+            var map = { all: 'exemptPillAll', yes: 'exemptPillYes', no: 'exemptPillNo' };
+            var el = document.getElementById(map[mode]);
+            if (el) el.classList.add('active');
+            filterExemptionTable();
+        }
+
         function renderExemptionTable() {
-            const housing = getHousingData();
-            const residents = getResidentsData();
-            const exemptions = getExemptionsData();
-            const tbody = document.getElementById('exemptionTableBody');
-            const formatSettings = getHousingFormatSettings();
-            
+            var housing = getHousingData();
+            var residents = getResidentsData();
+            var exemptions = getExemptionsData();
+            var tbody = document.getElementById('exemptionTableBody');
+            var formatSettings = getHousingFormatSettings();
+
             if (housing.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);">ยังไม่มีข้อมูลบ้านพัก/แฟลต กรุณาเพิ่มข้อมูลในแท็บ "บ้านพักและแฟลต"</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);">ยังไม่มีข้อมูลบ้านพัก/แฟลต</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = housing.map((item, index) => {
-                const displayNumber = formatHousingNumber(item, formatSettings);
-                const occupant = residents.find(r => r.house_number === displayNumber || r.house_number === item.number);
-                const occupantName = occupant ? `${occupant.prefix || ''}${occupant.firstname} ${occupant.lastname}` : '<span style="color:var(--muted);">ไม่มีผู้พักอาศัย</span>';
-                const exemption = exemptions[item.id] || { exempt: false, note: '' };
-                
-                return `
-                    <tr data-id="${item.id}">
-                        <td>${index + 1}</td>
-                        <td><strong>${displayNumber}</strong></td>
-                        <td style="text-align:left;">${occupantName}</td>
-                        <td>
-                            <input type="checkbox" class="exemption-checkbox" data-id="${item.id}" ${exemption.exempt ? 'checked' : ''}>
-                        </td>
-                        <td>
-                            <input type="text" class="exemption-note" data-id="${item.id}" value="${exemption.note || ''}" placeholder="เหตุผล..." style="width:100%;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font:inherit;font-size:0.85rem;">
-                        </td>
-                    </tr>
-                `;
+            var countYes = 0, countNo = 0;
+            housing.forEach(function(item) {
+                var ex = exemptions[item.id] || { exempt: false };
+                if (ex.exempt) countYes++; else countNo++;
+            });
+            var countAll = housing.length;
+            var ce = document.getElementById('exemptCountAll'); if (ce) ce.textContent = countAll;
+            var cy = document.getElementById('exemptCountYes'); if (cy) cy.textContent = countYes;
+            var cn = document.getElementById('exemptCountNo'); if (cn) cn.textContent = countNo;
+
+            var rows = housing.map(function(item, index) {
+                var displayNumber = formatHousingNumber(item, formatSettings);
+                var occupant = residents.find(function(r) { return r.house_number === displayNumber || r.house_number === item.number; });
+                var occupantName = occupant ? ((occupant.prefix||'') + occupant.firstname + ' ' + occupant.lastname) : '<span style="color:var(--muted);">ไม่มีผู้พักอาศัย</span>';
+                var exemption = exemptions[item.id] || { exempt: false, note: '' };
+                return '<tr data-id="' + item.id + '" data-exempt="' + (exemption.exempt ? 'yes' : 'no') + '">' +
+                    '<td>' + (index + 1) + '</td>' +
+                    '<td><strong>' + displayNumber + '</strong></td>' +
+                    '<td style="text-align:left;">' + occupantName + '</td>' +
+                    '<td><input type="checkbox" class="exemption-checkbox" data-id="' + item.id + '" ' + (exemption.exempt ? 'checked' : '') + ' onchange="this.closest(\'tr\').dataset.exempt=this.checked?\'yes\':\'no\'; filterExemptionTable()"></td>' +
+                    '<td><input type="text" class="exemption-note" data-id="' + item.id + '" value="' + (exemption.note || '') + '" placeholder="เหตุผล..." style="width:100%;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font:inherit;font-size:0.85rem;"></td>' +
+                    '</tr>';
             }).join('');
+            tbody.innerHTML = rows;
+            filterExemptionTable();
         }
 
         function filterExemptionTable() {
-            const searchTerm = document.getElementById('searchExemption').value.toLowerCase();
-            const rows = document.querySelectorAll('#exemptionTableBody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            var searchTerm = (document.getElementById('searchExemption') ? document.getElementById('searchExemption').value : '').toLowerCase();
+            var rows = document.querySelectorAll('#exemptionTableBody tr');
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                var exemptVal = row.dataset.exempt || 'no';
+                var matchSearch = !searchTerm || text.indexOf(searchTerm) !== -1;
+                var matchFilter = _exemptionFilter === 'all' || exemptVal === _exemptionFilter;
+                row.style.display = (matchSearch && matchFilter) ? '' : 'none';
             });
         }
 
