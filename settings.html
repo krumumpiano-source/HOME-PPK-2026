@@ -843,8 +843,16 @@
             if (await ppkConfirm('ต้องการลบข้อมูลผู้ร่วมพักอาศัยนี้หรือไม่?')) {
                 const item = coresidents[index];
                 if (item && item.id) {
-                    try { await callBackend('removeCoresident', { id: item.id }); }
-                    catch(e) { console.warn('removeCoresident API failed', e); }
+                    try {
+                        const r = await callBackend('removeCoresident', { id: item.id });
+                        if (!r || !r.success) {
+                            ppkAlert('ลบไม่สำเร็จ: ' + (r && r.error || 'เกิดข้อผิดพลาด'));
+                            return;
+                        }
+                    } catch(e) {
+                        ppkAlert('ลบไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
+                        return;
+                    }
                 }
                 coresidents.splice(index, 1);
                 renderCoresidents();

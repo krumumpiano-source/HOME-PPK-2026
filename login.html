@@ -215,6 +215,11 @@
                 errorMsg.style.display = 'block';
                 return false;
             }
+            if (!password) {
+                errorMsg.textContent = 'กรุณากรอกรหัสผ่าน';
+                errorMsg.style.display = 'block';
+                return false;
+            }
             handleLogin();
             return false;
         }

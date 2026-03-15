@@ -1116,6 +1116,7 @@
                     });
                     if (result && result.success) {
                         ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+                        await loadMonthData();
                     } else {
                         ppkAlert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
                     }

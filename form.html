@@ -336,8 +336,9 @@
                 var d = req.details || {};
                 if (typeof d === 'string') try { d = JSON.parse(d); } catch(e) { d = {}; }
                 // สร้างหน้าพิมพ์ A4 จากข้อมูล
-                var fullname = (d.firstname || '') + ' ' + (d.lastname || '');
-                var prefix = d.prefix || '';
+                var _escHtml = function(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+                var fullname = _escHtml((d.firstname || '') + ' ' + (d.lastname || ''));
+                var prefix = _escHtml(d.prefix || '');
                 var subDate = req.submitted_at ? new Date(req.submitted_at) : new Date();
                 var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
                 var dateStr = subDate.getDate() + ' ' + thaiMonths[subDate.getMonth()] + ' ' + (subDate.getFullYear() + 543);
@@ -348,7 +349,7 @@
                 var residents = d.residents || [];
                 if (typeof residents === 'string') try { residents = JSON.parse(residents); } catch(e) { residents = []; }
                 for (var ri = 0; ri < residents.length; ri++) {
-                    residentsHTML += '<tr><td style="border:1px solid #000;padding:4px;text-align:center;">' + (ri+1) + '</td><td style="border:1px solid #000;padding:4px;">' + (residents[ri].prefix||'') + (residents[ri].name||'') + '</td><td style="border:1px solid #000;padding:4px;text-align:center;">' + (residents[ri].relation||'') + '</td></tr>';
+                    residentsHTML += '<tr><td style="border:1px solid #000;padding:4px;text-align:center;">' + (ri+1) + '</td><td style="border:1px solid #000;padding:4px;">' + _escHtml(residents[ri].prefix||'') + _escHtml(residents[ri].name||'') + '</td><td style="border:1px solid #000;padding:4px;text-align:center;">' + _escHtml(residents[ri].relation||'') + '</td></tr>';
                 }
                 var docsChecked = d.documents_checked || [];
                 if (typeof docsChecked === 'string') try { docsChecked = JSON.parse(docsChecked); } catch(e) { docsChecked = []; }
@@ -366,18 +367,18 @@
                 pw.document.write('<p style="text-indent:2.5cm;text-align:justify;margin-bottom:0.2cm;">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + (d.subject_group||'') + ' มีความประสงค์ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยมีรายละเอียดดังต่อไปนี้</p>');
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 1: ข้อมูลส่วนตัว</div><div class="indent small-text">');
                 pw.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
-                pw.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + (d.address||'') + '</div>');
-                pw.document.write('<div>หมายเลขโทรศัพท์: ' + (d.phone||'') + ' &nbsp;&nbsp; อีเมล: ' + (d.email||'') + ' &nbsp;&nbsp; ID Line: ' + (d.line_id||'') + '</div>');
-                pw.document.write('<div>กลุ่มสาระการเรียนรู้: ' + (d.subject_group||'') + '</div></div></div>');
+                pw.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + _escHtml(d.address) + '</div>');
+                pw.document.write('<div>หมายเลขโทรศัพท์: ' + _escHtml(d.phone) + ' &nbsp;&nbsp; อีเมล: ' + _escHtml(d.email) + ' &nbsp;&nbsp; ID Line: ' + _escHtml(d.line_id) + '</div>');
+                pw.document.write('<div>กลุ่มสาระการเรียนรู้: ' + _escHtml(d.subject_group) + '</div></div></div>');
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิก</div><div class="indent small-text">');
                 pw.document.write('<div>ลักษณะการเข้าพัก: <span class="checkbox">' + (stayAlone ? '&#10003;' : '') + '</span> พักอาศัยคนเดียว &nbsp;&nbsp; <span class="checkbox">' + (!stayAlone ? '&#10003;' : '') + '</span> พักอาศัยพร้อมครอบครัว</div>');
                 pw.document.write('<div>จำนวนผู้เข้าพักทั้งหมด: ' + (d.total_residents||'') + ' คน</div>');
                 if (residentsHTML) { pw.document.write('<table><thead><tr><th style="width:50px;">ลำดับ</th><th>ชื่อ-นามสกุล</th><th style="width:100px;">ความสัมพันธ์</th></tr></thead><tbody>' + residentsHTML + '</tbody></table>'); }
-                if (d.additional_info) pw.document.write('<div>ข้อมูลเพิ่มเติม: ' + d.additional_info + '</div>');
+                if (d.additional_info) pw.document.write('<div>ข้อมูลเพิ่มเติม: ' + _escHtml(d.additional_info) + '</div>');
                 pw.document.write('</div></div>');
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 3: เหตุผลในการขอเข้าพัก</div><div class="indent small-text">');
-                reasons.forEach(function(r) { pw.document.write('<div><span class="checkbox">&#10003;</span> ' + (reasonLabels[r.trim()]||r.trim()) + '</div>'); });
-                if (d.other_reason) pw.document.write('<div><span class="checkbox">&#10003;</span> อื่นๆ: ' + d.other_reason + '</div>');
+                reasons.forEach(function(r) { pw.document.write('<div><span class="checkbox">&#10003;</span> ' + _escHtml(reasonLabels[r.trim()]||r.trim()) + '</div>'); });
+                if (d.other_reason) pw.document.write('<div><span class="checkbox">&#10003;</span> อื่นๆ: ' + _escHtml(d.other_reason) + '</div>');
                 pw.document.write('</div></div>');
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 4: เอกสารประกอบคำร้อง</div><div class="indent small-text">');
                 var docLabels = { 'id_card': 'สำเนาบัตรประชาชน', 'house_registration': 'สำเนาทะเบียนบ้าน', 'appointment_letter': 'สำเนาคำสั่งบรรจุ/แต่งตั้ง', 'marriage_cert': 'สำเนาทะเบียนสมรส', 'birth_cert': 'สำเนาสูติบัตรบุตร' };
