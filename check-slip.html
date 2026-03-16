@@ -90,8 +90,9 @@
     .status-unpaid{background:#f3f4f6;color:#6b7280;}
     .status-approved{background:#dbeafe;color:#1e40af;}
 
-    .slip-thumb{width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;}
-    .slip-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,.15);}
+    .slip-thumb{width:110px;height:90px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:transform .15s,box-shadow .15s;display:block;margin:0 auto;}
+    .slip-thumb:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,.3);border-color:var(--primary);}
+    .slip-multi{display:flex;flex-direction:column;gap:4px;align-items:center;}
     .no-slip{color:var(--muted);font-size:.85rem;}
 
     .action-btns{display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap;}
@@ -122,6 +123,16 @@
 
     .slip-gallery{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;}
     .slip-gallery img{max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);}
+
+    /* Lightbox */
+    .slip-lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:3000;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:1rem;}
+    .slip-lightbox.show{display:flex;}
+    .slip-lightbox-info{color:#fff;font-size:1rem;font-weight:700;text-align:center;background:rgba(255,255,255,.12);padding:.5rem 1.4rem;border-radius:20px;max-width:92vw;}
+    .slip-lightbox-img{max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+    .slip-lightbox-btns{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;}
+    .slip-lightbox-nav{display:flex;gap:.5rem;align-items:center;}
+    .slip-lightbox-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:background .2s;}
+    .slip-lightbox-dot.active{background:#fff;}
 
     .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem 1rem;}
     .info-item{display:flex;justify-content:space-between;padding:.5rem;background:#f8fafc;border-radius:6px;}
@@ -204,7 +215,7 @@
               <th style="width:100px;">ยอดที่แจ้ง</th>
               <th style="width:100px;">ยอดที่ชำระ</th>
               <th style="width:80px;">สถานะ</th>
-              <th style="width:70px;">สลิป</th>
+              <th style="width:130px;">สลิป</th>
               <th style="width:180px;">การดำเนินการ</th>
             </tr>
           </thead>
@@ -256,7 +267,7 @@
               <th style="width:100px;">ยอดที่แจ้ง</th>
               <th style="width:100px;">ยอดที่ชำระ</th>
               <th style="width:80px;">สถานะ</th>
-              <th style="width:70px;">สลิป</th>
+              <th style="width:130px;">สลิป</th>
               <th style="width:180px;">การดำเนินการ</th>
             </tr>
           </thead>
@@ -292,6 +303,17 @@
     <div class="footer-note">
       ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br />
       งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+    </div>
+  </div>
+
+  <!-- Lightbox ตรวจสลิปด่วน -->
+  <div class="slip-lightbox" id="slipLightbox" onclick="closeLightbox()">
+    <div class="slip-lightbox-info" id="lbxInfo" onclick="event.stopPropagation()"></div>
+    <img class="slip-lightbox-img" id="lbxImg" src="" alt="สลิป" onclick="event.stopPropagation()" />
+    <div class="slip-lightbox-nav" id="lbxNav" onclick="event.stopPropagation()"></div>
+    <div class="slip-lightbox-btns" onclick="event.stopPropagation()">
+      <button class="btn btn-success" id="lbxApproveBtn" onclick="lightboxApprove()">✓ อนุมัติการชำระ</button>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.35);" onclick="closeLightbox()">✕ ปิด</button>
     </div>
   </div>
 
@@ -650,10 +672,15 @@
         else if(status === 'pending') countPending++;
         else if(status === 'unpaid') countUnpaid++;
 
-        // สลิป thumbnail
+        // สลิป thumbnail - คลิกเพื่อดูเต็มจอทันที
         let slipHtml = '<span class="no-slip">-</span>';
         if(unit.slipImages && unit.slipImages.length > 0){
-          slipHtml = '<img src="' + unit.slipImages[0] + '" class="slip-thumb" onclick="viewDetail(\'' + type + '\',' + index + ')" alt="สลิป" />';
+          var allThumb = unit.slipImages.map(function(src, i){
+            return '<img src="' + src + '" class="slip-thumb" onclick="quickView(\'' + type + '\',' + index + ',' + i + ')" alt="สลิป" loading="lazy" />';
+          }).join('');
+          slipHtml = unit.slipImages.length > 1
+            ? '<div class="slip-multi">' + allThumb + '<span style="font-size:.75rem;color:var(--muted);">(' + unit.slipImages.length + ' รูป)</span></div>'
+            : allThumb;
         }
 
         // ปุ่มการดำเนินการ
@@ -772,6 +799,55 @@
     function closeModal(){
       document.getElementById('detailModal').classList.remove('show');
       currentUnit = null;
+    }
+
+    // ── Lightbox ตรวจสลิปด่วน ──
+    let lbxUnit = null;
+    let lbxImages = [];
+    let lbxIdx = 0;
+
+    function quickView(type, index, imgIdx){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit || !unit.slipImages || unit.slipImages.length === 0) return;
+      lbxUnit = { type, index };
+      lbxImages = unit.slipImages;
+      lbxIdx = imgIdx || 0;
+      const status = getStatus(unit);
+      document.getElementById('lbxInfo').textContent =
+        unit.unitNumber + (unit.name ? '  |  ' + unit.name : '') +
+        '  |  แจ้ง: ' + formatMoney(unit.notifiedAmount) + ' บาท' +
+        (unit.paidAmount !== null ? '  →  ชำระ: ' + formatMoney(unit.paidAmount) + ' บาท' : '  (ยังไม่มียอดชำระ)');
+      const approveBtn = document.getElementById('lbxApproveBtn');
+      approveBtn.style.display = (status === 'approved' || status === 'unpaid' || status === 'no-resident') ? 'none' : '';
+      renderLbxImg();
+      document.getElementById('slipLightbox').classList.add('show');
+    }
+
+    function renderLbxImg(){
+      document.getElementById('lbxImg').src = lbxImages[lbxIdx];
+      const nav = document.getElementById('lbxNav');
+      nav.innerHTML = '';
+      if(lbxImages.length > 1){
+        lbxImages.forEach(function(_, i){
+          const dot = document.createElement('div');
+          dot.className = 'slip-lightbox-dot' + (i === lbxIdx ? ' active' : '');
+          dot.onclick = function(){ lbxIdx = i; renderLbxImg(); };
+          nav.appendChild(dot);
+        });
+      }
+    }
+
+    function closeLightbox(){
+      document.getElementById('slipLightbox').classList.remove('show');
+      lbxUnit = null;
+    }
+
+    async function lightboxApprove(){
+      if(!lbxUnit) return;
+      const t = lbxUnit.type, i = lbxUnit.index;
+      closeLightbox();
+      await approvePayment(t, i);
     }
 
     // อนุมัติการชำระ
