@@ -738,7 +738,7 @@
                     }
                 } catch (e) {
                     console.error('getSettings error:', e);
-                    cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+                    cachedAdminSettings = {};
                 }
 
             // โหลดอัตราค่าน้ำจาก Backend

@@ -661,9 +661,10 @@
         </div>
         
         <!-- ปุ่มดำเนินการ -->
-        <div class="section no-print" style="text-align:center;">
-            <button class="btn btn-primary" onclick="saveData()" style="margin-right:0.8rem;">💾 บันทึกข้อมูล</button>
+        <div class="section no-print" style="text-align:center; display:flex; gap:0.6rem; justify-content:center; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveData()">💾 บันทึกข้อมูล</button>
             <button class="btn" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+            <button class="btn" onclick="exportExcel()" style="background:#22c55e;color:#fff;border-color:#16a34a;">📊 Export Excel</button>
         </div>
         
         <div class="footer-note">
@@ -1218,6 +1219,57 @@
         }
         
         // ============================
+        // EXPORT EXCEL (SheetJS)
+        // ============================
+        function exportExcel() {
+            if (typeof XLSX === 'undefined') {
+                ppkAlert('กำลังโหลดไลบรารี Excel กรุณากดอีกครั้ง');
+                var s = document.createElement('script');
+                s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+                document.head.appendChild(s);
+                return;
+            }
+            var p = getSelectedPeriod();
+            var monthName = THAI_MONTHS[parseInt(p.month) - 1] || p.month;
+            var sheetName = monthName + ' ' + p.year;
+
+            var totalIncome = incomeItems.reduce(function(s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+            var totalExpense = expenseItems.reduce(function(s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+            var carryOver = carryForwardAmount + totalIncome - totalExpense;
+
+            // สร้าง sheet data
+            var rows = [];
+            rows.push(['บัญชีรายรับ-รายจ่าย บ้านพักครู โรงเรียนพะเยาพิทยาคม']);
+            rows.push(['ประจำเดือน ' + sheetName]);
+            rows.push([]);
+            rows.push(['ยอดยกมา', '', '', carryForwardAmount]);
+            rows.push([]);
+            rows.push(['── รายรับ ──']);
+            rows.push(['ลำดับ', 'วันที่', 'รายการ', 'จำนวนเงิน (บาท)', 'หมายเหตุ']);
+            incomeItems.forEach(function(item, i) {
+                rows.push([i + 1, item.date || '', item.description || '', parseFloat(item.amount) || 0, item.note || '']);
+            });
+            rows.push(['', '', 'รวมรายรับ', totalIncome, '']);
+            rows.push([]);
+            rows.push(['── รายจ่าย ──']);
+            rows.push(['ลำดับ', 'วันที่', 'รายการ', 'จำนวนเงิน (บาท)', 'หมายเหตุ']);
+            expenseItems.forEach(function(item, i) {
+                rows.push([i + 1, item.date || '', item.description || '', parseFloat(item.amount) || 0, item.note || '']);
+            });
+            rows.push(['', '', 'รวมรายจ่าย', totalExpense, '']);
+            rows.push([]);
+            rows.push(['ยอดยกไป', '', '', carryOver]);
+
+            var wb = XLSX.utils.book_new();
+            var ws = XLSX.utils.aoa_to_sheet(rows);
+            // ตั้งความกว้างคอลัมน์
+            ws['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 30 }, { wch: 18 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
+            XLSX.writeFile(wb, 'บัญชี_' + p.year + '_' + p.month + '.xlsx');
+            ppkToast('ดาวน์โหลด Excel เรียบร้อย', 'success');
+        }
+
+        // ============================
         // SIDEBAR
         // ============================
         function initSidebar() {
@@ -1228,6 +1280,7 @@
             window.location.replace('dashboard.html');
         }
         </script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="supabase/config.js?v=20260313D"></script>
     <script src="supabase/supabase.min.js?v=20260313D"></script>
     <script src="ppk-api.js?v=20260313D"></script>

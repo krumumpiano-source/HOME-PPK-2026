@@ -82,12 +82,10 @@ if ($sbAccessToken) { OK "ได้รับ Access Token" } else { WARN "ไม
 if ($sbServiceKey) { OK "ได้รับ Service Role Key" } else { WARN "ไม่มี Service Key — จะข้ามขั้นตอน SQL + Storage" }
 
 # ============================================================
-Title "3. LINE Credentials"
+Title "3. Email Credentials (Resend.com)"
 
-INFO "ดูค่าได้ที่: https://developers.line.biz/console/"
-$lineToken  = Ask "LINE Channel Access Token"
-$lineSecret = Ask "LINE Channel Secret"
-$lineLiffId = Ask "LIFF ID (เช่น 2099999999-AbCdEfGh)"
+INFO "สมัครที่: https://resend.com"
+$resendKey = Ask "Resend API Key (re_...) หรือกด Enter เพื่อข้าม"
 
 # ============================================================
 Title "4. รัน SQL Migrations บน Supabase"
@@ -122,37 +120,6 @@ if ($sbServiceKey) {
     } catch { WARN "rls.sql — รัน manually ใน SQL Editor" }
   }
 
-  # ─ line-migration.sql ─
-  $lineSQL = "$ROOT\supabase\line-migration.sql"
-  if (Test-Path $lineSQL) {
-    $sql3 = Get-Content $lineSQL -Raw -Encoding UTF8
-    try {
-      Invoke-RestMethod -Uri "$sbUrl/rest/v1/rpc/exec_sql" -Method Post -Headers $headers -Body (ConvertTo-Json @{ query = $sql3 }) -ErrorAction Stop | Out-Null
-      OK "line-migration.sql สำเร็จ"
-    } catch { WARN "line-migration.sql — รัน manually ใน SQL Editor" }
-  }
-
-  # ─ ตั้งค่า LINE settings ในตาราง settings ─
-  if ($lineToken -or $lineSecret -or $lineLiffId) {
-    INFO "บันทึก LINE settings ลง DB..."
-    $settingsPayload = @(
-      @{key="line_channel_access_token"; value=$lineToken},
-      @{key="line_channel_secret";       value=$lineSecret},
-      @{key="line_liff_id";             value=$lineLiffId},
-      @{key="line_push_quota_limit";    value="200"},
-      @{key="line_push_quota_used";     value="0"}
-    ) | Where-Object { $_.value }
-    
-    foreach ($s in $settingsPayload) {
-      try {
-        Invoke-RestMethod -Uri "$sbUrl/rest/v1/settings" `
-          -Method Post -Headers (@{} + $headers + @{"Prefer"="resolution=merge-duplicates"}) `
-          -Body (ConvertTo-Json @($s)) -ErrorAction Stop | Out-Null
-      } catch {}
-    }
-    OK "LINE settings บันทึกแล้ว"
-  }
-
   # ─ สร้าง Storage bucket 'slips' ─
   INFO "สร้าง Storage bucket 'slips'..."
   try {
@@ -167,7 +134,6 @@ if ($sbServiceKey) {
   INFO "ไฟล์ที่ต้องรัน (ตามลำดับ):"
   INFO "  1. supabase\schema.sql"
   INFO "  2. supabase\rls.sql"
-  INFO "  3. supabase\line-migration.sql"
 }
 
 # ============================================================
@@ -180,7 +146,7 @@ if ($sbExe -and $sbAccessToken) {
   INFO "Link project..."
   & $sbExe link --project-ref $sbProject --password "" 2>&1 | Out-Null
 
-  $functions = @("line-webhook","line-push","cleanup-old-slips","send-email")
+  $functions = @("cleanup-old-slips","send-email")
   foreach ($fn in $functions) {
     $fnPath = "$ROOT\supabase\functions\$fn"
     if (Test-Path $fnPath) {
@@ -192,16 +158,13 @@ if ($sbExe -and $sbAccessToken) {
   }
 
   # ตั้งค่า secrets ใน Edge Functions
-  if ($lineToken)  { & $sbExe secrets set LINE_CHANNEL_ACCESS_TOKEN=$lineToken --project-ref $sbProject 2>&1 | Out-Null; OK "Secrets: LINE_CHANNEL_ACCESS_TOKEN" }
-  if ($lineSecret) { & $sbExe secrets set LINE_CHANNEL_SECRET=$lineSecret --project-ref $sbProject 2>&1 | Out-Null; OK "Secrets: LINE_CHANNEL_SECRET" }
+  if ($resendKey) { & $sbExe secrets set RESEND_API_KEY=$resendKey --project-ref $sbProject 2>&1 | Out-Null; OK "Secrets: RESEND_API_KEY" }
 
 } elseif (-not $sbExe) {
   WARN "ไม่มี Supabase CLI — deploy ด้วยตนเอง"
   INFO "รันใน PowerShell:"
   INFO "  supabase login"
   INFO "  supabase link --project-ref $sbProject"
-  INFO "  supabase functions deploy line-webhook"
-  INFO "  supabase functions deploy line-push"
   INFO "  supabase functions deploy cleanup-old-slips"
   INFO "  supabase functions deploy send-email"
 } else {
@@ -209,30 +172,10 @@ if ($sbExe -and $sbAccessToken) {
 }
 
 # ============================================================
-Title "6. ตั้งค่า LINE Webhook URL"
+Title "6. ตั้งค่า Email (Resend.com)"
 
-$webhookUrl = "https://mwigdgxrfpcmfjuztmip.supabase.co/functions/v1/line-webhook"
-INFO "Webhook URL ที่ต้องตั้งใน LINE Developers Console:"
-Write-Host "  $webhookUrl" -ForegroundColor Yellow
-INFO "ขั้นตอน:"
-INFO "  1. ไป https://developers.line.biz/console/"
-INFO "  2. เลือก Channel → Messaging API"
-INFO "  3. Webhook URL → วาง URL ด้านบน"
-INFO "  4. เปิด [Use Webhook] ✅"
-
-# ============================================================
-Title "7. สร้าง Rich Menu (ถ้ามี LINE Token)"
-
-if ($lineToken -and $lineLiffId) {
-  $rmFile = "$ROOT\supabase\line-richmenu.json"
-  if (Test-Path $rmFile) {
-    INFO "สร้าง Rich Menu..."
-    & "$ROOT\supabase\line-richmenu-setup.ps1" -ChannelToken $lineToken -LiffId $lineLiffId
-  }
-} else {
-  WARN "ไม่มี LINE Token/LIFF ID — ข้ามการสร้าง Rich Menu"
-  INFO "รันด้วยตนเอง: .\supabase\line-richmenu-setup.ps1 -ChannelToken 'xxx' -LiffId 'yyy'"
-}
+INFO "สมัครที่ https://resend.com แล้วยืนยัน Domain"
+INFO "คัดลอก API Key แล้วนำไปตั้งค่าใน Admin Settings หรือ Supabase Secrets"
 
 # ============================================================
 Title "8. GitHub Pages"
@@ -256,11 +199,10 @@ Write-Host @"
   ├─────────────────────────────────────────────┤
   │ GitHub Pages : $ghPagesUrl
   │ Supabase URL : https://mwigdgxrfpcmfjuztmip.supabase.co
-  │ Webhook URL  : $webhookUrl
   ├─────────────────────────────────────────────┤
   │ สิ่งที่ต้องทำเพิ่มเติม (manual):             │
   │  □ เปิด GitHub Pages ใน GitHub Settings      │
-  │  □ ตั้งค่า LINE Webhook URL                  │
+  │  □ ตั้งค่า Resend API Key                    │
   │  □ รัน SQL ถ้ายังไม่ได้รัน                  │
   └─────────────────────────────────────────────┘
 

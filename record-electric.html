@@ -802,15 +802,15 @@
 
             // ดึง adminSettings จาก Backend สำหรับใช้ใน printReport (ชื่อผู้ลงนาม)
             try {
-                    const settingsResult = await callBackendGet('getSettings');
+                    const settingsResult = await cachedCall('getSettings', {}, 600000);
                     if (settingsResult && settingsResult.success) {
                         cachedAdminSettings = settingsResult.data || {};
                     } else {
-                        cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+                        cachedAdminSettings = {};
                     }
                 } catch (e) {
                     console.error('getSettings error:', e);
-                    cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+                    cachedAdminSettings = {};
                 }
 
             await loadElectricSettings();

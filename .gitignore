@@ -35,3 +35,5 @@ supabase.exe
 supabase_cli.tar.gz
 supabase/.temp/
 
+
+node_modules/

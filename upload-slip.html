@@ -459,35 +459,10 @@
                     return;
                 }
 
-                // Fallback: บันทึกลง localStorage (ปกติจะไม่ถึงจุดนี้)
-                const slipData = {
-                    unitNumber: window.billingInfo.unitNumber,
-                    name: window.billingInfo.residentName,
-                    periodKey: window.billingInfo.periodKey,
-                    notifiedAmount: window.billingInfo.notifiedAmount,
-                    paidAmount: paidAmount,
-                    slipImages: resizedImages,
-                    submittedAt: new Date().toISOString(),
-                    status: 'pending'
-                };
-
-                const key = 'slipSubmissions_' + window.billingInfo.periodKey;
-                const submissions = JSON.parse(localStorage.getItem(key) || '[]');
-                const existingIndex = submissions.findIndex(s => s.unitNumber === slipData.unitNumber);
-                if (existingIndex !== -1) {
-                    if (!await ppkConfirm('คุณเคยส่งสลิปแล้ว ต้องการส่งใหม่หรือไม่?')) {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'ยืนยันการส่งสลิป';
-                        return;
-                    }
-                    submissions[existingIndex] = slipData;
-                } else {
-                    submissions.push(slipData);
-                }
-                localStorage.setItem(key, JSON.stringify(submissions));
-
-                ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
-                window.navigate('?page=dashboard');
+                // ถ้า Backend ไม่ตอบทั้ง success หรือ error → แจ้งผู้ใช้
+                ppkAlert('⚠️ ระบบไม่ตอบกลับ กรุณาลองใหม่อีกครั้ง');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ยืนยันการส่งสลิป';
 
             } catch (err) {
                 ppkAlert('เกิดข้อผิดพลาด: ' + err.message);
@@ -505,13 +480,11 @@
             document.getElementById('admin-override-panel').style.display = 'block';
 
             // โหลดรายการบ้าน/แฟลตทั้งหมด
-            let houses = JSON.parse(localStorage.getItem('housingData') || '[]');
-            if (houses.length === 0) {
-                try {
-                    const r = await cachedCall('getHousingList', {}, 600000);
-                    if (r && r.success) houses = r.data || [];
-                } catch(e) {}
-            }
+            let houses = [];
+            try {
+                const r = await cachedCall('getHousingList', {}, 600000);
+                if (r && r.success) houses = r.data || [];
+            } catch(e) {}
             // เรียงตัวเลข
             houses.sort((a, b) => {
                 const typeA = (a.display_number||'').startsWith('บ้าน') ? 0 : 1;
@@ -541,13 +514,11 @@
 
         async function fillResidentEmail(houseNumber) {
             // พยายามหา email ของผู้พักในบ้านนั้นจาก residents
-            let residents = JSON.parse(localStorage.getItem('residentsData') || '[]');
-            if (residents.length === 0) {
-                try {
-                    const r = await cachedCall('getResidentsList', {}, 600000);
-                    if (r && r.success) residents = r.data || [];
-                } catch(e) {}
-            }
+            let residents = [];
+            try {
+                const r = await cachedCall('getResidentsList', {}, 600000);
+                if (r && r.success) residents = r.data || [];
+            } catch(e) {}
             const found = residents.find(r => r.house_number === houseNumber && r.resident_type !== 'cohabitant');
             if (found && found.email) {
                 document.getElementById('admin-email-input').value = found.email;

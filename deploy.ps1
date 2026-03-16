@@ -20,7 +20,7 @@ Clear-Host
 Write-Cyan @"
  =========================================
   HOME PPK 2026 — Deployment Script
-  Supabase + LINE + Email (Resend.com)
+  Supabase + Email (Resend.com)
  =========================================
 "@
 
@@ -43,32 +43,22 @@ if (-not $hasCLI) {
 #  STEP 1: รัน SQL Migration
 # ============================================================
 function Run-SQLMigration {
-    Write-Cyan "`n[1/3] รัน SQL Migration (line-migration.sql)..."
-    $sqlFile = "$PSScriptRoot\supabase\line-migration.sql"
-    if (-not (Test-Path $sqlFile)) {
-        Write-Red "  ❌ ไม่พบไฟล์: supabase\line-migration.sql"
-        return $false
+    Write-Cyan "`n[1/3] รัน SQL Migrations..."
+    $sqlFiles = @("$PSScriptRoot\supabase\schema.sql", "$PSScriptRoot\supabase\rls.sql")
+
+    foreach ($sqlFile in $sqlFiles) {
+        $fname = Split-Path $sqlFile -Leaf
+        if (-not (Test-Path $sqlFile)) {
+            Write-Yellow "  ⚠ ไม่พบไฟล์: $fname"
+            continue
+        }
+        Write-White "  📄 $fname"
     }
 
-    if ($hasCLI) {
-        Write-White "  กำลังรัน SQL ผ่าน Supabase CLI..."
-        try {
-            supabase db reset --no-confirm 2>&1 | Out-Null
-            supabase db push --file $sqlFile 2>&1
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -eq 0) {
-                Write-Green "  ✅ รัน SQL Migration สำเร็จ"
-                return $true
-            }
-        } catch {}
-    }
-
-    # Fallback: แสดงวิธีทำด้วยตนเอง
-    Write-Yellow "  📋 วิธีรัน SQL ด้วยตนเอง:"
+    Write-Yellow "  📋 วิธีรัน SQL:"
     Write-Yellow "     1. เปิด https://supabase.com/dashboard"
     Write-Yellow "     2. เลือก Project ของคุณ → SQL Editor"
-    Write-Yellow "     3. เปิดไฟล์: supabase\line-migration.sql"
-    Write-Yellow "     4. วางเนื้อหาใน SQL Editor แล้วกด Run"
+    Write-Yellow "     3. รัน schema.sql แล้วตามด้วย rls.sql"
     Write-White ""
     $ans = Read-Host "  รัน SQL ด้วยตนเองเรียบร้อยแล้วหรือยัง? (y/n)"
     if ($ans -eq 'y' -or $ans -eq 'Y') {
@@ -84,7 +74,7 @@ function Run-SQLMigration {
 # ============================================================
 function Deploy-EdgeFunctions {
     Write-Cyan "`n[2/3] Deploy Supabase Edge Functions..."
-    $functions = @("send-email", "line-push", "line-webhook", "cleanup-old-slips")
+    $functions = @("send-email", "cleanup-old-slips")
 
     if (-not $hasCLI) {
         Write-Yellow "  📋 วิธี Deploy Edge Functions ด้วยตนเอง:"
@@ -123,7 +113,7 @@ function Set-Secrets {
     Write-Cyan "`n[3/3] ตั้งค่า Environment Secrets..."
 
     Write-White "  คุณสามารถตั้งค่า secrets สองวิธี:"
-    Write-White "  A) ตั้งผ่าน Admin Settings → LINE & อีเมล (แนะนำ, เก็บในฐานข้อมูล)"
+    Write-White "  A) ตั้งผ่าน Admin Settings → อีเมล (แนะนำ, เก็บในฐานข้อมูล)"
     Write-White "  B) ตั้งผ่าน Supabase CLI (เก็บใน Supabase Vault)"
     Write-White ""
 
@@ -137,20 +127,8 @@ function Set-Secrets {
             supabase secrets set RESEND_API_KEY="$resendKey" 2>&1
             Write-Green "  ✅ ตั้งค่า RESEND_API_KEY แล้ว"
         }
-
-        $lineToken = Read-Host "  LINE Channel Access Token หรือ 's' เพื่อข้าม"
-        if ($lineToken -ne 's' -and $lineToken.Length -gt 4) {
-            supabase secrets set LINE_CHANNEL_ACCESS_TOKEN="$lineToken" 2>&1
-            Write-Green "  ✅ ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN แล้ว"
-        }
-
-        $lineSecret = Read-Host "  LINE Channel Secret หรือ 's' เพื่อข้าม"
-        if ($lineSecret -ne 's' -and $lineSecret.Length -gt 4) {
-            supabase secrets set LINE_CHANNEL_SECRET="$lineSecret" 2>&1
-            Write-Green "  ✅ ตั้งค่า LINE_CHANNEL_SECRET แล้ว"
-        }
     } else {
-        Write-Yellow "  📋 ตั้งค่าใน Admin Settings → 탭 LINE & อีเมล"
+        Write-Yellow "  📋 ตั้งค่าใน Admin Settings → อีเมล"
         Write-Yellow "     หลังจาก Login ด้วย admin account"
     }
 
@@ -164,22 +142,16 @@ function Show-Summary {
     Write-Cyan "`n====== สรุปสิ่งที่ต้องทำต่อ ======"
     Write-White ""
     Write-Green "✅ ไฟล์ที่สร้างแล้ว:"
-    Write-White "   • supabase\line-migration.sql"
+    Write-White "   • supabase\schema.sql"
+    Write-White "   • supabase\rls.sql"
     Write-White "   • supabase\functions\send-email\index.ts"
-    Write-White "   • supabase\functions\line-push\index.ts"
-    Write-White "   • supabase\functions\line-webhook\index.ts"
     Write-White "   • supabase\functions\cleanup-old-slips\index.ts"
-    Write-White "   • liff-register.html, liff-dashboard.html, liff-slip.html"
-    Write-White "   • liff-history.html, liff-forms.html"
     Write-White "   • index.html (Landing Page)"
     Write-White ""
     Write-Yellow "📋 ขั้นตอนต่อไป (ทำด้วยตนเอง):"
-    Write-White "   1. เปิด Admin Settings → LINE & อีเมล → กรอก LINE Token + Resend Key"
-    Write-White "   2. ไป LINE Developers Console (developers.line.biz)"
-    Write-White "      → Messaging API → Webhook URL → วาง URL จากหน้า Admin Settings"
-    Write-White "   3. สร้าง LIFF App ใน LINE Developers → เปิด LIFF → นำ LIFF ID มากรอก"
-    Write-White "   4. สมัคร Resend.com → ยืนยัน Domain → คัดลอก API Key"
-    Write-White "   5. ทดสอบส่ง LINE และอีเมลจากหน้า Admin Settings"
+    Write-White "   1. เปิด Admin Settings → อีเมล → กรอก Resend Key"
+    Write-White "   2. สมัคร Resend.com → ยืนยัน Domain → คัดลอก API Key"
+    Write-White "   3. ทดสอบส่งอีเมลจากหน้า Admin Settings"
     Write-White ""
     Write-Cyan "====================================="
     Write-Green "  HOME PPK 2026 พร้อมใช้งาน! 🎉"
@@ -192,7 +164,7 @@ function Show-Summary {
 # ============================================================
 Write-White ""
 Write-White "สคริปต์นี้จะช่วย Deploy ระบบ HOME PPK 2026:"
-Write-White "  1. รัน SQL Migration (เพิ่ม LINE columns + settings rows)"
+Write-White "  1. รัน SQL Migrations (schema + RLS)"
 Write-White "  2. Deploy Supabase Edge Functions"
 Write-White "  3. ตั้งค่า Environment Secrets"
 Write-White ""

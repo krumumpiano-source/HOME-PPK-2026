@@ -1,5 +1,6 @@
-# ========================================
+﻿# ========================================
 # Deploy Supabase Edge Functions
+# HOME PPK 2026
 # ========================================
 
 param(
@@ -14,15 +15,15 @@ if ($Help) {
   .\deploy-edge-functions.ps1 [-Function <name>] [-ProjectRef <project-ref>]
 
 Parameters:
-  -Function     ชื่อ function ที่ต้องการ deploy (line-webhook | line-push | cleanup-old-slips | all)
+  -Function     ชื่อ function ที่ต้องการ deploy (send-email | cleanup-old-slips | all)
                 ค่าเริ่มต้น: all
   -ProjectRef   Supabase Project Reference ID (ถ้าไม่ระบุจะใช้จาก config.js)
   -Help         แสดงวิธีใช้งาน
 
 ตัวอย่าง:
-  .\deploy-edge-functions.ps1                           # Deploy ทั้งหมด
-  .\deploy-edge-functions.ps1 -Function line-webhook   # Deploy เฉพาะ line-webhook
-  .\deploy-edge-functions.ps1 -ProjectRef abcdefg      # ระบุ project ref
+  .\deploy-edge-functions.ps1                            # Deploy ทั้งหมด
+  .\deploy-edge-functions.ps1 -Function send-email      # Deploy เฉพาะ send-email
+  .\deploy-edge-functions.ps1 -ProjectRef abcdefg       # ระบุ project ref
 
 ข้อกำหนด:
   - ติดตั้ง Supabase CLI: https://supabase.com/docs/guides/cli
@@ -82,8 +83,6 @@ if (-not $ProjectRef) {
         Write-Host "❌ ไม่พบ Project Reference ID" -ForegroundColor Red
         Write-Host "`nกรุณาระบุ Project Ref:" -ForegroundColor Yellow
         Write-Host "  .\deploy-edge-functions.ps1 -ProjectRef <project-ref>`n" -ForegroundColor Cyan
-        Write-Host "หรือหา Project Ref ได้จาก:" -ForegroundColor White
-        Write-Host "  https://supabase.com/dashboard/project/<project-ref>/settings/general`n" -ForegroundColor Gray
         exit 1
     }
 }
@@ -104,7 +103,7 @@ Write-Host "✅ Project linked" -ForegroundColor Green
 # Deploy functions
 $functions = @()
 if ($Function -eq "all") {
-    $functions = @("line-webhook", "line-push", "cleanup-old-slips")
+    $functions = @("send-email", "cleanup-old-slips")
 } else {
     $functions = @($Function)
 }
@@ -152,11 +151,9 @@ Write-Host ""
 if ($success -gt 0) {
     Write-Host "🎉 Deploy เสร็จสมบูรณ์!" -ForegroundColor Green
     Write-Host "`nขั้นตอนถัดไป:" -ForegroundColor Yellow
-    Write-Host "1. ตั้งค่า Environment Variables ใน Supabase Dashboard" -ForegroundColor White
+    Write-Host "1. ตั้งค่า Resend API Key ใน Supabase Dashboard → Edge Functions" -ForegroundColor White
     Write-Host "   https://supabase.com/dashboard/project/$ProjectRef/settings/functions" -ForegroundColor Gray
-    Write-Host "2. ตั้งค่า LINE Webhook URL:" -ForegroundColor White
-    Write-Host "   https://$ProjectRef.supabase.co/functions/v1/line-webhook" -ForegroundColor Cyan
-    Write-Host "3. ทดสอบ functions ด้วย curl หรือ Postman`n" -ForegroundColor White
+    Write-Host "2. ทดสอบ functions ด้วย curl หรือ Postman`n" -ForegroundColor White
 }
 
 if ($failed -gt 0) {

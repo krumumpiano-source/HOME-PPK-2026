@@ -1,4 +1,4 @@
-# ✅ สรุปการแก้ไขระบบ HOME PPK 2026
+﻿# ✅ สรุปการแก้ไขระบบ HOME PPK 2026
 
 **📅 วันที่:** 7 มีนาคม 2569 (2026)  
 **👤 ผู้ดำเนินการ:** GitHub Copilot AI Assistant  
@@ -328,3 +328,8 @@ curl -X POST https://[PROJECT_REF].supabase.co/functions/v1/line-webhook
 - ทดสอบทีละขั้นตอนตามคู่มือ
 
 **ขอให้โชคดีกับการ deploy ครับ!** 🍀
+
+
+---
+
+> **หมายเหตุ (16 มี.ค. 2569):** LINE Integration ถูกยกเลิกและลบออกจากระบบทั้งหมดแล้ว รวมถึง LIFF pages, Edge Functions (line-webhook, line-push), line-migration.sql, และ LINE-SETUP-GUIDE.md ระบบใช้เฉพาะอีเมล (Resend.com) สำหรับการแจ้งเตือนเท่านั้น

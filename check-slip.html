@@ -799,15 +799,9 @@
           });
           if (result && result.success) {
             unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
-            // ส่ง LINE + อีเมลใบเสร็จอัตโนมัติ
+            // ส่งอีเมลใบเสร็จอัตโนมัติ
             const { monthName, year: yr } = getSelectedPeriod();
             const paidDate = new Date().toLocaleDateString('th-TH');
-            try {
-              await callBackend('linePush', {
-                houseNumber: unit.unitNumber,
-                message: `✅ อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}\nบ้านพัก: ${unit.unitNumber}\nยอดชำระ: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท\nวันที่: ${paidDate}\nสถานะ: ได้รับชำระเรียบร้อยแล้ว`
-              });
-            } catch(e) {}
             try {
               if (unit.email) {
                 const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
@@ -880,7 +874,6 @@
 <p>---<br>${emailSignature}</p></div>`;
 
       let emailSent = false;
-      let lineSent  = false;
 
       if (unit.email) {
         try {
@@ -888,19 +881,11 @@
           emailSent = er && er.success;
         } catch (e) { console.error('sendEmail reminder error:', e); }
       }
-      try {
-        const lineMsg = `แจ้งเตือนค่าสาธารณูปโภค ${monthName} ${year}\nบ้านพัก: ${unit.unitNumber}\nยอดค้าง: ${formatMoney(unit.notifiedAmount)} บาท\nกำหนด: ${dueDays} วันทำการ\n\n${emailReminderNote}`;
-        const lr = await callBackend('linePush', { houseNumber: unit.unitNumber, message: lineMsg });
-        lineSent = lr && lr.success;
-      } catch (e) { console.error('linePush reminder error:', e); }
 
-      const channels = [];
-      if (emailSent) channels.push('อีเมล');
-      if (lineSent)  channels.push('LINE');
-      if (channels.length > 0) {
-        ppkAlert(`✅ ส่งเตือนไปยัง ${unit.unitNumber} ผ่าน: ${channels.join(' + ')}`);
+      if (emailSent) {
+        ppkAlert(`✅ ส่งเตือนไปยัง ${unit.unitNumber} ทางอีเมลเรียบร้อย`);
       } else {
-        ppkAlert(`⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล / ยังไม่ได้เชื่อม LINE' : 'แสดงไม่สำเร็จ'}`);
+        ppkAlert(`⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล' : 'ส่งอีเมลไม่สำเร็จ'}`);
       }
     }
 
@@ -933,7 +918,6 @@
 <p>---<br>${emailSig}</p></div>`;
 
       let emailSent = false;
-      let lineSent  = false;
 
       if (unit.email) {
         try {
@@ -941,18 +925,10 @@
           emailSent = er && er.success;
         } catch(e) { console.error('sendReceiptEmail error:', e); }
       }
-      try {
-        const lineMsg = `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year}\nบ้านพัก: ${unit.unitNumber}\nยอดชำระ: ${formatMoney(unit.paidAmount)} บาท\nวันที่: ${paidDate}\n\n${emailReceiptNote}`;
-        const lr = await callBackend('linePush', { houseNumber: unit.unitNumber, message: lineMsg });
-        lineSent = lr && lr.success;
-      } catch(e) { console.error('linePush receipt error:', e); }
 
-      const channels = [];
-      if (emailSent) channels.push('อีเมล');
-      if (lineSent)  channels.push('LINE');
-      ppkAlert(channels.length > 0
-        ? `✅ ส่งใบเสร็จไปยัง ${unit.unitNumber} ผ่าน: ${channels.join(' + ')}`
-        : `⚠️ ไม่มีอีเมล / ยังไม่ได้เชื่อม LINE (ตั้งค่าใน Admin Settings ก่อน)`);
+      ppkAlert(emailSent
+        ? `✅ ส่งใบเสร็จไปยัง ${unit.unitNumber} ทางอีเมลเรียบร้อย`
+        : `⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล (ตั้งค่าใน Admin Settings ก่อน)' : 'ส่งอีเมลไม่สำเร็จ'}`);
     }
 
     // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
@@ -1205,7 +1181,7 @@
           }
         } catch (e) {
           console.error('getSettings error:', e);
-          cachedAdminSettings = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
+          cachedAdminSettings = {};
         }
 
       initPeriodSelectors();

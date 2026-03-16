@@ -1,4 +1,4 @@
-# 📋 สถานะโครงการ HOME PPK 2026
+﻿# 📋 สถานะโครงการ HOME PPK 2026
 
 **บันทึก:** 2 มีนาคม 2569 (2026)  
 **เวอร์ชัน:** หลัง Migration จาก Google Apps Script → Supabase  
@@ -11,10 +11,8 @@
 2. [สิ่งที่ทำเสร็จแล้ว](#2-สิ่งที่ทำเสร็จแล้ว)
 3. [**Master Priority List — ลำดับงานทั้งหมด**](#3-master-priority-list)
 4. [Bug ที่พบและยังไม่ได้แก้](#4-bug-ที่พบและยังไม่ได้แก้)
-5. [แผน LINE LIFF (อนุมัติแล้ว)](#5-แผน-line-liff)
 6. [แผน Auto-Delete Slip Images](#6-แผน-auto-delete-slip-images)
 7. [SQL สำหรับ Reset Admin](#7-sql-สำหรับ-reset-admin)
-8. [LINE Migration SQL](#8-line-migration-sql)
 9. [ขั้นตอน Deploy ระบบ](#9-ขั้นตอน-deploy-ระบบ)
 10. [ประมาณการโควต้าและค่าใช้จ่าย](#10-ประมาณการโควต้าและค่าใช้จ่าย)
 11. [โครงสร้าง DB Tables](#11-โครงสร้าง-db-tables-สรุป)
@@ -29,12 +27,11 @@
 ┌─────────────────────────────────────────────────────┐
 │                   FRONTEND                          │
 │  ┌──────────────┐        ┌─────────────────────┐   │
-│  │ ทีมงาน (Web) │        │ ผู้พักอาศัย (LINE)  │   │
-│  │ GitHub Pages │        │  LIFF 2.x (ฟรี)    │   │
-│  └──────┬───────┘        └──────────┬──────────┘   │
-└─────────┼──────────────────────────┼───────────────┘
-          │ HTTPS                    │ LIFF SDK
-          ▼                          ▼
+│  │ ทีมงาน (Web)                               │
+│  └──────┬───────┘                                 │
+└─────────┼─────────────────────────────────────────┘
+          │ HTTPS
+          ▼
 ┌─────────────────────────────────────────────────────┐
 │                  SUPABASE (FREE TIER)               │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │
@@ -45,20 +42,16 @@
           │
           ▼
 ┌─────────────────────────────────────────────────────┐
-│               LINE Messaging API                    │
-│  Push Notify (200/เดือน ฟรี) + Reply (ไม่จำกัด)   │
-└─────────────────────────────────────────────────────┘
+
 ```
 
 ### เทคโนโลยี
 | Component | Technology | Cost |
-|-----------|------------|------|
+||-|------|
 | Frontend (ทีมงาน) | HTML/CSS/JS บน GitHub Pages | ฟรี |
-| Frontend (ผู้พัก) | LINE LIFF 2.x | ฟรี |
 | Database | Supabase PostgreSQL | ฟรี (500MB) |
 | Edge Functions | Supabase Deno Functions | ฟรี (500K req/เดือน) |
 | File Storage | Supabase Storage | ฟรี (1GB) |
-| LINE Push | Messaging API Free Plan | ฟรี (200 push/เดือน) |
 | Auth | SHA-256 + session tokens ใน DB | — |
 
 ### ไฟล์หลัก
@@ -87,9 +80,7 @@
 - สร้าง `supabase/config.example.js` เป็น template สำหรับ dev ใหม่
 
 ### ✅ Architecture Planning (อนุมัติแล้ว)
-- แผน LINE LIFF สำหรับผู้พักอาศัย (เหมือนหมอพร้อม)
 - แผน auto-delete slip images อายุ >2 ปี (แต่เก็บ DB records ตลอดกาล)
-- ประมาณการโควต้า LINE 200 push/เดือน ≈ 95 push จริง (60 ห้อง) — อยู่ใน free
 
 ### ✅ Documentation
 - อัปเดต README.md (ลบ GAS references)
@@ -113,38 +104,20 @@
 ### Phase 2: Bug Fixes (AI เขียนให้ได้)
 
 | # | งาน | ไฟล์ | ความสำคัญ |
-|---|-----|------|-----------|
+|---|-----|------||
 | 7 | แก้ `imageUrl: null` bug | upload-slip.html | 🔴 Critical |
 | 8 | เพิ่ม missing ppk-api.js actions | ppk-api.js | 🟡 High |
 | 9 | Push GitHub → เปิด GitHub Pages | GitHub | 🟡 High |
 
-### Phase 3: LINE Integration (AI เขียนให้ได้)
-
-| # | งาน | รายละเอียด |
-|---|-----|-----------|
-| 10 | รัน `supabase/line-migration.sql` | เพิ่ม columns: `line_user_id`, `image_deleted_at`, table `line_push_log` |
-| 11 | สร้าง LINE OA + LIFF App | manual ที่ LINE Developers Console |
-| 12 | ออกแบบ Rich Menu (รูปภาพ) | 2500×1686px, 6 ปุ่ม |
-| 13 | Edge Function: `line-webhook` | รับ events จาก LINE → ประมวลผล |
-| 14 | Edge Function: `line-push` | ส่ง push message ไปหาผู้พัก |
-| 15 | Edge Function: `cleanup-old-slips` | ลบรูปสลิปอายุ >2 ปีทุกเดือน |
-| 16 | LIFF Page: `liff-register.html` | ผู้พักลงทะเบียนผ่าน LINE + QR |
-| 17 | LIFF Page: `liff-dashboard.html` | ผู้พักดูยอดค้างชำระ/สถานะ |
-| 18 | LIFF Page: `liff-slip.html` | ผู้พักส่งสลิปผ่าน LINE |
-| 19 | LIFF Page: `liff-history.html` | ผู้พักดูประวัติการชำระ |
-| 20 | LIFF Page: `liff-forms.html` | ผู้พักยื่นคำร้องต่างๆ |
-
-### Phase 4: Admin Page Modifications (AI เขียนให้ได้)
+### Phase 3: UX Improvements + Admin (AI เขียนให้ได้)
 
 | # | งาน | ไฟล์ |
-|---|-----|------|
-| 21 | เพิ่ม LINE tab + quota meter | admin-settings.html |
-| 22 | เพิ่มปุ่ม "ส่ง LINE" + quota counter | payment-notification.html |
-| 23 | เพิ่ม LINE push หลัง approve/reject + UI รูปถูกลบ | check-slip.html |
-| 24 | เปลี่ยนเป็น Landing Page (QR LINE OA) | index.html |
-
----
-
+|---|------|------|
+| 10 | Dashboard KPI Real-time | team-management.html |
+| 11 | Badge จำนวนงานค้างบน Sidebar | ppk-nav.js |
+| 12 | Toast Notification แทน alert() | ppk-utils.js |
+| 13 | Loading & Error States | ทุกหน้า |
+| 14 | Export Excel (SheetJS) | accounting, payment-notification |
 ## 4. Bug ที่พบและยังไม่ได้แก้
 
 ### 🔴 Critical: upload-slip.html — imageUrl = null
@@ -191,67 +164,12 @@ const submitResult = await callBackend('submitSlip', {
 Actions ต่อไปนี้ยังไม่มีใน `ppk-api.js` → ถ้ากดหน้านั้นจะ throw "Unknown action":
 
 | Action | ใช้ใน | สิ่งที่ต้องทำ |
-|--------|-------|--------------|
+|--------|-------|---|
 | `loadAccountingData` | accounting.html | query `outstanding` + `payment_history` |
 | `calculateAutoEntries` | accounting.html | คำนวณยอดสรุปบัญชี |
 | `saveAccounting` | accounting.html | insert `accounting_entries` |
 | `resetPassword` | forgot-password.html | update `users.password_hash` |
 | `findEmail` | forgot-email.html | query `users` by `id_card` |
-
----
-
-## 5. แผน LINE LIFF
-
-### User Journey (ผู้พักอาศัย)
-```
-QR Code ที่ index.html / บอร์ดประกาศจริง
-    ↓
-เพิ่มเพื่อน LINE OA
-    ↓
-Rich Menu: [ลงทะเบียน] [ยอดค้าง] [ส่งสลิป] [ประวัติ] [คำร้อง] [ติดต่อ]
-    ↓
-กดปุ่มใดก็ตาม → เปิด LIFF Page
-    ↓
-LIFF ดึง LINE User ID → ยืนยันตัวตน → แสดงข้อมูล
-```
-
-### Rich Menu (6 ปุ่ม)
-| ปุ่ม | Action | LIFF URL |
-|-----|--------|---------|
-| 🏠 ลงทะเบียน | เปิด LIFF | liff-register.html |
-| 💰 ยอดค้าง | เปิด LIFF | liff-dashboard.html |
-| 📎 ส่งสลิป | เปิด LIFF | liff-slip.html |
-| 📋 ประวัติ | เปิด LIFF | liff-history.html |
-| 📝 คำร้อง | เปิด LIFF | liff-forms.html |
-| 📞 ติดต่อ | ส่ง message | reply ฟรี |
-
-### Edge Functions ที่ต้องสร้าง
-
-**1. `line-webhook` (supabase/functions/line-webhook/index.ts)**
-- รับ POST จาก LINE Platform
-- verify signature ด้วย `X-Line-Signature`
-- event `follow` → บันทึก `line_user_id` ใน DB
-- event `message` → reply อัตโนมัติ
-
-**2. `line-push` (supabase/functions/line-push/index.ts)**
-- รับ call จาก admin pages
-- ส่ง push message ไปหา `line_user_id` ที่ระบุ
-- บันทึกลง `line_push_log` table
-- ใช้ Channel Access Token จาก `settings` table
-
-**3. `cleanup-old-slips` (supabase/functions/cleanup-old-slips/index.ts)**
-- trigger ด้วย pg_cron ทุกวันที่ 1 ของเดือน
-- หา records ที่ `created_at < NOW() - INTERVAL '2 years'` และ `image_url IS NOT NULL`
-- ลบไฟล์ออกจาก Supabase Storage
-- set `image_url = null`, `image_deleted_at = NOW()`
-- **ไม่ลบ DB record** — เก็บข้อมูล: house_number, period, amount, status
-
-### Push Notifications (3 events เท่านั้น)
-| Event | ผู้รับ | ข้อความ |
-|-------|-------|---------|
-| แจ้งบิล | ผู้พักทุกห้อง | "💰 บิลค่าน้ำ-ไฟเดือน {เดือน}: {ยอด} บาท กรุณาชำระภายใน {วันสุดท้าย}" |
-| อนุมัติสลิป | ผู้พักที่ส่ง | "✅ สลิปการชำระเงินเดือน {เดือน} ได้รับการยืนยันแล้ว" |
-| ปฏิเสธสลิป | ผู้พักที่ส่ง | "❌ สลิปเดือน {เดือน} ไม่ผ่าน เหตุผล: {reason} กรุณาส่งใหม่" |
 
 ---
 
@@ -351,50 +269,6 @@ SELECT id, email, first_name, role, is_active FROM public.users;
 
 ---
 
-## 8. LINE Migration SQL
-
-> บันทึกเป็น `supabase/line-migration.sql` แล้วรันใน SQL Editor
-
-```sql
--- เพิ่ม LINE columns ใน residents
-ALTER TABLE public.residents 
-ADD COLUMN IF NOT EXISTS line_user_id TEXT UNIQUE,
-ADD COLUMN IF NOT EXISTS line_display_name TEXT,
-ADD COLUMN IF NOT EXISTS line_picture_url TEXT,
-ADD COLUMN IF NOT EXISTS line_linked_at TIMESTAMPTZ;
-
--- เพิ่ม image_deleted_at ใน slip_submissions
-ALTER TABLE public.slip_submissions
-ADD COLUMN IF NOT EXISTS image_deleted_at TIMESTAMPTZ DEFAULT NULL;
-
--- สร้าง line_push_log table
-CREATE TABLE IF NOT EXISTS public.line_push_log (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    line_user_id TEXT NOT NULL,
-    message_type TEXT NOT NULL,        -- 'bill_notify' | 'slip_approved' | 'slip_rejected'
-    message_text TEXT,
-    related_id TEXT,                   -- slip_id หรือ outstanding_id
-    sent_at TIMESTAMPTZ DEFAULT NOW(),
-    success BOOLEAN DEFAULT true,
-    error_message TEXT
-);
-
--- เพิ่ม LINE settings
-INSERT INTO public.settings (key, value, description) VALUES
-('line_channel_access_token', '', 'LINE Channel Access Token'),
-('line_channel_secret', '', 'LINE Channel Secret'),
-('line_liff_id', '', 'LINE LIFF App ID'),
-('line_push_quota_used', '0', 'จำนวน push ที่ใช้ไปเดือนนี้'),
-('line_push_quota_reset_date', '', 'วันที่ reset โควต้า')
-ON CONFLICT (key) DO NOTHING;
-
--- Index
-CREATE INDEX IF NOT EXISTS idx_residents_line_user_id ON public.residents(line_user_id);
-CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sent_at);
-```
-
----
-
 ## 9. ขั้นตอน Deploy ระบบ
 
 ### Step-by-Step (เรียงตามลำดับ)
@@ -410,7 +284,6 @@ CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sen
 3. SQL Editor รัน:
    └─ schema.sql  (สร้าง tables)
    └─ rls.sql     (เปิด security)
-   └─ line-migration.sql  (LINE columns)
    └─ Admin SQL (ข้อ 7)   (สร้าง admin accounts)
 
 4. Storage → New Bucket
@@ -422,31 +295,16 @@ CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sen
    └─ push code ทั้งหมด (config.js จะ ignored)
    └─ Settings → Pages → Deploy from main branch
 
-6. LINE Developers Console:
-   └─ สร้าง Provider
-   └─ สร้าง Messaging API Channel
-   └─ สร้าง LIFF App (domain = GitHub Pages URL)
-   └─ copy Channel Access Token + Secret
 
-7. Supabase → Settings → ใส่ LINE tokens
 
 8. Deploy Edge Functions:
-   └─ supabase functions deploy line-webhook
-   └─ supabase functions deploy line-push
    └─ supabase functions deploy cleanup-old-slips
 
-9. LINE → Webhook URL = Edge Function URL
 
-10. Rich Menu:
-    └─ ออกแบบรูป 2500×1686px
-    └─ upload + กำหนด actions
-    └─ set as default
 
 11. ทดสอบ:
     └─ scan QR → เพิ่มเพื่อน
-    └─ ลงทะเบียนผ่าน LIFF
     └─ ส่งสลิปทดสอบ
-    └─ admin approve → ตรวจสอบ LINE push
 ```
 
 ---
@@ -455,20 +313,13 @@ CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sen
 
 ### Supabase Free Tier
 | Resource | Free Limit | การใช้จริง | สถานะ |
-|----------|-----------|-----------|-------|
+|----------|||-------|
 | Database | 500MB | ~50MB (60 ห้อง 3 ปี) | ✅ OK |
 | Storage | 1GB | ~27MB/เดือน | ✅ ~3 ปี |
 | Edge Functions | 500K req/เดือน | ~200 req/เดือน | ✅ OK |
 | Bandwidth | 5GB/เดือน | ~2GB/เดือน | ✅ OK |
 
-### LINE Free Plan
-| Resource | Free Limit | การใช้จริง | สถานะ |
-|----------|-----------|-----------|-------|
-| Push Messages | 200/เดือน | ~95/เดือน (60 ห้อง) | ✅ OK |
-| Reply Messages | ไม่จำกัด | ตามที่ผู้พักถาม | ✅ OK |
-| LIFF | ฟรี | — | ✅ OK |
-| Rich Menu | ฟรี | — | ✅ OK |
-
+||
 ### คำนวณ Push Messages
 ```
 60 ห้อง × 1 แจ้งบิล/เดือน = 60 push
@@ -491,14 +342,13 @@ CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sen
 |-------|-------|
 | `users` | ผู้ใช้งานทีมงาน (admin, team) |
 | `sessions` | session tokens |
-| `residents` | ผู้พักอาศัย + LINE user ID |
+| `residents` | ผู้พักอาศัย |
 | `outstanding` | ยอดค้างชำระรายเดือน |
 | `slip_submissions` | สลิปที่ส่งมา + image_url |
 | `payment_history` | ประวัติการชำระ |
 | `repair_requests` | คำร้องแจ้งซ่อม |
 | `housing_requests` | คำร้องขอเข้าพัก |
-| `settings` | ตั้งค่าระบบ (LINE tokens, etc.) |
-| `line_push_log` | บันทึกการส่ง LINE push |
+| `settings` | ตั้งค่าระบบ |
 
 ---
 
@@ -506,15 +356,7 @@ CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sen
 
 | ไฟล์ | สถานะ | วิธีสร้าง |
 |------|-------|----------|
-| `supabase/line-migration.sql` | ❌ ยังไม่มี | ดู Section 8 |
-| `supabase/functions/line-webhook/index.ts` | ❌ ยังไม่มี | AI เขียนให้ |
-| `supabase/functions/line-push/index.ts` | ❌ ยังไม่มี | AI เขียนให้ |
 | `supabase/functions/cleanup-old-slips/index.ts` | ❌ ยังไม่มี | AI เขียนให้ |
-| `liff-register.html` | ❌ ยังไม่มี | AI เขียนให้ |
-| `liff-dashboard.html` | ❌ ยังไม่มี | AI เขียนให้ |
-| `liff-slip.html` | ❌ ยังไม่มี | AI เขียนให้ |
-| `liff-history.html` | ❌ ยังไม่มี | AI เขียนให้ |
-| `liff-forms.html` | ❌ ยังไม่มี | AI เขียนให้ |
 
 ---
 
@@ -588,7 +430,7 @@ CREATE INDEX IF NOT EXISTS idx_line_push_log_sent_at ON public.line_push_log(sen
 ปัจจุบันบันทึกได้แค่รูปภาพ ควรเพิ่มปุ่ม **📥 ดาวน์โหลด Excel** ใน:
 
 | หน้า | ข้อมูลที่ export |
-|------|----------------|
+|------|-----|
 | payment-notification.html | ตารางยอดชำระทุกห้อง |
 | accounting.html | บัญชีรายรับรายจ่าย |
 | monthly-withdraw.html | ยอดเบิกประจำเดือน |
@@ -735,252 +577,3 @@ function showToast(message, type = 'success') {
 
 ---
 
-## 14. ระบบแจ้งเตือน LINE (เพิ่มเติม — อนุมัติแล้ว)
-
-> ผู้พักอาศัยที่แอดเพื่อน LINE OA แล้วจะได้รับข้อความอัตโนมัติตาม events ต่อไปนี้  
-> ทั้งหมดใช้ **Push Message** (หักโควต้า 200/เดือน) ยกเว้น reply ที่ฟรีไม่จำกัด
-
----
-
-### 14.1 แจ้งยอดชำระประจำเดือน (Bill Notification)
-
-**ทริกเกอร์:** ทีมงานกด "ส่ง LINE แจ้งบิล" บนหน้า `payment-notification.html`  
-**ผู้รับ:** ผู้พักทุกห้องที่มี `line_user_id` บันทึกในระบบ  
-**รูปแบบข้อความ:**
-
-```
-📋 แจ้งยอดค่าน้ำ-ไฟ เดือน {เดือน/ปี}
-ห้อง {เลขห้อง} — {ชื่อผู้พัก}
-
-💧 ค่าน้ำ       {หน่วย} หน่วย = {ยอด} บาท
-⚡ ค่าไฟ        {หน่วย} หน่วย = {ยอด} บาท
-🏢 ค่าส่วนกลาง                = {ยอด} บาท
-─────────────────────────
-💰 รวมทั้งสิ้น               = {ยอดรวม} บาท
-
-📅 กรุณาชำระภายในวันที่ {วันสุดท้าย}
-📎 ส่งสลิปผ่าน LINE ได้เลย → [ส่งสลิป]
-```
-
-**ปุ่ม Quick Reply:** `[📎 ส่งสลิปเดี๋ยวนี้]` → เปิด `liff-slip.html`
-
----
-
-### 14.2 ทวงชำระ — แอดมินกดเองรายห้อง (Manual Reminder)
-
-**ทริกเกอร์:** แอดมินกดปุ่ม **📲 ทวง LINE** เฉพาะห้องที่ต้องการใน `check-slip.html`  
-**เหตุผล:** ส่วนใหญ่ค้างจ่ายจริงแค่ 5-10 ห้อง แอดมินรู้บริบทแต่ละห้องดีกว่าระบบ ประหยัดโควต้าได้มาก
-
-**เงื่อนไข:** กดได้เฉพาะห้องที่ `outstanding` = `unpaid` และยังไม่มีสลิป หรือสลิปถูกปฏิเสธ
-
-**UI ใน check-slip.html (แต่ละแถวห้อง):**
-
-```
-┌────────────────────────────────────────────────────────┐
-│  ห้อง 205 — นายสมชาย ใจดี                              │
-│  ยอดค้าง: 1,250 บาท | สถานะ: ยังไม่มีสลิป             │
-│  📲 ทวงล่าสุด: 18 มี.ค. 10:30 (ทวงไปแล้ว 1 ครั้ง)   │
-│                                                        │
-│  [✅ อนุมัติ]  [❌ ปฏิเสธ]  [📲 ทวง LINE]              │
-│                                                        │
-│  💬 โควต้าคงเหลือ: 145/200 ข้อความ (เหลือ 55)         │
-└────────────────────────────────────────────────────────┘
-```
-
-**หลักการแสดงโควต้า:**
-- แสดง **โควต้าคงเหลือสด** ทุกแถวที่มีปุ่ม "📲 ทวง LINE"
-- สีเปลี่ยนตามระดับ: 🟢 >100 | 🟡 30-100 | 🔴 <30
-- เมื่อโควต้าหมด → ปุ่มกลายเป็น disabled + tooltip "โควต้าหมดแล้ว"
-- **หลัง push สำเร็จ → อัปเดตตัวเลขทันทีโดยไม่ต้อง reload หน้า**
-
-**รูปแบบข้อความทวง:**
-```
-⏰ แจ้งเตือนการชำระเงิน
-ห้อง {เลขห้อง} — {ชื่อผู้พัก}
-
-ยังไม่พบสลิปการชำระค่าน้ำ-ไฟ เดือน {เดือน/ปี}
-💰 ยอดที่ต้องชำระ: {ยอดรวม} บาท
-📅 ครบกำหนด: {วันสุดท้าย}
-
-กรุณาชำระและส่งสลิปหลักฐาน
-📎 [ส่งสลิปเดี๋ยวนี้]
-```
-
-**รูปแบบข้อความ (กรณีสลิปถูกปฏิเสธ — ต้องส่งใหม่):**
-```
-❌ สลิปการชำระเงินไม่ผ่านการตรวจสอบ
-ห้อง {เลขห้อง} — เดือน {เดือน/ปี}
-
-เหตุผล: {reason}
-
-กรุณาส่งสลิปใหม่ที่ถูกต้อง
-📎 [ส่งสลิปใหม่]
-```
-
-**บันทึก log:** ทุกครั้งที่กดทวง → บันทึกใน `line_push_log` พร้อม timestamp  
-แอดมินเห็นว่า "ทวงไปแล้ว X ครั้ง ล่าสุดวันที่..." ป้องกันทวงซ้ำถี่เกินไป
-
----
-
-### 14.3 ประกาศจากแอดมิน (Admin Broadcast)
-
-**ทริกเกอร์:** แอดมินพิมพ์ข้อความในหน้า `admin-settings.html` → Tab LINE → กด "ส่งประกาศ"  
-**ผู้รับ:** เลือกได้:
-- ✅ ส่งทุกห้อง (ทุก `line_user_id` ที่ active)
-- ✅ ส่งเฉพาะห้องที่ยังไม่ชำระ
-- ✅ ส่งเฉพาะผู้พักในอาคารที่เลือก (บ้านพัก / แฟลต)
-- ✅ ส่งเฉพาะห้องที่ระบุ (พิมพ์เลขห้อง)
-
-**UI ที่ต้องเพิ่มใน admin-settings.html (Tab LINE):**
-
-```
-┌────────────────────────────────────────────┐
-│  📢 ส่งประกาศ / ข้อความ ผ่าน LINE         │
-├────────────────────────────────────────────┤
-│  ผู้รับ: ○ ทุกห้อง  ○ ยังไม่ชำระ         │
-│           ○ บ้านพัก  ○ แฟลต  ○ ระบุห้อง   │
-│  ห้อง: [________________] (ถ้าเลือกระบุ)   │
-│                                            │
-│  ข้อความ:                                  │
-│  ┌──────────────────────────────────────┐  │
-│  │                                      │  │
-│  │  พิมพ์ข้อความประกาศที่นี่...         │  │
-│  │                                      │  │
-│  └──────────────────────────────────────┘  │
-│  (รองรับ emoji ✅❌⚠️📢)                  │
-│                                            │
-│  โควต้าที่ใช้ไปเดือนนี้: 47/200 ข้อความ   │
-│  คาดว่าจะใช้ครั้งนี้: ~60 ข้อความ         │
-│  จะเหลือ: ~93 ข้อความ                     │
-│                                            │
-│  [ดูตัวอย่าง]  [📤 ส่งประกาศ]             │
-└────────────────────────────────────────────┘
-```
-
-**รูปแบบข้อความ broadcast:**
-```
-📢 ประกาศจากงานบ้านพักครู
-โรงเรียนพะเยาพิทยาคม
-
-{ข้อความที่แอดมินพิมพ์}
-
-— งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู
-```
-
----
-
-### 14.4 แจ้งผลอนุมัติสลิป (Slip Result Notification)
-
-**ทริกเกอร์:** ทีมงานกด Approve หรือ Reject ใน `check-slip.html`  
-**ผู้รับ:** ผู้พักเฉพาะห้องนั้น
-
-**อนุมัติ:**
-```
-✅ ยืนยันการชำระเงิน
-ห้อง {เลขห้อง} — เดือน {เดือน/ปี}
-
-รับสลิปการชำระเงิน {ยอด} บาท เรียบร้อยแล้ว
-ขอบคุณที่ชำระตรงเวลา 🙏
-```
-
-**ปฏิเสธ:**
-```
-❌ ไม่สามารถยืนยันสลิปได้
-ห้อง {เลขห้อง} — เดือน {เดือน/ปี}
-
-เหตุผล: {reason ที่ทีมงานระบุ}
-
-กรุณาตรวจสอบและส่งสลิปใหม่
-📎 [ส่งสลิปใหม่]
-```
-
----
-
-### 14.5 สรุปโควต้า Push Message (อัปเดตตามการออกแบบจริง)
-
-| Event | วิธีส่ง | ครั้งต่อเดือน | จำนวน push |
-|-------|--------|-------------|-----------|
-| แจ้งบิลประจำเดือน | Push (ทีมงานกด) | 1 ครั้ง × 60 ห้อง | **60 push** |
-| ทวงชำระ | Push (แอดมินกดเองรายห้อง) | ~5-10 ห้อง × ไม่จำกัดครั้ง | **~20 push** |
-| รับสลิป (ยืนยัน) | Reply ฟรี (ผู้พักส่งมาก่อน) | ไม่จำกัด | **0 push** |
-| อนุมัติสลิป | Reply ฟรี | ~50 ห้อง | **0 push** |
-| ปฏิเสธสลิป | Push (หลัง reject) | ~5 ห้อง | **5 push** |
-| ประกาศแอดมิน | LINE OA Post (ฟรี) | ไม่จำกัด | **0 push** |
-| **รวมทั้งเดือน** | | | **~85/200 push** ✅ |
-
-> ✅ **อยู่ใน Free Plan อย่างสบาย** — เหลือสำรองอีก 115 push/เดือน  
-> 💡 **กุญแจสำคัญ:** อนุมัติสลิปใช้ Reply (ฟรี) ไม่ใช่ Push, ประกาศใช้ LINE OA Post (ฟรี)
-
----
-
-### 14.6 ระบบแสดงโควต้า LINE — มองเห็นได้จากทุกจุด
-
-โควต้าต้องแสดงให้เห็น **ทุกที่ที่มีปุ่มส่ง LINE** ไม่ใช่แค่หน้า settings:
-
-**📍 จุดที่แสดงโควต้า:**
-
-| หน้า | ตำแหน่ง | รายละเอียด |
-|------|---------|----------|
-| `check-slip.html` | ทุกแถวห้องที่มีปุ่ม ทวง | `💬 เหลือ 145/200` |
-| `payment-notification.html` | บนปุ่ม "ส่ง LINE แจ้งบิล" | `📲 ส่ง LINE แจ้งบิล (60 ห้อง) — จะใช้ 60/145 ที่เหลือ` |
-| `admin-settings.html` Tab LINE | Widget โควต้า | Progress bar + ประวัติ |
-
-**Widget ใน admin-settings.html Tab LINE:**
-
-```
-📊 โควต้า LINE Push เดือนนี้
-████████░░░░░░░░░░░░  85/200 ข้อความ (42.5%)
-
-✅ เหลือ 115 ข้อความ — ปกติ
-รีเซ็ตวันที่: 1 เมษายน 2569
-
-[📋 ดูประวัติการส่ง LINE]
-```
-
-**Widget บนปุ่มแจ้งบิลใน payment-notification.html:**
-
-```
-┌──────────────────────────────────────────┐
-│  📲 ส่ง LINE แจ้งบิลทุกห้อง             │
-│  จะใช้โควต้า: ~60 ข้อความ               │
-│  โควต้าคงเหลือ: 115/200 ✅              │
-│  หลังส่ง: จะเหลือ ~55 ข้อความ           │
-│                  [📤 ส่งเลย]             │
-└──────────────────────────────────────────┘
-```
-
-**สีโควต้าตามระดับ:**
-- 🟢 เขียว: เหลือ >100 — ปกติ
-- 🟡 เหลือง: เหลือ 30–100 — ระวัง
-- 🔴 แดง: เหลือ <30 — ใช้อย่างประหยัด
-- ⛔ เทา: โควต้าหมด — ปุ่ม disabled ทั้งหมด
-
-**DB Fields ที่ใช้ (settings table):**
-```sql
-line_push_quota_used       -- จำนวนที่ใช้ไปเดือนนี้ (update ทุกครั้งที่ส่งสำเร็จ)
-line_push_quota_limit      -- ค่า default = 200
-line_push_quota_reset_date -- วันที่ 1 ของเดือนถัดไป
-```
-
-**Logic reset โควต้า:** Edge Function `line-push` ตรวจทุกครั้ง — ถ้าเดือนเปลี่ยน reset `line_push_quota_used = 0` อัตโนมัติ
-
----
-
-### 14.7 งานที่ต้องเพิ่มใน Master Priority List
-
-งานต่อไปนี้ให้เพิ่มใน **Phase G (LINE Integration)**:
-
-| งาน | ไฟล์ | หมายเหตุ |
-|-----|------|----------|
-| G15 | Edge Function `line-bill-notify` | ส่งยอดบิลพร้อมปุ่ม Quick Reply |
-| G16 | Edge Function `line-reminder` | ทวงอัตโนมัติ + บันทึกครั้งที่ส่ง |
-| G17 | Edge Function `line-broadcast` | ส่งประกาศแอดมิน (เลือกกลุ่มได้) |
-| G18 | เพิ่ม "ส่ง LINE แจ้งบิล" บน payment-notification.html | พร้อม quota counter |
-| G19 | เพิ่ม "ทวงรายห้อง" และ "ทวงทั้งหมด" บน check-slip.html | ตรวจสอบซ้ำก่อนส่ง |
-| G20 | เพิ่ม Tab LINE Broadcast ใน admin-settings.html | เลือกกลุ่ม + quota meter |
-| G21 | เพิ่ม Cron schedule ตั้งเวลาทวงอัตโนมัติ | ตั้งค่าวันที่ใน settings |
-| G22 | Line push หลัง approve/reject สลิป | ใน check-slip.html |
-
----
-
-*บันทึกโดย AI Copilot | 2 มีนาคม 2569 | อัปเดต: เพิ่ม Master Priority List 45 งาน + ข้อเสนอแนะ UX 14 ข้อ + ระบบแจ้งเตือน LINE Section 14*
