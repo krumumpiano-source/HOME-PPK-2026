@@ -174,11 +174,18 @@
             await checkSession(true);
             const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
             const hasHouse = !!(user.houseNumber || user.house_number);
-            filterTabsByRole(hasHouse);
+            const role = user.role || 'user';
+            const isStaff = role === 'admin' || role === 'head' || (user.permissions && user.permissions.length > 0);
+            filterTabsByRole(hasHouse, isStaff);
             loadMyRequests(user, hasHouse);
         });
 
-        function filterTabsByRole(hasHouse) {
+        function filterTabsByRole(hasHouse, isStaff) {
+            // admin/head/คณะทำงาน → เห็นครบทั้ง 4 แท็บ
+            if (isStaff) {
+                switchTab('residence');
+                return;
+            }
             if (hasHouse) {
                 var resBtn = document.querySelector('.ppk-tab[data-tab="residence"]');
                 var resContent = document.getElementById('tab-residence');
