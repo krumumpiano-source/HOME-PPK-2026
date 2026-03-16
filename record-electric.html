@@ -163,8 +163,11 @@
         .table-scroll-wrapper { overflow-x: auto; margin-top: 1rem; -webkit-overflow-scrolling: touch; }
         .meter-table { width: 100%; border-collapse: collapse; }
         .meter-table th { background: linear-gradient(135deg, #f5e6d3, #f9e9d2); color: #b48850; padding: 0.7rem 0.5rem; font-weight: 700; font-size: 0.9rem; text-align: center; border-bottom: 2px solid #e6d5c3; white-space: nowrap; }
-        .meter-table td { padding: 0.5rem; border-bottom: 1px solid #f0e6d8; font-size: 0.95rem; vertical-align: middle; }
-        .meter-table tbody tr:hover { background: #fffdf8; }
+        .meter-table td { padding: 0.5rem; border: 1px solid #f0e6d8; font-size: 0.95rem; vertical-align: middle; }
+        .meter-table th { border: 1px solid #e6d5c3; }
+        .meter-table tbody tr:nth-child(even) { background: #fffdf8; }
+        .meter-table tbody tr:nth-child(odd) { background: #ffffff; }
+        .meter-table tbody tr:hover { background: #fff5e6; }
         .meter-table input[type="number"] { width: 110px; padding: 0.5rem; border: 1px solid #e6d5c3; border-radius: 6px; font-size: 1rem; font-family: 'Kanit', sans-serif; text-align: right; }
         .meter-table input[type="number"]:focus { outline: none; border-color: #d4a373; box-shadow: 0 0 0 3px rgba(212,163,115,0.15); }
         @media (max-width: 600px) {
