@@ -475,9 +475,14 @@ async function _routeAction(action, data) {
         case 'register': return ppkRegister(data);
 
         case 'getCurrentUser': {
-            // คืน user จาก localStorage (no-auth mode)
+            // คืน user + resident data จาก DB
             var u = JSON.parse(localStorage.getItem('currentUser') || 'null');
             if (!u) u = await checkSession();
+            if (!u) return { success: false, error: 'ไม่พบผู้ใช้' };
+            // ดึง resident data เพิ่มเติม (phone, subject_group, house_number ฯลฯ)
+            var resObj = null;
+            try { resObj = await _findResidentForUser(u.id, u.email); } catch(e) {}
+            u.resident = resObj || {};
             return { success: true, user: u };
         }
 

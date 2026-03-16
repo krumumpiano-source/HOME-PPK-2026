@@ -531,23 +531,25 @@
 
     // ============ Session + Auto-fill ============
     async function initPage() {
-        // ไม่ตรวจสอบ token — เข้าใช้งานได้ทันที
         try {
             const result = await callBackendGet('getCurrentUser');
-            if (!result || !result.success) { return; }
-            const resident = result.user.resident || {};
+            if (!result || !result.success || !result.user) return;
+            const user = result.user;
+            const res = user.resident || {};
+            const _v = function(resKey, userKey) { return res[resKey] || user[userKey || resKey] || ''; };
             const form = document.querySelector('select[name="prefix"]');
-            if (form && resident.prefix) form.value = resident.prefix;
+            if (form && _v('prefix')) form.value = _v('prefix');
             const fullname = document.querySelector('input[name="fullname"]');
-            if (fullname && resident.firstname) fullname.value = (resident.firstname || '') + ' ' + (resident.lastname || '');
+            var fn = (_v('firstname') + ' ' + _v('lastname')).trim();
+            if (fullname && fn) fullname.value = fn;
             const phone = document.querySelector('input[name="phone"]');
-            if (phone && resident.phone) phone.value = resident.phone;
+            if (phone && _v('phone')) phone.value = _v('phone');
             const posElTf = document.querySelector('select[name="position"]');
-            if (posElTf && resident.position) posElTf.value = resident.position;
+            if (posElTf && _v('position')) posElTf.value = _v('position');
             const group = document.querySelector('select[name="subject_group"]');
-            if (group && resident.subject_group) group.value = resident.subject_group;
+            if (group && _v('subject_group')) group.value = _v('subject_group');
             const currentHouse = document.querySelector('input[name="current_house"]');
-            if (currentHouse && resident.house_number) currentHouse.value = resident.house_number;
+            if (currentHouse && _v('house_number','houseNumber')) currentHouse.value = _v('house_number','houseNumber');
         } catch (e) { console.warn('Auto-fill failed', e); }
     }
 

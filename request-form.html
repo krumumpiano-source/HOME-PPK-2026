@@ -368,21 +368,22 @@
     }
 
     function _fillForm(user) {
-        const resident = user.resident || {};
+        const res = user.resident || {};
+        const _v = function(k) { return res[k] || user[k] || ''; };
         const prefixEl = document.querySelector('select[name="prefix"]');
-        if (prefixEl && resident.prefix) prefixEl.value = resident.prefix;
+        if (prefixEl && _v('prefix')) prefixEl.value = _v('prefix');
         const firstEl = document.querySelector('input[name="firstname"]');
-        if (firstEl && resident.firstname) firstEl.value = resident.firstname;
+        if (firstEl && _v('firstname')) firstEl.value = _v('firstname');
         const lastEl = document.querySelector('input[name="lastname"]');
-        if (lastEl && resident.lastname) lastEl.value = resident.lastname;
+        if (lastEl && _v('lastname')) lastEl.value = _v('lastname');
         const phoneEl = document.querySelector('input[name="phone"]');
-        if (phoneEl && (resident.phone || user.phone)) phoneEl.value = resident.phone || user.phone;
+        if (phoneEl && _v('phone')) phoneEl.value = _v('phone');
         const emailEl = document.querySelector('input[name="email"]');
-        if (emailEl && user.email) emailEl.value = user.email;
+        if (emailEl && (user.email || _v('email'))) emailEl.value = user.email || _v('email');
         const posEl = document.querySelector('select[name="position"]');
-        if (posEl && resident.position) posEl.value = resident.position;
+        if (posEl && _v('position')) posEl.value = _v('position');
         const groupEl = document.querySelector('select[name="subject_group"]');
-        if (groupEl && resident.subject_group) groupEl.value = resident.subject_group;
+        if (groupEl && _v('subject_group')) groupEl.value = _v('subject_group');
     }
 
     // ── Submit Handler ──
