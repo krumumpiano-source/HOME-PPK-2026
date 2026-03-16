@@ -299,7 +299,7 @@
 
             <!-- Buttons -->
             <div class="button-group">
-                <button class="ppk-btn ppk-btn-success ppk-btn-lg" onclick="saveSettings()">💾 บันทึกข้อมูล</button>
+                <button class="ppk-btn ppk-btn-success ppk-btn-lg" id="saveBtn" onclick="saveSettings()">💾 บันทึกข้อมูล</button>
                 <button class="ppk-btn ppk-btn-ghost ppk-btn-lg" onclick="resetForm()">🔄 รีเซ็ต</button>
             </div>
 
@@ -449,6 +449,27 @@
 
         // บันทึกข้อมูล
         async function saveSettings() {
+            const saveBtn = document.getElementById('saveBtn');
+
+            // ── Validation ──
+            const firstname = document.getElementById('firstname').value.trim();
+            const lastname  = document.getElementById('lastname').value.trim();
+            const email     = document.getElementById('email').value.trim();
+            const phone     = document.getElementById('phone').value.trim();
+
+            if (!firstname || !lastname) {
+                ppkAlert('กรุณากรอกชื่อและนามสกุล');
+                return;
+            }
+            if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+                ppkAlert('กรุณากรอกอีเมลให้ถูกต้อง เช่น name@example.com');
+                return;
+            }
+            if (phone && !/^\d{9,15}$/.test(phone.replace(/[-\s]/g, ''))) {
+                ppkAlert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (9-15 หลัก)');
+                return;
+            }
+
             // ตรวจสอบรหัสผ่าน (ถ้ามีการเปลี่ยน)
             const newPassword = document.getElementById('new_password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
@@ -506,6 +527,8 @@
             }
 
             // Try Backend first
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ กำลังบันทึก...';
             try {
                     // อัปเดตโปรไฟล์
                     const profileResult = await callBackend('updateProfile', userData);
@@ -546,6 +569,8 @@
                     }
                 } catch (err) {
                     ppkAlert(err.message || 'ไม่สามารถบันทึกข้อมูลได้');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '💾 บันทึกข้อมูล';
                     return;
                 }
             
@@ -553,6 +578,8 @@
             localStorage.setItem('userData', JSON.stringify(userData));
             
             // แสดงข้อความสำเร็จ
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 บันทึกข้อมูล';
             const successMessage = document.getElementById('successMessage');
             successMessage.classList.add('show');
             
