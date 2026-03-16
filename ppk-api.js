@@ -795,7 +795,16 @@ async function _routeAction(action, data) {
             var q = { order: 'recorded_at.desc' };
             if (data.period) q.period = 'eq.' + data.period;
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
-            var rows = await sbGet('electric_bills', q);
+            var rows;
+            if (data.year && !data.period) {
+                var q2 = { order: 'period.asc,house_number.asc' };
+                q2['period'] = 'gte.' + data.year + '-01';
+                if (data.houseNumber) q2.house_number = 'eq.' + data.houseNumber;
+                var allRows = await sbGet('electric_bills', q2);
+                rows = (allRows || []).filter(function(r) { return r.period && r.period.substring(0, 4) === String(data.year).substring(0, 4); });
+            } else {
+                rows = await sbGet('electric_bills', q);
+            }
             // ดึง Lost data ถ้ามี
             var lostInfo = null;
             if (data.period) {
