@@ -780,10 +780,9 @@
             printWindow.document.write('.header-period { font-size: 16pt; margin-top: 0.2cm; }');
             printWindow.document.write('.date-line { text-align: right; margin-bottom: 0.3cm; font-size: 14pt; }');
             printWindow.document.write('table { border-collapse: collapse; width: 100%; margin: 0.3cm 0; font-size: 14pt; }');
-            printWindow.document.write('th { background-color: #06b6d4; color: white; font-weight: bold; border: 1px solid #000; padding: 8px; }');
+            printWindow.document.write('th { font-weight: bold; border: 1px solid #000; padding: 8px; text-align: center; }');
             printWindow.document.write('td { border: 1px solid #000; padding: 6px; }');
-            printWindow.document.write('tr:nth-child(even) { background-color: #f0fdfa; }');
-            printWindow.document.write('.summary-row { background-color: #cffafe !important; font-weight: bold; }');
+            printWindow.document.write('.summary-row { font-weight: bold; }');
             printWindow.document.write('.signature-section { margin-top: 1cm; display: flex; justify-content: space-between; }');
             printWindow.document.write('.signature-box { width: 30%; text-align: center; font-size: 14pt; }');
             printWindow.document.write('.signature-line { margin-top: 1.5cm; border-top: 1px dotted #000; padding-top: 0.2cm; }');
@@ -793,7 +792,7 @@
             
             // หัวเอกสาร
             printWindow.document.write('<div class="header">');
-            printWindow.document.write('<div class="header-title">💧 รายงานบันทึกค่าน้ำ</div>');
+            printWindow.document.write('<div class="header-title">รายงานบันทึกค่าน้ำ</div>');
             printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
             printWindow.document.write('<div class="header-period">ประจำเดือน' + monthName + ' พ.ศ. ' + year + '</div>');
             printWindow.document.write('</div>');
@@ -968,9 +967,9 @@
             w.document.write('.memo-value { flex: 1; border-bottom: 1px dotted #000; }');
             w.document.write('.memo-body { text-indent: 4em; margin-bottom: 8px; }');
             w.document.write('table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14pt; }');
-            w.document.write('th { background-color: #f0f0f0; font-weight: bold; border: 1px solid #000; padding: 4px 6px; text-align: center; }');
+            w.document.write('th { font-weight: bold; border: 1px solid #000; padding: 4px 6px; text-align: center; }');
             w.document.write('td { border: 1px solid #000; padding: 3px 6px; }');
-            w.document.write('.summary-row { background-color: #f5f5f5; font-weight: bold; }');
+            w.document.write('.summary-row { font-weight: bold; }');
             w.document.write('.section-title { font-weight: bold; font-size: 16pt; margin: 16px 0 6px 0; }');
             w.document.write('.signature-section { margin-top: 24px; display: flex; justify-content: space-around; }');
             w.document.write('.signature-box { width: 40%; text-align: center; }');

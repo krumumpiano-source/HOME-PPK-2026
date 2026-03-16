@@ -815,10 +815,9 @@
             printWindow.document.write('.header-period { font-size: 16pt; margin-top: 0.2cm; }');
             printWindow.document.write('.date-line { text-align: right; margin-bottom: 0.3cm; font-size: 14pt; }');
             printWindow.document.write('table { border-collapse: collapse; width: 100%; margin: 0.3cm 0; font-size: 14pt; }');
-            printWindow.document.write('th { background-color: #d4a373; color: white; font-weight: bold; border: 1px solid #000; padding: 8px; }');
+            printWindow.document.write('th { font-weight: bold; border: 1px solid #000; padding: 8px; text-align: center; }');
             printWindow.document.write('td { border: 1px solid #000; padding: 6px; }');
-            printWindow.document.write('tr:nth-child(even) { background-color: #fffdf8; }');
-            printWindow.document.write('.summary-row { background-color: #fef8f0 !important; font-weight: bold; }');
+            printWindow.document.write('.summary-row { font-weight: bold; }');
             printWindow.document.write('.signature-section { margin-top: 1cm; display: flex; justify-content: space-between; }');
             printWindow.document.write('.signature-box { width: 30%; text-align: center; font-size: 14pt; }');
             printWindow.document.write('.signature-line { margin-top: 1.5cm; border-top: 1px dotted #000; padding-top: 0.2cm; }');
@@ -828,7 +827,7 @@
             
             // หัวเอกสาร
             printWindow.document.write('<div class="header">');
-            printWindow.document.write('<div class="header-title">⚡ รายงานบันทึกค่าไฟ</div>');
+            printWindow.document.write('<div class="header-title">รายงานบันทึกค่าไฟ</div>');
             printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
             printWindow.document.write('<div class="header-period">ประจำเดือน' + monthName + ' พ.ศ. ' + year + '</div>');
             printWindow.document.write('</div>');
@@ -863,20 +862,20 @@
             printWindow.document.write('</tr>');
             // แถวรวมทั้งหมด
             const grandTotal = totalAmount + totalLost;
-            printWindow.document.write('<tr style="background-color: #e8c9a0 !important; font-weight: bold;">');
+            printWindow.document.write('<tr class="summary-row">');
             printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมทั้งหมด</td>');
             printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + grandTotal.toLocaleString('th-TH') + '</td>');
             printWindow.document.write('</tr>');
             // แถวค่าไฟการไฟฟ้าเรียกเก็บ
-            printWindow.document.write('<tr style="background-color: #d1fae5 !important;">');
+            printWindow.document.write('<tr>');
             printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่าไฟการไฟฟ้าเรียกเก็บ</td>');
             printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
             // แถวส่วนต่าง
             const diff = grandTotal - peaTotal;
-            printWindow.document.write('<tr style="background-color: #d1fae5 !important; font-weight: bold;">');
+            printWindow.document.write('<tr class="summary-row">');
             printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">ส่วนต่างเรียกเก็บเกิน (จากการปัดเศษ)</td>');
-            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold; color: #059669;">' + diff.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + diff.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
             printWindow.document.write('</tbody></table>');
             
