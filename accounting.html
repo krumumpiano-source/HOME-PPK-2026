@@ -464,19 +464,23 @@
         }
         
         /* Print */
+        @page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }
         @media print {
+            body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 16pt; line-height: 1.15; }
             .sidebar, .back-btn, .btn, .entry-form, .no-print, .action-btn {
                 display: none !important;
             }
             .dashboard-container {
                 margin-left: 0 !important;
-                padding: 1rem !important;
+                padding: 0 !important;
             }
             .section {
                 box-shadow: none;
                 border: 1px solid #ccc;
                 page-break-inside: avoid;
             }
+            table { page-break-inside: avoid; }
+            .signature-section { page-break-inside: avoid; }
         }
     </style>
 </head>
