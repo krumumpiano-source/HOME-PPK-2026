@@ -159,53 +159,57 @@
             flex: 1;
         }
         
-        /* ตารางบันทึกค่าไฟ */
-        .table-scroll-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        /* Card Layout บันทึกค่าไฟ */
+        .card-list { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
+        .resident-card {
+            border-radius: 12px; padding: 1rem 1.2rem;
+            display: flex; align-items: center; gap: 1rem;
+            transition: box-shadow 0.2s;
         }
-        .meter-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            min-width: 600px;
+        .resident-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .resident-card.type-house {
+            background: linear-gradient(135deg, #fffdf8, #fff8ed);
+            border: 1.5px solid #f5e6d3;
         }
-        .meter-table th {
-            background: linear-gradient(135deg, #f5e6d3, #f9e9d2);
-            color: #b48850;
-            padding: 0.8rem;
-            font-weight: 600;
-            text-align: center;
+        .resident-card.type-flat {
+            background: linear-gradient(135deg, #f0fdff, #e0f7fa);
+            border: 1.5px solid #b9f6fc;
         }
-        .meter-table td {
-            padding: 0.6rem 0.8rem;
-            border-bottom: 1px solid #f5e6d3;
-            text-align: center;
+        .card-icon { font-size: 1.8rem; flex-shrink: 0; }
+        .card-info { flex: 1; min-width: 0; }
+        .card-house { font-weight: 700; font-size: 1.05rem; }
+        .type-house .card-house { color: #b48850; }
+        .type-flat .card-house { color: #0891b2; }
+        .card-name { font-size: 0.9rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-input-area { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+        .card-input-area label { font-size: 0.75rem; color: #94a3b8; }
+        .card-input-area input {
+            width: 130px; padding: 0.6rem 0.8rem; border-radius: 8px;
+            font-size: 1.1rem; font-family: 'Kanit', sans-serif;
+            text-align: right; font-weight: 600;
         }
-        .meter-table tr:nth-child(even) {
-            background: #fffdf8;
-        }
-        .meter-table tr:hover {
-            background: #fef6e8;
-        }
-        .meter-table input {
-            width: 100px;
-            padding: 0.5rem;
-            border: 1px solid #e6d5c3;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 0.95rem;
-            font-family: 'Kanit', sans-serif;
-        }
-        .meter-table input:focus {
-            outline: none;
-            border-color: #d4a373;
-            box-shadow: 0 0 0 2px rgba(212, 163, 115, 0.2);
+        .type-house .card-input-area input { border: 1.5px solid #e6d5c3; }
+        .type-house .card-input-area input:focus { outline: none; border-color: #d4a373; box-shadow: 0 0 0 3px rgba(212,163,115,0.15); }
+        .type-flat .card-input-area input { border: 1.5px solid #67e8f9; }
+        .type-flat .card-input-area input:focus { outline: none; border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
+        /* unit mode: meters + result */
+        .card-meters { flex-shrink: 0; display: flex; gap: 0.5rem; align-items: center; }
+        .card-meters input { width: 90px; padding: 0.5rem; border-radius: 8px; font-size: 1rem; font-family: 'Kanit', sans-serif; text-align: center; }
+        .type-house .card-meters input { border: 1.5px solid #e6d5c3; }
+        .type-house .card-meters input:focus { outline: none; border-color: #d4a373; box-shadow: 0 0 0 3px rgba(212,163,115,0.15); }
+        .type-flat .card-meters input { border: 1.5px solid #67e8f9; }
+        .type-flat .card-meters input:focus { outline: none; border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
+        .card-meters .arrow { color: #94a3b8; font-weight: 700; }
+        .card-result { text-align: right; font-size: 0.85rem; min-width: 70px; }
+        .card-result .units-used { font-weight: 700; color: #e0b97a; }
+        .card-result .amount-val { font-weight: 700; color: #059669; font-size: 1rem; }
+        @media (max-width: 600px) {
+            .resident-card { flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.9rem; }
+            .card-input-area { align-items: stretch; }
+            .card-input-area input { width: 100%; font-size: 1.2rem; padding: 0.7rem; }
+            .card-meters { flex-wrap: wrap; justify-content: center; }
+            .card-meters input { width: 80px; }
+            .card-result { text-align: center; }
         }
         
         .usage-value {
@@ -319,13 +323,6 @@
             .btn {
                 width: 100%;
             }
-            .meter-table {
-                font-size: 0.85rem;
-            }
-            .meter-table input {
-                width: 70px;
-                padding: 0.4rem;
-            }
         }
     </style>
 </head>
@@ -408,20 +405,8 @@
         <div class="section">
             <div class="section-title">📝 บันทึกค่าไฟ</div>
             
-            <div class="table-scroll-wrapper">
-            <table class="meter-table">
-                <thead id="electricTableHead">
-                    <tr>
-                        <th>ลำดับ</th>
-                        <th>บ้านพัก/แฟลต</th>
-                        <th>ผู้พักอาศัย</th>
-                        <th>ยอดค่าไฟ (บาท)</th>
-                    </tr>
-                </thead>
-                <tbody id="electricTableBody">
-                    <tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
-                </tbody>
-            </table>
+            <div class="card-list" id="electricCardList">
+                <div style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</div>
             </div>
             
             <!-- สรุปยอด -->
@@ -524,27 +509,10 @@
 
         function updateMethodUI() {
             const infoBox = document.getElementById('infoBox');
-            const thead = document.getElementById('electricTableHead');
-
             if (electricMethod === 'unit') {
                 infoBox.innerHTML = 'ℹ️ โหมด: <strong>คำนวณตามหน่วย</strong> — กรอกเลขมิเตอร์เดิมและปัจจุบัน ระบบจะคำนวณค่าไฟอัตโนมัติ (อัตรา ' + (electricRate || '?') + ' บาท/หน่วย)';
-                thead.innerHTML = '<tr>' +
-                    '<th>ลำดับ</th>' +
-                    '<th>บ้านพัก/แฟลต</th>' +
-                    '<th>ผู้พักอาศัย</th>' +
-                    '<th>มิเตอร์เดิม</th>' +
-                    '<th>มิเตอร์ปัจจุบัน</th>' +
-                    '<th>หน่วยใช้</th>' +
-                    '<th>ยอดค่าไฟ (บาท)</th>' +
-                    '</tr>';
             } else {
                 infoBox.innerHTML = 'ℹ️ โหมด: <strong>กรอกตามใบแจ้งหนี้</strong> — กรอกยอดค่าไฟของแต่ละบ้านพัก ระบบจะคำนวณยอดรวมโดยอัตโนมัติ';
-                thead.innerHTML = '<tr>' +
-                    '<th>ลำดับ</th>' +
-                    '<th>บ้านพัก/แฟลต</th>' +
-                    '<th>ผู้พักอาศัย</th>' +
-                    '<th>ยอดค่าไฟ (บาท)</th>' +
-                    '</tr>';
             }
         }
 
@@ -604,55 +572,63 @@
             return {};
         }
         
-        // สร้างตารางผู้พักอาศัย
+        // helper: ตรวจว่าเป็นแฟลตหรือไม่
+        function _isFlat(h) { var n = (h || '').toLowerCase(); return n.indexOf('แฟลต') >= 0 || n.indexOf('flat') >= 0; }
+
+        // สร้าง Card Layout ผู้พักอาศัย
         async function renderResidentsTable() {
-            const tbody = document.getElementById('electricTableBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+            const container = document.getElementById('electricCardList');
+            container.innerHTML = '<div style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</div>';
             const residents = await getResidentsData();
             const savedAmounts = await getSavedElectricData();
-            tbody.innerHTML = '';
+            container.innerHTML = '';
 
             if (residents.length === 0) {
-                const cols = electricMethod === 'unit' ? 7 : 4;
-                tbody.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                container.innerHTML = '<div style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</div>';
                 return;
             }
             
-            // กรองเฉพาะผู้พักที่มีบ้านและ active
             const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
             if (activeResidents.length === 0) {
-                const cols = electricMethod === 'unit' ? 7 : 4;
-                tbody.innerHTML = '<tr><td colspan="' + cols + '" style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                container.innerHTML = '<div style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน</div>';
                 return;
             }
             activeResidents.forEach((resident, index) => {
                 const houseNum = resident.house_number || '';
                 const savedAmount = savedAmounts[houseNum] || '';
                 const residentName = ((resident.prefix||'') + (resident.firstname||'') + ' ' + (resident.lastname||'')).trim();
+                const isFlat = _isFlat(houseNum);
+                const typeClass = isFlat ? 'type-flat' : 'type-house';
+                const icon = isFlat ? '🏢' : '🏠';
                 
-                const row = document.createElement('tr');
-                row.dataset.index = index;
-                row.dataset.house = houseNum;
+                const card = document.createElement('div');
+                card.className = 'resident-card ' + typeClass;
+                card.dataset.index = index;
+                card.dataset.house = houseNum;
 
                 if (electricMethod === 'unit') {
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${houseNum}</td>
-                        <td>${residentName}</td>
-                        <td><input type="number" class="prev-meter" value="" placeholder="เดิม" onchange="calculateUnitRow(this)" onblur="calculateUnitRow(this)" step="1" min="0"></td>
-                        <td><input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" onblur="calculateUnitRow(this)" step="1" min="0"></td>
-                        <td class="units-used">0</td>
-                        <td class="electric-amount-cell">${savedAmount ? applyRounding(savedAmount, electricRounding) : 0}</td>
-                    `;
+                    card.innerHTML =
+                        '<div class="card-icon">' + icon + '</div>' +
+                        '<div class="card-info"><div class="card-house">' + houseNum + '</div><div class="card-name">' + residentName + '</div></div>' +
+                        '<div class="card-meters">' +
+                            '<input type="number" class="prev-meter" value="" placeholder="เดิม" onchange="calculateUnitRow(this)" step="1" min="0">' +
+                            '<span class="arrow">→</span>' +
+                            '<input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" step="1" min="0">' +
+                        '</div>' +
+                        '<div class="card-result">' +
+                            '<div class="units-used">0 หน่วย</div>' +
+                            '<div class="amount-val electric-amount-cell">' + (savedAmount ? applyRounding(savedAmount, electricRounding) : 0) + ' ฿</div>' +
+                        '</div>';
                 } else {
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${houseNum}</td>
-                        <td>${residentName}</td>
-                        <td><input type="number" class="electric-amount" value="${savedAmount}" placeholder="กรอกยอดค่าไฟ" onchange="roundUpAndCalculate(this)" onblur="roundUpAndCalculate(this)" step="1" min="0"></td>
-                    `;
+                    card.innerHTML =
+                        '<div class="card-icon">' + icon + '</div>' +
+                        '<div class="card-info"><div class="card-house">' + houseNum + '</div><div class="card-name">' + residentName + '</div></div>' +
+                        '<div class="card-input-area">' +
+                            '<label>ยอดค่าไฟ (฿)</label>' +
+                            '<input type="number" class="electric-amount" value="' + savedAmount + '" placeholder="กรอกยอด" onchange="roundUpAndCalculate(this)" step="1" min="0">' +
+                        '</div>';
                 }
-                tbody.appendChild(row);
+                container.appendChild(card);
             });
             
             calculateSummary();
@@ -677,33 +653,33 @@
 
         // คำนวณค่าไฟตามหน่วย (unit mode)
         function calculateUnitRow(input) {
-            const row = input.closest('tr');
-            const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
-            const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
+            const card = input.closest('.resident-card');
+            const prevMeter = parseFloat(card.querySelector('.prev-meter').value) || 0;
+            const currMeter = parseFloat(card.querySelector('.curr-meter').value) || 0;
             const unitsUsed = Math.max(0, currMeter - prevMeter);
             let amount = unitsUsed * electricRate;
             amount = applyRounding(amount, electricRounding);
             if (amount > 0 && amount < electricMinCharge) amount = electricMinCharge;
 
-            row.querySelector('.units-used').textContent = unitsUsed;
-            row.querySelector('.electric-amount-cell').textContent = amount;
+            card.querySelector('.units-used').textContent = unitsUsed + ' หน่วย';
+            card.querySelector('.electric-amount-cell').textContent = amount + ' ฿';
             calculateSummary();
         }
         
         // คำนวณสรุป
         function calculateSummary() {
-            const rows = document.querySelectorAll('#electricTableBody tr');
+            const cards = document.querySelectorAll('#electricCardList .resident-card');
             let totalAmount = 0;
             let count = 0;
             
-            rows.forEach(row => {
+            cards.forEach(card => {
                 if (electricMethod === 'unit') {
-                    const amountCell = row.querySelector('.electric-amount-cell');
+                    const amountCell = card.querySelector('.electric-amount-cell');
                     if (!amountCell) return;
                     const value = parseFloat(amountCell.textContent) || 0;
                     totalAmount += value;
                 } else {
-                    const amountInput = row.querySelector('.electric-amount');
+                    const amountInput = card.querySelector('.electric-amount');
                     if (!amountInput) return;
                     const value = parseFloat(amountInput.value) || 0;
                     totalAmount += applyRounding(value, electricRounding);
@@ -734,24 +710,24 @@
             const month = document.getElementById('bill_month').value;
             const year = document.getElementById('bill_year').value;
             
-            const rows = document.querySelectorAll('#electricTableBody tr');
+            const cards = document.querySelectorAll('#electricCardList .resident-card');
             const records = [];
             
-            rows.forEach(row => {
+            cards.forEach(card => {
                 let amount = 0;
                 if (electricMethod === 'unit') {
-                    const amountCell = row.querySelector('.electric-amount-cell');
+                    const amountCell = card.querySelector('.electric-amount-cell');
                     if (!amountCell) return;
                     amount = parseFloat(amountCell.textContent) || 0;
                 } else {
-                    const amountInput = row.querySelector('.electric-amount');
+                    const amountInput = card.querySelector('.electric-amount');
                     if (!amountInput) return;
                     amount = applyRounding(parseFloat(amountInput.value) || 0, electricRounding);
                     if (amount > 0 && amount < electricMinCharge) amount = electricMinCharge;
                 }
                 records.push({
-                    house_number: row.dataset.house || row.cells[1].textContent,
-                    resident_name: row.cells[2].textContent,
+                    house_number: card.dataset.house,
+                    resident_name: card.querySelector('.card-name').textContent,
                     amount: amount
                 });
             });
@@ -829,8 +805,8 @@
             const today = new Date();
             const printDate = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
             
-            // เก็บข้อมูลจากตาราง
-            const rows = document.querySelectorAll('#electricTableBody tr');
+            // เก็บข้อมูลจากการ์ด
+            const cards = document.querySelectorAll('#electricCardList .resident-card');
             let tableHTML = '';
             let totalAmount = 0;
             let rowNum = 1;
@@ -841,14 +817,14 @@
             const lostFlat = applyRounding(parseFloat(document.getElementById('lost_flat').value) || 0, electricRounding);
             const totalLost = lostHouse + lostFlat;
             
-            rows.forEach(row => {
-                const house = row.cells[1].textContent;
-                const resident = row.cells[2].textContent;
+            cards.forEach(card => {
+                const house = card.dataset.house;
+                const resident = card.querySelector('.card-name').textContent;
                 var amount = '0';
-                var amountInput = row.querySelector('.electric-amount');
-                var amountCell = row.querySelector('.electric-amount-cell');
+                var amountInput = card.querySelector('.electric-amount');
+                var amountCell = card.querySelector('.electric-amount-cell');
                 if (amountInput) { amount = amountInput.value || '0'; }
-                else if (amountCell) { amount = amountCell.textContent || '0'; }
+                else if (amountCell) { amount = amountCell.textContent.replace(/[^\d.]/g,'') || '0'; }
                 const amountNum = applyRounding(parseFloat(amount) || 0, electricRounding);
                 
                 tableHTML += '<tr>';
