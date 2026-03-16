@@ -159,43 +159,18 @@
             flex: 1;
         }
         
-        /* Card Layout บันทึกค่าน้ำ */
-        .card-list { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
-        .resident-card {
-            border-radius: 12px; padding: 1rem 1.2rem;
-            display: flex; align-items: center; gap: 1rem;
-            transition: box-shadow 0.2s;
-        }
-        .resident-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-        .resident-card.type-house {
-            background: linear-gradient(135deg, #fffdf8, #fff8ed);
-            border: 1.5px solid #f5e6d3;
-        }
-        .resident-card.type-flat {
-            background: linear-gradient(135deg, #f0fdff, #e0f7fa);
-            border: 1.5px solid #b9f6fc;
-        }
-        .card-icon { font-size: 1.8rem; flex-shrink: 0; }
-        .card-info { flex: 1; min-width: 0; }
-        .card-house { font-weight: 700; font-size: 1.05rem; }
-        .type-house .card-house { color: #b48850; }
-        .type-flat .card-house { color: #0891b2; }
-        .card-name { font-size: 0.9rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-meters { flex-shrink: 0; display: flex; gap: 0.5rem; align-items: center; }
-        .card-meters input { width: 90px; padding: 0.5rem; border-radius: 8px; font-size: 1rem; font-family: 'Kanit', sans-serif; text-align: center; }
-        .type-house .card-meters input { border: 1.5px solid #e6d5c3; }
-        .type-house .card-meters input:focus { outline: none; border-color: #d4a373; box-shadow: 0 0 0 3px rgba(212,163,115,0.15); }
-        .type-flat .card-meters input { border: 1.5px solid #67e8f9; }
-        .type-flat .card-meters input:focus { outline: none; border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
-        .card-meters .arrow { color: #94a3b8; font-weight: 700; }
-        .card-result { text-align: right; font-size: 0.85rem; min-width: 70px; }
-        .card-result .usage-value { font-weight: 700; color: #4dd0e1; }
-        .card-result .amount-value { font-weight: 700; color: #059669; font-size: 1rem; }
+        /* Table Layout */
+        .table-scroll-wrapper { overflow-x: auto; margin-top: 1rem; -webkit-overflow-scrolling: touch; }
+        .meter-table { width: 100%; border-collapse: collapse; }
+        .meter-table th { background: linear-gradient(135deg, #e0f7fa, #b9f6fc); color: #00838f; padding: 0.7rem 0.5rem; font-weight: 700; font-size: 0.9rem; text-align: center; border-bottom: 2px solid #67e8f9; white-space: nowrap; }
+        .meter-table td { padding: 0.5rem; border-bottom: 1px solid #e0f7fa; font-size: 0.95rem; vertical-align: middle; }
+        .meter-table tbody tr:hover { background: #f0fdff; }
+        .meter-table input[type="number"] { width: 110px; padding: 0.5rem; border: 1px solid #67e8f9; border-radius: 6px; font-size: 1rem; font-family: 'Kanit', sans-serif; text-align: right; }
+        .meter-table input[type="number"]:focus { outline: none; border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
         @media (max-width: 600px) {
-            .resident-card { flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.9rem; }
-            .card-meters { flex-wrap: wrap; justify-content: center; }
-            .card-meters input { width: 80px; }
-            .card-result { text-align: center; }
+            .meter-table { font-size: 0.85rem; }
+            .meter-table input[type="number"] { width: 80px; font-size: 0.9rem; padding: 0.4rem; }
+            .meter-table th, .meter-table td { padding: 0.3rem 0.25rem; }
         }
         
         .usage-value {
@@ -374,8 +349,15 @@
         <div class="section">
             <div class="section-title">📝 บันทึกเลขมิเตอร์</div>
             
-            <div class="card-list" id="waterCardList">
-                <div style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</div>
+            <div class="table-scroll-wrapper">
+                <table class="meter-table">
+                    <thead>
+                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์เดิม</th><th>มิเตอร์ปัจจุบัน</th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
+                    </thead>
+                    <tbody id="meterTableBody">
+                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
+                    </tbody>
+                </table>
             </div>
             
             <!-- สรุปยอด -->
@@ -519,26 +501,23 @@
             return {};
         }
         
-        // helper: ตรวจว่าเป็นแฟลตหรือไม่
-        function _isFlat(h) { var n = (h || '').toLowerCase(); return n.indexOf('แฟลต') >= 0 || n.indexOf('flat') >= 0; }
-
-        // สร้าง Card Layout ผู้พักอาศัย
+        // สร้างตารางผู้พักอาศัย
         async function renderResidentsTable() {
-            const container = document.getElementById('waterCardList');
-            container.innerHTML = '<div style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</div>';
+            const tbody = document.getElementById('meterTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
             const residents = await getResidentsData();
             const prevMeterData = await getPreviousMeterData();
             const savedBill = await getSavedBillData();
-            container.innerHTML = '';
+            tbody.innerHTML = '';
             
             if (residents.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</div>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
                 return;
             }
 
             const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
             if (activeResidents.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน</div>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน</td></tr>';
                 return;
             }
             activeResidents.forEach((resident, index) => {
@@ -547,27 +526,18 @@
                 const prevMeter = saved ? saved.prevMeter : (prevMeterData[houseNum] || 0);
                 const currMeter = saved ? saved.currMeter : '';
                 const residentName = ((resident.prefix||'') + (resident.firstname||'') + ' ' + (resident.lastname||'')).trim();
-                const isFlat = _isFlat(houseNum);
-                const typeClass = isFlat ? 'type-flat' : 'type-house';
-                const icon = isFlat ? '🏢' : '🏠';
                 
-                const card = document.createElement('div');
-                card.className = 'resident-card ' + typeClass;
-                card.dataset.index = index;
-                card.dataset.house = houseNum;
-                card.innerHTML =
-                    '<div class="card-icon">' + icon + '</div>' +
-                    '<div class="card-info"><div class="card-house">' + houseNum + '</div><div class="card-name">' + residentName + '</div></div>' +
-                    '<div class="card-meters">' +
-                        '<input type="number" class="prev-meter" value="' + prevMeter + '" onchange="calculateRow(this)" placeholder="เดิม">' +
-                        '<span class="arrow">→</span>' +
-                        '<input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)">' +
-                    '</div>' +
-                    '<div class="card-result">' +
-                        '<div class="usage-value">0 หน่วย</div>' +
-                        '<div class="amount-value">0 ฿</div>' +
-                    '</div>';
-                container.appendChild(card);
+                const row = document.createElement('tr');
+                row.dataset.house = houseNum;
+                row.innerHTML =
+                    '<td style="text-align:center">' + (index + 1) + '</td>' +
+                    '<td>' + houseNum + '</td>' +
+                    '<td>' + residentName + '</td>' +
+                    '<td><input type="number" class="prev-meter" value="' + prevMeter + '" onchange="calculateRow(this)" placeholder="เดิม"></td>' +
+                    '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
+                    '<td class="usage-value" style="text-align:right">0</td>' +
+                    '<td class="amount-value" style="text-align:right">0</td>';
+                tbody.appendChild(row);
             });
             
             calculateAll();
@@ -579,9 +549,9 @@
         
         // คำนวณแถว
         function calculateRow(input) {
-            const card = input.closest('.resident-card');
-            const prevMeter = parseFloat(card.querySelector('.prev-meter').value) || 0;
-            const currMeter = parseFloat(card.querySelector('.curr-meter').value) || 0;
+            const row = input.closest('tr');
+            const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
+            const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
             const rate = parseFloat(document.getElementById('water_rate').value) || 0;
             
             const usage = Math.max(0, currMeter - prevMeter);
@@ -589,19 +559,19 @@
             amount = applyRounding(amount, waterRounding);
             if (amount > 0 && amount < waterMinCharge) amount = waterMinCharge;
             
-            card.querySelector('.usage-value').textContent = usage + ' หน่วย';
-            card.querySelector('.amount-value').textContent = amount.toLocaleString() + ' ฿';
+            row.querySelector('.usage-value').textContent = usage;
+            row.querySelector('.amount-value').textContent = amount.toLocaleString();
             
             calculateSummary();
         }
         
         // คำนวณทั้งหมด
         function calculateAll() {
-            const cards = document.querySelectorAll('#waterCardList .resident-card');
-            cards.forEach(card => {
-                if (!card.querySelector('.prev-meter')) return;
-                const prevMeter = parseFloat(card.querySelector('.prev-meter').value) || 0;
-                const currMeter = parseFloat(card.querySelector('.curr-meter').value) || 0;
+            const rows = document.querySelectorAll('#meterTableBody tr');
+            rows.forEach(row => {
+                if (!row.dataset.house) return;
+                const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
+                const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
                 const rate = parseFloat(document.getElementById('water_rate').value) || 0;
                 
                 const usage = Math.max(0, currMeter - prevMeter);
@@ -609,8 +579,8 @@
                 amount = applyRounding(amount, waterRounding);
                 if (amount > 0 && amount < waterMinCharge) amount = waterMinCharge;
                 
-                card.querySelector('.usage-value').textContent = usage + ' หน่วย';
-                card.querySelector('.amount-value').textContent = amount.toLocaleString() + ' ฿';
+                row.querySelector('.usage-value').textContent = usage;
+                row.querySelector('.amount-value').textContent = amount.toLocaleString();
             });
             
             calculateSummary();
@@ -618,15 +588,15 @@
         
         // คำนวณสรุป
         function calculateSummary() {
-            const cards = document.querySelectorAll('#waterCardList .resident-card');
+            const rows = document.querySelectorAll('#meterTableBody tr');
             let totalUsage = 0;
             let totalAmount = 0;
             let count = 0;
             
-            cards.forEach(card => {
-                if (!card.querySelector('.usage-value')) return;
-                totalUsage += parseInt(card.querySelector('.usage-value').textContent) || 0;
-                totalAmount += parseInt(card.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0;
+            rows.forEach(row => {
+                if (!row.dataset.house) return;
+                totalUsage += parseInt(row.querySelector('.usage-value').textContent) || 0;
+                totalAmount += parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0;
                 count++;
             });
             
@@ -646,18 +616,18 @@
                 return;
             }
 
-            const cards = document.querySelectorAll('#waterCardList .resident-card');
+            const rows = document.querySelectorAll('#meterTableBody tr');
             const records = [];
             
-            cards.forEach(card => {
-                if (!card.querySelector('.prev-meter')) return;
+            rows.forEach(row => {
+                if (!row.dataset.house) return;
                 records.push({
-                    house_number: card.dataset.house,
-                    resident_name: card.querySelector('.card-name').textContent,
-                    prev_meter: card.querySelector('.prev-meter').value,
-                    curr_meter: card.querySelector('.curr-meter').value,
-                    units: card.querySelector('.usage-value').textContent.replace(/[^\d]/g, ''),
-                    amount: card.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')
+                    house_number: row.dataset.house,
+                    resident_name: row.cells[2].textContent,
+                    prev_meter: row.querySelector('.prev-meter').value,
+                    curr_meter: row.querySelector('.curr-meter').value,
+                    units: row.querySelector('.usage-value').textContent.replace(/[^\d]/g, ''),
+                    amount: row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')
                 });
             });
             
@@ -760,21 +730,21 @@
             const today = new Date();
             const printDate = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
             
-            // เก็บข้อมูลจากการ์ด
-            const cards = document.querySelectorAll('#waterCardList .resident-card');
+            // เก็บข้อมูลจากตาราง
+            const rows = document.querySelectorAll('#meterTableBody tr');
             let tableHTML = '';
             let totalUsage = 0;
             let totalAmount = 0;
             let rowNum = 1;
             
-            cards.forEach(card => {
-                if (!card.querySelector('.prev-meter')) return;
-                const house = card.dataset.house;
-                const resident = card.querySelector('.card-name').textContent;
-                const prevMeter = card.querySelector('.prev-meter').value || '0';
-                const currMeter = card.querySelector('.curr-meter').value || '0';
-                const usage = card.querySelector('.usage-value').textContent.replace(/[^\d]/g, '');
-                const amount = card.querySelector('.amount-value').textContent.replace(/[^\d]/g, '');
+            rows.forEach(row => {
+                if (!row.dataset.house) return;
+                const house = row.dataset.house;
+                const resident = row.cells[2].textContent;
+                const prevMeter = row.querySelector('.prev-meter').value || '0';
+                const currMeter = row.querySelector('.curr-meter').value || '0';
+                const usage = row.querySelector('.usage-value').textContent.replace(/[^\d]/g, '');
+                const amount = row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '');
                 
                 tableHTML += '<tr>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: center;">' + rowNum + '</td>';
@@ -899,21 +869,21 @@
             var recorderName = _sys.meterRecorder || _sys.meter_recorder || '';
             var headName = _sys.headOfPromotion || _sys.head_of_promotion || '';
             
-            // เก็บข้อมูลเดือนปัจจุบันจากการ์ด
-            const cards = document.querySelectorAll('#waterCardList .resident-card');
+            // เก็บข้อมูลเดือนปัจจุบันจากตาราง
+            const memoRows = document.querySelectorAll('#meterTableBody tr');
             let monthlyTableHTML = '';
             let totalUsage = 0;
             let totalAmount = 0;
             let rowNum = 1;
             
-            cards.forEach(card => {
-                if (!card.querySelector('.prev-meter')) return;
-                const house = card.dataset.house;
-                const resident = card.querySelector('.card-name').textContent;
-                const prevMeter = card.querySelector('.prev-meter').value || '0';
-                const currMeter = card.querySelector('.curr-meter').value || '0';
-                const usage = parseInt(card.querySelector('.usage-value').textContent) || 0;
-                const amount = parseInt(card.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0;
+            memoRows.forEach(row => {
+                if (!row.dataset.house) return;
+                const house = row.dataset.house;
+                const resident = row.cells[2].textContent;
+                const prevMeter = row.querySelector('.prev-meter').value || '0';
+                const currMeter = row.querySelector('.curr-meter').value || '0';
+                const usage = parseInt(row.querySelector('.usage-value').textContent) || 0;
+                const amount = parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0;
                 
                 monthlyTableHTML += '<tr>';
                 monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;text-align:center;">' + rowNum + '</td>';
