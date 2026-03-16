@@ -774,7 +774,7 @@
             printWindow.document.write('@page { size: A4 landscape; margin: 2cm 2cm 2cm 2.5cm; }');
             printWindow.document.write('@media print { body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
             printWindow.document.write('* { box-sizing: border-box; }');
-            printWindow.document.write('body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 14pt; line-height: 1.4; margin: 0; padding: 2cm 2cm 2cm 2.5cm; }');
+            printWindow.document.write('body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 14pt; line-height: 1.15; margin: 0; padding: 2cm 2cm 2cm 2.5cm; }');
             printWindow.document.write('.header { text-align: center; margin-bottom: 0.5cm; }');
             printWindow.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
             printWindow.document.write('.header-subtitle { font-size: 16pt; }');
@@ -833,13 +833,10 @@
 
             // ช่องลงชื่อ
             printWindow.document.write('<div class="signature-section">');
-            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
-            printWindow.document.write('<div class="signature-box"><div class="signature-line">ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
-            printWindow.document.write('<div class="signature-box"><div class="signature-line">หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
             printWindow.document.write('</div>');
-            
-            // ท้ายกระดาษ
-            printWindow.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
             
             printWindow.document.write('</body></html>');
             printWindow.document.close();
@@ -955,18 +952,18 @@
             w.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>บันทึกข้อความ - ค่าน้ำ</title>');
             w.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
             w.document.write('<style>');
-            w.document.write('@page { size: A4; margin: 2cm 2cm 2cm 2.5cm; }');
+            w.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
             w.document.write('@media print { body { margin:0; padding:0; } .page-break { page-break-before: always; } }');
             w.document.write('* { box-sizing: border-box; }');
-            w.document.write('body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 16pt; line-height: 1.5; padding: 1.5cm 2cm; margin: 0; }');
+            w.document.write('body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 16pt; line-height: 1.15; padding: 2.5cm 2cm 2cm 3cm; margin: 0; }');
             w.document.write('.memo-header { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 12px; }');
-            w.document.write('.memo-title { font-size: 22pt; font-weight: bold; }');
+            w.document.write('.memo-title { font-size: 29pt; font-weight: bold; }');
             w.document.write('.memo-org { font-size: 16pt; margin-top: 4px; }');
-            w.document.write('.memo-fields { margin-bottom: 12px; }');
+            w.document.write('.memo-fields { margin-bottom: 12px; font-size: 20pt; }');
             w.document.write('.memo-field { display: flex; gap: 8px; margin-bottom: 2px; }');
             w.document.write('.memo-label { font-weight: bold; white-space: nowrap; }');
             w.document.write('.memo-value { flex: 1; border-bottom: 1px dotted #000; }');
-            w.document.write('.memo-body { text-indent: 4em; margin-bottom: 8px; }');
+            w.document.write('.memo-body { text-indent: 2.5cm; margin-bottom: 8px; }');
             w.document.write('table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14pt; }');
             w.document.write('th { font-weight: bold; border: 1px solid #000; padding: 4px 6px; text-align: center; }');
             w.document.write('td { border: 1px solid #000; padding: 3px 6px; }');
@@ -1007,12 +1004,12 @@
             w.document.write('รายละเอียดดังตารางแนบ');
             w.document.write('</div>');
             
-            w.document.write('<div style="margin-bottom: 12px; text-indent: 4em;">จึงเรียนมาเพื่อโปรดทราบ</div>');
+            w.document.write('<div style="margin-bottom: 12px; text-indent: 2.5cm;">จึงเรียนมาเพื่อโปรดทราบ</div>');
             
             // ===== ช่องลงนาม =====
             w.document.write('<div class="signature-section">');
-            w.document.write('<div class="signature-box"><div class="signature-line">(' + (recorderName || '.......................................') + ')<br>งานมาตรน้ำบ้านพักครู</div></div>');
-            w.document.write('<div class="signature-box"><div class="signature-line">(' + (headName || '.......................................') + ')<br>หัวหน้างานส่งเสริมฯ</div></div>');
+            w.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>(' + (recorderName || '.......................................') + ')<br>งานมาตรน้ำบ้านพักครู</div></div>');
+            w.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>(' + (headName || '.......................................') + ')<br>หัวหน้างานส่งเสริมฯ</div></div>');
             w.document.write('</div>');
             
             // ===== หน้า 2: ตารางรายละเอียดเดือน =====
@@ -1057,12 +1054,9 @@
             
             // ===== ช่องลงนามใต้ตาราง =====
             w.document.write('<div class="signature-section">');
-            w.document.write('<div class="signature-box"><div class="signature-line">(' + (recorderName || '.......................................') + ')<br>ผู้บันทึกข้อมูล/งานมาตรน้ำบ้านพักครู</div></div>');
-            w.document.write('<div class="signature-box"><div class="signature-line">(' + (headName || '.......................................') + ')<br>หัวหน้างานส่งเสริมฯ</div></div>');
+            w.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>(' + (recorderName || '.......................................') + ')<br>ผู้บันทึกข้อมูล/งานมาตรน้ำบ้านพักครู</div></div>');
+            w.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>(' + (headName || '.......................................') + ')<br>หัวหน้างานส่งเสริมฯ</div></div>');
             w.document.write('</div>');
-            
-            // ท้ายกระดาษ
-            w.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
             
             w.document.write('</body></html>');
             w.document.close();
@@ -1122,7 +1116,7 @@
             pw.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
             pw.document.write('@media print { body { margin:0; padding:0; } }');
             pw.document.write('* { box-sizing: border-box; }');
-            pw.document.write('body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 14pt; line-height: 1.4; margin:0; padding: 2.5cm 2cm 2cm 3cm; }');
+            pw.document.write('body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 14pt; line-height: 1.15; margin:0; padding: 2.5cm 2cm 2cm 3cm; }');
             pw.document.write('.header { text-align: center; margin-bottom: 0.5cm; }');
             pw.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
             pw.document.write('.header-subtitle { font-size: 16pt; }');
@@ -1160,11 +1154,10 @@
             pw.document.write('</tr></tbody></table>');
 
             pw.document.write('<div class="signature-section">');
-            pw.document.write('<div class="signature-box"><div class="signature-line">ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
-            pw.document.write('<div class="signature-box"><div class="signature-line">ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
-            pw.document.write('<div class="signature-box"><div class="signature-line">หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            pw.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            pw.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            pw.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
             pw.document.write('</div>');
-            pw.document.write('<div class="footer">HOME PPK 2026 - ระบบบริหารจัดการบ้านพักครู</div>');
             pw.document.write('</body></html>');
             pw.document.close();
             pw.onload = function() { setTimeout(function() { pw.print(); }, 500); };
