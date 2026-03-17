@@ -462,7 +462,7 @@
             const prevPeriod = prevYear + '-' + String(prevMonth).padStart(2, '0');
 
             try {
-                    const result = await cachedCall('getWaterBills', { period: prevPeriod }, 1800000);
+                    const result = await callBackend('getWaterBills', { period: prevPeriod });
                     if (result && result.success && result.data) {
                         const meterMap = {};
                         result.data.forEach(record => {
@@ -492,7 +492,7 @@
             const period = year + '-' + month;
 
             try {
-                    const result = await cachedCall('getWaterBills', { period }, 120000);
+                    const result = await callBackend('getWaterBills', { period });
                     if (result && result.success && result.data && result.data.length > 0) {
                         const map = {};
                         result.data.forEach(r => {

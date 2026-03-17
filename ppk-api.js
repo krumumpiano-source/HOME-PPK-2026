@@ -869,13 +869,21 @@ async function _routeAction(action, data) {
                 // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
                 var _eBatch = data.records.map(function(rec) {
                     var _eAmt = parseFloat(rec.amount) || 0;
-                    return {
+                    var obj = {
                         house_id: _eHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
                         year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
                         bill_amount: _eAmt, amount: _eAmt,
                         method: data.method || 'bill', recorded_by: user.id || null
                     };
+                    // unit mode: บันทึกมิเตอร์ด้วย
+                    if (data.method === 'unit') {
+                        obj.prev_meter = parseFloat(rec.prev_meter) || 0;
+                        obj.curr_meter = parseFloat(rec.curr_meter) || 0;
+                        obj.units_used = parseFloat(rec.units_used) || 0;
+                        obj.rate_per_unit = parseFloat(data.rate_per_unit) || 0;
+                    }
+                    return obj;
                 });
                 var inserted = await sbPost('electric_bills', _eBatch);
                 if (!Array.isArray(inserted)) inserted = [inserted];

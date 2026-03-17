@@ -512,6 +512,28 @@
             if (stored) { try { return JSON.parse(stored); } catch(e) {} }
             return [];
         }
+
+        // ดึงมิเตอร์เดือนก่อนหน้า (สำหรับ unit mode)
+        async function getPreviousElectricMeterData() {
+            if (electricMethod !== 'unit') return {};
+            const month = parseInt(document.getElementById('bill_month').value);
+            const year = parseInt(document.getElementById('bill_year').value);
+            let prevMonth = month - 1;
+            let prevYear = year;
+            if (prevMonth < 1) { prevMonth = 12; prevYear = year - 1; }
+            const prevPeriod = prevYear + '-' + String(prevMonth).padStart(2, '0');
+            try {
+                const result = await callBackend('getElectricBills', { period: prevPeriod });
+                if (result && result.success && result.data) {
+                    const meterMap = {};
+                    result.data.forEach(record => {
+                        meterMap[record.house_number || record.house] = parseInt(record.curr_meter || record.currMeter) || 0;
+                    });
+                    return meterMap;
+                }
+            } catch (e) { console.error('getPreviousElectricMeter error:', e); }
+            return {};
+        }
         
         // ดึงข้อมูลค่าไฟที่บันทึกไว้
         async function getSavedElectricData() {
@@ -520,7 +542,7 @@
             const period = year + '-' + month;
 
             try {
-                    const result = await cachedCall('getElectricBills', { period }, 120000);
+                    const result = await callBackend('getElectricBills', { period });
                     if (result && result.success && result.data && result.data.length > 0) {
                         // โหลดค่า PEA total + lost
                         var lostData = result.lost || result.meta || null;
@@ -562,8 +584,8 @@
         async function renderResidentsTable() {
             const tbody = document.getElementById('electricTableBody');
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
-            const [residents, housingList, savedAmounts] = await Promise.all([
-                getResidentsData(), getHousingListData(), getSavedElectricData()
+            const [residents, housingList, savedAmounts, prevMeterData] = await Promise.all([
+                getResidentsData(), getHousingListData(), getSavedElectricData(), getPreviousElectricMeterData()
             ]);
             tbody.innerHTML = '';
 
@@ -617,11 +639,12 @@
                 row.dataset.house = item.houseNum;
 
                 if (electricMethod === 'unit') {
+                    var _ePrev = prevMeterData[item.houseNum] || '';
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
                         '<td>' + item.houseNum + '</td>' +
                         '<td>' + item.residentName + '</td>' +
-                        '<td><input type="number" class="prev-meter" value="" placeholder="เดิม" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
+                        '<td><input type="number" class="prev-meter" value="' + _ePrev + '" placeholder="เดิม" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
                         '<td><input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
                         '<td class="units-used" style="text-align:right">0</td>' +
                         '<td class="electric-amount-cell" style="text-align:right">' + (savedAmount ? applyRounding(savedAmount, electricRounding) : 0) + '</td>';
@@ -721,21 +744,25 @@
             rows.forEach(row => {
                 if (!row.dataset.house) return;
                 let amount = 0;
+                let recData = {
+                    house_number: row.dataset.house,
+                    resident_name: row.cells[2].textContent
+                };
                 if (electricMethod === 'unit') {
                     const amountCell = row.querySelector('.electric-amount-cell');
                     if (!amountCell) return;
                     amount = parseFloat(amountCell.textContent) || 0;
+                    recData.prev_meter = parseFloat(row.querySelector('.prev-meter').value) || 0;
+                    recData.curr_meter = parseFloat(row.querySelector('.curr-meter').value) || 0;
+                    recData.units_used = parseInt(row.querySelector('.units-used').textContent) || 0;
                 } else {
                     const amountInput = row.querySelector('.electric-amount');
                     if (!amountInput) return;
                     amount = applyRounding(parseFloat(amountInput.value) || 0, electricRounding);
                     if (amount > 0 && amount < electricMinCharge) amount = electricMinCharge;
                 }
-                records.push({
-                    house_number: row.dataset.house,
-                    resident_name: row.cells[2].textContent,
-                    amount: amount
-                });
+                recData.amount = amount;
+                records.push(recData);
             });
             
             const electricData = {
