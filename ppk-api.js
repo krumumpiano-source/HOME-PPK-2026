@@ -1348,7 +1348,14 @@ async function _routeAction(action, data) {
 
             var resMap = {};
             (resRows || []).forEach(function(r) {
-                if (r.house_number) resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                if (r.house_number) {
+                    var name = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                    if (resMap[r.house_number]) {
+                        resMap[r.house_number] += '\n' + name;
+                    } else {
+                        resMap[r.house_number] = name;
+                    }
+                }
             });
             // รวมข้อมูลตาม house_number
             var summaryMap = {};

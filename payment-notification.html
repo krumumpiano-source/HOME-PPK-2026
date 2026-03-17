@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แจ้งเตือนการชำระ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260317B">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
@@ -170,11 +172,13 @@
         // === สร้าง dropdown ปี พ.ศ. แบบ dynamic ===
         function initYearSelector() {
             var sel = document.getElementById('bill_year');
-            var currentBE = now.getFullYear() + 543;
-            for (var y = currentBE; y >= currentBE - 3; y--) {
+            var cy = now.getFullYear() + 543;
+            var minY = 2568;
+            for (var y = cy + 2; y >= minY; y--) {
                 var opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;
+                if (y === cy) opt.selected = true;
                 sel.appendChild(opt);
             }
         }
@@ -218,8 +222,8 @@
             document.getElementById('houseTableTitle').textContent = '🏠 บ้านพัก ประจำเดือน'+THAI_MONTHS[mi]+' พ.ศ. '+y;
             document.getElementById('flatTableTitle').textContent = '🏢 แฟลต ประจำเดือน'+THAI_MONTHS[mi]+' พ.ศ. '+y;
         }
-        document.getElementById('bill_month').addEventListener('change',updateTableTitles);
-        document.getElementById('bill_year').addEventListener('change',updateTableTitles);
+        document.getElementById('bill_month').addEventListener('change',function(){ updateTableTitles(); loadBillData(); });
+        document.getElementById('bill_year').addEventListener('change',function(){ updateTableTitles(); loadBillData(); });
 
         // === แปลงเลขมิเตอร์เป็น 4 หลักท้าย ===
         function last4(num) {
@@ -381,12 +385,12 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260313D"></script>
-    <script src="supabase/supabase.min.js?v=20260313D"></script>
-    <script src="ppk-api.js?v=20260313D"></script>
-    <script src="ppk-app.js?v=20260313D"></script>
-    <script src="ppk-utils.js?v=20260313D"></script>
-    <script src="ppk-nav.js?v=20260313D"></script>
-    <script src="ppk-pwa.js?v=20260313D"></script>
+    <script src="supabase/config.js?v=20260317B"></script>
+    <script src="supabase/supabase.min.js?v=20260317B"></script>
+    <script src="ppk-api.js?v=20260317B"></script>
+    <script src="ppk-app.js?v=20260317B"></script>
+    <script src="ppk-utils.js?v=20260317B"></script>
+    <script src="ppk-nav.js?v=20260317B"></script>
+    <script src="ppk-pwa.js?v=20260317B"></script>
 </body>
 </html>

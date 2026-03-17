@@ -1,5 +1,5 @@
 ﻿// HOME PPK 2026 — Service Worker v1
-var CACHE_NAME = 'ppk-v20260317A';
+var CACHE_NAME = 'ppk-v20260317B';
 var PRECACHE = [
   './',
   './dashboard.html',
