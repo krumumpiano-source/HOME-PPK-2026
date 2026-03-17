@@ -226,6 +226,34 @@ async function _findResidentForUser(userId, userEmail) {
             }
         } catch(e) {}
     }
+    // 3) ค้นจาก coresidents table (ผู้ร่วมพักอาศัย)
+    if (userId) {
+        try {
+            var corRows = await sbGet('coresidents', { user_id: 'eq.' + userId, limit: '1' });
+            if (corRows && corRows[0]) {
+                // ดึงข้อมูล resident หลักเพื่อได้ house_number
+                var mainRes = await sbGet('residents', { id: 'eq.' + corRows[0].resident_id, is_active: 'eq.true', limit: '1' });
+                if (mainRes && mainRes[0]) {
+                    return { id: corRows[0].id, house_number: mainRes[0].house_number, house_id: mainRes[0].house_id, is_coresident: true };
+                }
+            }
+        } catch(e) {}
+    }
+    if (userEmail) {
+        var em2 = userEmail.trim().toLowerCase();
+        try {
+            var corEmRows = await sbGet('coresidents', { email: 'eq.' + em2, limit: '1' });
+            if (corEmRows && corEmRows[0]) {
+                if (userId && !corEmRows[0].user_id) {
+                    try { await sbPatch('coresidents', { id: 'eq.' + corEmRows[0].id }, { user_id: userId }); } catch(e3) {}
+                }
+                var mainRes2 = await sbGet('residents', { id: 'eq.' + corEmRows[0].resident_id, is_active: 'eq.true', limit: '1' });
+                if (mainRes2 && mainRes2[0]) {
+                    return { id: corEmRows[0].id, house_number: mainRes2[0].house_number, house_id: mainRes2[0].house_id, is_coresident: true };
+                }
+            }
+        } catch(e) {}
+    }
     return null;
 }
 
@@ -354,7 +382,7 @@ async function callBackendGet(action, params) {
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
     'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
     'saveWaterRate','saveElectricRate','saveRoundingSetting','saveHousingFormat','setupAdmin',
-    'getAdminTeam','getUsersList','getAllPermissions'];
+    'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf'];
 
 // ── Storage bucket helper: auto-create if not exists ──
 var _bucketReady = {};
@@ -565,14 +593,15 @@ async function _routeAction(action, data) {
             return { success: true, data: mapped };
         }
         case 'addHousing': {
-            var row = await sbPost('housing', {
+            var _hBody = {
                 house_number: data.house_number || data.number || '',
                 type: data.type || 'house',
                 building: data.building || data.zone || '',
-                floor: data.floor || '',
                 status: data.status || 'available',
                 notes: data.notes || data.note || ''
-            });
+            };
+            if (data.floor && !isNaN(parseInt(data.floor))) _hBody.floor = parseInt(data.floor);
+            var row = await sbPost('housing', _hBody);
             invalidateResidentCache();
             return { success: true, data: row };
         }
@@ -703,7 +732,7 @@ async function _routeAction(action, data) {
                         prefix: reg.prefix || '', firstname: reg.firstname || '',
                         lastname: reg.lastname || '', position: reg.position || '',
                         email: reg.email || '', phone: reg.phone || '',
-                        resident_type: data.resident_type || 'teacher',
+                        resident_type: data.resident_type || '',
                         address_no: reg.address_no || '', address_village: reg.address_village || '',
                         address_road: reg.address_road || '', subdistrict: reg.subdistrict || '',
                         district: reg.district || '', province: reg.province || '',
@@ -1758,21 +1787,24 @@ async function _routeAction(action, data) {
                 console.warn('set must_change_pw flag attempt 1 failed:', e1);
                 try { await sbPost('settings', { key: _flagKey, value: 'true' }); } catch(e2) { console.warn('set must_change_pw flag attempt 2 failed:', e2); }
             }
-            // หา house_id จาก house_number
+            // หา house_id จาก house_number (ลองหลายวิธี)
             var houseId = null;
-            if (data.house_number) {
-                var hRow = await sbGet('housing', { house_number: 'eq.' + data.house_number, select: 'id', limit: '1' });
+            var _hn = (data.house_number || '').trim();
+            if (_hn) {
+                var hRow = await sbGet('housing', { house_number: 'eq.' + _hn, select: 'id', limit: '1' });
                 houseId = hRow && hRow[0] ? hRow[0].id : null;
+                // Fallback: ลอง ilike ถ้า eq ไม่เจอ
+                if (!houseId) {
+                    var hRow2 = await sbGet('housing', { house_number: 'ilike.' + _hn, select: 'id', limit: '1' });
+                    houseId = hRow2 && hRow2[0] ? hRow2[0].id : null;
+                }
             }
-            if (!houseId) {
-                invalidateResidentCache();
-                return { success: true, userId: uid, residentId: null, warning: 'ไม่พบเลขที่บ้าน บันทึก user สำเร็จแต่ไม่ผูกแพรมบ้าน' };
-            }
+            var _resWarning = '';
+            if (!houseId && _hn) _resWarning = 'ไม่พบเลขที่บ้าน "' + _hn + '" ในระบบ — บันทึกผู้พักอาศัยแล้ว แต่ยังไม่ผูกบ้าน';
             // สร้าง resident — ใช้เฉพาะ columns ที่มีใน schema
-            var newRes = await sbPost('residents', {
+            var _resBody = {
                 user_id:      uid,
-                house_id:     houseId,
-                house_number: data.house_number || '',
+                house_number: _hn,
                 prefix:       data.prefix    || '',
                 firstname:    data.firstname || '',
                 lastname:     data.lastname  || '',
@@ -1780,9 +1812,24 @@ async function _routeAction(action, data) {
                 email:        email || '',
                 phone:        data.phone     || '',
                 is_active:    true
-            });
+            };
+            if (houseId) _resBody.house_id = houseId;
+            var newRes = null;
+            try {
+                newRes = await sbPost('residents', _resBody);
+            } catch(eRes) {
+                // ถ้า house_id NOT NULL constraint fail ให้ลองโดยไม่มี house_id
+                console.warn('addResident insert failed (house_id):', eRes.message, '— retrying without house_id');
+                delete _resBody.house_id;
+                try { newRes = await sbPost('residents', _resBody); } catch(eRes2) {
+                    console.error('addResident insert retry failed:', eRes2.message);
+                    _resWarning = 'สร้าง user สำเร็จ แต่สร้าง resident ไม่ได้: ' + eRes2.message;
+                }
+            }
             invalidateResidentCache();
-            return { success: true, userId: uid, residentId: newRes ? newRes.id : null };
+            var _result = { success: true, userId: uid, residentId: newRes ? newRes.id : null };
+            if (_resWarning) _result.warning = _resWarning;
+            return _result;
         }
         case 'updateResident': {
             var rid = data.id;
@@ -1792,7 +1839,16 @@ async function _routeAction(action, data) {
             if (data.firstname    !== undefined) resUp.firstname    = data.firstname;
             if (data.lastname     !== undefined) resUp.lastname     = data.lastname;
             if (data.position     !== undefined) resUp.position     = data.position;
-            if (data.house_number !== undefined) resUp.house_number = data.house_number;
+            if (data.house_number !== undefined) {
+                resUp.house_number = data.house_number;
+                // อัปเดต house_id ให้ตรงกับ house_number ใหม่
+                if (data.house_number) {
+                    var hLookup = await sbGet('housing', { house_number: 'eq.' + data.house_number, select: 'id', limit: '1' });
+                    resUp.house_id = hLookup && hLookup[0] ? hLookup[0].id : null;
+                } else {
+                    resUp.house_id = null;
+                }
+            }
             if (data.is_active    !== undefined) resUp.is_active    = data.is_active;
             await sbPatch('residents', { id: 'eq.' + rid }, resUp);
             // อัปเดต users table ด้วย (phone, email, password)
@@ -2050,6 +2106,31 @@ async function _routeAction(action, data) {
             return { success: true, data: mapped };
         }
 
+        /* ── getUsersList — ดึง users ทั้งหมด (สำหรับจัดการสิทธิ์) ─── */
+        case 'getUsersList': {
+            var allUsers = await sbGet('users', { is_active: 'eq.true', select: 'id,email,prefix,firstname,lastname,role,position,phone,created_at' });
+            allUsers = (allUsers || []).map(function(u) {
+                return {
+                    id: u.id, user_id: u.id,
+                    email: u.email || '', prefix: u.prefix || '',
+                    firstname: u.firstname || '', lastname: u.lastname || '',
+                    role: u.role || 'user', position: u.position || '',
+                    phone: u.phone || '', created_at: u.created_at || ''
+                };
+            });
+            // เสริมข้อมูล house_number จาก residents table
+            var userIds = allUsers.map(function(u) { return u.id; }).filter(Boolean);
+            if (userIds.length > 0) {
+                try {
+                    var resRows = await sbGet('residents', { user_id: 'in.(' + userIds.join(',') + ')', is_active: 'eq.true', select: 'user_id,house_number' });
+                    var houseMap = {};
+                    (resRows || []).forEach(function(r) { if (r.user_id) houseMap[r.user_id] = r.house_number; });
+                    allUsers.forEach(function(u) { u.house_number = houseMap[u.id] || ''; });
+                } catch(e) {}
+            }
+            return { success: true, data: allUsers };
+        }
+
         /* ── getMemberStatus — สถานะสมาชิก + สิทธิ์ ─── */
         case 'getMemberStatus': {
             var residents = await sbGet('residents', { is_active: 'eq.true', order: 'house_number.asc' });
@@ -2208,6 +2289,48 @@ async function _routeAction(action, data) {
                 return { success: true, downloadUrl: regRows[0].value };
             }
             return { success: false, message: 'ไม่พบไฟล์ระเบียบ' };
+        }
+
+        /* ── uploadRegulationPdf — อัปโหลด PDF ระเบียบไป Storage ─── */
+        case 'uploadRegulationPdf': {
+            var rpB64 = data.base64 || '';
+            if (!rpB64.startsWith('data:')) return { success: false, error: 'ไม่ใช่ base64 file' };
+            var rpMatch = rpB64.match(/data:([^;]+);base64,(.+)/);
+            if (!rpMatch) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
+            var rpMime = rpMatch[1];
+            var rpRaw = rpMatch[2];
+            var rpBinary = atob(rpRaw);
+            var rpBytes = new Uint8Array(rpBinary.length);
+            for (var rpi = 0; rpi < rpBinary.length; rpi++) { rpBytes[rpi] = rpBinary.charCodeAt(rpi); }
+            var rpPath = 'regulations/regulation_' + Date.now() + '.pdf';
+            var rpBlob = new Blob([rpBytes], { type: rpMime });
+            // ลบไฟล์เก่า (ถ้ามี)
+            var rpOldRows = await sbGet('settings', { key: 'eq.regulations_pdf', select: 'value', limit: '1' });
+            if (rpOldRows && rpOldRows[0] && rpOldRows[0].value) {
+                var rpOldMatch = rpOldRows[0].value.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+                if (rpOldMatch) {
+                    try { await window._sb.storage.from(rpOldMatch[1]).remove([rpOldMatch[2]]); } catch(e) {}
+                }
+            }
+            var rpUpRes = await window._sb.storage.from('slips').upload(rpPath, rpBlob, { contentType: rpMime, upsert: true });
+            if (rpUpRes.error) return { success: false, error: 'อัปโหลดไม่สำเร็จ: ' + (rpUpRes.error.message || '') };
+            var rpPub = window._sb.storage.from('slips').getPublicUrl(rpPath);
+            var rpUrl = rpPub.data.publicUrl;
+            await sbUpsert('settings', { key: 'regulations_pdf', value: rpUrl }, 'key');
+            return { success: true, downloadUrl: rpUrl };
+        }
+
+        /* ── deleteRegulationPdf — ลบ PDF ระเบียบจาก Storage ─── */
+        case 'deleteRegulationPdf': {
+            var drRows = await sbGet('settings', { key: 'eq.regulations_pdf', select: 'value', limit: '1' });
+            if (drRows && drRows[0] && drRows[0].value) {
+                var drMatch = drRows[0].value.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+                if (drMatch) {
+                    try { await window._sb.storage.from(drMatch[1]).remove([drMatch[2]]); } catch(e) { console.warn('delete regulation file:', e); }
+                }
+            }
+            await sbDelete('settings', { key: 'eq.regulations_pdf' });
+            return { success: true };
         }
 
         default:

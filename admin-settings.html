@@ -830,7 +830,7 @@
             <div class="tab-content" id="tab-permissions">
                 <div class="section">
                     <div class="section-title">🔐 จัดการสิทธิ์การเข้าถึง</div>
-                    <div class="section-desc">เลือกบุคลากร → คลิกเปิดสิทธิ์ → กดบันทึก<br>สิทธิ์จะมีผลภายใน 1 นาทีโดยผู้รับสิทธิ์ไม่ต้องออกจากระบบ</div>
+                    <div class="section-desc">เลือกผู้ใช้งาน → คลิกเปิดสิทธิ์ → กดบันทึก<br>สิทธิ์จะมีผลภายใน 1 นาทีโดยผู้รับสิทธิ์ไม่ต้องออกจากระบบ</div>
 
                     <details style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.1rem 1rem;">
                         <summary style="cursor:pointer; padding:0.6rem 0; font-weight:600; color:var(--muted); font-size:0.85rem; user-select:none;">⚙️ คำอธิบายสิทธิ์แต่ละประเภท (คลิกเพื่อขยาย)</summary>
@@ -852,7 +852,7 @@
                         <label style="font-weight:700; font-size:0.92rem; color:var(--text); display:block; margin-bottom:0.4rem;">➕ เพิ่มผู้รับสิทธิ์</label>
                         <div style="position:relative;">
                             <input type="text" id="permSearchInput"
-                                placeholder="🔍 พิมพ์ชื่อเพื่อค้นหาบุคลากร..."
+                                placeholder="🔍 พิมพ์ชื่อเพื่อค้นหาผู้ใช้งาน..."
                                 oninput="filterPermSearch()" onfocus="filterPermSearch()"
                                 autocomplete="off"
                                 style="width:100%; padding:0.65rem 1rem; border:2px solid var(--border); border-radius:12px; font-size:0.9rem; background:var(--card); color:var(--text); box-sizing:border-box;">
@@ -1848,11 +1848,11 @@
             } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message); }
         }
 
-        function openModal(modalName) {
+        async function openModal(modalName) {
             document.getElementById('modal-' + modalName).classList.add('active');
             // editResident ควบคุม dropdown ตัวเอง (async await) ไม่ต้องเรียกซ้ำที่นี่
             if (modalName === 'addResident') {
-                populateHouseDropdown('residentHouse'); // fire-and-forget; user hasn't had time to interact
+                await populateHouseDropdown('residentHouse');
             }
         }
 
@@ -1902,7 +1902,8 @@
             // Compute status based on actual residents
             data.forEach(function(h) {
                 var dn = formatHousingNumber(h, formatSettings);
-                var hasRes = residents.some(function(r) { return r.house_number === dn; });
+                var rawNum = h.number || h.house_number || '';
+                var hasRes = residents.some(function(r) { return r.house_number === dn || (rawNum && r.house_number === rawNum); });
                 if (h.status !== 'maintenance') h._realStatus = hasRes ? 'occupied' : 'available';
                 else h._realStatus = 'maintenance';
             });
@@ -1961,10 +1962,11 @@
             } else {
                 filtered.forEach(function(h) {
                     var dn = formatHousingNumber(h, formatSettings);
+                    var rawNum = h.number || h.house_number || '';
                     var s = statusMap[h._realStatus] || statusMap.available;
                     var typeIcon = h.type === 'house' ? '🏠' : '🏢';
                     var typeLabel = h.type === 'house' ? 'บ้านพัก' : 'แฟลต';
-                    var occupants = residents.filter(function(r) { return r.house_number === dn; });
+                    var occupants = residents.filter(function(r) { return r.house_number === dn || (rawNum && r.house_number === rawNum); });
                     var occStr = occupants.length > 0 ? occupants.map(function(r) { return (r.firstname||'') + ' ' + (r.lastname||''); }).join(', ') : '<span style="color:var(--muted);">-</span>';
                     var safeId = String(h.id).replace(/'/g, '&apos;');
                     var safeDn = dn.replace(/'/g, '&apos;');
@@ -2055,16 +2057,22 @@
                 return;
             }
 
+            // ตรวจเลขที่ซ้ำ
+            const existingData = getHousingData();
+            if (existingData.some(h => (h.number || h.house_number || '') === number && (h.type || 'house') === type)) {
+                ppkAlert('❌ เลขที่นี้มีในระบบแล้ว กรุณาใช้เลขอื่น');
+                return;
+            }
+
             // Save to Backend
             callBackend('addHousing', { type, number, zone, status, note }).then(result => {
                 if (result && result.success) {
-                    // Add to local cache
+                    // Add to local cache — ใช้ result.data.id จาก backend (UUID)
                     const data = getHousingData();
-                    const formatSettings = getHousingFormatSettings();
-                    const prefix = type === 'house' ? formatSettings.housePrefix : formatSettings.flatPrefix;
+                    const backendId = (result.data && result.data.id) || result.id;
                     data.push({
-                        id: result.id || (data.length > 0 ? Math.max(...data.map(h => typeof h.id === 'number' ? h.id : 0)) + 1 : 1),
-                        type, number, displayNumber: prefix + number, zone, status, note,
+                        id: backendId || ('HOU-' + Date.now().toString(36).toUpperCase()),
+                        type, number, displayNumber: '', zone, status, note,
                         createdAt: new Date().toISOString()
                     });
                     saveHousingData(data);
@@ -2110,8 +2118,7 @@
             }
 
             const formatSettings = getHousingFormatSettings();
-            const prefix = type === 'house' ? formatSettings.housePrefix : formatSettings.flatPrefix;
-            const updatedItem = { type, number, displayNumber: prefix + number, zone, status, note, updatedAt: new Date().toISOString() };
+            const updatedItem = { type, number, displayNumber: '', zone, status, note, updatedAt: new Date().toISOString() };
 
             // Update via Backend
             callBackend('updateHousing', { id: String(id), ...updatedItem }).then(result => {
@@ -2130,7 +2137,10 @@
 
         async function deleteHousingFromCard(id, displayName) {
             const residents = getResidentsData();
-            const residentCount = residents.filter(r => r.house_number === displayName).length;
+            const housing = getHousingData();
+            const hItem = housing.find(h => String(h.id) === String(id));
+            const rawNum = hItem ? (hItem.number || hItem.house_number || '') : '';
+            const residentCount = residents.filter(r => r.house_number === displayName || (rawNum && r.house_number === rawNum)).length;
             const residentWarning = residentCount > 0
                 ? `\n⚠️ มีผู้พักอาศัย ${residentCount} คน (บุคลากรจะไม่มีบ้านพัก)`
                 : '';
@@ -2286,7 +2296,7 @@
                             id: h.id || (i + 1),
                             type: h.type || 'house',
                             number: h.number || '',
-                            displayNumber: h.display_number || '',
+                            displayNumber: '',
                             zone: h.zone || '',
                             status: h.status || 'available',
                             note: h.note || ''
@@ -2303,12 +2313,14 @@
             const formatSettings = getHousingFormatSettings();
             select.innerHTML = '<option value="">เลือกบ้าน/ห้อง</option>';
             housing.forEach(h => {
+                const rawNumber = h.number || h.house_number || '';
                 const displayName = formatHousingNumber(h, formatSettings);
                 const statusText = h.status === 'available' ? ' (ว่าง)' : h.status === 'maintenance' ? ' (ซ่อมบำรุง)' : '';
                 const opt = document.createElement('option');
-                opt.value = displayName;
+                opt.value = rawNumber;
                 opt.textContent = displayName + statusText;
-                if (preselectValue && displayName === preselectValue) opt.selected = true;
+                // backward compat: preselectValue อาจเป็นทั้ง raw number หรือ display name
+                if (preselectValue && (rawNumber === preselectValue || displayName === preselectValue)) opt.selected = true;
                 select.appendChild(opt);
             });
         }
@@ -2331,12 +2343,14 @@
             var pillsEl = document.getElementById('residentFilterPills');
             if (!container) return;
 
-            // build house order map
+            // build house order map — ใช้ทั้ง raw number และ display name เป็น key
             var houseOrder = {};
             housing.forEach(function(h) {
                 var dn = formatHousingNumber(h, formatSettings);
+                var rawNum = h.number || h.house_number || '';
                 var rank = (h.type === 'house' ? 0 : 10000) + parseInt((dn.match(/\d+/) || [999])[0]);
                 houseOrder[dn] = rank;
+                if (rawNum) houseOrder[rawNum] = rank;
             });
 
             var allStaff = residents.filter(function(r) { return r.residentType !== 'cohabitant'; });
@@ -2385,7 +2399,7 @@
                 fullName = fullName.trim();
                 var houseIcon = '📍';
                 if (r.house_number) {
-                    var hi = housing.find(function(h) { return formatHousingNumber(h, formatSettings) === r.house_number; });
+                    var hi = housing.find(function(h) { return (h.number || h.house_number || '') === r.house_number || formatHousingNumber(h, formatSettings) === r.house_number; });
                     houseIcon = hi ? (hi.type === 'flat' ? '🏢' : '🏠') : '🏠';
                 }
                 var isSuspended = r.status === 'inactive' || r.status === 'suspended';
@@ -2586,21 +2600,26 @@
                 return;
             }
 
-            // Group residents by house
+            // Group residents by house — ใช้ displayNumber เป็น key
             const houseGroups = {};
+            const rawToDisplay = {}; // map raw number → displayNumber
 
             housing.forEach(h => {
                 const displayNumber = formatHousingNumber(h, formatSettings);
+                const rawNum = h.number || h.house_number || '';
                 houseGroups[displayNumber] = { houseInfo: h, residents: [], displayNumber };
+                if (rawNum) rawToDisplay[rawNum] = displayNumber;
             });
 
             residents.forEach(r => {
                 const houseNumber = r.house_number || '';
                 if (houseNumber) {
-                    if (!houseGroups[houseNumber]) {
-                        houseGroups[houseNumber] = { houseInfo: null, residents: [], displayNumber: houseNumber };
+                    // ลอง match ทั้ง display name และ raw number
+                    const displayKey = rawToDisplay[houseNumber] || houseNumber;
+                    if (!houseGroups[displayKey]) {
+                        houseGroups[displayKey] = { houseInfo: null, residents: [], displayNumber: displayKey };
                     }
-                    houseGroups[houseNumber].residents.push(r);
+                    houseGroups[displayKey].residents.push(r);
                 }
             });
 
@@ -2670,7 +2689,7 @@
                                     <div style="font-size:1.5rem; font-weight:700; color:${statusColor};">${totalCount}</div>
                                     <div style="font-size:0.75rem; color:var(--muted);">ผู้อาศัยรวม</div>
                                 </div>
-                                ${group.houseInfo ? `<button class="btn btn-danger" style="padding:0.2rem 0.6rem; font-size:0.75rem; line-height:1.4;" onclick="event.stopPropagation(); deleteHousingFromCard('${group.houseInfo.id}', '${group.displayNumber.replace(/'/g, "&apos;")}')">🗑️ ลบ</button>` : ''}
+                                ${group.houseInfo ? `<button class="btn btn-danger" style="padding:0.2rem 0.6rem; font-size:0.75rem; line-height:1.4;" onclick="event.stopPropagation(); deleteHousingFromCard(${JSON.stringify(group.houseInfo.id)}, ${JSON.stringify(group.displayNumber)})">🗑️ ลบ</button>` : ''}
                             </div>
                         </div>
                         ${totalCount > 0 ? `
@@ -2708,10 +2727,10 @@
             const formatSettings = getHousingFormatSettings();
 
             const isUnassigned = houseNumber === '(ไม่ระบุบ้าน)';
-            const houseInfo = housing.find(h => formatHousingNumber(h, formatSettings) === houseNumber);
+            const houseInfo = housing.find(h => (h.number || h.house_number || '') === houseNumber || formatHousingNumber(h, formatSettings) === houseNumber);
             const houseResidents = isUnassigned
                 ? residents.filter(r => !r.house_number)
-                : residents.filter(r => r.house_number === houseNumber);
+                : residents.filter(r => r.house_number === houseNumber || (houseInfo && (r.house_number === (houseInfo.number || '') || r.house_number === formatHousingNumber(houseInfo, formatSettings))));
 
             const typeEmoji = isUnassigned ? '📍' : houseInfo ? (houseInfo.type === 'house' ? '🏠' : '🏢') : '📍';
             document.getElementById('houseDetailsTitle').textContent = isUnassigned
@@ -2846,7 +2865,7 @@
                             id: h.id || (i + 1),
                             type: h.type || 'house',
                             number: h.number || '',
-                            displayNumber: h.display_number || '',
+                            displayNumber: '',
                             zone: h.zone || '',
                             status: h.status || 'available',
                             note: h.note || ''
@@ -2860,9 +2879,10 @@
             select.innerHTML = '<option value="">เลือกบ้าน/ห้องใหม่</option>';
             housing.forEach(h => {
                 const displayName = formatHousingNumber(h, formatSettings);
-                if (displayName !== resident.house_number) {
+                const rawNum = h.number || h.house_number || '';
+                if (rawNum !== resident.house_number && displayName !== resident.house_number) {
                     const opt = document.createElement('option');
-                    opt.value = displayName;
+                    opt.value = rawNum;
                     opt.textContent = displayName;
                     select.appendChild(opt);
                 }
@@ -2902,6 +2922,7 @@
             
             renderHouseCards();
             renderResidentTable();
+            renderManageHousingCards();
             
             if (currentHouseForDetails) {
                 openHouseDetails(currentHouseForDetails);
@@ -2920,6 +2941,7 @@
             openHouseDetails(currentHouseForDetails);
             renderHouseCards();
             renderResidentTable();
+            renderManageHousingCards();
 
             // รอ backend ลบจริง
             try {
@@ -2932,6 +2954,7 @@
                             openHouseDetails(currentHouseForDetails);
                             renderHouseCards();
                             renderResidentTable();
+                            renderManageHousingCards();
                         }
                         ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
                     }
@@ -2943,6 +2966,7 @@
                         openHouseDetails(currentHouseForDetails);
                         renderHouseCards();
                         renderResidentTable();
+                        renderManageHousingCards();
                     }
                     ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
                 }
@@ -3030,12 +3054,20 @@
             // Save to Backend
             callBackend('addResident', newResident).then(result => {
                 if (result && result.success) {
+                    // อัปเดต local ID จาก backend (UUID จริง)
+                    if (result.residentId) newResident.id = result.residentId;
+                    if (result.userId) newResident.userId = result.userId;
                     saveResidentsData(data);
                     renderResidentTable();
                     renderHouseCards();
+                    renderManageHousingCards();
                     closeModal('addResident');
                     clearAddForm();
-                    ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                    if (result.warning) {
+                        ppkAlert('⚠️ บันทึก user สำเร็จ แต่: ' + result.warning);
+                    } else {
+                        ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                    }
                 } else {
                     data.pop(); // revert
                     ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
@@ -3134,6 +3166,7 @@
                     }
                     renderResidentTable();
                     renderHouseCards();
+                    renderManageHousingCards();
                     closeModal('editResident');
                     ppkAlert('อัปเดตข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
                 } else {
@@ -3655,43 +3688,70 @@
         }
 
         // ========== Regulation PDF Functions ==========
+        var _regulationPdfUrl = ''; // เก็บ URL จาก backend
+
         function handleRegulationPdfUpload(event) {
             const file = event.target.files[0];
-            if (file && file.type === 'application/pdf') {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64 = e.target.result;
-                    localStorage.setItem('regulations_pdf', base64);
-                    updateRegulationFileStatus();
-                    ppkAlert('อัพโหลดไฟล์ระเบียบเรียบร้อยแล้ว!');
-                };
-                reader.readAsDataURL(file);
-            } else {
+            if (!file || file.type !== 'application/pdf') {
                 ppkAlert('กรุณาเลือกไฟล์ PDF เท่านั้น');
+                event.target.value = '';
+                return;
             }
+            if (file.size > 10 * 1024 * 1024) {
+                ppkAlert('ไฟล์ใหญ่เกิน 10 MB กรุณาเลือกไฟล์ที่เล็กกว่า');
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result;
+                const statusEl = document.getElementById('regulationFileStatus');
+                statusEl.textContent = '⏳ กำลังอัปโหลด...';
+                statusEl.style.color = '#2563eb';
+                try {
+                    const result = await callBackend('uploadRegulationPdf', { base64: base64 });
+                    if (result && result.success) {
+                        _regulationPdfUrl = result.downloadUrl || '';
+                        updateRegulationFileStatus();
+                        ppkAlert('อัพโหลดไฟล์ระเบียบเรียบร้อยแล้ว!');
+                    } else {
+                        ppkAlert('❌ อัปโหลดไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                        updateRegulationFileStatus();
+                    }
+                } catch(err) {
+                    ppkAlert('❌ อัปโหลดไม่สำเร็จ: ' + err.message);
+                    updateRegulationFileStatus();
+                }
+            };
+            reader.readAsDataURL(file);
             event.target.value = '';
         }
 
         async function deleteRegulationPdf() {
-            if (await ppkConfirm('ต้องการลบไฟล์ระเบียบนี้หรือไม่?')) {
-                localStorage.removeItem('regulations_pdf');
-                updateRegulationFileStatus();
-                ppkAlert('ลบไฟล์ระเบียบเรียบร้อยแล้ว');
+            if (!await ppkConfirm('ต้องการลบไฟล์ระเบียบนี้หรือไม่?')) return;
+            try {
+                const result = await callBackend('deleteRegulationPdf', {});
+                if (result && result.success) {
+                    _regulationPdfUrl = '';
+                    updateRegulationFileStatus();
+                    ppkAlert('ลบไฟล์ระเบียบเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                }
+            } catch(err) {
+                ppkAlert('❌ ลบไม่สำเร็จ: ' + err.message);
             }
         }
 
         function updateRegulationFileStatus() {
-            const savedPdf = localStorage.getItem('regulations_pdf');
             const statusEl = document.getElementById('regulationFileStatus');
             const infoEl = document.getElementById('regulationFileInfo');
             const deleteBtn = document.getElementById('deleteRegulationBtn');
             
-            if (savedPdf) {
-                statusEl.textContent = '✅ มีไฟล์ระเบียบในระบบ';
+            if (_regulationPdfUrl) {
+                statusEl.textContent = '✅ มีไฟล์ระเบียบในระบบ (เซิร์ฟเวอร์)';
                 statusEl.style.color = '#059669';
-                // Calculate file size
-                const fileSizeKB = Math.round((savedPdf.length * 3 / 4) / 1024);
-                infoEl.textContent = 'ขนาดไฟล์ประมาณ: ' + fileSizeKB + ' KB';
+                infoEl.textContent = 'ไฟล์เก็บอยู่บน Supabase Storage';
                 deleteBtn.style.display = 'inline-flex';
             } else {
                 statusEl.textContent = '❌ ยังไม่มีไฟล์ระเบียบ';
@@ -3699,6 +3759,15 @@
                 infoEl.textContent = 'กรุณาอัพโหลดไฟล์ PDF เพื่อแสดงในหน้าระเบียบ';
                 deleteBtn.style.display = 'none';
             }
+        }
+
+        // โหลดสถานะ PDF จาก backend
+        async function loadRegulationStatus() {
+            try {
+                var res = await callBackendGet('getRegulationsPdf', {});
+                _regulationPdfUrl = (res && res.success && res.downloadUrl) ? res.downloadUrl : '';
+            } catch(e) { _regulationPdfUrl = ''; }
+            updateRegulationFileStatus();
         }
 
         // ========== Announcement Functions ==========
@@ -3884,7 +3953,7 @@
                         id: h.id || (i + 1),
                         type: h.type || 'house',
                         number: h.number || '',
-                        displayNumber: h.display_number || '',
+                        displayNumber: '',
                         zone: h.zone || '',
                         status: h.status || 'available',
                         note: h.note || ''
@@ -4055,7 +4124,7 @@
                         id: h.id || (i + 1),
                         type: h.type || 'house',
                         number: h.number || '',
-                        displayNumber: h.display_number || '',
+                        displayNumber: '',
                         zone: h.zone || '',
                         status: h.status || 'available',
                         note: h.note || ''
@@ -4102,8 +4171,20 @@
                     }
                 }
 
+                // ตรวจสอบว่าโหลดข้อมูลครบหรือไม่
+                var _failedKeys = [];
+                ['getSettings','getHousing','getResidents'].forEach(function(k) {
+                    var r = results[k];
+                    if (!r || !r.success) _failedKeys.push(k);
+                });
+                if (_failedKeys.length > 0) {
+                    console.warn('batchGet partial failure:', _failedKeys);
+                    ppkAlert('⚠️ โหลดข้อมูลบางส่วนไม่สำเร็จ: ' + _failedKeys.join(', ') + '\nข้อมูลที่แสดงอาจไม่ครบถ้วน');
+                }
+
             } catch (err) {
                 console.warn('Backend load failed, using localStorage:', err.message);
+                ppkAlert('⚠️ เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กำลังใช้ข้อมูลสำรอง (อาจไม่เป็นปัจจุบัน)');
             }
 
             // Reload UI — re-render เฉพาะ tab ที่ user เคยเปิดแล้ว
@@ -4200,13 +4281,14 @@
 
             houseSelect.innerHTML = '<option value="">-- ไม่กำหนด (เว้นว่างได้) --</option>';
             sorted.forEach(h => {
-                const dn = h.displayNumber || h.number || '';
-                const isOccupied = residents.some(r => r.house_number === dn);
+                const rawNum = h.number || h.house_number || '';
+                const dn = formatHousingNumber(h, formatSettings) || rawNum;
+                const isOccupied = residents.some(r => r.house_number === dn || (rawNum && r.house_number === rawNum));
                 const statusLabel = h.status === 'available' && !isOccupied ? '[ว่าง]'
                     : h.status === 'maintenance' ? '[ซ่อมบำรุง]'
                     : '[มีผู้พัก]';
                 const opt = document.createElement('option');
-                opt.value = dn;
+                opt.value = rawNum;
                 opt.textContent = `${dn} ${statusLabel}`;
                 if (h.status === 'maintenance') opt.style.color = '#999';
                 else if (isOccupied || h.status !== 'available') opt.style.color = '#e67e22';
@@ -4238,12 +4320,12 @@
             const residentType = document.getElementById('approveRegType').value;
 
             try {
-                var currentUser = getCurrentUser();
+                var currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
                 const result = await callBackend('approveRegistration', {
                     regId: regId,
                     house_number: houseNumber,
                     resident_type: residentType,
-                    reviewedBy: currentUser.id || null
+                    reviewedBy: (currentUser && currentUser.id) ? currentUser.id : null
                 });
 
                 if (result && result.success) {
@@ -4357,7 +4439,7 @@
             });
         }
 
-        function saveExemptions() {
+        async function saveExemptions() {
             const exemptions = {};
             const exemptionsForDB = {};
             var housing = getHousingData();
@@ -4380,9 +4462,14 @@
             
             saveExemptionsData(exemptions);
             // บันทึกลง DB ด้วย
-            callBackend('saveExemptions', { exemptions: exemptionsForDB })
-                .catch(function(e) { console.warn('saveExemptions DB:', e); });
-            ppkAlert('บันทึกการยกเว้นค่าส่วนกลางเรียบร้อยแล้ว');
+            try {
+                var dbRes = await callBackend('saveExemptions', { exemptions: exemptionsForDB });
+                if (!dbRes || !dbRes.success) throw new Error(dbRes?.error || 'บันทึกไม่สำเร็จ');
+                ppkAlert('บันทึกการยกเว้นค่าส่วนกลางเรียบร้อยแล้ว');
+            } catch(e) {
+                console.warn('saveExemptions DB:', e);
+                ppkAlert('⚠️ บันทึกลง DB ไม่สำเร็จ: ' + e.message);
+            }
         }
 
         // โหลด exemptions จาก DB แล้ว render ตาราง
@@ -4477,9 +4564,10 @@
             try {
                 var results = await Promise.all([
                     callBackendGet('getResidents'),
-                    callBackendGet('getAllPermissions')
+                    callBackendGet('getAllPermissions'),
+                    callBackendGet('getUsersList')
                 ]);
-                var resResult = results[0], permResult = results[1];
+                var resResult = results[0], permResult = results[1], usersResult = results[2];
 
                 if (resResult && resResult.success && resResult.data) {
                     // Save full data to localStorage for other features
@@ -4497,9 +4585,23 @@
                         };
                     });
                     localStorage.setItem(STORAGE_KEYS.residents, JSON.stringify(fullData));
+                }
 
+                // ใช้ getUsersList เพื่อดึงผู้ใช้ทั้งหมด (ไม่จำกัดเฉพาะผู้พักอาศัย)
+                if (usersResult && usersResult.success && usersResult.data) {
+                    _permAllResidents = usersResult.data
+                        .filter(function(u) { return u.id && u.email && u.email.trim(); })
+                        .map(function(u) {
+                            return {
+                                id: u.id || '', user_id: u.user_id || u.id || '',
+                                prefix: u.prefix || '', firstname: u.firstname || '', lastname: u.lastname || '',
+                                email: u.email || '', house_number: u.house_number || '', position: u.position || ''
+                            };
+                        });
+                } else if (resResult && resResult.success && resResult.data) {
+                    // Fallback: ใช้ residents list ถ้า getUsersList ไม่สำเร็จ
                     _permAllResidents = resResult.data
-                        .filter(function(r) { return r.user_id && r.email && r.email.trim() && r.resident_type !== 'cohabitant'; })
+                        .filter(function(r) { return r.user_id && r.email && r.email.trim(); })
                         .map(function(r) {
                             return {
                                 id: r.id || '', user_id: r.user_id || '',
@@ -4509,7 +4611,7 @@
                         });
                 } else {
                     _permAllResidents = getResidentsData()
-                        .filter(function(r) { return r.user_id && r.email && r.email.trim() && r.residentType !== 'cohabitant'; })
+                        .filter(function(r) { return r.user_id && r.email && r.email.trim(); })
                         .map(function(r) {
                             return { id: r.id, user_id: r.user_id, prefix: r.prefix||'', firstname: r.firstname||'',
                                      lastname: r.lastname||'', email: r.email||'', house_number: r.house_number||'', position: r.position||'' };
@@ -4648,6 +4750,9 @@
             if (idx >= 0) _permNewlyAdded.splice(idx, 1);
             if (_permRemovedUsers.indexOf(userId) === -1) _permRemovedUsers.push(userId);
             renderPermCards();
+            // Sync removal to backend immediately
+            callBackend('updatePermissions', { permissions: { [userId]: {} } })
+                .catch(function(e) { console.warn('removePermPerson sync:', e); });
         }
 
         // Keep for backward compatibility
@@ -4742,10 +4847,11 @@
             }
             // Load from localStorage first (instant UI)
             loadAllSettings();
-            updateRegulationFileStatus();
             
             // Then sync from Backend (async update)
             await loadFromBackend();
+            // โหลดสถานะ PDF จาก backend (ไม่ใช้ localStorage)
+            loadRegulationStatus();
         };
     
         async function doLogout() {
