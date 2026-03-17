@@ -704,7 +704,8 @@
                         ? 'title="เติมอัตโนมัติจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า (แก้ไขได้)" onchange="calculateUnitRow(this)"'
                         : 'title="กรอกเลขเริ่มต้นมิเตอร์ (กรณีติดตั้งใหม่หรือมิเตอร์มือสอง)" onchange="calculateUnitRow(this)" placeholder="เลขเริ่มต้น"';
                     const unitsUsed = currMeter !== '' ? Math.max(0, (parseFloat(currMeter)||0) - (parseFloat(prevMeter)||0)) : 0;
-                    const initAmt = currMeter !== '' ? applyRounding(unitsUsed * electricRate, electricRounding) : (savedObj ? savedObj.amount : 0);
+                    // ถ้ามีข้อมูลบันทึกไว้แล้ว ใช้ยอดจาก DB โดยตรง ไม่คำนวณใหม่
+                    const initAmt = (savedObj && savedObj.amount) ? savedObj.amount : (currMeter !== '' ? applyRounding(unitsUsed * electricRate, electricRounding) : 0);
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
                         '<td>' + item.houseNum + '</td>' +
