@@ -1899,13 +1899,15 @@
             var pillsEl = document.getElementById('housingFilterPills');
             if (!tableEl) return;
 
-            // Compute status based on actual residents
+            // Compute status based on actual residents + respect manual status
             data.forEach(function(h) {
                 var dn = formatHousingNumber(h, formatSettings);
                 var rawNum = h.number || h.house_number || '';
                 var hasRes = residents.some(function(r) { return r.house_number === dn || (rawNum && r.house_number === rawNum); });
-                if (h.status !== 'maintenance') h._realStatus = hasRes ? 'occupied' : 'available';
-                else h._realStatus = 'maintenance';
+                // ถ้ามี resident จริง → occupied เสมอ
+                // ถ้าไม่มี resident → ใช้สถานะที่ admin ตั้งไว้ (occupied/maintenance/available)
+                if (hasRes) h._realStatus = 'occupied';
+                else h._realStatus = h.status || 'available';
             });
 
             var totalHouses = data.filter(function(h) { return h.type === 'house'; }).length;
