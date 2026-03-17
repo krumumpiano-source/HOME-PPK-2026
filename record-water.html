@@ -736,22 +736,15 @@
                     cachedAdminSettings = {};
                 }
 
-            // โหลดอัตราค่าน้ำจาก Backend
+            // โหลดอัตราค่าน้ำจาก settings ที่ดึงมาแล้ว
             const rateInput = document.getElementById('water_rate');
-            try {
-                    const result = await cachedCall('getWaterRate', {}, 1800000);
-                    if (result && result.success && result.data && result.data.length > 0) {
-                        rateInput.value = result.data[0].rate;
-                    } else {
-                        rateInput.value = '';
-                        rateInput.placeholder = 'ยังไม่ได้ตั้งค่า';
-                    }
-                } catch (e) {
-                    console.error('getWaterRate error:', e);
-                    const savedRate = localStorage.getItem('waterRate');
-                    if (savedRate) rateInput.value = savedRate;
-                    else { rateInput.value = ''; rateInput.placeholder = 'ยังไม่ได้ตั้งค่า'; }
-                }
+            const savedRate = cachedAdminSettings.water_rate || localStorage.getItem('waterRate') || '';
+            if (savedRate) {
+                rateInput.value = savedRate;
+            } else {
+                rateInput.value = '';
+                rateInput.placeholder = 'ยังไม่ได้ตั้งค่า';
+            }
 
             if (!rateInput.value) {
                 document.querySelector('.info-box').innerHTML = '⚠️ <strong>ยังไม่ได้ตั้งค่าอัตราค่าน้ำ</strong> — กรุณาตั้งค่าที่หน้า admin-settings แท็บ Water ก่อนใช้งาน หรือกรอกอัตราด้านล่าง';
