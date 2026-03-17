@@ -499,6 +499,16 @@
             if (stored) return JSON.parse(stored);
             return [];
         }
+
+        async function getHousingListData() {
+            try {
+                const result = await cachedCall('getHousingList', {}, 600000);
+                if (result && result.success && result.data) return result.data;
+            } catch (e) { console.error('getHousingList error:', e); }
+            const stored = localStorage.getItem('housingData');
+            if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+            return [];
+        }
         
         // ดึงข้อมูลค่าไฟที่บันทึกไว้
         async function getSavedElectricData() {
@@ -545,37 +555,69 @@
             return {};
         }
         
-        // สร้างตารางผู้พักอาศัย
+        // สร้างตาราง — 1 แถว = 1 บ้าน (รวม housing + residents)
         async function renderResidentsTable() {
             const tbody = document.getElementById('electricTableBody');
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
-            const residents = await getResidentsData();
-            const savedAmounts = await getSavedElectricData();
+            const [residents, housingList, savedAmounts] = await Promise.all([
+                getResidentsData(), getHousingListData(), getSavedElectricData()
+            ]);
             tbody.innerHTML = '';
 
-            if (residents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
-                return;
-            }
-            
+            // Group active residents by house_number
             const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
-            if (activeResidents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน</td></tr>';
+            const resByHouse = {};
+            activeResidents.forEach(r => {
+                const key = r.house_number;
+                if (!resByHouse[key]) resByHouse[key] = [];
+                resByHouse[key].push(r);
+            });
+
+            // Build 1 row per housing unit
+            const billRows = [];
+            const added = new Set();
+
+            // 1) จาก housing: บ้านที่ occupied หรือมี residents
+            housingList.forEach(h => {
+                const raw = h.house_number || '';
+                if (!raw || added.has(raw)) return;
+                const resArr = resByHouse[raw] || [];
+                if (h.status === 'occupied' || resArr.length > 0) {
+                    const r = resArr[0];
+                    const name = r ? ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim() : '-';
+                    billRows.push({ houseNum: raw, residentName: name });
+                    added.add(raw);
+                }
+            });
+
+            // 2) จาก residents: บ้านที่ยังไม่มีใน housing list
+            activeResidents.forEach(r => {
+                if (!added.has(r.house_number)) {
+                    const name = ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim();
+                    billRows.push({ houseNum: r.house_number, residentName: name });
+                    added.add(r.house_number);
+                }
+            });
+
+            if (billRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีบ้านพัก/ห้องพักที่ต้องบันทึกค่าไฟ — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                document.getElementById('totalHouses').textContent = '0';
                 return;
             }
-            activeResidents.forEach((resident, index) => {
-                const houseNum = resident.house_number || '';
-                const savedAmount = savedAmounts[houseNum] || '';
-                const residentName = ((resident.prefix||'') + (resident.firstname||'') + ' ' + (resident.lastname||'')).trim();
-                
+
+            // เรียงลำดับตามเลขบ้าน
+            billRows.sort((a, b) => a.houseNum.localeCompare(b.houseNum, 'th', { numeric: true }));
+
+            billRows.forEach((item, index) => {
+                const savedAmount = savedAmounts[item.houseNum] || '';
                 const row = document.createElement('tr');
-                row.dataset.house = houseNum;
+                row.dataset.house = item.houseNum;
 
                 if (electricMethod === 'unit') {
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
-                        '<td>' + houseNum + '</td>' +
-                        '<td>' + residentName + '</td>' +
+                        '<td>' + item.houseNum + '</td>' +
+                        '<td>' + item.residentName + '</td>' +
                         '<td><input type="number" class="prev-meter" value="" placeholder="เดิม" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
                         '<td><input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
                         '<td class="units-used" style="text-align:right">0</td>' +
@@ -583,8 +625,8 @@
                 } else {
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
-                        '<td>' + houseNum + '</td>' +
-                        '<td>' + residentName + '</td>' +
+                        '<td>' + item.houseNum + '</td>' +
+                        '<td>' + item.residentName + '</td>' +
                         '<td><input type="number" class="electric-amount" value="' + savedAmount + '" placeholder="กรอกยอด" onchange="roundUpAndCalculate(this)" step="1" min="0"></td>';
                 }
                 tbody.appendChild(row);

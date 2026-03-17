@@ -438,6 +438,16 @@
             if (stored) { residentsCache = JSON.parse(stored); return residentsCache; }
             return [];
         }
+
+        async function getHousingListData() {
+            try {
+                const result = await cachedCall('getHousingList', {}, 600000);
+                if (result && result.success && result.data) return result.data;
+            } catch (e) { console.error('getHousingList error:', e); }
+            const stored = localStorage.getItem('housingData');
+            if (stored) { try { return JSON.parse(stored); } catch(e) {} }
+            return [];
+        }
         
         // ดึงเลขมิเตอร์ก่อนหน้าจาก Backend หรือ localStorage
         async function getPreviousMeterData() {
@@ -505,38 +515,70 @@
             return {};
         }
         
-        // สร้างตารางผู้พักอาศัย
+        // สร้างตาราง — 1 แถว = 1 บ้าน (รวม housing + residents)
         async function renderResidentsTable() {
             const tbody = document.getElementById('meterTableBody');
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
-            const residents = await getResidentsData();
-            const prevMeterData = await getPreviousMeterData();
-            const savedBill = await getSavedBillData();
+            const [residents, housingList, prevMeterData, savedBill] = await Promise.all([
+                getResidentsData(), getHousingListData(), getPreviousMeterData(), getSavedBillData()
+            ]);
             tbody.innerHTML = '';
-            
-            if (residents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีข้อมูลผู้พักอาศัย — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+
+            // Group active residents by house_number
+            const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
+            const resByHouse = {};
+            activeResidents.forEach(r => {
+                const key = r.house_number;
+                if (!resByHouse[key]) resByHouse[key] = [];
+                resByHouse[key].push(r);
+            });
+
+            // Build 1 row per housing unit
+            const billRows = [];
+            const added = new Set();
+
+            // 1) จาก housing: บ้านที่ occupied หรือมี residents
+            housingList.forEach(h => {
+                const raw = h.house_number || '';
+                if (!raw || added.has(raw)) return;
+                const resArr = resByHouse[raw] || [];
+                if (h.status === 'occupied' || resArr.length > 0) {
+                    const r = resArr[0];
+                    const name = r ? ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim() : '-';
+                    billRows.push({ houseNum: raw, residentName: name });
+                    added.add(raw);
+                }
+            });
+
+            // 2) จาก residents: บ้านที่ยังไม่มีใน housing list
+            activeResidents.forEach(r => {
+                if (!added.has(r.house_number)) {
+                    const name = ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim();
+                    billRows.push({ houseNum: r.house_number, residentName: name });
+                    added.add(r.house_number);
+                }
+            });
+
+            if (billRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีบ้านพัก/ห้องพักที่ต้องบันทึกค่าน้ำ — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                document.getElementById('totalHouses').textContent = '0';
                 return;
             }
 
-            const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
-            if (activeResidents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่มีผู้พักอาศัยที่ได้รับมอบหมายบ้าน</td></tr>';
-                return;
-            }
-            activeResidents.forEach((resident, index) => {
-                const houseNum = resident.house_number || '';
-                const saved = savedBill[houseNum];
-                const prevMeter = saved ? saved.prevMeter : (prevMeterData[houseNum] || 0);
+            // เรียงลำดับตามเลขบ้าน
+            billRows.sort((a, b) => a.houseNum.localeCompare(b.houseNum, 'th', { numeric: true }));
+
+            billRows.forEach((item, index) => {
+                const saved = savedBill[item.houseNum];
+                const prevMeter = saved ? saved.prevMeter : (prevMeterData[item.houseNum] || 0);
                 const currMeter = saved ? saved.currMeter : '';
-                const residentName = ((resident.prefix||'') + (resident.firstname||'') + ' ' + (resident.lastname||'')).trim();
                 
                 const row = document.createElement('tr');
-                row.dataset.house = houseNum;
+                row.dataset.house = item.houseNum;
                 row.innerHTML =
                     '<td style="text-align:center">' + (index + 1) + '</td>' +
-                    '<td>' + houseNum + '</td>' +
-                    '<td>' + residentName + '</td>' +
+                    '<td>' + item.houseNum + '</td>' +
+                    '<td>' + item.residentName + '</td>' +
                     '<td><input type="number" class="prev-meter" value="' + prevMeter + '" onchange="calculateRow(this)" placeholder="เดิม"></td>' +
                     '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
                     '<td class="usage-value" style="text-align:right">0</td>' +
