@@ -694,6 +694,8 @@
                     const result = await callBackend('submitWaterBill', waterData);
                     if (result && result.success) {
                         _formDirty = false;
+                        // ลบ cache เพื่อให้โหลดข้อมูลใหม่เมื่อกลับมาดูเดือนนี้
+                        _invalidateBillCache('getWaterBills', waterData.period);
                         showSuccess('✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!');
                         return;
                     } else {
@@ -712,6 +714,11 @@
         }
 
         // ══════ Excel Export / Import ══════
+        function _invalidateBillCache(action, period) {
+            var ck = 'apicache_' + action + '_' + JSON.stringify({ period: period });
+            localStorage.removeItem(ck);
+        }
+
         function _ensureXLSX(cb) {
             if (typeof XLSX !== 'undefined') return cb();
             var s = document.createElement('script');

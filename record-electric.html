@@ -753,6 +753,7 @@
                     const result = await callBackend('submitElectricBill', electricData);
                     if (result && result.success) {
                         _formDirty = false;
+                        _invalidateBillCache('getElectricBills', electricData.period);
                         showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!');
                         return;
                     } else {
@@ -768,6 +769,11 @@
         }
 
         // ══════ Excel Export / Import ══════
+        function _invalidateBillCache(action, period) {
+            var ck = 'apicache_' + action + '_' + JSON.stringify({ period: period });
+            localStorage.removeItem(ck);
+        }
+
         function _ensureXLSX(cb) {
             if (typeof XLSX !== 'undefined') return cb();
             var s = document.createElement('script');
