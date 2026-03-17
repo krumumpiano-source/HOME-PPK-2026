@@ -749,6 +749,7 @@
             try {
                     const result = await callBackend('submitElectricBill', electricData);
                     if (result && result.success) {
+                        _formDirty = false;
                         showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!');
                         return;
                     } else {
@@ -759,8 +760,18 @@
 
             // Fallback: localStorage
             localStorage.setItem('electricBill_' + year + month, JSON.stringify(electricData));
+            _formDirty = false;
             showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว! (localStorage)');
         }
+
+        // ── Dirty tracking: ป้องกันออกจากหน้าเมื่อมีข้อมูลยังไม่บันทึก ──
+        let _formDirty = false;
+        document.addEventListener('input', function(e) {
+            if (e.target.closest('#electricTableBody')) _formDirty = true;
+        });
+        window.addEventListener('beforeunload', function(e) {
+            if (_formDirty) { e.preventDefault(); e.returnValue = ''; }
+        });
 
         function showSuccess(msg) {
             const el = document.getElementById('successMessage');

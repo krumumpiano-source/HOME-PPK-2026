@@ -690,6 +690,7 @@
             try {
                     const result = await callBackend('submitWaterBill', waterData);
                     if (result && result.success) {
+                        _formDirty = false;
                         showSuccess('✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!');
                         return;
                     } else {
@@ -703,8 +704,18 @@
 
             // Fallback: บันทึกลง localStorage
             localStorage.setItem('waterBill_' + year + month, JSON.stringify(waterData));
+            _formDirty = false;
             showSuccess('✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว! (localStorage)');
         }
+
+        // ── Dirty tracking: ป้องกันออกจากหน้าเมื่อมีข้อมูลยังไม่บันทึก ──
+        let _formDirty = false;
+        document.addEventListener('input', function(e) {
+            if (e.target.closest('#meterTableBody')) _formDirty = true;
+        });
+        window.addEventListener('beforeunload', function(e) {
+            if (_formDirty) { e.preventDefault(); e.returnValue = ''; }
+        });
 
         function showSuccess(msg) {
             const el = document.getElementById('successMessage');
