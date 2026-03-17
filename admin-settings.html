@@ -2118,6 +2118,13 @@
                 return;
             }
 
+            // ตรวจเลขที่ซ้ำ (ยกเว้นตัวเอง)
+            const existingData = getHousingData();
+            if (existingData.some(h => String(h.id) !== String(id) && (h.number || h.house_number || '') === number && (h.type || 'house') === type)) {
+                ppkAlert('❌ เลขที่นี้มีในระบบแล้ว กรุณาใช้เลขอื่น');
+                return;
+            }
+
             const formatSettings = getHousingFormatSettings();
             const updatedItem = { type, number, displayNumber: '', zone, status, note, updatedAt: new Date().toISOString() };
 
@@ -2152,7 +2159,19 @@
             const allData = getHousingData();
             const toDelete = allData.find(h => String(h.id) === String(id));
             saveHousingData(allData.filter(h => String(h.id) !== String(id)));
+
+            // Clear house_number ของ residents ที่อยู่บ้านนี้ (ป้องกัน orphan)
+            if (residentCount > 0) {
+                const resData = getResidentsData();
+                resData.forEach(r => {
+                    if (r.house_number === displayName || (rawNum && r.house_number === rawNum)) {
+                        r.house_number = '';
+                    }
+                });
+                saveResidentsData(resData);
+            }
             renderManageHousingCards();
+            renderResidentTable();
 
             // รอ backend ลบจริง
             try {
@@ -2179,20 +2198,41 @@
         }
 
         async function deleteHousing(id) {
-            if (!await ppkConfirm('คุณต้องการลบข้อมูลนี้หรือไม่? การดำเนินการนี้ไม่สามารถยกเลิกได้')) {
+            const allData = getHousingData();
+            const toDelete = allData.find(h => String(h.id) === String(id));
+            const rawNum = toDelete ? (toDelete.number || toDelete.house_number || '') : '';
+            const formatSettings = getHousingFormatSettings();
+            const displayName = toDelete ? formatHousingNumber(toDelete, formatSettings) : '';
+
+            // ตรวจสอบผู้พักอาศัย
+            const residents = getResidentsData();
+            const residentCount = residents.filter(r => r.house_number === displayName || (rawNum && r.house_number === rawNum)).length;
+            const residentWarning = residentCount > 0
+                ? `\n⚠️ มีผู้พักอาศัย ${residentCount} คน (บุคลากรจะไม่มีบ้านพัก)`
+                : '';
+            if (!await ppkConfirm(`ต้องการลบ "${displayName || rawNum}" หรือไม่?${residentWarning}\nการดำเนินการนี้ไม่สามารถยกเลิกได้`)) {
                 return;
             }
 
             // Optimistic: ลบ UI ทันที
-            const allData = getHousingData();
-            const toDelete = allData.find(h => String(h.id) === String(id));
-            const displayNumber = toDelete ? (toDelete.displayNumber || toDelete.display_number || '') : '';
             saveHousingData(allData.filter(h => String(h.id) !== String(id)));
+
+            // Clear orphaned residents
+            if (residentCount > 0) {
+                const resData = getResidentsData();
+                resData.forEach(r => {
+                    if (r.house_number === displayName || (rawNum && r.house_number === rawNum)) {
+                        r.house_number = '';
+                    }
+                });
+                saveResidentsData(resData);
+            }
             renderManageHousingCards();
+            renderResidentTable();
 
             // รอ backend ลบจริง
             try {
-                const result = await callBackend('deleteHousing', { id: String(id), displayNumber });
+                const result = await callBackend('deleteHousing', { id: String(id), displayNumber: displayName });
                 if (!result || !result.success) {
                     if (toDelete) {
                         const restored = getHousingData();
@@ -2887,12 +2927,19 @@
             openModal('moveResident');
         }
 
-        function confirmMoveResident() {
-            const residentId = document.getElementById('moveResidentId').value; // อย่าใช้ parseInt — ID อาจเป็น "RES001"
+        async function confirmMoveResident() {
+            const residentId = document.getElementById('moveResidentId').value;
             const newHouse = document.getElementById('moveResidentNewHouse').value;
             
             if (!newHouse) {
                 ppkAlert('กรุณาเลือกบ้าน/ห้องใหม่');
+                return;
+            }
+
+            // ตรวจสอบว่าบ้านใหม่มีอยู่จริง
+            const housing = getHousingData();
+            if (!housing.some(h => (h.number || h.house_number || '') === newHouse)) {
+                ppkAlert('❌ ไม่พบบ้าน/ห้องที่เลือก กรุณาลองใหม่');
                 return;
             }
             
@@ -2906,14 +2953,25 @@
             
             const oldHouse = data[index].house_number;
             data[index].house_number = newHouse;
-
-            // Sync move to Backend
-            callBackend('updateResident', { id: String(residentId), house_number: newHouse }).catch(err => console.warn(err));
-            
             saveResidentsData(data);
             closeModal('moveResident');
-            
-            ppkAlert(`ย้ายผู้พักอาศัยจาก "${oldHouse}" ไป "${newHouse}" เรียบร้อยแล้ว`);
+
+            // รอ backend ย้ายจริง
+            try {
+                const result = await callBackend('updateResident', { id: String(residentId), house_number: newHouse });
+                if (!result || !result.success) {
+                    // กู้คืน
+                    data[index].house_number = oldHouse;
+                    saveResidentsData(data);
+                    ppkAlert('❌ ย้ายไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                } else {
+                    ppkAlert(`ย้ายผู้พักอาศัยจาก "${oldHouse}" ไป "${newHouse}" เรียบร้อยแล้ว`);
+                }
+            } catch(e) {
+                data[index].house_number = oldHouse;
+                saveResidentsData(data);
+                ppkAlert('❌ ย้ายไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+            }
             
             renderHouseCards();
             renderResidentTable();
@@ -3007,7 +3065,8 @@
             }
 
             const data = getResidentsData();
-            const newId = data.length > 0 ? Math.max(...data.map(r => r.id || 0)) + 1 : 1;
+            const numericIds = data.map(r => parseInt(r.id)).filter(n => !isNaN(n));
+            const newId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
 
             data.push({
                 id: newId,
@@ -3181,6 +3240,7 @@
             saveResidentsData(allData.filter(r => String(r.id) !== String(id)));
             renderResidentTable();
             renderHouseCards();
+            renderManageHousingCards();
 
             // รอ backend ลบจริง
             try {
@@ -3192,6 +3252,7 @@
                         saveResidentsData(restored);
                         renderResidentTable();
                         renderHouseCards();
+                        renderManageHousingCards();
                     }
                     ppkAlert('❌ ลบไม่สำเร็จ: ' + (result?.error || 'เกิดข้อผิดพลาดจากระบบ'));
                 }
@@ -3202,12 +3263,13 @@
                     saveResidentsData(restored);
                     renderResidentTable();
                     renderHouseCards();
+                    renderManageHousingCards();
                 }
                 ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
             }
         }
 
-        function resetResidentPassword(id) {
+        async function resetResidentPassword(id) {
             const newPassword = prompt('กรอกรหัสผ่านใหม่สำหรับผู้พักอาศัย (อย่างน้อย 8 ตัวอักษร):');
             
             if (!newPassword) return;
@@ -3224,12 +3286,19 @@
 
             data[index].password = btoa(newPassword);
             data[index].updatedAt = new Date().toISOString();
-
-            // Sync to Backend
-            callBackend('updateResident', { id: String(id), password: newPassword }).catch(err => console.warn(err));
-
             saveResidentsData(data);
-            ppkAlert('รีเซ็ตรหัสผ่านเรียบร้อยแล้ว');
+
+            // รอ backend อัปเดตจริง
+            try {
+                const result = await callBackend('updateResident', { id: String(id), password: newPassword });
+                if (result && result.success) {
+                    ppkAlert('รีเซ็ตรหัสผ่านเรียบร้อยแล้ว');
+                } else {
+                    ppkAlert('⚠️ บันทึกรหัสผ่านในเครื่อง แต่อัปเดต backend ไม่สำเร็จ: ' + (result?.error || ''));
+                }
+            } catch(e) {
+                ppkAlert('⚠️ บันทึกรหัสผ่านในเครื่อง แต่ไม่สามารถเชื่อมต่อ backend: ' + e.message);
+            }
         }
 
         function filterResidentTable() {
