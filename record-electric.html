@@ -365,7 +365,8 @@
                         <script>
                             (function(){
                                 var cy = new Date().getFullYear() + 543;
-                                for(var y = cy + 1; y >= cy - 5; y--){
+                                var minY = 2568;
+                                for(var y = cy + 2; y >= minY; y--){
                                     document.write('<option value="' + y + '"' + (y === cy ? ' selected' : '') + '>' + y + '</option>');
                                 }
                             })();
