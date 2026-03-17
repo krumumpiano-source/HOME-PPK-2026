@@ -611,12 +611,9 @@
                 // ถ้าไม่มีจึงตกไปใช้ค่าที่บันทึกไว้ใน savedBill.prevMeter
                 const prevMeter = prevMeterData[item.houseNum] || (saved ? saved.prevMeter : 0);
                 const currMeter = saved ? saved.currMeter : '';
-                // ถ้า prevMeter = 0 (ไม่มีข้อมูลเดือนก่อน เช่น ติดตั้งมิเตอร์ใหม่/มือสอง)
-                // → ให้แก้ไขได้เพื่อกรอกเลขเริ่มต้น
-                const prevIsAuto = prevMeter > 0;
-                const prevAttrs = prevIsAuto
-                    ? 'readonly title="เติมอัตโนมัติจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า" style="background:#f1f5f9;color:#64748b;cursor:default;border-color:#cbd5e1;"'
-                    : 'title="กรอกเลขเริ่มต้นมิเตอร์ (กรณีติดตั้งใหม่หรือมิเตอร์มือสอง)" placeholder="เลขเริ่มต้น" onchange="calculateRow(this)" style="border-color:#f59e0b;background:#fffbeb;"';
+                // แก้ไขได้ทุกหลัง เผื่อเปลี่ยนมิเตอร์ในอนาคต
+                // auto-fill จากเดือนก่อนหน้า แต่ admin แก้ไขได้เสมอ
+                const prevAttrs = 'title="ระบบเติมจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า (แก้ไขได้กรณีเปลี่ยนมิเตอร์)" onchange="calculateRow(this)" placeholder="เลขมิเตอร์ก่อนหน้า"';
                 
                 const row = document.createElement('tr');
                 row.dataset.house = item.houseNum;
