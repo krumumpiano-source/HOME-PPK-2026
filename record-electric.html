@@ -417,15 +417,19 @@
                     <div class="summary-value" id="totalHouses">0</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-label">รวมค่าไฟ (ปัดเศษ)</div>
+                    <div class="summary-label">รวมค่าไฟ (เรียกเก็บ)</div>
                     <div class="summary-value" id="totalAmount">0 ฿</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">รวมค่าไฟ (ก่อนปัดเศษ)</div>
+                    <div class="summary-value" id="totalRawAmount" style="color:#6b7280;">0 ฿</div>
                 </div>
                 <div class="summary-item">
                     <div class="summary-label">รวมค่า Lost</div>
                     <div class="summary-value" id="totalLost">0 ฿</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-label">รวมทั้งหมด</div>
+                    <div class="summary-label">รวมทั้งหมด (ก่อนปัด + Lost)</div>
                     <div class="summary-value" id="grandTotal">0 ฿</div>
                 </div>
             </div>
@@ -437,8 +441,12 @@
                     <div class="summary-value" id="peaTotal" style="color: #059669;">0 ฿</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-label">ส่วนต่างเรียกเก็บเกิน (ปัดเศษ)</div>
+                    <div class="summary-label">ส่วนต่างจริง</div>
                     <div class="summary-value" id="diffAmount" style="color: #059669;">0 ฿</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">ส่วนเพิ่มจากการปัดเศษ</div>
+                    <div class="summary-value" id="roundingExtra" style="color: #d97706;">0 ฿</div>
                 </div>
             </div>
         </div>
@@ -704,8 +712,11 @@
                         ? 'title="เติมอัตโนมัติจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า (แก้ไขได้)" onchange="calculateUnitRow(this)"'
                         : 'title="กรอกเลขเริ่มต้นมิเตอร์ (กรณีติดตั้งใหม่หรือมิเตอร์มือสอง)" onchange="calculateUnitRow(this)" placeholder="เลขเริ่มต้น"';
                     const unitsUsed = currMeter !== '' ? Math.max(0, (parseFloat(currMeter)||0) - (parseFloat(prevMeter)||0)) : 0;
+                    // ยอดก่อนปัดเศษ (raw) = หน่วย × อัตรา
+                    const rawAmount = currMeter !== '' ? unitsUsed * electricRate : (savedObj ? savedObj.amount : 0);
                     // ถ้ามีข้อมูลบันทึกไว้แล้ว ใช้ยอดจาก DB โดยตรง ไม่คำนวณใหม่
                     const initAmt = (savedObj && savedObj.amount) ? savedObj.amount : (currMeter !== '' ? applyRounding(unitsUsed * electricRate, electricRounding) : 0);
+                    row.dataset.rawAmount = rawAmount;
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
                         '<td>' + item.houseNum + '</td>' +
@@ -715,6 +726,8 @@
                         '<td class="units-used" style="text-align:right">' + unitsUsed + '</td>' +
                         '<td class="electric-amount-cell" style="text-align:right">' + initAmt + '</td>';
                 } else {
+                    // bill mode: ยอดที่บันทึกไว้คือยอดหลังปัด ยอดก่อนปัดเท่ากัน (ผู้ใช้กรอกมาเอง)
+                    row.dataset.rawAmount = savedAmount || 0;
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
                         '<td>' + item.houseNum + '</td>' +
@@ -734,11 +747,14 @@
         // ปัดเศษขึ้นและคำนวณใหม่
         function roundUpAndCalculate(input) {
             const value = parseFloat(input.value);
+            const row = input.closest('tr');
             if (!isNaN(value) && value > 0) {
                 let rounded = applyRounding(value, electricRounding);
                 if (rounded > 0 && rounded < electricMinCharge) rounded = electricMinCharge;
+                row.dataset.rawAmount = value;
                 input.value = rounded;
             } else if (input.value !== '') {
+                row.dataset.rawAmount = 0;
                 input.value = 0;
             }
             calculateSummary();
@@ -750,23 +766,29 @@
             const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
             const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
             const unitsUsed = Math.max(0, currMeter - prevMeter);
-            let amount = unitsUsed * electricRate;
-            amount = applyRounding(amount, electricRounding);
-            if (amount > 0 && amount < electricMinCharge) amount = electricMinCharge;
+            let rawAmount = unitsUsed * electricRate;
+            let amount = applyRounding(rawAmount, electricRounding);
+            if (amount > 0 && amount < electricMinCharge) {
+                amount = electricMinCharge;
+                rawAmount = rawAmount > 0 ? rawAmount : electricMinCharge;
+            }
 
             row.querySelector('.units-used').textContent = unitsUsed;
             row.querySelector('.electric-amount-cell').textContent = amount;
+            row.dataset.rawAmount = rawAmount;
             calculateSummary();
         }
         
         // คำนวณสรุป
         function calculateSummary() {
             const rows = document.querySelectorAll('#electricTableBody tr');
-            let totalAmount = 0;
+            let totalAmount = 0;     // ยอดหลังปัดเศษ (เรียกเก็บจริง)
+            let totalRaw = 0;        // ยอดก่อนปัดเศษ (ต้นทุนจริง)
             let count = 0;
             
             rows.forEach(row => {
                 if (!row.dataset.house) return;
+                const rawAmt = parseFloat(row.dataset.rawAmount) || 0;
                 if (electricMethod === 'unit') {
                     const amountCell = row.querySelector('.electric-amount-cell');
                     if (!amountCell) return;
@@ -778,18 +800,21 @@
                     const value = parseFloat(amountInput.value) || 0;
                     totalAmount += value;
                 }
+                totalRaw += rawAmt;
                 count++;
             });
             
             const lostHouse = parseFloat(document.getElementById('lost_house').value) || 0;
             const lostFlat = parseFloat(document.getElementById('lost_flat').value) || 0;
             const totalLost = lostHouse + lostFlat;
-            const grandTotal = totalAmount + totalLost;
+            const grandTotal = totalRaw + totalLost;
             const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
             const diff = grandTotal - peaTotal;
+            const roundingExtra = totalAmount - totalRaw;
             
             document.getElementById('totalHouses').textContent = count;
             document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
+            document.getElementById('totalRawAmount').textContent = totalRaw.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
             document.getElementById('totalLost').textContent = totalLost.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
             document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
             document.getElementById('peaTotal').textContent = peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
@@ -797,6 +822,9 @@
             const diffEl = document.getElementById('diffAmount');
             diffEl.textContent = diff.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
             diffEl.style.color = diff > 0 ? '#dc2626' : '#059669';
+
+            const roundingEl = document.getElementById('roundingExtra');
+            roundingEl.textContent = roundingExtra.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
         }
         
         // บันทึกข้อมูล → Backend
@@ -1106,6 +1134,7 @@
             const rows = document.querySelectorAll('#electricTableBody tr');
             let tableHTML = '';
             let totalAmount = 0;
+            let totalRaw = 0;
             let rowNum = 1;
             
             // ดึงค่า Lost และค่าไฟการไฟฟ้า
@@ -1118,6 +1147,7 @@
                 if (!row.dataset.house) return;
                 const house = row.dataset.house;
                 const resident = row.cells[2].textContent;
+                const rawAmt = parseFloat(row.dataset.rawAmount) || 0;
                 var amount = '0';
                 var amountInput = row.querySelector('.electric-amount');
                 var amountCell = row.querySelector('.electric-amount-cell');
@@ -1133,6 +1163,7 @@
                 tableHTML += '</tr>';
                 
                 totalAmount += amountNum;
+                totalRaw += rawAmt;
                 rowNum++;
             });
             
@@ -1182,36 +1213,47 @@
             printWindow.document.write('</tr></thead>');
             printWindow.document.write('<tbody>');
             printWindow.document.write(tableHTML);
-            // แถวสรุปค่าไฟ
+            // แถวสรุปค่าไฟ (เรียกเก็บ)
             printWindow.document.write('<tr class="summary-row">');
-            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมค่าไฟ (ปัดเศษ)</td>');
-            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + totalAmount.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมค่าไฟ (เรียกเก็บจริง)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + totalAmount.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวสรุปค่าไฟ (ก่อนปัด)
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">รวมค่าไฟ (ก่อนปัดเศษ)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + totalRaw.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวส่วนเพิ่มจากปัดเศษ
+            const roundingExtra = totalAmount - totalRaw;
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ส่วนเพิ่มจากการปัดเศษ</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + roundingExtra.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
             // แถว Lost บ้านพัก
             printWindow.document.write('<tr class="summary-row">');
             printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่า Lost บ้านพัก</td>');
-            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostHouse.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostHouse.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
             // แถว Lost แฟลต
             printWindow.document.write('<tr class="summary-row">');
             printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่า Lost แฟลต</td>');
-            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostFlat.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostFlat.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
-            // แถวรวมทั้งหมด
-            const grandTotal = totalAmount + totalLost;
+            // แถวรวมทั้งหมด (ก่อนปัด + Lost)
+            const grandTotal = totalRaw + totalLost;
             printWindow.document.write('<tr class="summary-row">');
-            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมทั้งหมด</td>');
-            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + grandTotal.toLocaleString('th-TH') + '</td>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมทั้งหมด (ก่อนปัด + Lost)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
             // แถวค่าไฟการไฟฟ้าเรียกเก็บ
             printWindow.document.write('<tr>');
             printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่าไฟการไฟฟ้าเรียกเก็บ</td>');
             printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
-            // แถวส่วนต่าง
+            // แถวส่วนต่างจริง
             const diff = grandTotal - peaTotal;
             printWindow.document.write('<tr class="summary-row">');
-            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">ส่วนต่างเรียกเก็บเกิน (จากการปัดเศษ)</td>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">ส่วนต่างจริง</td>');
             printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + diff.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
             printWindow.document.write('</tr>');
             printWindow.document.write('</tbody></table>');
