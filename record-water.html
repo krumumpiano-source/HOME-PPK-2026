@@ -384,7 +384,7 @@
             <div class="table-scroll-wrapper">
                 <table class="meter-table">
                     <thead>
-                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์เดิม</th><th>มิเตอร์ปัจจุบัน</th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
+                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
                     </thead>
                     <tbody id="meterTableBody">
                         <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
@@ -611,7 +611,7 @@
                     '<td style="text-align:center">' + (index + 1) + '</td>' +
                     '<td>' + item.houseNum + '</td>' +
                     '<td>' + item.residentName + '</td>' +
-                    '<td><input type="number" class="prev-meter" value="' + prevMeter + '" onchange="calculateRow(this)" placeholder="เดิม"></td>' +
+                    '<td><input type="number" class="prev-meter" value="' + prevMeter + '" readonly title="เติมอัตโนมัติจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า" style="background:#f1f5f9;color:#64748b;cursor:default;border-color:#cbd5e1;"></td>' +
                     '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
                     '<td class="usage-value" style="text-align:right">0</td>' +
                     '<td class="amount-value" style="text-align:right">0</td>';
@@ -774,7 +774,7 @@
                     ['เดือน', monthName, 'ปี พ.ศ.', year, 'อัตราค่าน้ำ (บาท/หน่วย)', parseFloat(rate)],
                     ['การปัดเศษ', waterRounding, 'ค่าน้ำขั้นต่ำ (บาท)', waterMinCharge],
                     [],
-                    ['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์เดิม', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดเงิน (฿)']
+                    ['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์ก่อนหน้า', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดเงิน (฿)']
                 ];
 
                 var idx = 1;
