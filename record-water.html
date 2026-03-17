@@ -607,7 +607,9 @@
 
             billRows.forEach((item, index) => {
                 const saved = savedBill[item.houseNum];
-                const prevMeter = saved ? saved.prevMeter : (prevMeterData[item.houseNum] || 0);
+                // prevMeter: ใช้ curr_meter ของเดือนก่อนหน้าเสมอ (prevMeterData)
+                // ถ้าไม่มีจึงตกไปใช้ค่าที่บันทึกไว้ใน savedBill.prevMeter
+                const prevMeter = prevMeterData[item.houseNum] || (saved ? saved.prevMeter : 0);
                 const currMeter = saved ? saved.currMeter : '';
                 
                 const row = document.createElement('tr');
