@@ -381,7 +381,7 @@ async function callBackendGet(action, params) {
 // Actions ที่ต้องเป็น admin/head เท่านั้น (ห้ามมอบหมาย)
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
     'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
-    'saveWaterRate','saveElectricRate','saveRoundingSetting','saveHousingFormat','setupAdmin',
+    'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf'];
 
 // ── Storage bucket helper: auto-create if not exists ──
@@ -1305,12 +1305,6 @@ async function _routeAction(action, data) {
             var thMonths2 = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
             var dueDateStr = d2.getDate() + ' ' + thMonths2[d2.getMonth()] + ' ' + (d2.getFullYear() + 543);
             return { success: true, dueDate: dueDateStr, data: { due_date: String(dueDays), computed: dueDateStr } };
-        }
-
-        /* ── Rates ────────────────────────────────── */
-        case 'getWaterRate': {
-            var rows = await sbGet('water_rates', { order: 'effective_at.desc', limit: '10' });
-            return { success: true, data: rows };
         }
 
         /* ── Bill summaries ───────────────────────── */
