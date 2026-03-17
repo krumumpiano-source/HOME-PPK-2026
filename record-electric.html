@@ -781,7 +781,7 @@
             
             const lostHouse = parseFloat(document.getElementById('lost_house').value) || 0;
             const lostFlat = parseFloat(document.getElementById('lost_flat').value) || 0;
-            const totalLost = applyRounding(lostHouse, electricRounding) + applyRounding(lostFlat, electricRounding);
+            const totalLost = lostHouse + lostFlat;
             const grandTotal = totalAmount + totalLost;
             const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
             const diff = grandTotal - peaTotal;
