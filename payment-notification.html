@@ -239,8 +239,7 @@
             await updateFooterNotes();
             var month = document.getElementById('bill_month').value;
             var yearBE = document.getElementById('bill_year').value;
-            var yearCE = parseInt(yearBE) - 543;
-            var period = yearCE + '-' + month;
+            var period = yearBE + '-' + month;
             var houses = [];
             var flats = [];
             _lastLoadError = '';
