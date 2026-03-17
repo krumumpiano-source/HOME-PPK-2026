@@ -416,6 +416,9 @@
             <button class="btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
             <button class="btn btn-print" onclick="printReport()">🖨️ พิมพ์รายเดือน</button>
             <button class="btn btn-print" onclick="printYearlyReport()">📊 สรุปทั้งปี</button>
+            <button class="btn" onclick="exportExcel()" style="background: linear-gradient(to right, #d1fae5, #a7f3d0); color: #065f46;">📥 ส่งออก Excel</button>
+            <button class="btn" onclick="document.getElementById('importExcelFile').click()" style="background: linear-gradient(to right, #dbeafe, #bfdbfe); color: #1e40af;">📤 นำเข้า Excel</button>
+            <input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
             <button class="btn btn-secondary" onclick="navigate('?page=team-management')">❌ ยกเลิก</button>
         </div>
         
@@ -764,6 +767,166 @@
             showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว! (localStorage)');
         }
 
+        // ══════ Excel Export / Import ══════
+        function _ensureXLSX(cb) {
+            if (typeof XLSX !== 'undefined') return cb();
+            var s = document.createElement('script');
+            s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+            s.onload = cb;
+            s.onerror = function() { ppkAlert('❌ ไม่สามารถโหลด SheetJS ได้ กรุณาตรวจสอบอินเทอร์เน็ต'); };
+            document.head.appendChild(s);
+        }
+
+        function exportExcel() {
+            _ensureXLSX(function() {
+                var month = document.getElementById('bill_month').value;
+                var year = document.getElementById('bill_year').value;
+                var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+                var monthName = thaiMonths[parseInt(month) - 1];
+                var peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
+                var lostHouse = parseFloat(document.getElementById('lost_house').value) || 0;
+                var lostFlat = parseFloat(document.getElementById('lost_flat').value) || 0;
+
+                var rows = document.querySelectorAll('#electricTableBody tr');
+                var isUnit = electricMethod === 'unit';
+
+                var data = [
+                    ['บันทึกค่าไฟ — HOME PPK 2026'],
+                    ['เดือน', monthName, 'ปี พ.ศ.', year, 'โหมด', isUnit ? 'คำนวณตามหน่วย' : 'กรอกตามใบแจ้งหนี้'],
+                    isUnit ? ['อัตราค่าไฟ (บาท/หน่วย)', electricRate, 'การปัดเศษ', electricRounding, 'ค่าไฟขั้นต่ำ', electricMinCharge]
+                           : ['การปัดเศษ', electricRounding, 'ค่าไฟขั้นต่ำ', electricMinCharge],
+                    ['ค่าไฟการไฟฟ้า (บาท)', peaTotal, 'ค่า Lost บ้านพัก', lostHouse, 'ค่า Lost แฟลต', lostFlat],
+                    []
+                ];
+
+                if (isUnit) {
+                    data.push(['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์เดิม', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดค่าไฟ (฿)']);
+                } else {
+                    data.push(['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'ยอดค่าไฟ (฿)']);
+                }
+
+                var idx = 1;
+                var totalAmt = 0;
+                rows.forEach(function(row) {
+                    if (!row.dataset.house) return;
+                    if (isUnit) {
+                        var prev = parseFloat((row.querySelector('.prev-meter') || {}).value) || 0;
+                        var curr = parseFloat((row.querySelector('.curr-meter') || {}).value) || 0;
+                        var units = parseInt((row.querySelector('.units-used') || {}).textContent) || 0;
+                        var amt = parseFloat((row.querySelector('.electric-amount-cell') || {}).textContent) || 0;
+                        totalAmt += amt;
+                        data.push([idx++, row.dataset.house, row.cells[2].textContent, prev, curr, units, amt]);
+                    } else {
+                        var amt2 = parseFloat((row.querySelector('.electric-amount') || {}).value) || 0;
+                        totalAmt += amt2;
+                        data.push([idx++, row.dataset.house, row.cells[2].textContent, amt2]);
+                    }
+                });
+
+                data.push([]);
+                if (isUnit) {
+                    data.push(['', '', 'รวมค่าไฟ', '', '', '', totalAmt]);
+                } else {
+                    data.push(['', '', 'รวมค่าไฟ', totalAmt]);
+                }
+                data.push(['', '', 'รวมค่า Lost', lostHouse + lostFlat]);
+                data.push(['', '', 'รวมทั้งหมด', totalAmt + lostHouse + lostFlat]);
+                data.push(['', '', 'ค่าไฟการไฟฟ้า', peaTotal]);
+                data.push(['', '', 'ส่วนต่าง', (totalAmt + lostHouse + lostFlat) - peaTotal]);
+
+                var ws = XLSX.utils.aoa_to_sheet(data);
+                ws['!cols'] = isUnit ? [{wch:6},{wch:14},{wch:24},{wch:14},{wch:18},{wch:10},{wch:14}]
+                                     : [{wch:6},{wch:14},{wch:24},{wch:14}];
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'ค่าไฟ ' + monthName);
+                XLSX.writeFile(wb, 'ค่าไฟ_' + year + '_' + month + '.xlsx');
+            });
+        }
+
+        function importExcel(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+            _ensureXLSX(function() {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        var wb = XLSX.read(e.target.result, { type: 'array' });
+                        var ws = wb.Sheets[wb.SheetNames[0]];
+                        var json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                        var isUnit = electricMethod === 'unit';
+
+                        // อ่าน pea_total, lost_house, lost_flat จากแถวข้อมูล (แถว 4)
+                        for (var i = 0; i < Math.min(json.length, 10); i++) {
+                            var infoRow = json[i] || [];
+                            for (var c = 0; c < infoRow.length - 1; c++) {
+                                var lbl = String(infoRow[c]);
+                                if (lbl.indexOf('ค่าไฟการไฟฟ้า') >= 0) {
+                                    var v = parseFloat(infoRow[c+1]); if (v >= 0) document.getElementById('pea_total').value = v;
+                                }
+                                if (lbl.indexOf('Lost บ้านพัก') >= 0 || lbl.indexOf('Lost บ้าน') >= 0) {
+                                    var v2 = parseFloat(infoRow[c+1]); if (v2 >= 0) document.getElementById('lost_house').value = v2;
+                                }
+                                if (lbl.indexOf('Lost แฟลต') >= 0) {
+                                    var v3 = parseFloat(infoRow[c+1]); if (v3 >= 0) document.getElementById('lost_flat').value = v3;
+                                }
+                            }
+                        }
+
+                        // หาแถวหัวตาราง
+                        var headerIdx = -1;
+                        for (var h = 0; h < Math.min(json.length, 15); h++) {
+                            var rowStr = (json[h] || []).join(' ');
+                            if (rowStr.indexOf('บ้านพัก') >= 0 && rowStr.indexOf('ค่าไฟ') >= 0) {
+                                headerIdx = h; break;
+                            }
+                        }
+                        if (headerIdx < 0) { ppkAlert('❌ ไม่พบหัวตารางในไฟล์ Excel — ต้องมีคอลัมน์ "บ้านพัก" และ "ค่าไฟ"'); return; }
+
+                        // สร้าง map house → data
+                        var importMap = {};
+                        for (var r = headerIdx + 1; r < json.length; r++) {
+                            var row = json[r] || [];
+                            var house = String(row[1] || '').trim();
+                            if (!house || house === 'รวม' || house === '') continue;
+                            if (isUnit) {
+                                importMap[house] = { prev: parseFloat(row[3]) || 0, curr: parseFloat(row[4]) || 0 };
+                            } else {
+                                importMap[house] = { amount: parseFloat(row[3]) || 0 };
+                            }
+                        }
+
+                        // เติมข้อมูลลงตาราง
+                        var filled = 0;
+                        var domRows = document.querySelectorAll('#electricTableBody tr');
+                        domRows.forEach(function(tr) {
+                            var hk = tr.dataset.house;
+                            if (!hk || !importMap[hk]) return;
+                            if (isUnit) {
+                                var pm = tr.querySelector('.prev-meter');
+                                var cm = tr.querySelector('.curr-meter');
+                                if (pm) pm.value = importMap[hk].prev;
+                                if (cm) cm.value = importMap[hk].curr;
+                                calculateUnitRow(cm || pm);
+                            } else {
+                                var ai = tr.querySelector('.electric-amount');
+                                if (ai) { ai.value = importMap[hk].amount; roundUpAndCalculate(ai); }
+                            }
+                            filled++;
+                        });
+
+                        calculateSummary();
+                        _formDirty = true;
+                        ppkAlert('✅ นำเข้าสำเร็จ ' + filled + ' รายการ จาก ' + Object.keys(importMap).length + ' รายการในไฟล์');
+                    } catch (err) {
+                        console.error('Import error:', err);
+                        ppkAlert('❌ อ่านไฟล์ไม่สำเร็จ: ' + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
         // ── Dirty tracking: ป้องกันออกจากหน้าเมื่อมีข้อมูลยังไม่บันทึก ──
         let _formDirty = false;
         document.addEventListener('input', function(e) {
@@ -1058,5 +1221,6 @@
     <script src="ppk-utils.js?v=20260313D"></script>
     <script src="ppk-nav.js?v=20260313D"></script>
     <script src="ppk-pwa.js?v=20260313D"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>

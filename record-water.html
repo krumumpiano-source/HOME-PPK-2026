@@ -386,6 +386,9 @@
             <button class="btn btn-print" onclick="printReport()">🖨️ พิมพ์รายเดือน</button>
             <button class="btn btn-print" onclick="printYearlyReport()">📊 สรุปทั้งปี</button>
             <button class="btn" onclick="printMemo()" style="background: linear-gradient(to right, #fef3c7, #fde68a); color: #92400e;">📋 บันทึกข้อความ</button>
+            <button class="btn" onclick="exportExcel()" style="background: linear-gradient(to right, #d1fae5, #a7f3d0); color: #065f46;">📥 ส่งออก Excel</button>
+            <button class="btn" onclick="document.getElementById('importExcelFile').click()" style="background: linear-gradient(to right, #dbeafe, #bfdbfe); color: #1e40af;">📤 นำเข้า Excel</button>
+            <input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
             <button class="btn btn-secondary" onclick="navigate('?page=team-management')">❌ ยกเลิก</button>
         </div>
         
@@ -706,6 +709,128 @@
             localStorage.setItem('waterBill_' + year + month, JSON.stringify(waterData));
             _formDirty = false;
             showSuccess('✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว! (localStorage)');
+        }
+
+        // ══════ Excel Export / Import ══════
+        function _ensureXLSX(cb) {
+            if (typeof XLSX !== 'undefined') return cb();
+            var s = document.createElement('script');
+            s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+            s.onload = cb;
+            s.onerror = function() { ppkAlert('❌ ไม่สามารถโหลด SheetJS ได้ กรุณาตรวจสอบอินเทอร์เน็ต'); };
+            document.head.appendChild(s);
+        }
+
+        function exportExcel() {
+            _ensureXLSX(function() {
+                var month = document.getElementById('bill_month').value;
+                var year = document.getElementById('bill_year').value;
+                var rate = document.getElementById('water_rate').value || '0';
+                var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+                var monthName = thaiMonths[parseInt(month) - 1];
+
+                var rows = document.querySelectorAll('#meterTableBody tr');
+                var data = [
+                    ['บันทึกค่าน้ำ — HOME PPK 2026'],
+                    ['เดือน', monthName, 'ปี พ.ศ.', year, 'อัตราค่าน้ำ (บาท/หน่วย)', parseFloat(rate)],
+                    ['การปัดเศษ', waterRounding, 'ค่าน้ำขั้นต่ำ (บาท)', waterMinCharge],
+                    [],
+                    ['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์เดิม', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดเงิน (฿)']
+                ];
+
+                var idx = 1;
+                rows.forEach(function(row) {
+                    if (!row.dataset.house) return;
+                    data.push([
+                        idx++,
+                        row.dataset.house,
+                        row.cells[2].textContent,
+                        parseFloat(row.querySelector('.prev-meter').value) || 0,
+                        parseFloat(row.querySelector('.curr-meter').value) || 0,
+                        parseInt(row.querySelector('.usage-value').textContent) || 0,
+                        parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0
+                    ]);
+                });
+
+                data.push([]);
+                data.push(['', '', 'รวม', '', '',
+                    document.getElementById('totalUsage').textContent,
+                    document.getElementById('totalAmount').textContent]);
+
+                var ws = XLSX.utils.aoa_to_sheet(data);
+                ws['!cols'] = [{wch:6},{wch:14},{wch:24},{wch:14},{wch:18},{wch:10},{wch:14}];
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'ค่าน้ำ ' + monthName);
+                XLSX.writeFile(wb, 'ค่าน้ำ_' + year + '_' + month + '.xlsx');
+            });
+        }
+
+        function importExcel(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+            _ensureXLSX(function() {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        var wb = XLSX.read(e.target.result, { type: 'array' });
+                        var ws = wb.Sheets[wb.SheetNames[0]];
+                        var json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+                        // หาแถวหัวตาราง (มีคำว่า 'บ้านพัก' + 'มิเตอร์')
+                        var headerIdx = -1;
+                        for (var i = 0; i < Math.min(json.length, 15); i++) {
+                            var rowStr = (json[i] || []).join(' ');
+                            if (rowStr.indexOf('บ้านพัก') >= 0 && rowStr.indexOf('มิเตอร์') >= 0) {
+                                headerIdx = i; break;
+                            }
+                        }
+                        if (headerIdx < 0) { ppkAlert('❌ ไม่พบหัวตารางในไฟล์ Excel — ต้องมีคอลัมน์ "บ้านพัก" และ "มิเตอร์"'); return; }
+
+                        // อ่านอัตราค่าน้ำจากบรรทัดที่ 2 (ถ้ามี)
+                        if (headerIdx >= 2) {
+                            var infoRow = json[1] || [];
+                            for (var c = 0; c < infoRow.length - 1; c++) {
+                                if (String(infoRow[c]).indexOf('อัตรา') >= 0) {
+                                    var rv = parseFloat(infoRow[c+1]);
+                                    if (rv > 0) document.getElementById('water_rate').value = rv;
+                                }
+                            }
+                        }
+
+                        // สร้าง map house → {prev, curr} จากข้อมูล Excel
+                        var importMap = {};
+                        for (var r = headerIdx + 1; r < json.length; r++) {
+                            var row = json[r] || [];
+                            var house = String(row[1] || '').trim();
+                            if (!house || house === 'รวม' || house === '') continue;
+                            importMap[house] = {
+                                prev: parseFloat(row[3]) || 0,
+                                curr: parseFloat(row[4]) || 0
+                            };
+                        }
+
+                        // เติมข้อมูลลงตาราง
+                        var filled = 0;
+                        var domRows = document.querySelectorAll('#meterTableBody tr');
+                        domRows.forEach(function(tr) {
+                            var h = tr.dataset.house;
+                            if (!h || !importMap[h]) return;
+                            tr.querySelector('.prev-meter').value = importMap[h].prev;
+                            tr.querySelector('.curr-meter').value = importMap[h].curr;
+                            filled++;
+                        });
+
+                        calculateAll();
+                        _formDirty = true;
+                        ppkAlert('✅ นำเข้าสำเร็จ ' + filled + ' รายการ จาก ' + Object.keys(importMap).length + ' รายการในไฟล์');
+                    } catch (err) {
+                        console.error('Import error:', err);
+                        ppkAlert('❌ อ่านไฟล์ไม่สำเร็จ: ' + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
         }
 
         // ── Dirty tracking: ป้องกันออกจากหน้าเมื่อมีข้อมูลยังไม่บันทึก ──
@@ -1220,5 +1345,6 @@
     <script src="ppk-utils.js?v=20260313D"></script>
     <script src="ppk-nav.js?v=20260313D"></script>
     <script src="ppk-pwa.js?v=20260313D"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
