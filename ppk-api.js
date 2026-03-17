@@ -805,19 +805,19 @@ async function _routeAction(action, data) {
                 } catch(e) {}
                 // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
                 try { await sbDelete('water_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old water_bills:', e); }
-                var inserted = [];
-                for (var i = 0; i < data.records.length; i++) {
-                    var rec = data.records[i];
-                    var row = await sbPost('water_bills', {
+                // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
+                var _wBatch = data.records.map(function(rec) {
+                    return {
                         house_id: _wHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
                         year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
                         prev_meter: parseFloat(rec.prev_meter) || 0, curr_meter: parseFloat(rec.curr_meter) || 0,
                         units_used: parseFloat(rec.units) || 0, rate_per_unit: parseFloat(data.rate) || 0,
                         amount: parseFloat(rec.amount) || 0, recorded_by: user.id || null
-                    });
-                    inserted.push(row);
-                }
+                    };
+                });
+                var inserted = await sbPost('water_bills', _wBatch);
+                if (!Array.isArray(inserted)) inserted = [inserted];
                 // Auto-sync บัญชี
                 try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
                 return { success: true, data: inserted };
@@ -866,19 +866,19 @@ async function _routeAction(action, data) {
                 } catch(e) {}
                 // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
                 try { await sbDelete('electric_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old electric_bills:', e); }
-                var inserted = [];
-                for (var i = 0; i < data.records.length; i++) {
-                    var rec = data.records[i];
+                // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
+                var _eBatch = data.records.map(function(rec) {
                     var _eAmt = parseFloat(rec.amount) || 0;
-                    var row = await sbPost('electric_bills', {
+                    return {
                         house_id: _eHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
                         year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
                         bill_amount: _eAmt, amount: _eAmt,
                         method: data.method || 'bill', recorded_by: user.id || null
-                    });
-                    inserted.push(row);
-                }
+                    };
+                });
+                var inserted = await sbPost('electric_bills', _eBatch);
+                if (!Array.isArray(inserted)) inserted = [inserted];
                 // บันทึก PEA total + Lost ลง settings (ต่อ period)
                 if (data.pea_total || data.lost_house || data.lost_flat) {
                     var lostData = JSON.stringify({
