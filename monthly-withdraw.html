@@ -646,6 +646,8 @@
                         totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
                     });
                     if (result && result.success) {
+                        // ลบ cache เพื่อโหลดข้อมูลใหม่เมื่อกลับมาดู
+                        localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
                         ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
                     } else {
                         ppkAlert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));

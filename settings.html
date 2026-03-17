@@ -576,6 +576,8 @@
             
             // บันทึกลง localStorage (cache)
             localStorage.setItem('userData', JSON.stringify(userData));
+            // ลบ cache coresidents เพื่อโหลดข้อมูลใหม่เมื่อกลับมาดู
+            localStorage.removeItem('apicache_getCoresidents_{}');
             
             // แสดงข้อความสำเร็จ
             saveBtn.disabled = false;
@@ -876,6 +878,8 @@
                             ppkAlert('ลบไม่สำเร็จ: ' + (r && r.error || 'เกิดข้อผิดพลาด'));
                             return;
                         }
+                        // ลบ cache coresidents
+                        localStorage.removeItem('apicache_getCoresidents_{}');
                     } catch(e) {
                         ppkAlert('ลบไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
                         return;

@@ -1120,6 +1120,9 @@
                         expenseItems: backendExpense
                     });
                     if (result && result.success) {
+                        // ลบ cache เพื่อโหลดข้อมูลใหม่เมื่อกลับมาดู
+                        localStorage.removeItem('apicache_loadAccountingData_' + JSON.stringify({ period: period }));
+                        localStorage.removeItem('apicache_calculateAutoEntries_' + JSON.stringify({ period: period }));
                         ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
                         await loadMonthData();
                     } else {

@@ -932,6 +932,7 @@
                         status: newStatus,
                         note: note
                     });
+                    _clearRequestsCache();
                 } catch (e) {
                     console.error('อัปเดตสถานะไม่สำเร็จ:', e);
                 }
@@ -954,7 +955,7 @@
             saveData('residence', data);
             
             // ส่งลำดับใหม่ไป Backend
-            callBackend('updateQueue', { orderedIds: orderedIds }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
+            callBackend('updateQueue', { orderedIds: orderedIds }).then(function() { _clearRequestsCache(); }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
         }
 
         function addToQueue(id) {
@@ -972,7 +973,7 @@
                         type: 'residence',
                         status: 'waiting',
                         queuePosition: item.queuePosition
-                    }).catch(e => console.error('เพิ่มคิวไม่สำเร็จ:', e));
+                    }).then(function() { _clearRequestsCache(); }).catch(e => console.error('เพิ่มคิวไม่สำเร็จ:', e));
             }
         }
 
@@ -994,7 +995,7 @@
                         type: 'residence',
                         status: 'reviewing',
                         removeFromQueue: true
-                    }).catch(e => console.error('ลบจากคิวไม่สำเร็จ:', e));
+                    }).then(function() { _clearRequestsCache(); }).catch(e => console.error('ลบจากคิวไม่สำเร็จ:', e));
             }
         }
 
@@ -2118,6 +2119,7 @@
                     ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
                     return;
                 }
+                _clearRequestsCache();
 
                 // อัปเดต local cache
                 const data = getData('residence');

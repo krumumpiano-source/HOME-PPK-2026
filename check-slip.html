@@ -874,6 +874,8 @@
             amount: unit.paidAmount
           });
           if (result && result.success) {
+            // ลบ cache bill summary เพื่อโหลดสถานะใหม่
+            localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: _period }));
             unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
             // ส่งอีเมลใบเสร็จอัตโนมัติ
             const { monthName, year: yr } = getSelectedPeriod();
@@ -1185,6 +1187,8 @@
               period:      period,
               amount:      paidAmount
             });
+            // ลบ cache bill summary
+            localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: period }));
             ppkAlert(`✓ บันทึกและอนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
             closeManualPayModal();
             await loadSlipData();
