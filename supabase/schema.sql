@@ -90,7 +90,7 @@ create table if not exists public.housing (
 create table if not exists public.residents (
   id            text primary key default ('RES' || upper(substr(gen_random_uuid()::text, 1, 8))),
   user_id       text references public.users(id) on delete set null,
-  house_id      text not null references public.housing(id) on delete restrict,
+  house_id      text references public.housing(id) on delete set null,
   house_number  text not null,
   prefix        text,
   firstname     text not null,
@@ -120,10 +120,13 @@ create table if not exists public.coresidents (
   id            text primary key default ('COR' || upper(substr(gen_random_uuid()::text, 1, 8))),
   resident_id   text not null references public.residents(id) on delete cascade,
   house_id      text not null references public.housing(id) on delete cascade,
+  user_id       text references public.users(id) on delete set null,
   prefix        text,
   firstname     text not null,
   lastname      text not null,
   relation      text,
+  email         text,
+  phone         text,
   created_at    timestamptz default now()
 );
 

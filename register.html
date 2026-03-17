@@ -89,23 +89,34 @@
             <input type="text" id="lastname" name="lastname" required placeholder="กรอกนามสกุล">
         </div>
         <div class="form-group">
-            <label for="position" id="positionLabel">ตำแหน่ง</label>
-            <select id="position" name="position" required>
+            <label for="position" id="positionLabel">ตำแหน่ง / สถานะ</label>
+            <select id="position" name="position" required onchange="onPositionChange()">
                 <option value="">เลือกตำแหน่ง</option>
-                <option value="ครูผู้ช่วย">ครูผู้ช่วย</option>
-                <option value="ครู">ครู</option>
-                <option value="ครูชำนาญการ">ครูชำนาญการ (คศ.2)</option>
-                <option value="ครูชำนาญการพิเศษ">ครูชำนาญการพิเศษ (คศ.3)</option>
-                <option value="ครูเชี่ยวชาญ">ครูเชี่ยวชาญ (คศ.4)</option>
-                <option value="ครูเชี่ยวชาญพิเศษ">ครูเชี่ยวชาญพิเศษ (คศ.5)</option>
-                <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
-                <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
-                <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
-                <option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option>
-                <option value="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</option>
+                <optgroup label="── ผู้พักอาศัย ──">
+                    <option value="ผู้พักอาศัย">ผู้พักอาศัย (ผู้พักหลัก)</option>
+                    <option value="ผู้ร่วมพักอาศัย">ผู้ร่วมพักอาศัย (ครอบครัว/ผู้อยู่ร่วม)</option>
+                </optgroup>
+                <optgroup label="── บุคลากรโรงเรียน ──">
+                    <option value="ครูผู้ช่วย">ครูผู้ช่วย</option>
+                    <option value="ครู">ครู</option>
+                    <option value="ครูชำนาญการ">ครูชำนาญการ (คศ.2)</option>
+                    <option value="ครูชำนาญการพิเศษ">ครูชำนาญการพิเศษ (คศ.3)</option>
+                    <option value="ครูเชี่ยวชาญ">ครูเชี่ยวชาญ (คศ.4)</option>
+                    <option value="ครูเชี่ยวชาญพิเศษ">ครูเชี่ยวชาญพิเศษ (คศ.5)</option>
+                    <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
+                    <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
+                    <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                    <option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option>
+                    <option value="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</option>
+                </optgroup>
+                <optgroup label="── อื่นๆ ──">
+                    <option value="บุคคลภายนอก">บุคคลภายนอก</option>
+                    <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
+                </optgroup>
             </select>
+            <input type="text" id="positionCustom" placeholder="ระบุตำแหน่ง/สถานะ" style="display:none; margin-top:0.4rem;">
         </div>
-        <div class="form-group">
+        <div class="form-group" id="subjectGroupWrapper">
             <label for="subject_group">กลุ่มสาระการเรียนรู้</label>
             <select id="subject_group" name="subject_group">
                 <option value="">-- เลือกกลุ่มสาระ --</option>
@@ -205,6 +216,31 @@
             custom.style.display = 'none';
             custom.required = false;
             custom.value = '';
+        }
+    }
+
+    // ============ Position Custom Input + Subject Group Toggle ============
+    function onPositionChange() {
+        const sel = document.getElementById('position');
+        const custom = document.getElementById('positionCustom');
+        const subjectWrapper = document.getElementById('subjectGroupWrapper');
+        // Show custom input for "อื่นๆ"
+        if (sel.value === 'อื่นๆ') {
+            custom.style.display = 'block';
+            custom.required = true;
+            custom.focus();
+        } else {
+            custom.style.display = 'none';
+            custom.required = false;
+            custom.value = '';
+        }
+        // Hide subject group for non-teacher positions
+        var nonTeacherPositions = ['ผู้พักอาศัย','ผู้ร่วมพักอาศัย','บุคคลภายนอก','เจ้าหน้าที่','ลูกจ้างประจำ','ลูกจ้างชั่วคราว','อื่นๆ'];
+        if (nonTeacherPositions.indexOf(sel.value) >= 0) {
+            subjectWrapper.style.display = 'none';
+            document.getElementById('subject_group').value = '';
+        } else {
+            subjectWrapper.style.display = '';
         }
     }
 
@@ -410,7 +446,9 @@
                     : document.getElementById('prefix').value,
                 firstname: document.getElementById('firstname').value.trim(),
                 lastname: document.getElementById('lastname').value.trim(),
-                position: document.getElementById('position').value,
+                position: (document.getElementById('position').value === 'อื่นๆ')
+                    ? document.getElementById('positionCustom').value.trim()
+                    : document.getElementById('position').value,
                 address_no: document.getElementById('address_no').value.trim(),
                 address_road: document.getElementById('address_road').value.trim(),
                 address_village: document.getElementById('address_village').value.trim(),
