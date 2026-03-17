@@ -788,12 +788,12 @@
                         ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
                         return;
                     }
-                } catch (e) { console.error('Save error:', e); }
+                } catch (e) { console.error('Save error:', e); ppkAlert('⚠️ บันทึกลงฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต\n(' + (e.message || e) + ')'); }
 
             // Fallback: localStorage
             localStorage.setItem('electricBill_' + year + month, JSON.stringify(electricData));
             _formDirty = false;
-            showSuccess('✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว! (localStorage)');
+            showSuccess('⚠️ บันทึกลง localStorage เท่านั้น (ยังไม่ถึงฐานข้อมูล)');
         }
 
         // ══════ Excel Export / Import ══════
