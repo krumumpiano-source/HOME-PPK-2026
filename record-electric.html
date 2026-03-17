@@ -514,7 +514,7 @@
             const thead = document.getElementById('electricTableHead');
             if (electricMethod === 'unit') {
                 infoBox.innerHTML = 'ℹ️ โหมด: <strong>คำนวณตามหน่วย</strong> — กรอกเลขมิเตอร์เดิมและปัจจุบัน ระบบจะคำนวณค่าไฟอัตโนมัติ (อัตรา ' + (electricRate || '?') + ' บาท/หน่วย)';
-                thead.innerHTML = '<tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์เดิม</th><th>มิเตอร์ปัจจุบัน</th><th>หน่วยใช้</th><th>ยอดค่าไฟ (฿)</th></tr>';
+                thead.innerHTML = '<tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th>หน่วยใช้</th><th>ยอดค่าไฟ (฿)</th></tr>';
             } else {
                 infoBox.innerHTML = 'ℹ️ โหมด: <strong>กรอกตามใบแจ้งหนี้</strong> — กรอกยอดค่าไฟของแต่ละบ้านพัก ระบบจะคำนวณยอดรวมโดยอัตโนมัติ';
                 thead.innerHTML = '<tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>ยอดค่าไฟ (฿)</th></tr>';
@@ -553,14 +553,29 @@
             const prevPeriod = prevYear + '-' + String(prevMonth).padStart(2, '0');
             try {
                 const result = await callBackend('getElectricBills', { period: prevPeriod });
-                if (result && result.success && result.data) {
+                if (result && result.success && result.data && result.data.length > 0) {
                     const meterMap = {};
                     result.data.forEach(record => {
-                        meterMap[record.house_number || record.house] = parseInt(record.curr_meter || record.currMeter) || 0;
+                        meterMap[record.house_number || record.house] = parseFloat(record.curr_meter ?? record.currMeter) || 0;
                     });
                     return meterMap;
                 }
             } catch (e) { console.error('getPreviousElectricMeter error:', e); }
+            // Fallback: localStorage
+            const prevKey = 'electricBill_' + prevYear + String(prevMonth).padStart(2, '0');
+            const prevData = localStorage.getItem(prevKey);
+            if (prevData) {
+                try {
+                    const parsed = JSON.parse(prevData);
+                    const meterMap = {};
+                    (parsed.records || []).forEach(record => {
+                        const key = record.house_number || record.house;
+                        const val = parseFloat(record.curr_meter ?? record.currMeter) || 0;
+                        if (key) meterMap[key] = val;
+                    });
+                    return meterMap;
+                } catch(e) {}
+            }
             return {};
         }
         
@@ -582,7 +597,12 @@
                         }
                         const amountMap = {};
                         result.data.forEach(r => {
-                            amountMap[r.house_number || r.house] = parseFloat(r.amount) || 0;
+                            const key = r.house_number || r.house;
+                            amountMap[key] = {
+                                amount: parseFloat(r.amount) || 0,
+                                prevMeter: parseFloat(r.prev_meter ?? r.prevMeter) || 0,
+                                currMeter: parseFloat(r.curr_meter ?? r.currMeter) || 0
+                            };
                         });
                         return amountMap;
                     }
@@ -598,7 +618,12 @@
                 if (parsed.lost_flat !== undefined) document.getElementById('lost_flat').value = parsed.lost_flat || '';
                 const amountMap = {};
                 (parsed.records || []).forEach(record => {
-                    amountMap[record.house] = parseFloat(record.amount) || 0;
+                    const key = record.house_number || record.house;
+                    amountMap[key] = {
+                        amount: parseFloat(record.amount) || 0,
+                        prevMeter: parseFloat(record.prev_meter ?? record.prevMeter) || 0,
+                        currMeter: parseFloat(record.curr_meter ?? record.currMeter) || 0
+                    };
                 });
                 return amountMap;
             }
@@ -663,20 +688,28 @@
             billRows.sort((a, b) => a.houseNum.localeCompare(b.houseNum, 'th', { numeric: true }));
 
             billRows.forEach((item, index) => {
-                const savedAmount = savedAmounts[item.houseNum] || '';
+                const savedObj = savedAmounts[item.houseNum] || null;
+                const savedAmount = savedObj ? savedObj.amount : '';
                 const row = document.createElement('tr');
                 row.dataset.house = item.houseNum;
 
                 if (electricMethod === 'unit') {
-                    var _ePrev = prevMeterData[item.houseNum] || '';
+                    // prevMeter: ใช้ curr_meter เดือนก่อนหน้าก่อน ถ้าไม่มีใช้จาก savedBill
+                    const prevMeter = prevMeterData[item.houseNum] || (savedObj ? savedObj.prevMeter : 0);
+                    const currMeter = savedObj ? savedObj.currMeter : '';
+                    const prevAttrs = prevMeter > 0
+                        ? 'title="เติมอัตโนมัติจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า (แก้ไขได้)" onchange="calculateUnitRow(this)"'
+                        : 'title="กรอกเลขเริ่มต้นมิเตอร์ (กรณีติดตั้งใหม่หรือมิเตอร์มือสอง)" onchange="calculateUnitRow(this)" placeholder="เลขเริ่มต้น"';
+                    const unitsUsed = currMeter !== '' ? Math.max(0, (parseFloat(currMeter)||0) - (parseFloat(prevMeter)||0)) : 0;
+                    const initAmt = currMeter !== '' ? applyRounding(unitsUsed * electricRate, electricRounding) : (savedObj ? savedObj.amount : 0);
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
                         '<td>' + item.houseNum + '</td>' +
                         '<td>' + item.residentName + '</td>' +
-                        '<td><input type="number" class="prev-meter" value="' + _ePrev + '" placeholder="เดิม" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
-                        '<td><input type="number" class="curr-meter" value="" placeholder="ปัจจุบัน" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
-                        '<td class="units-used" style="text-align:right">0</td>' +
-                        '<td class="electric-amount-cell" style="text-align:right">' + (savedAmount ? applyRounding(savedAmount, electricRounding) : 0) + '</td>';
+                        '<td><input type="number" class="prev-meter" value="' + prevMeter + '" ' + prevAttrs + ' step="1" min="0"></td>' +
+                        '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="มิเตอร์ปัจจุบัน" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
+                        '<td class="units-used" style="text-align:right">' + unitsUsed + '</td>' +
+                        '<td class="electric-amount-cell" style="text-align:right">' + initAmt + '</td>';
                 } else {
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
@@ -759,7 +792,7 @@
             
             const diffEl = document.getElementById('diffAmount');
             diffEl.textContent = diff.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
-            diffEl.style.color = '#059669';
+            diffEl.style.color = diff > 0 ? '#dc2626' : '#059669';
         }
         
         // บันทึกข้อมูล → Backend
@@ -827,7 +860,6 @@
             localStorage.setItem('electricBill_' + year + month, JSON.stringify(electricData));
             _formDirty = false;
         }
-        }
 
         // ══════ Excel Export / Import ══════
         function _invalidateBillCache(action, period) {
@@ -867,7 +899,7 @@
                 ];
 
                 if (isUnit) {
-                    data.push(['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์เดิม', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดค่าไฟ (฿)']);
+                    data.push(['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์ก่อนหน้า', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดค่าไฟ (฿)']);
                 } else {
                     data.push(['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'ยอดค่าไฟ (฿)']);
                 }
