@@ -673,10 +673,10 @@
                 records.push({
                     house_number: row.dataset.house,
                     resident_name: row.cells[2].textContent,
-                    prev_meter: row.querySelector('.prev-meter').value,
-                    curr_meter: row.querySelector('.curr-meter').value,
-                    units: row.querySelector('.usage-value').textContent.replace(/[^\d]/g, ''),
-                    amount: row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')
+                    prev_meter: parseFloat(row.querySelector('.prev-meter').value) || 0,
+                    curr_meter: parseFloat(row.querySelector('.curr-meter').value) || 0,
+                    units: parseInt(row.querySelector('.usage-value').textContent.replace(/[^\d]/g, '')) || 0,
+                    amount: parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0
                 });
             });
             

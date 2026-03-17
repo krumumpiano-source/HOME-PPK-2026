@@ -790,8 +790,11 @@ async function _routeAction(action, data) {
                 // Validate: ตรวจค่าลบ/ผิดปกติ
                 for (var vi = 0; vi < data.records.length; vi++) {
                     var vr = data.records[vi];
-                    if (parseFloat(vr.amount) < 0) return { success: false, error: 'ยอดเงินติดลบ (' + (vr.house_number || '') + ')' };
-                    if (parseInt(vr.curr_meter) < parseInt(vr.prev_meter)) return { success: false, error: 'เลขมิเตอร์ปัจจุบันน้อยกว่าก่อนหน้า (' + (vr.house_number || '') + ')' };
+                    var _vAmt = parseFloat(vr.amount) || 0;
+                    var _vCurr = parseFloat(vr.curr_meter) || 0;
+                    var _vPrev = parseFloat(vr.prev_meter) || 0;
+                    if (_vAmt < 0) return { success: false, error: 'ยอดเงินติดลบ (' + (vr.house_number || '') + ')' };
+                    if (_vCurr > 0 && _vCurr < _vPrev) return { success: false, error: 'เลขมิเตอร์ปัจจุบันน้อยกว่าก่อนหน้า (' + (vr.house_number || '') + ')' };
                 }
                 var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
                 // Pre-fetch house_id map (house_id is required FK in water_bills)
@@ -800,16 +803,18 @@ async function _routeAction(action, data) {
                     var _wHouseRows = await sbGet('housing', { select: 'id,house_number' });
                     (_wHouseRows || []).forEach(function(h) { _wHouseMap[h.house_number] = h.id; });
                 } catch(e) {}
+                // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
+                try { await sbDelete('water_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old water_bills:', e); }
                 var inserted = [];
                 for (var i = 0; i < data.records.length; i++) {
                     var rec = data.records[i];
                     var row = await sbPost('water_bills', {
                         house_id: _wHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
-                        year: data.year, month: data.month,
-                        prev_meter: rec.prev_meter, curr_meter: rec.curr_meter,
-                        units_used: rec.units, rate_per_unit: data.rate,
-                        amount: rec.amount, recorded_by: user.id || null
+                        year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
+                        prev_meter: parseFloat(rec.prev_meter) || 0, curr_meter: parseFloat(rec.curr_meter) || 0,
+                        units_used: parseFloat(rec.units) || 0, rate_per_unit: parseFloat(data.rate) || 0,
+                        amount: parseFloat(rec.amount) || 0, recorded_by: user.id || null
                     });
                     inserted.push(row);
                 }
@@ -859,14 +864,17 @@ async function _routeAction(action, data) {
                     var _eHouseRows = await sbGet('housing', { select: 'id,house_number' });
                     (_eHouseRows || []).forEach(function(h) { _eHouseMap[h.house_number] = h.id; });
                 } catch(e) {}
+                // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
+                try { await sbDelete('electric_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old electric_bills:', e); }
                 var inserted = [];
                 for (var i = 0; i < data.records.length; i++) {
                     var rec = data.records[i];
+                    var _eAmt = parseFloat(rec.amount) || 0;
                     var row = await sbPost('electric_bills', {
                         house_id: _eHouseMap[rec.house_number] || null,
                         house_number: rec.house_number, period: data.period,
-                        year: data.year, month: data.month,
-                        bill_amount: rec.amount, amount: rec.amount,
+                        year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
+                        bill_amount: _eAmt, amount: _eAmt,
                         method: data.method || 'bill', recorded_by: user.id || null
                     });
                     inserted.push(row);
