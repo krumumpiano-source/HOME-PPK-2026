@@ -788,9 +788,9 @@
             const diff = grandTotal - peaTotal;
             
             document.getElementById('totalHouses').textContent = count;
-            document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('th-TH') + ' ฿';
-            document.getElementById('totalLost').textContent = totalLost.toLocaleString('th-TH') + ' ฿';
-            document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('th-TH') + ' ฿';
+            document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
+            document.getElementById('totalLost').textContent = totalLost.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
+            document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
             document.getElementById('peaTotal').textContent = peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿';
             
             const diffEl = document.getElementById('diffAmount');
