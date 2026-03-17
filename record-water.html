@@ -384,7 +384,7 @@
             <div class="table-scroll-wrapper">
                 <table class="meter-table">
                     <thead>
-                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
+                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th style="white-space:nowrap">หน่วยรวม <span style="font-weight:400;font-size:11px;color:#f59e0b;">(เปลี่ยนมิเตอร์)</span></th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
                     </thead>
                     <tbody id="meterTableBody">
                         <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
@@ -532,7 +532,8 @@
                         result.data.forEach(r => {
                             map[r.house_number || r.house] = {
                                 prevMeter: parseInt(r.prev_meter || r.prevMeter) || 0,
-                                currMeter: parseInt(r.curr_meter || r.currMeter) || 0
+                                currMeter: parseInt(r.curr_meter || r.currMeter) || 0,
+                                unitsOverride: r.units_override != null ? parseFloat(r.units_override) : null
                             };
                         });
                         return map;
@@ -545,7 +546,11 @@
                 const parsed = JSON.parse(saved);
                 const map = {};
                 (parsed.records || []).forEach(r => {
-                    map[r.house] = { prevMeter: parseInt(r.prevMeter) || 0, currMeter: parseInt(r.currMeter) || 0 };
+                    map[r.house_number || r.house] = {
+                        prevMeter: parseInt(r.prevMeter || r.prev_meter) || 0,
+                        currMeter: parseInt(r.currMeter || r.curr_meter) || 0,
+                        unitsOverride: r.units_override != null ? parseFloat(r.units_override) : null
+                    };
                 });
                 return map;
             }
@@ -615,6 +620,8 @@
                 // auto-fill จากเดือนก่อนหน้า แต่ admin แก้ไขได้เสมอ
                 const prevAttrs = 'title="ระบบเติมจากมิเตอร์ปัจจุบันของเดือนก่อนหน้า (แก้ไขได้กรณีเปลี่ยนมิเตอร์)" onchange="calculateRow(this)" placeholder="เลขมิเตอร์ก่อนหน้า"';
                 
+                const unitsOverride = saved ? (saved.unitsOverride != null ? saved.unitsOverride : '') : '';
+
                 const row = document.createElement('tr');
                 row.dataset.house = item.houseNum;
                 row.innerHTML =
@@ -623,6 +630,7 @@
                     '<td>' + item.residentName + '</td>' +
                     '<td><input type="number" class="prev-meter" value="' + prevMeter + '" ' + prevAttrs + '></td>' +
                     '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
+                    '<td style="text-align:center"><input type="number" class="units-override" value="' + unitsOverride + '" min="0" placeholder="-" title="กรอกเฉพาะกรณีเปลี่ยนมิเตอร์กลางเดือน (หน่วยมิเตอรเดิม + หน่วยมิเตอรใหม่)" onchange="calculateRow(this)" style="width:70px;border-color:#f59e0b;background:#fffbeb;"></td>' +
                     '<td class="usage-value" style="text-align:right">0</td>' +
                     '<td class="amount-value" style="text-align:right">0</td>';
                 tbody.appendChild(row);
@@ -640,13 +648,18 @@
             const row = input.closest('tr');
             const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
             const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
+            const overrideVal = row.querySelector('.units-override').value;
             const rate = parseFloat(document.getElementById('water_rate').value) || 0;
-            
-            const usage = Math.max(0, currMeter - prevMeter);
+
+            // ถ้ากรอกหน่วยรวม (กรณีเปลี่ยนมิเตอร์) → ใช้ค่านั้นแทน
+            const usage = overrideVal !== '' ? Math.max(0, parseFloat(overrideVal) || 0)
+                                             : Math.max(0, currMeter - prevMeter);
             let amount = usage * rate;
             amount = applyRounding(amount, waterRounding);
             if (amount > 0 && amount < waterMinCharge) amount = waterMinCharge;
-            
+
+            // highlight แถวที่มี override
+            row.style.background = overrideVal !== '' ? '#fffbeb' : '';
             row.querySelector('.usage-value').textContent = usage;
             row.querySelector('.amount-value').textContent = amount.toLocaleString();
             
@@ -660,13 +673,16 @@
                 if (!row.dataset.house) return;
                 const prevMeter = parseFloat(row.querySelector('.prev-meter').value) || 0;
                 const currMeter = parseFloat(row.querySelector('.curr-meter').value) || 0;
+                const overrideVal = row.querySelector('.units-override').value;
                 const rate = parseFloat(document.getElementById('water_rate').value) || 0;
-                
-                const usage = Math.max(0, currMeter - prevMeter);
+
+                const usage = overrideVal !== '' ? Math.max(0, parseFloat(overrideVal) || 0)
+                                                 : Math.max(0, currMeter - prevMeter);
                 let amount = usage * rate;
                 amount = applyRounding(amount, waterRounding);
                 if (amount > 0 && amount < waterMinCharge) amount = waterMinCharge;
-                
+
+                row.style.background = overrideVal !== '' ? '#fffbeb' : '';
                 row.querySelector('.usage-value').textContent = usage;
                 row.querySelector('.amount-value').textContent = amount.toLocaleString();
             });
@@ -709,11 +725,13 @@
             
             rows.forEach(row => {
                 if (!row.dataset.house) return;
+                const overrideVal = row.querySelector('.units-override').value;
                 records.push({
                     house_number: row.dataset.house,
                     resident_name: row.cells[2].textContent,
                     prev_meter: parseFloat(row.querySelector('.prev-meter').value) || 0,
                     curr_meter: parseFloat(row.querySelector('.curr-meter').value) || 0,
+                    units_override: overrideVal !== '' ? parseFloat(overrideVal) : null,
                     units: parseInt(row.querySelector('.usage-value').textContent.replace(/[^\d]/g, '')) || 0,
                     amount: parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0
                 });
@@ -784,18 +802,20 @@
                     ['เดือน', monthName, 'ปี พ.ศ.', year, 'อัตราค่าน้ำ (บาท/หน่วย)', parseFloat(rate)],
                     ['การปัดเศษ', waterRounding, 'ค่าน้ำขั้นต่ำ (บาท)', waterMinCharge],
                     [],
-                    ['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์ก่อนหน้า', 'มิเตอร์ปัจจุบัน', 'หน่วยใช้', 'ยอดเงิน (฿)']
+                    ['ลำดับ', 'บ้านพัก', 'ผู้พักอาศัย', 'มิเตอร์ก่อนหน้า', 'มิเตอร์ปัจจุบัน', 'หน่วยรวม(เปลี่ยนมิเตอร์)', 'หน่วยใช้', 'ยอดเงิน (฿)']
                 ];
 
                 var idx = 1;
                 rows.forEach(function(row) {
                     if (!row.dataset.house) return;
+                    var ovVal = row.querySelector('.units-override').value;
                     data.push([
                         idx++,
                         row.dataset.house,
                         row.cells[2].textContent,
                         parseFloat(row.querySelector('.prev-meter').value) || 0,
                         parseFloat(row.querySelector('.curr-meter').value) || 0,
+                        ovVal !== '' ? parseFloat(ovVal) : '',
                         parseInt(row.querySelector('.usage-value').textContent) || 0,
                         parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0
                     ]);

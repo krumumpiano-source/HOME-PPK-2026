@@ -813,6 +813,7 @@ async function _routeAction(action, data) {
                         year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
                         prev_meter: parseFloat(rec.prev_meter) || 0, curr_meter: parseFloat(rec.curr_meter) || 0,
                         units_used: parseFloat(rec.units) || 0, rate_per_unit: parseFloat(data.rate) || 0,
+                        units_override: rec.units_override != null ? parseFloat(rec.units_override) : null,
                         amount: parseFloat(rec.amount) || 0, recorded_by: user.id || null
                     };
                 });
