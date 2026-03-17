@@ -351,7 +351,29 @@
             var monthName=THAI_MONTHS[parseInt(month)-1];
             var typeName=type==='house'?'บ้านพัก':'แฟลต';
             var fileName='แจ้งยอดชำระ_'+typeName+'_'+monthName+'_'+year+'.png';
+
+            // แปลง input/button เป็นข้อความธรรมดาก่อน capture
+            var inputs = element.querySelectorAll('.common-input');
+            var exemptBtns = element.querySelectorAll('.exempt-btn');
+            var snapshots = [];
+            for (var k = 0; k < inputs.length; k++) {
+                var inp = inputs[k];
+                var val = parseFloat(inp.value) || 0;
+                var span = document.createElement('span');
+                span.className = 'common-snap';
+                span.textContent = val ? val.toLocaleString() : '-';
+                span.style.cssText = 'font-weight:700;color:' + (val ? 'var(--primary-dark)' : 'inherit');
+                var cell = inp.closest('.common-cell');
+                snapshots.push({ cell: cell, origHTML: cell.innerHTML });
+                cell.innerHTML = '';
+                cell.appendChild(span);
+            }
+
             html2canvas(element,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:1200}).then(function(canvas){
+                // คืนค่า input/button กลับ
+                for (var k = 0; k < snapshots.length; k++) {
+                    snapshots[k].cell.innerHTML = snapshots[k].origHTML;
+                }
                 overlay.classList.remove('show');
                 var link=document.createElement('a');
                 link.download=fileName;
@@ -362,6 +384,10 @@
                 msg.classList.add('show');
                 setTimeout(function(){msg.classList.remove('show');},3000);
             }).catch(function(err){
+                // คืนค่า input/button กลับ กรณี error
+                for (var k = 0; k < snapshots.length; k++) {
+                    snapshots[k].cell.innerHTML = snapshots[k].origHTML;
+                }
                 overlay.classList.remove('show');
                 ppkAlert('เกิดข้อผิดพลาด: '+err.message);
             });
