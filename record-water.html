@@ -492,23 +492,28 @@
 
             try {
                     const result = await callBackend('getWaterBills', { period: prevPeriod });
+                    console.log('[prevMeter] query period:', prevPeriod, '| rows:', result && result.data ? result.data.length : 'null', result && result.data ? result.data : '');
                     if (result && result.success && result.data && result.data.length > 0) {
                         const meterMap = {};
                         result.data.forEach(record => {
-                            meterMap[record.house_number || record.house] = parseInt(record.curr_meter || record.currMeter) || 0;
+                            meterMap[record.house_number || record.house] = parseFloat(record.curr_meter ?? record.currMeter) || 0;
                         });
+                        console.log('[prevMeter] meterMap:', meterMap);
                         return meterMap;
                     }
-                } catch (e) { console.error('getPreviousMeter error:', e); }
-            // Fallback: localStorage
+                } catch (e) { console.error('[prevMeter] error:', e); }
+            // Fallback: localStorage (fix field names: house_number, curr_meter)
             const prevKey = 'waterBill_' + prevYear + String(prevMonth).padStart(2, '0');
             const prevData = localStorage.getItem(prevKey);
             if (prevData) {
                 const parsed = JSON.parse(prevData);
                 const meterMap = {};
                 (parsed.records || []).forEach(record => {
-                    meterMap[record.house] = parseInt(record.currMeter) || 0;
+                    const key = record.house_number || record.house;
+                    const val = parseFloat(record.curr_meter ?? record.currMeter) || 0;
+                    if (key) meterMap[key] = val;
                 });
+                console.log('[prevMeter] from localStorage:', meterMap);
                 return meterMap;
             }
             return {};
