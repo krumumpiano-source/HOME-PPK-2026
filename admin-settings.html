@@ -2028,12 +2028,13 @@
         }
 
         function formatHousingNumber(item, settings) {
-            // ถ้ามี displayNumber / display_number ที่สมบูรณ์อยู่แล้ว ใช้ตรงๆ เลย
-            const cached = (item.displayNumber || item.display_number || '').trim();
-            if (cached) return cached;
-            // ไม่งั้น สร้างจาก prefix + number
-            const prefix = item.type === 'house' ? settings.housePrefix : settings.flatPrefix;
-            return (prefix || '') + (item.number || '');
+            // คำนวณจาก prefix + number เสมอ (ไม่ใช้ cache เพราะอาจ stale)
+            var num = (item.number || item.house_number || '').trim();
+            if (!num) return '';
+            var prefix = (item.type === 'house' ? settings.housePrefix : settings.flatPrefix) || '';
+            // ถ้า user พิมพ์ prefix ซ้ำในเลขที่ เช่น "แฟลต4" → ตัด prefix ออกก่อน
+            if (prefix && num.startsWith(prefix)) num = num.substring(prefix.length);
+            return prefix + num;
         }
 
         function getStatusBadge(status) {
@@ -2262,13 +2263,7 @@
             
             localStorage.setItem(STORAGE_KEYS.housingFormat, JSON.stringify(settings));
             
-            // Update all housing display numbers
-            const data = getHousingData();
-            data.forEach(item => {
-                const prefix = item.type === 'house' ? settings.housePrefix : settings.flatPrefix;
-                item.displayNumber = prefix + item.number;
-            });
-            saveHousingData(data);
+            // Re-render ด้วย format ใหม่ (formatHousingNumber คำนวณจาก settings เสมอ)
             renderManageHousingCards();
         }
 
