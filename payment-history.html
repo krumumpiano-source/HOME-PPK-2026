@@ -12,17 +12,12 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318B">
     <style>
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 400px) { .stat-grid { grid-template-columns: 1fr; } }
-        .stat-card {
-            background: var(--c-surface); border: 1px solid var(--c-border);
-            border-radius: var(--radius-lg); padding: 1.2rem 1rem;
-            box-shadow: var(--shadow-md); text-align: center;
-            position: relative; overflow: hidden;
-        }
+        .stat-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.2rem 1rem; box-shadow: var(--shadow-md); text-align: center; position: relative; overflow: hidden; }
         .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
         .stat-card.c-total::before  { background: linear-gradient(90deg,var(--c-primary),var(--c-cyan)); }
         .stat-card.c-water::before  { background: linear-gradient(90deg,var(--c-cyan),#38e8ff); }
@@ -31,91 +26,46 @@
         .stat-card-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
         .stat-card-label { font-size: 0.85rem; color: var(--c-text-3); font-weight: 600; }
         .stat-card-value { font-size: 1.35rem; font-weight: 700; margin-top: 0.2rem; }
-        .stat-card.c-total  .stat-card-value { color: var(--c-primary); }
-        .stat-card.c-water  .stat-card-value { color: var(--c-cyan); }
-        .stat-card.c-elec   .stat-card-value { color: var(--c-warning); }
+        .stat-card.c-total .stat-card-value  { color: var(--c-primary); }
+        .stat-card.c-water .stat-card-value  { color: var(--c-cyan); }
+        .stat-card.c-elec .stat-card-value   { color: var(--c-warning); }
         .stat-card.c-common .stat-card-value { color: var(--c-success); }
-
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
         @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
-        .chart-card, .chart-card-full {
-            background: var(--c-surface); border: 1px solid var(--c-border);
-            border-radius: var(--radius-lg); padding: 1.2rem 1.5rem; box-shadow: var(--shadow-md);
-        }
+        .chart-card, .chart-card-full { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.2rem 1.5rem; box-shadow: var(--shadow-md); }
         .chart-title { font-size: 1rem; font-weight: 700; color: var(--c-primary); margin-bottom: 0.8rem; }
-
-        .filter-section {
-            display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
-            background: var(--c-surface); padding: 1rem 1.5rem;
-            border-radius: var(--radius-lg); border: 1px solid var(--c-border); box-shadow: var(--shadow-md);
-        }
+        .filter-section { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; background: var(--c-surface); padding: 1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--c-border); box-shadow: var(--shadow-md); }
         .filter-section label { font-size: 0.95rem; font-weight: 600; }
         .filter-section select { padding: 0.6rem 0.8rem; font: inherit; font-size: 1rem; border: 1.5px solid var(--c-border); border-radius: var(--radius-sm); }
-
         .ppk-table-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow-x: auto; }
-        .ppk-table-card table { width: 100%; border-collapse: collapse; font-size: 0.95rem; text-align: center; }
-        .ppk-table-card th, .ppk-table-card td { border: 1px solid var(--c-border); padding: 0.75rem 0.6rem; }
-        .ppk-table-card th { background: var(--c-surface-2); font-weight: 700; }
+        .ppk-table-card table { width: 100%; border-collapse: collapse; font-size: 0.92rem; text-align: center; }
+        .ppk-table-card th, .ppk-table-card td { border: 1px solid var(--c-border); padding: 0.7rem 0.5rem; }
+        .ppk-table-card th { background: var(--c-surface-2); font-weight: 700; font-size: 0.85rem; }
         .ppk-table-card tr:nth-child(even) { background: var(--c-surface-2); }
         .ppk-table-card tr:hover { background: #f1f5f9; }
+        .section-title { font-size: 1.05rem; font-weight: 700; color: var(--c-text-1); margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+        .badge-pending  { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-ontime   { background: #dbeafe; color: #1e40af; }
+        .badge-late     { background: #fef3c7; color: #92400e; }
+        .badge-nodata   { background: #f3f4f6; color: #6b7280; }
     </style>
 </head>
 <body>
     <div id="ppkNav"></div>
-
     <div class="ppk-main" id="dashboardContainer">
         <div class="ppk-topbar">
-            <button class="ppk-btn ppk-btn-ghost ppk-btn-sm" onclick="navigate('?page=dashboard')">← กลับ</button>
-            <div class="ppk-topbar-title"><span class="icon">💸</span> ข้อมูลการชำระเงินย้อนหลัง</div>
+            <button class="ppk-btn ppk-btn-ghost ppk-btn-sm" onclick="navigate('?page=dashboard')">&#8592; กลับ</button>
+            <div class="ppk-topbar-title"><span class="icon">&#128184;</span> ข้อมูลการชำระเงินย้อนหลัง</div>
         </div>
-
         <div class="ppk-content">
-            <!-- Stat Cards -->
-            <div class="stat-grid">
-                <div class="stat-card c-total">
-                    <div class="stat-card-icon">💰</div>
-                    <div class="stat-card-label">ยอดชำระรวมทั้งปี</div>
-                    <div class="stat-card-value" id="statTotal">-</div>
-                </div>
-                <div class="stat-card c-water">
-                    <div class="stat-card-icon">💧</div>
-                    <div class="stat-card-label">ค่าน้ำรวม</div>
-                    <div class="stat-card-value" id="statWater">-</div>
-                </div>
-                <div class="stat-card c-elec">
-                    <div class="stat-card-icon">⚡</div>
-                    <div class="stat-card-label">ค่าไฟรวม</div>
-                    <div class="stat-card-value" id="statElec">-</div>
-                </div>
-                <div class="stat-card c-common">
-                    <div class="stat-card-icon">🏢</div>
-                    <div class="stat-card-label">ค่าส่วนกลางรวม</div>
-                    <div class="stat-card-value" id="statCommon">-</div>
-                </div>
-            </div>
-
-            <!-- Charts -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <div class="chart-title">📊 ค่าใช้จ่ายรายเดือน (แยกตามประเภท)</div>
-                    <canvas id="chartBar" height="220"></canvas>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">🧩 สัดส่วนค่าใช้จ่าย</div>
-                    <canvas id="chartDoughnut" height="220"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card-full">
-                <div class="chart-title">📈 แนวโน้มยอดชำระรายเดือน</div>
-                <canvas id="chartLine" height="110"></canvas>
-            </div>
-
-            <!-- Filter -->
+            <!-- Filter (TOP) -->
             <div class="filter-section">
                 <label for="month">เลือกเดือน:</label>
                 <select id="month">
-                    <option value="">— ทั้งปี —</option>
+                    <option value="">&#8212; ทั้งปี &#8212;</option>
                     <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option>
                     <option value="03">มีนาคม</option><option value="04">เมษายน</option>
                     <option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
@@ -124,31 +74,76 @@
                     <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
                 </select>
                 <label for="year">เลือกปี:</label>
-                <select id="year">
-                    <script>
-                        (function(){
-                            var cy = new Date().getFullYear() + 543;
-                            var minY = 2568;
-                            for(var y = cy + 2; y >= minY; y--){
-                                document.write('<option value="' + y + '"' + (y === cy ? ' selected' : '') + '>' + y + '</option>');
-                            }
-                        })();
-                    </script>
-                </select>
-                <button class="ppk-btn ppk-btn-primary ppk-btn-sm" onclick="filterHistory()">กรองข้อมูล</button>
+                <select id="year"></select>
+                <button class="ppk-btn ppk-btn-primary ppk-btn-sm" onclick="filterData()">กรองข้อมูล</button>
             </div>
 
-            <!-- Table -->
+            <!-- Stat Cards -->
+            <div class="stat-grid">
+                <div class="stat-card c-total">
+                    <div class="stat-card-icon">&#128176;</div>
+                    <div class="stat-card-label">ยอดแจ้งชำระรวม</div>
+                    <div class="stat-card-value" id="statTotal">-</div>
+                </div>
+                <div class="stat-card c-water">
+                    <div class="stat-card-icon">&#128167;</div>
+                    <div class="stat-card-label">ค่าน้ำรวม</div>
+                    <div class="stat-card-value" id="statWater">-</div>
+                </div>
+                <div class="stat-card c-elec">
+                    <div class="stat-card-icon">&#9889;</div>
+                    <div class="stat-card-label">ค่าไฟรวม</div>
+                    <div class="stat-card-value" id="statElec">-</div>
+                </div>
+                <div class="stat-card c-common">
+                    <div class="stat-card-icon">&#127970;</div>
+                    <div class="stat-card-label">ค่าส่วนกลางรวม</div>
+                    <div class="stat-card-value" id="statCommon">-</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">&#128202; ค่าใช้จ่ายรายเดือน (แยกตามประเภท)</div>
+                    <canvas id="chartBar" height="220"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">&#129513; สัดส่วนค่าใช้จ่าย</div>
+                    <canvas id="chartDoughnut" height="220"></canvas>
+                </div>
+            </div>
+            <div class="chart-card-full">
+                <div class="chart-title">&#128200; แนวโน้มยอดแจ้งชำระรายเดือน</div>
+                <canvas id="chartLine" height="110"></canvas>
+            </div>
+
+            <!-- Table 1: ยอดแจ้งชำระรายเดือน -->
+            <div class="section-title">&#128203; ยอดแจ้งชำระรายเดือน</div>
             <div class="ppk-table-card">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>เดือน</th><th>ปี</th><th>วันที่ชำระ</th>
-                            <th>ค่าน้ำ (บาท)</th><th>ค่าไฟ (บาท)</th><th>ค่าส่วนกลาง (บาท)</th><th>ยอดรวม (บาท)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="payment-history-body">
-                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
+                    <thead><tr>
+                        <th>เดือน</th><th>ค่าน้ำ (บาท)</th><th>ค่าไฟ (บาท)</th>
+                        <th>ค่าส่วนกลาง (บาท)</th><th>ยอดรวม (บาท)</th>
+                        <th>วันแจ้งยอด</th><th>กำหนดชำระ</th>
+                    </tr></thead>
+                    <tbody id="bill-table-body">
+                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลด...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table 2: สถานะการชำระเงิน -->
+            <div class="section-title">&#129534; สถานะการชำระเงิน (สลิป)</div>
+            <div class="ppk-table-card">
+                <table>
+                    <thead><tr>
+                        <th>เดือน</th><th>วันแจ้งยอด</th><th>กำหนดชำระ</th>
+                        <th>วันส่งสลิป</th><th>จำนวนเงิน</th>
+                        <th>สถานะ</th><th>ตรงเวลา</th>
+                    </tr></thead>
+                    <tbody id="slip-table-body">
+                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลด...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -159,259 +154,370 @@
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
     <script>
+    /* ============ Constants ============ */
+    var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                       'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    var THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
+                             'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-        // ============ Constants ============
-        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-        const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var allBillData  = [];
+    var allSlipData  = [];
+    var allNotifMap  = {};
+    var _lastLoadedYear = '';
+    var chartBar, chartDoughnut, chartLine;
 
-        let allHistoryData = [];
-        let chartBar, chartDoughnut, chartLine;
+    /* ============ HTML Escape ============ */
+    function _e(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
 
-        // ============ Stat Cards ============
-        function updateStats(data) {
-            const fmt = v => v > 0 ? v.toLocaleString('th-TH') + ' บ.' : '-';
-            const total    = data.reduce((s,r) => s + (r.total || r.water+r.electric+r.common), 0);
-            const water    = data.reduce((s,r) => s + r.water, 0);
-            const electric = data.reduce((s,r) => s + r.electric, 0);
-            const common   = data.reduce((s,r) => s + r.common, 0);
-            document.getElementById('statTotal').textContent   = fmt(total);
-            document.getElementById('statWater').textContent   = fmt(water);
-            document.getElementById('statElec').textContent    = fmt(electric);
-            document.getElementById('statCommon').textContent  = fmt(common);
+    /* ============ Format Date ============ */
+    function _fmtDate(d) {
+        if (!d || d === '-') return '-';
+        try {
+            var dt = new Date(d);
+            if (isNaN(dt.getTime())) return '-';
+            return dt.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'2-digit' });
+        } catch(e) { return '-'; }
+    }
+
+    /* ============ Year Dropdown ============ */
+    function initYearSelector() {
+        var sel = document.getElementById('year');
+        var cy = new Date().getFullYear() + 543;
+        for (var y = cy + 2; y >= 2568; y--) {
+            var opt = document.createElement('option');
+            opt.value = y; opt.textContent = y;
+            if (y === cy) opt.selected = true;
+            sel.appendChild(opt);
         }
+    }
 
-        // ============ Charts ============
-        function renderCharts(data) {
-            const months = Array.from({length:12}, (_,i) => String(i+1).padStart(2,'0'));
-            const byMonth = {};
-            months.forEach(m => { byMonth[m] = {water:0, electric:0, common:0}; });
-            data.forEach(r => {
-                const m = String(r.month).padStart(2,'0');
-                if (byMonth[m]) {
-                    byMonth[m].water    += r.water;
-                    byMonth[m].electric += r.electric;
-                    byMonth[m].common   += r.common;
-                }
-            });
+    /* ============ Stat Cards ============ */
+    function updateStats(data) {
+        var fmt = function(v) { return v > 0 ? v.toLocaleString('th-TH') + ' บ.' : '-'; };
+        var w = 0, e = 0, c = 0, t = 0;
+        data.forEach(function(r) { w += r.water; e += r.electric; c += r.common; t += r.total; });
+        document.getElementById('statTotal').textContent  = fmt(t);
+        document.getElementById('statWater').textContent  = fmt(w);
+        document.getElementById('statElec').textContent   = fmt(e);
+        document.getElementById('statCommon').textContent = fmt(c);
+    }
 
-            const labels    = months.map(m => THAI_MONTHS_SHORT[parseInt(m)-1]);
-            const waterArr  = months.map(m => byMonth[m].water);
-            const elecArr   = months.map(m => byMonth[m].electric);
-            const commonArr = months.map(m => byMonth[m].common);
-            const totalArr  = months.map(m => byMonth[m].water + byMonth[m].electric + byMonth[m].common);
+    /* ============ Charts ============ */
+    function renderCharts(data) {
+        var months = [];
+        for (var i = 1; i <= 12; i++) months.push(String(i).padStart(2,'0'));
+        var byM = {};
+        months.forEach(function(m) { byM[m] = {w:0, e:0, c:0, t:0}; });
+        data.forEach(function(r) {
+            var m = String(r.month).padStart(2,'0');
+            if (byM[m]) { byM[m].w += r.water; byM[m].e += r.electric; byM[m].c += r.common; byM[m].t += r.total; }
+        });
+        var currM = new Date().getMonth();
+        var selY = parseInt(document.getElementById('year').value);
+        var curBE = new Date().getFullYear() + 543;
+        var maxM = selY > curBE ? 11 : (selY < curBE ? 11 : currM);
+        var active = months.filter(function(m,i) { return i <= maxM || byM[m].t > 0; });
+        var labels  = active.map(function(m) { return THAI_MONTHS_SHORT[parseInt(m)-1]; });
+        var wArr    = active.map(function(m) { return byM[m].w; });
+        var eArr    = active.map(function(m) { return byM[m].e; });
+        var cArr    = active.map(function(m) { return byM[m].c; });
+        var tArr    = active.map(function(m) { return byM[m].t; });
 
-            if (chartBar)      chartBar.destroy();
-            if (chartDoughnut) chartDoughnut.destroy();
-            if (chartLine)     chartLine.destroy();
+        if (chartBar)      chartBar.destroy();
+        if (chartDoughnut) chartDoughnut.destroy();
+        if (chartLine)     chartLine.destroy();
+        var fk = { family: 'Kanit, sans-serif' };
 
-            const fontKanit = { family: 'Kanit, sans-serif' };
-
-            // Stacked Bar
-            chartBar = new Chart(document.getElementById('chartBar'), {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [
-                        { label: 'ค่าน้ำ',       data: waterArr,  backgroundColor: 'rgba(6,182,212,0.82)',   borderRadius: 3 },
-                        { label: 'ค่าไฟ',       data: elecArr,   backgroundColor: 'rgba(245,158,11,0.82)',  borderRadius: 3 },
-                        { label: 'ค่าส่วนกลาง', data: commonArr, backgroundColor: 'rgba(16,185,129,0.82)', borderRadius: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top', labels: { font: fontKanit, boxWidth: 14, padding: 10 } },
-                        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' บ.' } }
-                    },
-                    scales: {
-                        x: { stacked: true, ticks: { font: fontKanit } },
-                        y: { stacked: true, beginAtZero: true, ticks: { font: fontKanit, callback: v => v.toLocaleString('th-TH') } }
-                    }
-                }
-            });
-
-            // Doughnut
-            const totalW = waterArr.reduce((a,b)=>a+b,0);
-            const totalE = elecArr.reduce((a,b)=>a+b,0);
-            const totalC = commonArr.reduce((a,b)=>a+b,0);
-            chartDoughnut = new Chart(document.getElementById('chartDoughnut'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['ค่าน้ำ','ค่าไฟ','ค่าส่วนกลาง'],
-                    datasets: [{ data: [totalW, totalE, totalC],
-                        backgroundColor: ['rgba(6,182,212,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],
-                        borderWidth: 2, borderColor: '#fff', hoverOffset: 8 }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '62%',
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: fontKanit, padding: 12 } },
-                        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed.toLocaleString('th-TH') + ' บ.' } }
-                    }
-                }
-            });
-
-            // Line
-            chartLine = new Chart(document.getElementById('chartLine'), {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'ยอดชำระรวม',
-                        data: totalArr,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37,99,235,0.07)',
-                        borderWidth: 2.5,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#2563eb',
-                        tension: 0.35,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => 'ยอด: ' + ctx.parsed.y.toLocaleString('th-TH') + ' บ.' } }
-                    },
-                    scales: {
-                        x: { ticks: { font: fontKanit } },
-                        y: { beginAtZero: true, ticks: { font: fontKanit, callback: v => v.toLocaleString('th-TH') } }
-                    }
-                }
-            });
-        }
-
-        // ============ โหลดข้อมูล ============
-        async function loadPaymentHistory() {
-            const year = document.getElementById('year').value;
-            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const tbody = document.getElementById('payment-history-body');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
-
-            allHistoryData = [];
-
-            // ลอง Backend ก่อน
-            if (user.id) {
-                try {
-                    const houseNumber = user.houseNumber || '';
-                    const result = await callBackendGet('getPaymentHistory', { houseNumber: houseNumber });
-                    if (result && result.success && result.data) {
-                        allHistoryData = result.data
-                            .filter(row => (row.period || '').split('-')[0] === String(year))
-                            .map(row => {
-                                const parts = (row.period || '').split('-');
-                                return {
-                                    month: (parts[1] || '01').padStart(2, '0'),
-                                    year: parts[0] || String(year),
-                                    paidDate: row.payment_date || row.recorded_at || '-',
-                                    water: 0,
-                                    electric: 0,
-                                    common: 0,
-                                    total: parseFloat(row.amount_paid) || 0,
-                                    status: row.payment_method || ''
-                                };
-                            });
-                    }
-                } catch (e) { console.error('getPaymentHistory error:', e); }
-            }
-
-            // Fallback: localStorage
-            if (allHistoryData.length === 0) {
-                const unitNumber = localStorage.getItem('currentUserUnit') || user.houseNumber || '';
-                for (let m = 1; m <= 12; m++) {
-                    const mm = String(m).padStart(2, '0');
-                    const key = 'slipSubmissions_' + year + mm;
-                    const submissions = JSON.parse(localStorage.getItem(key) || '[]');
-                    const mySlip = submissions.find(s => s.unitNumber === unitNumber && s.status === 'approved');
-                    if (mySlip) {
-                        allHistoryData.push({
-                            month: mm,
-                            year: year,
-                            paidDate: mySlip.submittedAt ? new Date(mySlip.submittedAt).toLocaleDateString('th-TH') : '-',
-                            water: parseFloat(mySlip.waterAmount) || 0,
-                            electric: parseFloat(mySlip.electricAmount) || 0,
-                            common: parseFloat(mySlip.commonFee) || 0,
-                            total: parseFloat(mySlip.paidAmount) || 0,
-                            status: mySlip.status
-                        });
-                    }
+        chartBar = new Chart(document.getElementById('chartBar'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [
+                { label:'ค่าน้ำ',      data:wArr, backgroundColor:'rgba(6,182,212,0.82)',  borderRadius:3 },
+                { label:'ค่าไฟ',      data:eArr, backgroundColor:'rgba(245,158,11,0.82)', borderRadius:3 },
+                { label:'ค่าส่วนกลาง', data:cArr, backgroundColor:'rgba(16,185,129,0.82)', borderRadius:3 }
+            ]},
+            options: { responsive:true,
+                plugins:{ legend:{ position:'top', labels:{ font:fk, boxWidth:14, padding:10 }},
+                    tooltip:{ callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
+                scales:{
+                    x:{ stacked:true, ticks:{ font:fk }},
+                    y:{ stacked:true, beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}}
                 }
             }
+        });
 
-            renderTable(allHistoryData);
-            updateStats(allHistoryData);
-            renderCharts(allHistoryData);
+        var tw = wArr.reduce(function(a,b){return a+b;},0);
+        var te = eArr.reduce(function(a,b){return a+b;},0);
+        var tc = cArr.reduce(function(a,b){return a+b;},0);
+        chartDoughnut = new Chart(document.getElementById('chartDoughnut'), {
+            type: 'doughnut',
+            data: { labels:['ค่าน้ำ','ค่าไฟ','ค่าส่วนกลาง'],
+                datasets:[{ data:[tw,te,tc],
+                    backgroundColor:['rgba(6,182,212,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],
+                    borderWidth:2, borderColor:'#fff', hoverOffset:8 }]},
+            options:{ responsive:true, cutout:'62%',
+                plugins:{ legend:{ position:'bottom', labels:{ font:fk, padding:12 }},
+                    tooltip:{ callbacks:{ label:function(ctx){ return ctx.label+': '+ctx.parsed.toLocaleString('th-TH')+' บ.'; }}}}}
+        });
+
+        chartLine = new Chart(document.getElementById('chartLine'), {
+            type: 'line',
+            data: { labels: labels, datasets:[{
+                label:'ยอดแจ้งชำระรวม', data:tArr,
+                borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.07)',
+                borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#2563eb',
+                tension:0.35, fill:true
+            }]},
+            options:{ responsive:true,
+                plugins:{ legend:{ display:false },
+                    tooltip:{ callbacks:{ label:function(ctx){ return 'ยอด: '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
+                scales:{
+                    x:{ ticks:{ font:fk }},
+                    y:{ beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}}
+                }
+            }
+        });
+    }
+
+    /* ============ Load Data ============ */
+    async function loadData() {
+        var year = document.getElementById('year').value;
+        var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        var hn = user.houseNumber || user.house_number || '';
+        _lastLoadedYear = year;
+
+        document.getElementById('bill-table-body').innerHTML =
+            '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
+        document.getElementById('slip-table-body').innerHTML =
+            '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
+
+        if (!hn) {
+            document.getElementById('bill-table-body').innerHTML =
+                '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก กรุณาติดต่อคณะทำงาน</td></tr>';
+            document.getElementById('slip-table-body').innerHTML =
+                '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก</td></tr>';
+            return;
         }
 
-        // ============ แสดงตาราง ============
-        function renderTable(data) {
-            const tbody = document.getElementById('payment-history-body');
-            tbody.innerHTML = '';
+        allBillData = [];
+        allSlipData = [];
+        allNotifMap = {};
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลการชำระเงิน</td></tr>';
-                return;
+        try {
+            var res = await Promise.all([
+                cachedCall('getWaterBills',    { year: year, houseNumber: hn }),
+                cachedCall('getElectricBills', { year: year, houseNumber: hn }),
+                cachedCall('getSettings'),
+                callBackend('getNotificationHistory', { houseNumber: hn, limit: 200 }),
+                callBackend('getSlipSubmissions',     { houseNumber: hn })
+            ]);
+
+            /* -- Water map -- */
+            var wMap = {};
+            if (res[0] && res[0].success) {
+                (res[0].data || []).forEach(function(w) {
+                    var p = w.period || '';
+                    if (p.substring(0,4) === String(year)) {
+                        var mm = p.split('-')[1] || '';
+                        wMap[mm] = (wMap[mm] || 0) + (parseFloat(w.amount) || 0);
+                    }
+                });
             }
 
-            data.forEach(item => {
-                const monthIdx = parseInt(item.month) - 1;
-                const monthName = THAI_MONTHS[monthIdx] || item.month;
-                const total = item.total || (item.water + item.electric + item.common);
-                const tr = document.createElement('tr');
-                tr.innerHTML =
-                    '<td>' + monthName + '</td>' +
-                    '<td>' + item.year + '</td>' +
-                    '<td>' + (item.paidDate || '-') + '</td>' +
-                    '<td>' + (item.water ? item.water.toLocaleString() : '-') + '</td>' +
-                    '<td>' + (item.electric ? item.electric.toLocaleString() : '-') + '</td>' +
-                    '<td>' + (item.common ? item.common.toLocaleString() : '-') + '</td>' +
-                    '<td>' + (total ? total.toLocaleString() : '-') + '</td>';
-                tbody.appendChild(tr);
-            });
-        }
+            /* -- Electric map -- */
+            var eMap = {};
+            if (res[1] && res[1].success) {
+                (res[1].data || []).forEach(function(e) {
+                    var p = e.period || '';
+                    if (p.substring(0,4) === String(year)) {
+                        var mm = p.split('-')[1] || '';
+                        eMap[mm] = (eMap[mm] || 0) + (parseFloat(e.bill_amount) || parseFloat(e.amount) || 0);
+                    }
+                });
+            }
 
-        // ============ กรอง ============
-        function filterHistory() {
-            const selectedMonth = document.getElementById('month').value;
-            // โหลดใหม่จาก Backend (เผื่อเปลี่ยนปี) → กราฟแสดงทั้งปีเสมอ ตารางกรองตามเดือน
-            loadPaymentHistory().then(() => {
-                if (selectedMonth) {
-                    const filtered = allHistoryData.filter(item => item.month === selectedMonth);
-                    renderTable(filtered);
-                    // stat cards อัปเดตตามการกรอง
-                    updateStats(filtered);
-                    // กราฟยังคงแสดงทั้งปี (ไม่กรอง) เพื่อให้เห็นภาพรวม
+            /* -- Common fee from settings -- */
+            var commonFee = 0;
+            if (res[2] && res[2].success && res[2].data) {
+                var sett = res[2].data;
+                var isFlat = hn.toLowerCase().indexOf('\u0e41\u0e1f\u0e25\u0e15') >= 0 || hn.toLowerCase().indexOf('flat') >= 0;
+                commonFee = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
+            }
+
+            /* -- Notifications map (latest per month) -- */
+            if (res[3] && res[3].success) {
+                (res[3].data || []).forEach(function(n) {
+                    var p = n.period || '';
+                    if (p.substring(0,4) === String(year)) {
+                        var mm = p.split('-')[1] || '';
+                        if (!allNotifMap[mm] || new Date(n.sent_at) > new Date(allNotifMap[mm].sent_at)) {
+                            allNotifMap[mm] = n;
+                        }
+                    }
+                });
+            }
+
+            /* -- Build bill data per month -- */
+            for (var m = 1; m <= 12; m++) {
+                var mm = String(m).padStart(2,'0');
+                var w = wMap[mm] || 0;
+                var e = eMap[mm] || 0;
+                var notif = allNotifMap[mm] || {};
+                var waterVal    = w || parseFloat(notif.water_amount) || 0;
+                var electricVal = e || parseFloat(notif.electric_amount) || 0;
+                var commonVal   = (waterVal > 0 || electricVal > 0) ? commonFee : 0;
+                if (!commonVal && notif.common_fee) commonVal = parseFloat(notif.common_fee) || 0;
+                var totalVal = waterVal + electricVal + commonVal;
+                if (totalVal > 0 || notif.sent_at) {
+                    allBillData.push({
+                        month: mm, water: waterVal, electric: electricVal,
+                        common: commonVal, total: totalVal,
+                        notifiedAt: notif.sent_at || '', dueDate: notif.due_date || ''
+                    });
                 }
-            });
+            }
+
+            /* -- Slip submissions -- */
+            if (res[4] && res[4].success) {
+                allSlipData = (res[4].data || []).filter(function(s) {
+                    return (s.period || '').substring(0,4) === String(year);
+                }).map(function(s) {
+                    var mm = (s.period || '').split('-')[1] || '';
+                    var notif = allNotifMap[mm] || {};
+                    return {
+                        month: mm, period: s.period || '',
+                        submittedAt: s.submitted_at || '',
+                        amount: parseFloat(s.amount) || 0,
+                        status: s.status || 'pending',
+                        reviewedAt: s.reviewed_at || '',
+                        notifiedAt: notif.sent_at || '',
+                        dueDate: notif.due_date || ''
+                    };
+                });
+                allSlipData.sort(function(a,b) {
+                    if (a.month !== b.month) return a.month.localeCompare(b.month);
+                    return (a.submittedAt || '').localeCompare(b.submittedAt || '');
+                });
+            }
+
+        } catch(err) { console.error('loadData error:', err); }
+
+        renderAll(document.getElementById('month').value);
+    }
+
+    /* ============ Render All ============ */
+    function renderAll(filterMonth) {
+        var bf = filterMonth ? allBillData.filter(function(r){ return r.month === filterMonth; }) : allBillData;
+        var sf = filterMonth ? allSlipData.filter(function(r){ return r.month === filterMonth; }) : allSlipData;
+        updateStats(bf);
+        renderBillTable(bf);
+        renderSlipTable(sf);
+        renderCharts(allBillData);
+    }
+
+    /* ============ Bill Table ============ */
+    function renderBillTable(data) {
+        var tb = document.getElementById('bill-table-body');
+        tb.innerHTML = '';
+        if (!data || data.length === 0) {
+            tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ยังไม่มียอดแจ้งชำระ</td></tr>';
+            return;
         }
+        data.forEach(function(r) {
+            var mn = THAI_MONTHS[parseInt(r.month)-1] || _e(r.month);
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>'+_e(mn)+'</td>'+
+                '<td>'+(r.water  ? r.water.toLocaleString()  : '-')+'</td>'+
+                '<td>'+(r.electric ? r.electric.toLocaleString() : '-')+'</td>'+
+                '<td>'+(r.common ? r.common.toLocaleString() : '-')+'</td>'+
+                '<td><strong>'+(r.total ? r.total.toLocaleString() : '-')+'</strong></td>'+
+                '<td>'+_fmtDate(r.notifiedAt)+'</td>'+
+                '<td>'+_fmtDate(r.dueDate)+'</td>';
+            tb.appendChild(tr);
+        });
+    }
 
-        // ============ Sidebar ============
-        window._ppkNavPage = 'payment-history';
-        if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'payment-history'); }
-
-        // ============ Init ============
-        window.onload = async function() {
-            const user = await checkSession(true);
-            // ตั้งเดือนปัจจุบัน
-            document.getElementById('month').value = String(new Date().getMonth() + 1).padStart(2, '0');
-            await loadPaymentHistory();
-        };
-    
-        async function doLogout() {
-            window.location.replace('dashboard.html');
+    /* ============ Slip Table ============ */
+    function renderSlipTable(data) {
+        var tb = document.getElementById('slip-table-body');
+        tb.innerHTML = '';
+        if (!data || data.length === 0) {
+            tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ยังไม่มีข้อมูลการส่งสลิป</td></tr>';
+            return;
         }
-        </script>
+        data.forEach(function(r) {
+            var mn = THAI_MONTHS[parseInt(r.month)-1] || _e(r.month);
+            /* Status badge */
+            var stTxt = '', stCls = '';
+            if      (r.status === 'approved') { stTxt = '\u2705 อนุมัติ';  stCls = 'badge-approved'; }
+            else if (r.status === 'rejected') { stTxt = '\u274C ปฏิเสธ';   stCls = 'badge-rejected'; }
+            else                              { stTxt = '\u23F3 รอตรวจ';   stCls = 'badge-pending';  }
+            /* On-time check */
+            var tmTxt = '-', tmCls = 'badge-nodata';
+            if (r.dueDate && r.submittedAt) {
+                var due = new Date(r.dueDate + 'T23:59:59');
+                var sub = new Date(r.submittedAt);
+                if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
+                    if (sub <= due) { tmTxt = '\u2705 ตรงเวลา'; tmCls = 'badge-ontime'; }
+                    else {
+                        var diff = Math.ceil((sub - due) / 86400000);
+                        tmTxt = '\u26A0\uFE0F ช้า ' + diff + ' วัน'; tmCls = 'badge-late';
+                    }
+                }
+            }
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>'+_e(mn)+'</td>'+
+                '<td>'+_fmtDate(r.notifiedAt)+'</td>'+
+                '<td>'+_fmtDate(r.dueDate)+'</td>'+
+                '<td>'+_fmtDate(r.submittedAt)+'</td>'+
+                '<td>'+(r.amount ? r.amount.toLocaleString() : '-')+'</td>'+
+                '<td><span class="badge '+stCls+'">'+stTxt+'</span></td>'+
+                '<td><span class="badge '+tmCls+'">'+tmTxt+'</span></td>';
+            tb.appendChild(tr);
+        });
+    }
 
-    <script src="supabase/config.js?v=20260313D"></script>
-    <script src="supabase/supabase.min.js?v=20260313D"></script>
-    <script src="ppk-api.js?v=20260313D"></script>
-    <script src="ppk-app.js?v=20260313D"></script>
-    <script src="ppk-utils.js?v=20260313D"></script>
-    <script src="ppk-nav.js?v=20260313D"></script>
-    <script src="ppk-pwa.js?v=20260313D"></script>
+    /* ============ Filter ============ */
+    async function filterData() {
+        var selY = document.getElementById('year').value;
+        if (selY !== _lastLoadedYear) { await loadData(); return; }
+        renderAll(document.getElementById('month').value);
+    }
+
+    /* ============ Sidebar ============ */
+    window._ppkNavPage = 'payment-history';
+    if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'payment-history'); }
+
+    /* ============ Init ============ */
+    window.onload = async function() {
+        await checkSession(true);
+        initYearSelector();
+        document.getElementById('month').value = '';
+        await loadData();
+    };
+
+    async function doLogout() {
+        try { await callBackend('logout'); } catch(e) {}
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('sessionToken');
+        window.location.replace('login.html');
+    }
+    </script>
+
+    <script src="supabase/config.js?v=20260318B"></script>
+    <script src="supabase/supabase.min.js?v=20260318B"></script>
+    <script src="ppk-api.js?v=20260318B"></script>
+    <script src="ppk-app.js?v=20260318B"></script>
+    <script src="ppk-utils.js?v=20260318B"></script>
+    <script src="ppk-nav.js?v=20260318B"></script>
+    <script src="ppk-pwa.js?v=20260318B"></script>
 </body>
 </html>

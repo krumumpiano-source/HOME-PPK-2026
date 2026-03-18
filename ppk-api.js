@@ -915,12 +915,37 @@ async function _routeAction(action, data) {
             var q = { order: 'recorded_at.desc', limit: String(data.limit || 100) };
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var rows = await sbGet('payment_history', q);
+
+            // Enrich: ดึง water_bills + electric_bills + settings เพื่อแยกยอดค่าน้ำ/ค่าไฟ/ค่าส่วนกลาง
+            if (rows && rows.length > 0 && data.houseNumber) {
+                var [_phW, _phE, _phS] = await Promise.all([
+                    sbGet('water_bills',    { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }),
+                    sbGet('electric_bills', { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }),
+                    sbGet('settings',       { select: 'key,value' })
+                ]);
+                var _phWMap = {};
+                (_phW || []).forEach(function(w) { _phWMap[w.period] = (_phWMap[w.period] || 0) + (parseFloat(w.amount) || 0); });
+                var _phEMap = {};
+                (_phE || []).forEach(function(e) { _phEMap[e.period] = (_phEMap[e.period] || 0) + (parseFloat(e.bill_amount) || parseFloat(e.amount) || 0); });
+                var _phSMap = {};
+                (_phS || []).forEach(function(s) { _phSMap[s.key] = s.value; });
+                var _cfH = parseFloat(_phSMap['common_fee_house']) || parseFloat(_phSMap['commonFee']) || 0;
+                var _cfF = parseFloat(_phSMap['common_fee_flat'])  || parseFloat(_phSMap['commonFee']) || 0;
+                var _hn = (data.houseNumber || '').toLowerCase();
+                var _cf = (_hn.indexOf('แฟลต') >= 0 || _hn.indexOf('flat') >= 0) ? _cfF : _cfH;
+                rows.forEach(function(r) {
+                    r.water_amount    = _phWMap[r.period] || 0;
+                    r.electric_amount = _phEMap[r.period] || 0;
+                    r.common_fee      = _cf;
+                });
+            }
             return { success: true, data: rows };
         }
         case 'getSlipSubmissions': {
             var q = { order: 'submitted_at.desc' };
             if (data.status) q.status = 'eq.' + data.status;
             if (data.period) q.period = 'eq.' + data.period;
+            if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var [rows, resRows] = await Promise.all([
                 sbGet('slip_submissions', q),
                 sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' })
@@ -931,7 +956,10 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'getNotificationHistory': {
-            var rows = await sbGet('notifications', { order: 'sent_at.desc', limit: String(data.limit || 100) });
+            var q = { order: 'sent_at.desc', limit: String(data.limit || 100) };
+            if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
+            if (data.period) q.period = 'eq.' + data.period;
+            var rows = await sbGet('notifications', q);
             return { success: true, data: rows };
         }
         case 'saveNotification': {
