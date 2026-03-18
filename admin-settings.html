@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
             <style>
@@ -962,10 +964,6 @@
                                 <label for="paymentDueWorkingDays">จำนวนวันทำการกำหนดชำระ</label>
                                 <input type="number" id="paymentDueWorkingDays" value="15" min="1" max="30">
                                 <span class="hint">นับจากวันที่แจ้งยอดชำระ (ข้ามเสาร์-อาทิตย์)</span>
-                            </div>
-                            <div class="form-group">
-                                <label for="reminderDays">แจ้งเตือนล่วงหน้า (วัน)</label>
-                                <input type="number" id="reminderDays" value="5" min="0" max="15">
                             </div>
                         </div>
                     </div>
@@ -3505,7 +3503,6 @@
                 adminEmail: '',
                 adminPhone: '',
                 paymentDueWorkingDays: 15,
-                reminderDays: 5,
                 requireLogin: true,
                 allowResetPassword: true,
                 allowRegistration: false,
@@ -3542,7 +3539,6 @@
                 adminEmail: document.getElementById('adminEmail').value,
                 adminPhone: document.getElementById('adminPhone').value,
                 paymentDueWorkingDays: parseInt(document.getElementById('paymentDueWorkingDays').value) || 15,
-                reminderDays: parseInt(document.getElementById('reminderDays').value) || 5,
                 requireLogin: document.getElementById('requireLogin').checked,
                 allowResetPassword: document.getElementById('allowResetPassword').checked,
                 allowRegistration: document.getElementById('allowRegistration').checked,
@@ -3578,7 +3574,6 @@
                     admin_email: settings.adminEmail,
                     admin_phone: settings.adminPhone,
                     due_date: String(settings.paymentDueWorkingDays),
-                    reminder_days: String(settings.reminderDays),
                     require_login: String(settings.requireLogin),
                     allow_reset_password: String(settings.allowResetPassword),
                     allow_registration: String(settings.allowRegistration),
@@ -3627,7 +3622,6 @@
             document.getElementById('adminEmail').value = settings.adminEmail;
             document.getElementById('adminPhone').value = settings.adminPhone;
             document.getElementById('paymentDueWorkingDays').value = settings.paymentDueWorkingDays;
-            document.getElementById('reminderDays').value = settings.reminderDays;
             document.getElementById('requireLogin').checked = settings.requireLogin;
             document.getElementById('allowResetPassword').checked = settings.allowResetPassword;
             document.getElementById('allowRegistration').checked = settings.allowRegistration;
@@ -4142,7 +4136,6 @@
                         adminEmail: s.admin_email || '',
                         adminPhone: s.admin_phone || '',
                         paymentDueWorkingDays: parseInt(s.due_date) || 15,
-                        reminderDays: parseInt(s.reminder_days) || 5,
                         requireLogin: s.require_login === 'true',
                         allowResetPassword: s.allow_reset_password === 'true',
                         allowRegistration: s.allow_registration === 'true',
