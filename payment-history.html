@@ -654,62 +654,90 @@
     /* ============ Discipline Section ============ */
     function renderDiscipline(slipData) {
         var section = document.getElementById('disciplineSection');
-        /* Need at least some slips to show */
-        var withDue = slipData.filter(function(s) { return s.dueDate && s.submittedAt && s.status === 'approved'; });
-        if (withDue.length === 0) { section.style.display = 'none'; return; }
+        /* Show for approved slips — dueDate may be unavailable for historical data */
+        var approved = slipData.filter(function(s) { return s.submittedAt && s.status === 'approved'; });
+        if (approved.length === 0) { section.style.display = 'none'; return; }
         section.style.display = '';
 
+        /* Separate: slips with dueDate (can check on-time) vs without */
+        var withDue = approved.filter(function(s) { return s.dueDate; });
         var onTimeCount = 0;
         var lateSlips = [];
+        var checkedCount = 0;
         withDue.forEach(function(s) {
             var due = new Date(s.dueDate + 'T23:59:59');
             var sub = new Date(s.submittedAt);
             if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
+                checkedCount++;
                 if (sub <= due) { onTimeCount++; }
                 else { lateSlips.push(s); }
             }
         });
-        var pct = Math.round((onTimeCount / withDue.length) * 100);
+        /* If no dueDate data at all, show approved count instead */
+        var hasDueData = checkedCount > 0;
+        var pct = hasDueData ? Math.round((onTimeCount / checkedCount) * 100) : -1;
 
         /* Ring */
         var arc = document.getElementById('disciplineArc');
         var circumference = 2 * Math.PI * 42; /* ~264 */
-        var dashLen = (pct / 100) * circumference;
-        arc.setAttribute('stroke-dasharray', dashLen + ' ' + circumference);
-        var ringColor = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
-        arc.setAttribute('stroke', ringColor);
-
         var pctEl = document.getElementById('disciplinePct');
-        pctEl.textContent = pct + '%';
-        pctEl.style.color = ringColor;
+        var ringColor;
+        if (pct >= 0) {
+            var dashLen = (pct / 100) * circumference;
+            arc.setAttribute('stroke-dasharray', dashLen + ' ' + circumference);
+            ringColor = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+            arc.setAttribute('stroke', ringColor);
+            pctEl.textContent = pct + '%';
+            pctEl.style.color = ringColor;
+        } else {
+            /* No due date data → show approved count */
+            var dashLen2 = circumference;
+            arc.setAttribute('stroke-dasharray', dashLen2 + ' ' + circumference);
+            ringColor = '#10b981';
+            arc.setAttribute('stroke', ringColor);
+            pctEl.textContent = approved.length;
+            pctEl.style.color = ringColor;
+            document.querySelector('.discipline-ring-label').textContent = 'เดือนที่ชำระ';
+        }
 
         /* Streak */
         var streakEl = document.getElementById('disciplineStreak');
-        var sorted = withDue.slice().sort(function(a,b) {
-            return (a.month + (a.year||'')).localeCompare(b.month + (b.year||''));
-        });
-        var streak = 0;
-        for (var i = sorted.length - 1; i >= 0; i--) {
-            var s = sorted[i];
-            var due = new Date(s.dueDate + 'T23:59:59');
-            var sub = new Date(s.submittedAt);
-            if (!isNaN(due.getTime()) && !isNaN(sub.getTime()) && sub <= due) {
-                streak++;
-            } else { break; }
-        }
-        if (streak > 0) {
-            streakEl.innerHTML = '&#128293; ชำระตรงเวลาติดต่อกัน ' + streak + ' เดือน';
+        if (!hasDueData) {
+            /* No due-date → just show total approved months */
+            streakEl.innerHTML = '&#9989; ชำระแล้ว ' + approved.length + ' เดือน';
             streakEl.style.color = '#10b981';
-        } else if (lateSlips.length > 0) {
-            var lastLate = lateSlips[lateSlips.length - 1];
-            var lmLabel = _fmtMonthYear(lastLate.month, lastLate.year || document.getElementById('year').value);
-            streakEl.innerHTML = '&#9888;&#65039; ล่าช้าครั้งล่าสุด: ' + _e(lmLabel);
-            streakEl.style.color = '#ef4444';
+        } else {
+            var sorted = withDue.slice().sort(function(a,b) {
+                return ((a.year||'')+ a.month).localeCompare((b.year||'')+ b.month);
+            });
+            var streak = 0;
+            for (var i = sorted.length - 1; i >= 0; i--) {
+                var s = sorted[i];
+                var due = new Date(s.dueDate + 'T23:59:59');
+                var sub = new Date(s.submittedAt);
+                if (!isNaN(due.getTime()) && !isNaN(sub.getTime()) && sub <= due) {
+                    streak++;
+                } else { break; }
+            }
+            if (streak > 0) {
+                streakEl.innerHTML = '&#128293; ชำระตรงเวลาติดต่อกัน ' + streak + ' เดือน';
+                streakEl.style.color = '#10b981';
+            } else if (lateSlips.length > 0) {
+                var lastLate = lateSlips[lateSlips.length - 1];
+                var lmLabel = _fmtMonthYear(lastLate.month, lastLate.year || document.getElementById('year').value);
+                streakEl.innerHTML = '&#9888;&#65039; ล่าช้าครั้งล่าสุด: ' + _e(lmLabel);
+                streakEl.style.color = '#ef4444';
+            } else {
+                streakEl.innerHTML = '&#9989; ชำระแล้ว ' + approved.length + ' เดือน';
+                streakEl.style.color = '#10b981';
+            }
         }
 
         /* Message */
         var msgEl = document.getElementById('disciplineMsg');
-        if (pct >= 90) {
+        if (!hasDueData) {
+            msgEl.textContent = 'มีการชำระเงินครบ ' + approved.length + ' เดือน — ข้อมูลกำหนดชำระจะพร้อมใช้งานสำหรับเดือนที่ส่งผ่านระบบใหม่';
+        } else if (pct >= 90) {
             msgEl.textContent = 'ยอดเยี่ยม! วินัยการชำระเงินดีมาก รักษาระดับนี้ไว้นะครับ';
         } else if (pct >= 70) {
             msgEl.textContent = 'ดีมาก! แต่ยังมีบางเดือนที่ล่าช้า พยายามชำระให้ตรงเวลาทุกเดือนนะครับ';
@@ -722,23 +750,28 @@
         /* Timeline (12 months) */
         var timeline = document.getElementById('disciplineTimeline');
         timeline.innerHTML = '';
-        /* Group by month */
+        /* Group approved slips by month */
         var monthMap = {};
-        withDue.forEach(function(s) {
-            var mm = s.month;
-            var due = new Date(s.dueDate + 'T23:59:59');
-            var sub = new Date(s.submittedAt);
-            if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
-                monthMap[mm] = sub <= due ? 'on-time' : 'late';
-            }
-        });
+        if (hasDueData) {
+            withDue.forEach(function(s) {
+                var mm = s.month;
+                var due = new Date(s.dueDate + 'T23:59:59');
+                var sub = new Date(s.submittedAt);
+                if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
+                    monthMap[mm] = sub <= due ? 'on-time' : 'late';
+                }
+            });
+        } else {
+            /* No due dates → mark approved months as on-time (paid) */
+            approved.forEach(function(s) { monthMap[s.month] = 'on-time'; });
+        }
         for (var m = 1; m <= 12; m++) {
             var mm = String(m).padStart(2,'0');
             var cls = monthMap[mm] || 'no-data';
             var dot = document.createElement('div');
             dot.className = 'discipline-dot ' + cls;
             dot.textContent = THAI_MONTHS_SHORT[m-1];
-            dot.title = THAI_MONTHS[m-1] + ': ' + (cls === 'on-time' ? 'ตรงเวลา' : cls === 'late' ? 'ล่าช้า' : 'ไม่มีข้อมูล');
+            dot.title = THAI_MONTHS[m-1] + ': ' + (cls === 'on-time' ? (hasDueData ? 'ตรงเวลา' : 'ชำระแล้ว') : cls === 'late' ? 'ล่าช้า' : 'ไม่มีข้อมูล');
             timeline.appendChild(dot);
         }
     }
@@ -1111,7 +1144,7 @@
         renderMergedTable(bf, sf);
         renderCharts(allBillData);
         renderInsights(allBillData);
-        renderDiscipline(allSlipData);
+        renderDiscipline(allSlipData); /* Always use full data for discipline overview */
     }
 
     /* ============ Merged Table (Bill + Slip) ============ */
