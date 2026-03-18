@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318B">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318C">
     <style>
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -289,13 +289,31 @@
     async function loadData() {
         var year = document.getElementById('year').value;
         var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        var hn = user.houseNumber || user.house_number || '';
+        var hn = (user.houseNumber || user.house_number || '').trim();
         _lastLoadedYear = year;
 
         document.getElementById('bill-table-body').innerHTML =
             '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
         document.getElementById('slip-table-body').innerHTML =
             '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
+
+        /* -- ถ้า houseNumber ว่าง ลอง refresh จาก resident data -- */
+        if (!hn && user.id) {
+            try {
+                var curRes = await callBackend('getCurrentUser');
+                if (curRes && curRes.success && curRes.user) {
+                    var ru = curRes.user;
+                    hn = (ru.houseNumber || ru.house_number || '').trim();
+                    if (!hn && ru.resident) {
+                        hn = (ru.resident.house_number || '').trim();
+                    }
+                    if (hn) {
+                        user.houseNumber = hn;
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                    }
+                }
+            } catch(e) { console.warn('refresh user:', e); }
+        }
 
         if (!hn) {
             document.getElementById('bill-table-body').innerHTML =
@@ -304,24 +322,45 @@
                 '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก</td></tr>';
             return;
         }
+        console.log('[payment-history] house:', hn, 'year:', year);
 
         allBillData = [];
         allSlipData = [];
         allNotifMap = {};
 
+        /* ล้าง cache เก่าที่อาจเป็นผลว่าง */
         try {
+            Object.keys(localStorage).forEach(function(k) {
+                if (k.indexOf('apicache_getWaterBills') === 0 ||
+                    k.indexOf('apicache_getElectricBills') === 0 ||
+                    k.indexOf('apicache_getSettings') === 0) {
+                    localStorage.removeItem(k);
+                }
+            });
+        } catch(e) {}
+
+        try {
+            /* ดึง water/electric ทั้งปี (ทุกบ้าน) แล้วกรอง client-side
+               เพื่อหลีกเลี่ยง houseNumber ไม่ตรงที่ DB level */
             var res = await Promise.all([
-                cachedCall('getWaterBills',    { year: year, houseNumber: hn }),
-                cachedCall('getElectricBills', { year: year, houseNumber: hn }),
-                cachedCall('getSettings'),
+                callBackend('getWaterBills',    { year: year }),
+                callBackend('getElectricBills', { year: year }),
+                callBackend('getSettings'),
                 callBackend('getNotificationHistory', { houseNumber: hn, limit: 200 }),
                 callBackend('getSlipSubmissions',     { houseNumber: hn })
             ]);
+
+            /* -- Normalize house number สำหรับเปรียบเทียบ -- */
+            var hnNorm = hn.replace(/\s+/g, '').toLowerCase();
+            function matchHN(dbHN) {
+                return (dbHN || '').replace(/\s+/g, '').toLowerCase() === hnNorm;
+            }
 
             /* -- Water map -- */
             var wMap = {};
             if (res[0] && res[0].success) {
                 (res[0].data || []).forEach(function(w) {
+                    if (!matchHN(w.house_number)) return;
                     var p = w.period || '';
                     if (p.substring(0,4) === String(year)) {
                         var mm = p.split('-')[1] || '';
@@ -329,17 +368,28 @@
                     }
                 });
             }
+            console.log('[payment-history] waterMap:', JSON.stringify(wMap));
 
             /* -- Electric map -- */
             var eMap = {};
             if (res[1] && res[1].success) {
                 (res[1].data || []).forEach(function(e) {
+                    if (!matchHN(e.house_number)) return;
                     var p = e.period || '';
                     if (p.substring(0,4) === String(year)) {
                         var mm = p.split('-')[1] || '';
                         eMap[mm] = (eMap[mm] || 0) + (parseFloat(e.bill_amount) || parseFloat(e.amount) || 0);
                     }
                 });
+            }
+            console.log('[payment-history] electricMap:', JSON.stringify(eMap));
+
+            /* -- Debug: แสดง house_numbers ทั้งหมดที่มีใน DB -- */
+            if (Object.keys(wMap).length === 0 && Object.keys(eMap).length === 0) {
+                var dbHouses = {};
+                (res[0] && res[0].data || []).forEach(function(w) { dbHouses[w.house_number] = 1; });
+                (res[1] && res[1].data || []).forEach(function(e) { dbHouses[e.house_number] = 1; });
+                console.warn('[payment-history] ไม่พบข้อมูลสำหรับบ้าน "' + hn + '" | บ้านใน DB:', Object.keys(dbHouses).join(', '));
             }
 
             /* -- Common fee from settings -- */
@@ -361,6 +411,24 @@
                         }
                     }
                 });
+            }
+            /* -- ถ้า notification ว่าง ลองดึงโดยไม่กรอง houseNumber -- */
+            if (Object.keys(allNotifMap).length === 0) {
+                try {
+                    var notifAll = await callBackend('getNotificationHistory', { limit: 200 });
+                    if (notifAll && notifAll.success) {
+                        (notifAll.data || []).forEach(function(n) {
+                            if (!matchHN(n.house_number)) return;
+                            var p = n.period || '';
+                            if (p.substring(0,4) === String(year)) {
+                                var mm = p.split('-')[1] || '';
+                                if (!allNotifMap[mm] || new Date(n.sent_at) > new Date(allNotifMap[mm].sent_at)) {
+                                    allNotifMap[mm] = n;
+                                }
+                            }
+                        });
+                    }
+                } catch(e) {}
             }
 
             /* -- Build bill data per month -- */
@@ -404,6 +472,33 @@
                     if (a.month !== b.month) return a.month.localeCompare(b.month);
                     return (a.submittedAt || '').localeCompare(b.submittedAt || '');
                 });
+            }
+            /* -- ถ้า slip ว่าง ลองดึงโดยไม่กรอง houseNumber -- */
+            if (allSlipData.length === 0) {
+                try {
+                    var slipAll = await callBackend('getSlipSubmissions', {});
+                    if (slipAll && slipAll.success) {
+                        allSlipData = (slipAll.data || []).filter(function(s) {
+                            return matchHN(s.house_number) && (s.period || '').substring(0,4) === String(year);
+                        }).map(function(s) {
+                            var mm = (s.period || '').split('-')[1] || '';
+                            var notif = allNotifMap[mm] || {};
+                            return {
+                                month: mm, period: s.period || '',
+                                submittedAt: s.submitted_at || '',
+                                amount: parseFloat(s.amount) || 0,
+                                status: s.status || 'pending',
+                                reviewedAt: s.reviewed_at || '',
+                                notifiedAt: notif.sent_at || '',
+                                dueDate: notif.due_date || ''
+                            };
+                        });
+                        allSlipData.sort(function(a,b) {
+                            if (a.month !== b.month) return a.month.localeCompare(b.month);
+                            return (a.submittedAt || '').localeCompare(b.submittedAt || '');
+                        });
+                    }
+                } catch(e) {}
             }
 
         } catch(err) { console.error('loadData error:', err); }
@@ -512,12 +607,12 @@
     }
     </script>
 
-    <script src="supabase/config.js?v=20260318B"></script>
-    <script src="supabase/supabase.min.js?v=20260318B"></script>
-    <script src="ppk-api.js?v=20260318B"></script>
-    <script src="ppk-app.js?v=20260318B"></script>
-    <script src="ppk-utils.js?v=20260318B"></script>
-    <script src="ppk-nav.js?v=20260318B"></script>
-    <script src="ppk-pwa.js?v=20260318B"></script>
+    <script src="supabase/config.js?v=20260318C"></script>
+    <script src="supabase/supabase.min.js?v=20260318C"></script>
+    <script src="ppk-api.js?v=20260318C"></script>
+    <script src="ppk-app.js?v=20260318C"></script>
+    <script src="ppk-utils.js?v=20260318C"></script>
+    <script src="ppk-nav.js?v=20260318C"></script>
+    <script src="ppk-pwa.js?v=20260318C"></script>
 </body>
 </html>
