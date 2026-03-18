@@ -1168,10 +1168,9 @@
             }
         });
 
-        /* Collect all months from both bill and slip */
+        /* Collect months from bill data only — เดือนที่ยังไม่แจ้งยอดจะไม่แสดง */
         var monthKeys = {};
         billData.forEach(function(r) { monthKeys[(r.year||year)+'-'+r.month] = true; });
-        slipData.forEach(function(s) { monthKeys[(s.year||year)+'-'+s.month] = true; });
         var sortedKeys = Object.keys(monthKeys).sort();
 
         if (sortedKeys.length === 0) {
