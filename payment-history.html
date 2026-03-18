@@ -45,7 +45,7 @@
         .chart-title { font-size: 1rem; font-weight: 700; color: var(--c-primary); margin-bottom: 0.8rem; }
 
         /* ===== Insight Cards (Glassmorphism) ===== */
-        .insight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem; }
+        .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
         @media (max-width: 900px) { .insight-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .insight-grid { grid-template-columns: 1fr; } }
         .insight-card { background: rgba(255,255,255,0.65); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-lg); padding: 1rem 1.2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06); transition: transform 0.2s; }
@@ -239,25 +239,37 @@
 
             <!-- Insight Cards -->
             <div class="insight-grid" id="insightGrid" style="display:none;">
-                <div class="insight-card" id="insightAvg">
+                <div class="insight-card" style="border-left:3px solid #06b6d4;">
+                    <div class="insight-icon">&#128167;</div>
+                    <div class="insight-label">ค่าน้ำเฉลี่ย/เดือน</div>
+                    <div class="insight-value" id="insightWaterAvg">-</div>
+                    <div class="insight-sub" id="insightWaterAvgSub"></div>
+                </div>
+                <div class="insight-card" style="border-left:3px solid #f59e0b;">
+                    <div class="insight-icon">&#9889;</div>
+                    <div class="insight-label">ค่าไฟเฉลี่ย/เดือน</div>
+                    <div class="insight-value" id="insightElecAvg">-</div>
+                    <div class="insight-sub" id="insightElecAvgSub"></div>
+                </div>
+                <div class="insight-card" style="border-left:3px solid #6366f1;">
                     <div class="insight-icon">&#128202;</div>
-                    <div class="insight-label">ค่าเฉลี่ยต่อเดือน</div>
-                    <div class="insight-value" id="insightAvgVal">-</div>
-                    <div class="insight-sub" id="insightAvgSub"></div>
+                    <div class="insight-label">รวมเฉลี่ย/เดือน</div>
+                    <div class="insight-value" id="insightTotalAvg">-</div>
+                    <div class="insight-sub" id="insightTotalAvgSub"></div>
                 </div>
-                <div class="insight-card" id="insightMax">
-                    <div class="insight-icon">&#128314;</div>
-                    <div class="insight-label">เดือนสูงสุด</div>
-                    <div class="insight-value" id="insightMaxVal">-</div>
-                    <div class="insight-sub" id="insightMaxSub"></div>
+                <div class="insight-card" style="border-left:3px solid #06b6d4;">
+                    <div class="insight-icon">&#128167;&#128314;</div>
+                    <div class="insight-label">ค่าน้ำสูงสุด</div>
+                    <div class="insight-value" id="insightWaterMax">-</div>
+                    <div class="insight-sub" id="insightWaterMaxSub"></div>
                 </div>
-                <div class="insight-card" id="insightMin">
-                    <div class="insight-icon">&#128315;</div>
-                    <div class="insight-label">เดือนต่ำสุด</div>
-                    <div class="insight-value" id="insightMinVal">-</div>
-                    <div class="insight-sub" id="insightMinSub"></div>
+                <div class="insight-card" style="border-left:3px solid #f59e0b;">
+                    <div class="insight-icon">&#9889;&#128314;</div>
+                    <div class="insight-label">ค่าไฟสูงสุด</div>
+                    <div class="insight-value" id="insightElecMax">-</div>
+                    <div class="insight-sub" id="insightElecMaxSub"></div>
                 </div>
-                <div class="insight-card" id="insightSave">
+                <div class="insight-card" style="border-left:3px solid #10b981;">
                     <div class="insight-icon">&#128176;</div>
                     <div class="insight-label">ประหยัดได้ถ้าลด 10%</div>
                     <div class="insight-value" id="insightSaveVal">-</div>
@@ -590,27 +602,32 @@
                         }}}}}
         });
 
-        /* ===== Line Chart (Premium Gradient Fill) ===== */
+        /* ===== Line Chart (2 lines: ค่าน้ำ + ค่าไฟ) ===== */
         var lineCtx = document.getElementById('chartLine').getContext('2d');
-        var gradLine = lineCtx.createLinearGradient(0, 0, 0, 200);
-        gradLine.addColorStop(0, 'rgba(99,102,241,0.25)'); gradLine.addColorStop(1, 'rgba(99,102,241,0.01)');
+        var gradLineW = lineCtx.createLinearGradient(0, 0, 0, 200);
+        gradLineW.addColorStop(0, 'rgba(6,182,212,0.2)'); gradLineW.addColorStop(1, 'rgba(6,182,212,0.01)');
+        var gradLineE = lineCtx.createLinearGradient(0, 0, 0, 200);
+        gradLineE.addColorStop(0, 'rgba(245,158,11,0.2)'); gradLineE.addColorStop(1, 'rgba(245,158,11,0.01)');
 
         chartLine = new Chart(lineCtx, {
             type: 'line',
             data: { labels: labels, datasets:[
-                { label:'ยอดแจ้งชำระรวม', data:tArr,
-                    borderColor:'#6366f1', backgroundColor:gradLine,
-                    borderWidth:3, pointRadius:5, pointBackgroundColor:'#6366f1',
-                    pointBorderColor:'#fff', pointBorderWidth:2, pointHoverRadius:8,
-                    pointHoverBackgroundColor:'#6366f1', pointHoverBorderColor:'#fff', pointHoverBorderWidth:3,
+                { label:'ค่าน้ำ', data:wArr,
+                    borderColor:'#06b6d4', backgroundColor:gradLineW,
+                    borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#06b6d4',
+                    pointBorderColor:'#fff', pointBorderWidth:2, pointHoverRadius:7,
+                    pointHoverBackgroundColor:'#06b6d4', pointHoverBorderColor:'#fff', pointHoverBorderWidth:3,
                     tension:0.4, fill:true },
-                { label:'ค่าเฉลี่ย', data:avgArr,
-                    borderColor:'rgba(156,163,175,0.6)', borderWidth:1.5, borderDash:[5,5],
-                    pointRadius:0, fill:false }
+                { label:'ค่าไฟ', data:eArr,
+                    borderColor:'#f59e0b', backgroundColor:gradLineE,
+                    borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#f59e0b',
+                    pointBorderColor:'#fff', pointBorderWidth:2, pointHoverRadius:7,
+                    pointHoverBackgroundColor:'#f59e0b', pointHoverBorderColor:'#fff', pointHoverBorderWidth:3,
+                    tension:0.4, fill:true }
             ]},
             options:{ responsive:true, animation:{ duration:800, easing:'easeOutQuart' },
                 interaction: { intersect: false, mode: 'index' },
-                plugins:{ legend:{ display:true, labels:{ font:fk, usePointStyle:true }},
+                plugins:{ legend:{ display:true, labels:{ font:fk, usePointStyle:true, pointStyle:'circle' }},
                     tooltip:{ enabled:false, external:externalTooltipHandler,
                         callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
                 scales:{
@@ -621,34 +638,64 @@
         });
     }
 
-    /* ============ Insight Cards ============ */
+    /* ============ Insight Cards (แยกค่าน้ำ/ค่าไฟ) ============ */
     function renderInsights(data) {
         var grid = document.getElementById('insightGrid');
         var withData = data.filter(function(r) { return r.total > 0; });
         if (withData.length === 0) { grid.style.display = 'none'; return; }
         grid.style.display = '';
-
-        var sum = 0, maxV = 0, minV = Infinity, maxM = '', minM = '';
-        withData.forEach(function(r) {
-            sum += r.total;
-            if (r.total > maxV) { maxV = r.total; maxM = r.month; }
-            if (r.total < minV) { minV = r.total; minM = r.month; }
-        });
-        var avg = Math.round(sum / withData.length);
         var displayYear = document.getElementById('year').value;
+        var n = withData.length;
 
-        document.getElementById('insightAvgVal').textContent = avg.toLocaleString('th-TH') + ' บ.';
-        document.getElementById('insightAvgSub').textContent = 'จาก ' + withData.length + ' เดือนที่มีข้อมูล';
+        /* คำนวณค่าน้ำ */
+        var wSum = 0, wMax = 0, wMaxM = '', wMin = Infinity, wMinM = '';
+        withData.forEach(function(r) {
+            wSum += r.water;
+            if (r.water > wMax) { wMax = r.water; wMaxM = r.month; }
+            if (r.water > 0 && r.water < wMin) { wMin = r.water; wMinM = r.month; }
+        });
+        if (wMin === Infinity) wMin = 0;
+        var wAvg = Math.round(wSum / n);
 
-        document.getElementById('insightMaxVal').textContent = maxV.toLocaleString('th-TH') + ' บ.';
-        document.getElementById('insightMaxSub').textContent = _fmtMonthYear(maxM, displayYear);
+        /* คำนวณค่าไฟ */
+        var eSum = 0, eMax = 0, eMaxM = '', eMin = Infinity, eMinM = '';
+        withData.forEach(function(r) {
+            eSum += r.electric;
+            if (r.electric > eMax) { eMax = r.electric; eMaxM = r.month; }
+            if (r.electric > 0 && r.electric < eMin) { eMin = r.electric; eMinM = r.month; }
+        });
+        if (eMin === Infinity) eMin = 0;
+        var eAvg = Math.round(eSum / n);
 
-        document.getElementById('insightMinVal').textContent = minV.toLocaleString('th-TH') + ' บ.';
-        document.getElementById('insightMinSub').textContent = _fmtMonthYear(minM, displayYear);
+        /* รวม */
+        var tSum = 0;
+        withData.forEach(function(r) { tSum += r.total; });
+        var tAvg = Math.round(tSum / n);
 
-        var save10 = Math.round(sum * 0.1);
+        /* แสดงผล: ค่าน้ำ */
+        document.getElementById('insightWaterAvg').textContent = wAvg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightWaterAvgSub').textContent = 'รวม ' + wSum.toLocaleString('th-TH') + ' บ. (' + n + ' เดือน)';
+
+        /* แสดงผล: ค่าไฟ */
+        document.getElementById('insightElecAvg').textContent = eAvg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightElecAvgSub').textContent = 'รวม ' + eSum.toLocaleString('th-TH') + ' บ. (' + n + ' เดือน)';
+
+        /* แสดงผล: รวม */
+        document.getElementById('insightTotalAvg').textContent = tAvg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightTotalAvgSub').textContent = 'รวมทั้งปี ' + tSum.toLocaleString('th-TH') + ' บ.';
+
+        /* แสดงผล: ค่าน้ำสูงสุด */
+        document.getElementById('insightWaterMax').textContent = wMax.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightWaterMaxSub').textContent = _fmtMonthYear(wMaxM, displayYear) + (wMinM ? ' | ต่ำสุด ' + wMin.toLocaleString('th-TH') + ' บ. (' + _fmtMonthYear(wMinM, displayYear) + ')' : '');
+
+        /* แสดงผล: ค่าไฟสูงสุด */
+        document.getElementById('insightElecMax').textContent = eMax.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightElecMaxSub').textContent = _fmtMonthYear(eMaxM, displayYear) + (eMinM ? ' | ต่ำสุด ' + eMin.toLocaleString('th-TH') + ' บ. (' + _fmtMonthYear(eMinM, displayYear) + ')' : '');
+
+        /* แสดงผล: ประหยัด */
+        var save10 = Math.round((wSum + eSum) * 0.1);
         document.getElementById('insightSaveVal').textContent = save10.toLocaleString('th-TH') + ' บ./ปี';
-        document.getElementById('insightSaveSub').textContent = 'ลดค่าน้ำ+ค่าไฟ 10% = ประหยัด ~' + Math.round(save10/12).toLocaleString('th-TH') + ' บ./เดือน';
+        document.getElementById('insightSaveSub').textContent = 'น้ำ ~' + Math.round(wSum*0.1/n).toLocaleString('th-TH') + ' + ไฟ ~' + Math.round(eSum*0.1/n).toLocaleString('th-TH') + ' บ./เดือน';
     }
 
     /* ============ Discipline Section ============ */
