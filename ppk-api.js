@@ -814,7 +814,8 @@ async function _routeAction(action, data) {
                         prev_meter: parseFloat(rec.prev_meter) || 0, curr_meter: parseFloat(rec.curr_meter) || 0,
                         units_used: parseFloat(rec.units) || 0, rate_per_unit: parseFloat(data.rate) || 0,
                         units_override: rec.units_override != null ? parseFloat(rec.units_override) : null,
-                        amount: parseFloat(rec.amount) || 0, recorded_by: user.id || null
+                        amount: parseFloat(rec.amount) || 0, recorded_by: user.id || null,
+                        reading_date: data.readingDate || null
                     };
                 });
                 var inserted = await sbPost('water_bills', _wBatch);
@@ -875,7 +876,8 @@ async function _routeAction(action, data) {
                         house_number: rec.house_number, period: data.period,
                         year: parseInt(data.year) || 0, month: parseInt(data.month) || 0,
                         bill_amount: _eAmt, amount: _eAmt,
-                        method: data.method || 'bill', recorded_by: user.id || null
+                        method: data.method || 'bill', recorded_by: user.id || null,
+                        reading_date: data.readingDate || null
                     };
                     // unit mode: บันทึกมิเตอร์ด้วย
                     if (data.method === 'unit') {

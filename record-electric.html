@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>บันทึกค่าไฟ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318F">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -374,6 +374,12 @@
                     </select>
                 </div>
             </div>
+            <div class="form-row" style="margin-top:0.5rem;">
+                <div class="form-group">
+                    <label for="reading_date">📅 วันที่อ่านมิเตอร์</label>
+                    <input type="date" id="reading_date" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-size:1rem;font-family:'Kanit',sans-serif;background:#fff;">
+                </div>
+            </div>
         </div>
         
         <!-- ค่าไฟรวมจากการไฟฟ้า -->
@@ -475,6 +481,7 @@
         // ตั้งค่าเดือนปัจจุบัน
         const now = new Date();
         document.getElementById('bill_month').value = String(now.getMonth() + 1).padStart(2, '0');
+        document.getElementById('reading_date').value = now.toISOString().split('T')[0];
 
         // ============ Electric Method Settings ============
         let electricMethod = 'bill'; // 'bill' = กรอกยอดตรง, 'unit' = คำนวณตามหน่วย
@@ -858,6 +865,7 @@
                 year: year,
                 period: year + '-' + month,
                 method: electricMethod,
+                readingDate: document.getElementById('reading_date').value || null,
                 pea_total: parseFloat(document.getElementById('pea_total').value) || 0,
                 lost_house: parseFloat(document.getElementById('lost_house').value) || 0,
                 lost_flat: parseFloat(document.getElementById('lost_flat').value) || 0,
@@ -1370,13 +1378,13 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260313D"></script>
-    <script src="supabase/supabase.min.js?v=20260313D"></script>
-    <script src="ppk-api.js?v=20260313D"></script>
-    <script src="ppk-app.js?v=20260313D"></script>
-    <script src="ppk-utils.js?v=20260313D"></script>
-    <script src="ppk-nav.js?v=20260313D"></script>
-    <script src="ppk-pwa.js?v=20260313D"></script>
+    <script src="supabase/config.js?v=20260318F"></script>
+    <script src="supabase/supabase.min.js?v=20260318F"></script>
+    <script src="ppk-api.js?v=20260318F"></script>
+    <script src="ppk-app.js?v=20260318F"></script>
+    <script src="ppk-utils.js?v=20260318F"></script>
+    <script src="ppk-nav.js?v=20260318F"></script>
+    <script src="ppk-pwa.js?v=20260318F"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
