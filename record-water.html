@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>บันทึกค่าน้ำ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318F">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318H">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -449,7 +449,16 @@
         // ตั้งค่าเดือนปัจจุบัน
         const now = new Date();
         document.getElementById('bill_month').value = String(now.getMonth() + 1).padStart(2, '0');
-        document.getElementById('reading_date').value = now.toISOString().split('T')[0];
+        function _waterReadingKey() {
+            return '_readingDate_water_' + document.getElementById('bill_year').value + '-' + document.getElementById('bill_month').value;
+        }
+        (function initReadingDate() {
+            var saved = localStorage.getItem(_waterReadingKey());
+            document.getElementById('reading_date').value = saved || now.toISOString().split('T')[0];
+        })();
+        document.getElementById('reading_date').addEventListener('change', function() {
+            localStorage.setItem(_waterReadingKey(), this.value);
+        });
 
         // ============ ดึงข้อมูลจาก Backend ============
         let residentsCache = [];
@@ -650,8 +659,8 @@
         }
         
         // เมื่อเปลี่ยนรอบบิล โหลดข้อมูลใหม่
-        document.getElementById('bill_month').addEventListener('change', renderResidentsTable);
-        document.getElementById('bill_year').addEventListener('change', renderResidentsTable);
+        document.getElementById('bill_month').addEventListener('change', function() { var s = localStorage.getItem(_waterReadingKey()); document.getElementById('reading_date').value = s || now.toISOString().split('T')[0]; renderResidentsTable(); });
+        document.getElementById('bill_year').addEventListener('change', function() { var s = localStorage.getItem(_waterReadingKey()); document.getElementById('reading_date').value = s || now.toISOString().split('T')[0]; renderResidentsTable(); });
         
         // คำนวณแถว
         function calculateRow(input) {
@@ -1435,13 +1444,13 @@
             window.location.replace('dashboard.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260318F"></script>
-    <script src="supabase/supabase.min.js?v=20260318F"></script>
-    <script src="ppk-api.js?v=20260318F"></script>
-    <script src="ppk-app.js?v=20260318F"></script>
-    <script src="ppk-utils.js?v=20260318F"></script>
-    <script src="ppk-nav.js?v=20260318F"></script>
-    <script src="ppk-pwa.js?v=20260318F"></script>
+    <script src="supabase/config.js?v=20260318H"></script>
+    <script src="supabase/supabase.min.js?v=20260318H"></script>
+    <script src="ppk-api.js?v=20260318H"></script>
+    <script src="ppk-app.js?v=20260318H"></script>
+    <script src="ppk-utils.js?v=20260318H"></script>
+    <script src="ppk-nav.js?v=20260318H"></script>
+    <script src="ppk-pwa.js?v=20260318H"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>
