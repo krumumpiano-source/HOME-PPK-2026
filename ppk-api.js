@@ -963,8 +963,15 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'saveNotification': {
-            var row = await sbPost('notifications', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, water_amount: data.waterAmount, electric_amount: data.electricAmount, common_fee: data.commonFee, garbage_fee: data.garbageFee, total_amount: data.totalAmount, due_date: data.dueDate, message: data.message, sent_by: data.sentBy });
+            var _nBody = { house_id: data.houseId, house_number: data.houseNumber, period: data.period, water_amount: data.waterAmount, electric_amount: data.electricAmount, common_fee: data.commonFee, garbage_fee: data.garbageFee, total_amount: data.totalAmount, due_date: data.dueDate, message: data.message, sent_by: data.sentBy };
+            if (data.sentAt) _nBody.sent_at = data.sentAt;
+            var row = await sbPost('notifications', _nBody);
             return { success: true, data: row };
+        }
+        case 'deleteNotifications': {
+            if (!data.period) return { success: false, error: 'ไม่ระบุ period' };
+            try { await sbDelete('notifications', { period: 'eq.' + data.period }); } catch(e) {}
+            return { success: true };
         }
         case 'getRequests': {
             var q = { order: 'submitted_at.desc' };

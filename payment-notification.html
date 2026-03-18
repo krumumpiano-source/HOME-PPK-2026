@@ -12,8 +12,8 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แจ้งเตือนการชำระ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260317B">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318F">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
         :root {
@@ -119,9 +119,24 @@
             </div>
         </div>
 
+        <!-- วันที่แจ้งยอด + กำหนดชำระ -->
+        <div class="section">
+            <div class="section-title">📅 วันที่แจ้งยอด / กำหนดชำระ</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="notify_date">วันที่แจ้งยอด</label>
+                    <input type="date" id="notify_date" style="width:100%;padding:0.7rem 1rem;border:1px solid #6ee7b7;border-radius:8px;font-size:1rem;font-family:'Kanit',sans-serif;background:#fff;">
+                </div>
+                <div class="form-group">
+                    <label for="due_date">กำหนดชำระภายในวันที่</label>
+                    <input type="date" id="due_date" style="width:100%;padding:0.7rem 1rem;border:1px solid #6ee7b7;border-radius:8px;font-size:1rem;font-family:'Kanit',sans-serif;background:#fff;">
+                </div>
+            </div>
+        </div>
+
         <!-- ตารางบ้านพัก -->
         <div class="table-capture-area" id="captureHouse">
-            <div class="table-header-bar" id="houseTableTitle"> บ้านพัก ประจำเดือนกุมภาพันธ์ พ.ศ. 2569</div>
+            <div class="table-header-bar" id="houseTableTitle">🏠 บ้านพัก ประจำเดือน...</div>
             <table class="notify-table">
                 <thead><tr>
                     <th class="col-no">เลขที่</th><th class="col-resident">ผู้พักอาศัย</th>
@@ -139,7 +154,7 @@
 
         <!-- ตารางแฟลต -->
         <div class="table-capture-area" id="captureFlat">
-            <div class="table-header-bar" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);" id="flatTableTitle"> แฟลต ประจำเดือนกุมภาพันธ์ พ.ศ. 2569</div>
+            <div class="table-header-bar" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);" id="flatTableTitle">🏢 แฟลต ประจำเดือน...</div>
             <table class="notify-table">
                 <thead><tr>
                     <th class="col-no">เลขที่</th><th class="col-resident">ผู้พักอาศัย</th>
@@ -153,6 +168,10 @@
         </div>
         <div class="save-buttons">
             <button class="btn btn-flat" onclick="saveAsImage('captureFlat','flat')">💾 บันทึกรูป  แฟลต</button>
+        </div>
+
+        <div class="save-buttons" style="margin-top:0.5rem;">
+            <button class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:1.15rem;" onclick="saveNotificationsToDB()">💾 บันทึกข้อมูลแจ้งยอดลงระบบ</button>
         </div>
 
         <div class="save-buttons"><button class="btn btn-secondary" onclick="navigate('?page=team-management')"> กลับหน้าบริหารจัดการ</button></div>
@@ -209,11 +228,51 @@
             return dd + ' ' + mm + ' ' + yy;
         }
 
-        async function updateFooterNotes() {
-            var dueText = await calculateDueDate();
+        // === ตั้งค่าวันที่เริ่มต้น ===
+        function initDates() {
+            var today = new Date();
+            document.getElementById('notify_date').value = today.toISOString().split('T')[0];
+            // กำหนดชำระ: ใช้ calculateDueDate แล้วแปลงกลับเป็น date input
+            calculateDueDate().then(function(dueTxt) {
+                // dueTxt อาจเป็น "20 มีนาคม 2569" — แปลงเป็น ISO date
+                try {
+                    var parts = dueTxt.split(' ');
+                    var dd = parseInt(parts[0]);
+                    var mmIdx = THAI_MONTHS.indexOf(parts[1]);
+                    var yy = parseInt(parts[2]) - 543;
+                    if (dd && mmIdx >= 0 && yy) {
+                        var iso = yy + '-' + String(mmIdx + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+                        document.getElementById('due_date').value = iso;
+                    }
+                } catch (e) {}
+                updateFooterFromInput();
+            });
+        }
+
+        function formatThaiDate(isoDate) {
+            if (!isoDate) return '...';
+            try {
+                var parts = isoDate.split('-');
+                var dd = parseInt(parts[2]);
+                var mm = THAI_MONTHS[parseInt(parts[1]) - 1];
+                var yy = parseInt(parts[0]) + 543;
+                return dd + ' ' + mm + ' ' + yy;
+            } catch (e) { return '...'; }
+        }
+
+        function updateFooterFromInput() {
+            var dueVal = document.getElementById('due_date').value;
+            var dueText = dueVal ? formatThaiDate(dueVal) : '...';
             var footerText = 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ' + dueText;
             document.getElementById('houseFooterNote').textContent = footerText;
             document.getElementById('flatFooterNote').textContent = footerText;
+        }
+
+        // เมื่อเปลี่ยน due_date → อัพเดท footer ทันที
+        document.getElementById('due_date').addEventListener('change', updateFooterFromInput);
+
+        async function updateFooterNotes() {
+            updateFooterFromInput();
         }
 
         function updateTableTitles(){
@@ -230,6 +289,12 @@
             if (num == null) return '-';
             var s = String(num);
             return s.length > 4 ? s.slice(-4) : s;
+        }
+
+        // === HTML Escape Helper ===
+        function _e(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
 
         // === ดึงข้อมูลจาก Backend ===
@@ -279,7 +344,7 @@
             tbody.innerHTML = '';
             if (dataArray.length === 0) {
                 var msg = _lastLoadError
-                    ? '❌ เชื่อมต่อ Supabase ไม่สำเร็จ: ' + _lastLoadError + '<br><small style="color:#94a3b8">ตรวจสอบ Supabase URL / anon key ใน supabase/config.js</small>'
+                    ? '❌ เชื่อมต่อ Supabase ไม่สำเร็จ: ' + _e(_lastLoadError) + '<br><small style="color:#94a3b8">ตรวจสอบ Supabase URL / anon key ใน supabase/config.js</small>'
                     : '📭 ยังไม่มีข้อมูลค่าน้ำ/ค่าไฟ สำหรับรอบบิลนี้<br><small style="color:#94a3b8">กรุณาไปบันทึกค่าน้ำ/ค่าไฟ ที่หน้า "บันทึกค่าน้ำ" / "บันทึกค่าไฟ" ก่อน</small>';
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:1.5rem;">' + msg + '</td></tr>';
                 return;
@@ -290,14 +355,14 @@
                 var rt=(item.water||0)+(item.electric||0)+commonVal;
                 var parts=(item.residents||'').split('\n');
                 var rd='';
-                for(var j=0;j<parts.length;j++){var r=parts[j].trim();if(r){if(rd)rd+='<br>';rd+=r;}}
+                for(var j=0;j<parts.length;j++){var r=parts[j].trim();if(r){if(rd)rd+='<br>';rd+=_e(r);}}
                 var md=(item.prevMeter!=null&&item.currMeter!=null)
                     ? last4(item.prevMeter)+' - '+last4(item.currMeter) : '-';
                 var tr=document.createElement('tr');
                 tr.setAttribute('data-index', i);
                 tr.setAttribute('data-type', type);
                 tr.innerHTML=
-                    '<td class="col-no">'+item.number+'</td>'+
+                    '<td class="col-no">'+_e(item.number)+'</td>'+
                     '<td class="col-resident">'+rd+'</td>'+
                     '<td class="col-meter">'+md+'</td>'+
                     '<td class="amount-value">'+(item.water?item.water.toLocaleString():'-')+'</td>'+
@@ -354,7 +419,6 @@
 
             // แปลง input/button เป็นข้อความธรรมดาก่อน capture
             var inputs = element.querySelectorAll('.common-input');
-            var exemptBtns = element.querySelectorAll('.exempt-btn');
             var snapshots = [];
             for (var k = 0; k < inputs.length; k++) {
                 var inp = inputs[k];
@@ -364,15 +428,23 @@
                 span.textContent = val ? val.toLocaleString() : '-';
                 span.style.cssText = 'font-weight:700;color:' + (val ? 'var(--primary-dark)' : 'inherit');
                 var cell = inp.closest('.common-cell');
-                snapshots.push({ cell: cell, origHTML: cell.innerHTML });
-                cell.innerHTML = '';
+                // เก็บ child nodes จริงแทน innerHTML เพื่อรักษา event listeners
+                var origNodes = [];
+                while (cell.firstChild) {
+                    origNodes.push(cell.removeChild(cell.firstChild));
+                }
+                snapshots.push({ cell: cell, origNodes: origNodes });
                 cell.appendChild(span);
             }
 
             html2canvas(element,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:1200}).then(function(canvas){
-                // คืนค่า input/button กลับ
+                // คืนค่า DOM nodes กลับ (รักษา event listeners)
                 for (var k = 0; k < snapshots.length; k++) {
-                    snapshots[k].cell.innerHTML = snapshots[k].origHTML;
+                    var s = snapshots[k];
+                    s.cell.innerHTML = '';
+                    for (var n = 0; n < s.origNodes.length; n++) {
+                        s.cell.appendChild(s.origNodes[n]);
+                    }
                 }
                 overlay.classList.remove('show');
                 var link=document.createElement('a');
@@ -384,13 +456,99 @@
                 msg.classList.add('show');
                 setTimeout(function(){msg.classList.remove('show');},3000);
             }).catch(function(err){
-                // คืนค่า input/button กลับ กรณี error
+                // คืนค่า DOM nodes กลับ กรณี error
                 for (var k = 0; k < snapshots.length; k++) {
-                    snapshots[k].cell.innerHTML = snapshots[k].origHTML;
+                    var s = snapshots[k];
+                    s.cell.innerHTML = '';
+                    for (var n = 0; n < s.origNodes.length; n++) {
+                        s.cell.appendChild(s.origNodes[n]);
+                    }
                 }
                 overlay.classList.remove('show');
                 ppkAlert('เกิดข้อผิดพลาด: '+err.message);
             });
+        }
+
+        // === บันทึกข้อมูลแจ้งยอดลง DB ===
+        async function saveNotificationsToDB() {
+            var month = document.getElementById('bill_month').value;
+            var yearBE = document.getElementById('bill_year').value;
+            var period = yearBE + '-' + month;
+            var notifyDate = document.getElementById('notify_date').value;
+            var dueDate = document.getElementById('due_date').value;
+
+            if (!notifyDate) { ppkAlert('กรุณาระบุวันที่แจ้งยอด'); return; }
+            if (!dueDate) { ppkAlert('กรุณาระบุกำหนดชำระ'); return; }
+
+            // รวบรวมข้อมูลจากทั้ง 2 ตาราง
+            var allRows = [];
+            ['houseTableBody', 'flatTableBody'].forEach(function(tbId) {
+                var rows = document.getElementById(tbId).querySelectorAll('tr[data-index]');
+                for (var i = 0; i < rows.length; i++) {
+                    var cells = rows[i].querySelectorAll('td');
+                    if (cells.length < 7) continue;
+                    var hn = (cells[0].textContent || '').trim();
+                    if (!hn) continue;
+                    var water = parseFloat((cells[3].textContent || '0').replace(/,/g, '')) || 0;
+                    var electric = parseFloat((cells[4].textContent || '0').replace(/,/g, '')) || 0;
+                    var commonInput = cells[5].querySelector('.common-input');
+                    var common = commonInput ? (parseFloat(commonInput.value) || 0) : 0;
+                    var total = water + electric + common;
+                    if (total <= 0) continue;
+                    allRows.push({
+                        houseNumber: hn, period: period,
+                        waterAmount: water, electricAmount: electric,
+                        commonFee: common, totalAmount: total,
+                        dueDate: dueDate, sentAt: notifyDate + 'T00:00:00'
+                    });
+                }
+            });
+
+            if (allRows.length === 0) {
+                ppkAlert('ไม่มีข้อมูลให้บันทึก กรุณาดึงข้อมูลก่อน');
+                return;
+            }
+
+            var overlay = document.getElementById('loadingOverlay');
+            overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกข้อมูล...';
+            overlay.classList.add('show');
+
+            var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            var success = 0, fail = 0;
+
+            // ลบ notification เดิมของ period นี้ก่อน แล้ว insert ใหม่ทั้งหมด
+            try {
+                await callBackend('deleteNotifications', { period: period });
+            } catch (e) { console.warn('delete old notifications:', e); }
+
+            for (var i = 0; i < allRows.length; i++) {
+                try {
+                    var r = allRows[i];
+                    await callBackend('saveNotification', {
+                        houseNumber: r.houseNumber, period: r.period,
+                        waterAmount: r.waterAmount, electricAmount: r.electricAmount,
+                        commonFee: r.commonFee, totalAmount: r.totalAmount,
+                        dueDate: r.dueDate, sentAt: r.sentAt,
+                        sentBy: user.id || ''
+                    });
+                    success++;
+                } catch (e) {
+                    fail++;
+                    console.error('saveNotification error:', e);
+                }
+            }
+
+            overlay.classList.remove('show');
+            overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกรูปภาพ...';
+
+            var msg = document.getElementById('successMessage');
+            if (fail === 0) {
+                msg.textContent = '✅ บันทึกข้อมูลแจ้งยอดสำเร็จ ' + success + ' รายการ';
+            } else {
+                msg.textContent = '⚠️ บันทึกสำเร็จ ' + success + ' รายการ, ล้มเหลว ' + fail + ' รายการ';
+            }
+            msg.classList.add('show');
+            setTimeout(function() { msg.classList.remove('show'); }, 5000);
         }
 
         window.onload = async function(){
@@ -402,20 +560,23 @@
                 return;
             }
             updateTableTitles();
-            await updateFooterNotes();
+            initDates();
             await loadBillData();
         };
     
         async function doLogout() {
-            window.location.replace('dashboard.html');
+            try { await callBackend('logout'); } catch(e) {}
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('sessionToken');
+            window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260317B"></script>
-    <script src="supabase/supabase.min.js?v=20260317B"></script>
-    <script src="ppk-api.js?v=20260317B"></script>
-    <script src="ppk-app.js?v=20260317B"></script>
-    <script src="ppk-utils.js?v=20260317B"></script>
-    <script src="ppk-nav.js?v=20260317B"></script>
-    <script src="ppk-pwa.js?v=20260317B"></script>
+    <script src="supabase/config.js?v=20260318F"></script>
+    <script src="supabase/supabase.min.js?v=20260318F"></script>
+    <script src="ppk-api.js?v=20260318F"></script>
+    <script src="ppk-app.js?v=20260318F"></script>
+    <script src="ppk-utils.js?v=20260318F"></script>
+    <script src="ppk-nav.js?v=20260318F"></script>
+    <script src="ppk-pwa.js?v=20260318F"></script>
 </body>
 </html>
