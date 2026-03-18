@@ -265,32 +265,18 @@
                 </div>
             </div>
 
-            <!-- Table 1: ยอดแจ้งชำระรายเดือน -->
-            <div class="section-title">&#128203; ยอดแจ้งชำระรายเดือน</div>
+            <!-- ตารางสรุปรายเดือน (รวม Bill + Slip) -->
+            <div class="section-title">&#128203; สรุปค่าใช้จ่ายและการชำระเงินรายเดือน</div>
             <div class="ppk-table-card">
                 <table>
                     <thead><tr>
-                        <th>เดือน</th><th>ค่าน้ำ (บาท)</th><th>ค่าไฟ (บาท)</th>
-                        <th>ค่าส่วนกลาง (บาท)</th><th>ยอดรวม (บาท)</th>
-                        <th>วันแจ้งยอด</th><th>กำหนดชำระ</th>
-                    </tr></thead>
-                    <tbody id="bill-table-body">
-                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลด...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Table 2: สถานะการชำระเงิน -->
-            <div class="section-title">&#129534; สถานะการชำระเงิน (สลิป)</div>
-            <div class="ppk-table-card">
-                <table>
-                    <thead><tr>
-                        <th>เดือน</th><th>วันแจ้งยอด</th><th>กำหนดชำระ</th>
-                        <th>วันส่งสลิป</th><th>จำนวนเงิน</th>
+                        <th>เดือน</th><th>ค่าน้ำ</th><th>ค่าไฟ</th>
+                        <th>ค่าส่วนกลาง</th><th>ยอดแจ้ง</th>
+                        <th>ยอดชำระ</th><th>วันส่งสลิป</th>
                         <th>สถานะ</th><th>ตรงเวลา</th>
                     </tr></thead>
-                    <tbody id="slip-table-body">
-                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลด...</td></tr>
+                    <tbody id="merged-table-body">
+                        <tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลด...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -764,10 +750,8 @@
         var hn = (user.houseNumber || user.house_number || '').trim();
         _lastLoadedYear = year;
 
-        document.getElementById('bill-table-body').innerHTML =
-            '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
-        document.getElementById('slip-table-body').innerHTML =
-            '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
+        document.getElementById('merged-table-body').innerHTML =
+            '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
 
         /* -- ถ้า houseNumber ว่าง ลอง refresh จาก resident data -- */
         if (!hn && user.id) {
@@ -815,10 +799,8 @@
         }
 
         if (!hn) {
-            document.getElementById('bill-table-body').innerHTML =
-                '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก กรุณาติดต่อคณะทำงาน</td></tr>';
-            document.getElementById('slip-table-body').innerHTML =
-                '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก</td></tr>';
+            document.getElementById('merged-table-body').innerHTML =
+                '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก กรุณาติดต่อคณะทำงาน</td></tr>';
             return;
         }
         console.log('[payment-history] house:', hn, 'year:', year);
@@ -1126,76 +1108,85 @@
         var bf = filterMonth ? allBillData.filter(function(r){ return r.month === filterMonth; }) : allBillData;
         var sf = filterMonth ? allSlipData.filter(function(r){ return r.month === filterMonth; }) : allSlipData;
         updateStats(bf, sf);
-        renderBillTable(bf);
-        renderSlipTable(sf);
+        renderMergedTable(bf, sf);
         renderCharts(allBillData);
         renderInsights(allBillData);
         renderDiscipline(allSlipData);
     }
 
-    /* ============ Bill Table ============ */
-    function renderBillTable(data) {
-        var tb = document.getElementById('bill-table-body');
+    /* ============ Merged Table (Bill + Slip) ============ */
+    function renderMergedTable(billData, slipData) {
+        var tb = document.getElementById('merged-table-body');
         tb.innerHTML = '';
-        if (!data || data.length === 0) {
-            tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ยังไม่มียอดแจ้งชำระ</td></tr>';
-            return;
-        }
-        data.forEach(function(r) {
-            var mn = _fmtMonthYear(r.month, r.year || document.getElementById('year').value);
-            var tr = document.createElement('tr');
-            tr.innerHTML =
-                '<td>'+_e(mn)+'</td>'+
-                '<td>'+(r.water  ? r.water.toLocaleString()  : '-')+'</td>'+
-                '<td>'+(r.electric ? r.electric.toLocaleString() : '-')+'</td>'+
-                '<td>'+(r.common ? r.common.toLocaleString() : '-')+'</td>'+
-                '<td><strong>'+(r.total ? r.total.toLocaleString() : '-')+'</strong></td>'+
-                '<td>'+_fmtDate(r.notifiedAt)+'</td>'+
-                '<td>'+_fmtDate(r.dueDate)+'</td>';
-            tb.appendChild(tr);
-        });
-    }
+        var year = document.getElementById('year').value;
 
-    /* ============ Slip Table ============ */
-    function renderSlipTable(data) {
-        var tb = document.getElementById('slip-table-body');
-        tb.innerHTML = '';
-        if (!data || data.length === 0) {
-            tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">ยังไม่มีข้อมูลการส่งสลิป</td></tr>';
+        /* Build slip lookup by month (prefer approved, then latest) */
+        var slipByMonth = {};
+        slipData.forEach(function(s) {
+            var key = (s.year || year) + '-' + s.month;
+            var existing = slipByMonth[key];
+            if (!existing ||
+                (s.status === 'approved' && existing.status !== 'approved') ||
+                (s.status === existing.status && (s.submittedAt || '') > (existing.submittedAt || ''))) {
+                slipByMonth[key] = s;
+            }
+        });
+
+        /* Collect all months from both bill and slip */
+        var monthKeys = {};
+        billData.forEach(function(r) { monthKeys[(r.year||year)+'-'+r.month] = true; });
+        slipData.forEach(function(s) { monthKeys[(s.year||year)+'-'+s.month] = true; });
+        var sortedKeys = Object.keys(monthKeys).sort();
+
+        if (sortedKeys.length === 0) {
+            tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">ยังไม่มีข้อมูล</td></tr>';
             return;
         }
-        data.forEach(function(r) {
-            var mn = _fmtMonthYear(r.month, r.year || document.getElementById('year').value);
-            /* Status badge */
+
+        /* Bill lookup by month */
+        var billByMonth = {};
+        billData.forEach(function(r) { billByMonth[(r.year||year)+'-'+r.month] = r; });
+
+        sortedKeys.forEach(function(key) {
+            var parts = key.split('-');
+            var yr = parts[0], mm = parts[1];
+            var bill = billByMonth[key] || {};
+            var slip = slipByMonth[key];
+            var mn = _fmtMonthYear(mm, yr);
+
+            /* Slip status badge */
             var stTxt = '', stCls = '';
-            if      (r.status === 'approved') { stTxt = '\u2705 อนุมัติ';  stCls = 'badge-approved'; }
-            else if (r.status === 'rejected') { stTxt = '\u274C ปฏิเสธ';   stCls = 'badge-rejected'; }
-            else                              { stTxt = '\u23F3 รอตรวจ';   stCls = 'badge-pending';  }
+            if (slip) {
+                if      (slip.status === 'approved') { stTxt = '\u2705 อนุมัติ';  stCls = 'badge-approved'; }
+                else if (slip.status === 'rejected') { stTxt = '\u274C ปฏิเสธ';   stCls = 'badge-rejected'; }
+                else                                 { stTxt = '\u23F3 รอตรวจ';   stCls = 'badge-pending';  }
+            }
+
             /* On-time check */
             var tmTxt = '-', tmCls = 'badge-nodata';
-            if (r.dueDate && r.submittedAt) {
-                var due = new Date(r.dueDate + 'T23:59:59');
-                var sub = new Date(r.submittedAt);
+            if (slip && slip.dueDate && slip.submittedAt) {
+                var due = new Date(slip.dueDate + 'T23:59:59');
+                var sub = new Date(slip.submittedAt);
                 if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
                     if (sub <= due) { tmTxt = '\u2705 ตรงเวลา'; tmCls = 'badge-ontime'; }
                     else {
                         var diff = Math.ceil((sub - due) / 86400000);
-                        if (diff <= 7) {
-                            tmTxt = '\u26A0\uFE0F ช้า ' + diff + ' วัน'; tmCls = 'badge-late';
-                        } else {
-                            tmTxt = '\u274C ช้า ' + diff + ' วัน'; tmCls = 'badge-late-severe';
-                        }
+                        if (diff <= 7) { tmTxt = '\u26A0\uFE0F ช้า ' + diff + ' วัน'; tmCls = 'badge-late'; }
+                        else           { tmTxt = '\u274C ช้า ' + diff + ' วัน'; tmCls = 'badge-late-severe'; }
                     }
                 }
             }
+
             var tr = document.createElement('tr');
             tr.innerHTML =
                 '<td>'+_e(mn)+'</td>'+
-                '<td>'+_fmtDate(r.notifiedAt)+'</td>'+
-                '<td>'+_fmtDate(r.dueDate)+'</td>'+
-                '<td>'+_fmtDate(r.submittedAt)+'</td>'+
-                '<td>'+(r.amount ? r.amount.toLocaleString() : '-')+'</td>'+
-                '<td><span class="badge '+stCls+'">'+stTxt+'</span></td>'+
+                '<td>'+(bill.water  ? bill.water.toLocaleString()  : '-')+'</td>'+
+                '<td>'+(bill.electric ? bill.electric.toLocaleString() : '-')+'</td>'+
+                '<td>'+(bill.common ? bill.common.toLocaleString() : '-')+'</td>'+
+                '<td><strong>'+(bill.total ? bill.total.toLocaleString() : (slip ? slip.amount.toLocaleString() : '-'))+'</strong></td>'+
+                '<td>'+(slip && slip.amount ? slip.amount.toLocaleString() : '-')+'</td>'+
+                '<td>'+(slip ? _fmtDate(slip.submittedAt) : '-')+'</td>'+
+                '<td>'+(slip ? '<span class="badge '+stCls+'">'+stTxt+'</span>' : '-')+'</td>'+
                 '<td><span class="badge '+tmCls+'">'+tmTxt+'</span></td>';
             tb.appendChild(tr);
         });
@@ -1207,18 +1198,27 @@
         var lines = [];
         var year = document.getElementById('year').value;
         /* Header */
-        lines.push('เดือน,ค่าน้ำ,ค่าไฟ,ค่าส่วนกลาง,ยอดรวม,วันแจ้งยอด,กำหนดชำระ');
-        allBillData.forEach(function(r) {
-            var mn = _fmtMonthYear(r.month, r.year || year);
-            lines.push([mn, r.water, r.electric, r.common, r.total,
-                r.notifiedAt || '-', r.dueDate || '-'].join(','));
+        lines.push('เดือน,ค่าน้ำ,ค่าไฟ,ค่าส่วนกลาง,ยอดแจ้ง,ยอดชำระ,วันส่งสลิป,สถานะ');
+        /* Build merged data for export */
+        var slipByM = {};
+        allSlipData.forEach(function(s) {
+            var key = (s.year||year)+'-'+s.month;
+            var ex = slipByM[key];
+            if (!ex || (s.status==='approved' && ex.status!=='approved') ||
+                (s.status===ex.status && (s.submittedAt||'')>(ex.submittedAt||''))) { slipByM[key]=s; }
         });
-        lines.push('');
-        lines.push('เดือน,วันแจ้งยอด,กำหนดชำระ,วันส่งสลิป,จำนวนเงิน,สถานะ');
-        allSlipData.forEach(function(r) {
-            var mn = _fmtMonthYear(r.month, r.year || year);
-            lines.push([mn, r.notifiedAt || '-', r.dueDate || '-',
-                r.submittedAt || '-', r.amount, r.status].join(','));
+        var billByM = {};
+        allBillData.forEach(function(r) { billByM[(r.year||year)+'-'+r.month] = r; });
+        var allKeys = {};
+        allBillData.forEach(function(r) { allKeys[(r.year||year)+'-'+r.month]=1; });
+        allSlipData.forEach(function(s) { allKeys[(s.year||year)+'-'+s.month]=1; });
+        Object.keys(allKeys).sort().forEach(function(key) {
+            var parts = key.split('-');
+            var mn = _fmtMonthYear(parts[1], parts[0]);
+            var b = billByM[key] || {};
+            var s = slipByM[key];
+            lines.push([mn, b.water||0, b.electric||0, b.common||0, b.total||(s?s.amount:0),
+                s?s.amount:'-', s?(_fmtDate(s.submittedAt)):'-', s?s.status:'-'].join(','));
         });
 
         var csv = BOM + lines.join('\n');
