@@ -12,17 +12,21 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318F">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318G">
     <style>
-        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-        @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        /* ===== Stat Grid ===== */
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+        @media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 400px) { .stat-grid { grid-template-columns: 1fr; } }
-        .stat-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.2rem 1rem; box-shadow: var(--shadow-md); text-align: center; position: relative; overflow: hidden; }
+        .stat-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.2rem 1rem; box-shadow: var(--shadow-md); text-align: center; position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
         .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
         .stat-card.c-total::before  { background: linear-gradient(90deg,var(--c-primary),var(--c-cyan)); }
         .stat-card.c-water::before  { background: linear-gradient(90deg,var(--c-cyan),#38e8ff); }
         .stat-card.c-elec::before   { background: linear-gradient(90deg,var(--c-warning),#fcd34d); }
         .stat-card.c-common::before { background: linear-gradient(90deg,var(--c-success),#6ee7b7); }
+        .stat-card.c-owed::before   { background: linear-gradient(90deg,#ef4444,#f97316); }
         .stat-card-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
         .stat-card-label { font-size: 0.85rem; color: var(--c-text-3); font-weight: 600; }
         .stat-card-value { font-size: 1.35rem; font-weight: 700; margin-top: 0.2rem; }
@@ -30,13 +34,51 @@
         .stat-card.c-water .stat-card-value  { color: var(--c-cyan); }
         .stat-card.c-elec .stat-card-value   { color: var(--c-warning); }
         .stat-card.c-common .stat-card-value { color: var(--c-success); }
+        .stat-card.c-owed .stat-card-value   { color: #ef4444; }
+        .stat-card.c-owed.paid .stat-card-value { color: #10b981; }
+        .stat-card.c-owed.paid::before { background: linear-gradient(90deg,#10b981,#6ee7b7); }
+
+        /* ===== Charts ===== */
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
         @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
-        .chart-card, .chart-card-full { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.2rem 1.5rem; box-shadow: var(--shadow-md); }
+        .chart-card, .chart-card-full { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.2rem 1.5rem; box-shadow: var(--shadow-md); position: relative; }
         .chart-title { font-size: 1rem; font-weight: 700; color: var(--c-primary); margin-bottom: 0.8rem; }
-        .filter-section { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; background: var(--c-surface); padding: 1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--c-border); box-shadow: var(--shadow-md); }
-        .filter-section label { font-size: 0.95rem; font-weight: 600; }
-        .filter-section select { padding: 0.6rem 0.8rem; font: inherit; font-size: 1rem; border: 1.5px solid var(--c-border); border-radius: var(--radius-sm); }
+
+        /* ===== Insight Cards (Glassmorphism) ===== */
+        .insight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem; }
+        @media (max-width: 900px) { .insight-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .insight-grid { grid-template-columns: 1fr; } }
+        .insight-card { background: rgba(255,255,255,0.65); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-lg); padding: 1rem 1.2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06); transition: transform 0.2s; }
+        .insight-card:hover { transform: translateY(-3px); }
+        .insight-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+        .insight-label { font-size: 0.8rem; color: var(--c-text-3); font-weight: 600; }
+        .insight-value { font-size: 1.15rem; font-weight: 700; color: var(--c-text-1); margin-top: 0.15rem; }
+        .insight-sub { font-size: 0.75rem; color: var(--c-text-3); margin-top: 0.2rem; }
+
+        /* ===== Discipline Section ===== */
+        .discipline-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-md); margin-top: 1rem; }
+        .discipline-header { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+        .discipline-ring { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+        .discipline-ring svg { transform: rotate(-90deg); }
+        .discipline-ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+        .discipline-ring-pct { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+        .discipline-ring-label { font-size: 0.65rem; color: var(--c-text-3); }
+        .discipline-info { flex: 1; min-width: 200px; }
+        .discipline-streak { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .discipline-msg { font-size: 0.9rem; color: var(--c-text-2); line-height: 1.5; }
+        .discipline-timeline { display: flex; gap: 4px; margin-top: 1rem; flex-wrap: wrap; }
+        .discipline-dot { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: #fff; }
+        .discipline-dot.on-time { background: linear-gradient(135deg, #10b981, #34d399); }
+        .discipline-dot.late { background: linear-gradient(135deg, #ef4444, #f87171); }
+        .discipline-dot.no-data { background: #e5e7eb; color: #9ca3af; }
+
+        /* ===== Filter Section ===== */
+        .filter-section { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; background: var(--c-surface); padding: 1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--c-border); box-shadow: var(--shadow-md); }
+        .filter-section label { font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+        .filter-section select { padding: 0.55rem 0.7rem; font: inherit; font-size: 0.95rem; border: 1.5px solid var(--c-border); border-radius: var(--radius-sm); background: var(--c-surface); transition: border-color 0.2s; }
+        .filter-section select:focus { border-color: var(--c-primary); outline: none; }
+
+        /* ===== Tables ===== */
         .ppk-table-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow-x: auto; }
         .ppk-table-card table { width: 100%; border-collapse: collapse; font-size: 0.92rem; text-align: center; }
         .ppk-table-card th, .ppk-table-card td { border: 1px solid var(--c-border); padding: 0.7rem 0.5rem; }
@@ -50,7 +92,36 @@
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .badge-ontime   { background: #dbeafe; color: #1e40af; }
         .badge-late     { background: #fef3c7; color: #92400e; }
+        .badge-late-severe { background: #fee2e2; color: #991b1b; }
         .badge-nodata   { background: #f3f4f6; color: #6b7280; }
+
+        /* ===== Export Buttons ===== */
+        .export-bar { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap; }
+        .export-bar .ppk-btn { font-size: 0.85rem; }
+
+        /* ===== Chart.js Custom Tooltip ===== */
+        .chartjs-tooltip { background: rgba(15,23,42,0.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; border-radius: 10px; padding: 10px 14px; font-family: Kanit, sans-serif; font-size: 0.82rem; pointer-events: none; box-shadow: 0 8px 32px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); transition: all 0.15s ease; }
+        .chartjs-tooltip-title { font-weight: 700; margin-bottom: 4px; font-size: 0.88rem; }
+        .chartjs-tooltip-body { display: flex; flex-direction: column; gap: 2px; }
+        .chartjs-tooltip-item { display: flex; align-items: center; gap: 6px; }
+        .chartjs-tooltip-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+        /* ===== Doughnut Center Text ===== */
+        .doughnut-wrapper { position: relative; }
+        .doughnut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+        .doughnut-center-value { font-size: 1.2rem; font-weight: 800; color: var(--c-primary); }
+        .doughnut-center-label { font-size: 0.7rem; color: var(--c-text-3); }
+
+        /* ===== Print ===== */
+        @media print {
+            body { background: #fff !important; }
+            .ppk-sidebar, .ppk-topbar, .filter-section, .export-bar, .ppk-footer, #ppkNav { display: none !important; }
+            .ppk-main { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+            .ppk-content { padding: 0 !important; }
+            .stat-card, .chart-card, .chart-card-full, .ppk-table-card, .discipline-card, .insight-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+            .charts-grid, .stat-grid, .insight-grid { gap: 0.5rem; }
+            canvas { max-height: 200px !important; }
+        }
     </style>
 </head>
 <body>
@@ -63,30 +134,41 @@
         <div class="ppk-content">
             <!-- Filter (TOP) -->
             <div class="filter-section">
-                <label for="month">เลือกเดือน:</label>
-                <select id="month">
-                    <option value="">&#8212; ทั้งปี &#8212;</option>
-                    <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option>
-                    <option value="03">มีนาคม</option><option value="04">เมษายน</option>
-                    <option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
-                    <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option>
-                    <option value="09">กันยายน</option><option value="10">ตุลาคม</option>
-                    <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+                <label for="timeRange">ช่วงเวลา:</label>
+                <select id="timeRange" onchange="onTimeRangeChange()">
+                    <option value="year">ทั้งปี</option>
+                    <option value="month">เลือกเดือน</option>
+                    <option value="last3">ย้อนหลัง 3 เดือน</option>
+                    <option value="last6">ย้อนหลัง 6 เดือน</option>
+                    <option value="last12">ย้อนหลัง 12 เดือน</option>
                 </select>
-                <label for="year">เลือกปี:</label>
-                <select id="year"></select>
+                <span id="monthWrap">
+                    <label for="month">เดือน:</label>
+                    <select id="month" onchange="onFilterChange()">
+                        <option value="">&#8212; ทั้งปี &#8212;</option>
+                        <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option>
+                        <option value="03">มีนาคม</option><option value="04">เมษายน</option>
+                        <option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
+                        <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option>
+                        <option value="09">กันยายน</option><option value="10">ตุลาคม</option>
+                        <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+                    </select>
+                </span>
+                <span id="yearWrap">
+                    <label for="year">ปี:</label>
+                    <select id="year" onchange="onYearChange()"></select>
+                </span>
                 <span id="houseSelectWrap" style="display:none;">
                     <label for="houseSelect">บ้านพัก:</label>
                     <select id="houseSelect" onchange="onHouseChange()"></select>
                 </span>
-                <button class="ppk-btn ppk-btn-primary ppk-btn-sm" onclick="filterData()">กรองข้อมูล</button>
             </div>
 
-            <!-- Stat Cards -->
+            <!-- Stat Cards (5 cols) -->
             <div class="stat-grid">
                 <div class="stat-card c-total">
                     <div class="stat-card-icon">&#128176;</div>
-                    <div class="stat-card-label">ยอดแจ้งชำระรวม</div>
+                    <div class="stat-card-label" id="statTotalLabel">ยอดแจ้งชำระรวม</div>
                     <div class="stat-card-value" id="statTotal">-</div>
                 </div>
                 <div class="stat-card c-water">
@@ -104,6 +186,33 @@
                     <div class="stat-card-label">ค่าส่วนกลางรวม</div>
                     <div class="stat-card-value" id="statCommon">-</div>
                 </div>
+                <div class="stat-card c-owed" id="statOwedCard">
+                    <div class="stat-card-icon">&#128179;</div>
+                    <div class="stat-card-label">ยอดค้างชำระ</div>
+                    <div class="stat-card-value" id="statOwed">-</div>
+                </div>
+            </div>
+
+            <!-- Discipline Section -->
+            <div class="discipline-card" id="disciplineSection" style="display:none;">
+                <div class="section-title" style="margin-top:0;">&#127942; วินัยการชำระเงิน</div>
+                <div class="discipline-header">
+                    <div class="discipline-ring">
+                        <svg width="100" height="100" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                            <circle id="disciplineArc" cx="50" cy="50" r="42" fill="none" stroke="#10b981" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 264" style="transition: stroke-dasharray 1s ease;"/>
+                        </svg>
+                        <div class="discipline-ring-text">
+                            <div class="discipline-ring-pct" id="disciplinePct">-</div>
+                            <div class="discipline-ring-label">ตรงเวลา</div>
+                        </div>
+                    </div>
+                    <div class="discipline-info">
+                        <div class="discipline-streak" id="disciplineStreak"></div>
+                        <div class="discipline-msg" id="disciplineMsg"></div>
+                    </div>
+                </div>
+                <div class="discipline-timeline" id="disciplineTimeline"></div>
             </div>
 
             <!-- Charts -->
@@ -114,12 +223,46 @@
                 </div>
                 <div class="chart-card">
                     <div class="chart-title">&#129513; สัดส่วนค่าใช้จ่าย</div>
-                    <canvas id="chartDoughnut" height="220"></canvas>
+                    <div class="doughnut-wrapper">
+                        <canvas id="chartDoughnut" height="220"></canvas>
+                        <div class="doughnut-center">
+                            <div class="doughnut-center-value" id="doughnutCenterVal">-</div>
+                            <div class="doughnut-center-label">บาท (รวม)</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="chart-card-full">
                 <div class="chart-title">&#128200; แนวโน้มยอดแจ้งชำระรายเดือน</div>
                 <canvas id="chartLine" height="110"></canvas>
+            </div>
+
+            <!-- Insight Cards -->
+            <div class="insight-grid" id="insightGrid" style="display:none;">
+                <div class="insight-card" id="insightAvg">
+                    <div class="insight-icon">&#128202;</div>
+                    <div class="insight-label">ค่าเฉลี่ยต่อเดือน</div>
+                    <div class="insight-value" id="insightAvgVal">-</div>
+                    <div class="insight-sub" id="insightAvgSub"></div>
+                </div>
+                <div class="insight-card" id="insightMax">
+                    <div class="insight-icon">&#128314;</div>
+                    <div class="insight-label">เดือนสูงสุด</div>
+                    <div class="insight-value" id="insightMaxVal">-</div>
+                    <div class="insight-sub" id="insightMaxSub"></div>
+                </div>
+                <div class="insight-card" id="insightMin">
+                    <div class="insight-icon">&#128315;</div>
+                    <div class="insight-label">เดือนต่ำสุด</div>
+                    <div class="insight-value" id="insightMinVal">-</div>
+                    <div class="insight-sub" id="insightMinSub"></div>
+                </div>
+                <div class="insight-card" id="insightSave">
+                    <div class="insight-icon">&#128176;</div>
+                    <div class="insight-label">ประหยัดได้ถ้าลด 10%</div>
+                    <div class="insight-value" id="insightSaveVal">-</div>
+                    <div class="insight-sub" id="insightSaveSub"></div>
+                </div>
             </div>
 
             <!-- Table 1: ยอดแจ้งชำระรายเดือน -->
@@ -152,6 +295,12 @@
                 </table>
             </div>
 
+            <!-- Export Buttons -->
+            <div class="export-bar">
+                <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="exportCSV()">&#128229; บันทึก CSV</button>
+                <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="window.print()">&#128424; พิมพ์รายงาน</button>
+            </div>
+
             <div class="ppk-footer">
                 ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
                 งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -171,6 +320,7 @@
     var allSlipData  = [];
     var allNotifMap  = {};
     var _lastLoadedYear = '';
+    var _loadedYears = {};  /* cache multi-year data for last3/6/12 */
     var chartBar, chartDoughnut, chartLine;
 
     /* ============ HTML Escape ============ */
@@ -190,6 +340,13 @@
         } catch(e) { return '-'; }
     }
 
+    /* ============ Format Month+Year Short ============ */
+    function _fmtMonthYear(mm, year) {
+        var mi = parseInt(mm) - 1;
+        if (mi < 0 || mi > 11) return mm;
+        return THAI_MONTHS_SHORT[mi] + ' ' + (year || '');
+    }
+
     /* ============ Year Dropdown ============ */
     function initYearSelector() {
         var sel = document.getElementById('year');
@@ -202,91 +359,402 @@
         }
     }
 
+    /* ============ Time Range Logic ============ */
+    function onTimeRangeChange() {
+        var range = document.getElementById('timeRange').value;
+        var monthWrap = document.getElementById('monthWrap');
+        var yearWrap = document.getElementById('yearWrap');
+        if (range === 'year') {
+            monthWrap.style.display = 'none';
+            yearWrap.style.display = '';
+            document.getElementById('month').value = '';
+        } else if (range === 'month') {
+            monthWrap.style.display = '';
+            yearWrap.style.display = '';
+        } else {
+            /* last3, last6, last12 */
+            monthWrap.style.display = 'none';
+            yearWrap.style.display = 'none';
+        }
+        onFilterChange();
+    }
+
+    function onYearChange() {
+        var selY = document.getElementById('year').value;
+        if (selY !== _lastLoadedYear) {
+            loadData();
+        } else {
+            onFilterChange();
+        }
+    }
+
+    async function onFilterChange() {
+        var range = document.getElementById('timeRange').value;
+        if (range === 'last3' || range === 'last6' || range === 'last12') {
+            await loadDataMultiMonth(range);
+        } else {
+            var selY = document.getElementById('year').value;
+            if (selY !== _lastLoadedYear) {
+                await loadData();
+            } else {
+                renderAll(document.getElementById('month').value);
+            }
+        }
+    }
+
     /* ============ Stat Cards ============ */
-    function updateStats(data) {
+    function updateStats(billData, slipData) {
         var fmt = function(v) { return v > 0 ? v.toLocaleString('th-TH') + ' บ.' : '-'; };
         var w = 0, e = 0, c = 0, t = 0;
-        data.forEach(function(r) { w += r.water; e += r.electric; c += r.common; t += r.total; });
+        billData.forEach(function(r) { w += r.water; e += r.electric; c += r.common; t += r.total; });
         document.getElementById('statTotal').textContent  = fmt(t);
         document.getElementById('statWater').textContent  = fmt(w);
         document.getElementById('statElec').textContent   = fmt(e);
         document.getElementById('statCommon').textContent = fmt(c);
+
+        /* Update label with year */
+        var range = document.getElementById('timeRange').value;
+        var labelSuffix = '';
+        if (range === 'year' || range === 'month') {
+            labelSuffix = ' (ปี ' + document.getElementById('year').value + ')';
+        } else if (range === 'last3') { labelSuffix = ' (3 เดือนล่าสุด)'; }
+        else if (range === 'last6') { labelSuffix = ' (6 เดือนล่าสุด)'; }
+        else if (range === 'last12') { labelSuffix = ' (12 เดือนล่าสุด)'; }
+        document.getElementById('statTotalLabel').textContent = 'ยอดแจ้งชำระรวม' + labelSuffix;
+
+        /* Outstanding balance */
+        var approvedTotal = 0;
+        slipData.forEach(function(s) {
+            if (s.status === 'approved') approvedTotal += s.amount;
+        });
+        var owed = t - approvedTotal;
+        var owedCard = document.getElementById('statOwedCard');
+        if (owed <= 0) {
+            document.getElementById('statOwed').textContent = 'ชำระครบ';
+            owedCard.className = 'stat-card c-owed paid';
+        } else {
+            document.getElementById('statOwed').textContent = owed.toLocaleString('th-TH') + ' บ.';
+            owedCard.className = 'stat-card c-owed';
+        }
     }
 
-    /* ============ Charts ============ */
+    /* ============ Custom Tooltip ============ */
+    function getOrCreateTooltip(chart) {
+        var el = chart.canvas.parentNode.querySelector('.chartjs-tooltip');
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'chartjs-tooltip';
+            el.style.position = 'absolute';
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0';
+            chart.canvas.parentNode.style.position = 'relative';
+            chart.canvas.parentNode.appendChild(el);
+        }
+        return el;
+    }
+    function externalTooltipHandler(context) {
+        var tooltip = context.tooltip;
+        var el = getOrCreateTooltip(context.chart);
+        if (tooltip.opacity === 0) { el.style.opacity = '0'; return; }
+        var html = '';
+        if (tooltip.title && tooltip.title.length) {
+            html += '<div class="chartjs-tooltip-title">' + tooltip.title[0] + '</div>';
+        }
+        html += '<div class="chartjs-tooltip-body">';
+        (tooltip.body || []).forEach(function(b, i) {
+            var colors = tooltip.labelColors[i];
+            html += '<div class="chartjs-tooltip-item">';
+            html += '<span class="chartjs-tooltip-color" style="background:' + (colors.backgroundColor || '#fff') + '"></span>';
+            html += '<span>' + (b.lines || []).join('') + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+        el.innerHTML = html;
+        el.style.opacity = '1';
+        var pos = context.chart.canvas.getBoundingClientRect();
+        var left = tooltip.caretX;
+        var top = tooltip.caretY;
+        /* Keep within bounds */
+        var elW = el.offsetWidth || 150;
+        if (left + elW > pos.width) left = pos.width - elW - 10;
+        if (left < 0) left = 10;
+        el.style.left = left + 'px';
+        el.style.top = top + 'px';
+    }
+
+    /* ============ Charts (Premium) ============ */
     function renderCharts(data) {
         var months = [];
         for (var i = 1; i <= 12; i++) months.push(String(i).padStart(2,'0'));
         var byM = {};
         months.forEach(function(m) { byM[m] = {w:0, e:0, c:0, t:0}; });
+        /* Detect year from data or selector */
+        var displayYear = document.getElementById('year').value;
+        var isMulti = (document.getElementById('timeRange').value || '').indexOf('last') === 0;
+
         data.forEach(function(r) {
             var m = String(r.month).padStart(2,'0');
             if (byM[m]) { byM[m].w += r.water; byM[m].e += r.electric; byM[m].c += r.common; byM[m].t += r.total; }
         });
         var currM = new Date().getMonth();
-        var selY = parseInt(document.getElementById('year').value);
+        var selY = parseInt(displayYear);
         var curBE = new Date().getFullYear() + 543;
         var maxM = selY > curBE ? 11 : (selY < curBE ? 11 : currM);
-        var active = months.filter(function(m,i) { return i <= maxM || byM[m].t > 0; });
-        var labels  = active.map(function(m) { return THAI_MONTHS_SHORT[parseInt(m)-1]; });
-        var wArr    = active.map(function(m) { return byM[m].w; });
-        var eArr    = active.map(function(m) { return byM[m].e; });
-        var cArr    = active.map(function(m) { return byM[m].c; });
-        var tArr    = active.map(function(m) { return byM[m].t; });
+        /* Filter only months with data (skip empty future months) */
+        var active = months.filter(function(m,i) { return byM[m].t > 0; });
+        if (active.length === 0) {
+            active = months.filter(function(m,i) { return i <= maxM; });
+        }
+
+        var labels, wArr, eArr, cArr, tArr;
+        if (isMulti && data.length > 0) {
+            /* Multi-year: use data's own month+year labels */
+            var uniqueKeys = [];
+            var multiByKey = {};
+            data.forEach(function(r) {
+                var key = (r.year || displayYear) + '-' + String(r.month).padStart(2,'0');
+                if (!multiByKey[key]) { multiByKey[key] = {w:0,e:0,c:0,t:0}; uniqueKeys.push(key); }
+                multiByKey[key].w += r.water; multiByKey[key].e += r.electric;
+                multiByKey[key].c += r.common; multiByKey[key].t += r.total;
+            });
+            uniqueKeys.sort();
+            labels = uniqueKeys.map(function(k) {
+                var parts = k.split('-');
+                return THAI_MONTHS_SHORT[parseInt(parts[1])-1] + ' ' + parts[0];
+            });
+            wArr = uniqueKeys.map(function(k) { return multiByKey[k].w; });
+            eArr = uniqueKeys.map(function(k) { return multiByKey[k].e; });
+            cArr = uniqueKeys.map(function(k) { return multiByKey[k].c; });
+            tArr = uniqueKeys.map(function(k) { return multiByKey[k].t; });
+        } else {
+            labels  = active.map(function(m) { return THAI_MONTHS_SHORT[parseInt(m)-1] + ' ' + displayYear; });
+            wArr    = active.map(function(m) { return byM[m].w; });
+            eArr    = active.map(function(m) { return byM[m].e; });
+            cArr    = active.map(function(m) { return byM[m].c; });
+            tArr    = active.map(function(m) { return byM[m].t; });
+        }
 
         if (chartBar)      chartBar.destroy();
         if (chartDoughnut) chartDoughnut.destroy();
         if (chartLine)     chartLine.destroy();
         var fk = { family: 'Kanit, sans-serif' };
 
-        chartBar = new Chart(document.getElementById('chartBar'), {
+        /* Average for overlay line */
+        var nonZeroT = tArr.filter(function(v) { return v > 0; });
+        var avgT = nonZeroT.length > 0 ? Math.round(nonZeroT.reduce(function(a,b){return a+b;},0) / nonZeroT.length) : 0;
+        var avgArr = tArr.map(function() { return avgT; });
+
+        /* ===== Bar Chart (Premium Gradient) ===== */
+        var barCtx = document.getElementById('chartBar').getContext('2d');
+        var gradW = barCtx.createLinearGradient(0, 0, 0, 300);
+        gradW.addColorStop(0, 'rgba(6,182,212,0.9)'); gradW.addColorStop(1, 'rgba(6,182,212,0.3)');
+        var gradE = barCtx.createLinearGradient(0, 0, 0, 300);
+        gradE.addColorStop(0, 'rgba(245,158,11,0.9)'); gradE.addColorStop(1, 'rgba(245,158,11,0.3)');
+        var gradC = barCtx.createLinearGradient(0, 0, 0, 300);
+        gradC.addColorStop(0, 'rgba(16,185,129,0.9)'); gradC.addColorStop(1, 'rgba(16,185,129,0.3)');
+
+        chartBar = new Chart(barCtx, {
             type: 'bar',
             data: { labels: labels, datasets: [
-                { label:'ค่าน้ำ',      data:wArr, backgroundColor:'rgba(6,182,212,0.82)',  borderRadius:3 },
-                { label:'ค่าไฟ',      data:eArr, backgroundColor:'rgba(245,158,11,0.82)', borderRadius:3 },
-                { label:'ค่าส่วนกลาง', data:cArr, backgroundColor:'rgba(16,185,129,0.82)', borderRadius:3 }
+                { label:'ค่าน้ำ',      data:wArr, backgroundColor:gradW, borderColor:'rgba(6,182,212,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
+                { label:'ค่าไฟ',      data:eArr, backgroundColor:gradE, borderColor:'rgba(245,158,11,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
+                { label:'ค่าส่วนกลาง', data:cArr, backgroundColor:gradC, borderColor:'rgba(16,185,129,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
+                { label:'ค่าเฉลี่ย',  data:avgArr, type:'line', borderColor:'rgba(234,179,8,0.8)', borderWidth:2, borderDash:[6,4], pointRadius:0, pointHoverRadius:4, fill:false, order:0, yAxisID:'y' }
             ]},
-            options: { responsive:true,
-                plugins:{ legend:{ position:'top', labels:{ font:fk, boxWidth:14, padding:10 }},
-                    tooltip:{ callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
+            options: { responsive:true, animation:{ duration:800, easing:'easeOutQuart' },
+                interaction: { intersect: false, mode: 'index' },
+                plugins:{ legend:{ position:'top', labels:{ font:fk, boxWidth:14, padding:10, usePointStyle:true, pointStyle:'rectRounded' }},
+                    tooltip:{ enabled:false, position:'nearest', external:externalTooltipHandler,
+                        callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
                 scales:{
-                    x:{ stacked:true, ticks:{ font:fk }},
-                    y:{ stacked:true, beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}}
+                    x:{ stacked:true, ticks:{ font:fk, maxRotation:45 }, grid:{ display:false }},
+                    y:{ stacked:true, beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}, grid:{ color:'rgba(0,0,0,0.04)' }}
                 }
             }
         });
 
+        /* ===== Doughnut Chart (Premium) ===== */
         var tw = wArr.reduce(function(a,b){return a+b;},0);
         var te = eArr.reduce(function(a,b){return a+b;},0);
         var tc = cArr.reduce(function(a,b){return a+b;},0);
-        chartDoughnut = new Chart(document.getElementById('chartDoughnut'), {
+        var doughnutTotal = tw + te + tc;
+        document.getElementById('doughnutCenterVal').textContent = doughnutTotal > 0 ? doughnutTotal.toLocaleString('th-TH') : '-';
+
+        var dCtx = document.getElementById('chartDoughnut').getContext('2d');
+        var gD1 = dCtx.createLinearGradient(0, 0, 0, 250);
+        gD1.addColorStop(0, '#06b6d4'); gD1.addColorStop(1, '#22d3ee');
+        var gD2 = dCtx.createLinearGradient(0, 0, 0, 250);
+        gD2.addColorStop(0, '#f59e0b'); gD2.addColorStop(1, '#fbbf24');
+        var gD3 = dCtx.createLinearGradient(0, 0, 0, 250);
+        gD3.addColorStop(0, '#10b981'); gD3.addColorStop(1, '#34d399');
+
+        chartDoughnut = new Chart(dCtx, {
             type: 'doughnut',
             data: { labels:['ค่าน้ำ','ค่าไฟ','ค่าส่วนกลาง'],
                 datasets:[{ data:[tw,te,tc],
-                    backgroundColor:['rgba(6,182,212,0.85)','rgba(245,158,11,0.85)','rgba(16,185,129,0.85)'],
-                    borderWidth:2, borderColor:'#fff', hoverOffset:8 }]},
-            options:{ responsive:true, cutout:'62%',
-                plugins:{ legend:{ position:'bottom', labels:{ font:fk, padding:12 }},
-                    tooltip:{ callbacks:{ label:function(ctx){ return ctx.label+': '+ctx.parsed.toLocaleString('th-TH')+' บ.'; }}}}}
+                    backgroundColor:[gD1, gD2, gD3],
+                    borderWidth:3, borderColor:'#fff', hoverOffset:12, spacing:3 }]},
+            options:{ responsive:true, cutout:'65%',
+                animation:{ duration:800, easing:'easeOutQuart', animateRotate:true },
+                plugins:{ legend:{ position:'bottom', labels:{ font:fk, padding:14, usePointStyle:true, pointStyle:'circle' }},
+                    tooltip:{ enabled:false, external:externalTooltipHandler,
+                        callbacks:{ label:function(ctx){
+                            var pct = doughnutTotal > 0 ? ((ctx.parsed / doughnutTotal) * 100).toFixed(1) : 0;
+                            return ctx.label+': '+ctx.parsed.toLocaleString('th-TH')+' บ. ('+pct+'%)';
+                        }}}}}
         });
 
-        chartLine = new Chart(document.getElementById('chartLine'), {
+        /* ===== Line Chart (Premium Gradient Fill) ===== */
+        var lineCtx = document.getElementById('chartLine').getContext('2d');
+        var gradLine = lineCtx.createLinearGradient(0, 0, 0, 200);
+        gradLine.addColorStop(0, 'rgba(99,102,241,0.25)'); gradLine.addColorStop(1, 'rgba(99,102,241,0.01)');
+
+        chartLine = new Chart(lineCtx, {
             type: 'line',
-            data: { labels: labels, datasets:[{
-                label:'ยอดแจ้งชำระรวม', data:tArr,
-                borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.07)',
-                borderWidth:2.5, pointRadius:5, pointBackgroundColor:'#2563eb',
-                tension:0.35, fill:true
-            }]},
-            options:{ responsive:true,
-                plugins:{ legend:{ display:false },
-                    tooltip:{ callbacks:{ label:function(ctx){ return 'ยอด: '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
+            data: { labels: labels, datasets:[
+                { label:'ยอดแจ้งชำระรวม', data:tArr,
+                    borderColor:'#6366f1', backgroundColor:gradLine,
+                    borderWidth:3, pointRadius:5, pointBackgroundColor:'#6366f1',
+                    pointBorderColor:'#fff', pointBorderWidth:2, pointHoverRadius:8,
+                    pointHoverBackgroundColor:'#6366f1', pointHoverBorderColor:'#fff', pointHoverBorderWidth:3,
+                    tension:0.4, fill:true },
+                { label:'ค่าเฉลี่ย', data:avgArr,
+                    borderColor:'rgba(156,163,175,0.6)', borderWidth:1.5, borderDash:[5,5],
+                    pointRadius:0, fill:false }
+            ]},
+            options:{ responsive:true, animation:{ duration:800, easing:'easeOutQuart' },
+                interaction: { intersect: false, mode: 'index' },
+                plugins:{ legend:{ display:true, labels:{ font:fk, usePointStyle:true }},
+                    tooltip:{ enabled:false, external:externalTooltipHandler,
+                        callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
                 scales:{
-                    x:{ ticks:{ font:fk }},
-                    y:{ beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}}
+                    x:{ ticks:{ font:fk, maxRotation:45 }, grid:{ display:false }},
+                    y:{ beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}, grid:{ color:'rgba(0,0,0,0.04)' }}
                 }
             }
         });
+    }
+
+    /* ============ Insight Cards ============ */
+    function renderInsights(data) {
+        var grid = document.getElementById('insightGrid');
+        var withData = data.filter(function(r) { return r.total > 0; });
+        if (withData.length === 0) { grid.style.display = 'none'; return; }
+        grid.style.display = '';
+
+        var sum = 0, maxV = 0, minV = Infinity, maxM = '', minM = '';
+        withData.forEach(function(r) {
+            sum += r.total;
+            if (r.total > maxV) { maxV = r.total; maxM = r.month; }
+            if (r.total < minV) { minV = r.total; minM = r.month; }
+        });
+        var avg = Math.round(sum / withData.length);
+        var displayYear = document.getElementById('year').value;
+
+        document.getElementById('insightAvgVal').textContent = avg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightAvgSub').textContent = 'จาก ' + withData.length + ' เดือนที่มีข้อมูล';
+
+        document.getElementById('insightMaxVal').textContent = maxV.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightMaxSub').textContent = _fmtMonthYear(maxM, displayYear);
+
+        document.getElementById('insightMinVal').textContent = minV.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightMinSub').textContent = _fmtMonthYear(minM, displayYear);
+
+        var save10 = Math.round(sum * 0.1);
+        document.getElementById('insightSaveVal').textContent = save10.toLocaleString('th-TH') + ' บ./ปี';
+        document.getElementById('insightSaveSub').textContent = 'ลดค่าน้ำ+ค่าไฟ 10% = ประหยัด ~' + Math.round(save10/12).toLocaleString('th-TH') + ' บ./เดือน';
+    }
+
+    /* ============ Discipline Section ============ */
+    function renderDiscipline(slipData) {
+        var section = document.getElementById('disciplineSection');
+        /* Need at least some slips to show */
+        var withDue = slipData.filter(function(s) { return s.dueDate && s.submittedAt && s.status === 'approved'; });
+        if (withDue.length === 0) { section.style.display = 'none'; return; }
+        section.style.display = '';
+
+        var onTimeCount = 0;
+        var lateSlips = [];
+        withDue.forEach(function(s) {
+            var due = new Date(s.dueDate + 'T23:59:59');
+            var sub = new Date(s.submittedAt);
+            if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
+                if (sub <= due) { onTimeCount++; }
+                else { lateSlips.push(s); }
+            }
+        });
+        var pct = Math.round((onTimeCount / withDue.length) * 100);
+
+        /* Ring */
+        var arc = document.getElementById('disciplineArc');
+        var circumference = 2 * Math.PI * 42; /* ~264 */
+        var dashLen = (pct / 100) * circumference;
+        arc.setAttribute('stroke-dasharray', dashLen + ' ' + circumference);
+        var ringColor = pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+        arc.setAttribute('stroke', ringColor);
+
+        var pctEl = document.getElementById('disciplinePct');
+        pctEl.textContent = pct + '%';
+        pctEl.style.color = ringColor;
+
+        /* Streak */
+        var streakEl = document.getElementById('disciplineStreak');
+        var sorted = withDue.slice().sort(function(a,b) {
+            return (a.month + (a.year||'')).localeCompare(b.month + (b.year||''));
+        });
+        var streak = 0;
+        for (var i = sorted.length - 1; i >= 0; i--) {
+            var s = sorted[i];
+            var due = new Date(s.dueDate + 'T23:59:59');
+            var sub = new Date(s.submittedAt);
+            if (!isNaN(due.getTime()) && !isNaN(sub.getTime()) && sub <= due) {
+                streak++;
+            } else { break; }
+        }
+        if (streak > 0) {
+            streakEl.innerHTML = '&#128293; ชำระตรงเวลาติดต่อกัน ' + streak + ' เดือน';
+            streakEl.style.color = '#10b981';
+        } else if (lateSlips.length > 0) {
+            var lastLate = lateSlips[lateSlips.length - 1];
+            var lmLabel = _fmtMonthYear(lastLate.month, lastLate.year || document.getElementById('year').value);
+            streakEl.innerHTML = '&#9888;&#65039; ล่าช้าครั้งล่าสุด: ' + _e(lmLabel);
+            streakEl.style.color = '#ef4444';
+        }
+
+        /* Message */
+        var msgEl = document.getElementById('disciplineMsg');
+        if (pct >= 90) {
+            msgEl.textContent = 'ยอดเยี่ยม! วินัยการชำระเงินดีมาก รักษาระดับนี้ไว้นะครับ';
+        } else if (pct >= 70) {
+            msgEl.textContent = 'ดีมาก! แต่ยังมีบางเดือนที่ล่าช้า พยายามชำระให้ตรงเวลาทุกเดือนนะครับ';
+        } else if (pct >= 50) {
+            msgEl.textContent = 'ควรปรับปรุง — การชำระตรงเวลาจะช่วยให้ไม่ต้องกังวลเรื่องยอดค้างชำระครับ';
+        } else {
+            msgEl.textContent = 'ต้องปรับปรุงอย่างเร่งด่วน — กรุณาชำระค่าใช้จ่ายให้ตรงกำหนดเวลาครับ';
+        }
+
+        /* Timeline (12 months) */
+        var timeline = document.getElementById('disciplineTimeline');
+        timeline.innerHTML = '';
+        /* Group by month */
+        var monthMap = {};
+        withDue.forEach(function(s) {
+            var mm = s.month;
+            var due = new Date(s.dueDate + 'T23:59:59');
+            var sub = new Date(s.submittedAt);
+            if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
+                monthMap[mm] = sub <= due ? 'on-time' : 'late';
+            }
+        });
+        for (var m = 1; m <= 12; m++) {
+            var mm = String(m).padStart(2,'0');
+            var cls = monthMap[mm] || 'no-data';
+            var dot = document.createElement('div');
+            dot.className = 'discipline-dot ' + cls;
+            dot.textContent = THAI_MONTHS_SHORT[m-1];
+            dot.title = THAI_MONTHS[m-1] + ': ' + (cls === 'on-time' ? 'ตรงเวลา' : cls === 'late' ? 'ล่าช้า' : 'ไม่มีข้อมูล');
+            timeline.appendChild(dot);
+        }
     }
 
     /* ============ Load Data ============ */
@@ -359,7 +827,7 @@
         allSlipData = [];
         allNotifMap = {};
 
-        /* ล้าง cache เก่าที่อาจเป็นผลว่าง */
+        /* ล้าง cache เก่า */
         try {
             Object.keys(localStorage).forEach(function(k) {
                 if (k.indexOf('apicache_getWaterBills') === 0 ||
@@ -371,8 +839,6 @@
         } catch(e) {}
 
         try {
-            /* ดึง water/electric ทั้งปี (ทุกบ้าน) แล้วกรอง client-side
-               เพื่อหลีกเลี่ยง houseNumber ไม่ตรงที่ DB level */
             var res = await Promise.all([
                 callBackend('getWaterBills',    { year: year }),
                 callBackend('getElectricBills', { year: year }),
@@ -381,7 +847,6 @@
                 callBackend('getSlipSubmissions',     { houseNumber: hn })
             ]);
 
-            /* -- Normalize house number สำหรับเปรียบเทียบ -- */
             var hnNorm = hn.replace(/\s+/g, '').toLowerCase();
             function matchHN(dbHN) {
                 return (dbHN || '').replace(/\s+/g, '').toLowerCase() === hnNorm;
@@ -415,7 +880,6 @@
             }
             console.log('[payment-history] electricMap:', JSON.stringify(eMap));
 
-            /* -- Debug: แสดง house_numbers ทั้งหมดที่มีใน DB -- */
             if (Object.keys(wMap).length === 0 && Object.keys(eMap).length === 0) {
                 var dbHouses = {};
                 (res[0] && res[0].data || []).forEach(function(w) { dbHouses[w.house_number] = 1; });
@@ -431,7 +895,7 @@
                 commonFee = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
             }
 
-            /* -- Notifications map (latest per month) -- */
+            /* -- Notifications map -- */
             if (res[3] && res[3].success) {
                 (res[3].data || []).forEach(function(n) {
                     var p = n.period || '';
@@ -443,7 +907,6 @@
                     }
                 });
             }
-            /* -- ถ้า notification ว่าง ลองดึงโดยไม่กรอง houseNumber -- */
             if (Object.keys(allNotifMap).length === 0) {
                 try {
                     var notifAll = await callBackend('getNotificationHistory', { limit: 200 });
@@ -475,7 +938,7 @@
                 var totalVal = waterVal + electricVal + commonVal;
                 if (totalVal > 0 || notif.sent_at) {
                     allBillData.push({
-                        month: mm, water: waterVal, electric: electricVal,
+                        month: mm, year: year, water: waterVal, electric: electricVal,
                         common: commonVal, total: totalVal,
                         notifiedAt: notif.sent_at || '', dueDate: notif.due_date || ''
                     });
@@ -490,7 +953,7 @@
                     var mm = (s.period || '').split('-')[1] || '';
                     var notif = allNotifMap[mm] || {};
                     return {
-                        month: mm, period: s.period || '',
+                        month: mm, year: year, period: s.period || '',
                         submittedAt: s.submitted_at || '',
                         amount: parseFloat(s.amount) || 0,
                         status: s.status || 'pending',
@@ -504,7 +967,6 @@
                     return (a.submittedAt || '').localeCompare(b.submittedAt || '');
                 });
             }
-            /* -- ถ้า slip ว่าง ลองดึงโดยไม่กรอง houseNumber -- */
             if (allSlipData.length === 0) {
                 try {
                     var slipAll = await callBackend('getSlipSubmissions', {});
@@ -515,7 +977,7 @@
                             var mm = (s.period || '').split('-')[1] || '';
                             var notif = allNotifMap[mm] || {};
                             return {
-                                month: mm, period: s.period || '',
+                                month: mm, year: year, period: s.period || '',
                                 submittedAt: s.submitted_at || '',
                                 amount: parseFloat(s.amount) || 0,
                                 status: s.status || 'pending',
@@ -537,14 +999,138 @@
         renderAll(document.getElementById('month').value);
     }
 
+    /* ============ Load Multi-Month (last3/6/12) ============ */
+    async function loadDataMultiMonth(range) {
+        var n = range === 'last3' ? 3 : range === 'last6' ? 6 : 12;
+        var now = new Date();
+        var curBE = now.getFullYear() + 543;
+        var curM = now.getMonth() + 1; /* 1-12 */
+
+        /* Calculate which year-months we need */
+        var periods = [];
+        for (var i = 0; i < n; i++) {
+            var m = curM - i;
+            var y = curBE;
+            while (m <= 0) { m += 12; y--; }
+            periods.push({ year: String(y), month: String(m).padStart(2,'0') });
+        }
+        periods.reverse();
+
+        /* Determine unique years needed */
+        var yearsNeeded = {};
+        periods.forEach(function(p) { yearsNeeded[p.year] = true; });
+
+        /* For now, load from the already-loaded year if it covers all.
+           Otherwise re-load for each year. Simplified: just filter from current loaded data
+           plus load additional year if needed */
+        var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        var hn = (user.houseNumber || user.house_number || '').trim();
+        var savedHN = localStorage.getItem('_selectedHouse') || '';
+        if (!hn && savedHN) hn = savedHN;
+
+        if (!hn) return;
+
+        var hnNorm = hn.replace(/\s+/g, '').toLowerCase();
+        function matchHN(dbHN) { return (dbHN || '').replace(/\s+/g, '').toLowerCase() === hnNorm; }
+
+        /* Load all years needed */
+        var allBill = [], allSlip = [];
+        var yearKeys = Object.keys(yearsNeeded);
+
+        for (var yi = 0; yi < yearKeys.length; yi++) {
+            var yr = yearKeys[yi];
+            try {
+                var res = await Promise.all([
+                    callBackend('getWaterBills',    { year: yr }),
+                    callBackend('getElectricBills', { year: yr }),
+                    callBackend('getSettings'),
+                    callBackend('getSlipSubmissions', { houseNumber: hn })
+                ]);
+
+                var wMap = {}, eMap = {};
+                if (res[0] && res[0].success) {
+                    (res[0].data || []).forEach(function(w) {
+                        if (!matchHN(w.house_number)) return;
+                        var p = w.period || '';
+                        if (p.substring(0,4) === yr) {
+                            var mm = p.split('-')[1] || '';
+                            wMap[mm] = (wMap[mm] || 0) + (parseFloat(w.amount) || 0);
+                        }
+                    });
+                }
+                if (res[1] && res[1].success) {
+                    (res[1].data || []).forEach(function(e) {
+                        if (!matchHN(e.house_number)) return;
+                        var p = e.period || '';
+                        if (p.substring(0,4) === yr) {
+                            var mm = p.split('-')[1] || '';
+                            eMap[mm] = (eMap[mm] || 0) + (parseFloat(e.bill_amount) || parseFloat(e.amount) || 0);
+                        }
+                    });
+                }
+                var commonFee = 0;
+                if (res[2] && res[2].success && res[2].data) {
+                    var sett = res[2].data;
+                    var isFlat = hn.toLowerCase().indexOf('\u0e41\u0e1f\u0e25\u0e15') >= 0 || hn.toLowerCase().indexOf('flat') >= 0;
+                    commonFee = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
+                }
+
+                /* Bills for this year */
+                periods.filter(function(p) { return p.year === yr; }).forEach(function(p) {
+                    var mm = p.month;
+                    var w = wMap[mm] || 0;
+                    var e = eMap[mm] || 0;
+                    var commonVal = (w > 0 || e > 0) ? commonFee : 0;
+                    var totalVal = w + e + commonVal;
+                    if (totalVal > 0) {
+                        allBill.push({
+                            month: mm, year: yr, water: w, electric: e,
+                            common: commonVal, total: totalVal,
+                            notifiedAt: '', dueDate: ''
+                        });
+                    }
+                });
+
+                /* Slips for this year */
+                if (res[3] && res[3].success) {
+                    (res[3].data || []).filter(function(s) {
+                        return (s.period || '').substring(0,4) === yr;
+                    }).forEach(function(s) {
+                        var mm = (s.period || '').split('-')[1] || '';
+                        var inPeriods = periods.some(function(p) { return p.year === yr && p.month === mm; });
+                        if (inPeriods) {
+                            allSlip.push({
+                                month: mm, year: yr, period: s.period || '',
+                                submittedAt: s.submitted_at || '', amount: parseFloat(s.amount) || 0,
+                                status: s.status || 'pending', reviewedAt: s.reviewed_at || '',
+                                notifiedAt: '', dueDate: ''
+                            });
+                        }
+                    });
+                }
+            } catch(e) { console.error('loadDataMultiMonth year ' + yr + ':', e); }
+        }
+
+        allBillData = allBill;
+        allSlipData = allSlip.sort(function(a,b) {
+            var ka = (a.year||'') + a.month, kb = (b.year||'') + b.month;
+            if (ka !== kb) return ka.localeCompare(kb);
+            return (a.submittedAt||'').localeCompare(b.submittedAt||'');
+        });
+
+        renderAll('');
+    }
+
     /* ============ Render All ============ */
     function renderAll(filterMonth) {
         var bf = filterMonth ? allBillData.filter(function(r){ return r.month === filterMonth; }) : allBillData;
         var sf = filterMonth ? allSlipData.filter(function(r){ return r.month === filterMonth; }) : allSlipData;
-        updateStats(bf);
+        updateStats(bf, sf);
         renderBillTable(bf);
         renderSlipTable(sf);
         renderCharts(allBillData);
+        renderInsights(allBillData);
+        renderDiscipline(allSlipData);
     }
 
     /* ============ Bill Table ============ */
@@ -556,7 +1142,7 @@
             return;
         }
         data.forEach(function(r) {
-            var mn = THAI_MONTHS[parseInt(r.month)-1] || _e(r.month);
+            var mn = _fmtMonthYear(r.month, r.year || document.getElementById('year').value);
             var tr = document.createElement('tr');
             tr.innerHTML =
                 '<td>'+_e(mn)+'</td>'+
@@ -579,7 +1165,7 @@
             return;
         }
         data.forEach(function(r) {
-            var mn = THAI_MONTHS[parseInt(r.month)-1] || _e(r.month);
+            var mn = _fmtMonthYear(r.month, r.year || document.getElementById('year').value);
             /* Status badge */
             var stTxt = '', stCls = '';
             if      (r.status === 'approved') { stTxt = '\u2705 อนุมัติ';  stCls = 'badge-approved'; }
@@ -594,7 +1180,11 @@
                     if (sub <= due) { tmTxt = '\u2705 ตรงเวลา'; tmCls = 'badge-ontime'; }
                     else {
                         var diff = Math.ceil((sub - due) / 86400000);
-                        tmTxt = '\u26A0\uFE0F ช้า ' + diff + ' วัน'; tmCls = 'badge-late';
+                        if (diff <= 7) {
+                            tmTxt = '\u26A0\uFE0F ช้า ' + diff + ' วัน'; tmCls = 'badge-late';
+                        } else {
+                            tmTxt = '\u274C ช้า ' + diff + ' วัน'; tmCls = 'badge-late-severe';
+                        }
                     }
                 }
             }
@@ -611,11 +1201,41 @@
         });
     }
 
-    /* ============ Filter ============ */
+    /* ============ Export CSV ============ */
+    function exportCSV() {
+        var BOM = '\uFEFF';
+        var lines = [];
+        var year = document.getElementById('year').value;
+        /* Header */
+        lines.push('เดือน,ค่าน้ำ,ค่าไฟ,ค่าส่วนกลาง,ยอดรวม,วันแจ้งยอด,กำหนดชำระ');
+        allBillData.forEach(function(r) {
+            var mn = _fmtMonthYear(r.month, r.year || year);
+            lines.push([mn, r.water, r.electric, r.common, r.total,
+                r.notifiedAt || '-', r.dueDate || '-'].join(','));
+        });
+        lines.push('');
+        lines.push('เดือน,วันแจ้งยอด,กำหนดชำระ,วันส่งสลิป,จำนวนเงิน,สถานะ');
+        allSlipData.forEach(function(r) {
+            var mn = _fmtMonthYear(r.month, r.year || year);
+            lines.push([mn, r.notifiedAt || '-', r.dueDate || '-',
+                r.submittedAt || '-', r.amount, r.status].join(','));
+        });
+
+        var csv = BOM + lines.join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'payment-history-' + year + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    /* ============ Filter (legacy compat) ============ */
     async function filterData() {
-        var selY = document.getElementById('year').value;
-        if (selY !== _lastLoadedYear) { await loadData(); return; }
-        renderAll(document.getElementById('month').value);
+        await onFilterChange();
     }
 
     /* ============ House Change (Admin) ============ */
@@ -634,6 +1254,9 @@
         await checkSession(true);
         initYearSelector();
         document.getElementById('month').value = '';
+        /* Set default time range to 'year' and hide month selector */
+        document.getElementById('timeRange').value = 'year';
+        document.getElementById('monthWrap').style.display = 'none';
         await loadData();
     };
 
@@ -645,12 +1268,12 @@
     }
     </script>
 
-    <script src="supabase/config.js?v=20260318F"></script>
-    <script src="supabase/supabase.min.js?v=20260318F"></script>
-    <script src="ppk-api.js?v=20260318F"></script>
-    <script src="ppk-app.js?v=20260318F"></script>
-    <script src="ppk-utils.js?v=20260318F"></script>
-    <script src="ppk-nav.js?v=20260318F"></script>
-    <script src="ppk-pwa.js?v=20260318F"></script>
+    <script src="supabase/config.js?v=20260318G"></script>
+    <script src="supabase/supabase.min.js?v=20260318G"></script>
+    <script src="ppk-api.js?v=20260318G"></script>
+    <script src="ppk-app.js?v=20260318G"></script>
+    <script src="ppk-utils.js?v=20260318G"></script>
+    <script src="ppk-nav.js?v=20260318G"></script>
+    <script src="ppk-pwa.js?v=20260318G"></script>
 </body>
 </html>
