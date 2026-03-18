@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318D">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318E">
     <style>
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -294,7 +294,6 @@
         var year = document.getElementById('year').value;
         var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
         var hn = (user.houseNumber || user.house_number || '').trim();
-        var isAdmin = (user.role === 'admin' || user.role === 'head');
         _lastLoadedYear = year;
 
         document.getElementById('bill-table-body').innerHTML =
@@ -320,8 +319,8 @@
             } catch(e) { console.warn('refresh user:', e); }
         }
 
-        /* -- Admin/Head: ถ้า hn ยังว่าง → แสดง dropdown เลือกบ้าน -- */
-        if (!hn && isAdmin) {
+        /* -- ถ้า hn ยังว่าง → แสดง dropdown เลือกบ้าน (ทุก role) -- */
+        if (!hn) {
             var hSel = document.getElementById('houseSelect');
             if (hSel.options.length <= 1) {
                 try {
@@ -338,8 +337,7 @@
                 } catch(e) { console.warn('getHousing:', e); }
             }
             document.getElementById('houseSelectWrap').style.display = '';
-            /* ใช้ค่าจาก dropdown หรือ saved */
-            var savedHN = localStorage.getItem('_adminSelectedHouse') || '';
+            var savedHN = localStorage.getItem('_selectedHouse') || '';
             if (savedHN) {
                 hSel.value = savedHN;
                 hn = savedHN;
@@ -623,7 +621,7 @@
     /* ============ House Change (Admin) ============ */
     function onHouseChange() {
         var v = document.getElementById('houseSelect').value;
-        localStorage.setItem('_adminSelectedHouse', v);
+        localStorage.setItem('_selectedHouse', v);
         loadData();
     }
 
@@ -647,12 +645,12 @@
     }
     </script>
 
-    <script src="supabase/config.js?v=20260318D"></script>
-    <script src="supabase/supabase.min.js?v=20260318D"></script>
-    <script src="ppk-api.js?v=20260318D"></script>
-    <script src="ppk-app.js?v=20260318D"></script>
-    <script src="ppk-utils.js?v=20260318D"></script>
-    <script src="ppk-nav.js?v=20260318D"></script>
-    <script src="ppk-pwa.js?v=20260318D"></script>
+    <script src="supabase/config.js?v=20260318E"></script>
+    <script src="supabase/supabase.min.js?v=20260318E"></script>
+    <script src="ppk-api.js?v=20260318E"></script>
+    <script src="ppk-app.js?v=20260318E"></script>
+    <script src="ppk-utils.js?v=20260318E"></script>
+    <script src="ppk-nav.js?v=20260318E"></script>
+    <script src="ppk-pwa.js?v=20260318E"></script>
 </body>
 </html>
