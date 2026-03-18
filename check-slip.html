@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตรวจสอบสลิป | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
         <style>
@@ -92,6 +94,8 @@
 
     .slip-thumb{width:110px;height:90px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:transform .15s,box-shadow .15s;display:block;margin:0 auto;}
     .slip-thumb:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,.3);border-color:var(--primary);}
+    .slip-link-btn{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:var(--surface);border:2px solid var(--primary);color:var(--primary);font-size:.85rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s,color .15s;}
+    .slip-link-btn:hover{background:var(--primary);color:#fff;}
     .slip-multi{display:flex;flex-direction:column;gap:4px;align-items:center;}
     .no-slip{color:var(--muted);font-size:.85rem;}
 
@@ -676,7 +680,7 @@
         let slipHtml = '<span class="no-slip">-</span>';
         if(unit.slipImages && unit.slipImages.length > 0){
           var allThumb = unit.slipImages.map(function(src, i){
-            return '<img src="' + src + '" class="slip-thumb" onclick="quickView(\'' + type + '\',' + index + ',' + i + ')" alt="สลิป" loading="lazy" />';
+            return '<img src="' + src + '" class="slip-thumb" onclick="quickView(\'' + type + '\',' + index + ',' + i + ')" alt="สลิป" loading="lazy" onerror="this.outerHTML=\'<a href=&quot;' + src.replace(/'/g,'&apos;') + '&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot; class=&quot;slip-link-btn&quot;>🔗 ดูสลิป</a>\'" />';
           }).join('');
           slipHtml = unit.slipImages.length > 1
             ? '<div class="slip-multi">' + allThumb + '<span style="font-size:.75rem;color:var(--muted);">(' + unit.slipImages.length + ' รูป)</span></div>'
@@ -825,7 +829,19 @@
     }
 
     function renderLbxImg(){
-      document.getElementById('lbxImg').src = lbxImages[lbxIdx];
+      var img = document.getElementById('lbxImg');
+      var lbxLink = document.getElementById('lbxLink');
+      img.style.display = ''; img.src = lbxImages[lbxIdx];
+      if(lbxLink) lbxLink.remove();
+      img.onerror = function(){
+        this.style.display = 'none';
+        var a = document.createElement('a');
+        a.href = lbxImages[lbxIdx]; a.target = '_blank'; a.rel = 'noopener';
+        a.id = 'lbxLink'; a.className = 'slip-link-btn';
+        a.style.cssText = 'font-size:1.2rem;padding:16px 28px;margin:40px auto;display:inline-flex;';
+        a.textContent = '🔗 เปิดดูสลิปในแท็บใหม่';
+        this.parentNode.insertBefore(a, this.nextSibling);
+      };
       const nav = document.getElementById('lbxNav');
       nav.innerHTML = '';
       if(lbxImages.length > 1){

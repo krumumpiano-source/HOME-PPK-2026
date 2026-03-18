@@ -1480,7 +1480,7 @@ async function _routeAction(action, data) {
                 }};
             } else {
                 var houseNumber = sessHouseNumber;
-                var period = now2.getFullYear() + '-' + String(now2.getMonth() + 1).padStart(2, '0');
+                var period = (now2.getFullYear() + 543) + '-' + String(now2.getMonth() + 1).padStart(2, '0');
                 var outRows = [], slipRows = [];
                 if (houseNumber) {
                     [outRows, slipRows] = await Promise.all([
