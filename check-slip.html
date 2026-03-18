@@ -200,6 +200,11 @@
       </div>
     </div>
 
+    <!-- แจ้งเตือนเมื่อไม่มีบิล -->
+    <div id="no-bill-warning" style="display:none;background:#fef2f2;border:2px solid #dc2626;border-radius:12px;padding:1rem 1.2rem;margin:0 1rem 1rem;color:#991b1b;font-weight:600;">
+      ⚠️ เดือนที่เลือกยังไม่ได้บันทึกค่าน้ำค่าไฟ — สลิปที่แสดงด้านล่างไม่มียอดแจ้งเปรียบเทียบ
+    </div>
+
     <!-- ตารางบ้านพัก -->
     <div class="section" id="section-houses">
       <div class="section-head">
@@ -365,6 +370,7 @@
     let currentUnit = null;
     let currentUserData = null;
     let cachedAdminSettings = {};
+    let _noBillData = false;
 
     const THAI_MONTHS = [
       'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -398,6 +404,8 @@
           // ดึงยอดแจ้งจาก BillSummaryAll
           const billResult = await cachedCall('getBillSummaryAll', { period }, 300000);
           const billData = (billResult && billResult.success) ? (billResult.data || []) : [];
+          _noBillData = (billData.length === 0);
+          document.getElementById('no-bill-warning').style.display = _noBillData ? '' : 'none';
 
           // ดึงสลิปที่ส่งมา
           const slipResult = await callBackendGet('getSlipSubmissions', { period });
@@ -871,6 +879,12 @@
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
+
+      if(_noBillData){
+        if(!await ppkConfirm('⚠️ เดือนนี้ยังไม่ได้บันทึกค่าน้ำค่าไฟ\n\nไม่มียอดแจ้งเปรียบเทียบกับยอดที่ชำระ\nคุณแน่ใจหรือไม่ว่าต้องการอนุมัติ?')){
+          return;
+        }
+      }
       
       if(!await ppkConfirm(`ยืนยันอนุมัติการชำระเงินของ ${unit.unitNumber} (${unit.name})?\nยอดที่ชำระ: ${formatMoney(unit.paidAmount)} บาท`)){
         return;

@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>อัปโหลดสลิป | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
     <style>
@@ -302,16 +304,21 @@
                     }
                 } catch (e) { console.error('getBillSummaryAll error:', e); }
 
-            // ถ้า Backend ไม่มีข้อมูล → แจ้งผู้ใช้แทนการอ่าน localStorage ที่อาจเป็นข้อมูลเก่า
+            // ถ้า Backend ไม่มีข้อมูล → บล็อกการส่งสลิป
             if (totalAmount === 0) {
-                document.getElementById('display-amount').textContent = 'ยังไม่มีข้อมูลบิลเดือนนี้';
+                document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;font-weight:600;">⚠️ ยังไม่มีข้อมูลบิลเดือนนี้</span><br><span style="font-size:0.85rem;color:#666;">กรุณารอแจ้งยอดก่อนจึงจะส่งสลิปได้</span>';
                 document.getElementById('paid-amount').value = '';
+                document.getElementById('paid-amount').disabled = true;
+                document.querySelector('.submit-btn').disabled = true;
+                document.querySelector('.submit-btn').style.opacity = '0.5';
+                document.querySelector('.submit-btn').textContent = '⛔ ยังไม่เปิดรับชำระเดือนนี้';
                 window.billingInfo = {
                     unitNumber: unitNumber,
                     periodKey: periodKey,
                     period: toApiPeriod(periodKey),
                     notifiedAmount: 0,
-                    residentName: residentName
+                    residentName: residentName,
+                    noBillData: true
                 };
                 return;
             }
@@ -355,6 +362,7 @@
 
             if(files.length === 0){ ppkAlert('กรุณาแนบรูปสลิปอย่างน้อย 1 รูป'); return; }
             if(paidAmount <= 0){ ppkAlert('กรุณากรอกจำนวนเงินที่ชำระ'); return; }
+            if(window.billingInfo && window.billingInfo.noBillData){ ppkAlert('⛔ ยังไม่สามารถส่งสลิปได้\n\nเดือนนี้ยังไม่ได้บันทึกค่าน้ำค่าไฟ\nกรุณารอแจ้งยอดก่อน'); return; }
             // ตรวจขนาดไฟล์ (สูงสุด 5MB ต่อรูป)
             for (var fi = 0; fi < files.length; fi++) {
                 if (files[fi].size > 5 * 1024 * 1024) { ppkAlert('ไฟล์ ' + files[fi].name + ' มีขนาดเกิน 5MB'); return; }
