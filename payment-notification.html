@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แจ้งเตือนการชำระ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318G">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318H">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
@@ -242,9 +242,18 @@
         }
 
         // === ตั้งค่าวันที่เริ่มต้น ===
+        function getNotifyStorageKey() {
+            var m = document.getElementById('bill_month').value;
+            var y = document.getElementById('bill_year').value;
+            return '_notifyDate_' + y + '-' + m;
+        }
         function initDates() {
-            var today = new Date();
-            document.getElementById('notify_date').value = today.toISOString().split('T')[0];
+            var saved = localStorage.getItem(getNotifyStorageKey());
+            if (saved) {
+                document.getElementById('notify_date').value = saved;
+            } else {
+                document.getElementById('notify_date').value = new Date().toISOString().split('T')[0];
+            }
             updateFooterFromInput();
         }
 
@@ -279,8 +288,11 @@
             document.getElementById('dueDateDisplay').textContent = 'กำหนดชำระภายในวันที่ ' + dueText;
         }
 
-        // เมื่อเปลี่ยนวันที่แจ้งยอด → คำนวณกำหนดชำระใหม่
-        document.getElementById('notify_date').addEventListener('change', updateFooterFromInput);
+        // เมื่อเปลี่ยนวันที่แจ้งยอด → คำนวณกำหนดชำระใหม่ + บันทึก
+        document.getElementById('notify_date').addEventListener('change', function() {
+            localStorage.setItem(getNotifyStorageKey(), this.value);
+            updateFooterFromInput();
+        });
 
         async function updateFooterNotes() {
             updateFooterFromInput();
@@ -292,8 +304,8 @@
             document.getElementById('houseTableTitle').textContent = '🏠 บ้านพัก ประจำเดือน'+THAI_MONTHS[mi]+' พ.ศ. '+y;
             document.getElementById('flatTableTitle').textContent = '🏢 แฟลต ประจำเดือน'+THAI_MONTHS[mi]+' พ.ศ. '+y;
         }
-        document.getElementById('bill_month').addEventListener('change',function(){ updateTableTitles(); loadBillData(); });
-        document.getElementById('bill_year').addEventListener('change',function(){ updateTableTitles(); loadBillData(); });
+        document.getElementById('bill_month').addEventListener('change',function(){ updateTableTitles(); initDates(); loadBillData(); });
+        document.getElementById('bill_year').addEventListener('change',function(){ updateTableTitles(); initDates(); loadBillData(); });
 
         // === แปลงเลขมิเตอร์เป็น 4 หลักท้าย ===
         function last4(num) {
@@ -583,12 +595,12 @@
             window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260318G"></script>
-    <script src="supabase/supabase.min.js?v=20260318G"></script>
-    <script src="ppk-api.js?v=20260318G"></script>
-    <script src="ppk-app.js?v=20260318G"></script>
-    <script src="ppk-utils.js?v=20260318G"></script>
-    <script src="ppk-nav.js?v=20260318G"></script>
-    <script src="ppk-pwa.js?v=20260318G"></script>
+    <script src="supabase/config.js?v=20260318H"></script>
+    <script src="supabase/supabase.min.js?v=20260318H"></script>
+    <script src="ppk-api.js?v=20260318H"></script>
+    <script src="ppk-app.js?v=20260318H"></script>
+    <script src="ppk-utils.js?v=20260318H"></script>
+    <script src="ppk-nav.js?v=20260318H"></script>
+    <script src="ppk-pwa.js?v=20260318H"></script>
 </body>
 </html>
