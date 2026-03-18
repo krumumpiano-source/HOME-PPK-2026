@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318C">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318D">
     <style>
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         @media (max-width: 700px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -75,6 +75,10 @@
                 </select>
                 <label for="year">เลือกปี:</label>
                 <select id="year"></select>
+                <span id="houseSelectWrap" style="display:none;">
+                    <label for="houseSelect">บ้านพัก:</label>
+                    <select id="houseSelect" onchange="onHouseChange()"></select>
+                </span>
                 <button class="ppk-btn ppk-btn-primary ppk-btn-sm" onclick="filterData()">กรองข้อมูล</button>
             </div>
 
@@ -290,6 +294,7 @@
         var year = document.getElementById('year').value;
         var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
         var hn = (user.houseNumber || user.house_number || '').trim();
+        var isAdmin = (user.role === 'admin' || user.role === 'head');
         _lastLoadedYear = year;
 
         document.getElementById('bill-table-body').innerHTML =
@@ -313,6 +318,34 @@
                     }
                 }
             } catch(e) { console.warn('refresh user:', e); }
+        }
+
+        /* -- Admin/Head: ถ้า hn ยังว่าง → แสดง dropdown เลือกบ้าน -- */
+        if (!hn && isAdmin) {
+            var hSel = document.getElementById('houseSelect');
+            if (hSel.options.length <= 1) {
+                try {
+                    var hRes = await callBackend('getHousing');
+                    if (hRes && hRes.success && hRes.data) {
+                        hSel.innerHTML = '';
+                        hRes.data.forEach(function(h) {
+                            var opt = document.createElement('option');
+                            opt.value = h.house_number || h.number;
+                            opt.textContent = h.house_number || h.number;
+                            hSel.appendChild(opt);
+                        });
+                    }
+                } catch(e) { console.warn('getHousing:', e); }
+            }
+            document.getElementById('houseSelectWrap').style.display = '';
+            /* ใช้ค่าจาก dropdown หรือ saved */
+            var savedHN = localStorage.getItem('_adminSelectedHouse') || '';
+            if (savedHN) {
+                hSel.value = savedHN;
+                hn = savedHN;
+            } else if (hSel.value) {
+                hn = hSel.value;
+            }
         }
 
         if (!hn) {
@@ -587,6 +620,13 @@
         renderAll(document.getElementById('month').value);
     }
 
+    /* ============ House Change (Admin) ============ */
+    function onHouseChange() {
+        var v = document.getElementById('houseSelect').value;
+        localStorage.setItem('_adminSelectedHouse', v);
+        loadData();
+    }
+
     /* ============ Sidebar ============ */
     window._ppkNavPage = 'payment-history';
     if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'payment-history'); }
@@ -607,12 +647,12 @@
     }
     </script>
 
-    <script src="supabase/config.js?v=20260318C"></script>
-    <script src="supabase/supabase.min.js?v=20260318C"></script>
-    <script src="ppk-api.js?v=20260318C"></script>
-    <script src="ppk-app.js?v=20260318C"></script>
-    <script src="ppk-utils.js?v=20260318C"></script>
-    <script src="ppk-nav.js?v=20260318C"></script>
-    <script src="ppk-pwa.js?v=20260318C"></script>
+    <script src="supabase/config.js?v=20260318D"></script>
+    <script src="supabase/supabase.min.js?v=20260318D"></script>
+    <script src="ppk-api.js?v=20260318D"></script>
+    <script src="ppk-app.js?v=20260318D"></script>
+    <script src="ppk-utils.js?v=20260318D"></script>
+    <script src="ppk-nav.js?v=20260318D"></script>
+    <script src="ppk-pwa.js?v=20260318D"></script>
 </body>
 </html>
