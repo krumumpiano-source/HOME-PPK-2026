@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แจ้งเตือนการชำระ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260318F">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318G">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
@@ -119,17 +119,16 @@
             </div>
         </div>
 
-        <!-- วันที่แจ้งยอด + กำหนดชำระ -->
+        <!-- วันที่แจ้งยอด -->
         <div class="section">
-            <div class="section-title">📅 วันที่แจ้งยอด / กำหนดชำระ</div>
+            <div class="section-title">📅 วันที่แจ้งยอด</div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="notify_date">วันที่แจ้งยอด</label>
                     <input type="date" id="notify_date" style="width:100%;padding:0.7rem 1rem;border:1px solid #6ee7b7;border-radius:8px;font-size:1rem;font-family:'Kanit',sans-serif;background:#fff;">
                 </div>
-                <div class="form-group">
-                    <label for="due_date">กำหนดชำระภายในวันที่</label>
-                    <input type="date" id="due_date" style="width:100%;padding:0.7rem 1rem;border:1px solid #6ee7b7;border-radius:8px;font-size:1rem;font-family:'Kanit',sans-serif;background:#fff;">
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <div id="dueDateDisplay" style="padding:0.7rem 1rem;background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;font-size:1rem;font-family:'Kanit',sans-serif;color:#065f46;width:100%;">กำหนดชำระ: กำลังคำนวณ...</div>
                 </div>
             </div>
         </div>
@@ -204,49 +203,39 @@
         initYearSelector();
         document.getElementById('bill_month').value = String(now.getMonth()+1).padStart(2,'0');
 
-        // === คำนวณวันกำหนดชำระ (วันทำการ) ===
-        async function calculateDueDate() {
+        // === ดึงจำนวนวันทำการกำหนดชำระจาก settings ===
+        var _dueDaysCache = null;
+        async function getAdminDueDays() {
+            if (_dueDaysCache !== null) return _dueDaysCache;
             try {
                 var result = await cachedCall('getDueDate', {}, 600000);
-                if (result && result.success && result.dueDate) {
-                    return result.dueDate;
+                if (result && result.success && result.data && result.data.due_date) {
+                    _dueDaysCache = parseInt(result.data.due_date) || 15;
+                    return _dueDaysCache;
                 }
             } catch (e) { console.warn('getDueDate from backend failed:', e); }
-            // fallback คำนวณเอง
-            var adminDueDays = parseInt(localStorage.getItem('due_date_working_days')) || 15;
-            var today = new Date();
+            _dueDaysCache = parseInt(localStorage.getItem('due_date_working_days')) || 15;
+            return _dueDaysCache;
+        }
+
+        // === คำนวณวันกำหนดชำระ (วันทำการ) จากวันที่แจ้งยอด ===
+        function calculateDueDateFromNotify(notifyDateStr, dueDays) {
+            var d = new Date(notifyDateStr + 'T00:00:00');
+            if (isNaN(d.getTime())) return null;
             var count = 0;
-            var d = new Date(today);
-            while (count < adminDueDays) {
+            while (count < dueDays) {
                 d.setDate(d.getDate() + 1);
                 var day = d.getDay();
                 if (day !== 0 && day !== 6) { count++; }
             }
-            var dd = d.getDate();
-            var mm = THAI_MONTHS[d.getMonth()];
-            var yy = d.getFullYear() + 543;
-            return dd + ' ' + mm + ' ' + yy;
+            return d;
         }
 
         // === ตั้งค่าวันที่เริ่มต้น ===
         function initDates() {
             var today = new Date();
             document.getElementById('notify_date').value = today.toISOString().split('T')[0];
-            // กำหนดชำระ: ใช้ calculateDueDate แล้วแปลงกลับเป็น date input
-            calculateDueDate().then(function(dueTxt) {
-                // dueTxt อาจเป็น "20 มีนาคม 2569" — แปลงเป็น ISO date
-                try {
-                    var parts = dueTxt.split(' ');
-                    var dd = parseInt(parts[0]);
-                    var mmIdx = THAI_MONTHS.indexOf(parts[1]);
-                    var yy = parseInt(parts[2]) - 543;
-                    if (dd && mmIdx >= 0 && yy) {
-                        var iso = yy + '-' + String(mmIdx + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
-                        document.getElementById('due_date').value = iso;
-                    }
-                } catch (e) {}
-                updateFooterFromInput();
-            });
+            updateFooterFromInput();
         }
 
         function formatThaiDate(isoDate) {
@@ -260,16 +249,28 @@
             } catch (e) { return '...'; }
         }
 
-        function updateFooterFromInput() {
-            var dueVal = document.getElementById('due_date').value;
-            var dueText = dueVal ? formatThaiDate(dueVal) : '...';
+        // คำนวณ ISO date string ของกำหนดชำระจาก notify_date
+        async function getComputedDueDateISO() {
+            var notifyVal = document.getElementById('notify_date').value;
+            if (!notifyVal) return null;
+            var dueDays = await getAdminDueDays();
+            var dueDate = calculateDueDateFromNotify(notifyVal, dueDays);
+            if (!dueDate) return null;
+            return dueDate.getFullYear() + '-' + String(dueDate.getMonth()+1).padStart(2,'0') + '-' + String(dueDate.getDate()).padStart(2,'0');
+        }
+
+        async function updateFooterFromInput() {
+            var dueISO = await getComputedDueDateISO();
+            var dueText = dueISO ? formatThaiDate(dueISO) : '...';
             var footerText = 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม | กรุณาชำระภายในวันที่ ' + dueText;
             document.getElementById('houseFooterNote').textContent = footerText;
             document.getElementById('flatFooterNote').textContent = footerText;
+            // แสดงผลกำหนดชำระในช่อง display
+            document.getElementById('dueDateDisplay').textContent = 'กำหนดชำระภายในวันที่ ' + dueText;
         }
 
-        // เมื่อเปลี่ยน due_date → อัพเดท footer ทันที
-        document.getElementById('due_date').addEventListener('change', updateFooterFromInput);
+        // เมื่อเปลี่ยนวันที่แจ้งยอด → คำนวณกำหนดชำระใหม่
+        document.getElementById('notify_date').addEventListener('change', updateFooterFromInput);
 
         async function updateFooterNotes() {
             updateFooterFromInput();
@@ -475,10 +476,11 @@
             var yearBE = document.getElementById('bill_year').value;
             var period = yearBE + '-' + month;
             var notifyDate = document.getElementById('notify_date').value;
-            var dueDate = document.getElementById('due_date').value;
 
             if (!notifyDate) { ppkAlert('กรุณาระบุวันที่แจ้งยอด'); return; }
-            if (!dueDate) { ppkAlert('กรุณาระบุกำหนดชำระ'); return; }
+            var dueDays = await getAdminDueDays();
+            var dueDateObj = calculateDueDateFromNotify(notifyDate, dueDays);
+            var dueDate = dueDateObj ? (dueDateObj.getFullYear() + '-' + String(dueDateObj.getMonth()+1).padStart(2,'0') + '-' + String(dueDateObj.getDate()).padStart(2,'0')) : null;
 
             // รวบรวมข้อมูลจากทั้ง 2 ตาราง
             var allRows = [];
@@ -571,12 +573,12 @@
             window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260318F"></script>
-    <script src="supabase/supabase.min.js?v=20260318F"></script>
-    <script src="ppk-api.js?v=20260318F"></script>
-    <script src="ppk-app.js?v=20260318F"></script>
-    <script src="ppk-utils.js?v=20260318F"></script>
-    <script src="ppk-nav.js?v=20260318F"></script>
-    <script src="ppk-pwa.js?v=20260318F"></script>
+    <script src="supabase/config.js?v=20260318G"></script>
+    <script src="supabase/supabase.min.js?v=20260318G"></script>
+    <script src="ppk-api.js?v=20260318G"></script>
+    <script src="ppk-app.js?v=20260318G"></script>
+    <script src="ppk-utils.js?v=20260318G"></script>
+    <script src="ppk-nav.js?v=20260318G"></script>
+    <script src="ppk-pwa.js?v=20260318G"></script>
 </body>
 </html>
