@@ -184,6 +184,16 @@
         window._ppkNavPage = 'payment-notification';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'payment-notification'); }
 
+        // DEBUG: จับ navigation ออกจากหน้า
+        window.addEventListener('beforeunload', function(e) {
+            console.warn('[payment-notification] beforeunload — กำลังออกจากหน้า', new Error().stack);
+        });
+        var _origNavigate = typeof navigate === 'function' ? navigate : null;
+        navigate = function(page) {
+            console.warn('[payment-notification] navigate() called →', page, new Error().stack);
+            if (_origNavigate) _origNavigate(page);
+        };
+
         var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
         var now = new Date();
 
