@@ -902,12 +902,12 @@
                 console.warn('[payment-history] ไม่พบข้อมูลสำหรับบ้าน "' + hn + '" | บ้านใน DB:', Object.keys(dbHouses).join(', '));
             }
 
-            /* -- Common fee from settings -- */
-            var commonFee = 0;
+            /* -- Common fee from settings (ใช้เฉพาะเดือนที่มี notification) -- */
+            var commonFeeFromSettings = 0;
             if (res[2] && res[2].success && res[2].data) {
                 var sett = res[2].data;
                 var isFlat = hn.toLowerCase().indexOf('\u0e41\u0e1f\u0e25\u0e15') >= 0 || hn.toLowerCase().indexOf('flat') >= 0;
-                commonFee = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
+                commonFeeFromSettings = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
             }
 
             /* -- Notifications map -- */
@@ -948,8 +948,11 @@
                 var notif = allNotifMap[mm] || {};
                 var waterVal    = w || parseFloat(notif.water_amount) || 0;
                 var electricVal = e || parseFloat(notif.electric_amount) || 0;
-                var commonVal   = (waterVal > 0 || electricVal > 0) ? commonFee : 0;
-                if (!commonVal && notif.common_fee) commonVal = parseFloat(notif.common_fee) || 0;
+                /* ค่าส่วนกลาง: ใส่เฉพาะเมื่อมี notification (admin กดแจ้งยอดแล้ว) */
+                var commonVal   = 0;
+                if (notif.sent_at) {
+                    commonVal = parseFloat(notif.common_fee) || commonFeeFromSettings;
+                }
                 var totalVal = waterVal + electricVal + commonVal;
                 if (totalVal > 0 || notif.sent_at) {
                     allBillData.push({

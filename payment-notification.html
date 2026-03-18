@@ -332,7 +332,7 @@
             var flats = [];
             _lastLoadError = '';
             try {
-                var result = await callBackend('getBillSummaryAll', { period: period });
+                var result = await callBackend('getBillSummaryAll', { period: period, includeAllResidents: true });
                 if (result && result.success && result.data) {
                     result.data.forEach(function(item) {
                         var mapped = {

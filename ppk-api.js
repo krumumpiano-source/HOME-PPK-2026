@@ -1364,24 +1364,31 @@ async function _routeAction(action, data) {
         /* ── Bill summaries ───────────────────────── */
         case 'getBillSummaryAll': {
             var period = data.period || '';
-            // ดึงข้อมูลจาก water_bills, electric_bills, residents + settings (common_fee_house / common_fee_flat)
-            var [wRows, eRows, resRows, settRows] = await Promise.all([
+            // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications
+            var [wRows, eRows, resRows, settRows, notifRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }),
                 sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }),
-                sbGet('settings',       { select: 'key,value' })
+                sbGet('settings',       { select: 'key,value' }),
+                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' })
             ]);
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
             (settRows || []).forEach(function(s) { settMap[s.key] = s.value; });
             var commonFeeHouse = parseFloat(settMap['common_fee_house']) || 0;
             var commonFeeFlat  = parseFloat(settMap['common_fee_flat'])  || 0;
-            // fallback: ถ้ามี key เก่า commonFee ให้ใช้
             if (!commonFeeHouse && settMap['commonFee']) commonFeeHouse = parseFloat(settMap['commonFee']) || 0;
             if (!commonFeeFlat  && settMap['commonFee']) commonFeeFlat  = parseFloat(settMap['commonFee']) || 0;
 
             function isFlat(hn) { var n = (hn || '').toLowerCase(); return n.indexOf('แฟลต') >= 0 || n.indexOf('flat') >= 0; }
             function getCommonFee(hn) { return isFlat(hn) ? commonFeeFlat : commonFeeHouse; }
+
+            // สร้าง map ของบ้านที่มี notification (= admin กดแจ้งยอดแล้ว)
+            var notifMap = {};
+            (notifRows || []).forEach(function(n) {
+                if (n.house_number) notifMap[n.house_number] = parseFloat(n.common_fee) || 0;
+            });
+            var hasNotifications = Object.keys(notifMap).length > 0;
 
             var resMap = {};
             (resRows || []).forEach(function(r) {
@@ -1396,22 +1403,34 @@ async function _routeAction(action, data) {
             });
             // รวมข้อมูลตาม house_number
             var summaryMap = {};
+            // ค่าส่วนกลาง: ใส่เฉพาะเมื่อมี notification (แจ้งยอดแล้ว) หรือมีบิลน้ำ/ไฟจริง
+            function getCommonForHouse(hn) {
+                if (notifMap.hasOwnProperty(hn)) return notifMap[hn] || getCommonFee(hn);
+                if (hasNotifications) return 0; // มีการแจ้งยอดแล้วบางบ้าน แต่บ้านนี้ไม่ได้แจ้ง
+                return 0; // ยังไม่มีการแจ้งยอดเลย → ไม่ใส่ค่าส่วนกลาง
+            }
             (wRows || []).forEach(function(w) {
                 var hn = w.house_number || '';
-                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonFee(hn), prev_meter: null, curr_meter: null };
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonForHouse(hn), prev_meter: null, curr_meter: null };
                 summaryMap[hn].water_amount += parseFloat(w.amount) || 0;
                 summaryMap[hn].prev_meter = w.prev_meter;
                 summaryMap[hn].curr_meter = w.curr_meter;
             });
             (eRows || []).forEach(function(e) {
                 var hn = e.house_number || '';
-                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonFee(hn), prev_meter: null, curr_meter: null };
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonForHouse(hn), prev_meter: null, curr_meter: null };
                 summaryMap[hn].electric_amount += parseFloat(e.bill_amount) || parseFloat(e.amount) || 0;
             });
-            // สร้างผลลัพธ์ — เพิ่มบ้านที่มี resident แต่ยังไม่มีบิลด้วย
-            Object.keys(resMap).forEach(function(hn) {
-                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonFee(hn), prev_meter: null, curr_meter: null };
+            // เพิ่มบ้านที่มี notification แต่ยังไม่มีบิลน้ำ/ไฟ
+            Object.keys(notifMap).forEach(function(hn) {
+                if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonForHouse(hn), prev_meter: null, curr_meter: null };
             });
+            // เพิ่มบ้านที่มี resident (สำหรับหน้าแจ้งยอดให้ admin เห็นรายชื่อ)
+            if (data.includeAllResidents) {
+                Object.keys(resMap).forEach(function(hn) {
+                    if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonForHouse(hn), prev_meter: null, curr_meter: null };
+                });
+            }
             var result = Object.values(summaryMap).map(function(s) {
                 s.resident_name = resMap[s.house_number] || '';
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);

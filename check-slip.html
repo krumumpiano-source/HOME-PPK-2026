@@ -538,8 +538,8 @@
       // ดึงข้อมูลสถานะการอนุมัติ
       const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
 
-      // ค่าส่วนกลาง
-      const commonFeeRate = Number(localStorage.getItem('commonFee') || '110');
+      // ค่าส่วนกลาง (ไม่ hardcode → ใช้จาก settings จริง, default 0 ถ้าไม่มี)
+      const commonFeeRate = Number(localStorage.getItem('commonFee') || '0');
 
       housesData = [];
       flatsData = [];
