@@ -14,12 +14,6 @@ desktop.ini
 # Python
 .venv/
 
-# Migration tracker (local state)
-.migration-applied
-
-# Local env with credentials
-.env.local
-
 # ============================================================
 # SUPABASE — ห้าม commit credentials ลง Git เด็ดขาด!
 # ============================================================

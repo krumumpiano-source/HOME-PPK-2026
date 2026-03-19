@@ -1441,7 +1441,10 @@
         }
     
         async function doLogout() {
-            window.location.replace('dashboard.html');
+            if (typeof ppkLogout === 'function') { ppkLogout(); return; }
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('currentUser');
+            window.location.replace('login.html');
         }
         </script>
     <script src="supabase/config.js?v=20260318H"></script>

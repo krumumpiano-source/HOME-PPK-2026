@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตรวจสอบคำร้อง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260318A">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -772,10 +774,21 @@
     </div>
 
     <script>
+        // ========== HTML Escape Helper ==========
+        function _e(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+        function _safeUrl(url) {
+            if (!url) return '';
+            var s = String(url).trim();
+            if (/^https?:\/\//i.test(s)) return s;
+            return '';
+        }
+
         // ========== Backend API Helpers ==========
 
         // ========== Data Storage ==========
-        // ใช้ Backend เป็นหลัก
 
         let currentEditId = null;
         let currentEditType = null;
@@ -1012,6 +1025,7 @@
         function formatDate(dateStr) {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '-';
             const day = date.getDate().toString().padStart(2, '0');
             const month = date.getMonth() + 1;
             const year = date.getFullYear() + 543;
@@ -1124,9 +1138,9 @@
                     <span class="drag-handle" title="ลากเพื่อเรียงลำดับ">⋮⋮</span>
                     <div class="queue-number">${index + 1}</div>
                     <div class="queue-info">
-                        <div class="queue-name">${item.prefix}${item.fullname}</div>
+                        <div class="queue-name">${_e(item.prefix)}${_e(item.fullname)}</div>
                         <div class="queue-detail">
-                            📞 ${item.phone} | 📧 ${item.email || '-'}<br>
+                            📞 ${_e(item.phone)} | 📧 ${_e(item.email) || '-'}<br>
                             📅 ยื่นเมื่อ: ${formatDate(item.submitDate)}
                         </div>
                     </div>
@@ -1236,8 +1250,8 @@
                 <tr>
                     <td>${startIndex + index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
-                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
-                    <td>${item.subjectGroup}</td>
+                    <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
+                    <td>${_e(item.subjectGroup)}</td>
                     <td>${getStayTypeText(item.stayType)}</td>
                     <td>${getStatusBadge(item.status)}</td>
                     <td>${expiryDisplay}</td>
@@ -1285,8 +1299,8 @@
                 <tr>
                     <td>${index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
-                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
-                    <td>${item.houseNumber}</td>
+                    <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
+                    <td>${_e(item.houseNumber)}</td>
                     <td>${getWorkTypeText(item.workTypes)}</td>
                     <td>${getUrgencyText(item.urgency)}</td>
                     <td>${getStatusBadge(item.status)}</td>
@@ -1327,10 +1341,10 @@
                 <tr>
                     <td>${index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
-                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
-                    <td>${item.currentHouse}</td>
-                    <td>${item.requestedHouse}</td>
-                    <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.transferReason}">${item.transferReason}</td>
+                    <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
+                    <td>${_e(item.currentHouse)}</td>
+                    <td>${_e(item.requestedHouse)}</td>
+                    <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${_e(item.transferReason)}">${_e(item.transferReason)}</td>
                     <td>${getStatusBadge(item.status)}</td>
                     <td>
                         <div style="display:flex;gap:0.3rem;justify-content:center;">
@@ -1369,10 +1383,10 @@
                 <tr>
                     <td>${index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
-                    <td style="text-align:left;">${item.prefix}${item.fullname}</td>
-                    <td>${item.houseNumber}</td>
+                    <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
+                    <td>${_e(item.houseNumber)}</td>
                     <td>${formatDate(item.returnDate)}</td>
-                    <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.returnReason}">${item.returnReason}</td>
+                    <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${_e(item.returnReason)}">${_e(item.returnReason)}</td>
                     <td>${getStatusBadge(item.status)}</td>
                     <td>
                         <div style="display:flex;gap:0.3rem;justify-content:center;">
@@ -1428,27 +1442,27 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ชื่อ-นามสกุล</div>
-                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                            <div class="detail-value">${_e(item.prefix)}${_e(item.fullname)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ตำแหน่ง</div>
-                            <div class="detail-value">${item.position || '-'}</div>
+                            <div class="detail-value">${_e(item.position) || '-'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">กลุ่มสาระการเรียนรู้</div>
-                            <div class="detail-value">${item.subjectGroup}</div>
+                            <div class="detail-value">${_e(item.subjectGroup)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
-                            <div class="detail-value">${item.phone}</div>
+                            <div class="detail-value">${_e(item.phone)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">อีเมล</div>
-                            <div class="detail-value">${item.email || '-'}</div>
+                            <div class="detail-value">${_e(item.email) || '-'}</div>
                         </div>
                         <div class="detail-item full-width">
                             <div class="detail-label">ที่อยู่ตามบัตรประชาชน</div>
-                            <div class="detail-value">${item.address || '-'}</div>
+                            <div class="detail-value">${_e(item.address) || '-'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ลักษณะการเข้าพัก</div>
@@ -1480,19 +1494,19 @@
                         <div class="detail-label">รายชื่อผู้พักอาศัยร่วม</div>
                         <div class="detail-value">
                             <ul style="margin:0.5rem 0;padding-left:1.5rem;">
-                                ${item.residents.map(r => `<li>${r}</li>`).join('')}
+                                ${item.residents.map(r => `<li>${_e(r)}</li>`).join('')}
                             </ul>
                         </div>
                     </div>
                     ` : ''}
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอเข้าพัก</div>
-                        <div class="detail-value">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + item.otherReason : ''}</div>
+                        <div class="detail-value">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + _e(item.otherReason) : ''}</div>
                     </div>
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.additionalInfo}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${_e(item.additionalInfo)}</div>
                     </div>
                     ` : ''}
                     ${item.documentsChecked && item.documentsChecked.length > 0 ? `
@@ -1500,7 +1514,7 @@
                         <div class="detail-label">เอกสารที่แนบ</div>
                         <div class="detail-value">
                             <ul style="margin:0.5rem 0;padding-left:1.5rem;">
-                                ${item.documentsChecked.map(dc => '<li>' + (docLabels[dc] || dc) + '</li>').join('')}
+                                ${item.documentsChecked.map(dc => '<li>' + _e(docLabels[dc] || dc) + '</li>').join('')}
                             </ul>
                         </div>
                     </div>
@@ -1511,7 +1525,7 @@
                 if (item.costItems && item.costItems.length > 0) {
                     costHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:0.5rem;"><thead><tr><th style="border:1px solid #ddd;padding:0.4rem;background:#f8fafc;">รายการ</th><th style="border:1px solid #ddd;padding:0.4rem;background:#f8fafc;width:120px;">ราคา (บาท)</th></tr></thead><tbody>';
                     item.costItems.forEach(function(ci) {
-                        costHTML += '<tr><td style="border:1px solid #ddd;padding:0.4rem;">' + (ci.item || '-') + '</td><td style="border:1px solid #ddd;padding:0.4rem;text-align:right;">' + (ci.price || '0') + '</td></tr>';
+                        costHTML += '<tr><td style="border:1px solid #ddd;padding:0.4rem;">' + _e(ci.item || '-') + '</td><td style="border:1px solid #ddd;padding:0.4rem;text-align:right;">' + _e(ci.price || '0') + '</td></tr>';
                     });
                     costHTML += '</tbody></table>';
                 }
@@ -1528,23 +1542,23 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ผู้แจ้ง</div>
-                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                            <div class="detail-value">${_e(item.prefix)}${_e(item.fullname)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
-                            <div class="detail-value">${item.phone}</div>
+                            <div class="detail-value">${_e(item.phone)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">หมายเลขบ้านพัก</div>
-                            <div class="detail-value">${item.houseNumber}</div>
+                            <div class="detail-value">${_e(item.houseNumber)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">กลุ่มสาระ</div>
-                            <div class="detail-value">${item.subjectGroup}</div>
+                            <div class="detail-value">${_e(item.subjectGroup)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ประเภทงาน</div>
-                            <div class="detail-value">${getWorkTypeText(item.workTypes)}${item.otherWorkType ? ' (' + item.otherWorkType + ')' : ''}</div>
+                            <div class="detail-value">${getWorkTypeText(item.workTypes)}${item.otherWorkType ? ' (' + _e(item.otherWorkType) + ')' : ''}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ความเร่งด่วน</div>
@@ -1566,7 +1580,7 @@
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">รายละเอียดปัญหา</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.problemDetail || '-'}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${_e(item.problemDetail) || '-'}</div>
                     </div>
                     ${costHTML ? `
                     <div class="detail-item" style="margin-top:1rem;">
@@ -1588,32 +1602,32 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ชื่อ-นามสกุล</div>
-                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                            <div class="detail-value">${_e(item.prefix)}${_e(item.fullname)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ตำแหน่ง</div>
-                            <div class="detail-value">${item.position || '-'}</div>
+                            <div class="detail-value">${_e(item.position) || '-'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
-                            <div class="detail-value">${item.phone}</div>
+                            <div class="detail-value">${_e(item.phone)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">กลุ่มสาระ</div>
-                            <div class="detail-value">${item.subjectGroup}</div>
+                            <div class="detail-value">${_e(item.subjectGroup)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">บ้านพักปัจจุบัน</div>
-                            <div class="detail-value">${item.currentHouse}</div>
+                            <div class="detail-value">${_e(item.currentHouse)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ขอย้ายไปยัง</div>
-                            <div class="detail-value">${item.requestedHouse || '-'}</div>
+                            <div class="detail-value">${_e(item.requestedHouse) || '-'}</div>
                         </div>
                         ${item.transferType ? `
                         <div class="detail-item">
                             <div class="detail-label">ลักษณะการย้าย</div>
-                            <div class="detail-value">${tTypeText[item.transferType] || item.transferType}</div>
+                            <div class="detail-value">${tTypeText[item.transferType] || _e(item.transferType)}</div>
                         </div>` : ''}
                         <div class="detail-item">
                             <div class="detail-label">สถานะ</div>
@@ -1622,12 +1636,12 @@
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอย้าย</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + item.otherReason : ''}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + _e(item.otherReason) : ''}</div>
                     </div>
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.additionalInfo}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${_e(item.additionalInfo)}</div>
                     </div>` : ''}
                 `;
             } else if (type === 'return') {
@@ -1643,23 +1657,23 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ชื่อ-นามสกุล</div>
-                            <div class="detail-value">${item.prefix}${item.fullname}</div>
+                            <div class="detail-value">${_e(item.prefix)}${_e(item.fullname)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ตำแหน่ง</div>
-                            <div class="detail-value">${item.position || '-'}</div>
+                            <div class="detail-value">${_e(item.position) || '-'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">เบอร์โทรศัพท์</div>
-                            <div class="detail-value">${item.phone}</div>
+                            <div class="detail-value">${_e(item.phone)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">กลุ่มสาระ</div>
-                            <div class="detail-value">${item.subjectGroup}</div>
+                            <div class="detail-value">${_e(item.subjectGroup)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">หมายเลขบ้านพัก</div>
-                            <div class="detail-value">${item.houseNumber}</div>
+                            <div class="detail-value">${_e(item.houseNumber)}</div>
                         </div>
                         ${item.moveInDate ? `
                         <div class="detail-item">
@@ -1677,12 +1691,12 @@
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอคืน</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + item.otherReason : ''}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + _e(item.otherReason) : ''}</div>
                     </div>
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${item.additionalInfo}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${_e(item.additionalInfo)}</div>
                     </div>` : ''}
                 `;
             }
@@ -1698,15 +1712,17 @@
                     var aUrl = typeof att === 'string' ? att : (att.url || '');
                     var aName = typeof att === 'string' ? ('ไฟล์แนบ ' + (idx+1)) : (att.name || 'ไฟล์แนบ ' + (idx+1));
                     var aType = typeof att === 'string' ? '' : (att.type || '');
+                    aUrl = _safeUrl(aUrl);
+                    if (!aUrl) return;
                     var isImg = aType.indexOf('image') >= 0 || /\.(jpg|jpeg|png|gif|webp)$/i.test(aUrl);
                     if (isImg) {
                         content += `<div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-                            <div style="padding:0.4rem 0.6rem;background:#f8fafc;font-size:0.85rem;color:#4b5563;">${aName}</div>
-                            <img src="${aUrl}" style="max-width:100%;max-height:400px;display:block;cursor:pointer;" onclick="window.open('${aUrl}','_blank')" title="คลิกเพื่อดูขนาดเต็ม">
+                            <div style="padding:0.4rem 0.6rem;background:#f8fafc;font-size:0.85rem;color:#4b5563;">${_e(aName)}</div>
+                            <img src="${_e(aUrl)}" style="max-width:100%;max-height:400px;display:block;cursor:pointer;" onclick="window.open(this.src,'_blank')" title="คลิกเพื่อดูขนาดเต็ม">
                         </div>`;
                     } else {
-                        content += `<a href="${aUrl}" target="_blank" style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;text-decoration:none;color:#0369a1;font-size:0.9rem;">
-                            📄 ${aName}
+                        content += `<a href="${_e(aUrl)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.8rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;text-decoration:none;color:#0369a1;font-size:0.9rem;">
+                            📄 ${_e(aName)}
                             <span style="margin-left:auto;font-size:0.78rem;color:#6b7280;">เปิดไฟล์ →</span>
                         </a>`;
                     }
@@ -1719,7 +1735,7 @@
                 content += `
                     <div class="detail-item" style="margin-top:1.5rem;">
                         <div class="detail-label">💬 หมายเหตุจากเจ้าหน้าที่</div>
-                        <div class="detail-value" style="background:#fef3c7;padding:0.75rem;border-radius:8px;">${item.reviewNote}</div>
+                        <div class="detail-value" style="background:#fef3c7;padding:0.75rem;border-radius:8px;">${_e(item.reviewNote)}</div>
                     </div>
                 `;
             }
@@ -1854,6 +1870,7 @@
                 // คิวหมดอายุแล้ว - เปลี่ยนสถานะคำร้องที่อยู่ในคิวเป็น expired
                 const data = getData('residence');
                 let expiredCount = 0;
+                const expiredIds = [];
                 
                 data.forEach(item => {
                     if (item.status === 'waiting' && item.queuePosition) {
@@ -1861,11 +1878,23 @@
                         item.queuePosition = null;
                         item.expiredDate = new Date().toISOString().split('T')[0];
                         expiredCount++;
+                        expiredIds.push(item.id);
                     }
                 });
                 
                 if (expiredCount > 0) {
                     saveData('residence', data);
+                    // Sync ไป Backend
+                    expiredIds.forEach(function(rid) {
+                        callBackend('reviewRequest', {
+                            requestId: rid,
+                            type: 'residence',
+                            status: 'expired',
+                            note: 'หมดอายุอัตโนมัติ',
+                            removeFromQueue: true
+                        }).catch(function(e) { console.error('อัปเดต expired ไม่สำเร็จ:', e); });
+                    });
+                    _clearRequestsCache();
                     console.log(`ลบคิวที่หมดอายุ ${expiredCount} รายการ`);
                 }
             }
@@ -2178,15 +2207,18 @@
         });
     
         async function doLogout() {
-            window.location.replace('dashboard.html');
+            try { await callBackend('logout'); } catch(e) {}
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('sessionToken');
+            window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260313D"></script>
-    <script src="supabase/supabase.min.js?v=20260313D"></script>
-    <script src="ppk-api.js?v=20260313D"></script>
-    <script src="ppk-app.js?v=20260313D"></script>
-    <script src="ppk-utils.js?v=20260313D"></script>
-    <script src="ppk-nav.js?v=20260313D"></script>
-    <script src="ppk-pwa.js?v=20260313D"></script>
+    <script src="supabase/config.js?v=20260318A"></script>
+    <script src="supabase/supabase.min.js?v=20260318A"></script>
+    <script src="ppk-api.js?v=20260318A"></script>
+    <script src="ppk-app.js?v=20260318A"></script>
+    <script src="ppk-utils.js?v=20260318A"></script>
+    <script src="ppk-nav.js?v=20260318A"></script>
+    <script src="ppk-pwa.js?v=20260318A"></script>
 </body>
 </html>

@@ -309,6 +309,11 @@
             el.innerHTML = html;
         }
 
+        function _escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
         function renderAnnouncements(rows) {
             const el = document.getElementById('announceList');
             if (!Array.isArray(rows) || rows.length === 0) {
@@ -318,8 +323,8 @@
             el.innerHTML = rows.map(function(a) {
                 var prefix = a.type === 'urgent' ? '🚨 ' : (a.type === 'warning' ? '⚠️ ' : 'ℹ️ ');
                 var cls = a.type === 'urgent' ? ' urgent' : (a.type === 'warning' ? ' warning' : '');
-                var body = a.body ? '<div class="ppk-announce-body">' + a.body + '</div>' : '';
-                return '<div class="ppk-announce-item' + cls + '">' + prefix + '<strong>' + (a.title || '') + '</strong>' + body + '</div>';
+                var body = a.body ? '<div class="ppk-announce-body">' + _escHtml(a.body) + '</div>' : '';
+                return '<div class="ppk-announce-item' + cls + '">' + prefix + '<strong>' + _escHtml(a.title) + '</strong>' + body + '</div>';
             }).join('');
         }
 
@@ -336,7 +341,7 @@
 
             var parts = period.split('-');
             var monthIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
-            var yearBE = parts[0] ? String(parseInt(parts[0]) + 543) : String(new Date().getFullYear() + 543);
+            var yearBE = parts[0] ? parts[0] : String(new Date().getFullYear() + 543);
             var monthStr = String((monthIdx + 1)).padStart(2, '0');
             var periodKey = yearBE + monthStr;
             var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
@@ -349,7 +354,7 @@
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var firstName = user.firstname || '';
             document.getElementById('heroGreeting').textContent = 'สวัสดี' + (firstName ? ', ' + firstName : '');
-            document.getElementById('heroHouse').innerHTML = '🏠 บ้านพัก ' + (houseNumber || '—');
+            document.getElementById('heroHouse').textContent = '🏠 บ้านพัก ' + (houseNumber || '—');
 
             // Amount display
             var amtEl = document.getElementById('currentMonthAmount');
@@ -389,6 +394,10 @@
                 ctaEl.className = 'hero-cta';
                 ctaEl.style.background = '#FEE2E2';
                 ctaEl.style.color = '#DC2626';
+            } else if (!houseNumber) {
+                ctaEl.innerHTML = '🏠 ยังไม่ได้รับมอบหมายบ้านพัก';
+                ctaEl.className = 'hero-cta reviewing';
+                ctaEl.onclick = null;
             } else if (amount > 0) {
                 ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
                 ctaEl.className = 'hero-cta';
@@ -409,10 +418,18 @@
         function heroCtaClick() {
             var d = _ctaData;
             if (d.slipStatus === 'success' || d.slipStatus === 'reviewing') return;
+            if (!d.houseNumber) {
+                if (typeof ppkAlert === 'function') ppkAlert('กรุณาตั้งค่าบ้านพักก่อนส่งสลิป');
+                return;
+            }
             goToUploadSlip(d.periodKey, d.amount, false);
         }
         function outstandingBtnClick() {
             var d = _ctaData;
+            if (!d.houseNumber) {
+                if (typeof ppkAlert === 'function') ppkAlert('กรุณาตั้งค่าบ้านพักก่อนส่งสลิป');
+                return;
+            }
             goToUploadSlip(d.periodKey, d.outstanding, true);
         }
 
@@ -440,7 +457,7 @@
             var perms = user.permissions || [];
             var hasAnyPerm = isAdmin || perms.length > 0;
 
-            buildQuickActions(hasAnyPerm);
+            buildQuickActions(isAdmin);
             buildHubGrid();
             // re-render nav หลัง checkSession เพื่อให้ได้ permissions ล่าสุด
             if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'dashboard');
@@ -451,6 +468,7 @@
                     if (typeof ppkAlert === 'function') ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า');
                     return;
                 }
+                if (result._isStale && typeof ppkToast === 'function') ppkToast('ข้อมูลอาจไม่เป็นปัจจุบัน กรุณารีเฟรช', 'warning');
                 renderAnnouncements(result.announcements || []);
                 if (result.role === 'admin' || result.role === 'head') renderAdminDashboard(result.data || {});
                 else renderUserDashboard(result.data || {});
@@ -481,6 +499,7 @@
         }
 
         async function doLogout() {
+            if (typeof ppkLogout === 'function') { ppkLogout(); return; }
             localStorage.removeItem('sessionToken');
             localStorage.removeItem('currentUser');
             window.location.replace('login.html');

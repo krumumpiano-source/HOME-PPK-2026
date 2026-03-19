@@ -319,7 +319,7 @@ async function checkSession(autoRedirect) {
     try {
         var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
         var lastCheck = parseInt(localStorage.getItem('_sessionCheckTs') || '0');
-        var hasPerms = stored && Array.isArray(stored.permissions);
+        var hasPerms = stored && Array.isArray(stored.permissions) && stored.permissions.length > 0;
         if (stored && stored.id && stored.id !== 'USR-GUEST' && hasPerms && (Date.now() - lastCheck < 60000)) return stored;
     } catch(e) {}
     // ตรวจ token กับ sessions table
@@ -921,9 +921,9 @@ async function _routeAction(action, data) {
             // Enrich: ดึง water_bills + electric_bills + settings เพื่อแยกยอดค่าน้ำ/ค่าไฟ/ค่าส่วนกลาง
             if (rows && rows.length > 0 && data.houseNumber) {
                 var [_phW, _phE, _phS] = await Promise.all([
-                    sbGet('water_bills',    { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }),
-                    sbGet('electric_bills', { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }),
-                    sbGet('settings',       { select: 'key,value' })
+                    sbGet('water_bills',    { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
+                    sbGet('electric_bills', { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
+                    sbGet('settings',       { select: 'key,value' }).catch(function() { return []; })
                 ]);
                 var _phWMap = {};
                 (_phW || []).forEach(function(w) { _phWMap[w.period] = (_phWMap[w.period] || 0) + (parseFloat(w.amount) || 0); });
@@ -949,8 +949,8 @@ async function _routeAction(action, data) {
             if (data.period) q.period = 'eq.' + data.period;
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var [rows, resRows] = await Promise.all([
-                sbGet('slip_submissions', q),
-                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' })
+                sbGet('slip_submissions', q).catch(function() { return []; }),
+                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; })
             ]);
             var resMap = {};
             (resRows || []).forEach(function(r) { resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim(); });
@@ -1366,11 +1366,11 @@ async function _routeAction(action, data) {
             var period = data.period || '';
             // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications
             var [wRows, eRows, resRows, settRows, notifRows] = await Promise.all([
-                sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }),
-                sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }),
-                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }),
-                sbGet('settings',       { select: 'key,value' }),
-                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' })
+                sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
+                sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
+                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; }),
+                sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
+                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; })
             ]);
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
@@ -1488,9 +1488,9 @@ async function _routeAction(action, data) {
 
             if (sessRole === 'admin' || sessRole === 'head') {
                 var [pendingReg, pendingSlips, pendingReqs] = await Promise.all([
-                    sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }),
-                    sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }),
-                    sbGet('requests', { status: 'eq.pending', select: 'id', limit: '100' })
+                    sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
+                    sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
+                    sbGet('requests', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; })
                 ]);
                 return { success: true, role: 'admin', announcements: announcements, data: {
                     pendingRegistrations: (pendingReg || []).length,
@@ -1503,8 +1503,8 @@ async function _routeAction(action, data) {
                 var outRows = [], slipRows = [];
                 if (houseNumber) {
                     [outRows, slipRows] = await Promise.all([
-                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }),
-                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' })
+                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
                     ]);
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
@@ -2003,8 +2003,8 @@ async function _routeAction(action, data) {
         case 'loadAccountingData': {
             var period = data.period || '';
             var [incRows, expRows] = await Promise.all([
-                sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.income',  order: 'recorded_at.asc' }),
-                sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.expense', order: 'recorded_at.asc' })
+                sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.income',  order: 'recorded_at.asc' }).catch(function() { return []; }),
+                sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.expense', order: 'recorded_at.asc' }).catch(function() { return []; })
             ]);
             var mapRow = function(r) {
                 return {
@@ -2035,9 +2035,9 @@ async function _routeAction(action, data) {
         case 'calculateAutoEntries': {
             var period = data.period || '';
             var [waterRes, elecRes, payRes] = await Promise.all([
-                sbGet('water_bills',     { period: 'eq.' + period, select: 'amount' }),
-                sbGet('electric_bills',  { period: 'eq.' + period, select: 'bill_amount,amount' }),
-                sbGet('payment_history', { period: 'eq.' + period, select: 'amount_paid' })
+                sbGet('water_bills',     { period: 'eq.' + period, select: 'amount' }).catch(function() { return []; }),
+                sbGet('electric_bills',  { period: 'eq.' + period, select: 'bill_amount,amount' }).catch(function() { return []; }),
+                sbGet('payment_history', { period: 'eq.' + period, select: 'amount_paid' }).catch(function() { return []; })
             ]);
             var waterTotal = (waterRes  || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
             var elecTotal  = (elecRes   || []).reduce(function(s, r) { return s + (parseFloat(r.bill_amount) || parseFloat(r.amount) || 0); }, 0);
@@ -2526,7 +2526,7 @@ async function cachedCall(action, params, ttlMs) {
         return r;
     }
     // ถ้า fetch ล้มเหลวแต่มี stale data → ใช้ stale เป็น fallback
-    if (fresh && fresh.d) return fresh.d;
+    if (fresh && fresh.d) { fresh.d._isStale = true; return fresh.d; }
     return r;
 }
 

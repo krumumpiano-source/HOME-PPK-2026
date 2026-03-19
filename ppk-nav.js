@@ -225,6 +225,7 @@ function renderPPKNav(containerId, activePage) {
 // Logout helper
 if (typeof window.doLogout === 'undefined') {
   window.doLogout = function () {
+    if (typeof ppkLogout === 'function') { ppkLogout(); return; }
     localStorage.removeItem('sessionToken');
     localStorage.removeItem('currentUser');
     window.location.replace('login.html');

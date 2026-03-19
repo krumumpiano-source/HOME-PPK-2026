@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>เบิกจ่ายรายเดือน | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260313D">
             <style>
@@ -673,7 +675,10 @@
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'monthly-withdraw'); }
     
         async function doLogout() {
-            window.location.replace('dashboard.html');
+            if (typeof ppkLogout === 'function') { ppkLogout(); return; }
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('currentUser');
+            window.location.replace('login.html');
         }
         </script>
     <script src="supabase/config.js?v=20260313D"></script>
