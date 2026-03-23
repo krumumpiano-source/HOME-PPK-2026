@@ -19,12 +19,12 @@
   if (document.getElementById('_ppk_sdk')) return;
   if (typeof window._callBackendReal === 'function') return; // ppk-api.js โหลดผ่าน static tag แล้ว
 
-  // คำนวณ base path จาก script src
+  // คำนวณ base path จาก script src (ตัด query-string ออกด้วย)
   var basePath = (function () {
     var tags = document.getElementsByTagName('script');
     for (var i = 0; i < tags.length; i++) {
       if (tags[i].src && tags[i].src.indexOf('ppk-app.js') !== -1) {
-        return tags[i].src.replace('ppk-app.js', '');
+        return tags[i].src.replace(/ppk-app\.js.*$/, '');
       }
     }
     return '';
