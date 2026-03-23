@@ -312,7 +312,7 @@
         }
         @keyframes modalSlideIn { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .ev-modal-header {
-            background: linear-gradient(135deg, #DC2626, #F59E0B);
+            background: linear-gradient(135deg, #D97706, #F59E0B);
             padding: 1.5rem; border-radius: 20px 20px 0 0; color: white; text-align: center;
         }
         .ev-modal-header-icon { font-size: 2.5rem; margin-bottom: .3rem; }
@@ -337,9 +337,9 @@
             transition: all .2s;
         }
         .ev-modal-btn.accept {
-            background: linear-gradient(135deg, #DC2626, #EF4444); color: white;
+            background: linear-gradient(135deg, #D97706, #F59E0B); color: white;
         }
-        .ev-modal-btn.accept:hover { background: #B91C1C; }
+        .ev-modal-btn.accept:hover { background: #B45309; }
         .ev-modal-btn.cancel {
             background: #F1F5F9; color: var(--muted); margin-left: .5rem;
         }
@@ -785,10 +785,10 @@
                     <div class="tip-title">ใช้หลอด LED เพื่อประหยัดไฟฟ้า</div>
                     <div class="tip-text">หลอด LED 12 วัตต์ ให้แสงสว่างเท่าหลอดไส้ 60 วัตต์ แต่ประหยัดไฟฟ้าได้ถึง 80% และมีอายุการใช้งานยาวนานกว่าหลอดไส้ถึง 15 เท่า</div>
                 </div>
-                <div class="tip-card" style="border-left: 4px solid #DC2626;">
-                    <div class="tip-icon">🚫</div>
-                    <div class="tip-title">ห้ามติดตั้งตู้ชาร์จรถยนต์ไฟฟ้า (Wallbox)</div>
-                    <div class="tip-text">ระบบไฟฟ้าบ้านพักเป็น<strong>ไฟเฟสเดียว</strong> และสายเมนรองรับกำลังไฟฟ้าได้เพียง 6,600 วัตต์ — ตู้ชาร์จ Wallbox ใช้ไฟถึง 3,500 วัตต์ (53% ของทั้งระบบ) จึง<strong>ไม่ปลอดภัย</strong>ในการติดตั้ง หากจำเป็นต้องชาร์จรถยนต์ไฟฟ้า ให้ใช้เฉพาะสายชาร์จแบบพกพา (Portable EVSE) ขนาด 1,500 วัตต์ และชาร์จเฉพาะช่วงกลางคืนที่ไม่ได้เปิดเครื่องใช้ไฟฟ้าตัวอื่น</div>
+                <div class="tip-card" style="border-left: 4px solid #D97706;">
+                    <div class="tip-icon">⚠️</div>
+                    <div class="tip-title">ข้อจำกัดการติดตั้งตู้ชาร์จรถยนต์ไฟฟ้า (Wallbox)</div>
+                    <div class="tip-text">ระบบไฟฟ้าบ้านพักเป็น<strong>ไฟเฟสเดียว</strong> สายเมนรองรับได้เพียง 6,600 วัตต์ และมิเตอร์ประธานมีข้อจำกัดด้านพิกัดกระแส — ตู้ชาร์จ Wallbox ใช้ไฟ 3,500 วัตต์ (53% ของพิกัดทั้งระบบ) จึง<strong>ไม่เหมาะสม</strong>ที่จะติดตั้งบนระบบไฟฟ้าส่วนกลาง ทางที่ดีควรติดต่อ กฟภ. เพื่อขอติดตั้งมิเตอร์แยกส่วนตัวโดยรับผิดชอบค่าใช้จ่ายเอง</div>
                 </div>
                 <div class="tip-card" style="border-left: 4px solid #EC4899;">
                     <div class="tip-icon">🌡️</div>
@@ -866,25 +866,25 @@
     <div class="ev-modal-overlay" id="evModal">
         <div class="ev-modal">
             <div class="ev-modal-header">
-                <div class="ev-modal-header-icon">🚫🚗</div>
-                <h3>ห้ามติดตั้งตู้ชาร์จรถยนต์ไฟฟ้า (Wallbox) ในบ้านพัก</h3>
+                <div class="ev-modal-header-icon">⚠️🚗</div>
+                <h3>ข้อจำกัดการติดตั้งตู้ชาร์จรถยนต์ไฟฟ้า (Wallbox) ในบ้านพัก</h3>
             </div>
             <div class="ev-modal-body">
                 <div class="ev-modal-item">
-                    <div class="ev-modal-num" style="background:#DC2626;color:white;font-size:1rem;">!</div>
-                    <div><strong style="color:#DC2626;">ห้ามติดตั้ง Wallbox ในบ้านพัก</strong><br>ระบบไฟฟ้าบ้านพักเป็น<strong>ไฟเฟสเดียว (Single Phase 220V)</strong> และสายเมนเข้ามิเตอร์เป็นสายทองแดงขนาด 6 ตร.มม. ซึ่งรองรับกำลังไฟฟ้าได้เพียง 6,600 วัตต์ — ตู้ชาร์จ Wallbox ใช้ไฟ 3,500 วัตต์ คิดเป็น 53% ของพิกัดทั้งระบบ จึง<strong>ไม่ปลอดภัย</strong>ที่จะติดตั้ง</div>
+                    <div class="ev-modal-num" style="background:#FFFBEB;color:#D97706;font-size:1rem;">⚠</div>
+                    <div><strong style="color:#D97706;">ระบบไฟฟ้าบ้านพักมีข้อจำกัดในการรองรับตู้ชาร์จ Wallbox</strong><br>ระบบไฟฟ้าบ้านพักเป็น<strong>ไฟเฟสเดียว (Single Phase 220V)</strong> สายเมนเข้ามิเตอร์เป็นสายทองแดงขนาด 6 ตร.มม. รองรับได้เพียง 6,600 วัตต์ ประกอบกับมิเตอร์ประธานมีข้อจำกัดด้านพิกัดกระแส — ตู้ชาร์จ Wallbox ใช้ไฟ 3,500 วัตต์ (53% ของพิกัดทั้งระบบ) จึง<strong>ไม่เหมาะสม</strong>ที่จะติดตั้งบนระบบไฟฟ้าส่วนกลาง</div>
                 </div>
                 <div class="ev-modal-item">
                     <div class="ev-modal-num">1</div>
-                    <div><strong>ระบบไฟฟ้าเป็นเฟสเดียว</strong><br>แม้ไฟจะเข้ามาเป็น 3 เฟส แต่ถูกแบ่งให้แต่ละหลังเป็น<strong>เฟสเดียว (220 โวลต์)</strong> จึงใช้ตู้ชาร์จแบบ 3 เฟสไม่ได้ และกำลังไฟฟ้าที่รองรับได้มีจำกัด</div>
+                    <div><strong>ระบบไฟฟ้าเป็นเฟสเดียว</strong><br>แม้ไฟฟ้าจะจ่ายเข้ามาเป็น 3 เฟส แต่ถูกแบ่งให้แต่ละหลังเป็น<strong>เฟสเดียว (220 โวลต์)</strong> จึงไม่สามารถใช้ตู้ชาร์จแบบ 3 เฟสได้ และกำลังไฟฟ้าที่รองรับได้มีจำกัด</div>
                 </div>
                 <div class="ev-modal-item">
                     <div class="ev-modal-num">2</div>
-                    <div><strong>สายเมนเป็นตัวจำกัดกำลังไฟ</strong><br>สายทองแดงขนาด 6 ตร.มม. จากเสาไฟเข้ามิเตอร์ รองรับกระแสไฟได้ประมาณ 32 แอมป์ (6,600 วัตต์) — ตู้ชาร์จ Wallbox ใช้ไฟไปครึ่งหนึ่งแล้ว หากเปิดแอร์พร้อมชาร์จรถ จะเกินพิกัดทันที</div>
+                    <div><strong>สายเมนเป็นตัวจำกัดกำลังไฟ</strong><br>สายทองแดงขนาด 6 ตร.มม. จากเสาไฟเข้ามิเตอร์ รองรับกระแสไฟได้ประมาณ 32 แอมป์ (6,600 วัตต์) — ตู้ชาร์จ Wallbox ใช้ไฟเกินครึ่งหนึ่งของพิกัดทั้งระบบ หากเปิดเครื่องปรับอากาศพร้อมชาร์จรถ อาจเกินพิกัดสายได้</div>
                 </div>
                 <div class="ev-modal-item">
                     <div class="ev-modal-num">3</div>
-                    <div><strong>หากจำเป็นต้องชาร์จรถ EV</strong><br>ให้ใช้เฉพาะ<strong>สายชาร์จแบบพกพา (Portable EVSE) ที่ใช้ไฟไม่เกิน 1,500 วัตต์</strong>เท่านั้น ชาร์จได้เฉพาะช่วงกลางคืนที่ไม่ได้เปิดเครื่องใช้ไฟฟ้าตัวอื่น และต้องเดินวงจรแยกเฉพาะจากตู้เมน (MDB)</div>
+                    <div><strong>หากต้องการชาร์จรถ EV ด้วยระบบไฟฟ้าปัจจุบัน</strong><br>ให้ใช้เฉพาะ<strong>สายชาร์จแบบพกพา (Portable EVSE) ที่ใช้ไฟไม่เกิน 1,500 วัตต์</strong> ชาร์จเฉพาะช่วงกลางคืนที่ไม่ได้เปิดเครื่องใช้ไฟฟ้าตัวอื่น และต้องเดินวงจรแยกเฉพาะจากตู้เมน (MDB)</div>
                 </div>
                 <div class="ev-modal-item">
                     <div class="ev-modal-num">4</div>
@@ -892,6 +892,10 @@
                 </div>
                 <div class="ev-modal-item">
                     <div class="ev-modal-num">5</div>
+                    <div><strong>แนะนำ: ขอติดตั้งมิเตอร์แยกส่วนตัวจาก กฟภ.</strong><br>หากต้องการติดตั้งตู้ชาร์จ Wallbox ทางที่เหมาะสมที่สุดคือ<strong>ติดต่อการไฟฟ้าส่วนภูมิภาค (กฟภ.) เพื่อขอติดตั้งมิเตอร์ไฟฟ้าแยกส่วนตัว</strong> โดยรับผิดชอบค่าใช้จ่ายในการติดตั้งเอง ซึ่งจะทำให้มีระบบไฟฟ้าที่รองรับกำลังไฟเพียงพอ และไม่กระทบต่อระบบไฟฟ้าส่วนกลางของบ้านพัก</div>
+                </div>
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num">6</div>
                     <div><strong>ต้องปรึกษาช่างไฟฟ้าที่มีใบอนุญาต</strong><br>การติดตั้งจุดชาร์จรถ EV ต้องออกแบบและดำเนินการโดยช่างที่มีใบอนุญาตตามมาตรฐาน กฟภ. เท่านั้น</div>
                 </div>
             </div>
