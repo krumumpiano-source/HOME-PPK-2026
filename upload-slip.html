@@ -210,9 +210,10 @@
         const _pendingSlip = JSON.parse(localStorage.getItem('pendingSlipInfo') || 'null');
         if (_pendingSlip) localStorage.removeItem('pendingSlipInfo');
 
+        var _cuFallback = ''; try { var _cu = JSON.parse(localStorage.getItem('currentUser') || '{}'); _cuFallback = _cu.houseNumber || ''; } catch(e) {}
         var unitNumber = urlParams.get('unit')
             || (_pendingSlip && _pendingSlip.unitNumber)
-            || localStorage.getItem('currentUserUnit') || '';
+            || _cuFallback || '';
         const periodKey = urlParams.get('period')
             || (_pendingSlip && _pendingSlip.periodKey)
             || getCurrentPeriodKey();
