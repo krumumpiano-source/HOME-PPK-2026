@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260323C">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -135,6 +135,7 @@
         .cat-btn.active[data-cat="housing"] { background: linear-gradient(135deg, #10b981, #059669); }
         .cat-btn.active[data-cat="people"] { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
         .cat-btn.active[data-cat="system"] { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .cat-btn.active[data-cat="backup"] { background: linear-gradient(135deg, #dc2626, #b91c1c); }
         .cat-icon { font-size: 1.6rem; }
         .cat-label { font-size: 0.85rem; line-height: 1.2; }
 
@@ -596,6 +597,10 @@
                     <span class="cat-icon">⚙️</span>
                     <span class="cat-label">ระบบ</span>
                 </button>
+                <button class="cat-btn" data-cat="backup" onclick="showCat('backup', this)">
+                    <span class="cat-icon">🔒</span>
+                    <span class="cat-label">สำรองข้อมูล</span>
+                </button>
             </div>
 
             <!-- Sub-tabs: การเงิน -->
@@ -641,6 +646,13 @@
                 </button>
                 <button class="tab-btn" onclick="showTab('linemail', this)">
                     <span class="tab-btn-icon">�</span> อีเมล
+                </button>
+            </div>
+
+            <!-- Sub-tabs: สำรองข้อมูล -->
+            <div class="sub-tabs" id="sub-backup">
+                <button class="tab-btn" onclick="showTab('backup', this)">
+                    <span class="tab-btn-icon">🔒</span> ข้อมูลสำรอง
                 </button>
             </div>
 
@@ -1289,6 +1301,33 @@
                 </div>
             </div>
 
+            <!-- Tab: Backup -->
+            <div class="tab-content" id="tab-backup">
+                <div class="section">
+                    <div class="section-title">🔒 ข้อมูลสำรองอัตโนมัติ</div>
+                    <div class="section-desc">ระบบสำรองข้อมูลอัตโนมัติทุกครั้งที่มีการบันทึก สามารถกู้คืนได้ทีละ snapshot</div>
+                    <div class="btn-group" style="margin: 1rem 0 0.5rem 0;">
+                        <button class="btn btn-primary" onclick="loadBackups()">🔄 โหลดรายการสำรอง</button>
+                        <button class="btn btn-danger" onclick="deleteOldBackupsAction()">🗑️ ลบรายการเก่า (&gt;30 วัน)</button>
+                    </div>
+                    <div id="backup-filter" style="margin-bottom:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                        <select id="backupActionFilter" onchange="loadBackups()" style="padding:0.35rem 0.6rem; border-radius:6px; border:1px solid #cbd5e1; background:var(--card); color:var(--text);">
+                            <option value="">ทุกประเภท</option>
+                            <option value="submitWaterBill">💧 ค่าน้ำ</option>
+                            <option value="submitElectricBill">⚡ ค่าไฟ</option>
+                            <option value="saveAccounting">📊 บัญชี</option>
+                            <option value="updateResident">👤 แก้ไขผู้พัก</option>
+                            <option value="removeResident">🗑️ ลบผู้พัก</option>
+                            <option value="updatePermissions">🔐 สิทธิ์ผู้ใช้</option>
+                            <option value="saveExemptions">🏷️ ยกเว้นค่าส่วนกลาง</option>
+                        </select>
+                    </div>
+                    <div id="backup-list-container">
+                        <div style="color:#64748b; padding:1rem 0; text-align:center;">กดปุ่ม "โหลดรายการสำรอง" เพื่อดูข้อมูล</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Modal: Approve Registration -->
             <div class="modal-overlay" id="modal-approveReg">
                 <div class="modal">
@@ -1753,7 +1792,7 @@
         };
 
         // ========== Tab Functions ==========
-        var _catTabMap = { finance: 'water', housing: 'housing', people: 'permissions', system: 'system' };
+        var _catTabMap = { finance: 'water', housing: 'housing', people: 'permissions', system: 'system', backup: 'backup' };
 
         function showCat(cat, btnEl) {
             document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -1804,6 +1843,7 @@
                 else if (tabName === 'housing') loadHousingTabData();
                 else if (tabName === 'resident') loadResidentTabData();
                 else if (tabName === 'linemail') loadEmailSettings();
+                else if (tabName === 'backup') loadBackups();
             }
         }
 
@@ -3652,6 +3692,83 @@
         }
 
         // ========== Backup/Restore Functions ==========
+
+        // ========== Auto-Backup Cloud UI ==========
+        async function loadBackups() {
+            var container = document.getElementById('backup-list-container');
+            if (!container) return;
+            container.innerHTML = '<div style="text-align:center;padding:1rem;color:#64748b;">กำลังโหลด...</div>';
+            var selEl = document.getElementById('backupActionFilter');
+            var actionFilter = selEl ? selEl.value : '';
+            try {
+                var r = await callBackend('getBackups', actionFilter ? { action: actionFilter } : {});
+                if (!r || !r.success) {
+                    container.innerHTML = '<div style="color:red;padding:1rem;">โหลดไม่สำเร็จ: ' + ((r && r.error) || 'ลองใหม่อีกครั้ง') + '</div>';
+                    return;
+                }
+                var rows = r.data || [];
+                if (!rows.length) {
+                    container.innerHTML = '<div style="color:#64748b;padding:1rem;text-align:center;">ไม่มีข้อมูลสำรอง</div>';
+                    return;
+                }
+                var actionLabels = {
+                    submitWaterBill: '💧 ค่าน้ำ', submitElectricBill: '⚡ ค่าไฟ',
+                    saveAccounting: '📊 บัญชี', updateResident: '👤 แก้ผู้พัก',
+                    removeResident: '🗑️ ลบผู้พัก', updatePermissions: '🔐 สิทธิ์',
+                    saveExemptions: '🏷️ ยกเว้น'
+                };
+                var html = '<div style="overflow-x:auto;"><table class="data-table"><thead><tr>' +
+                    '<th>วันที่เวลา</th><th>ประเภท</th><th>รายละเอียด</th>' +
+                    '<th style="text-align:center;">รายการ</th><th></th></tr></thead><tbody>';
+                rows.forEach(function(row) {
+                    var dt = row.created_at ? new Date(row.created_at).toLocaleString('th-TH') : '-';
+                    var lbl = actionLabels[row.action] || row.action;
+                    var safeDesc = (row.description || '-').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+                    html += '<tr>' +
+                        '<td style="white-space:nowrap;font-size:0.82rem;">' + dt + '</td>' +
+                        '<td style="white-space:nowrap;">' + lbl + '</td>' +
+                        '<td style="font-size:0.9rem;">' + (row.description || '-') + '</td>' +
+                        '<td style="text-align:center;"><span class="badge badge-info">' + (row.record_count || 0) + '</span></td>' +
+                        '<td><button class="btn btn-sm btn-warning" onclick="restoreBackupAction(\'' + row.id + '\',\'' + safeDesc + '\')">↩️ กู้คืน</button></td>' +
+                        '</tr>';
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<div style="color:red;padding:1rem;">เกิดข้อผิดพลาด: ' + e.message + '</div>';
+            }
+        }
+
+        async function restoreBackupAction(id, desc) {
+            if (!await ppkConfirm('⚠️ กู้คืนข้อมูล:\n' + desc + '\n\nข้อมูลปัจจุบันในส่วนนี้จะถูกแทนที่ด้วยข้อมูล ณ เวลาที่สำรอง\nต้องการดำเนินการหรือไม่?')) return;
+            try {
+                var r = await callBackend('restoreBackup', { id: id });
+                if (r && r.success) {
+                    ppkAlert('✅ กู้คืนสำเร็จ: ' + (r.message || ''));
+                    loadBackups();
+                } else {
+                    ppkAlert('❌ กู้คืนไม่สำเร็จ: ' + ((r && r.error) || 'ลองใหม่อีกครั้ง'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        async function deleteOldBackupsAction() {
+            if (!await ppkConfirm('🗑️ ลบข้อมูลสำรองที่เก่ากว่า 30 วัน\n\nต้องการดำเนินการหรือไม่?')) return;
+            try {
+                var r = await callBackend('deleteOldBackups', { keepDays: 30 });
+                if (r && r.success) {
+                    ppkAlert('✅ ' + (r.message || 'ลบเรียบร้อยแล้ว'));
+                    loadBackups();
+                } else {
+                    ppkAlert('❌ ' + ((r && r.error) || 'ลองใหม่อีกครั้ง'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
         function backupData() {
             const backup = {
                 timestamp: new Date().toISOString(),
@@ -4923,10 +5040,10 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260319A"></script>
-    <script src="ppk-app.js?v=20260323C"></script>
-    <script src="ppk-utils.js?v=20260319A"></script>
-    <script src="ppk-nav.js?v=20260323C"></script>
+    <script src="ppk-api.js?v=20260323E"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>

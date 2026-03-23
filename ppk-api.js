@@ -382,7 +382,8 @@ async function callBackendGet(action, params) {
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
     'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
     'saveHousingFormat','setupAdmin',
-    'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf'];
+    'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf',
+    'getBackups','restoreBackup','deleteOldBackups'];
 
 // ── Storage bucket helper: auto-create if not exists ──
 var _bucketReady = {};
@@ -804,6 +805,8 @@ async function _routeAction(action, data) {
                     var _wHouseRows = await sbGet('housing', { select: 'id,house_number' });
                     (_wHouseRows || []).forEach(function(h) { _wHouseMap[h.house_number] = h.id; });
                 } catch(e) {}
+                // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
+                try { var _bakW = await sbGet('water_bills', { period: 'eq.' + data.period }); await _autoBackup('submitWaterBill', 'บันทึกค่าน้ำงวด ' + data.period, 'water_bills', 'period', data.period, user.id || null, _bakW); } catch(e) {}
                 // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
                 try { await sbDelete('water_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old water_bills:', e); }
                 // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
@@ -871,6 +874,8 @@ async function _routeAction(action, data) {
                     var _eHouseRows = await sbGet('housing', { select: 'id,house_number' });
                     (_eHouseRows || []).forEach(function(h) { _eHouseMap[h.house_number] = h.id; });
                 } catch(e) {}
+                // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
+                try { var _bakE = await sbGet('electric_bills', { period: 'eq.' + data.period }); await _autoBackup('submitElectricBill', 'บันทึกค่าไฟงวด ' + data.period, 'electric_bills', 'period', data.period, user.id || null, _bakE); } catch(e) {}
                 // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
                 try { await sbDelete('electric_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old electric_bills:', e); }
                 // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
@@ -1915,6 +1920,8 @@ async function _routeAction(action, data) {
         }
         case 'updateResident': {
             var rid = data.id;
+            // สำรองข้อมูลเดิมก่อนแก้ไข (auto-backup)
+            try { var _bakRes = await sbGet('residents', { id: 'eq.' + rid }); await _autoBackup('updateResident', 'แก้ไขผู้พักอาศัย ' + (data.firstname || rid), 'residents', 'id', rid, null, _bakRes); } catch(e) {}
             // อัปเดต residents table — ใช้เฉพาะ schema columns
             var resUp = { updated_at: new Date().toISOString() };
             if (data.prefix       !== undefined) resUp.prefix       = data.prefix;
@@ -1962,6 +1969,8 @@ async function _routeAction(action, data) {
         case 'removeResident': {
             var rid = data.id;
             var resRows = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id,email', limit: '1' });
+            // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
+            try { var _bakRm = await sbGet('residents', { id: 'eq.' + rid }); await _autoBackup('removeResident', 'ลบ/ปิดใช้งานผู้พักอาศัย ' + rid, 'residents', 'id', rid, null, _bakRm); } catch(e) {}
             await sbPatch('residents', { id: 'eq.' + rid }, { is_active: false, updated_at: new Date().toISOString() });
             var _rmUserId = resRows && resRows[0] ? resRows[0].user_id : null;
             // Fallback: ถ้าไม่มี user_id ให้ค้นจาก email
@@ -2060,6 +2069,8 @@ async function _routeAction(action, data) {
             var period = data.period || '';
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id', limit: '1' });
             var recordedBy = sess && sess[0] ? sess[0].user_id : '';
+            // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
+            try { var _bakA = await sbGet('accounting_entries', { period: 'eq.' + period }); await _autoBackup('saveAccounting', 'บันทึกบัญชีงวด ' + period, 'accounting_entries', 'period', period, recordedBy, _bakA); } catch(e) {}
             // ลบทุก entry ของ period นี้แล้ว insert ใหม่ทั้งหมด
             await sbDelete('accounting_entries', { period: 'eq.' + period });
             // หา year / month จาก period (YYYY-MM)
@@ -2299,6 +2310,16 @@ async function _routeAction(action, data) {
         case 'updatePermissions': {
             var perms = data.permissions || {};
             var userIds = Object.keys(perms);
+            // สำรองสิทธิ์เดิมก่อนแก้ไข (auto-backup)
+            try {
+                var _bakPArr = [];
+                for (var bpi = 0; bpi < userIds.length; bpi++) {
+                    if (!userIds[bpi] || userIds[bpi].indexOf('coh_') === 0 || userIds[bpi].indexOf('RES') === 0) continue;
+                    var _bpRows = await sbGet('permissions', { user_id: 'eq.' + userIds[bpi] });
+                    _bakPArr = _bakPArr.concat(_bpRows || []);
+                }
+                await _autoBackup('updatePermissions', 'อัปเดตสิทธิ์ผู้ใช้ ' + userIds.length + ' คน', 'permissions', null, null, null, _bakPArr);
+            } catch(e) {}
             for (var pi = 0; pi < userIds.length; pi++) {
                 var uid = userIds[pi];
                 // ข้าม virtual IDs ที่ไม่มีใน users table
@@ -2343,6 +2364,8 @@ async function _routeAction(action, data) {
             var exSess = await _getSessionRole();
             var exBy = exSess ? exSess.userId : null;
             var exToday = new Date().toISOString().split('T')[0];
+            // สำรองการยกเว้นเดิมก่อนแก้ไข (auto-backup)
+            try { var _bakEx = await sbGet('exemptions', { type: 'eq.common_fee' }); await _autoBackup('saveExemptions', 'บันทึกการยกเว้นค่าส่วนกลาง', 'exemptions', null, null, exBy, _bakEx || []); } catch(e) {}
             for (var exi = 0; exi < exHouseIds.length; exi++) {
                 var exHid = exHouseIds[exi];
                 var exItem = exData[exHid];
@@ -2415,6 +2438,69 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── getBackups — ดึงรายการสำรองข้อมูล ─── */
+        case 'getBackups': {
+            var bkQ = { order: 'created_at.desc', limit: '200' };
+            if (data.action) bkQ.action = 'eq.' + data.action;
+            var bkRows = await sbGet('data_backups', bkQ);
+            return { success: true, data: bkRows || [] };
+        }
+
+        /* ── restoreBackup — กู้คืนข้อมูลจาก snapshot ─── */
+        case 'restoreBackup': {
+            if (!data.id) return { success: false, error: 'ไม่ระบุ backup ID' };
+            var rbRows = await sbGet('data_backups', { id: 'eq.' + data.id, limit: '1' });
+            if (!rbRows || !rbRows[0]) return { success: false, error: 'ไม่พบข้อมูลสำรอง' };
+            var rbRow = rbRows[0];
+            var rbPrev = rbRow.previous_data || [];
+            var rbTbl = rbRow.affected_table;
+            var rbAct = rbRow.action;
+            try {
+                if (rbAct === 'submitWaterBill' || rbAct === 'submitElectricBill' || rbAct === 'saveAccounting') {
+                    var rbFk = rbRow.filter_key; var rbFv = rbRow.filter_value;
+                    if (rbFk && rbFv) { var rbDQ = {}; rbDQ[rbFk] = 'eq.' + rbFv; await sbDelete(rbTbl, rbDQ); }
+                    if (rbPrev.length > 0) {
+                        var rbClean = rbPrev.map(function(r) { var o = Object.assign({}, r); delete o.recorded_at; return o; });
+                        await sbPost(rbTbl, rbClean);
+                    }
+                } else if (rbAct === 'updateResident' || rbAct === 'removeResident') {
+                    for (var rri = 0; rri < rbPrev.length; rri++) {
+                        var rObj = Object.assign({}, rbPrev[rri]); var rId = rObj.id;
+                        delete rObj.id; delete rObj.created_at;
+                        rObj.updated_at = new Date().toISOString();
+                        await sbPatch('residents', { id: 'eq.' + rId }, rObj);
+                    }
+                } else if (rbAct === 'updatePermissions') {
+                    var rbUIDs = []; rbPrev.forEach(function(r) { if (r.user_id && rbUIDs.indexOf(r.user_id) < 0) rbUIDs.push(r.user_id); });
+                    for (var rui = 0; rui < rbUIDs.length; rui++) { await sbDelete('permissions', { user_id: 'eq.' + rbUIDs[rui] }); }
+                    if (rbPrev.length > 0) {
+                        var rbCPerms = rbPrev.map(function(r) { var o = Object.assign({}, r); delete o.id; delete o.created_at; return o; });
+                        await sbPost('permissions', rbCPerms);
+                    }
+                } else if (rbAct === 'saveExemptions') {
+                    var rbHIDs = []; rbPrev.forEach(function(r) { if (r.house_id && rbHIDs.indexOf(r.house_id) < 0) rbHIDs.push(r.house_id); });
+                    for (var rei = 0; rei < rbHIDs.length; rei++) { await sbDelete('exemptions', { house_id: 'eq.' + rbHIDs[rei], type: 'eq.common_fee' }); }
+                    if (rbPrev.length > 0) {
+                        var rbCEx = rbPrev.map(function(r) { var o = Object.assign({}, r); delete o.id; delete o.created_at; return o; });
+                        await sbPost('exemptions', rbCEx);
+                    }
+                } else {
+                    return { success: false, error: 'ไม่รองรับการกู้คืน action: ' + rbAct };
+                }
+            } catch(e) {
+                return { success: false, error: 'กู้คืนไม่สำเร็จ: ' + (e.message || String(e)) };
+            }
+            return { success: true, message: 'กู้คืนสำเร็จ (' + rbPrev.length + ' รายการ)' };
+        }
+
+        /* ── deleteOldBackups — ลบ snapshot เก่า ─── */
+        case 'deleteOldBackups': {
+            var dkDays = parseInt(data.keepDays) || 30;
+            var dkCut = new Date(Date.now() - dkDays * 86400000).toISOString();
+            await sbDelete('data_backups', { created_at: 'lt.' + dkCut });
+            return { success: true, message: 'ลบข้อมูลสำรองที่เก่ากว่า ' + dkDays + ' วันเรียบร้อยแล้ว' };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
@@ -2482,6 +2568,34 @@ async function _autoSyncAccounting(period) {
             description: 'ค่า Lost ไฟฟ้า', amount: lostTotal,
             recorded_at: new Date().toISOString()
         });
+    }
+}
+
+/* ══════════════════════════════════════════
+   Auto-Backup — บันทึก snapshot ก่อนการเขียนทุกครั้ง
+   เรียกก่อน delete/patch ในทุก action ที่ทำลายข้อมูล
+══════════════════════════════════════════ */
+async function _autoBackup(action, description, table, filterKey, filterValue, userId, preRows) {
+    try {
+        var rows = preRows;
+        if (!rows && filterKey && filterValue != null) {
+            var q = {};
+            q[filterKey] = 'eq.' + filterValue;
+            rows = (await sbGet(table, q)) || [];
+        }
+        rows = rows || [];
+        await sbPost('data_backups', {
+            action:         action,
+            description:    description,
+            affected_table: table,
+            filter_key:     filterKey  || null,
+            filter_value:   filterValue != null ? String(filterValue) : null,
+            record_count:   rows.length,
+            previous_data:  rows,
+            created_by:     userId || null
+        });
+    } catch(e) {
+        console.warn('_autoBackup failed (non-critical):', e);
     }
 }
 
