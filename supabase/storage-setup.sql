@@ -20,7 +20,7 @@ DO $$
 DECLARE
   b TEXT;
 BEGIN
-  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return']
+  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return','meter-photos']
   LOOP
     INSERT INTO storage.buckets (id, name, public, file_size_limit)
     VALUES (b, b, true, 10485760)
@@ -35,7 +35,7 @@ DECLARE
   b TEXT;
   pol TEXT;
 BEGIN
-  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return']
+  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return','meter-photos']
   LOOP
     pol := 'anon_insert_' || replace(b, '-', '_');
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = pol AND tablename = 'objects') THEN
@@ -53,7 +53,7 @@ DECLARE
   b TEXT;
   pol TEXT;
 BEGIN
-  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return']
+  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return','meter-photos']
   LOOP
     pol := 'anon_select_' || replace(b, '-', '_');
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = pol AND tablename = 'objects') THEN
@@ -71,7 +71,7 @@ DECLARE
   b TEXT;
   pol TEXT;
 BEGIN
-  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return']
+  FOREACH b IN ARRAY ARRAY['slips','receipts','attach-residence','attach-repair','attach-transfer','attach-return','meter-photos']
   LOOP
     pol := 'anon_delete_' || replace(b, '-', '_');
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = pol AND tablename = 'objects') THEN

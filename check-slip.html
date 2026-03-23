@@ -431,6 +431,8 @@
               slipId: slip ? slip.id : null,
               approval: slip && (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
               proxyNote: slip ? (slip.account_name || '') : '',
+              qrAmount: slip ? (parseFloat(slip.qr_amount) || null) : null,
+              qrRef: slip ? (slip.qr_ref || null) : null,
               noResident: false
             };
 
@@ -765,17 +767,28 @@
       // เปรียบเทียบยอด
       const diff = unit.paidAmount !== null ? unit.paidAmount - unit.notifiedAmount : 0;
       let diffClass = diff === 0 ? '' : 'diff';
+      let qrHtml = '';
+      if (unit.qrAmount !== null) {
+        var qrMatch = unit.paidAmount !== null && Math.abs(unit.qrAmount - unit.paidAmount) < 0.01;
+        qrHtml = '<div class="amount-box" style="background:' + (qrMatch ? '#d1fae5;border:2px solid #10b981' : '#fee2e2;border:2px solid #ef4444') + ';">' +
+          '<div class="amount-label">\uD83D\uDCF1 \u0E22\u0E2D\u0E14\u0E08\u0E32\u0E01 QR</div>' +
+          '<div class="amount-value">' + formatMoney(unit.qrAmount) + '</div>' +
+          '<div style="font-size:0.8rem;margin-top:0.3rem;">' + (qrMatch ? '\u2705 \u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E22\u0E2D\u0E14\u0E17\u0E35\u0E48\u0E41\u0E08\u0E49\u0E07' : '\u26A0\uFE0F \u0E22\u0E2D\u0E14\u0E44\u0E21\u0E48\u0E15\u0E23\u0E07 QR') + '</div>' +
+          (unit.qrRef ? '<div style="font-size:0.75rem;color:#666;margin-top:0.2rem;">Ref: ' + unit.qrRef + '</div>' : '') +
+          '</div>';
+      }
       const amountHtml = `
         <div class="amount-box notified">
-          <div class="amount-label">ยอดที่แจ้ง</div>
+          <div class="amount-label">\u0E22\u0E2D\u0E14\u0E17\u0E35\u0E48\u0E41\u0E08\u0E49\u0E07</div>
           <div class="amount-value">${formatMoney(unit.notifiedAmount)}</div>
         </div>
         <div class="amount-box paid">
-          <div class="amount-label">ยอดที่ชำระ</div>
+          <div class="amount-label">\u0E22\u0E2D\u0E14\u0E17\u0E35\u0E48\u0E0A\u0E33\u0E23\u0E30</div>
           <div class="amount-value">${unit.paidAmount !== null ? formatMoney(unit.paidAmount) : '-'}</div>
         </div>
+        ${qrHtml}
         ${diff !== 0 ? `<div class="amount-box diff">
-          <div class="amount-label">ส่วนต่าง</div>
+          <div class="amount-label">\u0E2A\u0E48\u0E27\u0E19\u0E15\u0E48\u0E32\u0E07</div>
           <div class="amount-value">${diff > 0 ? '+' : ''}${formatMoney(diff)}</div>
         </div>` : ''}
       `;

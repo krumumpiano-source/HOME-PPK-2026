@@ -407,7 +407,7 @@ async function _ensureBucket(name) {
 
 // Actions ที่สามารถมอบหมายให้ผู้ใช้ที่มี permission ได้
 var _PERM_ACTION_MAP = {
-    submitWaterBill: 'water', submitElectricBill: 'electric',
+    submitWaterBill: 'water,water_reader', submitElectricBill: 'electric',
     reviewSlip: 'slip', reviewRequest: 'request', checkDuplicateResident: 'request',
     sendNotification: 'notify',
     saveWithdraw: 'withdraw', saveAccounting: 'accounting'
@@ -426,8 +426,9 @@ async function _routeAction(action, data) {
         if (!_sess2) return { success: false, error: 'กรุณาเข้าสู่ระบบก่อน' };
         if (_sess2.role !== 'admin' && _sess2.role !== 'head') {
             var _reqPerm = _PERM_ACTION_MAP[action];
+            var _reqPerms = _reqPerm.indexOf(',') >= 0 ? _reqPerm.split(',') : [_reqPerm];
             var _permRows = [];
-            try { _permRows = await sbGet('permissions', { user_id: 'eq.' + _sess2.userId, permission: 'eq.' + _reqPerm, limit: '1' }) || []; } catch(e) {}
+            try { _permRows = await sbGet('permissions', { user_id: 'eq.' + _sess2.userId, permission: 'in.(' + _reqPerms.join(',') + ')', limit: '1' }) || []; } catch(e) {}
             if (_permRows.length === 0) {
                 return { success: false, error: 'คุณไม่มีสิทธิ์ดำเนินการนี้' };
             }
@@ -815,7 +816,11 @@ async function _routeAction(action, data) {
                         units_used: parseFloat(rec.units) || 0, rate_per_unit: parseFloat(data.rate) || 0,
                         units_override: rec.units_override != null ? parseFloat(rec.units_override) : null,
                         amount: parseFloat(rec.amount) || 0, recorded_by: user.id || null,
-                        reading_date: data.readingDate || null
+                        reading_date: data.readingDate || null,
+                        meter_photo_url: rec.meter_photo_url || null,
+                        ocr_raw_text: rec.ocr_raw_text || null,
+                        ocr_confidence: rec.ocr_confidence != null ? parseFloat(rec.ocr_confidence) : null,
+                        read_by: rec.read_by || user.id || null
                     };
                 });
                 var inserted = await sbPost('water_bills', _wBatch);
@@ -1152,6 +1157,9 @@ async function _routeAction(action, data) {
                 transfer_date: data.transferDate || null,
                 bank_name:     data.bankName     || null,
                 account_name:  proxyNote || data.accountName || null,
+                qr_amount:     data.qrAmount     || null,
+                qr_ref:        data.qrRef        || null,
+                qr_raw:        data.qrRaw        || null,
                 status:        'pending'
             });
             return { success: true, data: row };

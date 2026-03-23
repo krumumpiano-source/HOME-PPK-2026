@@ -184,6 +184,7 @@
             <div class="form-group">
                 <label for="paid-amount">กรอกจำนวนเงินที่ชำระ (บาท):</label>
                 <input type="number" id="paid-amount" name="paid-amount" placeholder="กรอกจำนวนเงินที่ชำระ" required min="0" step="0.01">
+                <div id="qr-status" style="display:none;margin-top:0.4rem;padding:0.5rem 0.75rem;border-radius:8px;font-size:0.9rem;"></div>
             </div>
             <div class="form-group">
                 <label for="slip">แนบไฟล์สลิป (รองรับไม่เกิน 3 รูป):</label>
@@ -335,11 +336,97 @@
             };
         }
 
-        // ============ Preview ============
-        document.getElementById('slip').addEventListener('change', function(e){
+        // ============ PromptPay EMVCo QR Parser ============
+        // Parse TLV (Tag-Length-Value) format used by Thai PromptPay QR codes
+        function parseEMVCoQR(raw) {
+            var result = { amount: null, ref: null, raw: raw };
+            try {
+                var i = 0;
+                while (i < raw.length - 3) {
+                    var tag = raw.substring(i, i + 2);
+                    var len = parseInt(raw.substring(i + 2, i + 4), 10);
+                    if (isNaN(len) || len <= 0) break;
+                    var val = raw.substring(i + 4, i + 4 + len);
+                    // Tag 54 = Transaction Amount
+                    if (tag === '54') {
+                        var parsed = parseFloat(val);
+                        if (!isNaN(parsed) && parsed > 0) result.amount = parsed;
+                    }
+                    // Tag 62 = Additional Data — parse sub-TLV for ref
+                    if (tag === '62') {
+                        var j = 0;
+                        while (j < val.length - 3) {
+                            var stag = val.substring(j, j + 2);
+                            var slen = parseInt(val.substring(j + 2, j + 4), 10);
+                            if (isNaN(slen) || slen <= 0) break;
+                            var sval = val.substring(j + 4, j + 4 + slen);
+                            // Sub-tag 05 = Reference Label, 07 = Terminal Label
+                            if (stag === '05' || stag === '07') {
+                                if (!result.ref) result.ref = sval;
+                            }
+                            j += 4 + slen;
+                        }
+                    }
+                    i += 4 + len;
+                }
+            } catch(e) { /* ignore parse errors */ }
+            return result;
+        }
+
+        // QR scan state
+        var _qrData = { amount: null, ref: null, raw: null };
+
+        // Scan QR from image file
+        function scanQRFromFile(file) {
+            return new Promise(function(resolve) {
+                if (typeof jsQR === 'undefined') { resolve(null); return; }
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var canvas = document.createElement('canvas');
+                        var maxDim = 1500; // QR needs decent resolution
+                        var w = img.width, h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            var scale = maxDim / Math.max(w, h);
+                            w = Math.round(w * scale); h = Math.round(h * scale);
+                        }
+                        canvas.width = w; canvas.height = h;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        var imageData = ctx.getImageData(0, 0, w, h);
+                        var qr = jsQR(imageData.data, w, h, { inversionAttempts: 'dontInvert' });
+                        resolve(qr ? qr.data : null);
+                    };
+                    img.onerror = function() { resolve(null); };
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() { resolve(null); };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showQRStatus(type, text) {
+            var el = document.getElementById('qr-status');
+            el.style.display = 'block';
+            if (type === 'success') {
+                el.style.background = '#d1fae5'; el.style.color = '#065f46'; el.style.border = '1px solid #10b981';
+            } else if (type === 'warn') {
+                el.style.background = '#fef3c7'; el.style.color = '#92400e'; el.style.border = '1px solid #f59e0b';
+            } else {
+                el.style.background = '#dbeafe'; el.style.color = '#1e40af'; el.style.border = '1px solid #60a5fa';
+            }
+            el.innerHTML = text;
+        }
+
+        // ============ Preview + QR Scan ============
+        document.getElementById('slip').addEventListener('change', async function(e){
             const previewContainer = document.getElementById('preview-container');
             previewContainer.innerHTML = '';
-            const files = Array.from(e.target.files).slice(0, 3); // จำกัด 3 รูป
+            _qrData = { amount: null, ref: null, raw: null };
+            document.getElementById('qr-status').style.display = 'none';
+
+            const files = Array.from(e.target.files).slice(0, 3);
             files.forEach((file) => {
                 const reader = new FileReader();
                 reader.onload = function(event){
@@ -350,6 +437,30 @@
                 };
                 reader.readAsDataURL(file);
             });
+
+            // Scan QR from all images
+            if (typeof jsQR !== 'undefined' && files.length > 0) {
+                showQRStatus('info', '\u23F3 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E48\u0E32\u0E19 QR Code \u0E08\u0E32\u0E01\u0E2A\u0E25\u0E34\u0E1B...');
+                for (var fi = 0; fi < files.length; fi++) {
+                    var qrRaw = await scanQRFromFile(files[fi]);
+                    if (qrRaw) {
+                        var parsed = parseEMVCoQR(qrRaw);
+                        _qrData.raw = qrRaw;
+                        _qrData.ref = parsed.ref;
+                        if (parsed.amount && parsed.amount > 0) {
+                            _qrData.amount = parsed.amount;
+                            document.getElementById('paid-amount').value = parsed.amount;
+                            showQRStatus('success', '\u2705 \u0E2D\u0E48\u0E32\u0E19\u0E08\u0E32\u0E01 QR: \u0E3F' + parsed.amount.toLocaleString('th-TH') + (parsed.ref ? ' (Ref: ' + parsed.ref + ')' : ''));
+                        } else {
+                            showQRStatus('warn', '\u2139\uFE0F \u0E1E\u0E1A QR Code \u0E41\u0E15\u0E48\u0E44\u0E21\u0E48\u0E21\u0E35\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19 \u2014 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E40\u0E2D\u0E07');
+                        }
+                        break; // use first QR found
+                    }
+                }
+                if (!_qrData.raw) {
+                    showQRStatus('info', '\u2139\uFE0F \u0E44\u0E21\u0E48\u0E1E\u0E1A QR Code \u0E43\u0E19\u0E2A\u0E25\u0E34\u0E1B \u2014 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E40\u0E2D\u0E07');
+                }
+            }
         });
 
         // ============ Submit ============
@@ -445,6 +556,9 @@
                         period:      window.billingInfo.period,
                         amount:      paidAmount,
                         slipUrl:     slipUrls.length > 0 ? JSON.stringify(slipUrls) : null,
+                        qrAmount:    _qrData.amount || null,
+                        qrRef:       _qrData.ref || null,
+                        qrRaw:       _qrData.raw || null,
                         submittedByName:  proxyData.submittedByName || null,
                         submittedByHouse: proxyData.submittedByHouse || null
                     }, {}));
@@ -635,9 +749,10 @@
         };
     </script>
     </div><!-- /ppk-main -->
+    <script src="libs/jsqr.min.js?v=20260323"></script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260319A"></script>
+    <script src="ppk-api.js?v=20260323D"></script>
     <script src="ppk-app.js?v=20260323C"></script>
     <script src="ppk-utils.js?v=20260319A"></script>
     <script src="ppk-nav.js?v=20260323C"></script>

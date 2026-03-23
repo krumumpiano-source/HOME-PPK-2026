@@ -74,7 +74,7 @@ function Run-SQLMigration {
 # ============================================================
 function Deploy-EdgeFunctions {
     Write-Cyan "`n[2/3] Deploy Supabase Edge Functions..."
-    $functions = @("send-email", "cleanup-old-slips")
+    $functions = @("send-email", "cleanup-old-slips", "cleanup-old-meter-photos")
 
     if (-not $hasCLI) {
         Write-Yellow "  📋 วิธี Deploy Edge Functions ด้วยตนเอง:"

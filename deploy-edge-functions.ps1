@@ -15,7 +15,7 @@ if ($Help) {
   .\deploy-edge-functions.ps1 [-Function <name>] [-ProjectRef <project-ref>]
 
 Parameters:
-  -Function     ชื่อ function ที่ต้องการ deploy (send-email | cleanup-old-slips | all)
+  -Function     ชื่อ function ที่ต้องการ deploy (send-email | cleanup-old-slips | cleanup-old-meter-photos | all)
                 ค่าเริ่มต้น: all
   -ProjectRef   Supabase Project Reference ID (ถ้าไม่ระบุจะใช้จาก config.js)
   -Help         แสดงวิธีใช้งาน
@@ -103,7 +103,7 @@ Write-Host "✅ Project linked" -ForegroundColor Green
 # Deploy functions
 $functions = @()
 if ($Function -eq "all") {
-    $functions = @("send-email", "cleanup-old-slips")
+    $functions = @("send-email", "cleanup-old-slips", "cleanup-old-meter-photos")
 } else {
     $functions = @($Function)
 }
