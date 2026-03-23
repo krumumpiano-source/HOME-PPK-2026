@@ -302,12 +302,13 @@
         .ev-modal-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,.6); z-index: 9999;
-            justify-content: center; align-items: center; padding: 1rem;
+            justify-content: flex-start; align-items: center; padding: 1rem;
+            flex-direction: column; overflow-y: auto;
         }
         .ev-modal-overlay.show { display: flex; }
         .ev-modal {
             background: white; border-radius: 20px; max-width: 520px; width: 100%;
-            max-height: 85vh; overflow-y: auto; position: relative;
+            margin: auto; position: relative;
             box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: modalSlideIn .3s ease;
         }
         @keyframes modalSlideIn { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
