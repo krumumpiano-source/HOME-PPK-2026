@@ -136,7 +136,7 @@ create table if not exists public.coresidents (
 
 create table if not exists public.water_bills (
   id            text primary key default ('WTR' || upper(substr(gen_random_uuid()::text, 1, 8))),
-  house_id      text not null references public.housing(id) on delete restrict,
+  house_id      text references public.housing(id) on delete restrict,
   house_number  text not null,
   period        text not null,  -- 'YYYY-MM'
   year          int not null,
@@ -144,17 +144,19 @@ create table if not exists public.water_bills (
   prev_meter    numeric(10,2) default 0,
   curr_meter    numeric(10,2) default 0,
   units_used    numeric(10,2) default 0,
+  units_override numeric(10,2) default null,
   rate_per_unit numeric(10,4) default 0,
   amount        numeric(10,2) default 0,
   status        text default 'pending',  -- pending | paid | exempt
   recorded_by   text,
+  reading_date  date,
   recorded_at   timestamptz default now(),
   updated_at    timestamptz default now()
 );
 
 create table if not exists public.electric_bills (
   id            text primary key default ('ELC' || upper(substr(gen_random_uuid()::text, 1, 8))),
-  house_id      text not null references public.housing(id) on delete restrict,
+  house_id      text references public.housing(id) on delete restrict,
   house_number  text not null,
   period        text not null,  -- 'YYYY-MM'
   year          int not null,
@@ -168,6 +170,7 @@ create table if not exists public.electric_bills (
   method        text default 'bill',  -- bill | unit
   status        text default 'pending',
   recorded_by   text,
+  reading_date  date,
   recorded_at   timestamptz default now(),
   updated_at    timestamptz default now()
 );

@@ -1094,8 +1094,8 @@ async function _routeAction(action, data) {
             // สร้าง ID ตาม prefix ของ type
             var prefixMap = { residence: 'REQ', transfer: 'TRF', return: 'RTN', repair: 'RPR' };
             var reqPrefix = prefixMap[data.type] || 'REQ';
-            var _uid = 'xxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16); }).toUpperCase();
-            var reqId = reqPrefix + _uid;
+            var _uid = 'xxxxxxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16); }).toUpperCase();
+            var reqId = reqPrefix + '-' + _uid + '-' + Date.now().toString(36).toUpperCase();
             // แยก type ออกจาก data แล้วเก็บที่เหลือใน details (jsonb)
             var detailsCopy = {};
             Object.keys(data).forEach(function(k) { if (k !== 'type') detailsCopy[k] = data[k]; });

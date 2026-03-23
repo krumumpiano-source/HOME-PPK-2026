@@ -1,9 +1,8 @@
 ﻿// HOME PPK 2026 — Service Worker v1
-var CACHE_NAME = 'ppk-v20260323A';
+var CACHE_NAME = 'ppk-v20260323C';
 var PRECACHE = [
   './',
   './dashboard.html',
-  './electrical-info.html',
   './login.html',
   './ppk-theme.css',
   './ppk-nav.js',
@@ -15,7 +14,8 @@ var PRECACHE = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './supabase/config.js',
-  './supabase/supabase.min.js'
+  './supabase/supabase.min.js',
+  './electrical-info.html'
 ];
 
 self.addEventListener('install', function(e) {

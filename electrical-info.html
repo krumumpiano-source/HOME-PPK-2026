@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ความรู้ระบบไฟฟ้าบ้านพัก | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260322A">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260323C">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600;700&display=swap');
         :root {
@@ -49,6 +49,7 @@
         .spec-card.copper::before { background: linear-gradient(90deg, #D97706, #F59E0B); }
         .spec-card.aluminum::before { background: linear-gradient(90deg, #6B7280, #9CA3AF); }
         .spec-card.meter::before { background: linear-gradient(90deg, #4F46E5, #06B6D4); }
+        .spec-card.old-meter::before { background: linear-gradient(90deg, #DC2626, #EF4444); }
         .spec-icon { font-size: 2rem; margin-bottom: .5rem; }
         .spec-title { font-weight: 600; font-size: 1.05rem; margin-bottom: .5rem; }
         .spec-detail { font-size: .88rem; color: var(--muted); line-height: 1.7; }
@@ -60,6 +61,7 @@
         .badge-copper { background: #FEF3C7; color: #92400E; }
         .badge-alu { background: #F3F4F6; color: #374151; }
         .badge-digital { background: #EEF2FF; color: #4338CA; }
+        .badge-old-meter { background: #FEE2E2; color: #991B1B; }
 
         /* Max Power Card */
         .max-power-card {
@@ -295,6 +297,53 @@
             background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px;
             padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; color: #991B1B;
         }
+
+        /* EV Warning Modal */
+        .ev-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,.6); z-index: 9999;
+            justify-content: center; align-items: center; padding: 1rem;
+        }
+        .ev-modal-overlay.show { display: flex; }
+        .ev-modal {
+            background: white; border-radius: 20px; max-width: 520px; width: 100%;
+            max-height: 85vh; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: modalSlideIn .3s ease;
+        }
+        @keyframes modalSlideIn { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .ev-modal-header {
+            background: linear-gradient(135deg, #DC2626, #F59E0B);
+            padding: 1.5rem; border-radius: 20px 20px 0 0; color: white; text-align: center;
+        }
+        .ev-modal-header-icon { font-size: 2.5rem; margin-bottom: .3rem; }
+        .ev-modal-header h3 { font-size: 1.15rem; font-weight: 600; }
+        .ev-modal-body { padding: 1.2rem 1.5rem; }
+        .ev-modal-item {
+            display: flex; gap: .7rem; padding: .7rem 0;
+            border-bottom: 1px solid #F1F5F9; font-size: .88rem; line-height: 1.6;
+        }
+        .ev-modal-item:last-child { border-bottom: none; }
+        .ev-modal-num {
+            flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+            background: #FEF2F2; color: #DC2626; font-weight: 700; font-size: .8rem;
+            display: flex; align-items: center; justify-content: center; margin-top: 2px;
+        }
+        .ev-modal-footer {
+            padding: 1rem 1.5rem 1.5rem; text-align: center;
+        }
+        .ev-modal-btn {
+            padding: .7rem 2.5rem; border: none; border-radius: 12px;
+            font-family: 'Kanit'; font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all .2s;
+        }
+        .ev-modal-btn.accept {
+            background: linear-gradient(135deg, #DC2626, #EF4444); color: white;
+        }
+        .ev-modal-btn.accept:hover { background: #B91C1C; }
+        .ev-modal-btn.cancel {
+            background: #F1F5F9; color: var(--muted); margin-left: .5rem;
+        }
+        .ev-modal-btn.cancel:hover { background: #E2E8F0; }
     </style>
 </head>
 <body>
@@ -305,60 +354,114 @@
 
         <div class="page-header">
             <h2>⚡ ความรู้ระบบไฟฟ้าบ้านพัก</h2>
-            <p>เรียนรู้สเปคสายไฟ มิเตอร์ และคำนวณกำลังไฟฟ้าที่ใช้ได้</p>
+            <p>ข้อมูลทางเทคนิคสำหรับผู้พักอาศัย — เกี่ยวกับสายไฟ มิเตอร์ การคำนวณกำลังไฟฟ้า และคำแนะนำด้านความปลอดภัย</p>
         </div>
 
         <!-- ══════════════ Section 1: สเปคสายไฟและมิเตอร์ ══════════════ -->
         <div class="section-block">
-            <div class="section-title">🔌 ข้อมูลระบบไฟฟ้าบ้านพัก</div>
+            <div class="section-title">🔌 ข้อมูลระบบไฟฟ้าของบ้านพักแต่ละหลัง</div>
 
             <div class="spec-grid">
                 <!-- สายเข้ามิเตอร์ -->
                 <div class="spec-card copper">
                     <div class="spec-icon">🔶</div>
-                    <div class="spec-title">สายจากเสาไฟ → มิเตอร์</div>
+                    <div class="spec-title">สายไฟจากเสาไฟ → มิเตอร์ (สายเมน — ตัวจำกัดหลัก)</div>
                     <div class="spec-detail">
-                        <strong>สายทองแดง 2 × 6 ตร.มม.</strong><br>
-                        ฉนวนครอสลิงก์โพลิเอทิลีน (XLPE)<br>
+                        <strong>สายทองแดง 2 × 6 ตร.มม.</strong> (หน้าตัด 6 ตารางมิลลิเมตร 2 เส้น)<br>
+                        ฉนวนครอสลิงก์โพลิเอทิลีน (XLPE) — ฉนวนทนความร้อนได้สูง<br>
                         เปลือกนอกโพลิไวนิลคลอไรด์ (PVC)<br>
-                        ยี่ห้อ <strong>Phelps Dodge</strong><br><br>
-                        พิกัดกระแส: <strong>~32 แอมป์</strong><br>
-                        <span class="spec-badge badge-copper">🟠 ตัวจำกัดหลัก</span>
+                        ยี่ห้อ: <strong>Phelps Dodge</strong><br><br>
+                        พิกัดกระแสไฟฟ้า: <strong>ประมาณ 32 แอมป์ (6,600 วัตต์)</strong><br>
+                        <span class="spec-badge badge-copper">🟠 ตัวจำกัดหลักของระบบ (ปัจจุบัน)</span>
                     </div>
                 </div>
 
                 <!-- สายเข้าบ้าน -->
                 <div class="spec-card aluminum">
                     <div class="spec-icon">⬜</div>
-                    <div class="spec-title">สายจากมิเตอร์ → บ้าน</div>
+                    <div class="spec-title">สายไฟจากมิเตอร์ → บ้าน (สายอลูมิเนียม)</div>
                     <div class="spec-detail">
-                        <strong>สายอลูมิเนียม 25 ตร.มม.</strong><br>
+                        <strong>สายอลูมิเนียม 25 ตร.มม.</strong> (หน้าตัด 25 ตารางมิลลิเมตร)<br>
                         ฉนวนโพลิไวนิลคลอไรด์ (PVC)<br>
                         พิกัดแรงดัน 750 โวลต์<br>
-                        ยี่ห้อ <strong>BCC</strong><br><br>
-                        พิกัดกระแส: <strong>~68 แอมป์</strong><br>
-                        <span class="spec-badge badge-alu">⚪ รองรับเพียงพอ</span>
+                        ยี่ห้อ: <strong>BCC</strong><br><br>
+                        พิกัดกระแสไฟฟ้า: <strong>ประมาณ 68 แอมป์ (14,960 วัตต์)</strong><br>
+                        <span class="spec-badge badge-alu">⚪ รองรับได้เพียงพอ</span>
                     </div>
                 </div>
 
-                <!-- มิเตอร์ -->
+                <!-- มิเตอร์เก่า -->
+                <div class="spec-card old-meter">
+                    <div class="spec-icon">🔴</div>
+                    <div class="spec-title">มิเตอร์เก่า (ถอดแล้ว)</div>
+                    <div class="spec-detail">
+                        <strong>มิเตอร์แบบจานหมุน 5(15)A</strong> (รับกระแสไฟได้สูงสุด 15 แอมป์)<br>
+                        กำลังไฟฟ้าสูงสุด: <strong>15 แอมป์ × 220V = 3,300 วัตต์</strong><br>
+                        ความแม่นยำ: Class 2.0 (คลาดเคลื่อนไม่เกิน ±2%) เมื่อยังใหม่<br>
+                        เสื่อมสภาพแล้วคลาดเคลื่อนได้ถึง ±5-20%<br><br>
+                        <span style="color:var(--danger);font-weight:600;">⚠️ เป็นตัวจำกัดตัวจริงของระบบเดิม!</span><br>
+                        <span class="spec-badge badge-old-meter">🔴 ถอดออกแล้ว และเปลี่ยนเป็นมิเตอร์ดิจิตอล</span>
+                    </div>
+                </div>
+
+                <!-- มิเตอร์ใหม่ -->
                 <div class="spec-card meter">
                     <div class="spec-icon">📟</div>
-                    <div class="spec-title">มิเตอร์ไฟฟ้า</div>
+                    <div class="spec-title">มิเตอร์ใหม่ (ปัจจุบัน)</div>
                     <div class="spec-detail">
-                        <strong>IPG SM-02 (ดิจิตอล)</strong><br>
-                        ความแม่นยำ Class 1.0 (±1%)<br>
-                        มาตรฐาน IEC 62053-21<br>
-                        แสดงค่าหน่วยต่อเนื่อง<br><br>
-                        แทนที่: <span style="text-decoration:line-through;color:var(--danger)">มิเตอร์จานหมุนเสื่อมสภาพ</span><br>
-                        <span class="spec-badge badge-digital">🔵 แม่นยำ ±1%</span>
+                        <strong>IPG SM-02 ดิจิตอล 5(100)A</strong><br>
+                        ผู้ผลิต: บจก. อินเตอร์เนชั่นแนล พาวเวอร์ กรุ๊ป<br>
+                        แรงดันไฟฟ้า: 230V 50Hz<br>
+                        ค่าคงที่: 1,000 imp/kWh<br>
+                        ความแม่นยำ: Class 1.0 (±1%) มาตรฐาน IEC 62053-21<br><br>
+                        พิกัดสูงสุด: <strong>100 แอมป์</strong> (มิเตอร์ไม่เป็นคอขวดแล้ว แต่ระบบยังถูกจำกัดโดยสายเมน)<br>
+                        ตัวจำกัดเปลี่ยนเป็น: <strong>สายทองแดง 32A = 6,600W</strong><br>
+                        <span style="font-size:.78rem;color:var(--success);">✅ ผ่าน QC ทุกตัว — ทดสอบ 22/12/2568 | ตรวจรับ 20 มี.ค. 2569</span><br>
+                        <span class="spec-badge badge-digital">🔵 แม่นยำ ±1% | 5(100)A</span>
                     </div>
                 </div>
             </div>
 
-            <div class="info-callout">
-                <strong>💡 ทำไมสายทองแดง 6 ตร.มม. เป็นตัวจำกัด?</strong><br>
-                สายจากเสาไฟเข้ามิเตอร์เป็นสายขนาดเล็กที่สุดในระบบ (6 ตร.มม.) จึงเป็นจุดคอขวด — ต่อให้สายเข้าบ้านรับได้มากกว่า แต่ก็ไม่สามารถดึงกระแสเกินกว่าที่สายเส้นแรกรับไหว ดังนั้นกำลังไฟสูงสุดจะถูกจำกัดตามสายเส้นนี้
+            <!-- ตารางเปรียบเทียบพิกัดอุปกรณ์ -->
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>อุปกรณ์</th>
+                        <th>พิกัดกระแส (A)</th>
+                        <th>กำลังไฟ (W)</th>
+                        <th>หมายเหตุ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>สายทองแดง 6 ตร.มม.</td>
+                        <td><strong>~32A</strong></td>
+                        <td><strong>6,600W</strong></td>
+                        <td><span style="color:var(--warning);font-weight:600;">🟠 ตัวจำกัดปัจจุบัน</span></td>
+                    </tr>
+                    <tr>
+                        <td>สายอลูมิเนียม 25 ตร.มม.</td>
+                        <td>~68A</td>
+                        <td>14,960W</td>
+                        <td>รองรับเพียงพอ</td>
+                    </tr>
+                    <tr style="background:#FEF2F2;">
+                        <td>🔴 มิเตอร์เก่า 5(15)A</td>
+                        <td class="compare-old"><strong>15A</strong></td>
+                        <td class="compare-old"><strong>3,300W</strong></td>
+                        <td><span style="color:var(--danger);font-weight:600;">❌ ตัวจำกัดตัวจริง (ระบบเก่า)</span></td>
+                    </tr>
+                    <tr style="background:#F0FDF4;">
+                        <td>🟢 มิเตอร์ใหม่ 5(100)A</td>
+                        <td class="compare-new"><strong>100A</strong></td>
+                        <td class="compare-new"><strong>22,000W</strong></td>
+                        <td>มิเตอร์รองรับได้เกินพอ — ระบบยังถูกจำกัดที่สายเมน 32A</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-callout" style="background:#F0FDF4;border-color:#86EFAC;color:#166534;">
+                <strong>✅ พิกัดเพิ่ม 2 เท่า!</strong> เปลี่ยนมิเตอร์เก่า 5(15)A → ใหม่ 5(100)A ทำให้ตัวจำกัดระบบเปลี่ยนจาก<strong>มิเตอร์ 3,300W → สายทองแดง 6,600W</strong> — ใช้ไฟฟ้าได้มากขึ้น 2 เท่าจากเดิม
             </div>
         </div>
 
@@ -367,13 +470,13 @@
             <div style="font-size:1rem;opacity:.8;">⚡ กำลังไฟฟ้าสูงสุดที่ใช้ได้</div>
             <div class="max-power-number">6,600</div>
             <div class="max-power-unit">วัตต์ (W)</div>
-            <div class="max-power-sub">สายทองแดง 6 ตร.มม. × 30 แอมป์ × 220 โวลต์ = 6,600 วัตต์</div>
-            <div class="max-power-sub" style="opacity:.6;margin-top:.3rem;">แนะนำใช้ไม่เกิน 80% = 5,280 วัตต์ เพื่อความปลอดภัย</div>
+            <div class="max-power-sub">คำนวณจาก: สายทองแดง 6 ตร.มม. × 30 แอมป์ × 220 โวลต์ = 6,600 วัตต์</div>
+            <div class="max-power-sub" style="opacity:.6;margin-top:.3rem;">คำแนะนำ: ควรใช้ไม่เกิน 80% (คือ 5,280 วัตต์) เพื่อความปลอดภัยของสายไฟ</div>
         </div>
 
         <!-- ══════════════ Section 3: เครื่องคำนวณ Interactive ══════════════ -->
         <div class="section-block">
-            <div class="section-title">🧮 คำนวณกำลังไฟฟ้า — เลือกเครื่องใช้ที่ใช้พร้อมกัน</div>
+            <div class="section-title">🧮 เครื่องคำนวณกำลังไฟฟ้า — เลือกเครื่องใช้ไฟฟ้าที่เปิดใช้พร้อมกัน</div>
 
             <div class="info-callout">
                 <strong>📌 วิธีใช้:</strong> แตะเลือกเครื่องใช้ไฟฟ้าที่คุณ<strong>เปิดใช้พร้อมกัน</strong> ระบบจะคำนวณว่ากำลังไฟรวมเกินพิกัดหรือไม่ — ปรับจำนวนตัวได้ด้วยปุ่ม +/−
@@ -432,28 +535,116 @@
             <div id="selectedList" class="selected-list"></div>
         </div>
 
-        <!-- ══════════════ Section 4: เปรียบเทียบมิเตอร์ ══════════════ -->
+        <!-- ══════════════ Section 4: ระบบเก็บค่าไฟ + ส่วนต่าง Lost ══════════════ -->
         <div class="section-block">
-            <div class="section-title">📊 เปรียบเทียบมิเตอร์: จานหมุน vs ดิจิตอล</div>
+            <div class="section-title">💰 ระบบการเก็บค่าไฟฟ้า และส่วนต่าง (Lost) คืออะไร?</div>
+
+            <!-- อัตราค่าไฟ -->
+            <div class="info-callout">
+                <strong>💡 อัตราค่าไฟฟ้า:</strong> ใช้อัตราเดียวกับบ้านเรือนทั่วไป (ตามอัตรา กฟภ./PEA) ทั้งบ้านพักและแฟลต + ค่าบริการจดมิเตอร์ <strong>9 บาท/หลัง/เดือน</strong>
+            </div>
+
+            <!-- Infographic: มิเตอร์ประธาน → มิเตอร์รายหลัง -->
+            <div style="margin:1.5rem 0;">
+                <div style="font-weight:600;font-size:.95rem;margin-bottom:1rem;">📊 ระบบมิเตอร์ประธานและมิเตอร์รายหลัง:</div>
+
+                <!-- มิเตอร์ประธาน -->
+                <div style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-bottom:1rem;">
+                    <div style="flex:1;min-width:220px;max-width:300px;border-radius:14px;padding:1rem;background:linear-gradient(135deg,#312E81,#4F46E5);color:white;text-align:center;">
+                        <div style="font-size:2rem;">🏢</div>
+                        <div style="font-weight:600;font-size:.95rem;">มิเตอร์ประธาน กฟภ.</div>
+                        <div style="font-size:.8rem;opacity:.8;margin-top:.3rem;">วัดตรงเสมอ — กฟภ. เก็บเงินตามนี้</div>
+                    </div>
+                </div>
+
+                <!-- ลูกศรลง -->
+                <div style="text-align:center;font-size:1.5rem;color:var(--primary);margin:.5rem 0;">⬇️ แบ่งไฟไปแต่ละหลัง</div>
+
+                <!-- มิเตอร์รายหลัง -->
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:1rem;">
+                    <div style="border-radius:10px;padding:.6rem .8rem;background:#EEF2FF;border:1px solid #C7D2FE;text-align:center;font-size:.8rem;min-width:70px;">🏠 หลัง 1</div>
+                    <div style="border-radius:10px;padding:.6rem .8rem;background:#EEF2FF;border:1px solid #C7D2FE;text-align:center;font-size:.8rem;min-width:70px;">🏠 หลัง 2</div>
+                    <div style="border-radius:10px;padding:.6rem .8rem;background:#EEF2FF;border:1px solid #C7D2FE;text-align:center;font-size:.8rem;min-width:70px;">🏠 หลัง 3</div>
+                    <div style="border-radius:10px;padding:.6rem .8rem;background:#EEF2FF;border:1px solid #C7D2FE;text-align:center;font-size:.8rem;min-width:70px;">🏠 ...</div>
+                </div>
+
+                <!-- ตำแหน่งมิเตอร์ประธาน -->
+                <div style="background:#F8FAFC;border-radius:12px;padding:1rem;font-size:.88rem;margin-bottom:1rem;">
+                    <div style="font-weight:600;margin-bottom:.5rem;">📍 ตำแหน่งมิเตอร์ประธาน (2 จุด):</div>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                        <span style="padding:.3rem .7rem;background:#DBEAFE;color:#1E40AF;border-radius:8px;font-size:.82rem;">🏠 บ้านพัก — บริเวณทางเข้ามุมโค้งถนน</span>
+                        <span style="padding:.3rem .7rem;background:#DBEAFE;color:#1E40AF;border-radius:8px;font-size:.82rem;">🏢 แฟลต — ฝั่งตรงข้ามแฟลต ติดหลังโกดังเป๊บซี่</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ส่วนต่าง Lost -->
+            <div style="margin:1.5rem 0;">
+                <div style="font-weight:600;font-size:.95rem;margin-bottom:1rem;">⚡ ส่วนต่าง (Lost) คืออะไร? อธิบายแบบเข้าใจง่าย:</div>
+
+                <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:14px;padding:1.2rem;margin-bottom:1rem;">
+                    <div style="font-size:.88rem;color:#92400E;line-height:1.7;">
+                        <strong>มิเตอร์ประธาน</strong> คือมิเตอร์ตัวใหญ่ของ กฟภ. ที่วัดไฟทั้งหมดที่ส่งเข้ามา (วัดตรงเสมอ)<br>
+                        <strong>มิเตอร์รายหลัง</strong> คือมิเตอร์แต่ละหลัง ที่วัดไฟที่แต่ละหลังใช้จริง → <strong>ถ้ามิเตอร์เสื่อมสภาพ จะวัดได้น้อยกว่าค่าจริง</strong><br><br>
+                        ตัวอย่าง: มิเตอร์ประธานวัดได้ <strong>100 หน่วย</strong> แต่มิเตอร์รายหลังรวมกันได้เพียง <strong>80 หน่วย</strong><br>
+                        → ส่วนต่าง <strong>20 หน่วย</strong> = <span style="color:#DC2626;font-weight:600;">Lost (ค่าสูญเสีย)</span><br><br>
+                        ค่าส่วนต่างนี้ยังคงต้องจ่ายให้ กฟภ. อยู่ดี → <strong>ภาระจึงตกเป็นของเงินส่วนกลาง (กองกลาง)</strong>
+                    </div>
+                </div>
+
+                <!-- ก่อน vs หลัง เปรียบเทียบ -->
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+                    <div style="flex:1;min-width:230px;max-width:350px;border-radius:14px;padding:1.2rem;background:#FEF2F2;border:1px solid #FECACA;text-align:center;">
+                        <div style="font-size:2rem;">🔴</div>
+                        <div style="font-weight:600;color:#991B1B;font-size:.95rem;">ก่อนเปลี่ยนมิเตอร์</div>
+                        <div style="font-size:2.5rem;font-weight:700;color:#DC2626;margin:.5rem 0;">~20%</div>
+                        <div style="font-size:.82rem;color:#991B1B;">ส่วนต่าง Lost สูง<br>มิเตอร์เสื่อมวัดต่ำกว่าจริง<br>ภาระตกกองกลาง</div>
+                    </div>
+                    <div style="flex:1;min-width:230px;max-width:350px;border-radius:14px;padding:1.2rem;background:#F0FDF4;border:1px solid #BBF7D0;text-align:center;">
+                        <div style="font-size:2rem;">🟢</div>
+                        <div style="font-weight:600;color:#166534;font-size:.95rem;">หลังเปลี่ยนมิเตอร์ใหม่</div>
+                        <div style="font-size:2.5rem;font-weight:700;color:#22C55E;margin:.5rem 0;">~1-2%</div>
+                        <div style="font-size:.82rem;color:#166534;">ส่วนต่าง Lost ลดลงมาก<br>วัดแม่นยำ ±1%<br>กองกลางไม่ต้องแบกรับ</div>
+                    </div>
+                </div>
+
+                <!-- คำเตือน: มิเตอร์ถูกแก้ไข/เสียหาย -->
+                <div class="danger-callout" style="margin-top:1.5rem;">
+                    <strong>🚨 มิเตอร์เสียหายหรือถูกแก้ไข = ภาระตกกองกลาง</strong><br><br>
+                    หากมิเตอร์รายหลังเกิดความเสียหาย เสื่อมสภาพ ถูกดัดแปลง หรือมีการกระทำให้มิเตอร์หมุนช้าลง (ไม่ว่าจะตั้งใจหรือไม่ก็ตาม) มิเตอร์จะ<strong>วัดค่าไฟต่ำกว่าที่ใช้จริง</strong><br><br>
+                    ผลที่เกิดขึ้นคือ: ส่วนต่างระหว่างมิเตอร์ประธานกับมิเตอร์รายหลังจะ<strong>เพิ่มขึ้น</strong> → ค่าส่วนต่าง (Lost) ที่เพิ่มขึ้นนี้ <strong style="color:#DC2626;">จะกลายเป็นภาระของเงินส่วนกลาง ซึ่งก็คือเงินของผู้พักอาศัยทุกหลังร่วมกัน</strong><br><br>
+                    📌 <strong>สรุป:</strong> มิเตอร์ที่เสียหายหรือถูกแก้ไข ไม่ได้ทำให้ "ได้ส่วนลดค่าไฟ" แต่เป็นการ<strong>โยนภาระให้ส่วนกลางแบกรับแทน</strong> ซึ่งไม่เป็นธรรมต่อผู้พักอาศัยทุกหลัง — หากพบเห็นมิเตอร์ที่มีสภาพผิดปกติ กรุณาแจ้งเจ้าหน้าที่ทันที
+                </div>
+            </div>
+
+            <div class="info-callout" style="background:#F0FDF4;border-color:#86EFAC;color:#166534;">
+                <strong>✅ สรุป:</strong> หลังเปลี่ยนมิเตอร์ แต่ละหลังอาจเสียค่าไฟ<strong>เพิ่มขึ้นเล็กน้อย</strong> ← แต่นี่คือค่าที่ถูกต้อง แม่นยำ เป็นธรรม — <strong>ส่วนต่าง (Lost) ลดลงจนแทบเป็นศูนย์</strong> กองกลางไม่ต้องแบกรับส่วนต่างอีกต่อไป = <strong>ยุติธรรมที่สุดสำหรับทุกคน</strong>
+            </div>
+        </div>
+
+        <!-- ══════════════ Section 5: เปรียบเทียบมิเตอร์ ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">📊 เปรียบเทียบมิเตอร์: แบบจานหมุน (เก่า) vs ดิจิตอล (ใหม่)</div>
 
             <div class="accuracy-visual">
                 <div class="accuracy-card old">
                     <div class="accuracy-icon">🔴</div>
-                    <div class="accuracy-name">มิเตอร์จานหมุน (เก่า)</div>
+                    <div class="accuracy-name">มิเตอร์แบบจานหมุน 5(15)A (เก่า)</div>
                     <div class="accuracy-pct" style="color:var(--danger);">±5-20%</div>
-                    <div class="accuracy-desc">เสื่อมสภาพตามอายุใช้งาน<br>จานหมุนช้าลง → <strong>อ่านค่าต่ำกว่าจริง</strong> หรือ <strong>อ่านค่าสูงกว่าจริง</strong></div>
+                    <div class="accuracy-desc">พิกัด: <strong>15A / 3,300 วัตต์</strong><br>เสื่อมสภาพตามอายุการใช้งาน<br>จานหมุนช้าลง → <strong>วัดค่าไฟได้ต่ำกว่าความเป็นจริง</strong></div>
                 </div>
                 <div class="accuracy-card new">
                     <div class="accuracy-icon">🟢</div>
-                    <div class="accuracy-name">IPG SM-02 (ดิจิตอล)</div>
+                    <div class="accuracy-name">IPG SM-02 5(100)A (ดิจิตอล — ใช้งานอยู่)</div>
                     <div class="accuracy-pct" style="color:var(--success);">±1%</div>
-                    <div class="accuracy-desc">วัดแม่นยำตามมาตรฐาน IEC<br>ไม่มีชิ้นส่วนเคลื่อนไหว → <strong>ค่าคงที่ไม่เสื่อม</strong></div>
+                    <div class="accuracy-desc">พิกัด: <strong>100A</strong> (เกินพิกัดสาย — ระบบจึงถูกจำกัดที่สายเมน 32A แทน)<br>วัดแม่นยำตามมาตรฐาน IEC<br>ไม่มีชิ้นส่วนเคลื่อนไหว → <strong>ค่าคงที่ ไม่เสื่อมสภาพ</strong></div>
                 </div>
             </div>
 
             <div class="warning-callout">
-                <strong>⚠️ ทำไมค่าไฟอาจเปลี่ยนหลังเปลี่ยนมิเตอร์?</strong><br>
-                มิเตอร์จานหมุนที่เสื่อมสภาพมักวัดค่า<strong>ต่ำกว่าจริง</strong> (จานหมุนช้าลง) เมื่อเปลี่ยนเป็นมิเตอร์ดิจิตอลที่วัดได้แม่นยำกว่า ค่าไฟจึง<strong>สะท้อนการใช้งานจริง</strong>มากขึ้น — ไม่ได้วัดเกิน แต่ตอนก่อนวัด<strong>ขาด</strong>ไป
+                <strong>⚠️ ทำไมค่าไฟอาจเปลี่ยนแปลงหลังเปลี่ยนมิเตอร์? อธิบาย 2 สาเหตุหลัก:</strong><br><br>
+                <strong>สาเหตุที่ 1 — มิเตอร์ใหม่วัดแม่นยำขึ้น:</strong> มิเตอร์จานหมุนเก่าเสื่อมสภาพ วัดค่าไฟ<strong>ต่ำกว่าที่ใช้จริง</strong> (เพราะจานหมุนช้าลง) มิเตอร์ดิจิตอลวัดแม่นยำ ±1% ค่าไฟจึงสะท้อนการใช้งานจริง<br><br>
+                <strong>สาเหตุที่ 2 — พิกัดมิเตอร์เพิ่มเป็น 2 เท่า:</strong> มิเตอร์เก่า 5(15)A จำกัดกำลังไฟที่ 3,300 วัตต์ มิเตอร์ใหม่ 5(100)A ทำให้ดึงไฟได้ถึง 6,600 วัตต์ (ตามพิกัดสาย) → ถ้าใช้เครื่องใช้ไฟฟ้ามากขึ้น ค่าไฟก็เพิ่มตาม
             </div>
 
             <table class="compare-table">
@@ -466,9 +657,14 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td>พิกัดกระแส</td>
+                        <td><strong class="compare-old">5(15)A → สูงสุด 3,300W</strong></td>
+                        <td><strong class="compare-new">5(100)A → มิเตอร์รองรับได้เกินพอ</strong></td>
+                    </tr>
+                    <tr>
                         <td>ความแม่นยำ</td>
-                        <td>Class 2.0 (±2%) เมื่อใหม่<br>เสื่อมเป็น ±5-20%</td>
-                        <td>Class 1.0 (±1%) คงที่</td>
+                        <td>Class 2.0 (±2%) เมื่อยังใหม่<br>เสื่อมสภาพแล้วคลาดเคลื่อนได้ถึง ±5-20%</td>
+                        <td>Class 1.0 (±1%) คงที่ตลอดอายุการใช้งาน<br>(ทดสอบจริง: คลาดเคลื่อนเพียง ±0.3%)</td>
                     </tr>
                     <tr>
                         <td>อายุการใช้งาน</td>
@@ -477,18 +673,18 @@
                     </tr>
                     <tr>
                         <td>การอ่านค่า</td>
-                        <td>ต้องอ่านเข็มเอง อาจผิดพลาด</td>
-                        <td>แสดงตัวเลขชัดเจน</td>
+                        <td>ต้องอ่านเข็มเอง อาจอ่านผิดพลาด</td>
+                        <td>แสดงตัวเลขดิจิตอลชัดเจน อ่านง่าย</td>
                     </tr>
                     <tr>
                         <td>ชิ้นส่วนเคลื่อนไหว</td>
-                        <td>มี (จานหมุน เฟือง) → สึกหรอ</td>
-                        <td>ไม่มี → ทนทาน</td>
+                        <td>มี (จานหมุน เฟือง) → สึกหรอตามอายุ</td>
+                        <td>ไม่มีชิ้นส่วนเคลื่อนไหว → ทนทาน</td>
                     </tr>
                     <tr>
                         <td>ผลกระทบจาก<br>ฝุ่น/ความชื้น</td>
-                        <td>จานหมุนฝืด → ค่าคลาดเคลื่อน</td>
-                        <td>ไม่มีผลกระทบ</td>
+                        <td>จานหมุนฝืด → ค่าคลาดเคลื่อนสูง</td>
+                        <td>ไม่มีผลกระทบ วัดแม่นยำเสมอ</td>
                     </tr>
                     <tr>
                         <td>ผลต่อค่าไฟ</td>
@@ -503,40 +699,101 @@
             </div>
         </div>
 
-        <!-- ══════════════ Section 5: คำแนะนำความปลอดภัย ══════════════ -->
+        <!-- ══════════════ Section 5.5: ผลทดสอบ QC จากผู้ผลิต ══════════════ -->
         <div class="section-block">
-            <div class="section-title">🛡️ คำแนะนำการใช้ไฟฟ้าอย่างปลอดภัย</div>
+            <div class="section-title">🏭 ผลทดสอบคุณภาพจากโรงงานผู้ผลิต (QC Report)</div>
+
+            <div class="info-callout" style="background:#F0FDF4;border-color:#86EFAC;color:#166534;">
+                <strong>✅ มิเตอร์ที่ใช้ในบ้านพักผ่านการทดสอบคุณภาพจากโรงงานทุกตัว</strong><br><br>
+                ผู้ผลิต: <strong>บริษัท อินเตอร์เนชั่นแนล พาวเวอร์ กรุ๊ป จำกัด</strong> (International Power Group Co., Ltd.)<br>
+                ที่อยู่: 48/418 ม.1 ต.คอกกระบือ อ.เมืองสมุทรสาคร จ.สมุทรสาคร 74000<br><br>
+                พิกัดมิเตอร์: <strong>5(100)A 230V 50Hz</strong> | ค่าคงที่: <strong>1,000 imp/kWh</strong><br>
+                สัญญาเลขที่: <strong>3002336577 กฟจ.ชุมพร</strong><br>
+                วันที่ทดสอบ: <strong>22 ธันวาคม 2568</strong> | ตรวจรับ QC: <strong>20 มีนาคม 2569 — PASS</strong>
+            </div>
+
+            <div style="margin:1.5rem 0;">
+                <div style="font-weight:600;font-size:.95rem;margin-bottom:.8rem;">📋 ผลทดสอบมิเตอร์ทั้ง 17 ตัว:</div>
+
+                <div style="overflow-x:auto;">
+                    <table class="compare-table" style="min-width:600px;">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">ลำดับ</th>
+                                <th>เลขมิเตอร์ (PEA No.)</th>
+                                <th style="text-align:center;">แรงดัน AC</th>
+                                <th style="text-align:center;">ค่าคงที่มิเตอร์</th>
+                                <th style="text-align:center;">ค่าคลาดเคลื่อน</th>
+                                <th style="text-align:center;">ผลทดสอบ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>2025115377</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>2</td><td>2025115398</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>3</td><td>2025115583</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>4</td><td>2025107957</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>5</td><td>2025107964</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>6</td><td>2025115393</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>7</td><td>2025113026</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>8</td><td>2025113027</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>9</td><td>2025108025</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>10</td><td>2025107956</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>11</td><td>2025113023</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>12</td><td>2025107947</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>13</td><td>2025113014</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>14</td><td>2025107968</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>15</td><td>2025113016</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>16</td><td>2025108003</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                            <tr><td>17</td><td>2025113028</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">±0.3%</td><td style="text-align:center;color:var(--success);font-weight:600;">PASS</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="font-size:.82rem;color:var(--muted);margin-top:.8rem;line-height:1.6;">
+                    <strong>รายการทดสอบที่ผ่านทั้งหมด:</strong> แรงดันไฟฟ้า AC, ค่าคงที่มิเตอร์ (Meter Constant), การเริ่มทำงาน (Initial Start-up), สภาวะเริ่มหมุน (Starting Condition), สภาวะไม่มีโหลด (No-load Condition)<br>
+                    <strong>ค่าคลาดเคลื่อน:</strong> ทุกตัวอยู่ในช่วง ±0.3% ซึ่งดีกว่ามาตรฐาน Class 1.0 ที่กำหนดไว้ ±1% อย่างมาก
+                </div>
+            </div>
+
+            <div class="info-callout" style="background:#F0FDF4;border-color:#86EFAC;color:#166534;">
+                <strong>🔍 สรุปผล QC:</strong> มิเตอร์ทั้ง 17 ตัวที่ใช้ในบ้านพัก ผ่านการทดสอบจากโรงงานผู้ผลิตครบทุกรายการ โดยมีค่าคลาดเคลื่อนเพียง ±0.3% (ดีกว่าข้อกำหนด ±1% ถึง 3 เท่า) — <strong>ผู้พักอาศัยสามารถมั่นใจได้ว่ามิเตอร์วัดค่าไฟฟ้าได้ถูกต้องแม่นยำ</strong>
+            </div>
+        </div>
+
+        <!-- ══════════════ Section 6: คำแนะนำความปลอดภัย ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">🛡️ คำแนะนำการใช้ไฟฟ้าอย่างปลอดภัย (สำหรับผู้พักอาศัย)</div>
 
             <div class="tip-grid">
                 <div class="tip-card" style="border-left: 4px solid var(--danger);">
                     <div class="tip-icon">🚫</div>
-                    <div class="tip-title">ห้ามใช้เกินพิกัด 6,600W</div>
-                    <div class="tip-text">หากเปิดเครื่องใช้ไฟฟ้ารวมกันเกินพิกัด สายไฟจะร้อนจนอาจเกิดเพลิงไหม้ได้ — เมนเบรกเกอร์จะตัดไฟอัตโนมัติเพื่อป้องกัน</div>
+                    <div class="tip-title">ห้ามใช้ไฟฟ้ารวมกันเกิน 6,600 วัตต์</div>
+                    <div class="tip-text">หากเปิดเครื่องใช้ไฟฟ้าหลายตัวพร้อมกัน จนกำลังไฟฟ้ารวมเกิน 6,600 วัตต์ สายไฟจะร้อนจัด ซึ่งอาจทำให้เกิดเพลิงไหม้ได้ — เมนเบรกเกอร์ (สวิตช์ตัดไฟอัตโนมัติ) จะตัดกระแสไฟตั้งแต่ก่อนเกิดอันตราย</div>
                 </div>
                 <div class="tip-card" style="border-left: 4px solid var(--warning);">
                     <div class="tip-icon">🔌</div>
-                    <div class="tip-title">ห้ามต่อพ่วงปลั๊กไฟมากเกิน</div>
-                    <div class="tip-text">ปลั๊กพ่วงมีพิกัดจำกัด (ส่วนมาก 2,300W) การเสียบเครื่องใช้ไฟฟ้ากำลังสูงหลายตัวในปลั๊กพ่วงเดียวกันเสี่ยงไฟไหม้</div>
+                    <div class="tip-title">ห้ามต่อพ่วงปลั๊กไฟหลายตัวในจุดเดียว</div>
+                    <div class="tip-text">ปลั๊กพ่วงส่วนใหญ่รองรับได้เพียง 2,300 วัตต์ การเสียบเครื่องใช้ไฟฟ้ากำลังสูงหลายตัวผ่านปลั๊กพ่วงเดียวกัน อาจทำให้ปลั๊กพ่วงร้อนจัดจนเกิดไฟไหม้ได้</div>
                 </div>
                 <div class="tip-card" style="border-left: 4px solid var(--info);">
                     <div class="tip-icon">❄️</div>
-                    <div class="tip-title">แอร์กินไฟมากที่สุด</div>
-                    <div class="tip-text">แอร์ 12,000 BTU ใช้ ~1,200W ตั้งอุณหภูมิ 25-26°C ช่วยประหยัดไฟได้ 10-15% เทียบกับตั้ง 20°C</div>
+                    <div class="tip-title">แอร์คือเครื่องใช้ไฟฟ้าที่กินไฟมากที่สุด</div>
+                    <div class="tip-text">เครื่องปรับอากาศ 12,000 BTU ใช้ไฟประมาณ 1,200 วัตต์ การตั้งอุณหภูมิ 25-26°C ช่วยประหยัดไฟได้ 10-15% เมื่อเทียบกับการตั้งที่ 20°C</div>
                 </div>
                 <div class="tip-card" style="border-left: 4px solid var(--success);">
                     <div class="tip-icon">💡</div>
-                    <div class="tip-title">ใช้หลอด LED ประหยัดไฟ</div>
-                    <div class="tip-text">หลอด LED 12W ให้แสงเท่าหลอดไส้ 60W แต่ประหยัดไฟกว่า 80% และอายุยาวนานกว่า 15 เท่า</div>
+                    <div class="tip-title">ใช้หลอด LED เพื่อประหยัดไฟฟ้า</div>
+                    <div class="tip-text">หลอด LED 12 วัตต์ ให้แสงสว่างเท่าหลอดไส้ 60 วัตต์ แต่ประหยัดไฟฟ้าได้ถึง 80% และมีอายุการใช้งานยาวนานกว่าหลอดไส้ถึง 15 เท่า</div>
                 </div>
-                <div class="tip-card" style="border-left: 4px solid #8B5CF6;">
-                    <div class="tip-icon">🚗</div>
-                    <div class="tip-title">ชาร์จรถ EV ต้องระวัง</div>
-                    <div class="tip-text">ตู้ชาร์จ Wallbox ใช้ ~3,500W คิดเป็น 53% ของพิกัดทั้งหมด — ชาร์จพร้อมเปิดแอร์อาจเกินพิกัดได้ ควรชาร์จตอนกลางคืนที่ไม่ใช้เครื่องใช้อื่น</div>
+                <div class="tip-card" style="border-left: 4px solid #DC2626;">
+                    <div class="tip-icon">🚫</div>
+                    <div class="tip-title">ห้ามติดตั้งตู้ชาร์จรถยนต์ไฟฟ้า (Wallbox)</div>
+                    <div class="tip-text">ระบบไฟฟ้าบ้านพักเป็น<strong>ไฟเฟสเดียว</strong> และสายเมนรองรับกำลังไฟฟ้าได้เพียง 6,600 วัตต์ — ตู้ชาร์จ Wallbox ใช้ไฟถึง 3,500 วัตต์ (53% ของทั้งระบบ) จึง<strong>ไม่ปลอดภัย</strong>ในการติดตั้ง หากจำเป็นต้องชาร์จรถยนต์ไฟฟ้า ให้ใช้เฉพาะสายชาร์จแบบพกพา (Portable EVSE) ขนาด 1,500 วัตต์ และชาร์จเฉพาะช่วงกลางคืนที่ไม่ได้เปิดเครื่องใช้ไฟฟ้าตัวอื่น</div>
                 </div>
                 <div class="tip-card" style="border-left: 4px solid #EC4899;">
                     <div class="tip-icon">🌡️</div>
-                    <div class="tip-title">สายร้อน = อันตราย</div>
-                    <div class="tip-text">หากจับสายไฟหรือปลั๊กแล้วร้อน แสดงว่ากำลังดึงกระแสมากเกินไป — ให้ปิดเครื่องใช้ไฟฟ้าบางตัวทันทีแล้วแจ้งซ่อม</div>
+                    <div class="tip-title">สายไฟร้อนผิดปกติ = อันตราย</div>
+                    <div class="tip-text">หากจับสายไฟหรือปลั๊กแล้วรู้สึกร้อน แสดงว่ากำลังดึงกระแสไฟฟ้ามากเกินไป — ให้ปิดเครื่องใช้ไฟฟ้าบางตัวทันที แล้วแจ้งซ่อมผ่านระบบ</div>
                 </div>
             </div>
 
@@ -545,14 +802,107 @@
             </div>
         </div>
 
+        <!-- ══════════════ Section 7: เบรกเกอร์ + ลำดับป้องกัน ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">🔌 เบรกเกอร์ (สวิตช์ตัดไฟอัตโนมัติ) และลำดับการป้องกันไฟฟ้า</div>
+
+            <div class="info-callout">
+                <strong>💡 เบรกเกอร์ที่เหมาะสมกับสาย 6 ตร.มม.:</strong><br>
+                สายทองแดง 6 ตร.มม. รองรับกระแสไฟฟ้าได้ประมาณ 32 แอมป์ — ดังนั้น<strong>ต้องใช้เบรกเกอร์ขนาดไม่เกิน 32 แอมป์</strong> เพื่อให้เบรกเกอร์ตัดไฟได้ทัน <strong>ก่อน</strong>ที่สายไฟจะร้อนเกินไป
+            </div>
+
+            <!-- ลำดับการป้องกัน Visual -->
+            <div style="margin:1.5rem 0;">
+                <div style="font-weight:600;font-size:.95rem;margin-bottom:1rem;">🛡️ ลำดับเหตุการณ์เมื่อใช้ไฟเกิน 6,600 วัตต์ อธิบายเป็นขั้นตอน:</div>
+
+                <!-- Step 1: เกินเล็กน้อย -->
+                <div style="display:flex;gap:.8rem;margin-bottom:.8rem;align-items:flex-start;">
+                    <div style="flex-shrink:0;width:48px;height:48px;border-radius:12px;background:var(--warning-bg);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">⚠️</div>
+                    <div style="flex:1;border:1px solid #FDE68A;border-radius:12px;padding:.8rem;background:#FFFBEB;">
+                        <div style="font-weight:600;color:#92400E;font-size:.9rem;">ขั้นที่ 1 — เกินพิกัดเล็กน้อย (30-35 แอมป์)</div>
+                        <div style="font-size:.82rem;color:#92400E;line-height:1.6;">สายไฟเริ่มร้อน ฉนวน XLPE ยังทนได้ชั่วคราว → <strong>เบรกเกอร์ตัดกระแสไฟอัตโนมัติ</strong> ✅ ปลอดภัย</div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin:-.3rem 0 .3rem;font-size:1.2rem;color:var(--muted);">↓</div>
+
+                <!-- Step 2: เกินปานกลาง -->
+                <div style="display:flex;gap:.8rem;margin-bottom:.8rem;align-items:flex-start;">
+                    <div style="flex-shrink:0;width:48px;height:48px;border-radius:12px;background:var(--danger-bg);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🔴</div>
+                    <div style="flex:1;border:1px solid #FECACA;border-radius:12px;padding:.8rem;background:#FEF2F2;">
+                        <div style="font-weight:600;color:#991B1B;font-size:.9rem;">ขั้นที่ 2 — เกินพิกัดปานกลาง (35-50 แอมป์)</div>
+                        <div style="font-size:.82rem;color:#991B1B;line-height:1.6;">สายร้อนจัด → ถ้าเบรกเกอร์ทำงานปกติ จะ<strong>ตัดกระแสไฟได้ทัน</strong> ✅ ยังปลอดภัย</div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin:-.3rem 0 .3rem;font-size:1.2rem;color:var(--muted);">↓</div>
+
+                <!-- Step 3: เกินมาก -->
+                <div style="display:flex;gap:.8rem;margin-bottom:.8rem;align-items:flex-start;">
+                    <div style="flex-shrink:0;width:48px;height:48px;border-radius:12px;background:#991B1B;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🔥</div>
+                    <div style="flex:1;border:2px solid #DC2626;border-radius:12px;padding:.8rem;background:linear-gradient(135deg,#FEF2F2,#FEE2E2);">
+                        <div style="font-weight:600;color:#991B1B;font-size:.9rem;">ขั้นที่ 3 — เกินพิกัดมาก (มากกว่า 50 แอมป์ต่อเนื่อง) + เบรกเกอร์ไม่ตัด</div>
+                        <div style="font-size:.82rem;color:#991B1B;line-height:1.6;">ฉนวน XLPE ละลาย → สายเปลือย → <strong>ลัดวงจร → ไฟไหม้!</strong> 🚨 อันตรายมาก</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="danger-callout">
+                <strong>🚨 อันตรายจากเบรกเกอร์ผิดขนาด!</strong><br>
+                ถ้าติดตั้งเบรกเกอร์ขนาด 50 แอมป์กับสาย 6 ตร.มม. (ที่รองรับได้เพียง 32 แอมป์) → เบรกเกอร์จะ<strong>ไม่ตัดไฟ</strong>เมื่อสายร้อนเกิน เพราะเบรกเกอร์คิดว่ายังใช้ได้ — ทำให้<strong>ฉนวนสายละลายจนเกิดไฟไหม้</strong>ได้ โดยที่เบรกเกอร์ไม่ทำงาน!
+            </div>
+
+            <div class="warning-callout">
+                <strong>📌 คำแนะนำ:</strong> ตรวจสอบว่าเมนเบรกเกอร์ในบ้านมีขนาด <strong>ไม่เกิน 32 แอมป์</strong> — สามารถดูตัวเลขที่หน้าเบรกเกอร์ได้เลย หากเกิน 32 แอมป์หรือไม่แน่ใจ ให้ <a href="form.html" onclick="navigate('?page=form');return false;" style="color:#92400E;font-weight:600;">📝 แจ้งซ่อม/ตรวจสอบ</a>
+            </div>
+        </div>
+
         <!-- Footer -->
         <div style="text-align:center;padding:2rem 0 1rem;color:var(--muted);font-size:.8rem;">
-            ข้อมูลอ้างอิง: มาตรฐาน มอก. สายไฟฟ้า, IEC 62053-21 มิเตอร์ไฟฟ้า<br>
-            ค่าวัตต์เป็นค่าโดยประมาณ อาจแตกต่างตามรุ่นและยี่ห้อ
+            ข้อมูลอ้างอิง: มาตรฐาน มอก. สายไฟฟ้า, IEC 62053-21 มิเตอร์ไฟฟ้า, เอกสารทดสอบ QC จาก บจก. อินเตอร์เนชั่นแนล พาวเวอร์ กรุ๊ป<br>
+            ค่าวัตต์ของเครื่องใช้ไฟฟ้าเป็นค่าโดยประมาณ อาจแตกต่างตามรุ่นและยี่ห้อ
         </div>
     </div>
 
-    <script src="ppk-nav.js?v=20260322A"></script>
+    <!-- EV Warning Modal -->
+    <div class="ev-modal-overlay" id="evModal">
+        <div class="ev-modal">
+            <div class="ev-modal-header">
+                <div class="ev-modal-header-icon">🚫🚗</div>
+                <h3>ห้ามติดตั้งตู้ชาร์จรถยนต์ไฟฟ้า (Wallbox) ในบ้านพัก</h3>
+            </div>
+            <div class="ev-modal-body">
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num" style="background:#DC2626;color:white;font-size:1rem;">!</div>
+                    <div><strong style="color:#DC2626;">ห้ามติดตั้ง Wallbox ในบ้านพัก</strong><br>ระบบไฟฟ้าบ้านพักเป็น<strong>ไฟเฟสเดียว (Single Phase 220V)</strong> และสายเมนเข้ามิเตอร์เป็นสายทองแดงขนาด 6 ตร.มม. ซึ่งรองรับกำลังไฟฟ้าได้เพียง 6,600 วัตต์ — ตู้ชาร์จ Wallbox ใช้ไฟ 3,500 วัตต์ คิดเป็น 53% ของพิกัดทั้งระบบ จึง<strong>ไม่ปลอดภัย</strong>ที่จะติดตั้ง</div>
+                </div>
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num">1</div>
+                    <div><strong>ระบบไฟฟ้าเป็นเฟสเดียว</strong><br>แม้ไฟจะเข้ามาเป็น 3 เฟส แต่ถูกแบ่งให้แต่ละหลังเป็น<strong>เฟสเดียว (220 โวลต์)</strong> จึงใช้ตู้ชาร์จแบบ 3 เฟสไม่ได้ และกำลังไฟฟ้าที่รองรับได้มีจำกัด</div>
+                </div>
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num">2</div>
+                    <div><strong>สายเมนเป็นตัวจำกัดกำลังไฟ</strong><br>สายทองแดงขนาด 6 ตร.มม. จากเสาไฟเข้ามิเตอร์ รองรับกระแสไฟได้ประมาณ 32 แอมป์ (6,600 วัตต์) — ตู้ชาร์จ Wallbox ใช้ไฟไปครึ่งหนึ่งแล้ว หากเปิดแอร์พร้อมชาร์จรถ จะเกินพิกัดทันที</div>
+                </div>
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num">3</div>
+                    <div><strong>หากจำเป็นต้องชาร์จรถ EV</strong><br>ให้ใช้เฉพาะ<strong>สายชาร์จแบบพกพา (Portable EVSE) ที่ใช้ไฟไม่เกิน 1,500 วัตต์</strong>เท่านั้น ชาร์จได้เฉพาะช่วงกลางคืนที่ไม่ได้เปิดเครื่องใช้ไฟฟ้าตัวอื่น และต้องเดินวงจรแยกเฉพาะจากตู้เมน (MDB)</div>
+                </div>
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num">4</div>
+                    <div><strong>ข้อกำหนดด้านความปลอดภัย</strong><br>วงจรชาร์จ EV ต้องมีเบรกเกอร์แยกเฉพาะ พร้อมอุปกรณ์ป้องกันไฟรั่ว (RCBO/RCD) และต้องเดินสายดินชนิด PE (สายดินป้องกัน) ตลอดวงจร — ห้ามใช้ท่อน้ำหรือเหล็กโครงสร้างแทนสายดิน</div>
+                </div>
+                <div class="ev-modal-item">
+                    <div class="ev-modal-num">5</div>
+                    <div><strong>ต้องปรึกษาช่างไฟฟ้าที่มีใบอนุญาต</strong><br>การติดตั้งจุดชาร์จรถ EV ต้องออกแบบและดำเนินการโดยช่างที่มีใบอนุญาตตามมาตรฐาน กฟภ. เท่านั้น</div>
+                </div>
+            </div>
+            <div class="ev-modal-footer">
+                <button class="ev-modal-btn accept" onclick="confirmEvAdd()">⚠️ รับทราบแล้ว เพิ่มเพื่อทดลองคำนวณ</button>
+                <button class="ev-modal-btn cancel" onclick="cancelEvAdd()">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="ppk-nav.js?v=20260323C"></script>
     <script src="ppk-app.js?v=20260322A"></script>
     <script>
     // ─── Appliance Database ───
@@ -673,15 +1023,42 @@
     }
 
     // ─── Toggle Appliance ───
+    var pendingEvId = null;
+    var EV_IDS = ['wallbox', 'evse'];
+
     function toggleApp(id) {
         if (selected[id]) {
             delete selected[id];
-        } else {
-            var a = appliances.find(function(x) { return x.id === id; });
-            if (a) selected[id] = { qty: a.defQty };
+            renderGrid();
+            updateCalc();
+            return;
         }
+        // EV items → show warning modal first
+        if (EV_IDS.indexOf(id) !== -1) {
+            pendingEvId = id;
+            document.getElementById('evModal').classList.add('show');
+            return;
+        }
+        var a = appliances.find(function(x) { return x.id === id; });
+        if (a) selected[id] = { qty: a.defQty };
         renderGrid();
         updateCalc();
+    }
+
+    function confirmEvAdd() {
+        if (pendingEvId) {
+            var a = appliances.find(function(x) { return x.id === pendingEvId; });
+            if (a) selected[pendingEvId] = { qty: a.defQty };
+            pendingEvId = null;
+        }
+        document.getElementById('evModal').classList.remove('show');
+        renderGrid();
+        updateCalc();
+    }
+
+    function cancelEvAdd() {
+        pendingEvId = null;
+        document.getElementById('evModal').classList.remove('show');
     }
 
     function changeQty(id, delta) {
