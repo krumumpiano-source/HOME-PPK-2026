@@ -21,7 +21,7 @@ desktop.ini
 .env.local
 .env.*.local
 supabase/.env
-supabase/config.js
+# supabase/config.js — ต้อง track เพราะเป็น public anon key (ปลอดภัย มี RLS)
 
 # ============================================================
 # Internal docs / planning files (ไม่ต้องขึ้น GitHub)
