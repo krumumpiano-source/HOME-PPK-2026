@@ -1,0 +1,846 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>ความรู้ระบบไฟฟ้าบ้านพัก | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260322A">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600;700&display=swap');
+        :root {
+            --bg: #f8fafc; --surface: #ffffff; --border: #e5e7eb;
+            --text: #0f172a; --muted: #64748b;
+            --primary: #4F46E5; --primary-light: #EEF2FF;
+            --success: #22C55E; --success-bg: #F0FDF4;
+            --warning: #F59E0B; --warning-bg: #FFFBEB;
+            --danger: #EF4444; --danger-bg: #FEF2F2;
+            --info: #06B6D4; --info-bg: #ECFEFF;
+            --shadow: 0 4px 16px rgba(15,23,42,.06);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); }
+        .dashboard-container {
+            background: var(--surface); padding: 2rem;
+            padding-left: max(1.25rem, env(safe-area-inset-left)); padding-right: max(1.25rem, env(safe-area-inset-right));
+            min-height: 100vh;
+        }
+        @media (max-width:600px) { .dashboard-container { padding: 1rem; } }
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .page-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: .3rem; }
+        .page-header p { color: var(--muted); font-size: .95rem; }
+
+        /* Spec Cards */
+        .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .spec-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 1.25rem; box-shadow: var(--shadow); position: relative; overflow: hidden;
+        }
+        .spec-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        }
+        .spec-card.copper::before { background: linear-gradient(90deg, #D97706, #F59E0B); }
+        .spec-card.aluminum::before { background: linear-gradient(90deg, #6B7280, #9CA3AF); }
+        .spec-card.meter::before { background: linear-gradient(90deg, #4F46E5, #06B6D4); }
+        .spec-icon { font-size: 2rem; margin-bottom: .5rem; }
+        .spec-title { font-weight: 600; font-size: 1.05rem; margin-bottom: .5rem; }
+        .spec-detail { font-size: .88rem; color: var(--muted); line-height: 1.7; }
+        .spec-detail strong { color: var(--text); }
+        .spec-badge {
+            display: inline-block; padding: .2rem .7rem; border-radius: 20px;
+            font-size: .78rem; font-weight: 500; margin-top: .5rem;
+        }
+        .badge-copper { background: #FEF3C7; color: #92400E; }
+        .badge-alu { background: #F3F4F6; color: #374151; }
+        .badge-digital { background: #EEF2FF; color: #4338CA; }
+
+        /* Max Power Card */
+        .max-power-card {
+            background: linear-gradient(135deg, #312E81, #4F46E5, #06B6D4);
+            border-radius: 20px; padding: 2rem; color: white; text-align: center;
+            margin-bottom: 2rem; position: relative; overflow: hidden;
+        }
+        .max-power-card::after {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 140px; height: 140px; border-radius: 50%;
+            background: rgba(255,255,255,.06);
+        }
+        .max-power-number { font-size: 3.5rem; font-weight: 700; line-height: 1; margin: .5rem 0; }
+        .max-power-unit { font-size: 1.2rem; font-weight: 300; opacity: .85; }
+        .max-power-sub { font-size: .9rem; opacity: .75; margin-top: .5rem; }
+
+        /* Calculator Section */
+        .calc-section { margin-bottom: 2rem; }
+        .calc-header {
+            display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem;
+            padding-bottom: .75rem; border-bottom: 1px solid #F1F5F9;
+        }
+        .calc-header-icon {
+            width: 40px; height: 40px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .calc-header-title { font-size: 1.1rem; font-weight: 600; }
+
+        /* Category Tabs */
+        .cat-tabs {
+            display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem;
+        }
+        .cat-tab {
+            padding: .4rem .9rem; border-radius: 20px; font-size: .82rem;
+            border: 1px solid var(--border); cursor: pointer; background: white;
+            font-family: 'Kanit', sans-serif; transition: all .2s; font-weight: 400;
+        }
+        .cat-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .cat-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Appliance Grid */
+        .app-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            gap: .7rem; margin-bottom: 1.5rem;
+        }
+        @media (max-width:400px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
+        .app-item {
+            border: 2px solid var(--border); border-radius: 14px; padding: .8rem .6rem;
+            text-align: center; cursor: pointer; transition: all .2s; background: white;
+            position: relative; user-select: none;
+        }
+        .app-item:hover { border-color: #A5B4FC; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79,70,229,.1); }
+        .app-item.selected { border-color: var(--primary); background: var(--primary-light); }
+        .app-item.selected::after {
+            content: '✓'; position: absolute; top: 6px; right: 8px;
+            background: var(--primary); color: white; width: 20px; height: 20px;
+            border-radius: 50%; font-size: .7rem; display: flex; align-items: center; justify-content: center;
+        }
+        .app-icon { font-size: 1.8rem; margin-bottom: .3rem; }
+        .app-name { font-size: .78rem; font-weight: 500; line-height: 1.3; margin-bottom: .2rem; }
+        .app-watt { font-size: .72rem; color: var(--muted); }
+        .app-qty {
+            display: flex; align-items: center; justify-content: center; gap: .3rem;
+            margin-top: .4rem;
+        }
+        .app-qty button {
+            width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border);
+            background: white; cursor: pointer; font-family: 'Kanit'; font-size: .85rem;
+            display: flex; align-items: center; justify-content: center; transition: all .15s;
+        }
+        .app-qty button:hover { background: var(--primary-light); border-color: var(--primary); }
+        .app-qty span { font-size: .85rem; min-width: 20px; text-align: center; font-weight: 600; }
+
+        /* Custom Appliance */
+        .custom-add {
+            border: 2px dashed var(--border); border-radius: 14px; padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .custom-add-title { font-size: .9rem; font-weight: 500; margin-bottom: .7rem; color: var(--muted); }
+        .custom-row {
+            display: flex; gap: .5rem; flex-wrap: wrap; align-items: flex-end;
+        }
+        .custom-row input {
+            flex: 1; min-width: 100px; padding: .5rem .7rem; border: 1px solid var(--border);
+            border-radius: 8px; font-family: 'Kanit'; font-size: .88rem;
+        }
+        .custom-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+        .custom-row button {
+            padding: .5rem 1rem; background: var(--primary); color: white; border: none;
+            border-radius: 8px; font-family: 'Kanit'; font-size: .88rem; cursor: pointer;
+            white-space: nowrap; transition: background .2s;
+        }
+        .custom-row button:hover { background: #4338CA; }
+        .custom-list { margin-top: .7rem; }
+        .custom-tag {
+            display: inline-flex; align-items: center; gap: .3rem;
+            padding: .3rem .7rem; background: #DBEAFE; color: #1E40AF;
+            border-radius: 20px; font-size: .8rem; margin: .2rem;
+        }
+        .custom-tag button {
+            background: none; border: none; color: #1E40AF; cursor: pointer;
+            font-size: .9rem; padding: 0; line-height: 1;
+        }
+
+        /* Gauge */
+        .gauge-container {
+            display: flex; flex-direction: column; align-items: center; margin: 1.5rem 0;
+        }
+        .gauge-svg { width: 260px; height: 160px; }
+        @media (max-width:400px) { .gauge-svg { width: 220px; height: 140px; } }
+        .gauge-bg { fill: none; stroke: #E2E8F0; stroke-width: 18; stroke-linecap: round; }
+        .gauge-fill { fill: none; stroke-width: 18; stroke-linecap: round; transition: stroke-dashoffset .6s ease, stroke .4s; }
+        .gauge-text { font-family: 'Kanit'; font-weight: 700; fill: var(--text); }
+        .gauge-label { font-family: 'Kanit'; font-weight: 400; fill: var(--muted); font-size: 12px; }
+        .gauge-status {
+            margin-top: .7rem; padding: .4rem 1.2rem; border-radius: 20px;
+            font-size: .9rem; font-weight: 500; transition: all .3s;
+        }
+        .status-safe { background: var(--success-bg); color: #166534; }
+        .status-caution { background: var(--warning-bg); color: #92400E; }
+        .status-danger { background: var(--danger-bg); color: #991B1B; }
+        .status-over { background: #991B1B; color: white; animation: pulse-danger 1s infinite; }
+        @keyframes pulse-danger { 0%,100% { opacity: 1; } 50% { opacity: .7; } }
+
+        /* Summary */
+        .summary-bar {
+            background: #F8FAFC; border-radius: 12px; padding: 1rem; margin: 1rem 0;
+        }
+        .summary-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .3rem 0; font-size: .88rem;
+        }
+        .summary-row.total { font-weight: 600; border-top: 1px solid var(--border); padding-top: .6rem; margin-top: .3rem; font-size: 1rem; }
+        .progress-wrap { height: 10px; background: #E2E8F0; border-radius: 5px; margin-top: .5rem; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 5px; transition: width .5s ease, background .4s; }
+
+        /* Selected Items */
+        .selected-list { margin: 1rem 0; }
+        .sel-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .5rem .7rem; border-radius: 8px; font-size: .85rem;
+            margin-bottom: .3rem; transition: background .2s;
+        }
+        .sel-item:hover { background: #F8FAFC; }
+        .sel-item-name { display: flex; align-items: center; gap: .4rem; }
+        .sel-item-watt { font-weight: 500; white-space: nowrap; }
+        .sel-remove {
+            background: none; border: none; color: var(--danger); cursor: pointer;
+            font-size: 1rem; padding: .2rem; opacity: .6; transition: opacity .2s;
+        }
+        .sel-remove:hover { opacity: 1; }
+
+        /* Comparison Table */
+        .compare-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            font-size: .88rem; margin: 1rem 0;
+        }
+        .compare-table th {
+            padding: .7rem .6rem; text-align: left; font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+        }
+        .compare-table th:first-child { width: 35%; }
+        .compare-table td { padding: .6rem; border-bottom: 1px solid #F1F5F9; vertical-align: top; }
+        .compare-table tr:last-child td { border-bottom: none; }
+        .compare-old { color: var(--danger); }
+        .compare-new { color: var(--success); }
+
+        /* Meter Accuracy Visual */
+        .accuracy-visual {
+            display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 1.5rem 0;
+        }
+        .accuracy-card {
+            flex: 1; min-width: 240px; max-width: 360px; border-radius: 16px;
+            padding: 1.5rem; text-align: center;
+        }
+        .accuracy-card.old { background: linear-gradient(135deg, #FEF2F2, #FEE2E2); border: 1px solid #FECACA; }
+        .accuracy-card.new { background: linear-gradient(135deg, #F0FDF4, #DCFCE7); border: 1px solid #BBF7D0; }
+        .accuracy-icon { font-size: 3rem; margin-bottom: .5rem; }
+        .accuracy-name { font-weight: 600; font-size: 1rem; margin-bottom: .3rem; }
+        .accuracy-pct { font-size: 2rem; font-weight: 700; }
+        .accuracy-desc { font-size: .82rem; color: var(--muted); margin-top: .3rem; }
+
+        /* Tips */
+        .tip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .tip-card {
+            border-radius: 14px; padding: 1.1rem; border: 1px solid var(--border);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .tip-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .tip-icon { font-size: 1.5rem; margin-bottom: .4rem; }
+        .tip-title { font-weight: 600; font-size: .92rem; margin-bottom: .3rem; }
+        .tip-text { font-size: .82rem; color: var(--muted); line-height: 1.6; }
+
+        /* Section spacing */
+        .section-block { margin-bottom: 2.5rem; }
+        .section-title {
+            display: flex; align-items: center; gap: .5rem;
+            font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem;
+            padding-bottom: .5rem; border-bottom: 2px solid #EEF2FF;
+        }
+
+        /* Responsive */
+        @media (max-width:600px) {
+            .page-header h2 { font-size: 1.4rem; }
+            .max-power-number { font-size: 2.5rem; }
+            .spec-grid { grid-template-columns: 1fr; }
+            .accuracy-visual { flex-direction: column; align-items: center; }
+        }
+
+        /* Back button */
+        .back-link {
+            display: inline-flex; align-items: center; gap: .3rem;
+            color: var(--muted); font-size: .88rem; text-decoration: none;
+            margin-bottom: 1rem; transition: color .2s;
+        }
+        .back-link:hover { color: var(--primary); }
+
+        /* Info callout */
+        .info-callout {
+            background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px;
+            padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; color: #1E40AF;
+        }
+        .info-callout strong { font-weight: 600; }
+
+        /* Warning callout */
+        .warning-callout {
+            background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px;
+            padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; color: #92400E;
+        }
+
+        /* Danger callout */
+        .danger-callout {
+            background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px;
+            padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; color: #991B1B;
+        }
+    </style>
+</head>
+<body>
+    <div id="ppkNav"></div>
+
+    <div class="dashboard-container">
+        <a href="dashboard.html" class="back-link" onclick="navigate('?page=dashboard');return false;">← กลับแดชบอร์ด</a>
+
+        <div class="page-header">
+            <h2>⚡ ความรู้ระบบไฟฟ้าบ้านพัก</h2>
+            <p>เรียนรู้สเปคสายไฟ มิเตอร์ และคำนวณกำลังไฟฟ้าที่ใช้ได้</p>
+        </div>
+
+        <!-- ══════════════ Section 1: สเปคสายไฟและมิเตอร์ ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">🔌 ข้อมูลระบบไฟฟ้าบ้านพัก</div>
+
+            <div class="spec-grid">
+                <!-- สายเข้ามิเตอร์ -->
+                <div class="spec-card copper">
+                    <div class="spec-icon">🔶</div>
+                    <div class="spec-title">สายจากเสาไฟ → มิเตอร์</div>
+                    <div class="spec-detail">
+                        <strong>สายทองแดง 2 × 6 ตร.มม.</strong><br>
+                        ฉนวนครอสลิงก์โพลิเอทิลีน (XLPE)<br>
+                        เปลือกนอกโพลิไวนิลคลอไรด์ (PVC)<br>
+                        ยี่ห้อ <strong>Phelps Dodge</strong><br><br>
+                        พิกัดกระแส: <strong>~32 แอมป์</strong><br>
+                        <span class="spec-badge badge-copper">🟠 ตัวจำกัดหลัก</span>
+                    </div>
+                </div>
+
+                <!-- สายเข้าบ้าน -->
+                <div class="spec-card aluminum">
+                    <div class="spec-icon">⬜</div>
+                    <div class="spec-title">สายจากมิเตอร์ → บ้าน</div>
+                    <div class="spec-detail">
+                        <strong>สายอลูมิเนียม 25 ตร.มม.</strong><br>
+                        ฉนวนโพลิไวนิลคลอไรด์ (PVC)<br>
+                        พิกัดแรงดัน 750 โวลต์<br>
+                        ยี่ห้อ <strong>BCC</strong><br><br>
+                        พิกัดกระแส: <strong>~68 แอมป์</strong><br>
+                        <span class="spec-badge badge-alu">⚪ รองรับเพียงพอ</span>
+                    </div>
+                </div>
+
+                <!-- มิเตอร์ -->
+                <div class="spec-card meter">
+                    <div class="spec-icon">📟</div>
+                    <div class="spec-title">มิเตอร์ไฟฟ้า</div>
+                    <div class="spec-detail">
+                        <strong>IPG SM-02 (ดิจิตอล)</strong><br>
+                        ความแม่นยำ Class 1.0 (±1%)<br>
+                        มาตรฐาน IEC 62053-21<br>
+                        แสดงค่าหน่วยต่อเนื่อง<br><br>
+                        แทนที่: <span style="text-decoration:line-through;color:var(--danger)">มิเตอร์จานหมุนเสื่อมสภาพ</span><br>
+                        <span class="spec-badge badge-digital">🔵 แม่นยำ ±1%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-callout">
+                <strong>💡 ทำไมสายทองแดง 6 ตร.มม. เป็นตัวจำกัด?</strong><br>
+                สายจากเสาไฟเข้ามิเตอร์เป็นสายขนาดเล็กที่สุดในระบบ (6 ตร.มม.) จึงเป็นจุดคอขวด — ต่อให้สายเข้าบ้านรับได้มากกว่า แต่ก็ไม่สามารถดึงกระแสเกินกว่าที่สายเส้นแรกรับไหว ดังนั้นกำลังไฟสูงสุดจะถูกจำกัดตามสายเส้นนี้
+            </div>
+        </div>
+
+        <!-- ══════════════ Section 2: พิกัดสูงสุด ══════════════ -->
+        <div class="max-power-card">
+            <div style="font-size:1rem;opacity:.8;">⚡ กำลังไฟฟ้าสูงสุดที่ใช้ได้</div>
+            <div class="max-power-number">6,600</div>
+            <div class="max-power-unit">วัตต์ (W)</div>
+            <div class="max-power-sub">สายทองแดง 6 ตร.มม. × 30 แอมป์ × 220 โวลต์ = 6,600 วัตต์</div>
+            <div class="max-power-sub" style="opacity:.6;margin-top:.3rem;">แนะนำใช้ไม่เกิน 80% = 5,280 วัตต์ เพื่อความปลอดภัย</div>
+        </div>
+
+        <!-- ══════════════ Section 3: เครื่องคำนวณ Interactive ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">🧮 คำนวณกำลังไฟฟ้า — เลือกเครื่องใช้ที่ใช้พร้อมกัน</div>
+
+            <div class="info-callout">
+                <strong>📌 วิธีใช้:</strong> แตะเลือกเครื่องใช้ไฟฟ้าที่คุณ<strong>เปิดใช้พร้อมกัน</strong> ระบบจะคำนวณว่ากำลังไฟรวมเกินพิกัดหรือไม่ — ปรับจำนวนตัวได้ด้วยปุ่ม +/−
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="cat-tabs" id="catTabs"></div>
+
+            <!-- Appliance Grid -->
+            <div class="app-grid" id="appGrid"></div>
+
+            <!-- Custom Appliance -->
+            <div class="custom-add">
+                <div class="custom-add-title">➕ เพิ่มเครื่องใช้ไฟฟ้าอื่นๆ เอง</div>
+                <div class="custom-row">
+                    <input type="text" id="customName" placeholder="ชื่อเครื่องใช้" maxlength="40">
+                    <input type="number" id="customWatt" placeholder="วัตต์ (W)" min="1" max="20000" style="max-width:120px;">
+                    <button onclick="addCustomAppliance()">➕ เพิ่ม</button>
+                </div>
+                <div class="custom-list" id="customList"></div>
+            </div>
+
+            <!-- Gauge Visualization -->
+            <div class="gauge-container">
+                <svg class="gauge-svg" viewBox="0 0 260 150">
+                    <path class="gauge-bg" d="M 30 130 A 100 100 0 0 1 230 130" />
+                    <path class="gauge-fill" id="gaugeFill" d="M 30 130 A 100 100 0 0 1 230 130" />
+                    <text class="gauge-text" x="130" y="110" text-anchor="middle" font-size="32" id="gaugeText">0</text>
+                    <text class="gauge-label" x="130" y="130" text-anchor="middle" id="gaugeLabel">วัตต์</text>
+                    <text class="gauge-label" x="30" y="148" text-anchor="middle" font-size="10">0</text>
+                    <text class="gauge-label" x="230" y="148" text-anchor="middle" font-size="10">6,600W</text>
+                </svg>
+                <div class="gauge-status status-safe" id="gaugeStatus">✅ ปลอดภัย — ยังไม่ได้เลือกเครื่องใช้ไฟฟ้า</div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="summary-bar" id="summaryBar">
+                <div class="summary-row total">
+                    <span>⚡ กำลังไฟรวม</span>
+                    <span id="totalWatt">0 W / 6,600 W</span>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-fill" id="progressFill" style="width:0%;background:var(--success);"></div>
+                </div>
+                <div class="summary-row" style="margin-top:.5rem;">
+                    <span>ใช้ไป</span>
+                    <span id="totalPct">0%</span>
+                </div>
+                <div class="summary-row">
+                    <span>คงเหลือ</span>
+                    <span id="totalRemain">6,600 W</span>
+                </div>
+            </div>
+
+            <!-- Selected Items Breakdown -->
+            <div id="selectedList" class="selected-list"></div>
+        </div>
+
+        <!-- ══════════════ Section 4: เปรียบเทียบมิเตอร์ ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">📊 เปรียบเทียบมิเตอร์: จานหมุน vs ดิจิตอล</div>
+
+            <div class="accuracy-visual">
+                <div class="accuracy-card old">
+                    <div class="accuracy-icon">🔴</div>
+                    <div class="accuracy-name">มิเตอร์จานหมุน (เก่า)</div>
+                    <div class="accuracy-pct" style="color:var(--danger);">±5-20%</div>
+                    <div class="accuracy-desc">เสื่อมสภาพตามอายุใช้งาน<br>จานหมุนช้าลง → <strong>อ่านค่าต่ำกว่าจริง</strong> หรือ <strong>อ่านค่าสูงกว่าจริง</strong></div>
+                </div>
+                <div class="accuracy-card new">
+                    <div class="accuracy-icon">🟢</div>
+                    <div class="accuracy-name">IPG SM-02 (ดิจิตอล)</div>
+                    <div class="accuracy-pct" style="color:var(--success);">±1%</div>
+                    <div class="accuracy-desc">วัดแม่นยำตามมาตรฐาน IEC<br>ไม่มีชิ้นส่วนเคลื่อนไหว → <strong>ค่าคงที่ไม่เสื่อม</strong></div>
+                </div>
+            </div>
+
+            <div class="warning-callout">
+                <strong>⚠️ ทำไมค่าไฟอาจเปลี่ยนหลังเปลี่ยนมิเตอร์?</strong><br>
+                มิเตอร์จานหมุนที่เสื่อมสภาพมักวัดค่า<strong>ต่ำกว่าจริง</strong> (จานหมุนช้าลง) เมื่อเปลี่ยนเป็นมิเตอร์ดิจิตอลที่วัดได้แม่นยำกว่า ค่าไฟจึง<strong>สะท้อนการใช้งานจริง</strong>มากขึ้น — ไม่ได้วัดเกิน แต่ตอนก่อนวัด<strong>ขาด</strong>ไป
+            </div>
+
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>คุณสมบัติ</th>
+                        <th class="compare-old">🔴 จานหมุน (เก่า)</th>
+                        <th class="compare-new">🟢 ดิจิตอล IPG SM-02</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ความแม่นยำ</td>
+                        <td>Class 2.0 (±2%) เมื่อใหม่<br>เสื่อมเป็น ±5-20%</td>
+                        <td>Class 1.0 (±1%) คงที่</td>
+                    </tr>
+                    <tr>
+                        <td>อายุการใช้งาน</td>
+                        <td>5-10 ปี แล้วเริ่มเสื่อม</td>
+                        <td>15-20 ปี ไม่มีส่วนสึกหรอ</td>
+                    </tr>
+                    <tr>
+                        <td>การอ่านค่า</td>
+                        <td>ต้องอ่านเข็มเอง อาจผิดพลาด</td>
+                        <td>แสดงตัวเลขชัดเจน</td>
+                    </tr>
+                    <tr>
+                        <td>ชิ้นส่วนเคลื่อนไหว</td>
+                        <td>มี (จานหมุน เฟือง) → สึกหรอ</td>
+                        <td>ไม่มี → ทนทาน</td>
+                    </tr>
+                    <tr>
+                        <td>ผลกระทบจาก<br>ฝุ่น/ความชื้น</td>
+                        <td>จานหมุนฝืด → ค่าคลาดเคลื่อน</td>
+                        <td>ไม่มีผลกระทบ</td>
+                    </tr>
+                    <tr>
+                        <td>ผลต่อค่าไฟ</td>
+                        <td>อาจวัดต่ำกว่าจริง<br>(เหมือนได้ส่วนลด)</td>
+                        <td>วัดตรงตามจริง</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-callout">
+                <strong>💡 สรุป:</strong> มิเตอร์ดิจิตอล IPG SM-02 วัดค่าไฟฟ้าได้แม่นยำกว่ามิเตอร์จานหมุนเก่ามาก ค่าไฟที่คุณจ่ายตอนนี้คือ<strong>ค่าที่ถูกต้องตามจริง</strong> ไม่ใช่ค่าที่เกินจริง
+            </div>
+        </div>
+
+        <!-- ══════════════ Section 5: คำแนะนำความปลอดภัย ══════════════ -->
+        <div class="section-block">
+            <div class="section-title">🛡️ คำแนะนำการใช้ไฟฟ้าอย่างปลอดภัย</div>
+
+            <div class="tip-grid">
+                <div class="tip-card" style="border-left: 4px solid var(--danger);">
+                    <div class="tip-icon">🚫</div>
+                    <div class="tip-title">ห้ามใช้เกินพิกัด 6,600W</div>
+                    <div class="tip-text">หากเปิดเครื่องใช้ไฟฟ้ารวมกันเกินพิกัด สายไฟจะร้อนจนอาจเกิดเพลิงไหม้ได้ — เมนเบรกเกอร์จะตัดไฟอัตโนมัติเพื่อป้องกัน</div>
+                </div>
+                <div class="tip-card" style="border-left: 4px solid var(--warning);">
+                    <div class="tip-icon">🔌</div>
+                    <div class="tip-title">ห้ามต่อพ่วงปลั๊กไฟมากเกิน</div>
+                    <div class="tip-text">ปลั๊กพ่วงมีพิกัดจำกัด (ส่วนมาก 2,300W) การเสียบเครื่องใช้ไฟฟ้ากำลังสูงหลายตัวในปลั๊กพ่วงเดียวกันเสี่ยงไฟไหม้</div>
+                </div>
+                <div class="tip-card" style="border-left: 4px solid var(--info);">
+                    <div class="tip-icon">❄️</div>
+                    <div class="tip-title">แอร์กินไฟมากที่สุด</div>
+                    <div class="tip-text">แอร์ 12,000 BTU ใช้ ~1,200W ตั้งอุณหภูมิ 25-26°C ช่วยประหยัดไฟได้ 10-15% เทียบกับตั้ง 20°C</div>
+                </div>
+                <div class="tip-card" style="border-left: 4px solid var(--success);">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-title">ใช้หลอด LED ประหยัดไฟ</div>
+                    <div class="tip-text">หลอด LED 12W ให้แสงเท่าหลอดไส้ 60W แต่ประหยัดไฟกว่า 80% และอายุยาวนานกว่า 15 เท่า</div>
+                </div>
+                <div class="tip-card" style="border-left: 4px solid #8B5CF6;">
+                    <div class="tip-icon">🚗</div>
+                    <div class="tip-title">ชาร์จรถ EV ต้องระวัง</div>
+                    <div class="tip-text">ตู้ชาร์จ Wallbox ใช้ ~3,500W คิดเป็น 53% ของพิกัดทั้งหมด — ชาร์จพร้อมเปิดแอร์อาจเกินพิกัดได้ ควรชาร์จตอนกลางคืนที่ไม่ใช้เครื่องใช้อื่น</div>
+                </div>
+                <div class="tip-card" style="border-left: 4px solid #EC4899;">
+                    <div class="tip-icon">🌡️</div>
+                    <div class="tip-title">สายร้อน = อันตราย</div>
+                    <div class="tip-text">หากจับสายไฟหรือปลั๊กแล้วร้อน แสดงว่ากำลังดึงกระแสมากเกินไป — ให้ปิดเครื่องใช้ไฟฟ้าบางตัวทันทีแล้วแจ้งซ่อม</div>
+                </div>
+            </div>
+
+            <div class="danger-callout" style="margin-top:1.5rem;">
+                <strong>🚨 พบปัญหาไฟฟ้า?</strong> แจ้งซ่อมได้ทันทีผ่านระบบ → <a href="form.html" onclick="navigate('?page=form');return false;" style="color:#991B1B;font-weight:600;">📝 ยื่นคำร้องแจ้งซ่อม</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center;padding:2rem 0 1rem;color:var(--muted);font-size:.8rem;">
+            ข้อมูลอ้างอิง: มาตรฐาน มอก. สายไฟฟ้า, IEC 62053-21 มิเตอร์ไฟฟ้า<br>
+            ค่าวัตต์เป็นค่าโดยประมาณ อาจแตกต่างตามรุ่นและยี่ห้อ
+        </div>
+    </div>
+
+    <script src="ppk-nav.js?v=20260322A"></script>
+    <script src="ppk-app.js?v=20260322A"></script>
+    <script>
+    // ─── Appliance Database ───
+    var MAX_WATT = 6600;
+    var SAFE_PCT = 80;
+
+    var categories = [
+        { id: 'all', label: '🔌 ทั้งหมด' },
+        { id: 'light', label: '💡 แสงสว่าง' },
+        { id: 'cool', label: '🌬️ ปรับอากาศ' },
+        { id: 'kitchen', label: '🍳 ห้องครัว' },
+        { id: 'laundry', label: '👕 ซักรีด' },
+        { id: 'water', label: '💧 น้ำ' },
+        { id: 'it', label: '💻 IT/ชาร์จ' },
+        { id: 'clean', label: '🧹 ทำความสะอาด' },
+        { id: 'ev', label: '🚗 ชาร์จ EV' }
+    ];
+
+    var appliances = [
+        // 💡 แสงสว่าง
+        { id: 'led', cat: 'light', icon: '💡', name: 'หลอด LED', watt: 12, defQty: 4 },
+        { id: 'fluorescent', cat: 'light', icon: '🔦', name: 'หลอดนีออน', watt: 36, defQty: 2 },
+
+        // 🌬️ ปรับอากาศ
+        { id: 'fan', cat: 'cool', icon: '🌀', name: 'พัดลม', watt: 75, defQty: 1 },
+        { id: 'ac9k', cat: 'cool', icon: '❄️', name: 'แอร์ 9,000 BTU', watt: 900, defQty: 1 },
+        { id: 'ac12k', cat: 'cool', icon: '❄️', name: 'แอร์ 12,000 BTU', watt: 1200, defQty: 1 },
+        { id: 'ac18k', cat: 'cool', icon: '❄️', name: 'แอร์ 18,000 BTU', watt: 1800, defQty: 1 },
+        { id: 'ac24k', cat: 'cool', icon: '❄️', name: 'แอร์ 24,000 BTU', watt: 2500, defQty: 1 },
+        { id: 'purifier', cat: 'cool', icon: '🌿', name: 'เครื่องฟอกอากาศ', watt: 50, defQty: 1 },
+
+        // 🍳 ห้องครัว
+        { id: 'rice', cat: 'kitchen', icon: '🍚', name: 'หม้อหุงข้าว', watt: 700, defQty: 1 },
+        { id: 'microwave', cat: 'kitchen', icon: '📡', name: 'ไมโครเวฟ', watt: 1000, defQty: 1 },
+        { id: 'oven', cat: 'kitchen', icon: '🔥', name: 'เตาอบ', watt: 2000, defQty: 1 },
+        { id: 'estove', cat: 'kitchen', icon: '🔴', name: 'เตาแก๊สไฟฟ้า', watt: 2000, defQty: 1 },
+        { id: 'epan', cat: 'kitchen', icon: '🍳', name: 'กะทะไฟฟ้า', watt: 1500, defQty: 1 },
+        { id: 'kettle', cat: 'kitchen', icon: '☕', name: 'กาต้มน้ำร้อนไฟฟ้า', watt: 1500, defQty: 1 },
+        { id: 'airfryer', cat: 'kitchen', icon: '🌪️', name: 'หม้ออบลมร้อน', watt: 1500, defQty: 1 },
+        { id: 'blender', cat: 'kitchen', icon: '🥤', name: 'เครื่องปั่น', watt: 600, defQty: 1 },
+        { id: 'thermos', cat: 'kitchen', icon: '🫖', name: 'กระติกน้ำร้อน', watt: 800, defQty: 1 },
+        { id: 'fridge', cat: 'kitchen', icon: '🧊', name: 'ตู้เย็น', watt: 150, defQty: 1 },
+
+        // 👕 ซักรีด
+        { id: 'washer', cat: 'laundry', icon: '👕', name: 'เครื่องซักผ้า', watt: 500, defQty: 1 },
+        { id: 'dryer', cat: 'laundry', icon: '🌀', name: 'เครื่องอบผ้า', watt: 2500, defQty: 1 },
+        { id: 'iron', cat: 'laundry', icon: '👔', name: 'เตารีด', watt: 1000, defQty: 1 },
+        { id: 'steam_iron', cat: 'laundry', icon: '♨️', name: 'เตารีดไอน้ำ', watt: 2200, defQty: 1 },
+
+        // 💧 น้ำ
+        { id: 'heater', cat: 'water', icon: '🚿', name: 'เครื่องทำน้ำอุ่น', watt: 3500, defQty: 1 },
+        { id: 'pump', cat: 'water', icon: '💧', name: 'ปั๊มน้ำอัตโนมัติ', watt: 250, defQty: 1 },
+
+        // 💻 IT/ชาร์จ
+        { id: 'tv', cat: 'it', icon: '📺', name: 'ทีวี', watt: 120, defQty: 1 },
+        { id: 'laptop', cat: 'it', icon: '💻', name: 'โน้ตบุค', watt: 65, defQty: 1 },
+        { id: 'desktop', cat: 'it', icon: '🖥️', name: 'คอมตั้งโต๊ะ', watt: 300, defQty: 1 },
+        { id: 'phone', cat: 'it', icon: '📱', name: 'ชาร์จมือถือ', watt: 20, defQty: 1 },
+        { id: 'ipad', cat: 'it', icon: '📱', name: 'ชาร์จไอแพด', watt: 20, defQty: 1 },
+
+        // 🧹 ทำความสะอาด
+        { id: 'vacuum', cat: 'clean', icon: '🧹', name: 'เครื่องดูดฝุ่น', watt: 1200, defQty: 1 },
+
+        // 💆 อื่นๆ
+        { id: 'hairdryer', cat: 'clean', icon: '💇', name: 'เครื่องเป่าผม', watt: 1500, defQty: 1 },
+
+        // 🚗 ชาร์จ EV
+        { id: 'wallbox', cat: 'ev', icon: '🔋', name: 'ตู้ชาร์จ EV (Wallbox)', watt: 3500, defQty: 1 },
+        { id: 'evse', cat: 'ev', icon: '🔌', name: 'สายชาร์จ EV (แถมมากับรถ)', watt: 1500, defQty: 1 }
+    ];
+
+    // ─── State ───
+    var selected = {}; // { id: { qty: n } }
+    var customItems = []; // [{ id, name, watt }]
+    var activeCat = 'all';
+
+    // ─── Init ───
+    document.addEventListener('DOMContentLoaded', function() {
+        renderPPKNav('ppkNav', 'electrical-info');
+        renderCatTabs();
+        renderGrid();
+        updateCalc();
+    });
+
+    // ─── Render Category Tabs ───
+    function renderCatTabs() {
+        var html = categories.map(function(c) {
+            return '<button class="cat-tab' + (c.id === activeCat ? ' active' : '') + '" onclick="filterCat(\'' + c.id + '\')">' + c.label + '</button>';
+        }).join('');
+        document.getElementById('catTabs').innerHTML = html;
+    }
+
+    function filterCat(catId) {
+        activeCat = catId;
+        renderCatTabs();
+        renderGrid();
+    }
+
+    // ─── Render Appliance Grid ───
+    function renderGrid() {
+        var items = activeCat === 'all' ? appliances : appliances.filter(function(a) { return a.cat === activeCat; });
+        var html = items.map(function(a) {
+            var sel = selected[a.id];
+            var isSelected = !!sel;
+            var qty = sel ? sel.qty : a.defQty;
+            return '<div class="app-item' + (isSelected ? ' selected' : '') + '" data-id="' + a.id + '">' +
+                '<div class="app-icon" onclick="toggleApp(\'' + a.id + '\')">' + a.icon + '</div>' +
+                '<div class="app-name" onclick="toggleApp(\'' + a.id + '\')">' + _e(a.name) + '</div>' +
+                '<div class="app-watt">' + _fw(a.watt) + ' W</div>' +
+                (isSelected ? '<div class="app-qty">' +
+                    '<button onclick="event.stopPropagation();changeQty(\'' + a.id + '\',-1)">−</button>' +
+                    '<span>' + qty + '</span>' +
+                    '<button onclick="event.stopPropagation();changeQty(\'' + a.id + '\',1)">+</button>' +
+                '</div>' : '') +
+            '</div>';
+        }).join('');
+        document.getElementById('appGrid').innerHTML = html;
+    }
+
+    // ─── Toggle Appliance ───
+    function toggleApp(id) {
+        if (selected[id]) {
+            delete selected[id];
+        } else {
+            var a = appliances.find(function(x) { return x.id === id; });
+            if (a) selected[id] = { qty: a.defQty };
+        }
+        renderGrid();
+        updateCalc();
+    }
+
+    function changeQty(id, delta) {
+        if (!selected[id]) return;
+        var newQ = selected[id].qty + delta;
+        if (newQ < 1) { delete selected[id]; }
+        else if (newQ > 20) return;
+        else { selected[id].qty = newQ; }
+        renderGrid();
+        updateCalc();
+    }
+
+    // ─── Custom Appliance ───
+    var customCounter = 0;
+    function addCustomAppliance() {
+        var nameEl = document.getElementById('customName');
+        var wattEl = document.getElementById('customWatt');
+        var name = (nameEl.value || '').trim();
+        var watt = parseInt(wattEl.value, 10);
+        if (!name || !watt || watt < 1) return;
+        if (watt > 20000) { watt = 20000; }
+        customCounter++;
+        var cid = 'custom_' + customCounter;
+        customItems.push({ id: cid, name: name, watt: watt });
+        selected[cid] = { qty: 1 };
+        nameEl.value = '';
+        wattEl.value = '';
+        renderCustomList();
+        updateCalc();
+    }
+
+    function removeCustom(cid) {
+        customItems = customItems.filter(function(c) { return c.id !== cid; });
+        delete selected[cid];
+        renderCustomList();
+        updateCalc();
+    }
+
+    function renderCustomList() {
+        var html = customItems.map(function(c) {
+            return '<span class="custom-tag">' + _e(c.name) + ' (' + _fw(c.watt) + 'W)' +
+                '<button onclick="removeCustom(\'' + c.id + '\')" title="ลบ">✕</button></span>';
+        }).join('');
+        document.getElementById('customList').innerHTML = html;
+    }
+
+    // ─── Update Calculation ───
+    function updateCalc() {
+        var totalW = 0;
+        var items = [];
+
+        // Standard appliances
+        Object.keys(selected).forEach(function(id) {
+            var a = appliances.find(function(x) { return x.id === id; });
+            var c = customItems.find(function(x) { return x.id === id; });
+            var info = a || c;
+            if (!info) return;
+            var qty = selected[id].qty;
+            var w = info.watt * qty;
+            totalW += w;
+            items.push({ icon: info.icon || '🔌', name: info.name, watt: info.watt, qty: qty, total: w });
+        });
+
+        var pct = Math.min((totalW / MAX_WATT) * 100, 100);
+        var overPct = (totalW / MAX_WATT) * 100;
+
+        // Gauge
+        updateGauge(totalW, pct, overPct);
+
+        // Progress
+        var color = overPct <= 70 ? 'var(--success)' : overPct <= 90 ? 'var(--warning)' : 'var(--danger)';
+        var fillEl = document.getElementById('progressFill');
+        fillEl.style.width = Math.min(pct, 100) + '%';
+        fillEl.style.background = color;
+
+        // Numbers
+        document.getElementById('totalWatt').textContent = _fw(totalW) + ' W / ' + _fw(MAX_WATT) + ' W';
+        document.getElementById('totalPct').textContent = Math.round(overPct) + '%';
+        document.getElementById('totalRemain').textContent = _fw(Math.max(MAX_WATT - totalW, 0)) + ' W';
+
+        // Status
+        var statusEl = document.getElementById('gaugeStatus');
+        if (totalW === 0) {
+            statusEl.className = 'gauge-status status-safe';
+            statusEl.textContent = '✅ ปลอดภัย — ยังไม่ได้เลือกเครื่องใช้ไฟฟ้า';
+        } else if (overPct <= 70) {
+            statusEl.className = 'gauge-status status-safe';
+            statusEl.textContent = '✅ ปลอดภัย — ใช้ไฟ ' + Math.round(overPct) + '% ของพิกัด';
+        } else if (overPct <= 90) {
+            statusEl.className = 'gauge-status status-caution';
+            statusEl.textContent = '⚠️ ระวัง — ใช้ไฟ ' + Math.round(overPct) + '% ใกล้เต็มพิกัด';
+        } else if (overPct <= 100) {
+            statusEl.className = 'gauge-status status-danger';
+            statusEl.textContent = '🔴 อันตราย — ใช้ไฟ ' + Math.round(overPct) + '% เกือบเต็มพิกัด!';
+        } else {
+            statusEl.className = 'gauge-status status-over';
+            statusEl.textContent = '🚨 เกินพิกัด! (' + _fw(totalW) + 'W) สายไฟร้อน เสี่ยงไฟไหม้!';
+        }
+
+        // Selected items list
+        renderSelectedList(items, totalW);
+    }
+
+    function updateGauge(totalW, pct, overPct) {
+        var arc = document.getElementById('gaugeFill');
+        // Arc length calculation for semicircle
+        var radius = 100;
+        var circumference = Math.PI * radius; // ~314
+        var fill = Math.min(pct / 100, 1) * circumference;
+        arc.style.strokeDasharray = circumference;
+        arc.style.strokeDashoffset = circumference - fill;
+
+        // Color
+        var c = overPct <= 70 ? '#22C55E' : overPct <= 90 ? '#F59E0B' : '#EF4444';
+        arc.style.stroke = c;
+
+        // Text
+        document.getElementById('gaugeText').textContent = _fw(totalW);
+        document.getElementById('gaugeLabel').textContent = overPct > 100
+            ? 'เกิน! ' + _fw(totalW - MAX_WATT) + 'W'
+            : Math.round(overPct) + '% ของ ' + _fw(MAX_WATT) + 'W';
+    }
+
+    function renderSelectedList(items, totalW) {
+        if (items.length === 0) {
+            document.getElementById('selectedList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;font-size:.9rem;">แตะเลือกเครื่องใช้ไฟฟ้าด้านบนเพื่อเริ่มคำนวณ</div>';
+            return;
+        }
+        // Sort by total watt desc
+        items.sort(function(a, b) { return b.total - a.total; });
+        var html = '<div style="font-size:.9rem;font-weight:600;margin-bottom:.5rem;">📋 รายการที่เลือก (' + items.length + ' รายการ)</div>';
+        items.forEach(function(it) {
+            var pctOfTotal = totalW > 0 ? Math.round((it.total / totalW) * 100) : 0;
+            var barColor = it.total > 2000 ? 'var(--danger)' : it.total > 1000 ? 'var(--warning)' : 'var(--success)';
+            html += '<div class="sel-item">' +
+                '<span class="sel-item-name">' + it.icon + ' ' + _e(it.name) + (it.qty > 1 ? ' ×' + it.qty : '') + '</span>' +
+                '<span class="sel-item-watt">' + _fw(it.total) + ' W (' + pctOfTotal + '%)</span>' +
+            '</div>' +
+            '<div style="height:4px;background:#F1F5F9;border-radius:2px;margin:0 .7rem .5rem;overflow:hidden;">' +
+                '<div style="height:100%;width:' + Math.min(pctOfTotal, 100) + '%;background:' + barColor + ';border-radius:2px;transition:width .4s;"></div>' +
+            '</div>';
+        });
+        document.getElementById('selectedList').innerHTML = html;
+    }
+
+    // ─── Helpers ───
+    function _fw(n) { return n.toLocaleString('th-TH'); }
+    function _e(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    // ─── Navigation (SPA fallback) ───
+    function navigate(qs) {
+        var page = (qs || '').replace('?page=', '');
+        if (page) window.location.href = page + '.html';
+    }
+    </script>
+</body>
+</html>
