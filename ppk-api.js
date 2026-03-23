@@ -1260,7 +1260,8 @@ async function _routeAction(action, data) {
         case 'getHousingList': {
             var rows = await sbGet('housing', { order: 'house_number.asc' });
             var mapped = (rows || []).map(function(h) {
-                return { id: h.id, display_number: (h.type === 'flat' ? 'แฟลต' : 'บ้าน') + h.house_number, house_number: h.house_number, type: h.type, status: h.status };
+                var _pfxH = h.type === 'flat' ? 'แฟลต' : 'บ้าน', _rawH = h.house_number || '', _numH = _rawH.startsWith(_pfxH) ? _rawH.substring(_pfxH.length) : _rawH;
+                return { id: h.id, display_number: _pfxH + _numH, house_number: h.house_number, type: h.type, status: h.status };
             }).sort(_naturalCmp);
             return { success: true, data: mapped };
         }

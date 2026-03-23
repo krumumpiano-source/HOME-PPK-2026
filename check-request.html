@@ -2098,7 +2098,8 @@
 
                 select.innerHTML = '<option value="">— เลือกบ้าน/ห้อง —</option>';
                 available.forEach(h => {
-                    const label = (h.type === 'flat' ? 'แฟลต' : 'บ้าน') + (h.house_number || h.number || '');
+                    const _pfxC = h.type === 'flat' ? 'แฟลต' : 'บ้าน', _rawC = h.house_number || h.number || '';
+                    const label = _pfxC + (_rawC.startsWith(_pfxC) ? _rawC.substring(_pfxC.length) : _rawC);
                     const opt = document.createElement('option');
                     opt.value = h.house_number || h.number || '';
                     opt.textContent = label;

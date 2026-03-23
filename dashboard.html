@@ -355,7 +355,7 @@
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var firstName = user.firstname || '';
             document.getElementById('heroGreeting').textContent = 'สวัสดี' + (firstName ? ', ' + firstName : '');
-            document.getElementById('heroHouse').textContent = '🏠 บ้านพัก ' + (houseNumber || '—');
+            document.getElementById('heroHouse').textContent = '🏠 ' + (houseNumber || '—');
 
             // Amount display
             var amtEl = document.getElementById('currentMonthAmount');

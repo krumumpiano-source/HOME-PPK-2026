@@ -61,7 +61,7 @@ function renderPPKNav(containerId, activePage) {
     : hasAnyPerm ? '\ud83d\udccc \u0e04\u0e13\u0e30\u0e17\u0e33\u0e07\u0e32\u0e19'
     : '\ud83c\udfe0 \u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22';
   var houseBadge = houseNumber
-    ? '<div class="sidebar-user-house">\u0e1a\u0e49\u0e32\u0e19 ' + _esc(houseNumber) + '</div>'
+    ? '<div class="sidebar-user-house">' + _esc(houseNumber) + '</div>'
     : '';
 
   // Resident menu items
