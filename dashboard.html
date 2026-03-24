@@ -467,7 +467,8 @@
         async function cancelSlipClick() {
             var d = _ctaData;
             if (!d.slipId) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
-            if (!confirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้')) return;
+            var ok = await ppkConfirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้', { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' });
+            if (!ok) return;
             try {
                 var result = await callBackend('cancelSlip', { id: d.slipId });
                 if (result && result.success) {

@@ -892,7 +892,8 @@
         // ============ ยกเลิกสลิปที่ใช้ edit mode ==========
         async function cancelEditSlip() {
             if (!_editSlipId) return;
-            if (!confirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้')) return;
+            var ok = await ppkConfirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้', { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' });
+            if (!ok) return;
             try {
                 var result = await callBackend('cancelSlip', { id: _editSlipId });
                 if (result && result.success) {
