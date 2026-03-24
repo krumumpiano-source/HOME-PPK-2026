@@ -172,10 +172,21 @@ async function sbDelete(table, filter) {
         _waitSb(async function (sb) {
             try {
                 var q = sb.from(table).delete();
+                var hasFilter = false;
                 Object.keys(filter || {}).forEach(function (k) {
-                    var m = String(filter[k]).match(/^eq\.(.+)$/);
-                    if (m) q = q.eq(k, m[1]);
+                    var v = String(filter[k]);
+                    var mEq = v.match(/^eq\.(.+)$/);
+                    if (mEq) { q = q.eq(k, mEq[1]); hasFilter = true; return; }
+                    var mIn = v.match(/^in\.\((.+)\)$/);
+                    if (mIn) { q = q.in(k, mIn[1].split(',').map(function(s){ return s.trim(); })); hasFilter = true; return; }
+                    var mNeq = v.match(/^neq\.(.+)$/);
+                    if (mNeq) { q = q.neq(k, mNeq[1]); hasFilter = true; }
                 });
+                // ป้องกัน delete-all: ถ้าไม่มี filter ใดๆ ที่ valid ให้ reject แทน
+                if (!hasFilter && Object.keys(filter || {}).length > 0) {
+                    reject(new Error('sbDelete: filter provided but no valid condition matched — aborting to prevent delete-all'));
+                    return;
+                }
                 var res = await q;
                 if (res.error) reject(new Error(res.error.message));
                 else resolve(true);

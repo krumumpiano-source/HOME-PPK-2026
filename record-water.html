@@ -401,7 +401,7 @@
         </div>
         
         <!-- ตารางบันทึกมิเตอร์ -->
-        <div class="section">
+        <div class="section" style="max-width:none;width:100%">
             <div class="section-title">📝 บันทึกเลขมิเตอร์</div>
             
             <div class="table-scroll-wrapper">
@@ -410,7 +410,7 @@
                         <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th style="white-space:nowrap">📷</th><th style="white-space:nowrap">หน่วยรวม <span style="font-weight:400;font-size:11px;color:#f59e0b;">(เปลี่ยนมิเตอร์)</span></th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
                     </thead>
                     <tbody id="meterTableBody">
-                        <tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
+                        <tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -596,7 +596,7 @@
         // สร้างตาราง — 1 แถว = 1 บ้าน (รวม housing + residents)
         async function renderResidentsTable() {
             const tbody = document.getElementById('meterTableBody');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
             const [residents, housingList, prevMeterData, savedBill] = await Promise.all([
                 getResidentsData(), getHousingListData(), getPreviousMeterData(), getSavedBillData()
             ]);
