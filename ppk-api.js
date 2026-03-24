@@ -1616,7 +1616,7 @@ async function _routeAction(action, data) {
             var canSlip = await sbGet('slip_submissions', { id: 'eq.' + data.id, select: 'id,house_number,status', limit: '1' });
             if (!canSlip || canSlip.length === 0) return { success: false, error: 'ไม่พบสลิป' };
             var canRow = canSlip[0];
-            if (canRow.status !== 'pending') return { success: false, error: 'ไม่สามารถยกเลิกสลิปที่ตรวจสอบแล้ว' };
+            if (canRow.status !== 'pending' && canRow.status !== 'rejected') return { success: false, error: 'ไม่สามารถยกเลิกสลิปที่ตรวจสอบแล้ว' };
             if (canSess.role !== 'admin' && canSess.role !== 'head') {
                 var muArrC = []; try { muArrC = await sbGet('users', { id: 'eq.' + canSess.userId, select: 'email', limit: '1' }); } catch(e) {}
                 var myResObjC = await _findResidentForUser(canSess.userId, muArrC[0] ? muArrC[0].email : null);

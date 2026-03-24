@@ -418,9 +418,9 @@
                 rejectBanner.style.display = 'none';
             }
 
-            // Cancel button (only when reviewing)
+            // Cancel button (when reviewing or rejected)
             var cancelBtn = document.getElementById('heroCancelBtn');
-            if (cancelBtn) cancelBtn.style.display = (slipStatus === 'reviewing') ? '' : 'none';
+            if (cancelBtn) cancelBtn.style.display = (slipStatus === 'reviewing' || slipStatus === 'rejected') ? '' : 'none';
             if (slipStatus === 'success') {
                 ctaEl.innerHTML = '✅ ชำระสำเร็จแล้ว';
                 ctaEl.className = 'hero-cta success';
