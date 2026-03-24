@@ -716,8 +716,8 @@
                 var _elecHouses = {};
                 var _elecLatest = null;
                 _elecFiltered.forEach(function(b) {
-                    // นับเฉพาะห้องที่บันทึกมิเตอร์จริง (curr_meter > 0 = กรอกเลขมิเตอร์แล้ว)
-                    if (b.house_number && parseFloat(b.curr_meter) > 0) _elecHouses[b.house_number] = true;
+                    // นับเฉพาะห้องที่บันทึกค่าไฟจริง (bill_amount > 0 หรือ curr_meter > 0)
+                    if (b.house_number && (parseFloat(b.bill_amount) > 0 || parseFloat(b.amount) > 0 || parseFloat(b.curr_meter) > 0)) _elecHouses[b.house_number] = true;
                     if (b.recorded_at && (!_elecLatest || b.recorded_at > _elecLatest)) _elecLatest = b.recorded_at;
                 });
                 var elecCount = Object.keys(_elecHouses).length;
