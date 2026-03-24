@@ -175,6 +175,7 @@
             <div id="edit-mode-banner">
                 <div style="font-weight:700;color:#b45309;margin-bottom:0.4rem;">✏️ โหมดแก้ไขสลิป</div>
                 <div style="font-size:0.9rem;color:#92400e;">สลิปนี้ยังรอการตรวจสอบ — คุณสามารถแก้ไขรูปสลิปและจำนวนเงินได้</div>
+                <button type="button" onclick="cancelEditSlip()" style="margin-top:0.65rem;background:transparent;border:1px solid #d97706;color:#92400e;border-radius:8px;padding:0.38rem 0.9rem;font-size:0.82rem;cursor:pointer;font-family:Kanit,sans-serif;">🗑️ ยกเลิกสลิปที่ส่งไว้</button>
             </div>
             <!-- Proxy Upload Panel (สำหรับผู้พักอาศัยส่งสลิปแทนบ้านอื่น) -->
             <div id="proxy-toggle-container" style="display:none;">
@@ -886,6 +887,23 @@
             document.getElementById('proxy-my-house-text').textContent = myHouseNumber;
             document.getElementById('proxy-confirm-banner').className = 'proxy-confirm-banner visible';
             loadBillingInfo();
+        }
+
+        // ============ ยกเลิกสลิปที่ใช้ edit mode ==========
+        async function cancelEditSlip() {
+            if (!_editSlipId) return;
+            if (!confirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้')) return;
+            try {
+                var result = await callBackend('cancelSlip', { id: _editSlipId });
+                if (result && result.success) {
+                    ppkAlert('✔ ยกเลิกสลิปเรียบร้อยแล้ว');
+                    window.navigate('dashboard.html');
+                } else {
+                    ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
         }
 
         // ============ ตรวจสอบว่ามีสลิป pending → เปิด edit mode ==========

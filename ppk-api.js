@@ -1564,6 +1564,7 @@ async function _routeAction(action, data) {
                         totalOutstanding: adminOutRows.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0),
                         slipStatus: adminSlipStatus,
                         reviewNote: adminReviewNote,
+                        slipId: adminLatestSlip ? adminLatestSlip.id : null,
                         dueDate: adminCurrentOut ? adminCurrentOut.due_date : null
                     };
                 }
@@ -1601,12 +1602,31 @@ async function _routeAction(action, data) {
                     totalOutstanding: totalOutstanding,
                     slipStatus: slipStatus,
                     reviewNote: reviewNote,
+                    slipId: latestSlip ? latestSlip.id : null,
                     dueDate: currentOut ? currentOut.due_date : null
                 }};
             }
         }
 
         /* ── Slip review ──────────────────────────── */
+        case 'cancelSlip': {
+            if (!data.id) return { success: false, error: 'ไม่ระบุ ID สลิป' };
+            var canSess = await _getSessionRole();
+            if (!canSess) return { success: false, error: 'กรุณาเข้าสู่ระบบก่อน' };
+            var canSlip = await sbGet('slip_submissions', { id: 'eq.' + data.id, select: 'id,house_number,status', limit: '1' });
+            if (!canSlip || canSlip.length === 0) return { success: false, error: 'ไม่พบสลิป' };
+            var canRow = canSlip[0];
+            if (canRow.status !== 'pending') return { success: false, error: 'ไม่สามารถยกเลิกสลิปที่ตรวจสอบแล้ว' };
+            if (canSess.role !== 'admin' && canSess.role !== 'head') {
+                var muArrC = []; try { muArrC = await sbGet('users', { id: 'eq.' + canSess.userId, select: 'email', limit: '1' }); } catch(e) {}
+                var myResObjC = await _findResidentForUser(canSess.userId, muArrC[0] ? muArrC[0].email : null);
+                var myHouseC = myResObjC ? (myResObjC.house_number || '') : '';
+                if (myHouseC && canRow.house_number !== myHouseC) return { success: false, error: 'คุณไม่มีสิทธิ์ยกเลิกสลิปนี้' };
+            }
+            await sbDelete('slip_submissions', { id: 'eq.' + data.id });
+            return { success: true };
+        }
+
         case 'rejectSlip': {
             // ปฏิเสธสลิป + ส่ง notification ให้ผู้พักบนแดชบอร์ด + อีเมล
             if (!data.id || !data.houseNumber) return { success: false, error: 'ไม่ระบุ ID หรือเลขบ้าน' };

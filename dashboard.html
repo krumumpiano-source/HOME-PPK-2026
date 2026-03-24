@@ -88,6 +88,19 @@
             display: none;
         }
         .hero-reject-banner strong { color: #fff; }
+        .hero-cancel-btn {
+            background: transparent;
+            border: 1px solid rgba(239,68,68,0.45);
+            color: #FCA5A5;
+            border-radius: 8px;
+            padding: .42rem .9rem;
+            font-size: .82rem;
+            cursor: pointer;
+            margin-top: .55rem;
+            width: 100%;
+            transition: background .2s;
+        }
+        .hero-cancel-btn:hover { background: rgba(220,38,38,0.15); }
 
         /* ── Outstanding banner ── */
         .outstanding-banner {
@@ -196,6 +209,7 @@
                     </div>
                     <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
                     <div class="hero-reject-banner" id="heroRejectBanner"></div>
+                    <button class="hero-cancel-btn" id="heroCancelBtn" onclick="cancelSlipClick()" style="display:none;">🗑️ ยกเลิกสลิปที่ส่งไว้</button>
                 </div>
             </div>
 
@@ -349,6 +363,7 @@
             var houseNumber = data.houseNumber || '';
             var slipStatus = data.slipStatus || 'none';
             var reviewNote = data.reviewNote || '';
+            var slipId = data.slipId || null;
 
             var parts = period.split('-');
             var monthIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
@@ -358,7 +373,7 @@
             var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
 
             // Save for CTA buttons
-            _ctaData = { periodKey: periodKey, amount: amount, outstanding: outstanding, houseNumber: houseNumber, slipStatus: slipStatus };
+            _ctaData = { periodKey: periodKey, amount: amount, outstanding: outstanding, houseNumber: houseNumber, slipStatus: slipStatus, slipId: slipId };
 
             // User info
             var user = {};
@@ -403,8 +418,9 @@
                 rejectBanner.style.display = 'none';
             }
 
-            // CTA button
-            var ctaEl = document.getElementById('heroCta');
+            // Cancel button (only when reviewing)
+            var cancelBtn = document.getElementById('heroCancelBtn');
+            if (cancelBtn) cancelBtn.style.display = (slipStatus === 'reviewing') ? '' : 'none';
             if (slipStatus === 'success') {
                 ctaEl.innerHTML = '✅ ชำระสำเร็จแล้ว';
                 ctaEl.className = 'hero-cta success';
@@ -448,6 +464,26 @@
             }
             goToUploadSlip(d.periodKey, d.amount, false);
         }
+        async function cancelSlipClick() {
+            var d = _ctaData;
+            if (!d.slipId) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
+            if (!confirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้')) return;
+            try {
+                var result = await callBackend('cancelSlip', { id: d.slipId });
+                if (result && result.success) {
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
+                    // ล้าง cache แล้ว reload
+                    var ck = 'apicache_getDashboardData_{}';
+                    try { localStorage.removeItem(ck); } catch(e) {}
+                    setTimeout(function() { loadDashboard(); }, 500);
+                } else {
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
+                }
+            } catch(e) {
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
         function outstandingBtnClick() {
             var d = _ctaData;
             if (!d.houseNumber) {
