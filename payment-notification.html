@@ -170,6 +170,7 @@
 
         <div class="save-buttons" style="margin-top:0.5rem;">
             <button class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:1.15rem;" onclick="saveNotificationsToDB()">💾 บันทึกข้อมูลแจ้งยอดลงระบบ</button>
+            <button class="btn" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:1rem;" onclick="clearNotificationsForPeriod()" title="ลบข้อมูลการแจ้งยอดของเดือนนี้ทั้งหมดออกจาก DB (ใช้เมื่อแจ้งผิด/ทดสอบ)">🗑️ ล้างการแจ้งยอดเดือนนี้</button>
         </div>
 
         <div class="save-buttons"><button class="btn btn-secondary" onclick="navigate('?page=team-management')"> กลับหน้าบริหารจัดการ</button></div>
@@ -555,6 +556,25 @@
             setTimeout(function() { msg.classList.remove('show'); }, 5000);
         }
 
+        async function clearNotificationsForPeriod() {
+            var month = document.getElementById('bill_month').value;
+            var yearBE = document.getElementById('bill_year').value;
+            var period = yearBE + '-' + month;
+            var ok = await ppkConfirm(
+                '⚠️ ล้างการแจ้งยอดเดือน ' + yearBE + '-' + month + ' ทั้งหมด?\n\n' +
+                'ข้อมูลการแจ้งยอดใน DB จะถูกลบออก (ตัวเลขในตารางด้านบนยังคงอยู่)\n' +
+                'ใช้เพื่อแก้ไขข้อมูลที่บันทึกผิดหรือจากการทดสอบ',
+                { type: 'danger', okText: 'ล้างข้อมูล', cancelText: 'ยกเลิก' }
+            );
+            if (!ok) return;
+            try {
+                await callBackend('deleteNotifications', { period: period });
+                ppkAlert('✅ ล้างการแจ้งยอดเดือน ' + period + ' เรียบร้อยแล้ว');
+            } catch(e) {
+                ppkAlert('❌ ล้างไม่สำเร็จ: ' + (e.message || e));
+            }
+        }
+
         window.onload = async function(){
             var user = await checkSession(true);
             var _perms = user && user.permissions || [];
@@ -578,9 +598,9 @@
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
     <script src="ppk-api.js?v=20260324B"></script>
-    <script src="ppk-app.js?v=20260323E"></script>
-    <script src="ppk-utils.js?v=20260323E"></script>
-    <script src="ppk-nav.js?v=20260323E"></script>
+    <script src="ppk-app.js?v=20260324B"></script>
+    <script src="ppk-utils.js?v=20260324B"></script>
+    <script src="ppk-nav.js?v=20260324B"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>
