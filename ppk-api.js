@@ -1573,6 +1573,62 @@ async function _routeAction(action, data) {
         }
 
         /* ── Slip review ──────────────────────────── */
+        case 'rejectSlip': {
+            // ปฏิเสธสลิป + ส่ง notification ให้ผู้พักบนแดชบอร์ด + อีเมล
+            if (!data.id || !data.houseNumber) return { success: false, error: 'ไม่ระบุ ID หรือเลขบ้าน' };
+            var rejSess = await _getSessionRole();
+            if (!rejSess || (rejSess.role !== 'admin' && rejSess.role !== 'head' && rejSess.role !== 'officer')) {
+                return { success: false, error: 'ไม่มีสิทธิ์ปฏิเสธสลิป' };
+            }
+            var rejNote = (data.note || 'ยอดเงินไม่ตรงกับใบแจ้งหนี้');
+            await sbPatch('slip_submissions', { id: 'eq.' + data.id }, {
+                status: 'rejected',
+                reviewed_by: rejSess.userId || '',
+                reviewed_at: new Date().toISOString(),
+                review_note: rejNote
+            });
+            // แจ้งผู้พักทางแดชบอร์ด (residents เห็นผ่าน getNotificationHistory)
+            try {
+                await sbPost('notifications', {
+                    house_number: data.houseNumber,
+                    period: data.period || '',
+                    water_amount: 0, electric_amount: 0,
+                    common_fee: 0, garbage_fee: 0,
+                    total_amount: parseFloat(data.notifiedAmount) || 0,
+                    message: 'SLIP_REJECTED:' + rejNote,
+                    sent_by: rejSess.userId || ''
+                });
+            } catch(e) {}
+            // ส่งอีเมลแจ้งผู้พัก
+            if (data.email) {
+                try {
+                    var paidAmt = parseFloat(data.paidAmount) || 0;
+                    var notifAmt = parseFloat(data.notifiedAmount) || 0;
+                    var diffAmt = paidAmt - notifAmt;
+                    var diffLine = data.paidAmount
+                        ? '<p>ยอดที่ส่ง: <strong>' + paidAmt.toLocaleString('th-TH') + ' บาท</strong><br>ยอดที่ต้องชำระ: <strong>' + notifAmt.toLocaleString('th-TH') + ' บาท</strong><br>ส่วนต่าง: <strong style="color:#dc2626;">' + (diffAmt > 0 ? '+' : '') + diffAmt.toLocaleString('th-TH') + ' บาท</strong></p>'
+                        : '';
+                    var rjHtml = '<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">'
+                        + '<p>เรียน คุณ' + (data.residentName || 'ผู้พักอาศัย') + '</p>'
+                        + '<div style="background:#fef2f2;border:2px solid #dc2626;padding:16px;border-radius:10px;margin:12px 0">'
+                        + '<p>⚠️ <strong>สลิปการชำระถูกปฏิเสธ</strong></p>'
+                        + '<p>บ้านพัก: <strong>' + data.houseNumber + '</strong></p>'
+                        + '<p>งวด: <strong>' + (data.period || '') + '</strong></p>'
+                        + diffLine
+                        + '<p>เหตุผล: <strong>' + rejNote + '</strong></p>'
+                        + '</div>'
+                        + '<p>กรุณาอัพโหลดสลิปใหม่ให้ถูกต้องผ่านระบบ HOME PPK 2026 หรือติดต่อเจ้าหน้าที่</p>'
+                        + '<p>---<br>' + (data.signature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม') + '</p></div>';
+                    await _callEdge('send-email', {
+                        to: data.email,
+                        subject: '⚠️ สลิปถูกปฏิเสธ: บ้าน ' + data.houseNumber + ' งวด ' + (data.period || ''),
+                        html: rjHtml
+                    });
+                } catch(e) {}
+            }
+            return { success: true };
+        }
+
         case 'reviewSlip': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
             var reviewerId = sess && sess[0] ? sess[0].user_id : null;

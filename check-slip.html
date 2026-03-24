@@ -89,8 +89,13 @@
     .status-match{background:#d1fae5;color:#065f46;}
     .status-mismatch{background:#fee2e2;color:#991b1b;}
     .status-pending{background:#fef3c7;color:#92400e;}
+    .status-pending-match{background:#dcfce7;color:#166534;border:1.5px solid #86efac;}
+    .status-pending-mismatch{background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;}
+    .status-rejected{background:#ede9fe;color:#6d28d9;}
     .status-unpaid{background:#f3f4f6;color:#6b7280;}
     .status-approved{background:#dbeafe;color:#1e40af;}
+    .reject-reason-box{width:100%;padding:.65rem .9rem;border:1.5px solid #E5E7EB;border-radius:10px;font:inherit;font-size:.95rem;min-height:80px;resize:vertical;box-sizing:border-box;}
+    .reject-reason-box:focus{outline:none;border-color:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.12);}
 
     .slip-thumb{width:110px;height:90px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:transform .15s,box-shadow .15s;display:block;margin:0 auto;}
     .slip-thumb:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(0,0,0,.3);border-color:var(--primary);}
@@ -173,7 +178,7 @@
   <div id="ppkNav"></div>
 
   <div class="dashboard-container" id="dashboardContainer">
-    <button class="back-btn" onclick="navigate('?page=team-management')">← กลับ</button>
+    <button class="back-btn" onclick="history.back()">← กลับ</button>
 
     <div class="page-header"><h2>🧾 ตรวจสลิปการชำระเงิน</h2></div>
 
@@ -315,6 +320,28 @@
     </div>
   </div>
 
+  <!-- Modal ปฏิเสธสลิป -->
+  <div class="modal-overlay" id="rejectModal">
+    <div class="modal-content" style="max-width:480px;">
+      <button class="modal-close" onclick="closeRejectModal()">×</button>
+      <div class="modal-title" style="color:#dc2626;">❌ ปฏิเสธสลิป</div>
+      <div class="modal-body">
+        <div id="rejectModalInfo" style="margin-bottom:1rem;"></div>
+        <div class="form-group">
+          <label style="font-weight:700;">เหตุผล (แสดงให้ผู้พักอาศัยทราบ):</label>
+          <textarea id="rejectReason" class="reject-reason-box" placeholder="เช่น ยอดเงินไม่ตรงกับใบแจ้งหนี้ กรุณาส่งสลิปใหม่"></textarea>
+        </div>
+        <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:.75rem;border-radius:6px;font-size:.9rem;color:#991b1b;margin-top:.75rem;">
+          ⚠️ ผู้พักอาศัยจะได้รับการแจ้งเตือนทางแดชบอร์ดและอีเมล และสามารถส่งสลิปใหม่ได้
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" id="rejectConfirmBtn" onclick="doRejectSlip()">❌ ยืนยันปฏิเสธสลิป</button>
+        <button class="btn" onclick="closeRejectModal()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Lightbox ตรวจสลิปด่วน -->
   <div class="slip-lightbox" id="slipLightbox" onclick="closeLightbox()">
     <div class="slip-lightbox-info" id="lbxInfo" onclick="event.stopPropagation()"></div>
@@ -429,6 +456,8 @@
               slipImages: [],
               slipDate: slip ? (slip.submitted_at || null) : null,
               slipId: slip ? slip.id : null,
+              slipStatus: slip ? (slip.status || 'pending') : null,
+              reviewNote: slip ? (slip.review_note || '') : '',
               approval: slip && (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
               proxyNote: slip ? (slip.account_name || '') : '',
               qrAmount: slip ? (parseFloat(slip.qr_amount) || null) : null,
@@ -466,6 +495,8 @@
                 slipImages: [],
                 slipDate: slip.submitted_at || null,
                 slipId: slip.id || null,
+                slipStatus: slip.status || 'pending',
+                reviewNote: slip.review_note || '',
                 approval: (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
                 proxyNote: slip.account_name || '',
                 noResident: false
@@ -507,7 +538,7 @@
                     notifiedAmount: parseFloat(ls.notifiedAmount) || 0,
                     paidAmount: parseFloat(ls.paidAmount) || 0,
                     slipImages: ls.slipImages || [], slipDate: ls.submittedAt || null,
-                    slipId: null, approval: localApprovals[uNum] || null,
+                    slipId: null, slipStatus: null, reviewNote: '', approval: localApprovals[uNum] || null,
                     proxyNote: '', noResident: false
                   };
                   if (uNum.toLowerCase().startsWith('f') || uNum.includes('แฟลต')) { flatsData.push(ud); }
@@ -580,6 +611,9 @@
           paidAmount: paidAmount,
           slipImages: slipImages,
           slipDate: slipDate,
+          slipId: null,
+          slipStatus: null,
+          reviewNote: '',
           approval: approval,
           noResident: resident.no_resident || false
         };
@@ -638,20 +672,21 @@
     // ตรวจสอบสถานะ
     function getStatus(unit){
       if(unit.noResident) return 'no-resident';
+      if(unit.slipStatus === 'rejected') return 'rejected';
       if(unit.approval && unit.approval.status === 'approved') return 'approved';
       if(unit.paidAmount === null) return 'unpaid';
-      if(unit.paidAmount === unit.notifiedAmount) return 'match';
-      if(unit.paidAmount !== unit.notifiedAmount) return 'mismatch';
-      return 'pending';
+      // สลิปค้างตรวจ: แยกตาม match/mismatch
+      if(Math.abs((unit.paidAmount||0) - (unit.notifiedAmount||0)) < 0.01) return 'pending-match';
+      return 'pending-mismatch';
     }
 
     function getStatusBadge(status){
       const badges = {
-        'match': '<span class="status-badge status-match">✓ ตรง</span>',
-        'mismatch': '<span class="status-badge status-mismatch">✗ ไม่ตรง</span>',
-        'pending': '<span class="status-badge status-pending">⏳ รอตรวจ</span>',
-        'unpaid': '<span class="status-badge status-unpaid">○ ยังไม่ชำระ</span>',
-        'approved': '<span class="status-badge status-approved">✓ อนุมัติแล้ว</span>',
+        'pending-match':    '<span class="status-badge status-pending-match">⏳ รอตรวจ (ยอดตรง)</span>',
+        'pending-mismatch': '<span class="status-badge status-pending-mismatch">⚠️ ยอดไม่ตรง</span>',
+        'rejected':    '<span class="status-badge status-rejected">✗ ถูกปฏิเสธ</span>',
+        'unpaid':      '<span class="status-badge status-unpaid">○ ยังไม่ชำระ</span>',
+        'approved':    '<span class="status-badge status-approved">✓ อนุมัติแล้ว</span>',
         'no-resident': '<span class="status-badge status-unpaid">- ไม่มีผู้พัก</span>'
       };
       return badges[status] || '';
@@ -680,9 +715,9 @@
         const status = getStatus(unit);
 
         // นับสถานะ
-        if(status === 'match' || status === 'approved') countMatch++;
-        else if(status === 'mismatch') countMismatch++;
-        else if(status === 'pending') countPending++;
+        if(status === 'approved') countMatch++;
+        else if(status === 'pending-mismatch' || status === 'rejected') countMismatch++;
+        else if(status === 'pending-match') countPending++;
         else if(status === 'unpaid') countUnpaid++;
 
         // สลิป thumbnail - คลิกเพื่อดูเต็มจอทันที
@@ -710,10 +745,21 @@
             '<button class="btn btn-sm btn-primary" onclick="showManualPayment(\'' + type + '\',' + index + ')" title="บันทึกการชำระด้วยตนเอง">💵 บันทึก</button>' +
             '<button class="btn btn-sm btn-warning" onclick="showReminder(\'' + type + '\',' + index + ')" title="ส่งอีเมลเตือน">📧 เตือน</button>' +
           '</div>';
-        } else {
+        } else if(status === 'rejected'){
           actionsHtml = '<div class="action-btns">' +
             '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
-            '<button class="btn btn-sm btn-success" onclick="approvePayment(\'' + type + '\',' + index + ')">✓</button>' +
+            '<span style="font-size:.78rem;color:#6d28d9;white-space:nowrap;">✗ ปฏิเสธแล้ว</span>' +
+          '</div>';
+        } else if(status === 'pending-mismatch'){
+          actionsHtml = '<div class="action-btns">' +
+            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="showRejectModal(\'' + type + '\',' + index + ')" title="ยอดไม่ตรง — ปฏิเสธสลิป">❌ ปฏิเสธ</button>' +
+          '</div>';
+        } else if(status === 'pending-match'){
+          actionsHtml = '<div class="action-btns">' +
+            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
+            '<button class="btn btn-sm btn-success" onclick="approvePayment(\'' + type + '\',' + index + ')">✓ อนุมัติ</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="showRejectModal(\'' + type + '\',' + index + ')" title="ปฏิเสธ">❌</button>' +
           '</div>';
         }
 
@@ -759,7 +805,7 @@
         <div class="info-item"><span class="info-label">ค่าไฟ:</span><span class="info-value">${formatMoney(unit.electricAmount)} บาท</span></div>
         <div class="info-item"><span class="info-label">ค่าส่วนกลาง:</span><span class="info-value">${formatMoney(unit.commonFee)} บาท</span></div>
         <div class="info-item"><span class="info-label">วันที่ส่งสลิป:</span><span class="info-value">${unit.slipDate ? new Date(unit.slipDate).toLocaleString('th-TH') : '-'}</span></div>
-        ${unit.proxyNote ? '<div class="info-item"><span class="info-label">\uD83D\uDD04 \u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19:</span><span class="info-value" style="color:#C2410C;font-weight:600;">' + unit.proxyNote.replace('\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ','') + '</span></div>' : ''}
+        ${unit.proxyNote ? '<div class="info-item"><span class="info-label">\uD83D\uDD04 \u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19:</span><span class="info-value" style="color:#C2410C;font-weight:600;">' + _esc(unit.proxyNote.replace('\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ','')) + '</span></div>' : ''}
       `;
       document.getElementById('modalInfo').innerHTML = infoHtml;
 
@@ -809,10 +855,19 @@
       let actionsHtml = '';
       if(status === 'approved'){
         actionsHtml = '<span style="color:var(--success);">✓ อนุมัติการชำระแล้ว</span>';
-      } else if(unit.paidAmount !== null) {
-        actionsHtml = `
-          <button class="btn btn-success" onclick="approvePayment('${type}',${index});closeModal();">✓ อนุมัติ (ส่งใบเสร็จ)</button>
-        `;
+      } else if(status === 'rejected'){
+        actionsHtml = '<div style="background:#f5f3ff;border-left:4px solid #6d28d9;padding:.7rem .9rem;border-radius:6px;font-size:.9rem;margin-bottom:.5rem;">'
+          + '✗ สลิปถูกปฏิเสธแล้ว' + (unit.reviewNote ? '<br><small style="color:#6d28d9;">' + _esc(unit.reviewNote) + '</small>' : '') + '</div>';
+      } else if(status === 'pending-mismatch'){
+        const _diff = ((unit.paidAmount||0) - (unit.notifiedAmount||0));
+        actionsHtml = '<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:.7rem .9rem;border-radius:6px;font-size:.9rem;margin-bottom:.5rem;">'
+          + '⛔ ยอดเงินไม่ตรง — <strong>ไม่สามารถอนุมัติได้</strong><br>'
+          + 'ยอดที่ส่ง: ' + formatMoney(unit.paidAmount) + ' | แจ้งไว้: ' + formatMoney(unit.notifiedAmount) + ' | ผลต่าง: <strong style="color:#dc2626;">' + (_diff>0?'+':'') + formatMoney(_diff) + ' บาท</strong>'
+          + '</div>'
+          + '<button class="btn btn-danger" onclick="closeModal();showRejectModal(\'' + type + '\',' + index + ');">❌ ปฏิเสธสลิป</button>';
+      } else if(unit.paidAmount !== null){
+        actionsHtml = '<button class="btn btn-success" onclick="approvePayment(\'' + type + '\',' + index + ');closeModal();">✓ อนุมัติ (ส่งใบเสร็จ)</button>'
+          + '<button class="btn btn-danger" onclick="closeModal();showRejectModal(\'' + type + '\',' + index + ');" style="margin-left:.5rem;">❌ ปฏิเสธ</button>';
       }
       actionsHtml += '<button class="btn" onclick="closeModal()">ปิด</button>';
       document.getElementById('modalActions').innerHTML = actionsHtml;
@@ -843,7 +898,7 @@
         '  |  แจ้ง: ' + formatMoney(unit.notifiedAmount) + ' บาท' +
         (unit.paidAmount !== null ? '  →  ชำระ: ' + formatMoney(unit.paidAmount) + ' บาท' : '  (ยังไม่มียอดชำระ)');
       const approveBtn = document.getElementById('lbxApproveBtn');
-      approveBtn.style.display = (status === 'approved' || status === 'unpaid' || status === 'no-resident') ? 'none' : '';
+      approveBtn.style.display = (status === 'approved' || status === 'unpaid' || status === 'no-resident' || status === 'rejected' || status === 'pending-mismatch') ? 'none' : '';
       renderLbxImg();
       document.getElementById('slipLightbox').classList.add('show');
     }
@@ -886,11 +941,92 @@
       await approvePayment(t, i);
     }
 
+    // ── Helper: escape HTML (ป้องกัน XSS) ──
+    function _esc(s){ if(!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+    // ── Reject slip modal ──
+    var _rejectTarget = null;
+
+    function showRejectModal(type, index){
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit || !unit.slipId){ ppkAlert('ไม่พบสลิปที่จะปฏิเสธ'); return; }
+      _rejectTarget = { type, index };
+      const diff = ((unit.paidAmount||0) - (unit.notifiedAmount||0));
+      const diffStr = (diff > 0 ? '+' : '') + formatMoney(diff);
+      document.getElementById('rejectModalInfo').innerHTML =
+        '<div class="info-grid" style="gap:.5rem;margin-bottom:.75rem;">'
+        + '<div class="info-item"><span class="info-label">เลขที่:</span><span class="info-value">'+_esc(unit.unitNumber)+'</span></div>'
+        + '<div class="info-item"><span class="info-label">ผู้พัก:</span><span class="info-value">'+_esc(unit.name||'-')+'</span></div>'
+        + '<div class="info-item"><span class="info-label">ยอดที่แจ้ง:</span><span class="info-value">฿'+formatMoney(unit.notifiedAmount)+'</span></div>'
+        + '<div class="info-item"><span class="info-label">ยอดที่ส่ง:</span><span class="info-value" style="color:#dc2626;">฿'+formatMoney(unit.paidAmount)+'</span></div>'
+        + (Math.abs(diff) > 0.01 ? '<div class="info-item" style="grid-column:span 2;"><span class="info-label">ผลต่าง:</span><span class="info-value" style="color:#dc2626;font-weight:700;">'+diffStr+' บาท</span></div>' : '')
+        + '</div>';
+      var defaultReason = '';
+      if(diff < -0.01) defaultReason = 'ยอดเงินน้อยกว่าที่แจ้ง ' + formatMoney(Math.abs(diff)) + ' บาท กรุณาส่งสลิปใหม่';
+      else if(diff > 0.01) defaultReason = 'ยอดเงินมากกว่าที่แจ้ง ' + formatMoney(Math.abs(diff)) + ' บาท กรุณาส่งสลิปใหม่';
+      else defaultReason = 'สลิปไม่ถูกต้อง กรุณาส่งสลิปใหม่';
+      document.getElementById('rejectReason').value = defaultReason;
+      document.getElementById('rejectModal').classList.add('show');
+    }
+
+    function closeRejectModal(){
+      document.getElementById('rejectModal').classList.remove('show');
+      _rejectTarget = null;
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      document.getElementById('rejectModal').addEventListener('click', function(e){ if(e.target===this) closeRejectModal(); });
+    });
+
+    async function doRejectSlip(){
+      if(!_rejectTarget) return;
+      const { type, index } = _rejectTarget;
+      const list = type === 'houses' ? housesData : flatsData;
+      const unit = list[index];
+      if(!unit || !unit.slipId){ ppkAlert('ไม่พบสลิป'); return; }
+      const reason = document.getElementById('rejectReason').value.trim();
+      if(!reason){ ppkAlert('กรุณากรอกเหตุผล'); return; }
+      const { month, year } = getSelectedPeriod();
+      const period = year + '-' + month;
+      const sig = (cachedAdminSettings||{}).emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
+      const btn = document.getElementById('rejectConfirmBtn');
+      btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+      try {
+        const r = await callBackend('rejectSlip', {
+          id: unit.slipId,
+          houseNumber: unit.unitNumber,
+          period: period,
+          notifiedAmount: unit.notifiedAmount,
+          paidAmount: unit.paidAmount,
+          email: unit.email || '',
+          residentName: unit.name || '',
+          note: reason,
+          signature: sig
+        });
+        if(r && r.success){
+          unit.slipStatus = 'rejected';
+          unit.reviewNote = reason;
+          closeRejectModal();
+          renderTable(type);
+          ppkAlert('✓ ปฏิเสธสลิปและแจ้งผู้พักเรียบร้อยแล้ว');
+        } else {
+          ppkAlert('เกิดข้อผิดพลาด: ' + ((r||{}).error||'ไม่สามารถปฏิเสธได้'));
+        }
+      } catch(e){ ppkAlert('เกิดข้อผิดพลาด: ' + e.message); }
+      btn.disabled = false; btn.textContent = '❌ ยืนยันปฏิเสธสลิป';
+    }
+
     // อนุมัติการชำระ
     async function approvePayment(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
+
+      // ป้องกันอนุมัติเมื่อยอดไม่ตรง
+      if(getStatus(unit) === 'pending-mismatch'){
+        ppkAlert('⛔ ไม่สามารถอนุมัติได้\n\nยอดที่ผู้พักส่งมา: ' + formatMoney(unit.paidAmount) + ' บาท\nยอดที่ต้องชำระ: ' + formatMoney(unit.notifiedAmount) + ' บาท\n\nกรุณาใช้ปุ่ม "ปฏิเสธสลิป" เพื่อแจ้งผู้พักให้ส่งสลิปใหม่');
+        return;
+      }
 
       if(_noBillData){
         if(!await ppkConfirm('⚠️ เดือนนี้ยังไม่ได้บันทึกค่าน้ำค่าไฟ\n\nไม่มียอดแจ้งเปรียบเทียบกับยอดที่ชำระ\nคุณแน่ใจหรือไม่ว่าต้องการอนุมัติ?')){
@@ -940,7 +1076,8 @@
 
       // Fallback: localStorage
       const { key } = getSelectedPeriod();
-      const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
+      let slipApprovals = {};
+      try { slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}'); } catch(lsE) {}
       
       slipApprovals[unit.unitNumber] = {
         status: 'approved',
@@ -965,8 +1102,9 @@
       const unit = list[index];
       if(!unit) return;
 
-      if(await ppkConfirm(`ส่งอีเมลเตือนการชำระไปยัง ${unit.unitNumber} (${unit.name})?`)){
-        sendReminderToUnit(unit);
+      if(await ppkConfirm(`ส่งอีเมลเตือนการชำระไปยัง ${unit.unitNumber} (${unit.name})? `)){
+        const ok = await sendReminderToUnit(unit);
+        ppkAlert(ok ? `✅ ส่งเตือนไปยัง ${unit.unitNumber} ทางอีเมลเรียบร้อย` : `⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล' : 'ส่งอีเมลไม่สำเร็จ'}`);
       }
     }
 
@@ -1003,9 +1141,9 @@
       }
 
       if (emailSent) {
-        ppkAlert(`✅ ส่งเตือนไปยัง ${unit.unitNumber} ทางอีเมลเรียบร้อย`);
+        return true;
       } else {
-        ppkAlert(`⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล' : 'ส่งอีเมลไม่สำเร็จ'}`);
+        return false;
       }
     }
 
@@ -1046,9 +1184,7 @@
         } catch(e) { console.error('sendReceiptEmail error:', e); }
       }
 
-      ppkAlert(emailSent
-        ? `✅ ส่งใบเสร็จไปยัง ${unit.unitNumber} ทางอีเมลเรียบร้อย`
-        : `⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล (ตั้งค่าใน Admin Settings ก่อน)' : 'ส่งอีเมลไม่สำเร็จ'}`);
+      return emailSent;
     }
 
     // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
@@ -1072,10 +1208,8 @@
 
       for (const unit of unpaidUnits) {
         if (unit.email) {
-          try {
-            await sendReminderToUnit(unit);
-            sent++;
-          } catch (e) { failed++; }
+          const _ok = await sendReminderToUnit(unit);
+          if(_ok) sent++; else failed++;
         } else {
           failed++;
         }
@@ -1105,15 +1239,12 @@
       const { year, month } = getSelectedPeriod();
       const period = year + '-' + month;
 
-      for (const unit of approvedUnits) {
-        if (unit.email || unit.unitNumber) {
-          try {
-            await sendReceiptEmail(type, list.indexOf(unit));
-            sent++;
-          } catch (e) { failed++; }
-        } else {
-          failed++;
-        }
+      for (let _ri = 0; _ri < approvedUnits.length; _ri++) {
+        const _ru = approvedUnits[_ri];
+        const _rIdx = list.indexOf(_ru);
+        if (_rIdx < 0) { failed++; continue; }
+        const _rok = await sendReceiptEmail(type, _rIdx);
+        if(_rok) sent++; else failed++;
       }
 
       ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่สำเร็จ/ไม่มีอีเมล: ${failed} รายการ`);
