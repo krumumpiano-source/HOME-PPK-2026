@@ -2549,10 +2549,12 @@ async function _routeAction(action, data) {
             var exToday = new Date().toISOString().split('T')[0];
             // สำรองการยกเว้นเดิมก่อนแก้ไข (auto-backup)
             try { var _bakEx = await sbGet('exemptions', { type: 'eq.common_fee' }); await _autoBackup('saveExemptions', 'บันทึกการยกเว้นค่าส่วนกลาง', 'exemptions', null, null, exBy, _bakEx || []); } catch(e) {}
+            // ลบ exemptions ทั้งหมดของ type common_fee ก่อน (ป้องกัน orphaned records จาก house_id เก่า)
+            try { await sbDelete('exemptions', { type: 'eq.common_fee' }); } catch(e) {}
+            // insert เฉพาะบ้านที่ admin ติ๊กยกเว้น
             for (var exi = 0; exi < exHouseIds.length; exi++) {
                 var exHid = exHouseIds[exi];
                 var exItem = exData[exHid];
-                try { await sbDelete('exemptions', { house_id: 'eq.' + exHid, type: 'eq.common_fee' }); } catch(e) {}
                 if (exItem.exempt) {
                     try {
                         await sbPost('exemptions', {
