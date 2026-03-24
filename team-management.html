@@ -686,15 +686,22 @@
                 var pendSlips   = (results[3] && results[3].data) || [];
                 var withdraws   = (results[4] && results[4].data) || [];
 
-                // กรองเฉพาะเดือนปัจจุบัน
-                var waterCount = waterBills.filter(function(b) { return b.period === currentPeriod; }).length;
-                var elecCount  = elecBills.filter(function(b) { return b.period === currentPeriod; }).length;
+                // กรองเฉพาะเดือนปัจจุบัน + นับ distinct house_number (ป้องกันนับซ้ำ)
+                var _waterHouses = {};
+                waterBills.filter(function(b) { return b.period === currentPeriod; })
+                    .forEach(function(b) { if (b.house_number) _waterHouses[b.house_number] = true; });
+                var waterCount = Object.keys(_waterHouses).length;
+
+                var _elecHouses = {};
+                elecBills.filter(function(b) { return b.period === currentPeriod; })
+                    .forEach(function(b) { if (b.house_number) _elecHouses[b.house_number] = true; });
+                var elecCount = Object.keys(_elecHouses).length;
+
                 var notifCount = notifs.filter(function(n) { return (n.period || '') === currentPeriod; }).length;
                 var pendSlipCount = pendSlips.length;
                 var withdrawCount = withdraws.filter(function(w) { return w.period === currentPeriod; }).length;
 
                 var totalHouses = (kpiData && kpiData.totalHouses) || 0;
-                // จำนวนห้องที่ควรแจ้ง = ห้องทั้งหมด (ใช้ waterCount เป็น baseline ถ้า housing ยังไม่ load)
                 var notifTarget = totalHouses || waterCount || elecCount || 1;
 
                 // กำหนดสถานะแต่ละขั้นตอน
@@ -702,18 +709,22 @@
                     {
                         name: 'บันทึกมิเตอร์น้ำ',
                         page: 'record-water',
-                        done: waterCount > 0,
-                        status: waterCount > 0
-                            ? '✅ บันทึกแล้ว ' + waterCount + ' ห้อง'
-                            : '⏳ ยังไม่ได้บันทึก'
+                        done: waterCount > 0 && waterCount >= totalHouses,
+                        status: waterCount <= 0
+                            ? '⏳ ยังไม่ได้บันทึก'
+                            : (waterCount >= totalHouses
+                                ? '✅ บันทึกแล้ว ' + waterCount + '/' + totalHouses + ' ห้อง'
+                                : '⚠️ บันทึกแล้ว ' + waterCount + '/' + totalHouses + ' ห้อง (ยังไม่ครบ)')
                     },
                     {
                         name: 'บันทึกมิเตอร์ไฟ',
                         page: 'record-electric',
-                        done: elecCount > 0,
-                        status: elecCount > 0
-                            ? '✅ บันทึกแล้ว ' + elecCount + ' ห้อง'
-                            : '⏳ ยังไม่ได้บันทึก'
+                        done: elecCount > 0 && elecCount >= totalHouses,
+                        status: elecCount <= 0
+                            ? '⏳ ยังไม่ได้บันทึก'
+                            : (elecCount >= totalHouses
+                                ? '✅ บันทึกแล้ว ' + elecCount + '/' + totalHouses + ' ห้อง'
+                                : '⚠️ บันทึกแล้ว ' + elecCount + '/' + totalHouses + ' ห้อง (ยังไม่ครบ)')
                     },
                     {
                         name: 'แจ้งยอดชำระ',
