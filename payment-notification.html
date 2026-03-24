@@ -76,16 +76,15 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ค่าส่วนกลาง editable */
-        .common-cell { position: relative; display: inline-flex; align-items: center; gap: 4px; }
-        .common-input { width: 60px; text-align: center; border: 1px solid #6ee7b7; border-radius: 5px; font-family: 'Kanit', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--primary-dark); padding: 2px 4px; background: #f0fdf4; }
-        .common-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
-        .exempt-btn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid #f87171; background: #fff1f2; color: #ef4444; font-size: 0.7rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-family: 'Kanit', sans-serif; transition: all 0.15s; flex-shrink: 0; }
-        .exempt-btn:hover { background: #fecaca; }
-        .exempt-btn.exempted { background: #10b981; color: #fff; border-color: #059669; }
-        .exempt-btn.exempted:hover { background: #059669; }
-        .exempted-row .common-input { color: #9ca3af; text-decoration: line-through; }
+        .common-cell { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+        .common-display { font-weight: 700; color: var(--primary-dark); font-size: 0.95rem; min-width: 50px; text-align: right; display: inline-block; }
+        .exempt-btn { padding: 2px 8px; border-radius: 6px; border: 1.5px solid #fca5a5; background: #fff1f2; color: #ef4444; font-size: 0.78rem; cursor: pointer; font-family: 'Kanit', sans-serif; transition: all 0.15s; white-space: nowrap; line-height: 1.6; }
+        .exempt-btn:hover { background: #fecaca; border-color: #f87171; }
+        .exempt-btn.exempted { background: #dcfce7; color: #16a34a; border-color: #86efac; }
+        .exempt-btn.exempted:hover { background: #bbf7d0; }
+        .exempted-row .common-display { color: #9ca3af; text-decoration: line-through; }
 
-        @media (max-width: 600px) { .form-row { flex-direction: column; gap: 0; } .save-buttons { flex-direction: column; } .btn { width: 100%; justify-content: center; } .notify-table { font-size: 0.8rem; } .notify-table th, .notify-table td { padding: 0.4rem 0.3rem; } .table-header-bar { font-size: 1rem; } .common-input { width: 50px; } }
+        @media (max-width: 600px) { .form-row { flex-direction: column; gap: 0; } .save-buttons { flex-direction: column; } .btn { width: 100%; justify-content: center; } .notify-table { font-size: 0.8rem; } .notify-table th, .notify-table td { padding: 0.4rem 0.3rem; } .table-header-bar { font-size: 1rem; } .exempt-btn { font-size: 0.72rem; padding: 2px 5px; } }
     </style>
 </head>
 <body>
@@ -391,8 +390,9 @@
                     '<td class="amount-value">'+(item.water?item.water.toLocaleString():'-')+'</td>'+
                     '<td class="amount-value">'+(item.electric?item.electric.toLocaleString():'-')+'</td>'+
                     '<td class="amount-value"><div class="common-cell">'+
-                        '<input type="number" class="common-input" value="'+commonVal+'" min="0" onchange="recalcRow(this)" data-original="'+commonVal+'">'+
-                        '<button class="exempt-btn" title="ยกเว้นค่าส่วนกลาง" onclick="toggleExempt(this)"></button>'+
+                        '<span class="common-display">'+(commonVal ? commonVal.toLocaleString() : '-')+'</span>'+
+                        '<input type="hidden" class="common-input" value="'+commonVal+'" data-original="'+commonVal+'">'+
+                        '<button class="exempt-btn" onclick="toggleExempt(this)" title="กดเพื่อยกเว้นค่าส่วนกลาง">ยกเว้น</button>'+
                     '</div></td>'+
                     '<td class="total-value">'+rt.toLocaleString()+'</td>';
                 tbody.appendChild(tr);
@@ -412,20 +412,22 @@
         function toggleExempt(btn) {
             var tr = btn.closest('tr');
             var input = tr.querySelector('.common-input');
+            var display = tr.querySelector('.common-display');
             if (btn.classList.contains('exempted')) {
                 btn.classList.remove('exempted');
-                btn.title = 'ยกเว้นค่าส่วนกลาง';
-                btn.textContent = '';
+                btn.textContent = 'ยกเว้น';
+                btn.title = 'กดเพื่อยกเว้นค่าส่วนกลาง';
                 tr.classList.remove('exempted-row');
                 input.value = input.getAttribute('data-original');
-                input.disabled = false;
+                var origVal = parseFloat(input.value) || 0;
+                display.textContent = origVal ? origVal.toLocaleString() : '-';
             } else {
                 btn.classList.add('exempted');
-                btn.title = 'ยกเลิกการยกเว้น';
-                btn.textContent = '';
+                btn.textContent = '✓ ยกเว้นอยู่';
+                btn.title = 'กดเพื่อยกเลิกการยกเว้น';
                 tr.classList.add('exempted-row');
                 input.value = 0;
-                input.disabled = true;
+                display.textContent = '-';
             }
             recalcRow(input);
         }
@@ -440,36 +442,12 @@
             var typeName=type==='house'?'บ้านพัก':'แฟลต';
             var fileName='แจ้งยอดชำระ_'+typeName+'_'+monthName+'_'+year+'.png';
 
-            // แปลง input/button เป็นข้อความธรรมดาก่อน capture
-            var inputs = element.querySelectorAll('.common-input');
-            var snapshots = [];
-            for (var k = 0; k < inputs.length; k++) {
-                var inp = inputs[k];
-                var val = parseFloat(inp.value) || 0;
-                var span = document.createElement('span');
-                span.className = 'common-snap';
-                span.textContent = val ? val.toLocaleString() : '-';
-                span.style.cssText = 'font-weight:700;color:' + (val ? 'var(--primary-dark)' : 'inherit');
-                var cell = inp.closest('.common-cell');
-                // เก็บ child nodes จริงแทน innerHTML เพื่อรักษา event listeners
-                var origNodes = [];
-                while (cell.firstChild) {
-                    origNodes.push(cell.removeChild(cell.firstChild));
-                }
-                snapshots.push({ cell: cell, origNodes: origNodes });
-                cell.appendChild(span);
-            }
+            // ซ่อนปุ่มยกเว้นก่อน capture แล้วคืนค่าหลัง
+            var exemptBtns = element.querySelectorAll('.exempt-btn');
+            for (var k = 0; k < exemptBtns.length; k++) { exemptBtns[k].style.visibility = 'hidden'; }
 
             html2canvas(element,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:1200}).then(function(canvas){
-                // คืนค่า DOM nodes กลับ (รักษา event listeners)
-                for (var k = 0; k < snapshots.length; k++) {
-                    var s = snapshots[k];
-                    s.cell.innerHTML = '';
-                    for (var n = 0; n < s.origNodes.length; n++) {
-                        s.cell.appendChild(s.origNodes[n]);
-                    }
-                }
-                overlay.classList.remove('show');
+                for (var k = 0; k < exemptBtns.length; k++) { exemptBtns[k].style.visibility = ''; }
                 var link=document.createElement('a');
                 link.download=fileName;
                 link.href=canvas.toDataURL('image/png');
@@ -479,14 +457,7 @@
                 msg.classList.add('show');
                 setTimeout(function(){msg.classList.remove('show');},3000);
             }).catch(function(err){
-                // คืนค่า DOM nodes กลับ กรณี error
-                for (var k = 0; k < snapshots.length; k++) {
-                    var s = snapshots[k];
-                    s.cell.innerHTML = '';
-                    for (var n = 0; n < s.origNodes.length; n++) {
-                        s.cell.appendChild(s.origNodes[n]);
-                    }
-                }
+                for (var k = 0; k < exemptBtns.length; k++) { exemptBtns[k].style.visibility = ''; }
                 overlay.classList.remove('show');
                 ppkAlert('เกิดข้อผิดพลาด: '+err.message);
             });
