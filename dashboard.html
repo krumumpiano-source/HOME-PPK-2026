@@ -421,6 +421,12 @@
             // Cancel button (when reviewing or rejected)
             var cancelBtn = document.getElementById('heroCancelBtn');
             if (cancelBtn) cancelBtn.style.display = (slipStatus === 'reviewing' || slipStatus === 'rejected') ? '' : 'none';
+
+            // CTA button
+            var ctaEl = document.getElementById('heroCta');
+            ctaEl.style.background = '';
+            ctaEl.style.color = '';
+            ctaEl.onclick = heroCtaClick;
             if (slipStatus === 'success') {
                 ctaEl.innerHTML = '✅ ชำระสำเร็จแล้ว';
                 ctaEl.className = 'hero-cta success';
@@ -438,9 +444,6 @@
                 ctaEl.innerHTML = '🏠 ยังไม่ได้รับมอบหมายบ้านพัก';
                 ctaEl.className = 'hero-cta reviewing';
                 ctaEl.onclick = null;
-            } else if (amount > 0) {
-                ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
-                ctaEl.className = 'hero-cta';
             } else {
                 ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
                 ctaEl.className = 'hero-cta';
@@ -473,10 +476,16 @@
                 var result = await callBackend('cancelSlip', { id: d.slipId });
                 if (result && result.success) {
                     if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
-                    // ล้าง cache แล้ว reload
-                    var ck = 'apicache_getDashboardData_{}';
-                    try { localStorage.removeItem(ck); } catch(e) {}
-                    setTimeout(function() { loadDashboard(); }, 500);
+                    // ล้าง cache ทุก key ที่เกี่ยวกับ getDashboardData แล้ว reload
+                    try {
+                        var keys = [];
+                        for (var i = 0; i < localStorage.length; i++) {
+                            var k = localStorage.key(i);
+                            if (k && k.indexOf('apicache_getDashboardData') === 0) keys.push(k);
+                        }
+                        keys.forEach(function(k) { localStorage.removeItem(k); });
+                    } catch(e) {}
+                    setTimeout(function() { loadDashboard(); }, 400);
                 } else {
                     if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
                 }
