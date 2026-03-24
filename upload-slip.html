@@ -125,9 +125,31 @@
             margin-left: 0.5rem; vertical-align: middle;
         }
         .proxy-badge.visible { display: inline-block; }
+        /* OCR Overlay */
+        #ocr-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
+        #ocr-overlay.active { display:flex; }
+        .ocr-overlay-card { background:#fff; border-radius:16px; padding:2rem 2.5rem; text-align:center; max-width:320px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+        /* Slip thumbs */
+        .slip-thumb-wrap { position:relative; display:inline-block; }
+        .slip-thumb-wrap img { width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #4f8cff; }
+        .slip-thumb-del { position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:14px;cursor:pointer;padding:0;font-weight:700;display:flex;align-items:center;justify-content:center; }
+        .add-slip-btn { display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;border:2px dashed #4f8cff;border-radius:10px;background:#f0f4ff;color:#2563eb;font:inherit;font-size:0.9rem;cursor:pointer;transition:all 0.15s; }
+        .add-slip-btn:hover { background:#dbeafe;border-color:#2563eb; }
+        /* Edit mode banner */
+        #edit-mode-banner { display:none;background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:1rem;margin-bottom:1rem; }
+        #edit-mode-banner.active { display:block; }
     </style>
 </head>
 <body>
+    <!-- OCR Overlay -->
+    <div id="ocr-overlay">
+        <div class="ocr-overlay-card">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem;">📸</div>
+            <div style="font-size:1.1rem;font-weight:700;color:#1e40af;margin-bottom:0.5rem;">กำลังอ่านสลิป...</div>
+            <div id="ocr-overlay-status" style="font-size:0.9rem;color:#64748b;">⏳ วิเคราะห์รูปภาพ</div>
+            <div style="margin-top:1rem;font-size:0.82rem;color:#92400e;background:#fef3c7;border-radius:8px;padding:0.5rem 0.75rem;">⚠️ กรุณาอย่าออกจากหน้านี้ระหว่างอ่านสลิป</div>
+        </div>
+    </div>
     <div id="ppkNav"></div>
     <div class="ppk-main">
     <div class="upload-slip-container">
@@ -148,6 +170,12 @@
                 </div>
             </div>
 
+
+            <!-- Edit mode banner -->
+            <div id="edit-mode-banner">
+                <div style="font-weight:700;color:#b45309;margin-bottom:0.4rem;">✏️ โหมดแก้ไขสลิป</div>
+                <div style="font-size:0.9rem;color:#92400e;">สลิปนี้ยังรอการตรวจสอบ — คุณสามารถแก้ไขรูปสลิปและจำนวนเงินได้</div>
+            </div>
             <!-- Proxy Upload Panel (สำหรับผู้พักอาศัยส่งสลิปแทนบ้านอื่น) -->
             <div id="proxy-toggle-container" style="display:none;">
                 <div class="proxy-toggle-box" onclick="document.getElementById('proxy-checkbox').click()">
@@ -187,9 +215,13 @@
                 <div id="qr-status" style="display:none;margin-top:0.4rem;padding:0.5rem 0.75rem;border-radius:8px;font-size:0.9rem;"></div>
             </div>
             <div class="form-group">
-                <label for="slip">แนบไฟล์สลิป (รองรับไม่เกิน 3 รูป):</label>
-                <input type="file" id="slip" name="slip[]" accept="image/*" multiple required>
-                <div id="preview-container" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;"></div>
+                <label>แนบไฟล์สลิป (รวมทุกสลิป ไม่เกิน 3 รูป):</label>
+                <input type="file" id="slip" name="slip[]" accept="image/*" multiple style="display:none">
+                <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+                    <button type="button" class="add-slip-btn" id="add-slip-btn" onclick="document.getElementById('slip').click()">📎 เพิ่มสลิป</button>
+                    <span id="slip-count-label" style="font-size:0.85rem;color:#64748b;">ยังไม่ได้เลือกไฟล์</span>
+                </div>
+                <div id="preview-container" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem;"></div>
             </div>
             <button type="submit" class="submit-btn">ยืนยันการส่งสลิป</button>
             <button type="button" class="back-btn" onclick="window.navigate('?page=dashboard')">ย้อนกลับ</button>
@@ -449,59 +481,129 @@
             el.innerHTML = text;
         }
 
-        // ============ Preview + QR Scan ============
-        document.getElementById('slip').addEventListener('change', async function(e){
-            const previewContainer = document.getElementById('preview-container');
-            previewContainer.innerHTML = '';
+        // ============ Custom file management =============
+        var selectedFiles = []; // ไฟล์สลิปที่เลือกไว้ (max 3)
+        var _editSlipId = null; // ID สลิปที่แก้ไข (null = สร้างใหม่)
+
+        function renderSlipPreview() {
+            var container = document.getElementById('preview-container');
+            var countLbl = document.getElementById('slip-count-label');
+            var addBtn = document.getElementById('add-slip-btn');
+            container.innerHTML = '';
+            if (selectedFiles.length === 0) {
+                countLbl.textContent = 'ยังไม่ได้เลือกไฟล์';
+                addBtn.style.display = '';
+                return;
+            }
+            countLbl.textContent = selectedFiles.length + ' ไฟล์' + (selectedFiles.length >= 3 ? ' (เต็มแล้ว)' : '');
+            addBtn.style.display = selectedFiles.length >= 3 ? 'none' : '';
+            selectedFiles.forEach(function(file, idx) {
+                var wrap = document.createElement('div');
+                wrap.className = 'slip-thumb-wrap';
+                var img = document.createElement('img');
+                img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #4f8cff;';
+                var delBtn = document.createElement('button');
+                delBtn.type = 'button'; delBtn.className = 'slip-thumb-del'; delBtn.textContent = '×';
+                delBtn.title = 'ลบสลิปนี้';
+                (function(i){ delBtn.onclick = function() { removeSlipFile(i); }; })(idx);
+                var reader = new FileReader();
+                reader.onload = function(e) { img.src = e.target.result; };
+                reader.readAsDataURL(file);
+                wrap.appendChild(img); wrap.appendChild(delBtn);
+                container.appendChild(wrap);
+            });
+        }
+
+        function removeSlipFile(idx) {
+            selectedFiles.splice(idx, 1);
+            renderSlipPreview();
             _qrData = { amount: null, ref: null, raw: null };
             document.getElementById('qr-status').style.display = 'none';
+            if (selectedFiles.length > 0) { scanAllSlipFiles(); }
+        }
 
-            const files = Array.from(e.target.files).slice(0, 3);
-            files.forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = function(event){
-                    const img = document.createElement('img');
-                    img.src = event.target.result;
-                    img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #4f8cff;';
-                    previewContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
+        document.getElementById('slip').addEventListener('change', function(e) {
+            var newF = Array.from(e.target.files);
+            var remaining = 3 - selectedFiles.length;
+            selectedFiles = selectedFiles.concat(newF.slice(0, remaining));
+            e.target.value = '';
+            renderSlipPreview();
+            if (selectedFiles.length > 0) { scanAllSlipFiles(); }
+        });
 
-            // Scan QR → fallback OCR ถ้าไม่มียอดจาก QR
-            if (files.length > 0) {
-                showQRStatus('info', '⏳ กำลังตรวจสลิป...');
-                var _qrFound = false;
-                if (typeof jsQR !== 'undefined') {
-                    for (var fi = 0; fi < files.length; fi++) {
-                        var qrRaw = await scanQRFromFile(files[fi]);
-                        if (qrRaw) {
-                            var parsed = parseEMVCoQR(qrRaw);
-                            _qrData.raw = qrRaw; _qrData.ref = parsed.ref; _qrFound = true;
-                            if (parsed.amount && parsed.amount > 0) {
-                                _qrData.amount = parsed.amount;
-                                document.getElementById('paid-amount').value = parsed.amount;
-                                var _qrMsg = '✅ อ่านจาก QR: ฿' + parsed.amount.toLocaleString('th-TH') + (parsed.ref ? ' (Ref: ' + parsed.ref + ')' : '');
-                                if (window.billingInfo && window.billingInfo.notifiedAmount > 0 && Math.abs(parsed.amount - window.billingInfo.notifiedAmount) > 1) {
-                                    _qrMsg += '<br>⚠️ ยอดจาก QR (' + parsed.amount.toLocaleString('th-TH') + ') ต่างจากยอดที่แจ้ง (' + window.billingInfo.notifiedAmount.toLocaleString('th-TH') + ' บาท) — กรุณาตรวจสอบ';
-                                    showQRStatus('warn', _qrMsg);
-                                } else { showQRStatus('success', _qrMsg); }
-                            }
-                            break;
-                        }
+        // ============ Scan QR + OCR ทุกสลิป รวมยอด ============
+        async function scanAllSlipFiles() {
+            _qrData = { amount: null, ref: null, raw: null };
+            document.getElementById('qr-status').style.display = 'none';
+            if (selectedFiles.length === 0) return;
+
+            showQRStatus('info', '⏳ กำลังตรวจสลิป...');
+
+            // Step 1: QR scan ทุกไฟล์ รวมยอด
+            var _qrFound = false, _qrTotal = 0, _qrAmounts = [];
+            if (typeof jsQR !== 'undefined') {
+                for (var fi = 0; fi < selectedFiles.length; fi++) {
+                    var qrRaw = await scanQRFromFile(selectedFiles[fi]);
+                    if (qrRaw) {
+                        var parsed = parseEMVCoQR(qrRaw);
+                        _qrFound = true;
+                        if (!_qrData.raw) { _qrData.raw = qrRaw; _qrData.ref = parsed.ref; }
+                        if (parsed.amount && parsed.amount > 0) { _qrAmounts.push(parsed.amount); _qrTotal += parsed.amount; }
                     }
                 }
-                // OCR fallback ถ้ายังไม่ได้ยอดจาก QR
-                if (!_qrData.amount) {
-                    showQRStatus('info', (_qrFound ? 'ℹ️ พบ QR แต่ไม่มียอด' : 'ℹ️ ไม่พบ QR') + ' — กำลัง OCR อ่านยอด...');
-                    var ocrAmt = await _ocrSlipAmount(files[0]);
-                    if (ocrAmt && ocrAmt > 0) {
-                        document.getElementById('paid-amount').value = ocrAmt;
-                        showQRStatus('warn', '🔍 OCR อ่านยอด: ฿' + ocrAmt.toLocaleString('th-TH') + ' — กรุณาตรวจสอบก่อนส่ง');
-                    } else { showQRStatus('info', 'ℹ️ ไม่สามารถอ่านยอดอัตโนมัติ — กรุณากรอกเอง'); }
-                }
             }
-        });
+            if (_qrTotal > 0) {
+                _qrData.amount = _qrTotal;
+                document.getElementById('paid-amount').value = _qrTotal;
+                var _qrMsg = _qrAmounts.length > 1
+                    ? ('✅ QR ' + _qrAmounts.length + ' ใบ รวม: ฿' + _qrTotal.toLocaleString('th-TH'))
+                    : ('✅ อ่านจาก QR: ฿' + _qrTotal.toLocaleString('th-TH') + (_qrData.ref ? ' (Ref: ' + _qrData.ref + ')' : ''));
+                if (window.billingInfo && window.billingInfo.notifiedAmount > 0) {
+                    var diff = _qrTotal - window.billingInfo.notifiedAmount;
+                    if (Math.abs(diff) > 1) {
+                        var diffTxt = diff > 0
+                            ? ('มากกว่ายอดที่แจ้ง ฿' + Math.abs(diff).toLocaleString('th-TH') + ' บาท')
+                            : ('น้อยกว่ายอดที่แจ้ง ฿' + Math.abs(diff).toLocaleString('th-TH') + ' บาท');
+                        _qrMsg += '<br>⚠️ ยอดรวม' + diffTxt + ' (ยอดที่แจ้ง ฿' + window.billingInfo.notifiedAmount.toLocaleString('th-TH') + ') — กรุณาตรวจสอบ';
+                        showQRStatus('warn', _qrMsg);
+                    } else { showQRStatus('success', _qrMsg); }
+                } else { showQRStatus('success', _qrMsg); }
+                return;
+            }
+
+            // Step 2: OCR fallback — แสดง overlay ขณะประมวลผล
+            var ocrOverlay = document.getElementById('ocr-overlay');
+            document.getElementById('ocr-overlay-status').textContent = selectedFiles.length > 1 ? '⏳ วิเคราะห์ ' + selectedFiles.length + ' รูป' : '⏳ วิเคราะห์รูปภาพ';
+            ocrOverlay.classList.add('active');
+            showQRStatus('info', (_qrFound ? 'ℹ️ พบ QR แต่ไม่มียอด' : 'ℹ️ ไม่พบ QR') + ' — กำลัง OCR อ่านยอด...');
+
+            var ocrTotal = 0, ocrCount = 0;
+            for (var oi = 0; oi < selectedFiles.length; oi++) {
+                if (selectedFiles.length > 1) {
+                    document.getElementById('ocr-overlay-status').textContent = '⏳ กำลังอ่านรูปที่ ' + (oi + 1) + '/' + selectedFiles.length;
+                }
+                var ocrAmt = await _ocrSlipAmount(selectedFiles[oi]);
+                if (ocrAmt && ocrAmt > 0) { ocrTotal += ocrAmt; ocrCount++; }
+            }
+            ocrOverlay.classList.remove('active');
+
+            if (ocrTotal > 0) {
+                document.getElementById('paid-amount').value = ocrTotal;
+                var ocrMsg = ocrCount > 1
+                    ? ('🔍 OCR ' + ocrCount + ' ใบ รวม: ฿' + ocrTotal.toLocaleString('th-TH') + ' — กรุณาตรวจสอบก่อนส่ง')
+                    : ('🔍 OCR อ่านยอด: ฿' + ocrTotal.toLocaleString('th-TH') + ' — กรุณาตรวจสอบก่อนส่ง');
+                if (window.billingInfo && window.billingInfo.notifiedAmount > 0) {
+                    var ocrDiff = ocrTotal - window.billingInfo.notifiedAmount;
+                    if (Math.abs(ocrDiff) > 1) {
+                        var ocrDiffTxt = ocrDiff > 0
+                            ? ('มากกว่ายอดที่แจ้ง ฿' + Math.abs(ocrDiff).toLocaleString('th-TH') + ' บาท')
+                            : ('น้อยกว่ายอดที่แจ้ง ฿' + Math.abs(ocrDiff).toLocaleString('th-TH') + ' บาท');
+                        ocrMsg += '<br>⚠️ ยอดรวม' + ocrDiffTxt + ' (ยอดที่แจ้ง ฿' + window.billingInfo.notifiedAmount.toLocaleString('th-TH') + ')';
+                    }
+                }
+                showQRStatus('warn', ocrMsg);
+            } else { showQRStatus('info', 'ℹ️ ไม่สามารถอ่านยอดอัตโนมัติ — กรุณากรอกเอง'); }
+        }
 
         // ============ Submit ============
         document.getElementById('slipForm').addEventListener('submit', async function(e){
@@ -514,8 +616,7 @@
             }
 
             const paidAmount = parseFloat(document.getElementById('paid-amount').value) || 0;
-            const fileInput = document.getElementById('slip');
-            const files = Array.from(fileInput.files).slice(0, 3);
+            const files = selectedFiles.slice(0, 3);
 
             if(files.length === 0){ ppkAlert('กรุณาแนบรูปสลิปอย่างน้อย 1 รูป'); return; }
             if(paidAmount <= 0){ ppkAlert('กรุณากรอกจำนวนเงินที่ชำระ'); return; }
@@ -601,7 +702,9 @@
                         proxyData.residentId = proxyResOpt.getAttribute('data-resident-id') || null;
                     }
 
-                    const submitResult = await callBackend('submitSlip', Object.assign({
+                    const submitResult = _editSlipId
+                        ? await callBackend('updateSlip', { id: _editSlipId, amount: paidAmount, slipUrl: slipUrls.length > 0 ? JSON.stringify(slipUrls) : null, qrAmount: _qrData.amount || null, qrRef: _qrData.ref || null, qrRaw: _qrData.raw || null })
+                        : await callBackend('submitSlip', Object.assign({
                         houseNumber: window.billingInfo.unitNumber,
                         residentId:  proxyData.residentId || user.residentId || null,
                         period:      window.billingInfo.period,
@@ -613,8 +716,9 @@
                         submittedByName:  proxyData.submittedByName || null,
                         submittedByHouse: proxyData.submittedByHouse || null
                     }, {}));
+                    const _wasEdit = !!_editSlipId;
                     if (submitResult && submitResult.success) {
-                        ppkAlert('✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
+                        ppkAlert(_wasEdit ? '✓ แก้ไขสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่' : '✓ ส่งสลิปเรียบร้อยแล้ว!\n\nกรุณารอการตรวจสอบจากเจ้าหน้าที่');
                         window.navigate('dashboard.html');
                         return;
                     } else if (submitResult && !submitResult.success) {
@@ -784,6 +888,24 @@
             loadBillingInfo();
         }
 
+        // ============ ตรวจสอบว่ามีสลิป pending → เปิด edit mode ==========
+        async function checkEditMode() {
+            if (!unitNumber || !periodKey || (window.billingInfo && window.billingInfo.noBillData)) return;
+            try {
+                var period = toApiPeriod(periodKey);
+                var result = await callBackend('getSlipSubmissions', { houseNumber: unitNumber, period: period });
+                if (!result || !result.success || !result.data || result.data.length === 0) return;
+                var existing = result.data.find(function(s){ return s.status === 'pending'; });
+                if (!existing) return;
+                _editSlipId = existing.id;
+                document.getElementById('edit-mode-banner').classList.add('active');
+                document.querySelector('.submit-btn').textContent = '✏️ แก้ไขสลิป';
+                if (existing.amount && parseFloat(existing.amount) > 0) {
+                    document.getElementById('paid-amount').value = existing.amount;
+                }
+            } catch(e) { /* ignore */ }
+        }
+
         // โหลดข้อมูลเมื่อเปิดหน้า
         window._ppkNavPage = 'upload-slip';
         window.onload = async function(){
@@ -797,6 +919,7 @@
             // Proxy mode (ผู้พักอาศัยส่งสลิปแทนบ้านอื่น)
             await initProxyPanel(user);
             await loadBillingInfo();
+            await checkEditMode();
         };
     </script>
     </div><!-- /ppk-main -->
