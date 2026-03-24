@@ -1,0 +1,30 @@
+﻿{
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "globals": {
+    "callBackend": "readonly",
+    "cachedCall": "readonly",
+    "ppkAlert": "readonly",
+    "ppkConfirm": "readonly",
+    "ppkToast": "readonly",
+    "checkSession": "readonly",
+    "navigate": "readonly",
+    "renderPPKNav": "readonly",
+    "openModal": "readonly",
+    "closeModal": "readonly",
+    "supabase": "readonly"
+  },
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": "warn",
+    "no-unreachable": "error",
+    "eqeqeq": ["warn", "always", { "null": "ignore" }],
+    "no-redeclare": "error",
+    "no-dupe-keys": "error"
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020
+  }
+}

@@ -906,7 +906,8 @@
                 callBackend('getElectricBills', { year: year }),
                 callBackend('getSettings'),
                 callBackend('getNotificationHistory', { houseNumber: hn, limit: 200 }),
-                callBackend('getSlipSubmissions',     { houseNumber: hn })
+                callBackend('getSlipSubmissions',     { houseNumber: hn }),
+                callBackend('getExemptions',          { houseNumber: hn })
             ]);
 
             var hnNorm = hn.replace(/\s+/g, '').toLowerCase();
@@ -951,7 +952,10 @@
 
             /* -- Common fee from settings (ใช้เฉพาะเดือนที่มี notification) -- */
             var commonFeeFromSettings = 0;
-            if (res[2] && res[2].success && res[2].data) {
+            var isExemptCommon = (res[5] && res[5].success && Object.keys(res[5].data || {}).length > 0);
+            if (isExemptCommon) {
+                commonFeeFromSettings = 0;
+            } else if (res[2] && res[2].success && res[2].data) {
                 var sett = res[2].data;
                 var isFlat = hn.toLowerCase().indexOf('\u0e41\u0e1f\u0e25\u0e15') >= 0 || hn.toLowerCase().indexOf('flat') >= 0;
                 commonFeeFromSettings = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
@@ -998,7 +1002,7 @@
                 /* ค่าส่วนกลาง: ใส่เฉพาะเมื่อมี notification (admin กดแจ้งยอดแล้ว) */
                 var commonVal   = 0;
                 if (notif.sent_at) {
-                    commonVal = parseFloat(notif.common_fee) || commonFeeFromSettings;
+                    commonVal = (notif.common_fee != null) ? parseFloat(notif.common_fee) : commonFeeFromSettings;
                 }
                 var totalVal = waterVal + electricVal + commonVal;
                 if (totalVal > 0 || notif.sent_at) {
@@ -1109,7 +1113,8 @@
                     callBackend('getWaterBills',    { year: yr }),
                     callBackend('getElectricBills', { year: yr }),
                     callBackend('getSettings'),
-                    callBackend('getSlipSubmissions', { houseNumber: hn })
+                    callBackend('getSlipSubmissions', { houseNumber: hn }),
+                    callBackend('getExemptions',      { houseNumber: hn })
                 ]);
 
                 var wMap = {}, eMap = {};
@@ -1133,8 +1138,9 @@
                         }
                     });
                 }
+                var isExemptAnnual = (res[4] && res[4].success && Object.keys(res[4].data || {}).length > 0);
                 var commonFee = 0;
-                if (res[2] && res[2].success && res[2].data) {
+                if (!isExemptAnnual && res[2] && res[2].success && res[2].data) {
                     var sett = res[2].data;
                     var isFlat = hn.toLowerCase().indexOf('\u0e41\u0e1f\u0e25\u0e15') >= 0 || hn.toLowerCase().indexOf('flat') >= 0;
                     commonFee = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;

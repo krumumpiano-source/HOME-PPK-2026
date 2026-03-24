@@ -572,6 +572,8 @@
         // ดึงข้อมูลสถานะการอนุมัติ
         slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
         // ค่าส่วนกลาง (ไม่ hardcode → ใช้จาก settings จริง, default 0 ถ้าไม่มี)
+        // หมายเหตุ: fallback นี้ไม่สามารถตรวจ exemptions จาก DB ได้เพราะ backend ใช้ไม่ได้
+        // ในโหมดปกติ ข้อมูลจะมาจาก getBillSummaryAll ซึ่งตรวจ exemptions แล้ว
         commonFeeRate = Number(localStorage.getItem('commonFee') || '0');
       } catch(lsErr) { console.warn('localStorage fallback error:', lsErr); }
 

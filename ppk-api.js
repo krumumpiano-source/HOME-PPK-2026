@@ -945,12 +945,13 @@ async function _routeAction(action, data) {
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var rows = await sbGet('payment_history', q);
 
-            // Enrich: ดึง water_bills + electric_bills + settings เพื่อแยกยอดค่าน้ำ/ค่าไฟ/ค่าส่วนกลาง
+            // Enrich: ดึง water_bills + electric_bills + settings + exemptions เพื่อแยกยอดค่าน้ำ/ค่าไฟ/ค่าส่วนกลาง
             if (rows && rows.length > 0 && data.houseNumber) {
-                var [_phW, _phE, _phS] = await Promise.all([
+                var [_phW, _phE, _phS, _phExempt] = await Promise.all([
                     sbGet('water_bills',    { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
                     sbGet('electric_bills', { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
-                    sbGet('settings',       { select: 'key,value' }).catch(function() { return []; })
+                    sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
+                    sbGet('exemptions',     { house_number: 'eq.' + data.houseNumber, type: 'eq.common_fee', select: 'id' }).catch(function() { return []; })
                 ]);
                 var _phWMap = {};
                 (_phW || []).forEach(function(w) { _phWMap[w.period] = (_phWMap[w.period] || 0) + (parseFloat(w.amount) || 0); });
@@ -961,11 +962,13 @@ async function _routeAction(action, data) {
                 var _cfH = parseFloat(_phSMap['common_fee_house']) || parseFloat(_phSMap['commonFee']) || 0;
                 var _cfF = parseFloat(_phSMap['common_fee_flat'])  || parseFloat(_phSMap['commonFee']) || 0;
                 var _hn = (data.houseNumber || '').toLowerCase();
-                var _cf = (_hn.indexOf('แฟลต') >= 0 || _hn.indexOf('flat') >= 0) ? _cfF : _cfH;
+                var _isExempt = _phExempt && _phExempt.length > 0;
+                var _cf = _isExempt ? 0 : ((_hn.indexOf('แฟลต') >= 0 || _hn.indexOf('flat') >= 0) ? _cfF : _cfH);
                 rows.forEach(function(r) {
                     r.water_amount    = _phWMap[r.period] || 0;
                     r.electric_amount = _phEMap[r.period] || 0;
                     r.common_fee      = _cf;
+                    r.exempt_common   = _isExempt;
                 });
             }
             return { success: true, data: rows };
@@ -2529,7 +2532,9 @@ async function _routeAction(action, data) {
 
         /* ── getExemptions — ดึงการยกเว้นค่าส่วนกลางจาก DB ─── */
         case 'getExemptions': {
-            var exRows = await sbGet('exemptions', { type: 'eq.common_fee' });
+            var exQ = { type: 'eq.common_fee' };
+            if (data.houseNumber) exQ.house_number = 'eq.' + data.houseNumber;
+            var exRows = await sbGet('exemptions', exQ);
             var exMap = {};
             (exRows || []).forEach(function(e) { exMap[e.house_id] = { exempt: true, note: e.reason || '' }; });
             return { success: true, data: exMap };
