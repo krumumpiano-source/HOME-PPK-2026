@@ -192,6 +192,13 @@
             .meter-table th, .meter-table td { padding: 0.3rem 0.25rem; }
         }
         
+        /* ซ่อน/แสดงคอลัมน์เปลี่ยนมิเตอร์ */
+        .meter-table.hide-override .th-override,
+        .meter-table.hide-override .td-override { display: none; }
+        #btnToggleOverride { padding: 0.3rem 0.9rem; border: 1.5px dashed #f59e0b; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 0.82rem; cursor: pointer; font-family: 'Kanit', sans-serif; transition: all 0.2s; opacity: 0.65; }
+        #btnToggleOverride.active { border-style: solid; border-color: #d97706; background: #fde68a; opacity: 1; font-weight: 700; }
+        #btnToggleOverride:hover { opacity: 1; }
+
         .usage-value {
             font-weight: 700;
             color: #4dd0e1;
@@ -402,12 +409,15 @@
         
         <!-- ตารางบันทึกมิเตอร์ -->
         <div class="section" style="max-width:none;width:100%">
-            <div class="section-title">📝 บันทึกเลขมิเตอร์</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.25rem">
+                <div class="section-title" style="margin-bottom:0">📝 บันทึกเลขมิเตอร์</div>
+                <button id="btnToggleOverride" onclick="toggleOverrideCol()" title="กดเพื่อแสดง/ซ่อนคอลัมน์หน่วยรวมกรณีเปลี่ยนมิเตอร์">🔧 เปลี่ยนมิเตอร์</button>
+            </div>
             
             <div class="table-scroll-wrapper">
-                <table class="meter-table">
+                <table class="meter-table hide-override" id="meterTable">
                     <thead>
-                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th style="white-space:nowrap">📷</th><th style="white-space:nowrap">หน่วยรวม <span style="font-weight:400;font-size:11px;color:#f59e0b;">(เปลี่ยนมิเตอร์)</span></th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
+                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th style="white-space:nowrap">📷</th><th class="th-override" style="white-space:nowrap">หน่วยรวม <span style="font-weight:400;font-size:11px;color:#f59e0b;">(เปลี่ยนมิเตอร์)</span></th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
                     </thead>
                     <tbody id="meterTableBody">
                         <tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
@@ -679,7 +689,7 @@
                         '<input type="hidden" class="ocr-raw-text" value="">' +
                         '<input type="hidden" class="ocr-confidence" value="">' +
                     '</td>' +
-                    '<td style="text-align:center"><input type="number" class="units-override" value="' + unitsOverride + '" min="0" placeholder="-" title="กรอกเฉพาะกรณีเปลี่ยนมิเตอร์กลางเดือน (หน่วยมิเตอรเดิม + หน่วยมิเตอรใหม่)" onchange="calculateRow(this)" style="width:70px;border-color:#f59e0b;background:#fffbeb;"></td>' +
+                    '<td class="td-override" style="text-align:center"><input type="number" class="units-override" value="' + unitsOverride + '" min="0" placeholder="-" title="กรอกเฉพาะกรณีเปลี่ยนมิเตอร์กลางเดือน (หน่วยมิเตอรเดิม + หน่วยมิเตอรใหม่)" onchange="calculateRow(this)" style="width:70px;border-color:#f59e0b;background:#fffbeb;"></td>' +
                     '<td class="usage-value" style="text-align:right">0</td>' +
                     '<td class="amount-value" style="text-align:right">0</td>';
                 tbody.appendChild(row);
@@ -688,6 +698,14 @@
             calculateAll();
         }
         
+        // toggle คอลัมน์เปลี่ยนมิเตอร์
+        function toggleOverrideCol() {
+            var tbl = document.getElementById('meterTable');
+            var btn = document.getElementById('btnToggleOverride');
+            tbl.classList.toggle('hide-override');
+            btn.classList.toggle('active', !tbl.classList.contains('hide-override'));
+        }
+
         // เมื่อเปลี่ยนรอบบิล โหลดข้อมูลใหม่
         document.getElementById('bill_month').addEventListener('change', function() { var s = localStorage.getItem(_waterReadingKey()); document.getElementById('reading_date').value = s || now.toISOString().split('T')[0]; renderResidentsTable(); });
         document.getElementById('bill_year').addEventListener('change', function() { var s = localStorage.getItem(_waterReadingKey()); document.getElementById('reading_date').value = s || now.toISOString().split('T')[0]; renderResidentsTable(); });
