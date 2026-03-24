@@ -179,7 +179,7 @@
             </div>
             <div class="form-group">
                 <label for="amount">ยอดที่ต้องชำระ (บาท):</label>
-                <div id="display-amount" style="font-size: 1.2rem; font-weight: bold; color: #e11d48; margin-bottom: 1rem;">0 บาท</div>
+                <div id="display-amount" style="font-size: 1.2rem; font-weight: bold; color: #e11d48; margin-bottom: 1rem;">⏳ กำลังโหลด...</div>
             </div>
             <div class="form-group">
                 <label for="paid-amount">กรอกจำนวนเงินที่ชำระ (บาท):</label>
@@ -337,6 +337,35 @@
             };
         }
 
+
+        // ============ Tesseract OCR — อ่านยอดเงินจากรูปสลิป ============
+        var _tessReady = false, _tessLoading = false;
+        function _loadTesseract() {
+            return new Promise(function(resolve, reject) {
+                if (_tessReady) { resolve(); return; }
+                if (_tessLoading) { var _iv = setInterval(function() { if (_tessReady) { clearInterval(_iv); resolve(); } }, 200); return; }
+                _tessLoading = true;
+                var s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                s.onload = function() { _tessReady = true; _tessLoading = false; resolve(); };
+                s.onerror = function() { _tessLoading = false; reject(new Error('โหลด Tesseract ไม่สำเร็จ')); };
+                document.head.appendChild(s);
+            });
+        }
+        async function _ocrSlipAmount(file) {
+            try {
+                await _loadTesseract();
+                var ocrResult = await Tesseract.recognize(file, 'tha+eng', { tessedit_char_whitelist: '0123456789,.฿ ' });
+                var text = (ocrResult.data.text || '').replace(/\s+/g, ' ').trim();
+                var patterns = [/฿\s*([\d,]+(?:\.\d{1,2})?)/, /([\d,]+(?:\.\d{1,2})?)\s*บาท/, /([\d,]+\.\d{2})/];
+                for (var _pi = 0; _pi < patterns.length; _pi++) {
+                    var _pm = text.match(patterns[_pi]);
+                    if (_pm) { var _pv = parseFloat((_pm[1] || _pm[0]).replace(/,/g, '')); if (!isNaN(_pv) && _pv >= 10 && _pv <= 999999) return _pv; }
+                }
+            } catch(e) { /* ignore */ }
+            return null;
+        }
+
         // ============ PromptPay EMVCo QR Parser ============
         // Parse TLV (Tag-Length-Value) format used by Thai PromptPay QR codes
         function parseEMVCoQR(raw) {
@@ -439,27 +468,37 @@
                 reader.readAsDataURL(file);
             });
 
-            // Scan QR from all images
-            if (typeof jsQR !== 'undefined' && files.length > 0) {
-                showQRStatus('info', '\u23F3 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E48\u0E32\u0E19 QR Code \u0E08\u0E32\u0E01\u0E2A\u0E25\u0E34\u0E1B...');
-                for (var fi = 0; fi < files.length; fi++) {
-                    var qrRaw = await scanQRFromFile(files[fi]);
-                    if (qrRaw) {
-                        var parsed = parseEMVCoQR(qrRaw);
-                        _qrData.raw = qrRaw;
-                        _qrData.ref = parsed.ref;
-                        if (parsed.amount && parsed.amount > 0) {
-                            _qrData.amount = parsed.amount;
-                            document.getElementById('paid-amount').value = parsed.amount;
-                            showQRStatus('success', '\u2705 \u0E2D\u0E48\u0E32\u0E19\u0E08\u0E32\u0E01 QR: \u0E3F' + parsed.amount.toLocaleString('th-TH') + (parsed.ref ? ' (Ref: ' + parsed.ref + ')' : ''));
-                        } else {
-                            showQRStatus('warn', '\u2139\uFE0F \u0E1E\u0E1A QR Code \u0E41\u0E15\u0E48\u0E44\u0E21\u0E48\u0E21\u0E35\u0E22\u0E2D\u0E14\u0E40\u0E07\u0E34\u0E19 \u2014 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E40\u0E2D\u0E07');
+            // Scan QR → fallback OCR ถ้าไม่มียอดจาก QR
+            if (files.length > 0) {
+                showQRStatus('info', '⏳ กำลังตรวจสลิป...');
+                var _qrFound = false;
+                if (typeof jsQR !== 'undefined') {
+                    for (var fi = 0; fi < files.length; fi++) {
+                        var qrRaw = await scanQRFromFile(files[fi]);
+                        if (qrRaw) {
+                            var parsed = parseEMVCoQR(qrRaw);
+                            _qrData.raw = qrRaw; _qrData.ref = parsed.ref; _qrFound = true;
+                            if (parsed.amount && parsed.amount > 0) {
+                                _qrData.amount = parsed.amount;
+                                document.getElementById('paid-amount').value = parsed.amount;
+                                var _qrMsg = '✅ อ่านจาก QR: ฿' + parsed.amount.toLocaleString('th-TH') + (parsed.ref ? ' (Ref: ' + parsed.ref + ')' : '');
+                                if (window.billingInfo && window.billingInfo.notifiedAmount > 0 && Math.abs(parsed.amount - window.billingInfo.notifiedAmount) > 1) {
+                                    _qrMsg += '<br>⚠️ ยอดจาก QR (' + parsed.amount.toLocaleString('th-TH') + ') ต่างจากยอดที่แจ้ง (' + window.billingInfo.notifiedAmount.toLocaleString('th-TH') + ' บาท) — กรุณาตรวจสอบ';
+                                    showQRStatus('warn', _qrMsg);
+                                } else { showQRStatus('success', _qrMsg); }
+                            }
+                            break;
                         }
-                        break; // use first QR found
                     }
                 }
-                if (!_qrData.raw) {
-                    showQRStatus('info', '\u2139\uFE0F \u0E44\u0E21\u0E48\u0E1E\u0E1A QR Code \u0E43\u0E19\u0E2A\u0E25\u0E34\u0E1B \u2014 \u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E40\u0E2D\u0E07');
+                // OCR fallback ถ้ายังไม่ได้ยอดจาก QR
+                if (!_qrData.amount) {
+                    showQRStatus('info', (_qrFound ? 'ℹ️ พบ QR แต่ไม่มียอด' : 'ℹ️ ไม่พบ QR') + ' — กำลัง OCR อ่านยอด...');
+                    var ocrAmt = await _ocrSlipAmount(files[0]);
+                    if (ocrAmt && ocrAmt > 0) {
+                        document.getElementById('paid-amount').value = ocrAmt;
+                        showQRStatus('warn', '🔍 OCR อ่านยอด: ฿' + ocrAmt.toLocaleString('th-TH') + ' — กรุณาตรวจสอบก่อนส่ง');
+                    } else { showQRStatus('info', 'ℹ️ ไม่สามารถอ่านยอดอัตโนมัติ — กรุณากรอกเอง'); }
                 }
             }
         });
@@ -467,6 +506,12 @@
         // ============ Submit ============
         document.getElementById('slipForm').addEventListener('submit', async function(e){
             e.preventDefault();
+
+            // ตรวจ proxy mode: ต้องเลือกบ้านปลายทางก่อนส่ง
+            if (proxyMode && (!unitNumber || unitNumber === myHouseNumber)) {
+                ppkAlert('⚠️ กรุณาเลือกบ้านที่ต้องการส่งสลิปแทนก่อน');
+                return;
+            }
 
             const paidAmount = parseFloat(document.getElementById('paid-amount').value) || 0;
             const fileInput = document.getElementById('slip');
@@ -526,6 +571,11 @@
                         }
                     }
                     submitBtn.textContent = 'กำลังบันทึก...';
+                    // แจ้งเตือนถ้ารูปทุกใบอัปโหลดล้มเหลว
+                    if (window._sb && resizedImages.length > 0 && slipUrls.length === 0) {
+                        var _proceedNoImg = await ppkConfirm('⚠️ อัปโหลดรูปสลิปไม่สำเร็จ\n\nต้องการส่งโดยไม่มีรูปสลิปหรือไม่?\n(admin จะไม่เห็นรูปหลักฐาน)');
+                        if (!_proceedNoImg) { submitBtn.disabled = false; submitBtn.textContent = 'ยืนยันการส่งสลิป'; return; }
+                    }
 
                     // ยืนยันก่อนส่ง ถ้าเป็นโหมดส่งแทน
                     if (proxyMode && unitNumber !== myHouseNumber) {

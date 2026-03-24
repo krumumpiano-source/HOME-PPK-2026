@@ -524,24 +524,23 @@
         } catch (e) { console.error('loadSlipData backend error:', e); }
 
       // ── Fallback: localStorage ──
-
-      // ดึงข้อมูลผู้พักอาศัย
-      const residentsData = JSON.parse(localStorage.getItem('residentsData') || '[]');
-      
-      // ดึงข้อมูลค่าน้ำ ค่าไฟ
-      const waterData = JSON.parse(localStorage.getItem('waterBill_' + key) || '{}');
-      const waterRecords = waterData.records || [];
-      const electricData = JSON.parse(localStorage.getItem('electricBill_' + key) || '{}');
-      const electricRecords = electricData.records || [];
-      
-      // ดึงข้อมูลสลิปที่ส่งมา
-      const slipSubmissions = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
-      
-      // ดึงข้อมูลสถานะการอนุมัติ
-      const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
-
-      // ค่าส่วนกลาง (ไม่ hardcode → ใช้จาก settings จริง, default 0 ถ้าไม่มี)
-      const commonFeeRate = Number(localStorage.getItem('commonFee') || '0');
+      let residentsData = [], waterData = {}, waterRecords = [], electricData = {}, electricRecords = [];
+      let slipSubmissions = [], slipApprovals = {}, commonFeeRate = 0;
+      try {
+        // ดึงข้อมูลผู้พักอาศัย
+        residentsData = JSON.parse(localStorage.getItem('residentsData') || '[]');
+        // ดึงข้อมูลค่าน้ำ ค่าไฟ
+        waterData = JSON.parse(localStorage.getItem('waterBill_' + key) || '{}');
+        waterRecords = waterData.records || [];
+        electricData = JSON.parse(localStorage.getItem('electricBill_' + key) || '{}');
+        electricRecords = electricData.records || [];
+        // ดึงข้อมูลสลิปที่ส่งมา
+        slipSubmissions = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
+        // ดึงข้อมูลสถานะการอนุมัติ
+        slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
+        // ค่าส่วนกลาง (ไม่ hardcode → ใช้จาก settings จริง, default 0 ถ้าไม่มี)
+        commonFeeRate = Number(localStorage.getItem('commonFee') || '0');
+      } catch(lsErr) { console.warn('localStorage fallback error:', lsErr); }
 
       housesData = [];
       flatsData = [];

@@ -1127,12 +1127,14 @@ async function _routeAction(action, data) {
             if (!data.amount || parseFloat(data.amount) <= 0) return { success: false, error: 'จำนวนเงินไม่ถูกต้อง' };
             // ตรวจสอบว่า house_number ตรงกับ session (ป้องกันส่งแทนคนอื่น)
             var slipSess = await _getSessionRole();
+            var _isProxySubmit = !!(data.submittedByName && data.submittedByHouse);
             if (slipSess && slipSess.role !== 'admin' && slipSess.role !== 'head') {
                 var myResUser = null;
                 try { var muArr = await sbGet('users', { id: 'eq.' + slipSess.userId, select: 'email', limit: '1' }); myResUser = muArr && muArr[0]; } catch(e) {}
                 var myResObj = await _findResidentForUser(slipSess.userId, myResUser ? myResUser.email : null);
                 var myHouse = myResObj ? (myResObj.house_number || '') : '';
-                if (myHouse && data.houseNumber !== myHouse) {
+                // อนุญาต proxy mode (ผู้พักส่งแทนบ้านอื่น) ถ้ามี submittedByName และ submittedByHouse
+                if (myHouse && data.houseNumber !== myHouse && !_isProxySubmit) {
                     return { success: false, error: 'คุณไม่สามารถส่งสลิปแทนบ้านอื่นได้' };
                 }
             }

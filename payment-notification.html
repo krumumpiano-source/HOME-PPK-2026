@@ -537,7 +537,7 @@
             overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกข้อมูล...';
             overlay.classList.add('show');
 
-            var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            var user; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) { user = {}; }
             var success = 0, fail = 0;
 
             // ลบ notification เดิมของ period นี้ก่อน แล้ว insert ใหม่ทั้งหมด
