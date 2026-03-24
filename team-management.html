@@ -705,7 +705,8 @@
                 var _waterHouses = {};
                 var _waterLatest = null;
                 _waterFiltered.forEach(function(b) {
-                    if (b.house_number) _waterHouses[b.house_number] = true;
+                    // นับเฉพาะห้องที่บันทึกมิเตอร์จริง (curr_meter > 0 = กรอกเลขมิเตอร์แล้ว)
+                    if (b.house_number && parseFloat(b.curr_meter) > 0) _waterHouses[b.house_number] = true;
                     if (b.recorded_at && (!_waterLatest || b.recorded_at > _waterLatest)) _waterLatest = b.recorded_at;
                 });
                 var waterCount = Object.keys(_waterHouses).length;
@@ -715,7 +716,8 @@
                 var _elecHouses = {};
                 var _elecLatest = null;
                 _elecFiltered.forEach(function(b) {
-                    if (b.house_number) _elecHouses[b.house_number] = true;
+                    // นับเฉพาะห้องที่บันทึกมิเตอร์จริง (curr_meter > 0 = กรอกเลขมิเตอร์แล้ว)
+                    if (b.house_number && parseFloat(b.curr_meter) > 0) _elecHouses[b.house_number] = true;
                     if (b.recorded_at && (!_elecLatest || b.recorded_at > _elecLatest)) _elecLatest = b.recorded_at;
                 });
                 var elecCount = Object.keys(_elecHouses).length;
