@@ -555,6 +555,10 @@
                     var _coErrors = [];
                     for (const c of coresidents) {
                         if (c._isNew) {
+                            if (!c.firstname || !c.lastname) {
+                                _coErrors.push('กรุณากรอกชื่อ-นามสกุลผู้ร่วมพัก');
+                                continue;
+                            }
                             try {
                                 const r = await callBackend('addCoresident', c);
                                 if (r && r.success && r.id) {

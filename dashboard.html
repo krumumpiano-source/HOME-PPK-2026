@@ -412,7 +412,7 @@
             if (slipStatus === 'rejected' && rejectBanner) {
                 rejectBanner.style.display = '';
                 rejectBanner.innerHTML = '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
-                    + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
+                    + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
                     + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>“⚠️ สลิปไม่ผ่าน — กดส่งใหม่”</strong> เพื่ออัพโหลดสลิปใหม่';
             } else if (rejectBanner) {
                 rejectBanner.style.display = 'none';

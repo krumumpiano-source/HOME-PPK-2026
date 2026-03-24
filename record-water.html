@@ -589,6 +589,9 @@
             return {};
         }
         
+        // Helper: escape HTML ป้องกัน XSS
+        function _eRw(s){ var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML; }
+        
         // สร้างตาราง — 1 แถว = 1 บ้าน (รวม housing + residents)
         async function renderResidentsTable() {
             const tbody = document.getElementById('meterTableBody');
@@ -658,8 +661,8 @@
                 row.dataset.house = item.houseNum;
                 row.innerHTML =
                     '<td style="text-align:center">' + (index + 1) + '</td>' +
-                    '<td>' + item.houseNum + '</td>' +
-                    '<td>' + item.residentName + '</td>' +
+                    '<td>' + _eRw(item.houseNum) + '</td>' +
+                    '<td>' + _eRw(item.residentName) + '</td>' +
                     '<td><input type="number" class="prev-meter" value="' + prevMeter + '" ' + prevAttrs + '></td>' +
                     '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
                     '<td class="td-override" style="text-align:center"><input type="number" class="units-override" value="' + unitsOverride + '" min="0" placeholder="-" title="กรอกเฉพาะกรณีเปลี่ยนมิเตอร์กลางเดือน (หน่วยมิเตอรเดิม + หน่วยมิเตอรใหม่)" onchange="calculateRow(this)" style="width:70px;border-color:#f59e0b;background:#fffbeb;"></td>' +

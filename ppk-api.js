@@ -182,9 +182,9 @@ async function sbDelete(table, filter) {
                     var mNeq = v.match(/^neq\.(.+)$/);
                     if (mNeq) { q = q.neq(k, mNeq[1]); hasFilter = true; }
                 });
-                // ป้องกัน delete-all: ถ้าไม่มี filter ใดๆ ที่ valid ให้ reject แทน
-                if (!hasFilter && Object.keys(filter || {}).length > 0) {
-                    reject(new Error('sbDelete: filter provided but no valid condition matched — aborting to prevent delete-all'));
+                // ป้องกัน delete-all: ถ้าไม่มี filter ใดๆ ที่ valid (รวมกรณี filter={}) ให้ reject ทุกกรณี
+                if (!hasFilter) {
+                    reject(new Error('sbDelete: no valid filter — aborting to prevent delete-all'));
                     return;
                 }
                 var res = await q;

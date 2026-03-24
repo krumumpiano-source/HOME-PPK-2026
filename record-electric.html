@@ -655,6 +655,9 @@
             return {};
         }
         
+        // Helper: escape HTML ป้องกัน XSS
+        function _eRw(s){ var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML; }
+        
         // สร้างตาราง — 1 แถว = 1 บ้าน (รวม housing + residents)
         async function renderResidentsTable() {
             const tbody = document.getElementById('electricTableBody');
@@ -729,8 +732,8 @@
                     row.dataset.rawAmount = rawAmount;
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
-                        '<td>' + item.houseNum + '</td>' +
-                        '<td>' + item.residentName + '</td>' +
+                        '<td>' + _eRw(item.houseNum) + '</td>' +
+                        '<td>' + _eRw(item.residentName) + '</td>' +
                         '<td><input type="number" class="prev-meter" value="' + prevMeter + '" ' + prevAttrs + ' step="1" min="0"></td>' +
                         '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="มิเตอร์ปัจจุบัน" onchange="calculateUnitRow(this)" step="1" min="0"></td>' +
                         '<td class="units-used" style="text-align:right">' + unitsUsed + '</td>' +
@@ -740,8 +743,8 @@
                     row.dataset.rawAmount = savedAmount || 0;
                     row.innerHTML =
                         '<td style="text-align:center">' + (index + 1) + '</td>' +
-                        '<td>' + item.houseNum + '</td>' +
-                        '<td>' + item.residentName + '</td>' +
+                        '<td>' + _eRw(item.houseNum) + '</td>' +
+                        '<td>' + _eRw(item.residentName) + '</td>' +
                         '<td><input type="number" class="electric-amount" value="' + savedAmount + '" placeholder="กรอกยอด" onchange="roundUpAndCalculate(this)" step="1" min="0"></td>';
                 }
                 tbody.appendChild(row);

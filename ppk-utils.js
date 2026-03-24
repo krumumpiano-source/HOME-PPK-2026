@@ -306,7 +306,7 @@
     ].join('');
     toast.innerHTML =
       '<span style="font-size:18px;flex-shrink:0;margin-top:-1px">' + c.icon + '</span>' +
-      '<span style="flex:1">' + String(message).replace(/</g, '&lt;') + '</span>' +
+      '<span style="flex:1">' + String(message).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>' +
       '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:' + c.text + ';font-size:16px;flex-shrink:0;padding:0;opacity:.6">✕</button>';
 
     container.appendChild(toast);
