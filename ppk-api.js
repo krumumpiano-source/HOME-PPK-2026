@@ -2536,7 +2536,7 @@ async function _routeAction(action, data) {
             if (data.houseNumber) exQ.house_number = 'eq.' + data.houseNumber;
             var exRows = await sbGet('exemptions', exQ);
             var exMap = {};
-            (exRows || []).forEach(function(e) { exMap[e.house_id] = { exempt: true, note: e.reason || '' }; });
+            (exRows || []).forEach(function(e) { exMap[e.house_id] = { exempt: true, note: e.reason || '', house_number: e.house_number || '' }; });
             return { success: true, data: exMap };
         }
 

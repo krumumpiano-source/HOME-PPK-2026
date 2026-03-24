@@ -4579,9 +4579,26 @@
                 return;
             }
 
+            // สร้าง map จาก house_number → exemption (fallback เมื่อ house_id ไม่ match)
+            var exByHN = {};
+            Object.keys(exemptions).forEach(function(eid) {
+                var ex = exemptions[eid];
+                if (ex.exempt && ex.house_number) exByHN[ex.house_number] = ex;
+            });
+
+            function findExemption(item) {
+                // ลอง match ด้วย house_id ก่อน
+                if (exemptions[item.id] && exemptions[item.id].exempt) return exemptions[item.id];
+                // fallback: match ด้วย house_number (ป้องกัน orphaned records จาก house_id เก่า)
+                var dn = formatHousingNumber(item, formatSettings);
+                if (exByHN[dn]) return exByHN[dn];
+                if (exByHN[item.number]) return exByHN[item.number];
+                return { exempt: false, note: '' };
+            }
+
             var countYes = 0, countNo = 0;
             housing.forEach(function(item) {
-                var ex = exemptions[item.id] || { exempt: false };
+                var ex = findExemption(item);
                 if (ex.exempt) countYes++; else countNo++;
             });
             var countAll = housing.length;
@@ -4593,7 +4610,7 @@
                 var displayNumber = formatHousingNumber(item, formatSettings);
                 var occupant = residents.find(function(r) { return r.house_number === displayNumber || r.house_number === item.number; });
                 var occupantName = occupant ? ((occupant.prefix||'') + occupant.firstname + ' ' + occupant.lastname) : '<span style="color:var(--muted);">ไม่มีผู้พักอาศัย</span>';
-                var exemption = exemptions[item.id] || { exempt: false, note: '' };
+                var exemption = findExemption(item);
                 return '<tr data-id="' + item.id + '" data-exempt="' + (exemption.exempt ? 'yes' : 'no') + '">' +
                     '<td>' + (index + 1) + '</td>' +
                     '<td><strong>' + displayNumber + '</strong></td>' +
@@ -4651,12 +4668,43 @@
             }
         }
 
-        // โหลด exemptions จาก DB แล้ว render ตาราง
+        // โหลด exemptions จาก DB แล้ว render ตาราง + auto-cleanup orphans
         async function loadAndRenderExemptions() {
             try {
                 var res = await callBackendGet('getExemptions', {});
                 if (res && res.success && res.data) {
                     saveExemptionsData(res.data);
+                    // ตรวจ orphaned exemptions (house_id เก่าที่ไม่ match housing ปัจจุบัน)
+                    var housing = getHousingData();
+                    var validIds = {};
+                    housing.forEach(function(h) { validIds[h.id] = true; });
+                    var hasOrphans = Object.keys(res.data).some(function(id) {
+                        return res.data[id].exempt && !validIds[id];
+                    });
+                    if (hasOrphans) {
+                        console.warn('[exemptions] พบ orphaned records → auto-cleanup');
+                        // สร้าง exemptions ตาม housing ปัจจุบัน แล้วบันทึกลง DB เพื่อลบ orphans
+                        var formatSettings = getHousingFormatSettings();
+                        var exByHN = {};
+                        Object.keys(res.data).forEach(function(eid) {
+                            var ex = res.data[eid];
+                            if (ex.exempt && ex.house_number) exByHN[ex.house_number] = ex;
+                        });
+                        var cleanExemptions = {};
+                        housing.forEach(function(h) {
+                            var dn = formatHousingNumber(h, formatSettings);
+                            var matched = res.data[h.id] || exByHN[dn] || exByHN[h.number] || { exempt: false, note: '' };
+                            cleanExemptions[h.id] = {
+                                exempt: matched.exempt,
+                                note: matched.note || '',
+                                house_number: dn || h.number || ''
+                            };
+                        });
+                        try {
+                            await callBackend('saveExemptions', { exemptions: cleanExemptions });
+                            saveExemptionsData(cleanExemptions);
+                        } catch(e) { console.warn('auto-cleanup exemptions:', e); }
+                    }
                 }
             } catch(e) { /* ใช้ localStorage fallback */ }
             renderExemptionTable();
