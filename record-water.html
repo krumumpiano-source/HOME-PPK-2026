@@ -33,19 +33,7 @@
 
         * { box-sizing: border-box; }
 
-        /* Camera button & meter photo styles */
-        .cam-btn { cursor:pointer; font-size:1.3rem; padding:2px 6px; border-radius:6px; transition:background 0.2s; display:inline-block; }
-        .cam-btn:hover { background:#e0f2fe; }
-        .meter-thumb { width:36px; height:36px; border-radius:6px; object-fit:cover; cursor:pointer; border:1.5px solid #60a5fa; vertical-align:middle; margin-top:2px; }
-        .meter-thumb-wrap { display:inline-block; min-height:1px; }
-        .ocr-badge { font-size:0.72rem; padding:1px 5px; border-radius:4px; white-space:nowrap; display:inline-block; margin-left:2px; }
-        .ocr-badge.ok { background:#d1fae5; color:#065f46; }
-        .ocr-badge.warn { background:#fef3c7; color:#92400e; }
-        .ocr-badge.fail { background:#fee2e2; color:#991b1b; }
 
-        /* Meter photo lightbox */
-        .meter-lightbox { position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out; }
-        .meter-lightbox img { max-width:95vw;max-height:92vh;border-radius:8px; }
 
         body {
             font-family: 'Kanit', sans-serif;
@@ -417,10 +405,10 @@
             <div class="table-scroll-wrapper">
                 <table class="meter-table hide-override" id="meterTable">
                     <thead>
-                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th style="white-space:nowrap">📷</th><th class="th-override" style="white-space:nowrap">หน่วยรวม <span style="font-weight:400;font-size:11px;color:#f59e0b;">(เปลี่ยนมิเตอร์)</span></th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
+                        <tr><th>#</th><th>บ้านพัก</th><th>ผู้พักอาศัย</th><th>มิเตอร์ก่อนหน้า</th><th>มิเตอร์ปัจจุบัน</th><th class="th-override" style="white-space:nowrap">หน่วยรวม <span style="font-weight:400;font-size:11px;color:#f59e0b;">(เปลี่ยนมิเตอร์)</span></th><th>หน่วยใช้</th><th>ยอดเงิน (฿)</th></tr>
                     </thead>
                     <tbody id="meterTableBody">
-                        <tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
+                        <tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -577,9 +565,7 @@
                                 prevMeter: parseInt(r.prev_meter || r.prevMeter) || 0,
                                 currMeter: parseInt(r.curr_meter || r.currMeter) || 0,
                                 unitsOverride: r.units_override != null ? parseFloat(r.units_override) : null,
-                                meterPhotoUrl: r.meter_photo_url || null,
-                                ocrRawText: r.ocr_raw_text || null,
-                                ocrConfidence: r.ocr_confidence != null ? parseFloat(r.ocr_confidence) : null
+
                             };
                         });
                         return map;
@@ -606,7 +592,7 @@
         // สร้างตาราง — 1 แถว = 1 บ้าน (รวม housing + residents)
         async function renderResidentsTable() {
             const tbody = document.getElementById('meterTableBody');
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
             const [residents, housingList, prevMeterData, savedBill] = await Promise.all([
                 getResidentsData(), getHousingListData(), getPreviousMeterData(), getSavedBillData()
             ]);
@@ -648,7 +634,7 @@
             });
 
             if (billRows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">ไม่มีบ้านพัก/ห้องพักที่ต้องบันทึกค่าน้ำ — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">ไม่มีบ้านพัก/ห้องพักที่ต้องบันทึกค่าน้ำ — กรุณาเพิ่มข้อมูลที่หน้า admin-settings</td></tr>';
                 document.getElementById('totalHouses').textContent = '0';
                 return;
             }
@@ -670,25 +656,12 @@
 
                 const row = document.createElement('tr');
                 row.dataset.house = item.houseNum;
-                var photoThumb = saved && saved.meterPhotoUrl
-                    ? '<img src="' + saved.meterPhotoUrl + '" class="meter-thumb" onclick="viewMeterPhoto(this.src)" title="ดูรูปมิเตอร์">'
-                    : '';
                 row.innerHTML =
                     '<td style="text-align:center">' + (index + 1) + '</td>' +
                     '<td>' + item.houseNum + '</td>' +
                     '<td>' + item.residentName + '</td>' +
                     '<td><input type="number" class="prev-meter" value="' + prevMeter + '" ' + prevAttrs + '></td>' +
                     '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
-                    '<td style="text-align:center;white-space:nowrap;">' +
-                        '<label class="cam-btn" title="ถ่ายรูปมิเตอร์">' +
-                            '📷<input type="file" accept="image/*" capture="environment" class="meter-photo-input" style="display:none" onchange="handleMeterPhoto(this)">' +
-                        '</label>' +
-                        '<span class="ocr-badge" style="display:none"></span>' +
-                        '<div class="meter-thumb-wrap">' + photoThumb + '</div>' +
-                        '<input type="hidden" class="meter-photo-url" value="' + (saved && saved.meterPhotoUrl ? saved.meterPhotoUrl : '') + '">' +
-                        '<input type="hidden" class="ocr-raw-text" value="">' +
-                        '<input type="hidden" class="ocr-confidence" value="">' +
-                    '</td>' +
                     '<td class="td-override" style="text-align:center"><input type="number" class="units-override" value="' + unitsOverride + '" min="0" placeholder="-" title="กรอกเฉพาะกรณีเปลี่ยนมิเตอร์กลางเดือน (หน่วยมิเตอรเดิม + หน่วยมิเตอรใหม่)" onchange="calculateRow(this)" style="width:70px;border-color:#f59e0b;background:#fffbeb;"></td>' +
                     '<td class="usage-value" style="text-align:right">0</td>' +
                     '<td class="amount-value" style="text-align:right">0</td>';
@@ -776,139 +749,7 @@
             document.getElementById('totalAmount').textContent = totalAmount.toLocaleString() + ' ฿';
         }
 
-        // ══════ ถ่ายรูปมิเตอร์ + OCR ══════
-        var _tesseractReady = false;
-        var _tesseractLoading = false;
 
-        function _loadTesseract() {
-            return new Promise(function(resolve, reject) {
-                if (_tesseractReady) { resolve(); return; }
-                if (_tesseractLoading) {
-                    var iv = setInterval(function() { if (_tesseractReady) { clearInterval(iv); resolve(); } }, 200);
-                    return;
-                }
-                _tesseractLoading = true;
-                var s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-                s.onload = function() { _tesseractReady = true; _tesseractLoading = false; resolve(); };
-                s.onerror = function() { _tesseractLoading = false; reject(new Error('โหลด Tesseract.js ไม่สำเร็จ')); };
-                document.head.appendChild(s);
-            });
-        }
-
-        function _resizeMeterImage(file, maxWidth) {
-            maxWidth = maxWidth || 800;
-            return new Promise(function(resolve) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    var img = new Image();
-                    img.onload = function() {
-                        var w = img.width, h = img.height;
-                        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-                        var canvas = document.createElement('canvas');
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        canvas.toBlob(function(blob) { resolve({ blob: blob, dataUrl: canvas.toDataURL('image/jpeg', 0.7) }); }, 'image/jpeg', 0.7);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function handleMeterPhoto(input) {
-            var file = input.files && input.files[0];
-            if (!file) return;
-
-            var row = input.closest('tr');
-            var houseNum = row.dataset.house;
-            var badge = row.querySelector('.ocr-badge');
-            var thumbWrap = row.querySelector('.meter-thumb-wrap');
-            var hiddenUrl = row.querySelector('.meter-photo-url');
-            var hiddenOcrText = row.querySelector('.ocr-raw-text');
-            var hiddenOcrConf = row.querySelector('.ocr-confidence');
-            var currInput = row.querySelector('.curr-meter');
-
-            badge.style.display = 'inline-block';
-            badge.className = 'ocr-badge';
-            badge.textContent = '⏳ กำลังประมวลผล...';
-
-            try {
-                // 1) ย่อรูป
-                var resized = await _resizeMeterImage(file, 800);
-
-                // 2) อัปโหลดไป Supabase Storage
-                var photoUrl = '';
-                if (window._sb) {
-                    var month = document.getElementById('bill_month').value;
-                    var year = document.getElementById('bill_year').value;
-                    var houseDir = houseNum.replace(/[^a-zA-Z0-9_-]/g, '_');
-                    var periodDir = (year + '-' + month).replace(/[^a-zA-Z0-9_-]/g, '_');
-                    var path = houseDir + '/' + periodDir + '/' + Date.now() + '.jpg';
-                    var uploadRes = await window._sb.storage.from('meter-photos').upload(path, resized.blob, { contentType: 'image/jpeg', upsert: true });
-                    if (!uploadRes.error) {
-                        var urlRes = window._sb.storage.from('meter-photos').getPublicUrl(path);
-                        photoUrl = urlRes.data.publicUrl;
-                    } else {
-                        console.warn('Upload meter photo failed:', uploadRes.error.message);
-                    }
-                }
-                hiddenUrl.value = photoUrl;
-
-                // 3) แสดง thumbnail
-                thumbWrap.innerHTML = '<img src="' + (photoUrl || resized.dataUrl) + '" class="meter-thumb" onclick="viewMeterPhoto(this.src)" title="ดูรูปมิเตอร์">';
-
-                // 4) OCR ด้วย Tesseract.js
-                badge.textContent = '🔍 กำลังอ่านเลข...';
-                try {
-                    await _loadTesseract();
-                    var ocrResult = await Tesseract.recognize(resized.dataUrl, 'eng', {
-                        tessedit_char_whitelist: '0123456789.'
-                    });
-                    var rawText = (ocrResult.data.text || '').trim();
-                    var confidence = ocrResult.data.confidence || 0;
-                    hiddenOcrText.value = rawText;
-                    hiddenOcrConf.value = confidence.toFixed(1);
-
-                    // ดึงเลขจาก OCR — เอาเฉพาะตัวเลข 3-7 หลัก (เลขมิเตอร์น้ำทั่วไป)
-                    var nums = rawText.match(/\d{3,7}/g);
-                    if (nums && nums.length > 0) {
-                        var bestNum = nums.reduce(function(a, b) { return a.length >= b.length ? a : b; });
-                        currInput.value = parseInt(bestNum, 10);
-                        calculateRow(currInput);
-                        if (confidence >= 70) {
-                            badge.className = 'ocr-badge ok';
-                            badge.textContent = '✅ ' + bestNum;
-                        } else {
-                            badge.className = 'ocr-badge warn';
-                            badge.textContent = '⚠️ ' + bestNum + ' (' + confidence.toFixed(0) + '%)';
-                        }
-                    } else {
-                        badge.className = 'ocr-badge fail';
-                        badge.textContent = '❌ อ่านไม่ได้';
-                    }
-                } catch (ocrErr) {
-                    console.warn('OCR error:', ocrErr);
-                    badge.className = 'ocr-badge warn';
-                    badge.textContent = '📷 รูปบันทึกแล้ว';
-                    hiddenOcrText.value = '';
-                    hiddenOcrConf.value = '0';
-                }
-            } catch (err) {
-                console.error('handleMeterPhoto error:', err);
-                badge.className = 'ocr-badge fail';
-                badge.textContent = '❌ ผิดพลาด';
-            }
-        }
-
-        function viewMeterPhoto(src) {
-            var overlay = document.createElement('div');
-            overlay.className = 'meter-lightbox';
-            overlay.innerHTML = '<img src="' + src + '" style="max-width:95vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5)">' +
-                '<div style="position:fixed;top:16px;right:20px;font-size:36px;color:#fff;cursor:pointer;z-index:10001" onclick="this.parentElement.remove()">✕</div>';
-            overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
-            document.body.appendChild(overlay);
-        }
 
         // บันทึกข้อมูล → Backend
         async function saveData() {
@@ -936,14 +777,6 @@
                     units: parseInt(row.querySelector('.usage-value').textContent.replace(/[^\d]/g, '')) || 0,
                     amount: parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g, '')) || 0
                 };
-                var mUrl = row.querySelector('.meter-photo-url');
-                if (mUrl && mUrl.value) {
-                    rec.meter_photo_url = mUrl.value;
-                    rec.ocr_raw_text = (row.querySelector('.ocr-raw-text') || {}).value || '';
-                    rec.ocr_confidence = parseFloat((row.querySelector('.ocr-confidence') || {}).value) || 0;
-                    var user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                    rec.read_by = user.email || '';
-                }
                 records.push(rec);
             });
             
