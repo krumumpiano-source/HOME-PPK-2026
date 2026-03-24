@@ -1143,6 +1143,15 @@ async function _routeAction(action, data) {
             if (dupSlips && dupSlips.length > 0) {
                 return { success: false, error: 'บ้านนี้มีสลิปค้างอยู่แล้วสำหรับงวดนี้ กรุณารอผลตรวจสอบ' };
             }
+            // ลบสลิปที่ถูกปฏิเสธเก่าออก เพื่อป้องกัน stale rejected record ปรากฏหลัง cancel
+            try {
+                var oldRejected = await sbGet('slip_submissions', { house_number: 'eq.' + data.houseNumber, period: 'eq.' + data.period, status: 'eq.rejected', limit: '10' });
+                if (oldRejected && oldRejected.length > 0) {
+                    for (var ri = 0; ri < oldRejected.length; ri++) {
+                        await sbDelete('slip_submissions', { id: 'eq.' + oldRejected[ri].id });
+                    }
+                }
+            } catch(e) { /* ไม่เป็นปัญหาสำคัญ */ }
             var proxyNote = null;
             if (data.submittedByName && data.submittedByHouse) {
                 proxyNote = '\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ' + data.submittedByName + ' (' + data.submittedByHouse + ')';

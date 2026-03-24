@@ -3703,7 +3703,8 @@
             try {
                 var r = await callBackend('getBackups', actionFilter ? { action: actionFilter } : {});
                 if (!r || !r.success) {
-                    container.innerHTML = '<div style="color:red;padding:1rem;">โหลดไม่สำเร็จ: ' + ((r && r.error) || 'ลองใหม่อีกครั้ง') + '</div>';
+                    var _errMsg1 = String((r && r.error) || 'ลองใหม่อีกครั้ง').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    container.innerHTML = '<div style="color:red;padding:1rem;">โหลดไม่สำเร็จ: ' + _errMsg1 + '</div>';
                     return;
                 }
                 var rows = r.data || [];
@@ -3735,7 +3736,8 @@
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
             } catch(e) {
-                container.innerHTML = '<div style="color:red;padding:1rem;">เกิดข้อผิดพลาด: ' + e.message + '</div>';
+                var _errMsg2 = String(e.message || e).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                container.innerHTML = '<div style="color:red;padding:1rem;">เกิดข้อผิดพลาด: ' + _errMsg2 + '</div>';
             }
         }
 
