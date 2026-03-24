@@ -4581,7 +4581,14 @@
 
             var countYes = 0, countNo = 0;
             housing.forEach(function(item) {
-                var ex = exemptions[item.id] || { exempt: false };
+                var ex = exemptions[item.id];
+                if (!ex || !ex.exempt) {
+                    var _byHN = window._exByHN || {};
+                    var dn = formatHousingNumber(item, formatSettings);
+                    var _m = _byHN[dn] || _byHN[item.number];
+                    if (_m && _m.exempt) ex = _m;
+                }
+                ex = ex || { exempt: false };
                 if (ex.exempt) countYes++; else countNo++;
             });
             var countAll = housing.length;
@@ -4593,7 +4600,14 @@
                 var displayNumber = formatHousingNumber(item, formatSettings);
                 var occupant = residents.find(function(r) { return r.house_number === displayNumber || r.house_number === item.number; });
                 var occupantName = occupant ? ((occupant.prefix||'') + occupant.firstname + ' ' + occupant.lastname) : '<span style="color:var(--muted);">ไม่มีผู้พักอาศัย</span>';
-                var exemption = exemptions[item.id] || { exempt: false, note: '' };
+                var exemption = exemptions[item.id];
+                // fallback: ถ้า localStorage housing ID เก่าไม่ตรง DB → ลอง match ด้วย house_number
+                if (!exemption || !exemption.exempt) {
+                    var _byHN = window._exByHN || {};
+                    var _byHNMatch = _byHN[displayNumber] || _byHN[item.number];
+                    if (_byHNMatch && _byHNMatch.exempt) exemption = _byHNMatch;
+                }
+                exemption = exemption || { exempt: false, note: '' };
                 return '<tr data-id="' + item.id + '" data-exempt="' + (exemption.exempt ? 'yes' : 'no') + '">' +
                     '<td>' + (index + 1) + '</td>' +
                     '<td><strong>' + displayNumber + '</strong></td>' +
@@ -4651,38 +4665,19 @@
             }
         }
 
-        // โหลด exemptions จาก DB แล้ว render ตาราง + auto-cleanup orphans
+        // โหลด exemptions จาก DB แล้ว render ตาราง
+        // (server-side getExemptions validate orphans เองแล้ว ไม่ต้อง cleanup ซ้ำที่ client)
         async function loadAndRenderExemptions() {
             try {
                 var res = await callBackendGet('getExemptions', {});
                 if (res && res.success && res.data) {
                     saveExemptionsData(res.data);
-                    // ตรวจ orphaned exemptions (house_id เก่าที่ไม่ match housing ปัจจุบัน)
-                    var housing = getHousingData();
-                    var validIds = {};
-                    housing.forEach(function(h) { validIds[h.id] = true; });
-                    var hasOrphans = Object.keys(res.data).some(function(id) {
-                        return res.data[id].exempt && !validIds[id];
+                    // สร้าง map ย้อนกลับจาก house_number → ข้อมูลยกเว้น
+                    // ใช้เป็น fallback เมื่อ localStorage housing ID ไม่ตรงกับ DB
+                    window._exByHN = {};
+                    Object.values(res.data).forEach(function(ex) {
+                        if (ex.exempt && ex.house_number) window._exByHN[ex.house_number] = ex;
                     });
-                    if (hasOrphans) {
-                        console.warn('[exemptions] พบ orphaned records → auto-cleanup: ลบ orphans ทิ้ง');
-                        // เก็บเฉพาะ exemptions ที่ house_id match housing ปัจจุบัน (ลบ orphans ทิ้ง)
-                        var formatSettings = getHousingFormatSettings();
-                        var cleanExemptions = {};
-                        housing.forEach(function(h) {
-                            var dn = formatHousingNumber(h, formatSettings);
-                            var existing = res.data[h.id] || { exempt: false, note: '' };
-                            cleanExemptions[h.id] = {
-                                exempt: existing.exempt,
-                                note: existing.note || '',
-                                house_number: dn || h.number || ''
-                            };
-                        });
-                        try {
-                            await callBackend('saveExemptions', { exemptions: cleanExemptions });
-                            saveExemptionsData(cleanExemptions);
-                        } catch(e) { console.warn('auto-cleanup exemptions:', e); }
-                    }
                 }
             } catch(e) { /* ใช้ localStorage fallback */ }
             renderExemptionTable();
