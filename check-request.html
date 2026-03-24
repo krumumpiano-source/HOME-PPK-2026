@@ -1756,7 +1756,7 @@
         }
 
         async function deleteRequestDirect(type, id) {
-            if (!confirm('⚠️ ยืนยันการลบคำร้อง ' + id + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้')) return;
+            if (!await ppkConfirm('⚠️ ยืนยันการลบคำร้อง ' + id + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้', { type: 'danger', okText: 'ลบคำร้อง', cancelText: 'ยกเลิก' })) return;
             try {
                 const result = await callBackend('deleteRequest', { id: id });
                 if (result && result.success) {
@@ -1776,7 +1776,7 @@
             const id = window._currentDetailId;
             const type = window._currentDetailType;
             if (!id) return;
-            if (!confirm('⚠️ ยืนยันการลบคำร้อง ' + id + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้')) return;
+            if (!await ppkConfirm('⚠️ ยืนยันการลบคำร้อง ' + id + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้', { type: 'danger', okText: 'ลบคำร้อง', cancelText: 'ยกเลิก' })) return;
             try {
                 const result = await callBackend('deleteRequest', { id: id });
                 if (result && result.success) {
