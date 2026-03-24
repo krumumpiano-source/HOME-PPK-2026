@@ -557,9 +557,9 @@
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
     <script src="ppk-api.js?v=20260324B"></script>
-    <script src="ppk-app.js?v=20260323E"></script>
-    <script src="ppk-utils.js?v=20260323E"></script>
-    <script src="ppk-nav.js?v=20260323E"></script>
+    <script src="ppk-app.js?v=20260324B"></script>
+    <script src="ppk-utils.js?v=20260324B"></script>
+    <script src="ppk-nav.js?v=20260324B"></script>
     <script>
     // ════════════════════════════════════════════════════════════
     //  Team Management — KPI Dashboard + Workflow Checklist
@@ -694,6 +694,8 @@
                 var withdrawCount = withdraws.filter(function(w) { return w.period === currentPeriod; }).length;
 
                 var totalHouses = (kpiData && kpiData.totalHouses) || 0;
+                // จำนวนห้องที่ควรแจ้ง = ห้องทั้งหมด (ใช้ waterCount เป็น baseline ถ้า housing ยังไม่ load)
+                var notifTarget = totalHouses || waterCount || elecCount || 1;
 
                 // กำหนดสถานะแต่ละขั้นตอน
                 var steps = [
@@ -716,10 +718,12 @@
                     {
                         name: 'แจ้งยอดชำระ',
                         page: 'payment-notification',
-                        done: notifCount > 0,
-                        status: notifCount > 0
-                            ? '✅ แจ้งแล้ว ' + notifCount + ' รายการ'
-                            : '⏳ ยังไม่ได้แจ้ง'
+                        done: notifCount > 0 && notifCount >= notifTarget,
+                        status: notifCount <= 0
+                            ? '⏳ ยังไม่ได้แจ้ง'
+                            : (notifCount >= notifTarget
+                                ? '✅ แจ้งแล้ว ' + notifCount + '/' + notifTarget + ' ห้อง'
+                                : '⚠️ แจ้งแล้ว ' + notifCount + '/' + notifTarget + ' ห้อง (ยังไม่ครบ)')
                     },
                     {
                         name: 'ตรวจสลิปการชำระ',
