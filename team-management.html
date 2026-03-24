@@ -12,7 +12,9 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>จัดการทีมงาน | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260324B">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap">
             <style>
         @media (max-width: 600px) {
             }
@@ -27,7 +29,6 @@
             .dashboard-container { }
             
         }
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
     body {
         font-family: 'Kanit', sans-serif;
         background: linear-gradient(135deg, #4f8cff 0%, #38e8ff 100%);
@@ -700,15 +701,25 @@
                 var withdraws   = (results[4] && results[4].data) || [];
 
                 // กรองเฉพาะเดือนปัจจุบัน + นับ distinct house_number (ป้องกันนับซ้ำ)
+                var _waterFiltered = waterBills.filter(function(b) { return b.period === currentPeriod; });
                 var _waterHouses = {};
-                waterBills.filter(function(b) { return b.period === currentPeriod; })
-                    .forEach(function(b) { if (b.house_number) _waterHouses[b.house_number] = true; });
+                var _waterLatest = null;
+                _waterFiltered.forEach(function(b) {
+                    if (b.house_number) _waterHouses[b.house_number] = true;
+                    if (b.recorded_at && (!_waterLatest || b.recorded_at > _waterLatest)) _waterLatest = b.recorded_at;
+                });
                 var waterCount = Object.keys(_waterHouses).length;
+                var _waterDateStr = _waterLatest ? '(บันทึกเมื่อ ' + new Date(_waterLatest).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' }) + ')' : '';
 
+                var _elecFiltered = elecBills.filter(function(b) { return b.period === currentPeriod; });
                 var _elecHouses = {};
-                elecBills.filter(function(b) { return b.period === currentPeriod; })
-                    .forEach(function(b) { if (b.house_number) _elecHouses[b.house_number] = true; });
+                var _elecLatest = null;
+                _elecFiltered.forEach(function(b) {
+                    if (b.house_number) _elecHouses[b.house_number] = true;
+                    if (b.recorded_at && (!_elecLatest || b.recorded_at > _elecLatest)) _elecLatest = b.recorded_at;
+                });
                 var elecCount = Object.keys(_elecHouses).length;
+                var _elecDateStr = _elecLatest ? '(บันทึกเมื่อ ' + new Date(_elecLatest).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' }) + ')' : '';
 
                 var notifCount = notifs.filter(function(n) { return (n.period || '') === currentPeriod; }).length;
                 var pendSlipCount = pendSlips.length;
@@ -730,8 +741,8 @@
                         status: waterCount <= 0
                             ? '⏳ ยังไม่ได้บันทึก'
                             : (waterCount >= totalHouses
-                                ? '✅ บันทึกแล้ว ' + waterCount + '/' + totalHouses + ' ห้อง'
-                                : '⚠️ บันทึกแล้ว ' + waterCount + '/' + totalHouses + ' ห้อง (ยังไม่ครบ)')
+                                ? '✅ บันทึกแล้ว ' + waterCount + '/' + totalHouses + ' ห้อง ' + _waterDateStr
+                                : '⚠️ บันทึกแล้ว ' + waterCount + '/' + totalHouses + ' ห้อง (ยังไม่ครบ) ' + _waterDateStr)
                     },
                     {
                         name: 'บันทึกมิเตอร์ไฟ',
@@ -740,8 +751,8 @@
                         status: elecCount <= 0
                             ? '⏳ ยังไม่ได้บันทึก'
                             : (elecCount >= totalHouses
-                                ? '✅ บันทึกแล้ว ' + elecCount + '/' + totalHouses + ' ห้อง'
-                                : '⚠️ บันทึกแล้ว ' + elecCount + '/' + totalHouses + ' ห้อง (ยังไม่ครบ)')
+                                ? '✅ บันทึกแล้ว ' + elecCount + '/' + totalHouses + ' ห้อง ' + _elecDateStr
+                                : '⚠️ บันทึกแล้ว ' + elecCount + '/' + totalHouses + ' ห้อง (ยังไม่ครบ) ' + _elecDateStr)
                     },
                     {
                         name: 'แจ้งยอดชำระ',
