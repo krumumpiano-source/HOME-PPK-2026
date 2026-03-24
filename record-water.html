@@ -756,6 +756,8 @@
 
         // บันทึกข้อมูล → Backend
         async function saveData() {
+            if (_isSaving) return;
+            _isSaving = true;
             const month = document.getElementById('bill_month').value;
             const year = document.getElementById('bill_year').value;
             const rate = document.getElementById('water_rate').value;
@@ -804,20 +806,24 @@
                         _formDirty = false;
                         _invalidateBillCache('getWaterBills', waterData.period);
                         await ppkAlert('บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!', { type: 'success', title: 'บันทึกสำเร็จ' });
+                        _isSaving = false;
                         return;
                     } else {
                         await ppkAlert('บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'), { type: 'error', title: 'เกิดข้อผิดพลาด' });
+                        _isSaving = false;
                         return;
                     }
                 } catch (e) {
                     _hideSavingOverlay();
                     console.error('Save error:', e);
                     await ppkAlert('บันทึกลงฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต\n(' + (e.message || e) + ')', { type: 'error', title: 'เชื่อมต่อล้มเหลว' });
+                    _isSaving = false;
                 }
 
             // Fallback: บันทึกลง localStorage
             localStorage.setItem('waterBill_' + year + month, JSON.stringify(waterData));
             _formDirty = false;
+            _isSaving = false;
         }
 
         // ══════ Excel Export / Import ══════
@@ -951,6 +957,7 @@
 
         // ── Dirty tracking: ป้องกันออกจากหน้าเมื่อมีข้อมูลยังไม่บันทึก ──
         let _formDirty = false;
+        var _isSaving = false; // ป้องกันการกด Save ซ้อนกัน (double-submit)
         document.addEventListener('input', function(e) {
             if (e.target.closest('#meterTableBody')) _formDirty = true;
         });

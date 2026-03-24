@@ -785,11 +785,19 @@
                 setTimeout(waitAndLoad, 200);
                 return;
             }
-            checkPermission();
-            loadKPI().then(function(kpiData) {
-                loadWorkflow(kpiData);
+            // ยืนยัน session กับ server ก่อนโหลดหน้า (ไม่เชื่อเพียง localStorage)
+            checkSession(true).then(function(user) {
+                if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+                    if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+                    window.location.replace('dashboard.html');
+                    return;
+                }
+                checkPermission();
+                loadKPI().then(function(kpiData) {
+                    loadWorkflow(kpiData);
+                });
+                loadMemberStatus();
             });
-            loadMemberStatus();
         }
 
         // รอ DOM + scripts โหลดเสร็จ

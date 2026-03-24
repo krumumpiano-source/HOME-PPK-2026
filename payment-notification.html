@@ -343,6 +343,8 @@
                             electric: parseFloat(item.electric_amount) || 0,
                             common: parseFloat(item.common_fee) || 0
                         };
+                        // หน่วยที่ไม่มีผู้พักอาศัย → ไม่เรียกเก็บค่าส่วนกลาง
+                        if (!mapped.residents) mapped.common = 0;
                         var num = mapped.number.toLowerCase();
                         if (num.indexOf('แฟลต') >= 0 || num.indexOf('flat') >= 0) {
                             flats.push(mapped);

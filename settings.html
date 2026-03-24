@@ -490,6 +490,10 @@
                     ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                     return;
                 }
+                if (newPassword === currentPassword) {
+                    ppkAlert('รหัสผ่านใหม่ต้องแตกต่างจากรหัสผ่านปัจจุบัน');
+                    return;
+                }
             }
             
             // รวบรวมข้อมูลครบถ้วนตาม register.html

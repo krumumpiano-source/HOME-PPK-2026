@@ -842,6 +842,8 @@
         
         // บันทึกข้อมูล → Backend
         async function saveData() {
+            if (_isSaving) return;
+            _isSaving = true;
             const month = document.getElementById('bill_month').value;
             const year = document.getElementById('bill_year').value;
             
@@ -895,16 +897,19 @@
                         _formDirty = false;
                         _invalidateBillCache('getElectricBills', electricData.period);
                         await ppkAlert('บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!', { type: 'success', title: 'บันทึกสำเร็จ' });
+                        _isSaving = false;
                         return;
                     } else {
                         await ppkAlert('บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'), { type: 'error', title: 'เกิดข้อผิดพลาด' });
+                        _isSaving = false;
                         return;
                     }
-                } catch (e) { console.error('Save error:', e); _hideSavingOverlay(); await ppkAlert('บันทึกลงฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต\n(' + (e.message || e) + ')', { type: 'error', title: 'เชื่อมต่อล้มเหลว' }); }
+                } catch (e) { console.error('Save error:', e); _hideSavingOverlay(); await ppkAlert('บันทึกลงฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต\n(' + (e.message || e) + ')', { type: 'error', title: 'เชื่อมต่อล้มเหลว' }); _isSaving = false; }
 
             // Fallback: localStorage
             localStorage.setItem('electricBill_' + year + month, JSON.stringify(electricData));
             _formDirty = false;
+            _isSaving = false;
         }
 
         // ══════ Excel Export / Import ══════
@@ -1074,6 +1079,7 @@
 
         // ── Dirty tracking: ป้องกันออกจากหน้าเมื่อมีข้อมูลยังไม่บันทึก ──
         let _formDirty = false;
+        var _isSaving = false; // ป้องกันการกด Save ซ้อนกัน (double-submit)
         document.addEventListener('input', function(e) {
             if (e.target.closest('#electricTableBody')) _formDirty = true;
         });

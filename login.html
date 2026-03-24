@@ -226,6 +226,32 @@
             return false;
         }
 
+        // ── ป้องกัน brute-force: จำกัดจำนวนครั้งการเข้าสู่ระบบผิดพลาด (ออก 5 ครั้ง ล็อค 15 นาที) ──
+        function _getLoginLockStatus(email) {
+            var lockKey  = 'loginLock_' + email.toLowerCase();
+            var lockUntil = parseInt(localStorage.getItem(lockKey) || '0');
+            if (lockUntil > Date.now()) {
+                var minsLeft = Math.ceil((lockUntil - Date.now()) / 60000);
+                return 'บัญชีถูกล็อคชั่วคราว กรุณารอ ' + minsLeft + ' นาที แล้วลองอีกครั้ง';
+            }
+            return null;
+        }
+        function _recordLoginFailure(email) {
+            var attKey  = 'loginAttempts_' + email.toLowerCase();
+            var lockKey = 'loginLock_'     + email.toLowerCase();
+            var attempts = parseInt(localStorage.getItem(attKey) || '0') + 1;
+            if (attempts >= 5) {
+                localStorage.setItem(lockKey, String(Date.now() + 15 * 60 * 1000));
+                localStorage.removeItem(attKey);
+            } else {
+                localStorage.setItem(attKey, String(attempts));
+            }
+        }
+        function _clearLoginFailures(email) {
+            localStorage.removeItem('loginAttempts_' + email.toLowerCase());
+            localStorage.removeItem('loginLock_'     + email.toLowerCase());
+        }
+
         // ============ Login Handler ============
         async function handleLogin() {
             const email = document.getElementById('email').value.trim();
@@ -237,10 +263,21 @@
             loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
             errorMsg.style.display = 'none';
 
+            // ตรวจว่าถูกล็อคอยู่หรือไม่
+            var _lockMsg = _getLoginLockStatus(email);
+            if (_lockMsg) {
+                errorMsg.textContent = _lockMsg;
+                errorMsg.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'เข้าสู่ระบบ';
+                return;
+            }
+
             try {
                 const result = await callBackend('login', { email, password });
 
                 if (result.success && result.must_set_password) {
+                    _clearLoginFailures(email);
                     // เข้าใช้ครั้งแรก → แสดง modal ตั้งรหัสผ่าน
                     window._firstLoginUserId = result.userId;
                     var nameEl = document.getElementById('flUserName');
@@ -252,6 +289,7 @@
                 }
 
                 if (result.success) {
+                    _clearLoginFailures(email);
                     // Store session
                     localStorage.setItem('sessionToken', result.token);
                     localStorage.setItem('currentUser', JSON.stringify(result.user));
@@ -270,6 +308,7 @@
                     // Redirect to dashboard
                     window.location.href = 'dashboard.html';
                 } else {
+                    _recordLoginFailure(email);
                     errorMsg.textContent = result.error || result.message || 'เข้าสู่ระบบไม่สำเร็จ';
                     errorMsg.style.display = 'block';
                 }

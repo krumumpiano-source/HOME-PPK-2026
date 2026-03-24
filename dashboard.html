@@ -462,7 +462,8 @@
             var d = _ctaData;
             if (d.slipStatus === 'success' || d.slipStatus === 'reviewing') return;
             if (!d.houseNumber) {
-                if (typeof ppkAlert === 'function') ppkAlert('กรุณาตั้งค่าบ้านพักก่อนส่งสลิป');
+                // ยังไม่ได้รับมอบหมายบ้านพัก → นำไปยื่นคำร้อง
+                window.location.href = 'request-form.html';
                 return;
             }
             goToUploadSlip(d.periodKey, d.amount, false);
