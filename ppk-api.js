@@ -1530,16 +1530,48 @@ async function _routeAction(action, data) {
             });
 
             if (sessRole === 'admin' || sessRole === 'head') {
-                var [pendingReg, pendingSlips, pendingReqs] = await Promise.all([
+                var adminPeriod = (now2.getFullYear() + 543) + '-' + String(now2.getMonth() + 1).padStart(2, '0');
+                var adminQueries = [
                     sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
                     sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
                     sbGet('requests', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; })
-                ]);
+                ];
+                if (sessHouseNumber) {
+                    adminQueries.push(
+                        sbGet('outstanding', { house_number: 'eq.' + sessHouseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, period: 'eq.' + adminPeriod, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
+                    );
+                }
+                var adminResults = await Promise.all(adminQueries);
+                var pendingReg = adminResults[0], pendingSlips = adminResults[1], pendingReqs = adminResults[2];
+                var residentData = null;
+                if (sessHouseNumber) {
+                    var adminOutRows = adminResults[3] || [];
+                    var adminSlipRows = adminResults[4] || [];
+                    var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
+                    var adminLatestSlip = adminSlipRows[0];
+                    var adminSlipStatus = 'none';
+                    var adminReviewNote = '';
+                    if (adminLatestSlip) {
+                        if (adminLatestSlip.status === 'approved') adminSlipStatus = 'success';
+                        else if (adminLatestSlip.status === 'rejected') { adminSlipStatus = 'rejected'; adminReviewNote = adminLatestSlip.review_note || ''; }
+                        else adminSlipStatus = 'reviewing';
+                    }
+                    residentData = {
+                        houseNumber: sessHouseNumber,
+                        period: adminPeriod,
+                        currentAmount: adminCurrentOut ? parseFloat(adminCurrentOut.total_amount) || 0 : 0,
+                        totalOutstanding: adminOutRows.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0),
+                        slipStatus: adminSlipStatus,
+                        reviewNote: adminReviewNote,
+                        dueDate: adminCurrentOut ? adminCurrentOut.due_date : null
+                    };
+                }
                 return { success: true, role: 'admin', announcements: announcements, data: {
                     pendingRegistrations: (pendingReg || []).length,
                     pendingSlips: (pendingSlips || []).length,
                     pendingRequests: (pendingReqs || []).length
-                }};
+                }, residentData: residentData };
             } else {
                 var houseNumber = sessHouseNumber;
                 var period = (now2.getFullYear() + 543) + '-' + String(now2.getMonth() + 1).padStart(2, '0');

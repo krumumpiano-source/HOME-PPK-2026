@@ -340,7 +340,6 @@
         }
 
         function renderUserDashboard(data) {
-            document.getElementById('adminStatsSection').style.display = 'none';
             document.getElementById('paymentSection').style.display = '';
             document.getElementById('hubMenuCard').style.display = '';
 
@@ -460,8 +459,6 @@
 
         function renderAdminDashboard(data) {
             document.getElementById('adminStatsSection').style.display = '';
-            document.getElementById('paymentSection').style.display = 'none';
-            document.getElementById('outstandingSection').style.display = 'none';
 
             function _stat(id, count) {
                 var el = document.getElementById(id);
@@ -495,12 +492,14 @@
                 }
                 if (result._isStale && typeof ppkToast === 'function') ppkToast('ข้อมูลอาจไม่เป็นปัจจุบัน กรุณารีเฟรช', 'warning');
                 renderAnnouncements(result.announcements || []);
-                if (result.role === 'admin' || result.role === 'head') renderAdminDashboard(result.data || {});
-                else renderUserDashboard(result.data || {});
+                if (result.role === 'admin' || result.role === 'head') {
+                    renderAdminDashboard(result.data || {});
+                    if (result.residentData) renderUserDashboard(result.residentData);
+                } else renderUserDashboard(result.data || {});
             } catch(e) {
                 console.warn('getDashboardData failed, fallback:', e);
                 renderAnnouncements([]);
-                if (isAdmin) renderAdminDashboard({});
+                if (isAdmin) { renderAdminDashboard({}); }
                 else renderUserDashboard({});
             }
         }
