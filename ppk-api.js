@@ -1507,11 +1507,11 @@ async function _routeAction(action, data) {
             // ค่าส่วนกลาง: ใช้ค่าจาก settings เป็น default, ยกเว้นตาม exemptions table
             // ถ้ามี notification อยู่แล้ว → ใช้ค่าจาก notification (admin แก้มือไว้แล้ว)
             function getCommonForHouse(hn) {
-                // ถ้า admin เคยแจ้งยอดรอบนี้แล้ว → ใช้ค่าที่เคยบันทึก
-                if (notifMap.hasOwnProperty(hn)) return notifMap[hn];
-                // ถ้าบ้านถูกยกเว้นค่าส่วนกลาง → 0
+                // ตรวจยกเว้นก่อนเสมอ — exempt → 0 (override notification เก่าที่ค้างไว้)
                 if (exemptSet[hn]) return 0;
-                // ใช้ค่าจาก settings ตามประเภทบ้าน/แฟลต
+                // notification มีค่า > 0 = admin เคยแจ้งยอดด้วยค่านั้นแล้ว → ใช้ค่านั้น
+                if (notifMap.hasOwnProperty(hn) && notifMap[hn] > 0) return notifMap[hn];
+                // notification เป็น 0 (stale จากตอนที่บ้านเคยถูก exempt) หรือไม่มี notification → ใช้ settings
                 return getCommonFee(hn);
             }
             (wRows || []).forEach(function(w) {
