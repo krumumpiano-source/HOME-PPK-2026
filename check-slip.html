@@ -259,6 +259,7 @@
       <div class="action-buttons">
         <button class="btn btn-success" onclick="sendAllReceipts('houses')">📧 ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)</button>
         <button class="btn btn-warning" onclick="sendReminder('houses')">📧 ส่งอีเมลเตือนรายที่ยังไม่ชำระ</button>
+        <button class="btn btn-secondary" onclick="exportCSV('houses')" style="background:#475569;color:#fff;border-color:#475569;">📊 Export CSV บ้านพัก</button>
       </div>
     </div>
 
@@ -311,6 +312,7 @@
       <div class="action-buttons">
         <button class="btn btn-success" onclick="sendAllReceipts('flats')">📧 ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)</button>
         <button class="btn btn-warning" onclick="sendReminder('flats')">📧 ส่งอีเมลเตือนรายที่ยังไม่ชำระ</button>
+        <button class="btn btn-secondary" onclick="exportCSV('flats')" style="background:#475569;color:#fff;border-color:#475569;">📊 Export CSV แฟลต</button>
       </div>
     </div>
 
@@ -1248,6 +1250,55 @@
       }
 
       ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่สำเร็จ/ไม่มีอีเมล: ${failed} รายการ`);
+    }
+
+    // ── Export CSV ── ดาวน์โหลดข้อมูลสรุปสลิปเป็นไฟล์ CSV (รองรับภาษาไทยด้วย BOM)
+    function exportCSV(type) {
+      var list      = type === 'houses' ? housesData : flatsData;
+      var typeName  = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
+      var period    = getSelectedPeriod();
+      var fileName  = 'สรุปสลิป_' + typeName + '_' + period.monthName + '_' + period.year + '.csv';
+
+      var STATUS_LABEL = {
+        'approved':        'อนุมัติแล้ว',
+        'rejected':        'ปฏิเสธ',
+        'pending-match':   'รอตรวจ (ยอดตรง)',
+        'pending-mismatch':'รอตรวจ (ยอดไม่ตรง)',
+        'unpaid':          'ยังไม่ชำระ'
+      };
+
+      var rows = [['ลำดับ', 'เลขที่', 'ชื่อผู้พักอาศัย', 'ยอดแจ้ง (บาท)', 'ยอดชำระ (บาท)', 'สถานะ', 'วันที่ส่งสลิป', 'หมายเหตุ']];
+      list.forEach(function(u, i) {
+        var status  = getStatus(u);
+        var dateStr = u.slipDate ? new Date(u.slipDate).toLocaleDateString('th-TH') : '-';
+        rows.push([
+          i + 1,
+          u.unitNumber || '-',
+          u.name       || '-',
+          u.notifiedAmount || 0,
+          u.paidAmount     || 0,
+          STATUS_LABEL[status] || status,
+          dateStr,
+          u.reviewNote || ''
+        ]);
+      });
+
+      var csv = '\uFEFF' + rows.map(function(row) {
+        return row.map(function(cell) {
+          var s = String(cell).replace(/"/g, '""');
+          return (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) ? '"' + s + '"' : s;
+        }).join(',');
+      }).join('\r\n');
+
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href     = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // เริ่มต้น

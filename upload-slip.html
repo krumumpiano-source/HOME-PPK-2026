@@ -647,7 +647,8 @@
 
                 try {
                     // อัปโหลดรูปสลิปไปยัง Supabase Storage ก่อน
-                    const slipUrls = [];
+                    const slipUrls  = [];
+                    const slipPaths = []; // เก็บ path ไว้ลบคืนถ้า DB insert ล้มเหลว
                     if (window._sb && resizedImages.length > 0) {
                         submitBtn.textContent = 'กำลังอัปโหลดรูป...';
                         for (let i = 0; i < resizedImages.length; i++) {
@@ -666,6 +667,7 @@
                                 if (!upErr) {
                                     const { data: urlData } = window._sb.storage.from('slips').getPublicUrl(path);
                                     slipUrls.push(urlData.publicUrl);
+                                    slipPaths.push(path);
                                 } else {
                                     console.warn('Upload slip image failed:', upErr.message);
                                 }
@@ -723,13 +725,22 @@
                         window.navigate('dashboard.html');
                         return;
                     } else if (submitResult && !submitResult.success) {
-                        // Backend ส่งกลับ error — แจ้งผู้ใช้ชัดเจน ไม่ fallback เงียบ
+                        // ลบรูปที่อัปโหลดไปแล้วคืน (best-effort) เพื่อไม่ให้ค้างใน Storage
+                        if (slipPaths.length > 0) {
+                            window._sb.storage.from('slips').remove(slipPaths)
+                                .catch(function(e) { console.warn('cleanup orphaned slip files:', e); });
+                        }
                         ppkAlert('⚠️ ' + (submitResult.error || 'ไม่สามารถบันทึกสลิปได้'));
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'ยืนยันการส่งสลิป';
                         return;
                     }
                 } catch (submitErr) {
+                    // ลบรูปที่อัปโหลดไปแล้วคืน (best-effort)
+                    if (typeof slipPaths !== 'undefined' && slipPaths.length > 0 && window._sb) {
+                        window._sb.storage.from('slips').remove(slipPaths)
+                            .catch(function(e) { console.warn('cleanup orphaned slip files:', e); });
+                    }
                     console.error('Supabase submitSlip failed:', submitErr);
                     ppkAlert('❌ บันทึกสลิปไม่สำเร็จ\n\n' + (submitErr.message || 'ไม่สามารถเชื่อมต่อระบบได้') + '\n\nกรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
                     submitBtn.disabled = false;
