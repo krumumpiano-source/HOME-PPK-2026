@@ -596,24 +596,36 @@
             try {
                 var results = await Promise.all([
                     callBackend('getOutstanding', { status: 'paid' }),
-                    callBackend('getOutstanding', { status: 'unpaid' }),
+                    callBackend('getNotificationHistory', { limit: 200 }),
                     callBackend('getSlipSubmissions', { status: 'pending' }),
                     callBackend('getRequests', { status: 'pending' }),
                     callBackend('getHousing', {})
                 ]);
 
                 var paidAll     = (results[0] && results[0].data) || [];
-                var unpaidAll   = (results[1] && results[1].data) || [];
+                var notifAll    = (results[1] && results[1].data) || [];
                 var pendSlips   = (results[2] && results[2].data) || [];
                 var pendReqs    = (results[3] && results[3].data) || [];
                 var housing     = (results[4] && results[4].data) || [];
 
                 // นับเฉพาะเดือนปัจจุบัน
-                var paidCount  = paidAll.filter(function(r) { return r.period === currentPeriod; }).length;
-                var unpaidCount = unpaidAll.filter(function(r) { return r.period === currentPeriod; }).length;
-                var totalHouses = housing.length || (paidCount + unpaidCount) || 0;
+                var paidCount     = paidAll.filter(function(r) { return r.period === currentPeriod; }).length;
+                var notifSentCount = notifAll.filter(function(n) { return (n.period || '') === currentPeriod; }).length;
+                var totalHouses   = housing.length || paidCount || 0;
+                // ยังไม่ชำระ = ทั้งหมด - ชำระแล้ว (ไม่ขึ้นกับ outstanding table)
+                var unpaidCount   = Math.max(0, totalHouses - paidCount);
                 var pendSlipCount = pendSlips.length;
                 var pendReqCount  = pendReqs.length;
+
+                // action text ตามสถานะจริง
+                var unpaidAction;
+                if (paidCount >= totalHouses && totalHouses > 0) {
+                    unpaidAction = '✅ ครบทุกห้องแล้ว';
+                } else if (notifSentCount === 0) {
+                    unpaidAction = 'ยังไม่ได้แจ้งยอด';
+                } else {
+                    unpaidAction = 'แจ้งเตือน →';
+                }
 
                 var kpiContent = document.getElementById('kpiContent');
                 kpiContent.innerHTML =
@@ -631,7 +643,7 @@
                         '<div class="kpi-card red" onclick="navigate(\'?page=payment-notification\')">' +
                             '<div class="kpi-number">' + unpaidCount + '</div>' +
                             '<div class="kpi-label">ยังไม่ชำระ</div>' +
-                            '<div class="kpi-action">' + (unpaidCount > 0 ? 'แจ้งเตือน →' : 'ครบทุกห้อง') + '</div>' +
+                            '<div class="kpi-action">' + unpaidAction + '</div>' +
                         '</div>' +
                         '<div class="kpi-card blue" onclick="navigate(\'?page=check-request\')">' +
                             '<div class="kpi-number">' + pendReqCount + '</div>' +
@@ -648,6 +660,7 @@
                 return {
                     paidCount: paidCount,
                     unpaidCount: unpaidCount,
+                    notifSentCount: notifSentCount,
                     pendSlipCount: pendSlipCount,
                     pendReqCount: pendReqCount,
                     totalHouses: totalHouses
@@ -703,6 +716,10 @@
 
                 var totalHouses = (kpiData && kpiData.totalHouses) || 0;
                 var notifTarget = totalHouses || waterCount || elecCount || 1;
+                // ใช้ notifSentCount จาก kpiData (query เดียวกัน ไม่ต้อง query ซ้ำ)
+                var notifSentTotal = (kpiData && kpiData.notifSentCount != null)
+                    ? kpiData.notifSentCount : notifCount;
+                var paidTotal = (kpiData && kpiData.paidCount) || 0;
 
                 // กำหนดสถานะแต่ละขั้นตอน
                 var steps = [
@@ -729,20 +746,24 @@
                     {
                         name: 'แจ้งยอดชำระ',
                         page: 'payment-notification',
-                        done: notifCount > 0 && notifCount >= notifTarget,
-                        status: notifCount <= 0
+                        done: notifSentTotal > 0 && notifSentTotal >= notifTarget,
+                        status: notifSentTotal <= 0
                             ? '⏳ ยังไม่ได้แจ้ง'
-                            : (notifCount >= notifTarget
-                                ? '✅ แจ้งแล้ว ' + notifCount + '/' + notifTarget + ' ห้อง'
-                                : '⚠️ แจ้งแล้ว ' + notifCount + '/' + notifTarget + ' ห้อง (ยังไม่ครบ)')
+                            : (notifSentTotal >= notifTarget
+                                ? '✅ แจ้งแล้ว ' + notifSentTotal + '/' + notifTarget + ' ห้อง'
+                                : '⚠️ แจ้งแล้ว ' + notifSentTotal + '/' + notifTarget + ' ห้อง (ยังไม่ครบ)')
                     },
                     {
                         name: 'ตรวจสลิปการชำระ',
                         page: 'check-slip',
-                        done: pendSlipCount === 0 && (kpiData && kpiData.paidCount > 0),
-                        status: pendSlipCount > 0
-                            ? '🔍 รอตรวจ ' + pendSlipCount + ' รายการ'
-                            : (kpiData && kpiData.paidCount > 0 ? '✅ ตรวจครบแล้ว' : '⏳ ยังไม่มีสลิปเข้า')
+                        done: pendSlipCount === 0 && paidTotal > 0 && notifSentTotal >= notifTarget,
+                        status: notifSentTotal === 0
+                            ? '⏳ รอแจ้งยอดก่อน'
+                            : (pendSlipCount > 0
+                                ? '🔍 รอตรวจ ' + pendSlipCount + ' รายการ'
+                                : (paidTotal > 0
+                                    ? '✅ ตรวจครบแล้ว (' + paidTotal + ' ห้องชำระแล้ว)'
+                                    : '⏳ ยังไม่มีสลิปเข้า'))
                     },
                     {
                         name: 'บันทึกยอดเบิกประจำเดือน',
@@ -750,7 +771,7 @@
                         done: withdrawCount > 0,
                         status: withdrawCount > 0
                             ? '✅ บันทึกแล้ว ' + withdrawCount + ' รายการ'
-                            : '⏳ ยังไม่ได้บันทึก'
+                            : (paidTotal === 0 ? '⏳ รอเก็บเงินให้ครบก่อน' : '⏳ ยังไม่ได้บันทึก')
                     }
                 ];
 
