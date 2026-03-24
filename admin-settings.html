@@ -4302,11 +4302,11 @@
                     const housingData = housingResult.data.map((h, i) => ({
                         id: h.id || (i + 1),
                         type: h.type || 'house',
-                        number: h.number || '',
+                        number: h.house_number || h.number || '',
                         displayNumber: '',
                         zone: h.zone || '',
                         status: h.status || 'available',
-                        note: h.note || ''
+                        note: h.notes || h.note || ''
                     }));
                     localStorage.setItem(STORAGE_KEYS.housing, JSON.stringify(housingData));
                 }
