@@ -1433,13 +1433,14 @@ async function _routeAction(action, data) {
         /* ── Bill summaries ───────────────────────── */
         case 'getBillSummaryAll': {
             var period = data.period || '';
-            // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications
-            var [wRows, eRows, resRows, settRows, notifRows] = await Promise.all([
+            // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications, exemptions
+            var [wRows, eRows, resRows, settRows, notifRows, exemptRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; }),
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
-                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; })
+                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; }),
+                sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; })
             ]);
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
@@ -1451,6 +1452,12 @@ async function _routeAction(action, data) {
 
             function isFlat(hn) { var n = (hn || '').toLowerCase(); return n.indexOf('แฟลต') >= 0 || n.indexOf('flat') >= 0; }
             function getCommonFee(hn) { return isFlat(hn) ? commonFeeFlat : commonFeeHouse; }
+
+            // สร้าง set ของบ้านที่ถูกยกเว้นค่าส่วนกลาง (จาก admin-settings)
+            var exemptSet = {};
+            (exemptRows || []).forEach(function(ex) {
+                if (ex.house_number) exemptSet[ex.house_number] = true;
+            });
 
             // สร้าง map ของบ้านที่มี notification (= admin กดแจ้งยอดแล้ว)
             var notifMap = {};
@@ -1472,11 +1479,15 @@ async function _routeAction(action, data) {
             });
             // รวมข้อมูลตาม house_number
             var summaryMap = {};
-            // ค่าส่วนกลาง: ใส่เฉพาะเมื่อมี notification (แจ้งยอดแล้ว) หรือมีบิลน้ำ/ไฟจริง
+            // ค่าส่วนกลาง: ใช้ค่าจาก settings เป็น default, ยกเว้นตาม exemptions table
+            // ถ้ามี notification อยู่แล้ว → ใช้ค่าจาก notification (admin แก้มือไว้แล้ว)
             function getCommonForHouse(hn) {
-                if (notifMap.hasOwnProperty(hn)) return notifMap[hn] || getCommonFee(hn);
-                if (hasNotifications) return 0; // มีการแจ้งยอดแล้วบางบ้าน แต่บ้านนี้ไม่ได้แจ้ง
-                return 0; // ยังไม่มีการแจ้งยอดเลย → ไม่ใส่ค่าส่วนกลาง
+                // ถ้า admin เคยแจ้งยอดรอบนี้แล้ว → ใช้ค่าที่เคยบันทึก
+                if (notifMap.hasOwnProperty(hn)) return notifMap[hn];
+                // ถ้าบ้านถูกยกเว้นค่าส่วนกลาง → 0
+                if (exemptSet[hn]) return 0;
+                // ใช้ค่าจาก settings ตามประเภทบ้าน/แฟลต
+                return getCommonFee(hn);
             }
             (wRows || []).forEach(function(w) {
                 var hn = w.house_number || '';
@@ -1502,6 +1513,7 @@ async function _routeAction(action, data) {
             }
             var result = Object.values(summaryMap).map(function(s) {
                 s.resident_name = resMap[s.house_number] || '';
+                s.exempt_common = exemptSet[s.house_number] ? true : false;
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
                 return s;
             }).sort(_naturalCmp);
