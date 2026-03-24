@@ -945,13 +945,14 @@ async function _routeAction(action, data) {
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var rows = await sbGet('payment_history', q);
 
-            // Enrich: ดึง water_bills + electric_bills + settings + exemptions เพื่อแยกยอดค่าน้ำ/ค่าไฟ/ค่าส่วนกลาง
+            // Enrich: ดึง water_bills + electric_bills + settings + exemptions + housing เพื่อแยกยอดค่าน้ำ/ค่าไฟ/ค่าส่วนกลาง
             if (rows && rows.length > 0 && data.houseNumber) {
-                var [_phW, _phE, _phS, _phExempt] = await Promise.all([
+                var [_phW, _phE, _phS, _phExempt, _phHousing] = await Promise.all([
                     sbGet('water_bills',    { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
                     sbGet('electric_bills', { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
                     sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
-                    sbGet('exemptions',     { house_number: 'eq.' + data.houseNumber, type: 'eq.common_fee', select: 'id' }).catch(function() { return []; })
+                    sbGet('exemptions',     { house_number: 'eq.' + data.houseNumber, type: 'eq.common_fee', select: 'id,house_id' }).catch(function() { return []; }),
+                    sbGet('housing',        { select: 'id' }).catch(function() { return []; })
                 ]);
                 var _phWMap = {};
                 (_phW || []).forEach(function(w) { _phWMap[w.period] = (_phWMap[w.period] || 0) + (parseFloat(w.amount) || 0); });
@@ -962,7 +963,10 @@ async function _routeAction(action, data) {
                 var _cfH = parseFloat(_phSMap['common_fee_house']) || parseFloat(_phSMap['commonFee']) || 0;
                 var _cfF = parseFloat(_phSMap['common_fee_flat'])  || parseFloat(_phSMap['commonFee']) || 0;
                 var _hn = (data.houseNumber || '').toLowerCase();
-                var _isExempt = _phExempt && _phExempt.length > 0;
+                // validate ว่า exemption มี house_id ที่ตรงกับ housing จริง
+                var _phValidIds = {};
+                (_phHousing || []).forEach(function(h) { if (h.id) _phValidIds[String(h.id)] = true; });
+                var _isExempt = (_phExempt || []).some(function(ex) { return ex.house_id && _phValidIds[String(ex.house_id)]; });
                 var _cf = _isExempt ? 0 : ((_hn.indexOf('แฟลต') >= 0 || _hn.indexOf('flat') >= 0) ? _cfF : _cfH);
                 rows.forEach(function(r) {
                     r.water_amount    = _phWMap[r.period] || 0;
@@ -1436,14 +1440,15 @@ async function _routeAction(action, data) {
         /* ── Bill summaries ───────────────────────── */
         case 'getBillSummaryAll': {
             var period = data.period || '';
-            // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications, exemptions
-            var [wRows, eRows, resRows, settRows, notifRows, exemptRows] = await Promise.all([
+            // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications, exemptions, housing
+            var [wRows, eRows, resRows, settRows, notifRows, exemptRows, housingRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; }),
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
                 sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; }),
-                sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; })
+                sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number,house_id' }).catch(function() { return []; }),
+                sbGet('housing',        { select: 'id,number,type' }).catch(function() { return []; })
             ]);
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
@@ -1457,10 +1462,27 @@ async function _routeAction(action, data) {
             function getCommonFee(hn) { return isFlat(hn) ? commonFeeFlat : commonFeeHouse; }
 
             // สร้าง set ของบ้านที่ถูกยกเว้นค่าส่วนกลาง (จาก admin-settings)
+            // validate ด้วย housing table: ป้องกัน orphaned records ที่ house_id ไม่ตรงกับ housing จริง
+            var validHousingIds = {};
+            (housingRows || []).forEach(function(h) { if (h.id) validHousingIds[String(h.id)] = true; });
             var exemptSet = {};
+            var _orphanExemptions = [];
             (exemptRows || []).forEach(function(ex) {
-                if (ex.house_number) exemptSet[ex.house_number] = true;
+                if (!ex.house_number) return;
+                // ตรวจว่า record นี้มี house_id ที่ตรงกับ housing จริง
+                if (ex.house_id && validHousingIds[String(ex.house_id)]) {
+                    exemptSet[ex.house_number] = true;
+                } else {
+                    _orphanExemptions.push(ex);
+                }
             });
+            // ลบ orphaned exemptions เงียบๆ (house_id ไม่ตรง housing จริง)
+            if (_orphanExemptions.length > 0) {
+                console.warn('[getBillSummaryAll] พบ orphaned exemptions:', _orphanExemptions.length, '→ auto-delete');
+                _orphanExemptions.forEach(function(o) {
+                    sbDelete('exemptions', { house_number: 'eq.' + o.house_number, type: 'eq.common_fee' }).catch(function() {});
+                });
+            }
 
             // สร้าง map ของบ้านที่มี notification (= admin กดแจ้งยอดแล้ว)
             var notifMap = {};
@@ -2534,9 +2556,19 @@ async function _routeAction(action, data) {
         case 'getExemptions': {
             var exQ = { type: 'eq.common_fee' };
             if (data.houseNumber) exQ.house_number = 'eq.' + data.houseNumber;
-            var exRows = await sbGet('exemptions', exQ);
+            var [exRows, exHousingRows] = await Promise.all([
+                sbGet('exemptions', exQ).catch(function() { return []; }),
+                sbGet('housing', { select: 'id' }).catch(function() { return []; })
+            ]);
+            // validate: เก็บเฉพาะ exemptions ที่ house_id ตรงกับ housing จริง
+            var exValidIds = {};
+            (exHousingRows || []).forEach(function(h) { if (h.id) exValidIds[String(h.id)] = true; });
             var exMap = {};
-            (exRows || []).forEach(function(e) { exMap[e.house_id] = { exempt: true, note: e.reason || '', house_number: e.house_number || '' }; });
+            (exRows || []).forEach(function(e) {
+                if (e.house_id && exValidIds[String(e.house_id)]) {
+                    exMap[e.house_id] = { exempt: true, note: e.reason || '', house_number: e.house_number || '' };
+                }
+            });
             return { success: true, data: exMap };
         }
 
