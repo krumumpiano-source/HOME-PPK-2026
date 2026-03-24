@@ -952,7 +952,7 @@ async function _routeAction(action, data) {
                     sbGet('electric_bills', { house_number: 'eq.' + data.houseNumber, order: 'period.asc' }).catch(function() { return []; }),
                     sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
                     sbGet('exemptions',     { house_number: 'eq.' + data.houseNumber, type: 'eq.common_fee', select: 'id,house_id' }).catch(function() { return []; }),
-                    sbGet('housing',        { select: 'id' }).catch(function() { return []; })
+                    sbGet('housing',        { select: 'id,house_number' }).catch(function() { return []; })
                 ]);
                 var _phWMap = {};
                 (_phW || []).forEach(function(w) { _phWMap[w.period] = (_phWMap[w.period] || 0) + (parseFloat(w.amount) || 0); });
@@ -1448,7 +1448,7 @@ async function _routeAction(action, data) {
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
                 sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; }),
                 sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number,house_id' }).catch(function() { return []; }),
-                sbGet('housing',        { select: 'id,number,type' }).catch(function() { return []; })
+                sbGet('housing',        { select: 'id,house_number,type' }).catch(function() { return []; })
             ]);
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
