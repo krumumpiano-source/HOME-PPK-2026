@@ -79,6 +79,15 @@
         .hero-status.pending { background: rgba(251,191,36,0.2); color: #FCD34D; }
         .hero-status.paid { background: rgba(16,185,129,0.2); color: #6EE7B7; }
         .hero-status.overdue { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+        .hero-status.rejected { background: rgba(239,68,68,0.25); color: #FCA5A5; }
+        /* Rejection reason banner inside hero card */
+        .hero-reject-banner {
+            background: rgba(220,38,38,0.18); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 10px; padding: .65rem .9rem; margin-top: .75rem;
+            font-size: .88rem; color: #FCA5A5; line-height: 1.5;
+            display: none;
+        }
+        .hero-reject-banner strong { color: #fff; }
 
         /* ── Outstanding banner ── */
         .outstanding-banner {
@@ -186,6 +195,7 @@
                         </div>
                     </div>
                     <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
+                    <div class="hero-reject-banner" id="heroRejectBanner"></div>
                 </div>
             </div>
 
@@ -339,6 +349,7 @@
             var period = data.period || '';
             var houseNumber = data.houseNumber || '';
             var slipStatus = data.slipStatus || 'none';
+            var reviewNote = data.reviewNote || '';
 
             var parts = period.split('-');
             var monthIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
@@ -374,10 +385,23 @@
                 badgeEl.innerHTML = '<div class="hero-status paid">✅ ชำระแล้ว</div>';
             } else if (slipStatus === 'reviewing') {
                 badgeEl.innerHTML = '<div class="hero-status pending">🔍 รอตรวจสอบ</div>';
+            } else if (slipStatus === 'rejected') {
+                badgeEl.innerHTML = '<div class="hero-status rejected">❌ สลิปไม่ผ่าน</div>';
             } else if (amount > 0) {
                 badgeEl.innerHTML = '<div class="hero-status overdue">⏳ รอชำระ</div>';
             } else {
                 badgeEl.innerHTML = '';
+            }
+
+            // Rejection reason banner
+            var rejectBanner = document.getElementById('heroRejectBanner');
+            if (slipStatus === 'rejected' && rejectBanner) {
+                rejectBanner.style.display = '';
+                rejectBanner.innerHTML = '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                    + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
+                    + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>“⚠️ สลิปไม่ผ่าน — กดส่งใหม่”</strong> เพื่ออัพโหลดสลิปใหม่';
+            } else if (rejectBanner) {
+                rejectBanner.style.display = 'none';
             }
 
             // CTA button
@@ -464,7 +488,7 @@
             if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'dashboard');
 
             try {
-                var result = await cachedCall('getDashboardData', {}, 60000);
+                var result = await cachedCall('getDashboardData', {}, isAdmin ? 60000 : 15000);
                 if (!result || !result.success) {
                     if (typeof ppkAlert === 'function') ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า');
                     return;

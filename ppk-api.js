@@ -1553,9 +1553,10 @@ async function _routeAction(action, data) {
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
                 var latestSlip = slipRows && slipRows[0];
                 var slipStatus = 'none';
+                var reviewNote = '';
                 if (latestSlip) {
                     if (latestSlip.status === 'approved') slipStatus = 'success';
-                    else if (latestSlip.status === 'rejected') slipStatus = 'rejected';
+                    else if (latestSlip.status === 'rejected') { slipStatus = 'rejected'; reviewNote = latestSlip.review_note || ''; }
                     else slipStatus = 'reviewing';
                 }
                 var totalOutstanding = (outRows || []).reduce(function(s, r) {
@@ -1567,6 +1568,7 @@ async function _routeAction(action, data) {
                     currentAmount: currentOut ? parseFloat(currentOut.total_amount) || 0 : 0,
                     totalOutstanding: totalOutstanding,
                     slipStatus: slipStatus,
+                    reviewNote: reviewNote,
                     dueDate: currentOut ? currentOut.due_date : null
                 }};
             }
