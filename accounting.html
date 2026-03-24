@@ -885,7 +885,7 @@
                 tr.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${formatDate(item.date)}</td>
-                    <td style="text-align:left;">${item.description}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
+                    <td style="text-align:left;">${String(item.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
                     <td>${formatMoney(item.amount)}</td>
                     <td>${hasImage}</td>
                     <td>${item.note || '-'}</td>
@@ -919,7 +919,7 @@
                 tr.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${formatDate(item.date)}</td>
-                    <td style="text-align:left;">${item.description}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
+                    <td style="text-align:left;">${String(item.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
                     <td>${formatMoney(item.amount)}</td>
                     <td>${hasImage}</td>
                     <td>${item.note || '-'}</td>

@@ -1169,7 +1169,7 @@
                 tableHTML += '<tr>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: center;">' + rowNum + '</td>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + house + '</td>';
-                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + resident + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + resident.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: right;">' + amountNum.toLocaleString('th-TH') + '</td>';
                 tableHTML += '</tr>';
                 

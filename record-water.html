@@ -1203,7 +1203,7 @@
                 tableHTML += '<tr>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: center;">' + rowNum + '</td>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + house + '</td>';
-                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + resident + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + resident.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: right;">' + parseInt(prevMeter).toLocaleString() + '</td>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: right;">' + parseInt(currMeter).toLocaleString() + '</td>';
                 tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: right;">' + usage + '</td>';
@@ -1338,7 +1338,7 @@
                 monthlyTableHTML += '<tr>';
                 monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;text-align:center;">' + rowNum + '</td>';
                 monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;">' + house + '</td>';
-                monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;">' + resident + '</td>';
+                monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;">' + resident.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
                 monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;text-align:right;">' + parseInt(prevMeter).toLocaleString() + '</td>';
                 monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;text-align:right;">' + parseInt(currMeter).toLocaleString() + '</td>';
                 monthlyTableHTML += '<td style="border:1px solid #000;padding:4px;text-align:right;">' + usage.toLocaleString() + '</td>';

@@ -805,11 +805,10 @@ async function _routeAction(action, data) {
                     var _wHouseRows = await sbGet('housing', { select: 'id,house_number' });
                     (_wHouseRows || []).forEach(function(h) { _wHouseMap[h.house_number] = h.id; });
                 } catch(e) {}
-                // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
-                try { var _bakW = await sbGet('water_bills', { period: 'eq.' + data.period }); await _autoBackup('submitWaterBill', 'บันทึกค่าน้ำงวด ' + data.period, 'water_bills', 'period', data.period, user.id || null, _bakW); } catch(e) {}
-                // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
-                try { await sbDelete('water_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old water_bills:', e); }
-                // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
+                // สำรองข้อมูลเดิมและเก็บ IDs เดิมไว้ (เพื่อลบหลัง insert สำเร็จ — ป้องกันข้อมูลสูญหายถ้า insert fail)
+                var _oldWIds = [];
+                try { var _bakW = await sbGet('water_bills', { period: 'eq.' + data.period }); _oldWIds = (_bakW || []).map(function(r){ return r.id; }).filter(Boolean); await _autoBackup('submitWaterBill', 'บันทึกค่าน้ำงวด ' + data.period, 'water_bills', 'period', data.period, user.id || null, _bakW); } catch(e) {}
+                // Batch insert ก่อน (ลบเก่าหลัง insert สำเร็จ — ป้องกันข้อมูลสูญหายถ้า insert fail)
                 var _wBatch = data.records.map(function(rec) {
                     return {
                         house_id: _wHouseMap[rec.house_number] || null,
@@ -828,6 +827,10 @@ async function _routeAction(action, data) {
                 });
                 var inserted = await sbPost('water_bills', _wBatch);
                 if (!Array.isArray(inserted)) inserted = [inserted];
+                // ลบข้อมูลเดิมหลัง insert สำเร็จ (insert-first, delete-after)
+                if (_oldWIds.length > 0) {
+                    try { await sbDelete('water_bills', { id: 'in.(' + _oldWIds.join(',') + ')' }); } catch(e) { console.warn('cleanup old water_bills:', e); }
+                }
                 // Auto-sync บัญชี
                 try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
                 return { success: true, data: inserted };
@@ -874,11 +877,10 @@ async function _routeAction(action, data) {
                     var _eHouseRows = await sbGet('housing', { select: 'id,house_number' });
                     (_eHouseRows || []).forEach(function(h) { _eHouseMap[h.house_number] = h.id; });
                 } catch(e) {}
-                // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
-                try { var _bakE = await sbGet('electric_bills', { period: 'eq.' + data.period }); await _autoBackup('submitElectricBill', 'บันทึกค่าไฟงวด ' + data.period, 'electric_bills', 'period', data.period, user.id || null, _bakE); } catch(e) {}
-                // ลบข้อมูลเดิมของ period นี้ก่อน insert ใหม่ (ป้องกันข้อมูลซ้ำ)
-                try { await sbDelete('electric_bills', { period: 'eq.' + data.period }); } catch(e) { console.warn('delete old electric_bills:', e); }
-                // Batch insert ทีเดียว (เร็วกว่า insert ทีละแถว)
+                // สำรองข้อมูลเดิมและเก็บ IDs เดิมไว้ (เพื่อลบหลัง insert สำเร็จ — ป้องกันข้อมูลสูญหายถ้า insert fail)
+                var _oldEIds = [];
+                try { var _bakE = await sbGet('electric_bills', { period: 'eq.' + data.period }); _oldEIds = (_bakE || []).map(function(r){ return r.id; }).filter(Boolean); await _autoBackup('submitElectricBill', 'บันทึกค่าไฟงวด ' + data.period, 'electric_bills', 'period', data.period, user.id || null, _bakE); } catch(e) {}
+                // Batch insert ก่อน (ลบเก่าหลัง insert สำเร็จ — ป้องกันข้อมูลสูญหายถ้า insert fail)
                 var _eBatch = data.records.map(function(rec) {
                     var _eAmt = parseFloat(rec.amount) || 0;
                     var obj = {
@@ -900,6 +902,10 @@ async function _routeAction(action, data) {
                 });
                 var inserted = await sbPost('electric_bills', _eBatch);
                 if (!Array.isArray(inserted)) inserted = [inserted];
+                // ลบข้อมูลเดิมหลัง insert สำเร็จ (insert-first, delete-after)
+                if (_oldEIds.length > 0) {
+                    try { await sbDelete('electric_bills', { id: 'in.(' + _oldEIds.join(',') + ')' }); } catch(e) { console.warn('cleanup old electric_bills:', e); }
+                }
                 // บันทึก PEA total + Lost ลง settings (ต่อ period)
                 if (data.pea_total || data.lost_house || data.lost_flat) {
                     var lostData = JSON.stringify({

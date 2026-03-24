@@ -552,6 +552,7 @@
                     }
 
                     // บันทึก coresidents ทีละรายการ (เฉพาะที่เปลี่ยนแปลง)
+                    var _coErrors = [];
                     for (const c of coresidents) {
                         if (c._isNew) {
                             try {
@@ -560,14 +561,24 @@
                                     c.id = r.id;
                                     c._isNew = false;
                                     c._isModified = false;
+                                } else if (!r || !r.success) {
+                                    _coErrors.push((c.firstname || c.lastname || 'ผู้ร่วมพัก') + ': ' + (r && r.error || 'บันทึกไม่สำเร็จ'));
                                 }
-                            } catch(e) { console.warn('addCoresident failed', e); }
+                            } catch(e) { _coErrors.push((c.firstname || c.lastname || 'ผู้ร่วมพัก') + ': ' + (e.message || 'เกิดข้อผิดพลาด')); }
                         } else if (c._isModified && c.id) {
                             try {
                                 await callBackend('updateCoresident', c);
                                 c._isModified = false;
-                            } catch(e) { console.warn('updateCoresident failed', e); }
+                            } catch(e) { _coErrors.push((c.firstname || c.lastname || 'ผู้ร่วมพัก') + ': ' + (e.message || 'เกิดข้อผิดพลาด')); }
                         }
+                    }
+                    if (_coErrors.length > 0) {
+                        ppkAlert('⚠️ บันทึกผู้ร่วมพักบางรายไม่สำเร็จ:
+' + _coErrors.join('
+'));
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = '💾 บันทึกข้อมูล';
+                        return;
                     }
                 } catch (err) {
                     ppkAlert(err.message || 'ไม่สามารถบันทึกข้อมูลได้');

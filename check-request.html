@@ -968,7 +968,7 @@
             saveData('residence', data);
             
             // ส่งลำดับใหม่ไป Backend
-            callBackend('updateQueue', { orderedIds: orderedIds }).then(function() { _clearRequestsCache(); }).catch(e => console.error('อัปเดตคิวไม่สำเร็จ:', e));
+            callBackend('updateQueue', { orderedIds: orderedIds }).then(function() { _clearRequestsCache(); }).catch(function(e) { console.error('อัปเดตคิวไม่สำเร็จ:', e); if (typeof ppkToast === 'function') ppkToast('ไม่สามารถบันทึกลำดับคิวได้ กรุณาลองใหม่', 'error'); });
         }
 
         function addToQueue(id) {
