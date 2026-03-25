@@ -517,10 +517,10 @@
                     ]);
 
                     if (waterResult && waterResult.success) {
-                        waterTotal = waterResult.total || 0;
+                        waterTotal = (waterResult.data && waterResult.data.total) || 0;
                     }
                     if (electricResult && electricResult.success) {
-                        electricTotal = electricResult.peaTotal || 0;
+                        electricTotal = (electricResult.data && electricResult.data.total) || 0;
                     }
                     // โหลดค่าขยะจาก settings ก่อน
                     if (settingsResult && settingsResult.success && settingsResult.data) {

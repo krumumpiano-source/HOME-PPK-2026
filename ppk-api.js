@@ -394,7 +394,7 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
     'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf',
-    'getBackups','restoreBackup','deleteOldBackups'];
+    'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries'];
 
 // ── Storage bucket helper: auto-create if not exists ──
 var _bucketReady = {};
@@ -917,12 +917,13 @@ async function _routeAction(action, data) {
                 if (_oldEIds.length > 0) {
                     try { await sbDelete('electric_bills', { id: 'in.(' + _oldEIds.join(',') + ')' }); } catch(e) { console.warn('cleanup old electric_bills:', e); }
                 }
-                // บันทึก PEA total + Lost ลง settings (ต่อ period)
-                if (data.pea_total || data.lost_house || data.lost_flat) {
+                // บันทึก PEA total + Lost + rounding_surplus ลง settings (ต่อ period)
+                if (data.pea_total || data.lost_house || data.lost_flat || data.rounding_surplus) {
                     var lostData = JSON.stringify({
                         pea_total: data.pea_total || 0,
                         lost_house: data.lost_house || 0,
-                        lost_flat: data.lost_flat || 0
+                        lost_flat: data.lost_flat || 0,
+                        rounding_surplus: data.rounding_surplus || 0
                     });
                     await sbUpsert('settings', { key: 'electric_lost_' + data.period, value: lostData }, 'key');
                 }
@@ -1044,14 +1045,24 @@ async function _routeAction(action, data) {
             return { success: true, data: row };
         }
         case 'getMonthlyWithdraw': {
-            var q = { order: 'created_at.desc' };
-            if (data.period) q.period = 'eq.' + data.period;
-            var rows = await sbGet('monthly_withdraw', q);
-            return { success: true, data: rows };
+            var wdKey = 'monthly_withdraw_' + (data.period || '');
+            var wdRows = await sbGet('settings', { key: 'eq.' + wdKey });
+            var wdStored = null;
+            if (wdRows && wdRows[0] && wdRows[0].value) {
+                try { wdStored = JSON.parse(wdRows[0].value); } catch(e) {}
+            }
+            return { success: true, data: wdStored };
         }
         case 'saveWithdraw': {
-            var row = await sbPost('monthly_withdraw', { period: data.period, year: data.year, month: data.month, description: data.description, amount: data.amount, recipient: data.recipient, approved_by: data.approvedBy });
-            return { success: true, data: row };
+            var swKey = 'monthly_withdraw_' + (data.period || '');
+            var swVal = JSON.stringify({
+                garbageFee: data.garbageFee || 0,
+                additionalItems: data.additionalItems || [],
+                totalWithdraw: data.totalWithdraw || 0,
+                savedAt: new Date().toISOString()
+            });
+            await sbUpsert('settings', { key: swKey, value: swVal }, 'key');
+            return { success: true };
         }
         case 'getSettings': {
             var rows = await sbGet('settings', {});
@@ -2236,36 +2247,76 @@ async function _routeAction(action, data) {
                     receipt_url: r.receipt_url || null
                 };
             };
-            // คำนวณ carryForward = ยอดสะสมของเดือนก่อน
+            // คำนวณ carryForward = ผลสะสมสุทธิของทุก period ก่อนหน้า (ไม่ใช่แค่เดือนก่อน)
             var carryForward = 0;
             try {
-                var parts = period.split('-');
-                var prevDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 2, 1);
-                var prevPeriod = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
-                var [prevInc, prevExp] = await Promise.all([
-                    sbGet('accounting_entries', { period: 'eq.' + prevPeriod, type: 'eq.income',  select: 'amount' }),
-                    sbGet('accounting_entries', { period: 'eq.' + prevPeriod, type: 'eq.expense', select: 'amount' })
+                // period เป็น YYYY-MM สามารถเปรียบเทียบ string ได้โดยตรง
+                var [allPrevInc, allPrevExp] = await Promise.all([
+                    sbGet('accounting_entries', { period: 'lt.' + period, type: 'eq.income',  select: 'amount' }).catch(function() { return []; }),
+                    sbGet('accounting_entries', { period: 'lt.' + period, type: 'eq.expense', select: 'amount' }).catch(function() { return []; })
                 ]);
-                var pInc = (prevInc || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-                var pExp = (prevExp || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-                carryForward = pInc - pExp;
+                var totalPrevInc = (allPrevInc || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                var totalPrevExp = (allPrevExp || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                carryForward = totalPrevInc - totalPrevExp;
             } catch(e) { carryForward = 0; }
             return { success: true, incomeItems: (incRows || []).map(mapRow), expenseItems: (expRows || []).map(mapRow), carryForward: carryForward };
         }
+
+        /* ── loadAndSyncAccounting — sync auto entries แล้ว load ข้อมูลบัญชี ─── */
+        case 'loadAndSyncAccounting': {
+            var period = data.period || '';
+            // 1. Sync: ลบ auto entries เก่า แล้ว insert ใหม่ที่ถูกต้อง
+            await _autoSyncAccounting(period);
+            // 2. Load: ดึงข้อมูลทั้งหมด (manual + auto ใหม่)
+            var [incRows, expRows] = await Promise.all([
+                sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.income',  order: 'recorded_at.asc' }).catch(function() { return []; }),
+                sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.expense', order: 'recorded_at.asc' }).catch(function() { return []; })
+            ]);
+            var mapRow2 = function(r) {
+                return {
+                    id: r.id, amount: parseFloat(r.amount) || 0,
+                    name: r.description || '', description: r.description || '',
+                    savedAt: r.recorded_at || r.updated_at || '',
+                    source: r.category === 'auto' ? 'auto' : 'manual',
+                    note: r.category === 'auto' ? '' : (r.category || ''),
+                    receipt_url: r.receipt_url || null
+                };
+            };
+            // คำนวณ carryForward จาก period ก่อนหน้า (หลัง sync แล้ว ตัวเลขถูกต้อง)
+            var carryForward2 = 0;
+            try {
+                var [allPrevInc2, allPrevExp2] = await Promise.all([
+                    sbGet('accounting_entries', { period: 'lt.' + period, type: 'eq.income',  select: 'amount' }).catch(function() { return []; }),
+                    sbGet('accounting_entries', { period: 'lt.' + period, type: 'eq.expense', select: 'amount' }).catch(function() { return []; })
+                ]);
+                var totalPrevInc2 = (allPrevInc2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                var totalPrevExp2 = (allPrevExp2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                carryForward2 = totalPrevInc2 - totalPrevExp2;
+            } catch(e) { carryForward2 = 0; }
+            return { success: true, incomeItems: (incRows || []).map(mapRow2), expenseItems: (expRows || []).map(mapRow2), carryForward: carryForward2 };
+        }
         case 'calculateAutoEntries': {
             var period = data.period || '';
-            var [waterRes, elecRes, payRes] = await Promise.all([
-                sbGet('water_bills',     { period: 'eq.' + period, select: 'amount' }).catch(function() { return []; }),
-                sbGet('electric_bills',  { period: 'eq.' + period, select: 'bill_amount,amount' }).catch(function() { return []; }),
-                sbGet('payment_history', { period: 'eq.' + period, select: 'amount_paid' }).catch(function() { return []; })
-            ]);
-            var waterTotal = (waterRes  || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-            var elecTotal  = (elecRes   || []).reduce(function(s, r) { return s + (parseFloat(r.bill_amount) || parseFloat(r.amount) || 0); }, 0);
-            var payTotal   = (payRes    || []).reduce(function(s, r) { return s + (parseFloat(r.amount_paid) || 0); }, 0);
-            var incomeItems  = payTotal  > 0 ? [{ name: 'ยอดรับชำระค่าเช่าและค่าสาธารณูปโภค', amount: payTotal }] : [];
+            // ดึงค่าส่วนกลางจาก notifications (ยอดที่แจ้งไปจริง รวมการยกเว้น + admin override)
+            var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
+            var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
+            // ดึง rounding_surplus + lost_house + lost_flat จาก settings
+            var roundingSurplus = 0, lostHouseAmt = 0, lostFlatAmt = 0;
+            try {
+                var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
+                if (lostRows && lostRows[0]) {
+                    var ld = JSON.parse(lostRows[0].value);
+                    roundingSurplus = parseFloat(ld.rounding_surplus) || 0;
+                    lostHouseAmt = parseFloat(ld.lost_house) || 0;
+                    lostFlatAmt = parseFloat(ld.lost_flat) || 0;
+                }
+            } catch(e) {}
+            var incomeItems = [];
             var expenseItems = [];
-            if (waterTotal > 0) expenseItems.push({ name: 'ค่าน้ำประปา', amount: waterTotal });
-            if (elecTotal  > 0) expenseItems.push({ name: 'ค่าไฟ PEA',   amount: elecTotal  });
+            if (commonTotal > 0)    incomeItems.push({ name: 'ค่าส่วนกลาง', amount: commonTotal });
+            if (roundingSurplus > 0) incomeItems.push({ name: 'ส่วนต่างค่าไฟจากการปัดเศษ', amount: roundingSurplus });
+            if (lostHouseAmt > 0)  expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt });
+            if (lostFlatAmt > 0)   expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt });
             return { success: true, incomeItems: incomeItems, expenseItems: expenseItems };
         }
         case 'saveAccounting': {
@@ -2718,6 +2769,38 @@ async function _routeAction(action, data) {
             return { success: true, message: 'ลบข้อมูลสำรองที่เก่ากว่า ' + dkDays + ' วันเรียบร้อยแล้ว' };
         }
 
+        /* ── purgeStaleAutoEntries — ล้างข้อมูล auto เก่า (ค่าน้ำ/ค่าไฟ/ยอดรับชำระ) ทุก period ─── */
+        case 'purgeStaleAutoEntries': {
+            // รายการ description เก่าที่ไม่ควรอยู่ในบัญชีกองกลาง
+            var staleDesc = [
+                'ค่าน้ำประปา',
+                'ค่าไฟ PEA',
+                'ยอดรับชำระค่าเช่าและค่าสาธารณูปโภค',
+                'ค่า Lost ไฟฟ้า'  // รายการเก่าที่รวม Lost เป็นรายการเดียว (รูปแบบเก่า)
+            ];
+            var deletedCount = 0;
+            for (var sdi = 0; sdi < staleDesc.length; sdi++) {
+                try {
+                    await sbDelete('accounting_entries', { category: 'eq.auto', description: 'eq.' + staleDesc[sdi] });
+                    deletedCount++;
+                } catch(e) { console.warn('purge stale:', staleDesc[sdi], e); }
+            }
+            // Re-sync ทุก period ที่ยังมีใน accounting_entries
+            var allPeriodRows = await sbGet('accounting_entries', { select: 'period' }).catch(function() { return []; });
+            var uniquePeriods = {};
+            (allPeriodRows || []).forEach(function(r) { if (r.period) uniquePeriods[r.period] = true; });
+            // รวม periods จาก notifications และ settings (อาจยังไม่มีใน accounting_entries)
+            try {
+                var notifPRows = await sbGet('notifications', { select: 'period' });
+                (notifPRows || []).forEach(function(r) { if (r.period) uniquePeriods[r.period] = true; });
+            } catch(e) {}
+            var periodsToSync = Object.keys(uniquePeriods).sort();
+            for (var psi = 0; psi < periodsToSync.length; psi++) {
+                try { await _autoSyncAccounting(periodsToSync[psi]); } catch(e) { console.warn('re-sync period:', periodsToSync[psi], e); }
+            }
+            return { success: true, message: 'ล้างข้อมูลเก่าและ sync ใหม่เรียบร้อย (' + periodsToSync.length + ' เดือน)' };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
@@ -2730,20 +2813,18 @@ async function _routeAction(action, data) {
 ══════════════════════════════════════════ */
 async function _autoSyncAccounting(period) {
     if (!period) return;
-    // ดึงยอดบิลล่าสุด
-    var waterRes  = await sbGet('water_bills',     { period: 'eq.' + period, select: 'amount' });
-    var elecRes   = await sbGet('electric_bills',  { period: 'eq.' + period, select: 'bill_amount,amount' });
-    var payRes    = await sbGet('payment_history', { period: 'eq.' + period, select: 'amount_paid' });
-    var waterTotal = (waterRes  || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-    var elecTotal  = (elecRes   || []).reduce(function(s, r) { return s + (parseFloat(r.bill_amount) || parseFloat(r.amount) || 0); }, 0);
-    var payTotal   = (payRes    || []).reduce(function(s, r) { return s + (parseFloat(r.amount_paid) || 0); }, 0);
-    // ดึง Lost data
-    var lostTotal = 0;
+    // ดึงค่าส่วนกลางจาก notifications (ยอดที่แจ้งไปจริง รวมการยกเว้น + admin override)
+    var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' });
+    var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
+    // ดึง rounding_surplus + lost_house + lost_flat จาก settings
+    var roundingSurplus = 0, lostHouseAmt = 0, lostFlatAmt = 0;
     try {
         var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
         if (lostRows && lostRows[0]) {
             var ld = JSON.parse(lostRows[0].value);
-            lostTotal = (parseFloat(ld.lost_house) || 0) + (parseFloat(ld.lost_flat) || 0);
+            roundingSurplus = parseFloat(ld.rounding_surplus) || 0;
+            lostHouseAmt = parseFloat(ld.lost_house) || 0;
+            lostFlatAmt = parseFloat(ld.lost_flat) || 0;
         }
     } catch(e) {}
     // ลบเฉพาะรายการ auto ของ period นี้
@@ -2752,37 +2833,37 @@ async function _autoSyncAccounting(period) {
     var pParts = period.split('-');
     var pYear  = parseInt(pParts[0]) || new Date().getFullYear();
     var pMonth = parseInt(pParts[1]) || (new Date().getMonth() + 1);
-    // Insert รายรับ auto
-    if (payTotal > 0) {
+    // Insert รายรับ auto (กองกลาง)
+    if (commonTotal > 0) {
         await sbPost('accounting_entries', {
             period: period, year: pYear, month: pMonth,
             type: 'income', category: 'auto',
-            description: 'ยอดรับชำระค่าเช่าและค่าสาธารณูปโภค',
-            amount: payTotal, recorded_at: new Date().toISOString()
+            description: 'ค่าส่วนกลาง',
+            amount: commonTotal, recorded_at: new Date().toISOString()
         });
     }
-    // Insert รายจ่าย auto
-    if (waterTotal > 0) {
+    if (roundingSurplus > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'income', category: 'auto',
+            description: 'ส่วนต่างค่าไฟจากการปัดเศษ',
+            amount: roundingSurplus, recorded_at: new Date().toISOString()
+        });
+    }
+    // Insert รายจ่าย auto (กองกลาง)
+    if (lostHouseAmt > 0) {
         await sbPost('accounting_entries', {
             period: period, year: pYear, month: pMonth,
             type: 'expense', category: 'auto',
-            description: 'ค่าน้ำประปา', amount: waterTotal,
+            description: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt,
             recorded_at: new Date().toISOString()
         });
     }
-    if (elecTotal > 0) {
+    if (lostFlatAmt > 0) {
         await sbPost('accounting_entries', {
             period: period, year: pYear, month: pMonth,
             type: 'expense', category: 'auto',
-            description: 'ค่าไฟ PEA', amount: elecTotal,
-            recorded_at: new Date().toISOString()
-        });
-    }
-    if (lostTotal > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่า Lost ไฟฟ้า', amount: lostTotal,
+            description: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt,
             recorded_at: new Date().toISOString()
         });
     }
