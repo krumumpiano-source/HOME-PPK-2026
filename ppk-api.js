@@ -1564,6 +1564,14 @@ async function _routeAction(action, data) {
         case 'getElectricBillPEA': {
             var rows = await sbGet('electric_bills', { period: 'eq.' + (data.period || '') });
             var total = (rows || []).reduce(function(s, r) { return s + (parseFloat(r.bill_amount) || parseFloat(r.amount) || 0); }, 0);
+            // ดึง pea_total จริงจาก settings (บันทึกตอน submitElectricBill) — ถ้ามีให้ใช้แทน
+            try {
+                var _peaRows = await sbGet('settings', { key: 'eq.electric_lost_' + (data.period || '') });
+                if (_peaRows && _peaRows[0] && _peaRows[0].value) {
+                    var _peaData = JSON.parse(_peaRows[0].value);
+                    if (_peaData && parseFloat(_peaData.pea_total) > 0) total = parseFloat(_peaData.pea_total);
+                }
+            } catch(e) {}
             return { success: true, data: { total: total, rows: rows } };
         }
 

@@ -508,12 +508,15 @@
             additionalItems = [];
 
             try {
+                    // ล้าง cache เพื่อให้ได้ข้อมูลล่าสุดเสมอ
+                    ['getWaterBillTotal','getElectricBillPEA'].forEach(function(action) {
+                        try { localStorage.removeItem('apicache_' + action + '_' + JSON.stringify({ period: period })); } catch(e) {}
+                    });
                     // ดึงข้อมูลจาก Backend ทั้งหมดพร้อมกัน
-                    const [waterResult, electricResult, withdrawResult, settingsResult] = await Promise.all([
-                        cachedCall('getWaterBillTotal', { period }, 300000),
-                        cachedCall('getElectricBillPEA', { period }, 300000),
-                        cachedCall('getMonthlyWithdraw', { period }, 120000),
-                        cachedCall('getSettings', {}, 300000)
+                    const [waterResult, electricResult, withdrawResult] = await Promise.all([
+                        callBackend('getWaterBillTotal', { period }),
+                        callBackend('getElectricBillPEA', { period }),
+                        cachedCall('getMonthlyWithdraw', { period }, 120000)
                     ]);
 
                     if (waterResult && waterResult.success) {
