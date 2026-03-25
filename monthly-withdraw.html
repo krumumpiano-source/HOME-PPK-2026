@@ -390,7 +390,7 @@
                     <tr>
                         <td>
                             🗑️ ค่าขยะ
-                            <input type="number" id="garbageFee" value="" min="0" step="10" placeholder="โหลดจากระบบ..."
+                            <input type="number" id="garbageFee" value="" min="0" step="10" placeholder="กรอกจำนวนเงิน"
                                    style="width:100px;margin-left:1rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
                                    onchange="calculateTotal()">
                         </td>
@@ -522,14 +522,7 @@
                     if (electricResult && electricResult.success) {
                         electricTotal = (electricResult.data && electricResult.data.total) || 0;
                     }
-                    // โหลดค่าขยะจาก settings ก่อน
-                    if (settingsResult && settingsResult.success && settingsResult.data) {
-                        garbageFee = parseFloat(settingsResult.data.garbage_fee) || 310;
-                    } else {
-                        garbageFee = 310;
-                    }
                     if (withdrawResult && withdrawResult.success && withdrawResult.data) {
-                        garbageFee = withdrawResult.data.garbageFee || garbageFee;
                         additionalItems = withdrawResult.data.additionalItems || [];
                     }
                 } catch (e) {
@@ -540,8 +533,8 @@
 
             document.getElementById('waterTotal').textContent = formatMoney(waterTotal);
             document.getElementById('electricTotal').textContent = formatMoney(electricTotal);
-            document.getElementById('garbageFee').value = garbageFee;
-            document.getElementById('garbageDisplay').textContent = formatMoney(garbageFee);
+            document.getElementById('garbageFee').value = '';
+            document.getElementById('garbageDisplay').textContent = '0.00';
             
             renderAdditionalItems();
             calculateTotal();
