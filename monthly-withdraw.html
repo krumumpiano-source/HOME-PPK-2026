@@ -446,6 +446,7 @@
                              'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         
         let additionalItems = [];
+        let _loadToken = 0; // ป้องกัน race condition เมื่อเปลี่ยนเดือนเร็วๆ
         
         // เริ่มต้นเมื่อโหลดหน้า
         window.onload = async function() {
@@ -496,16 +497,22 @@
         
         // โหลดข้อมูล
         async function loadData() {
-            const { month, year, period, key } = getPeriod();
+            const token = ++_loadToken; // แต่ละครั้งที่เรียกจะได้ token ใหม่
+            const { month, year, period } = getPeriod();
             
-            // แสดงช่วงเวลา
+            // แสดงช่วงเวลาและ reset ทันที (ก่อน async)
             const monthIndex = parseInt(month) - 1;
             document.getElementById('periodDisplay').textContent = `(${THAI_MONTHS[monthIndex]} ${year})`;
+            document.getElementById('waterTotal').textContent = 'กำลังโหลด...';
+            document.getElementById('electricTotal').textContent = 'กำลังโหลด...';
+            document.getElementById('garbageFee').value = '';
+            document.getElementById('garbageDisplay').textContent = '0.00';
+            additionalItems = [];
+            renderAdditionalItems();
+            calculateTotal();
 
             let waterTotal = 0;
             let electricTotal = 0;
-            let garbageFee = 0;
-            additionalItems = [];
 
             try {
                     // ล้าง cache เพื่อให้ได้ข้อมูลล่าสุดเสมอ
@@ -519,6 +526,9 @@
                         cachedCall('getMonthlyWithdraw', { period }, 120000)
                     ]);
 
+                    // ถ้ามีการเปลี่ยนเดือนระหว่างรอ → ยกเลิกผลชุดนี้
+                    if (token !== _loadToken) return;
+
                     if (waterResult && waterResult.success) {
                         waterTotal = (waterResult.data && waterResult.data.total) || 0;
                     }
@@ -529,15 +539,14 @@
                         additionalItems = withdrawResult.data.additionalItems || [];
                     }
                 } catch (e) {
+                    if (token !== _loadToken) return;
                     console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
-                    ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
-                    return;
+                    // ไม่ alert เพื่อไม่รบกวนเมื่อเปลี่ยนเดือน — แสดงเป็น 0.00 แทน
                 }
 
+            if (token !== _loadToken) return;
             document.getElementById('waterTotal').textContent = formatMoney(waterTotal);
             document.getElementById('electricTotal').textContent = formatMoney(electricTotal);
-            document.getElementById('garbageFee').value = '';
-            document.getElementById('garbageDisplay').textContent = '0.00';
             
             renderAdditionalItems();
             calculateTotal();
