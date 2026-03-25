@@ -516,14 +516,14 @@
 
             try {
                     // ล้าง cache เพื่อให้ได้ข้อมูลล่าสุดเสมอ
-                    ['getWaterBillTotal','getElectricBillPEA'].forEach(function(action) {
+                    ['getWaterBillTotal','getElectricBillPEA','getMonthlyWithdraw'].forEach(function(action) {
                         try { localStorage.removeItem('apicache_' + action + '_' + JSON.stringify({ period: period })); } catch(e) {}
                     });
                     // ดึงข้อมูลจาก Backend ทั้งหมดพร้อมกัน
                     const [waterResult, electricResult, withdrawResult] = await Promise.all([
                         callBackend('getWaterBillTotal', { period }),
                         callBackend('getElectricBillPEA', { period }),
-                        cachedCall('getMonthlyWithdraw', { period }, 120000)
+                        callBackend('getMonthlyWithdraw', { period })
                     ]);
 
                     // ถ้ามีการเปลี่ยนเดือนระหว่างรอ → ยกเลิกผลชุดนี้
@@ -536,7 +536,13 @@
                         electricTotal = (electricResult.data && electricResult.data.total) || 0;
                     }
                     if (withdrawResult && withdrawResult.success && withdrawResult.data) {
-                        additionalItems = withdrawResult.data.additionalItems || [];
+                        // คืนค่า garbageFee และ additionalItems ที่เคยบันทึกไว้
+                        const saved = withdrawResult.data;
+                        if (saved.garbageFee > 0) {
+                            document.getElementById('garbageFee').value = saved.garbageFee;
+                            document.getElementById('garbageDisplay').textContent = formatMoney(saved.garbageFee);
+                        }
+                        additionalItems = saved.additionalItems || [];
                     }
                 } catch (e) {
                     if (token !== _loadToken) return;
