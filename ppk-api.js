@@ -321,6 +321,11 @@ async function _getSessionRole() {
         var sess = s && s[0];
         if (sess && new Date(sess.expires_at) > new Date()) return { userId: sess.user_id, role: sess.role };
     } catch(e) {}
+    // Fallback: ใช้ currentUser จาก localStorage (กรณี session ใน DB หมดอายุหรือ query ล้มเหลว)
+    try {
+        var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        if (stored && stored.id && stored.role) return { userId: stored.id, role: stored.role };
+    } catch(e) {}
     return null;
 }
 

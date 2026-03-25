@@ -628,41 +628,35 @@
         
         // บันทึกข้อมูล
         async function saveData() {
-            const { month, year, period, key } = getPeriod();
+            const { month, year, period } = getPeriod();
             const garbageFee = parseFloat(document.getElementById('garbageFee').value) || 0;
-            
-            const data = {
-                month: month,
-                year: year,
-                garbageFee: garbageFee,
-                additionalItems: additionalItems,
-                savedAt: new Date().toISOString()
-            };
-            
-            try {
-                    // คำนวณ totalWithdraw
-                    const waterTotal = parseMoney(document.getElementById('waterTotal').textContent);
-                    const electricTotal = parseMoney(document.getElementById('electricTotal').textContent);
-                    let additionalTotal = 0;
-                    additionalItems.forEach(item => { additionalTotal += parseFloat(item.amount) || 0; });
+            const saveBtn = document.querySelector('.btn[onclick="saveData()"]');
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ กำลังบันทึก...'; }
 
-                    const result = await callBackend('saveWithdraw', {
-                        period: period,
-                        garbageFee: garbageFee,
-                        additionalItems: additionalItems,
-                        totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
-                    });
-                    if (result && result.success) {
-                        // ลบ cache เพื่อโหลดข้อมูลใหม่เมื่อกลับมาดู
-                        localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
-                        ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
-                    } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
-                    }
-                } catch (e) {
-                    console.error('บันทึกไม่สำเร็จ:', e);
-                    ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+            try {
+                const waterTotal = parseMoney(document.getElementById('waterTotal').textContent);
+                const electricTotal = parseMoney(document.getElementById('electricTotal').textContent);
+                let additionalTotal = 0;
+                additionalItems.forEach(item => { additionalTotal += parseFloat(item.amount) || 0; });
+
+                const result = await callBackend('saveWithdraw', {
+                    period: period,
+                    garbageFee: garbageFee,
+                    additionalItems: additionalItems,
+                    totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
+                });
+                if (result && result.success) {
+                    localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
+                    await ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว! ✅', { type: 'success', title: 'บันทึกสำเร็จ' });
+                } else {
+                    await ppkAlert('เกิดข้อผิดพลาด: ' + ((result && (result.message || result.error)) || 'ไม่ทราบสาเหตุ'), { type: 'error', title: 'บันทึกไม่สำเร็จ' });
                 }
+            } catch (e) {
+                console.error('บันทึกไม่สำเร็จ:', e);
+                await ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่', { type: 'error', title: 'เกิดข้อผิดพลาด' });
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึกข้อมูล'; }
+            }
         }
         
         // ฟอร์แมตเงิน
