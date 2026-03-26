@@ -2379,12 +2379,22 @@ async function _routeAction(action, data) {
                     lostFlatAmt = parseFloat(ld.lost_flat) || 0;
                 }
             } catch(e) {}
+            // ดึงค่าขยะจาก monthly_withdraw
+            var withdrawGarbage = 0;
+            try {
+                var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
+                if (wdRows && wdRows[0]) {
+                    var wd = JSON.parse(wdRows[0].value);
+                    withdrawGarbage = parseFloat(wd.garbageFee) || 0;
+                }
+            } catch(e) {}
             var incomeItems = [];
             var expenseItems = [];
             if (commonTotal > 0)    incomeItems.push({ name: 'ค่าส่วนกลาง', amount: commonTotal });
             if (roundingSurplus > 0) incomeItems.push({ name: 'ส่วนต่างค่าไฟจากการปัดเศษ', amount: roundingSurplus });
             if (lostHouseAmt > 0)  expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt });
             if (lostFlatAmt > 0)   expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt });
+            if (withdrawGarbage > 0) expenseItems.push({ name: 'ค่าขยะ', amount: withdrawGarbage });
             return { success: true, incomeItems: incomeItems, expenseItems: expenseItems };
         }
         case 'saveAccounting': {
@@ -2844,7 +2854,14 @@ async function _routeAction(action, data) {
                 'ค่าน้ำประปา',
                 'ค่าไฟ PEA',
                 'ยอดรับชำระค่าเช่าและค่าสาธารณูปโภค',
-                'ค่า Lost ไฟฟ้า'  // รายการเก่าที่รวม Lost เป็นรายการเดียว (รูปแบบเก่า)
+                'ค่า Lost ไฟฟ้า',  // รายการเก่าที่รวม Lost เป็นรายการเดียว (รูปแบบเก่า)
+                // รายการที่เคยสร้างผิด (ค่าน้ำ/ค่าไฟเป็น pass-through ไม่ใช่กองกลาง)
+                'ค่าน้ำประปา (เก็บจากผู้พัก)',
+                'ค่าน้ำประปา (จ่าย PPA)',
+                'ค่าไฟฟ้า (เก็บจากผู้พัก)',
+                'ค่าไฟฟ้า (จ่าย PEA)',
+                'ค่าขยะ (เก็บจากผู้พัก)',
+                'ค่าขยะ (จ่ายเทศบาล)'
             ];
             var deletedCount = 0;
             for (var sdi = 0; sdi < staleDesc.length; sdi++) {
@@ -3281,10 +3298,14 @@ async function _routeAction(action, data) {
 ══════════════════════════════════════════ */
 async function _autoSyncAccounting(period) {
     if (!period) return;
-    // ดึงค่าส่วนกลางจาก notifications (ยอดที่แจ้งไปจริง รวมการยกเว้น + admin override)
-    var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' });
+    // ── บัญชีกองกลาง: ค่าน้ำ/ค่าไฟ = เงินฝากจ่าย (pass-through) ไม่นับ ──
+    // รายรับ: ค่าส่วนกลาง + ส่วนต่างค่าไฟปัดเศษ
+    // รายจ่าย: Lost ไฟฟ้า (บ้านพัก + แฟลต) + ค่าขยะ
+
+    // ── 1. ดึงค่าส่วนกลางจาก notifications
+    var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
     var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-    // ดึง rounding_surplus + lost_house + lost_flat จาก settings
+    // ── 2. ดึง rounding_surplus + lost จาก settings
     var roundingSurplus = 0, lostHouseAmt = 0, lostFlatAmt = 0;
     try {
         var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
@@ -3295,19 +3316,28 @@ async function _autoSyncAccounting(period) {
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
         }
     } catch(e) {}
-    // ลบเฉพาะรายการ auto ของ period นี้
+    // ── 3. ดึงค่าขยะจาก monthly_withdraw
+    var withdrawGarbage = 0;
+    try {
+        var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
+        if (wdRows && wdRows[0] && wdRows[0].value) {
+            var wd = JSON.parse(wdRows[0].value);
+            withdrawGarbage = parseFloat(wd.garbageFee) || 0;
+        }
+    } catch(e) {}
+    // ── 4. ลบเฉพาะรายการ auto ของ period นี้
     await sbDelete('accounting_entries', { period: 'eq.' + period, category: 'eq.auto' });
-    // หา year / month จาก period
     var pParts = period.split('-');
     var pYear  = parseInt(pParts[0]) || new Date().getFullYear();
     var pMonth = parseInt(pParts[1]) || (new Date().getMonth() + 1);
-    // Insert รายรับ auto (กองกลาง)
+    var ts = new Date().toISOString();
+    // ── 5. Insert รายรับ auto ──
     if (commonTotal > 0) {
         await sbPost('accounting_entries', {
             period: period, year: pYear, month: pMonth,
             type: 'income', category: 'auto',
             description: 'ค่าส่วนกลาง',
-            amount: commonTotal, recorded_at: new Date().toISOString()
+            amount: commonTotal, recorded_at: ts
         });
     }
     if (roundingSurplus > 0) {
@@ -3315,16 +3345,16 @@ async function _autoSyncAccounting(period) {
             period: period, year: pYear, month: pMonth,
             type: 'income', category: 'auto',
             description: 'ส่วนต่างค่าไฟจากการปัดเศษ',
-            amount: roundingSurplus, recorded_at: new Date().toISOString()
+            amount: roundingSurplus, recorded_at: ts
         });
     }
-    // Insert รายจ่าย auto (กองกลาง)
+    // ── 6. Insert รายจ่าย auto ──
     if (lostHouseAmt > 0) {
         await sbPost('accounting_entries', {
             period: period, year: pYear, month: pMonth,
             type: 'expense', category: 'auto',
             description: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt,
-            recorded_at: new Date().toISOString()
+            recorded_at: ts
         });
     }
     if (lostFlatAmt > 0) {
@@ -3332,7 +3362,15 @@ async function _autoSyncAccounting(period) {
             period: period, year: pYear, month: pMonth,
             type: 'expense', category: 'auto',
             description: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt,
-            recorded_at: new Date().toISOString()
+            recorded_at: ts
+        });
+    }
+    if (withdrawGarbage > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าขยะ', amount: withdrawGarbage,
+            recorded_at: ts
         });
     }
 }
