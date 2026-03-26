@@ -1,0 +1,441 @@
+﻿﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>ตรวจสอบ Statement | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        :root {
+            --bg: #f8fafc; --surface: #ffffff; --border: #e5e7eb; --text: #0f172a;
+            --muted: #64748b; --primary: #2563eb; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); min-height: 100vh; margin: 0; color: var(--text); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+        h1 { text-align: center; margin-bottom: 0.5rem; }
+        .subtitle { text-align: center; color: var(--muted); margin-bottom: 1.5rem; }
+        .loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 1.2rem; }
+        .month-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 1.5rem; overflow: hidden; border: 1px solid var(--border); }
+        .month-header { padding: 0.8rem 1.2rem; font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .month-header:hover { opacity: 0.85; }
+        .month-header.ok { background: #ecfdf5; color: #065f46; border-left: 5px solid var(--success); }
+        .month-header.warn { background: #fef9c3; color: #854d0e; border-left: 5px solid var(--warning); }
+        .month-header.err { background: #fef2f2; color: #991b1b; border-left: 5px solid var(--danger); }
+        .month-header.nodata { background: #f1f5f9; color: var(--muted); border-left: 5px solid var(--border); }
+        .month-header .badge { font-size: 0.85rem; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+        .badge-ok { background: #d1fae5; color: #065f46; }
+        .badge-warn { background: #fef08a; color: #854d0e; }
+        .badge-err { background: #fecaca; color: #991b1b; }
+        .month-body { padding: 0 1.2rem 1rem; display: none; }
+        .month-body.open { display: block; }
+        table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.92rem; }
+        th { background: #f1f5f9; text-align: left; padding: 6px 10px; border: 1px solid var(--border); font-weight: 600; }
+        td { padding: 6px 10px; border: 1px solid var(--border); }
+        .right { text-align: right; }
+        .match { color: #059669; font-weight: 600; }
+        .mismatch { color: #dc2626; font-weight: 700; background: #fef2f2; }
+        .na { color: var(--muted); font-style: italic; }
+        .section-title { font-weight: 700; margin-top: 1rem; margin-bottom: 0.3rem; font-size: 0.95rem; }
+        .summary-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
+        .summary-box.has-issues { background: #fef2f2; border-color: #fecaca; }
+        .summary-box h3 { margin: 0 0 0.5rem 0; }
+        .detail-row { display: flex; gap: 2rem; flex-wrap: wrap; }
+        .detail-col { flex: 1; min-width: 280px; }
+        .note { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+        .back-btn { display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1.2rem; background: var(--primary); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .back-btn:hover { opacity: 0.9; }
+        @media (max-width: 600px) {
+            .container { padding: 0.5rem; }
+            .detail-row { flex-direction: column; gap: 0.5rem; }
+            table { font-size: 0.82rem; }
+            th, td { padding: 4px 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="accounting.html" class="back-btn">← กลับหน้าบัญชี</a>
+        <h1>🔍 ตรวจสอบ Statement ธนาคาร</h1>
+        <p class="subtitle">เทียบข้อมูลจาก Statement ออมสิน (020473653424) กับข้อมูลในระบบ HOME PPK</p>
+        <div id="content"><div class="loading">⏳ กำลังดึงข้อมูลจากระบบ...</div></div>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════
+    // STATEMENT DATA (parsed from bank PDF)
+    // ═══════════════════════════════════════════════
+    const STATEMENT = [
+        {
+            period: '2568-09', label: 'กันยายน 2568',
+            openBal: 0.00, closeBal: 20296.73,
+            withdrawals: [],
+            totalDeposit: 20296.73, totalWithdraw: 0
+        },
+        {
+            period: '2568-10', label: 'ตุลาคม 2568',
+            openBal: 20296.73, closeBal: 24244.16,
+            withdrawals: [
+                { date: '06/10/2568', amount: 19084.57 },
+                { date: '06/10/2568', amount: 310.00 },
+                { date: '06/10/2568', amount: 3980.00 }
+            ],
+            totalDeposit: 27322.00, totalWithdraw: 23374.57
+        },
+        {
+            period: '2568-11', label: 'พฤศจิกายน 2568',
+            openBal: 24244.16, closeBal: 22739.41,
+            withdrawals: [
+                { date: '05/11/2568', amount: 16432.75 },
+                { date: '05/11/2568', amount: 310.00 },
+                { date: '05/11/2568', amount: 3920.00 },
+                { date: '05/11/2568', amount: 500.00 }
+            ],
+            totalDeposit: 19658.00, totalWithdraw: 21162.75
+        },
+        {
+            period: '2568-12', label: 'ธันวาคม 2568',
+            openBal: 22739.41, closeBal: 29393.37,
+            withdrawals: [
+                { date: '14/12/2568', amount: 14349.05 },
+                { date: '14/12/2568', amount: 310.00 },
+                { date: '14/12/2568', amount: 4500.00 },
+                { date: '14/12/2568', amount: 1500.00 }
+            ],
+            totalDeposit: 27313.01, totalWithdraw: 20659.05
+        },
+        {
+            period: '2569-01', label: 'มกราคม 2569',
+            openBal: 29393.37, closeBal: 33687.34,
+            withdrawals: [
+                { date: '08/01/2569', amount: 4580.00 },
+                { date: '08/01/2569', amount: 310.00 },
+                { date: '08/01/2569', amount: 12972.03 }
+            ],
+            totalDeposit: 22156.00, totalWithdraw: 17862.03
+        },
+        {
+            period: '2569-02', label: 'กุมภาพันธ์ 2569',
+            openBal: 33687.34, closeBal: 29318.91,
+            withdrawals: [
+                { date: '09/02/2569', amount: 300.00 },
+                { date: '09/02/2569', amount: 1500.00 },
+                { date: '09/02/2569', amount: 4120.00 },
+                { date: '09/02/2569', amount: 11713.43 }
+            ],
+            totalDeposit: 13265.00, totalWithdraw: 17633.43
+        },
+        {
+            period: '2569-03', label: 'มีนาคม 2569 (ถึง 24/3)',
+            openBal: 29318.91, closeBal: 4887.70,
+            withdrawals: [
+                { date: '06/03/2569', amount: 320.00 },
+                { date: '06/03/2569', amount: 4680.00 },
+                { date: '06/03/2569', amount: 12104.21 },
+                { date: '06/03/2569', amount: 15000.00 }
+            ],
+            totalDeposit: 7673.00, totalWithdraw: 32104.21
+        }
+    ];
+
+    // Known special transactions (admin-defined notes)
+    const KNOWN_NOTES = {
+        '2569-03_15000': 'ถอนเงินสด: ค่ามิเตอร์ดิจิตอล 9,010 + ค่าแรงติดตั้ง 1,000 + เงินสดคงเหลือ 4,990 (ยังไม่นำฝาก)'
+    };
+
+    // ═══════════════════════════════════════════════
+    const fmt = v => parseFloat(v||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    function toggleMonth(el) {
+        el.nextElementSibling.classList.toggle('open');
+    }
+
+    window.onload = async function() {
+        var user = await checkSession(true);
+        if (!user || user.role !== 'admin') {
+            if (typeof ppkAlert === 'function') ppkAlert('เฉพาะแอดมินเท่านั้นที่เข้าถึงหน้านี้ได้');
+            window.location.replace('dashboard.html');
+            return;
+        }
+
+        // โหลด settings ทั้งหมด (มี electric_lost_* และ monthly_withdraw_*)
+        let allSettings = {};
+        try {
+            const r = await callBackend('getSettings', {});
+            if (r && r.success) allSettings = r.data || {};
+        } catch(e) { console.error('getSettings error:', e); }
+
+        let html = '';
+        let totalIssues = 0;
+        let totalNotes = 0;
+
+        for (const stm of STATEMENT) {
+            const issues = [];
+            const notes = [];
+
+            // ── ดึงข้อมูลจากระบบ ──
+            let sysWithdraw = null, sysElectric = null, sysAccounting = null, sysNotifications = [];
+
+            try {
+                const wdRaw = allSettings['monthly_withdraw_' + stm.period];
+                if (wdRaw) sysWithdraw = JSON.parse(wdRaw);
+            } catch(e) {}
+
+            try {
+                const elRaw = allSettings['electric_lost_' + stm.period];
+                if (elRaw) sysElectric = JSON.parse(elRaw);
+            } catch(e) {}
+
+            try {
+                const r = await callBackend('loadAndSyncAccounting', { period: stm.period });
+                if (r && r.success) sysAccounting = r;
+            } catch(e) {}
+
+            try {
+                const r = await callBackend('getNotificationHistory', { period: stm.period, limit: 200 });
+                if (r && r.success) sysNotifications = r.data || [];
+            } catch(e) {}
+
+            // ── วิเคราะห์ข้อมูล ──
+            const peaTotal = sysElectric ? parseFloat(sysElectric.pea_total) || 0 : 0;
+            const garbageFee = sysWithdraw ? parseFloat(sysWithdraw.garbageFee) || 0 : 0;
+            const sysTotal = sysWithdraw ? parseFloat(sysWithdraw.totalWithdraw) || 0 : 0;
+            const oc = (sysWithdraw && sysWithdraw.operatingCosts) || {};
+            const travelW = parseFloat(oc.travelWithdraw) || 0;
+            const travelE = parseFloat(oc.travelElectric) || 0;
+            const travelG = parseFloat(oc.travelGarbage) || 0;
+            const travelTotal = travelW + travelE + travelG;
+            const roundingFee = parseFloat(oc.roundingFee) || 0;
+            const additionalItems = (sysWithdraw && sysWithdraw.additionalItems) || [];
+            const additionalTotal = additionalItems.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+
+            // ── จับคู่รายการถอน ──
+            const stmW = stm.withdrawals.slice().sort((a,b) => b.amount - a.amount);
+            let matchResults = [];
+            let usedIndexes = [];
+
+            if (stmW.length > 0) {
+                // 1) ค่าไฟ PEA = ตัวที่มีสตางค์ (มีทศนิยม) และมากกว่า 5000
+                const peaIdx = stmW.findIndex(w => w.amount > 5000 && w.amount % 1 !== 0);
+                const stmPea = peaIdx >= 0 ? stmW[peaIdx] : stmW[0];
+                const peaI = peaIdx >= 0 ? peaIdx : 0;
+                usedIndexes.push(peaI);
+                const peaMatch = peaTotal > 0 ? Math.abs(stmPea.amount - peaTotal) < 0.02 : false;
+                matchResults.push({ label: 'ค่าไฟ PEA', stmAmount: stmPea.amount, sysAmount: peaTotal, match: peaMatch, noData: peaTotal === 0 });
+                if (peaTotal > 0 && !peaMatch) issues.push('ค่าไฟ PEA ไม่ตรง: Statement=' + fmt(stmPea.amount) + ' ระบบ=' + fmt(peaTotal));
+
+                // 2) ค่าขยะ = ตัว 3000-6000
+                const garbageIdx = stmW.findIndex((w,i) => !usedIndexes.includes(i) && w.amount >= 3000 && w.amount <= 6000);
+                if (garbageIdx >= 0) {
+                    usedIndexes.push(garbageIdx);
+                    const garbageMatch = garbageFee > 0 ? Math.abs(stmW[garbageIdx].amount - garbageFee) < 0.02 : false;
+                    matchResults.push({ label: 'ค่าขยะ', stmAmount: stmW[garbageIdx].amount, sysAmount: garbageFee, match: garbageMatch, noData: garbageFee === 0 });
+                    if (garbageFee > 0 && !garbageMatch) issues.push('ค่าขยะไม่ตรง: Statement=' + fmt(stmW[garbageIdx].amount) + ' ระบบ=' + fmt(garbageFee));
+                }
+
+                // 3) ค่าเดินทาง = ตัว 200-500
+                const travelIdx = stmW.findIndex((w,i) => !usedIndexes.includes(i) && w.amount >= 200 && w.amount <= 500);
+                if (travelIdx >= 0) {
+                    usedIndexes.push(travelIdx);
+                    const travelMatch = travelTotal > 0 ? Math.abs(stmW[travelIdx].amount - travelTotal) < 0.02 : false;
+                    matchResults.push({ label: 'ค่าเดินทาง (รวม)', stmAmount: stmW[travelIdx].amount, sysAmount: travelTotal, match: travelMatch, noData: travelTotal === 0 });
+                    if (travelTotal > 0 && !travelMatch) issues.push('ค่าเดินทางไม่ตรง: Statement=' + fmt(stmW[travelIdx].amount) + ' ระบบ=' + fmt(travelTotal));
+                }
+
+                // 4) รายการที่เหลือ
+                stmW.forEach((w, i) => {
+                    if (usedIndexes.includes(i)) return;
+                    const noteKey = stm.period + '_' + w.amount;
+                    const knownNote = KNOWN_NOTES[noteKey];
+                    matchResults.push({ label: 'รายการอื่น', stmAmount: w.amount, sysAmount: null, match: false, noData: true, isExtra: true });
+                    if (knownNote) {
+                        notes.push('💡 ' + fmt(w.amount) + ' บาท — ' + knownNote);
+                    } else {
+                        notes.push('❓ รายการถอน ' + fmt(w.amount) + ' บาท — ไม่ตรงกับข้อมูลในระบบ ต้องตรวจสอบ');
+                    }
+                });
+            }
+
+            // ── Accounting ──
+            const accCarryForward = sysAccounting ? sysAccounting.carryForward || 0 : 0;
+            const accIncome = sysAccounting ? (sysAccounting.incomeItems||[]).reduce((s,i) => s + (parseFloat(i.amount)||0), 0) : 0;
+            const accExpense = sysAccounting ? (sysAccounting.expenseItems||[]).reduce((s,i) => s + (parseFloat(i.amount)||0), 0) : 0;
+            const accCarryOver = accCarryForward + accIncome - accExpense;
+
+            // ── Notifications ──
+            const notifTotalAll = sysNotifications.reduce((s,n) => s + (parseFloat(n.total_amount)||0), 0);
+            const notifCommonTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.common_fee)||0), 0);
+            const notifWaterTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.water_amount)||0), 0);
+            const notifElectricTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.electric_amount)||0), 0);
+            const notifGarbageTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.garbage_fee)||0), 0);
+
+            // ── สถานะ ──
+            const hasNoSystemData = !sysWithdraw && !sysElectric && sysNotifications.length === 0;
+            const status = hasNoSystemData ? 'nodata' : (issues.length > 0 ? 'err' : (notes.length > 0 ? 'warn' : 'ok'));
+            if (issues.length > 0) totalIssues += issues.length;
+            if (notes.length > 0) totalNotes += notes.length;
+
+            // ═══════════════════════════════════════
+            // RENDER
+            // ═══════════════════════════════════════
+            html += '<div class="month-card">';
+            html += '<div class="month-header ' + status + '" onclick="toggleMonth(this)">';
+            html += '<span>📅 ' + stm.label + '</span>';
+            if (status === 'ok') html += '<span class="badge badge-ok">✅ ตรงกัน</span>';
+            else if (status === 'err') html += '<span class="badge badge-err">❌ ไม่ตรง ' + issues.length + ' รายการ</span>';
+            else if (status === 'warn') html += '<span class="badge badge-warn">⚠️ มีหมายเหตุ ' + notes.length + ' รายการ</span>';
+            else html += '<span class="badge" style="background:#e2e8f0;color:#64748b;">📭 ไม่มีข้อมูลในระบบ</span>';
+            html += '</div>';
+            html += '<div class="month-body">';
+
+            // --- Statement summary ---
+            html += '<div class="section-title">📄 Statement ธนาคาร</div>';
+            html += '<table><tr><th>ยอดยกมา</th><th>ยอดฝากรวม</th><th>ยอดถอนรวม</th><th>ยอดยกไป</th></tr>';
+            html += '<tr><td class="right">' + fmt(stm.openBal) + '</td><td class="right" style="color:#059669;">' + fmt(stm.totalDeposit) + '</td><td class="right" style="color:#dc2626;">' + fmt(stm.totalWithdraw) + '</td><td class="right" style="font-weight:700;">' + fmt(stm.closeBal) + '</td></tr></table>';
+
+            // --- Withdrawal matching ---
+            if (matchResults.length > 0) {
+                html += '<div class="section-title">🔎 เทียบรายการถอนกับระบบ</div>';
+                html += '<table><tr><th>รายการ</th><th>Statement (บาท)</th><th>ระบบ (บาท)</th><th>ผลตรวจ</th></tr>';
+                matchResults.forEach(m => {
+                    const cls = m.noData ? 'na' : (m.match ? 'match' : 'mismatch');
+                    const label = m.noData ? '— ไม่มีข้อมูล' : (m.match ? '✅ ตรง' : '❌ ไม่ตรง');
+                    html += '<tr><td>' + m.label + (m.isExtra ? ' ⚠️' : '') + '</td>';
+                    html += '<td class="right">' + fmt(m.stmAmount) + '</td>';
+                    html += '<td class="right ' + cls + '">' + (m.sysAmount !== null ? fmt(m.sysAmount) : '—') + '</td>';
+                    html += '<td class="' + cls + '">' + label + '</td></tr>';
+                });
+                // สรุป
+                const stmTotalW = stm.totalWithdraw;
+                html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>รวมถอนทั้งหมด</td>';
+                html += '<td class="right">' + fmt(stmTotalW) + '</td><td class="right">—</td><td></td></tr>';
+                html += '</table>';
+            }
+
+            // --- Detail columns ---
+            html += '<div class="detail-row">';
+
+            // Left: Withdraw + Electric
+            html += '<div class="detail-col">';
+            html += '<div class="section-title">💰 ข้อมูลเบิกจ่าย (monthly-withdraw)</div>';
+            if (sysWithdraw) {
+                html += '<table>';
+                html += '<tr><td>ค่าขยะ</td><td class="right">' + fmt(garbageFee) + '</td></tr>';
+                additionalItems.forEach(it => {
+                    html += '<tr><td>' + (it.name||'—') + '</td><td class="right">' + fmt(it.amount) + '</td></tr>';
+                });
+                if (roundingFee > 0) html += '<tr><td>ค่าดำเนินการ (ปัดเศษ)</td><td class="right">' + fmt(roundingFee) + '</td></tr>';
+                if (travelW > 0) html += '<tr><td>ค่าเดินทางถอนเงิน</td><td class="right">' + fmt(travelW) + '</td></tr>';
+                if (travelE > 0) html += '<tr><td>ค่าเดินทางชำระค่าไฟ</td><td class="right">' + fmt(travelE) + '</td></tr>';
+                if (travelG > 0) html += '<tr><td>ค่าเดินทางชำระค่าขยะ</td><td class="right">' + fmt(travelG) + '</td></tr>';
+                html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>ยอดเบิกจ่ายรวม</td><td class="right">' + fmt(sysTotal) + '</td></tr>';
+                html += '</table>';
+            } else {
+                html += '<p class="na">ยังไม่มีข้อมูลเบิกจ่ายในระบบ</p>';
+            }
+
+            if (sysElectric) {
+                html += '<div class="section-title">⚡ ข้อมูลไฟฟ้า (electric_lost)</div>';
+                html += '<table>';
+                html += '<tr><td>ค่าไฟ PEA Total</td><td class="right">' + fmt(sysElectric.pea_total) + '</td></tr>';
+                html += '<tr><td>ส่วนต่างค่าไฟ (electric_diff)</td><td class="right">' + fmt(sysElectric.electric_diff) + '</td></tr>';
+                html += '<tr><td>Lost บ้านพัก</td><td class="right">' + fmt(sysElectric.lost_house) + '</td></tr>';
+                html += '<tr><td>Lost แฟลต</td><td class="right">' + fmt(sysElectric.lost_flat) + '</td></tr>';
+                html += '</table>';
+            }
+            html += '</div>';
+
+            // Right: Accounting + Notifications
+            html += '<div class="detail-col">';
+            html += '<div class="section-title">📊 บัญชีกองทุน (accounting)</div>';
+            if (sysAccounting) {
+                html += '<table>';
+                html += '<tr><td>ยอดยกมา</td><td class="right">' + fmt(accCarryForward) + '</td></tr>';
+                html += '<tr><td>รายรับรวม (' + (sysAccounting.incomeItems||[]).length + ' รายการ)</td><td class="right" style="color:#059669;">' + fmt(accIncome) + '</td></tr>';
+                html += '<tr><td>รายจ่ายรวม (' + (sysAccounting.expenseItems||[]).length + ' รายการ)</td><td class="right" style="color:#dc2626;">' + fmt(accExpense) + '</td></tr>';
+                html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>ยอดยกไป</td><td class="right">' + fmt(accCarryOver) + '</td></tr>';
+                html += '</table>';
+
+                if ((sysAccounting.incomeItems||[]).length > 0) {
+                    html += '<div class="section-title" style="font-size:0.85rem;">📥 รายรับ</div><table>';
+                    (sysAccounting.incomeItems||[]).forEach(i => {
+                        html += '<tr><td>' + (i.name||i.description||'—') + (i.source==='auto'?' <small style="color:#059669;">[auto]</small>':'') + '</td><td class="right">' + fmt(i.amount) + '</td></tr>';
+                    });
+                    html += '</table>';
+                }
+                if ((sysAccounting.expenseItems||[]).length > 0) {
+                    html += '<div class="section-title" style="font-size:0.85rem;">📤 รายจ่าย</div><table>';
+                    (sysAccounting.expenseItems||[]).forEach(i => {
+                        html += '<tr><td>' + (i.name||i.description||'—') + (i.source==='auto'?' <small style="color:#059669;">[auto]</small>':'') + '</td><td class="right">' + fmt(i.amount) + '</td></tr>';
+                    });
+                    html += '</table>';
+                }
+            } else {
+                html += '<p class="na">ยังไม่มีข้อมูลบัญชีในระบบ</p>';
+            }
+
+            if (sysNotifications.length > 0) {
+                html += '<div class="section-title">📨 การแจ้งเตือน (' + sysNotifications.length + ' หลัง)</div>';
+                html += '<table>';
+                html += '<tr><td>ยอดแจ้งเตือนรวมทั้งหมด</td><td class="right">' + fmt(notifTotalAll) + '</td></tr>';
+                html += '<tr><td>├ ค่าส่วนกลาง</td><td class="right">' + fmt(notifCommonTotal) + '</td></tr>';
+                html += '<tr><td>├ ค่าน้ำประปา</td><td class="right">' + fmt(notifWaterTotal) + '</td></tr>';
+                html += '<tr><td>├ ค่าไฟฟ้า</td><td class="right">' + fmt(notifElectricTotal) + '</td></tr>';
+                html += '<tr><td>└ ค่าขยะ</td><td class="right">' + fmt(notifGarbageTotal) + '</td></tr>';
+                html += '</table>';
+                // เทียบยอดฝากกับยอดแจ้งเตือน
+                const depositDiff = stm.totalDeposit - notifTotalAll;
+                if (Math.abs(depositDiff) > 1) {
+                    const diffColor = depositDiff > 0 ? '#059669' : '#dc2626';
+                    html += '<p class="note">📌 ยอดฝาก Statement (' + fmt(stm.totalDeposit) + ') vs ยอดแจ้งเตือน (' + fmt(notifTotalAll) + ') → ส่วนต่าง: <strong style="color:' + diffColor + ';">' + fmt(depositDiff) + '</strong>';
+                    html += '<br><small>ส่วนต่างอาจเกิดจาก: ผู้พักโอนไม่ตรงยอด / มีเงินฝากเพิ่มเติม / ยังไม่ได้แจ้งเตือนครบ</small></p>';
+                } else if (Math.abs(depositDiff) <= 1 && notifTotalAll > 0) {
+                    html += '<p class="note" style="color:#059669;">✅ ยอดฝากตรงกับยอดแจ้งเตือน</p>';
+                }
+            }
+            html += '</div></div>';
+
+            // Issues & notes
+            if (issues.length > 0 || notes.length > 0) {
+                html += '<div style="margin-top:0.8rem;padding:0.8rem;background:#fefce8;border:1px solid #fde68a;border-radius:8px;">';
+                issues.forEach(i => { html += '<div style="color:#dc2626;font-weight:600;margin-bottom:4px;">❌ ' + i + '</div>'; });
+                notes.forEach(n => { html += '<div style="color:#854d0e;margin-bottom:4px;">' + n + '</div>'; });
+                html += '</div>';
+            }
+
+            html += '</div></div>';
+        }
+
+        // ═══ Overall Summary ═══
+        let summaryHtml = '<div class="summary-box' + (totalIssues > 0 ? ' has-issues' : '') + '">';
+        summaryHtml += '<h3>' + (totalIssues > 0 ? '❌ พบปัญหา ' + totalIssues + ' รายการ' : '✅ ตรวจสอบเสร็จสิ้น') + '</h3>';
+        summaryHtml += '<div>📅 ช่วงข้อมูล: กันยายน 2568 — มีนาคม 2569 (7 เดือน)</div>';
+        summaryHtml += '<div>🏦 ยอดเปิด: <strong>' + fmt(0) + '</strong> → ยอดปัจจุบัน: <strong>' + fmt(4887.70) + '</strong></div>';
+        if (totalNotes > 0) summaryHtml += '<div>📝 มีหมายเหตุ ' + totalNotes + ' รายการ (กดเปิดแต่ละเดือนเพื่อดูรายละเอียด)</div>';
+        summaryHtml += '<div class="note">💡 ยอดใน Statement = เงินรวมทั้งบัญชี (กองทุน + เงินฝากจ่ายค่าน้ำ/ค่าไฟ)</div>';
+        summaryHtml += '<div class="note">💡 ยอดในบัญชีระบบ (กองทุน) จะไม่เท่ากับ Statement เพราะค่าน้ำ/ค่าไฟเป็น pass-through</div>';
+        summaryHtml += '</div>';
+
+        document.getElementById('content').innerHTML = summaryHtml + html;
+    };
+    </script>
+
+    <script src="supabase/config.js?v=20260319A"></script>
+    <script src="supabase/supabase.min.js?v=20260319A"></script>
+    <script src="ppk-api.js?v=20260326B"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
+    <script src="ppk-pwa.js?v=20260319A"></script>
+</body>
+</html>
