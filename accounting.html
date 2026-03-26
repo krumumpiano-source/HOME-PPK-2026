@@ -733,7 +733,7 @@
             const currentYear = new Date().getFullYear() + 543;
             yearSelect.innerHTML = '';
             
-            for (let y = currentYear; y >= currentYear - 5; y--) {
+            for (let y = currentYear + 1; y >= 2568; y--) {
                 const opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;

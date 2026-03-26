@@ -1319,12 +1319,12 @@
       yearSelect.innerHTML = '';
       const now = new Date();
       const yearBE = toBuddhistYear(now.getFullYear());
-      [yearBE, yearBE-1, yearBE-2].forEach(y => {
+      for (let y = yearBE + 1; y >= 2568; y--) {
         const opt = document.createElement('option');
         opt.value = String(y);
         opt.textContent = String(y);
         yearSelect.appendChild(opt);
-      });
+      }
 
       monthSelect.value = String(now.getMonth()+1).padStart(2,'0');
       yearSelect.value = String(yearBE);

@@ -201,8 +201,7 @@
         function initYearSelector() {
             var sel = document.getElementById('bill_year');
             var cy = now.getFullYear() + 543;
-            var minY = 2568;
-            for (var y = cy + 2; y >= minY; y--) {
+            for (var y = cy + 1; y >= 2568; y--) {
                 var opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;
