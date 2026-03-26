@@ -2982,40 +2982,40 @@
             if (!currentHouseForDetails || currentHouseForDetails === '(ไม่ระบุบ้าน)') return;
             document.getElementById('assignProxyHouseInfo').textContent = `🏠 กำหนดผู้ชำระแทนสำหรับ: ${currentHouseForDetails}`;
             document.getElementById('assignProxyNotes').value = '';
-            // โหลดรายชื่อ users ทั้งหมดที่มีในระบบ
             const sel = document.getElementById('assignProxyUserSelect');
             sel.innerHTML = '<option value="">⏳ กำลังโหลด...</option>';
+            openModal('assignProxy');
             try {
-                const residents = getResidentsData();
-                // กรอง: active, มีบ้าน, ไม่ใช่บ้านที่กำลัง assign
+                // ดึงจาก backend โดยตรง (ไม่พึ่ง localStorage)
+                const res = await callBackend('getResidentsList', {});
+                const residents = (res && res.success && res.data) ? res.data : [];
+                // กรอง: มีบ้าน, มี user_id, ไม่ใช่บ้านที่กำลัง assign, ไม่ใช่ผู้อยู่ร่วม
                 const eligible = residents.filter(r =>
-                    r.status !== 'inactive' &&
                     r.house_number &&
                     r.house_number !== currentHouseForDetails &&
-                    (r.user_id || r.userId) &&
-                    r.residentType !== 'cohabitant'
+                    r.user_id &&
+                    r.resident_type !== 'cohabitant'
                 );
                 eligible.sort((a, b) => {
                     const na = `${a.firstname||''}${a.lastname||''}`;
                     const nb = `${b.firstname||''}${b.lastname||''}`;
                     return na.localeCompare(nb, 'th');
                 });
-                sel.innerHTML = '<option value="">-- เลือกผู้ชำระแทน --</option>';
-                eligible.forEach(r => {
-                    const name = `${r.prefix||''}${r.firstname||''} ${r.lastname||''}`.trim();
-                    const uid = r.user_id || r.userId;
-                    const opt = document.createElement('option');
-                    opt.value = uid;
-                    opt.textContent = `${name} (${r.house_number})`;
-                    sel.appendChild(opt);
-                });
                 if (eligible.length === 0) {
                     sel.innerHTML = '<option value="">ไม่พบผู้ใช้ที่สามารถกำหนดได้</option>';
+                } else {
+                    sel.innerHTML = '<option value="">-- เลือกผู้ชำระแทน --</option>';
+                    eligible.forEach(r => {
+                        const name = `${r.prefix||''}${r.firstname||''} ${r.lastname||''}`.trim();
+                        const opt = document.createElement('option');
+                        opt.value = r.user_id;
+                        opt.textContent = `${name} (${r.house_number})`;
+                        sel.appendChild(opt);
+                    });
                 }
             } catch(e) {
                 sel.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลด</option>';
             }
-            openModal('assignProxy');
         }
 
         async function saveProxyAssignment() {
