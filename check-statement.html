@@ -26,6 +26,17 @@
         h1 { text-align: center; margin-bottom: 0.5rem; }
         .subtitle { text-align: center; color: var(--muted); margin-bottom: 1.5rem; }
         .loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 1.2rem; }
+        .upload-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem; border: 2px dashed var(--primary); }
+        .upload-card h3 { margin: 0 0 1rem 0; color: var(--primary); }
+        .upload-row { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: flex-end; }
+        .upload-row .field { flex: 1; min-width: 180px; }
+        .upload-row label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9rem; }
+        .upload-row input { width: 100%; padding: 0.5rem 0.8rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 0.95rem; }
+        .upload-row input[type="file"] { padding: 0.4rem; }
+        .btn-upload { padding: 0.55rem 1.5rem; background: var(--primary); color: #fff; border: none; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-upload:hover { opacity: 0.9; }
+        .btn-upload:disabled { opacity: 0.5; cursor: not-allowed; }
+        .upload-status { margin-top: 0.8rem; font-size: 0.9rem; min-height: 1.3rem; }
         .month-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 1.5rem; overflow: hidden; border: 1px solid var(--border); }
         .month-header { padding: 0.8rem 1.2rem; font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
         .month-header:hover { opacity: 0.85; }
@@ -55,11 +66,14 @@
         .note { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
         .back-btn { display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1.2rem; background: var(--primary); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
         .back-btn:hover { opacity: 0.9; }
+        .del-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: var(--danger); padding: 0; margin-left: 0.5rem; }
+        .del-btn:hover { text-decoration: underline; }
         @media (max-width: 600px) {
             .container { padding: 0.5rem; }
             .detail-row { flex-direction: column; gap: 0.5rem; }
             table { font-size: 0.82rem; }
             th, td { padding: 4px 6px; }
+            .upload-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -67,234 +81,375 @@
     <div class="container">
         <a href="accounting.html" class="back-btn">← กลับหน้าบัญชี</a>
         <h1>🔍 ตรวจสอบ Statement ธนาคาร</h1>
-        <p class="subtitle">เทียบข้อมูลจาก Statement ออมสิน (020473653424) กับข้อมูลในระบบ HOME PPK</p>
+        <p class="subtitle">อัปโหลด Statement PDF แล้วเทียบกับข้อมูลในระบบ HOME PPK อัตโนมัติ</p>
+
+        <!-- ═══ UPLOAD SECTION ═══ -->
+        <div class="upload-card" id="uploadSection">
+            <h3>📤 อัปโหลด Statement PDF</h3>
+            <div class="upload-row">
+                <div class="field">
+                    <label>ไฟล์ PDF (เลือกได้หลายไฟล์)</label>
+                    <input type="file" id="pdfFiles" accept=".pdf" multiple>
+                </div>
+                <div class="field" style="max-width:200px;">
+                    <label>🔑 รหัส PDF (ถ้ามี)</label>
+                    <input type="password" id="pdfPassword" placeholder="ใส่รหัสเปิด PDF">
+                </div>
+                <button class="btn-upload" id="btnUpload" onclick="processPDFs()">📥 อ่านและบันทึก</button>
+            </div>
+            <div class="upload-status" id="uploadStatus"></div>
+        </div>
+
         <div id="content"><div class="loading">⏳ กำลังดึงข้อมูลจากระบบ...</div></div>
     </div>
 
+    <!-- pdf.js for client-side PDF parsing (supports password) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
     <script>
     // ═══════════════════════════════════════════════
-    // STATEMENT DATA (parsed from bank PDF)
+    // THAI MONTHS
     // ═══════════════════════════════════════════════
-    const STATEMENT = [
-        {
-            period: '2568-09', label: 'กันยายน 2568',
-            openBal: 0.00, closeBal: 20296.73,
-            withdrawals: [],
-            totalDeposit: 20296.73, totalWithdraw: 0
-        },
-        {
-            period: '2568-10', label: 'ตุลาคม 2568',
-            openBal: 20296.73, closeBal: 24244.16,
-            withdrawals: [
-                { date: '06/10/2568', amount: 19084.57 },
-                { date: '06/10/2568', amount: 310.00 },
-                { date: '06/10/2568', amount: 3980.00 }
-            ],
-            totalDeposit: 27322.00, totalWithdraw: 23374.57
-        },
-        {
-            period: '2568-11', label: 'พฤศจิกายน 2568',
-            openBal: 24244.16, closeBal: 22739.41,
-            withdrawals: [
-                { date: '05/11/2568', amount: 16432.75 },
-                { date: '05/11/2568', amount: 310.00 },
-                { date: '05/11/2568', amount: 3920.00 },
-                { date: '05/11/2568', amount: 500.00 }
-            ],
-            totalDeposit: 19658.00, totalWithdraw: 21162.75
-        },
-        {
-            period: '2568-12', label: 'ธันวาคม 2568',
-            openBal: 22739.41, closeBal: 29393.37,
-            withdrawals: [
-                { date: '14/12/2568', amount: 14349.05 },
-                { date: '14/12/2568', amount: 310.00 },
-                { date: '14/12/2568', amount: 4500.00 },
-                { date: '14/12/2568', amount: 1500.00 }
-            ],
-            totalDeposit: 27313.01, totalWithdraw: 20659.05
-        },
-        {
-            period: '2569-01', label: 'มกราคม 2569',
-            openBal: 29393.37, closeBal: 33687.34,
-            withdrawals: [
-                { date: '08/01/2569', amount: 4580.00 },
-                { date: '08/01/2569', amount: 310.00 },
-                { date: '08/01/2569', amount: 12972.03 }
-            ],
-            totalDeposit: 22156.00, totalWithdraw: 17862.03
-        },
-        {
-            period: '2569-02', label: 'กุมภาพันธ์ 2569',
-            openBal: 33687.34, closeBal: 29318.91,
-            withdrawals: [
-                { date: '09/02/2569', amount: 300.00 },
-                { date: '09/02/2569', amount: 1500.00 },
-                { date: '09/02/2569', amount: 4120.00 },
-                { date: '09/02/2569', amount: 11713.43 }
-            ],
-            totalDeposit: 13265.00, totalWithdraw: 17633.43
-        },
-        {
-            period: '2569-03', label: 'มีนาคม 2569 (ถึง 24/3)',
-            openBal: 29318.91, closeBal: 4887.70,
-            withdrawals: [
-                { date: '06/03/2569', amount: 320.00 },
-                { date: '06/03/2569', amount: 4680.00 },
-                { date: '06/03/2569', amount: 12104.21 },
-                { date: '06/03/2569', amount: 15000.00 }
-            ],
-            totalDeposit: 7673.00, totalWithdraw: 32104.21
-        }
-    ];
-
-    // Known special transactions (admin-defined notes)
-    const KNOWN_NOTES = {
-        '2569-03_15000': 'ถอนเงินสด: ค่ามิเตอร์ดิจิตอล 9,010 + ค่าแรงติดตั้ง 1,000 + เงินสดคงเหลือ 4,990 (ยังไม่นำฝาก)'
-    };
-
-    // ═══════════════════════════════════════════════
+    const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const fmt = v => parseFloat(v||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    function toggleMonth(el) { el.nextElementSibling.classList.toggle('open'); }
 
-    function toggleMonth(el) {
-        el.nextElementSibling.classList.toggle('open');
+    // ═══════════════════════════════════════════════
+    // PDF PARSER — Parse GSB (ออมสิน) statement text
+    // ═══════════════════════════════════════════════
+    function parseStatementText(text) {
+        var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        var result = { period: '', label: '', openBal: 0, closeBal: 0, totalDeposit: 0, totalWithdraw: 0, withdrawals: [], deposits: [] };
+
+        // Find period: "รอบวันที่ DD/MM/YYYY - DD/MM/YYYY"
+        for (var i = 0; i < lines.length; i++) {
+            var periodMatch = lines[i].match(/รอบวันที่\s+\d{2}\/(\d{2})\/(\d{4})/);
+            if (periodMatch) {
+                var mm = parseInt(periodMatch[1]);
+                var yy = periodMatch[2];
+                result.period = yy + '-' + String(mm).padStart(2, '0');
+                result.label = THAI_MONTHS[mm - 1] + ' ' + yy;
+                break;
+            }
+        }
+
+        // Find ยอดยกมา / ยอดยกไป
+        for (var i = 0; i < lines.length; i++) {
+            var openMatch = lines[i].match(/ยอดยกมา\s+([\d,]+\.\d{2})/);
+            if (openMatch) { result.openBal = parseFloat(openMatch[1].replace(/,/g, '')); }
+            var closeMatch = lines[i].match(/ยอดยกไป\s+([\d,]+\.\d{2})/);
+            if (closeMatch) { result.closeBal = parseFloat(closeMatch[1].replace(/,/g, '')); }
+            var totalWMatch = lines[i].match(/ยอดรวมรายการถอน\s*=\s*\d+\s*รายการ\s+([\d,]+\.\d{2})/);
+            if (totalWMatch) { result.totalWithdraw = parseFloat(totalWMatch[1].replace(/,/g, '')); }
+            var totalDMatch = lines[i].match(/ยอดรวมรายการฝาก\s*=\s*\d+\s*รายการ\s+([\d,]+\.\d{2})/);
+            if (totalDMatch) { result.totalDeposit = parseFloat(totalDMatch[1].replace(/,/g, '')); }
+        }
+
+        // Parse transaction lines: DD/MM/YYYYDescription Amount Balance Code...
+        var txRegex = /^(\d{2}\/\d{2}\/\d{4})(.*)/;
+        for (var i = 0; i < lines.length; i++) {
+            var m = lines[i].match(txRegex);
+            if (!m) continue;
+            var date = m[1];
+            var rest = m[2];
+            // Extract all numbers (with commas and decimals)
+            var nums = [];
+            var numRegex = /([\d,]+\.\d{2})/g;
+            var nm;
+            while ((nm = numRegex.exec(rest)) !== null) {
+                nums.push(parseFloat(nm[1].replace(/,/g, '')));
+            }
+            if (nums.length < 2) continue; // need at least amount + balance
+
+            var isWithdraw = /Withdraw|ถอน/i.test(rest);
+            var amount = nums[0]; // first number is the transaction amount
+
+            if (isWithdraw) {
+                result.withdrawals.push({ date: date, amount: amount });
+            } else {
+                result.deposits.push({ date: date, amount: amount });
+            }
+        }
+
+        return result;
     }
 
-    window.onload = async function() {
-        var user = await checkSession(true);
-        if (!user) return;
-        var _role = user.role || '';
-        var _perms = (user.permissions && Array.isArray(user.permissions)) ? user.permissions : [];
-        var _allowed = (_role === 'admin' || _role === 'head' || _perms.indexOf('accounting') >= 0);
-        if (!_allowed) {
-            if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (role=' + _role + ')');
-            window.location.replace('dashboard.html');
+    // ═══════════════════════════════════════════════
+    // PDF PROCESSING
+    // ═══════════════════════════════════════════════
+    async function processPDFs() {
+        var fileInput = document.getElementById('pdfFiles');
+        var password = document.getElementById('pdfPassword').value || '';
+        var statusEl = document.getElementById('uploadStatus');
+        var btn = document.getElementById('btnUpload');
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+            statusEl.innerHTML = '<span style="color:var(--danger);">❌ กรุณาเลือกไฟล์ PDF</span>';
             return;
         }
 
-        // โหลด settings ทั้งหมด (มี electric_lost_* และ monthly_withdraw_*)
-        let allSettings = {};
+        btn.disabled = true;
+        statusEl.innerHTML = '⏳ กำลังอ่าน PDF... (0/' + fileInput.files.length + ')';
+
+        var parsedStatements = [];
+        var errors = [];
+
+        for (var fi = 0; fi < fileInput.files.length; fi++) {
+            var file = fileInput.files[fi];
+            statusEl.innerHTML = '⏳ กำลังอ่าน: ' + file.name + ' (' + (fi+1) + '/' + fileInput.files.length + ')';
+
+            try {
+                var arrayBuffer = await file.arrayBuffer();
+                var loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, password: password || undefined });
+                var pdf = await loadingTask.promise;
+
+                var fullText = '';
+                for (var p = 1; p <= pdf.numPages; p++) {
+                    var page = await pdf.getPage(p);
+                    var textContent = await page.getTextContent();
+                    var pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+
+                // Re-parse with line breaks by position
+                var textByPage = '';
+                for (var p = 1; p <= pdf.numPages; p++) {
+                    var page = await pdf.getPage(p);
+                    var textContent = await page.getTextContent();
+                    var items = textContent.items;
+                    if (items.length === 0) continue;
+
+                    // Group by Y position (same line)
+                    var lineMap = {};
+                    items.forEach(function(item) {
+                        var y = Math.round(item.transform[5]);
+                        if (!lineMap[y]) lineMap[y] = [];
+                        lineMap[y].push({ x: item.transform[4], str: item.str });
+                    });
+
+                    // Sort by Y descending (top to bottom), then X ascending
+                    var yKeys = Object.keys(lineMap).map(Number).sort(function(a,b) { return b - a; });
+                    yKeys.forEach(function(y) {
+                        var parts = lineMap[y].sort(function(a,b) { return a.x - b.x; });
+                        textByPage += parts.map(function(p) { return p.str; }).join(' ') + '\n';
+                    });
+                }
+
+                var parsed = parseStatementText(textByPage);
+                if (parsed.period) {
+                    parsedStatements.push(parsed);
+                } else {
+                    errors.push(file.name + ': ไม่พบข้อมูล period');
+                }
+            } catch(e) {
+                var errMsg = e.message || '';
+                if (errMsg.includes('password') || errMsg.includes('Password')) {
+                    errors.push(file.name + ': ❌ รหัส PDF ไม่ถูกต้อง');
+                } else {
+                    errors.push(file.name + ': ' + errMsg);
+                }
+            }
+        }
+
+        // Save to Supabase settings
+        if (parsedStatements.length > 0) {
+            statusEl.innerHTML = '⏳ กำลังบันทึกลงระบบ...';
+            var settingsToSave = {};
+            parsedStatements.forEach(function(s) {
+                s.uploadedAt = new Date().toISOString();
+                settingsToSave['bank_statement_' + s.period] = JSON.stringify(s);
+            });
+
+            try {
+                await callBackend('saveSettings', { settings: settingsToSave });
+                var names = parsedStatements.map(function(s) { return s.label; }).join(', ');
+                statusEl.innerHTML = '<span style="color:var(--success);">✅ บันทึกสำเร็จ ' + parsedStatements.length + ' เดือน: ' + names + '</span>';
+                if (errors.length > 0) {
+                    statusEl.innerHTML += '<br><span style="color:var(--danger);">' + errors.join('<br>') + '</span>';
+                }
+                // Reload page data
+                setTimeout(function() { loadAndRender(); }, 500);
+            } catch(e) {
+                statusEl.innerHTML = '<span style="color:var(--danger);">❌ บันทึกไม่สำเร็จ: ' + e.message + '</span>';
+            }
+        } else {
+            statusEl.innerHTML = '<span style="color:var(--danger);">❌ ไม่สามารถอ่านข้อมูลได้<br>' + errors.join('<br>') + '</span>';
+        }
+
+        btn.disabled = false;
+    }
+
+    // ═══════════════════════════════════════════════
+    // DELETE STATEMENT
+    // ═══════════════════════════════════════════════
+    async function deleteStatement(period) {
+        if (!confirm('ลบข้อมูล Statement เดือน ' + period + ' ?')) return;
         try {
-            const r = await callBackend('getSettings', {});
+            await callBackend('saveSettings', { settings: { ['bank_statement_' + period]: '' } });
+            loadAndRender();
+        } catch(e) {
+            alert('ลบไม่สำเร็จ: ' + e.message);
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // MAIN: LOAD AND RENDER
+    // ═══════════════════════════════════════════════
+    async function loadAndRender() {
+        var contentEl = document.getElementById('content');
+        contentEl.innerHTML = '<div class="loading">⏳ กำลังดึงข้อมูลจากระบบ...</div>';
+
+        // 1. Load all settings
+        var allSettings = {};
+        try {
+            var r = await callBackend('getSettings', {});
             if (r && r.success) allSettings = r.data || {};
         } catch(e) { console.error('getSettings error:', e); }
 
-        let html = '';
-        let totalIssues = 0;
-        let totalNotes = 0;
+        // 2. Collect statement data from settings (key: bank_statement_YYYY-MM)
+        var statements = [];
+        var keys = Object.keys(allSettings);
+        for (var ki = 0; ki < keys.length; ki++) {
+            if (keys[ki].indexOf('bank_statement_') === 0 && allSettings[keys[ki]]) {
+                try {
+                    var parsed = JSON.parse(allSettings[keys[ki]]);
+                    if (parsed && parsed.period) statements.push(parsed);
+                } catch(e) {}
+            }
+        }
 
-        for (const stm of STATEMENT) {
-            const issues = [];
-            const notes = [];
+        // Sort by period
+        statements.sort(function(a, b) { return a.period < b.period ? -1 : 1; });
+
+        if (statements.length === 0) {
+            contentEl.innerHTML = '<div class="summary-box"><h3>📭 ยังไม่มีข้อมูล Statement</h3><div>กรุณาอัปโหลด PDF Statement ธนาคารด้านบน</div></div>';
+            return;
+        }
+
+        // 3. Render each month
+        var html = '';
+        var totalIssues = 0;
+        var totalNotes = 0;
+
+        for (var si = 0; si < statements.length; si++) {
+            var stm = statements[si];
+            var issues = [];
+            var notes = [];
 
             // ── ดึงข้อมูลจากระบบ ──
-            let sysWithdraw = null, sysElectric = null, sysAccounting = null, sysNotifications = [];
+            var sysWithdraw = null, sysElectric = null, sysAccounting = null, sysNotifications = [];
 
             try {
-                const wdRaw = allSettings['monthly_withdraw_' + stm.period];
+                var wdRaw = allSettings['monthly_withdraw_' + stm.period];
                 if (wdRaw) sysWithdraw = JSON.parse(wdRaw);
             } catch(e) {}
 
             try {
-                const elRaw = allSettings['electric_lost_' + stm.period];
+                var elRaw = allSettings['electric_lost_' + stm.period];
                 if (elRaw) sysElectric = JSON.parse(elRaw);
             } catch(e) {}
 
             try {
-                const r = await callBackend('loadAndSyncAccounting', { period: stm.period });
-                if (r && r.success) sysAccounting = r;
+                var r2 = await callBackend('loadAndSyncAccounting', { period: stm.period });
+                if (r2 && r2.success) sysAccounting = r2;
             } catch(e) {}
 
             try {
-                const r = await callBackend('getNotificationHistory', { period: stm.period, limit: 200 });
-                if (r && r.success) sysNotifications = r.data || [];
+                var r3 = await callBackend('getNotificationHistory', { period: stm.period, limit: 200 });
+                if (r3 && r3.success) sysNotifications = r3.data || [];
             } catch(e) {}
 
             // ── วิเคราะห์ข้อมูล ──
-            const peaTotal = sysElectric ? parseFloat(sysElectric.pea_total) || 0 : 0;
-            const garbageFee = sysWithdraw ? parseFloat(sysWithdraw.garbageFee) || 0 : 0;
-            const sysTotal = sysWithdraw ? parseFloat(sysWithdraw.totalWithdraw) || 0 : 0;
-            const oc = (sysWithdraw && sysWithdraw.operatingCosts) || {};
-            const travelW = parseFloat(oc.travelWithdraw) || 0;
-            const travelE = parseFloat(oc.travelElectric) || 0;
-            const travelG = parseFloat(oc.travelGarbage) || 0;
-            const travelTotal = travelW + travelE + travelG;
-            const roundingFee = parseFloat(oc.roundingFee) || 0;
-            const additionalItems = (sysWithdraw && sysWithdraw.additionalItems) || [];
-            const additionalTotal = additionalItems.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+            var peaTotal = sysElectric ? parseFloat(sysElectric.pea_total) || 0 : 0;
+            var garbageFee = sysWithdraw ? parseFloat(sysWithdraw.garbageFee) || 0 : 0;
+            var sysTotal = sysWithdraw ? parseFloat(sysWithdraw.totalWithdraw) || 0 : 0;
+            var oc = (sysWithdraw && sysWithdraw.operatingCosts) || {};
+            var travelW = parseFloat(oc.travelWithdraw) || 0;
+            var travelE = parseFloat(oc.travelElectric) || 0;
+            var travelG = parseFloat(oc.travelGarbage) || 0;
+            var travelTotal = travelW + travelE + travelG;
+            var roundingFee = parseFloat(oc.roundingFee) || 0;
+            var additionalItems = (sysWithdraw && sysWithdraw.additionalItems) || [];
 
             // ── จับคู่รายการถอน ──
-            const stmW = stm.withdrawals.slice().sort((a,b) => b.amount - a.amount);
-            let matchResults = [];
-            let usedIndexes = [];
+            var stmW = (stm.withdrawals || []).slice().sort(function(a,b) { return b.amount - a.amount; });
+            var matchResults = [];
+            var usedIndexes = [];
 
             if (stmW.length > 0) {
-                // 1) ค่าไฟ PEA = ตัวที่มีสตางค์ (มีทศนิยม) และมากกว่า 5000
-                const peaIdx = stmW.findIndex(w => w.amount > 5000 && w.amount % 1 !== 0);
-                const stmPea = peaIdx >= 0 ? stmW[peaIdx] : stmW[0];
-                const peaI = peaIdx >= 0 ? peaIdx : 0;
-                usedIndexes.push(peaI);
-                const peaMatch = peaTotal > 0 ? Math.abs(stmPea.amount - peaTotal) < 0.02 : false;
-                matchResults.push({ label: 'ค่าไฟ PEA', stmAmount: stmPea.amount, sysAmount: peaTotal, match: peaMatch, noData: peaTotal === 0 });
-                if (peaTotal > 0 && !peaMatch) issues.push('ค่าไฟ PEA ไม่ตรง: Statement=' + fmt(stmPea.amount) + ' ระบบ=' + fmt(peaTotal));
+                // 1) ค่าไฟ PEA = ตัวที่มีสตางค์ และมากกว่า 5000
+                var peaIdx = -1;
+                for (var wi = 0; wi < stmW.length; wi++) {
+                    if (stmW[wi].amount > 5000 && stmW[wi].amount % 1 !== 0) { peaIdx = wi; break; }
+                }
+                if (peaIdx < 0) peaIdx = 0;
+                usedIndexes.push(peaIdx);
+                var peaMatch = peaTotal > 0 ? Math.abs(stmW[peaIdx].amount - peaTotal) < 0.02 : false;
+                matchResults.push({ label: 'ค่าไฟ PEA', stmAmount: stmW[peaIdx].amount, sysAmount: peaTotal, match: peaMatch, noData: peaTotal === 0 });
+                if (peaTotal > 0 && !peaMatch) issues.push('ค่าไฟ PEA ไม่ตรง: Statement=' + fmt(stmW[peaIdx].amount) + ' ระบบ=' + fmt(peaTotal));
 
-                // 2) ค่าขยะ = ตัว 3000-6000
-                const garbageIdx = stmW.findIndex((w,i) => !usedIndexes.includes(i) && w.amount >= 3000 && w.amount <= 6000);
+                // 2) ค่าขยะ = 3000-6000
+                var garbageIdx = -1;
+                for (var wi = 0; wi < stmW.length; wi++) {
+                    if (usedIndexes.indexOf(wi) < 0 && stmW[wi].amount >= 3000 && stmW[wi].amount <= 6000) { garbageIdx = wi; break; }
+                }
                 if (garbageIdx >= 0) {
                     usedIndexes.push(garbageIdx);
-                    const garbageMatch = garbageFee > 0 ? Math.abs(stmW[garbageIdx].amount - garbageFee) < 0.02 : false;
+                    var garbageMatch = garbageFee > 0 ? Math.abs(stmW[garbageIdx].amount - garbageFee) < 0.02 : false;
                     matchResults.push({ label: 'ค่าขยะ', stmAmount: stmW[garbageIdx].amount, sysAmount: garbageFee, match: garbageMatch, noData: garbageFee === 0 });
                     if (garbageFee > 0 && !garbageMatch) issues.push('ค่าขยะไม่ตรง: Statement=' + fmt(stmW[garbageIdx].amount) + ' ระบบ=' + fmt(garbageFee));
                 }
 
-                // 3) ค่าเดินทาง = ตัว 200-500
-                const travelIdx = stmW.findIndex((w,i) => !usedIndexes.includes(i) && w.amount >= 200 && w.amount <= 500);
+                // 3) ค่าเดินทาง = 200-500
+                var travelIdx = -1;
+                for (var wi = 0; wi < stmW.length; wi++) {
+                    if (usedIndexes.indexOf(wi) < 0 && stmW[wi].amount >= 200 && stmW[wi].amount <= 500) { travelIdx = wi; break; }
+                }
                 if (travelIdx >= 0) {
                     usedIndexes.push(travelIdx);
-                    const travelMatch = travelTotal > 0 ? Math.abs(stmW[travelIdx].amount - travelTotal) < 0.02 : false;
+                    var travelMatch = travelTotal > 0 ? Math.abs(stmW[travelIdx].amount - travelTotal) < 0.02 : false;
                     matchResults.push({ label: 'ค่าเดินทาง (รวม)', stmAmount: stmW[travelIdx].amount, sysAmount: travelTotal, match: travelMatch, noData: travelTotal === 0 });
                     if (travelTotal > 0 && !travelMatch) issues.push('ค่าเดินทางไม่ตรง: Statement=' + fmt(stmW[travelIdx].amount) + ' ระบบ=' + fmt(travelTotal));
                 }
 
                 // 4) รายการที่เหลือ
-                stmW.forEach((w, i) => {
-                    if (usedIndexes.includes(i)) return;
-                    const noteKey = stm.period + '_' + w.amount;
-                    const knownNote = KNOWN_NOTES[noteKey];
-                    matchResults.push({ label: 'รายการอื่น', stmAmount: w.amount, sysAmount: null, match: false, noData: true, isExtra: true });
-                    if (knownNote) {
-                        notes.push('💡 ' + fmt(w.amount) + ' บาท — ' + knownNote);
-                    } else {
-                        notes.push('❓ รายการถอน ' + fmt(w.amount) + ' บาท — ไม่ตรงกับข้อมูลในระบบ ต้องตรวจสอบ');
-                    }
-                });
+                for (var wi = 0; wi < stmW.length; wi++) {
+                    if (usedIndexes.indexOf(wi) >= 0) continue;
+                    matchResults.push({ label: 'รายการอื่น', stmAmount: stmW[wi].amount, sysAmount: null, match: false, noData: true, isExtra: true });
+                    notes.push('❓ รายการถอน ' + fmt(stmW[wi].amount) + ' บาท — ไม่ตรงกับข้อมูลในระบบ ต้องตรวจสอบ');
+                }
             }
 
             // ── Accounting ──
-            const accCarryForward = sysAccounting ? sysAccounting.carryForward || 0 : 0;
-            const accIncome = sysAccounting ? (sysAccounting.incomeItems||[]).reduce((s,i) => s + (parseFloat(i.amount)||0), 0) : 0;
-            const accExpense = sysAccounting ? (sysAccounting.expenseItems||[]).reduce((s,i) => s + (parseFloat(i.amount)||0), 0) : 0;
-            const accCarryOver = accCarryForward + accIncome - accExpense;
+            var accCarryForward = sysAccounting ? sysAccounting.carryForward || 0 : 0;
+            var accIncome = sysAccounting ? (sysAccounting.incomeItems||[]).reduce(function(s,i) { return s + (parseFloat(i.amount)||0); }, 0) : 0;
+            var accExpense = sysAccounting ? (sysAccounting.expenseItems||[]).reduce(function(s,i) { return s + (parseFloat(i.amount)||0); }, 0) : 0;
+            var accCarryOver = accCarryForward + accIncome - accExpense;
 
             // ── Notifications ──
-            const notifTotalAll = sysNotifications.reduce((s,n) => s + (parseFloat(n.total_amount)||0), 0);
-            const notifCommonTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.common_fee)||0), 0);
-            const notifWaterTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.water_amount)||0), 0);
-            const notifElectricTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.electric_amount)||0), 0);
-            const notifGarbageTotal = sysNotifications.reduce((s,n) => s + (parseFloat(n.garbage_fee)||0), 0);
+            var notifTotalAll = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.total_amount)||0); }, 0);
+            var notifCommonTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.common_fee)||0); }, 0);
+            var notifWaterTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.water_amount)||0); }, 0);
+            var notifElectricTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.electric_amount)||0); }, 0);
+            var notifGarbageTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.garbage_fee)||0); }, 0);
 
             // ── สถานะ ──
-            const hasNoSystemData = !sysWithdraw && !sysElectric && sysNotifications.length === 0;
-            const status = hasNoSystemData ? 'nodata' : (issues.length > 0 ? 'err' : (notes.length > 0 ? 'warn' : 'ok'));
+            var hasNoSystemData = !sysWithdraw && !sysElectric && sysNotifications.length === 0;
+            var status = hasNoSystemData ? 'nodata' : (issues.length > 0 ? 'err' : (notes.length > 0 ? 'warn' : 'ok'));
             if (issues.length > 0) totalIssues += issues.length;
             if (notes.length > 0) totalNotes += notes.length;
 
-            // ═══════════════════════════════════════
-            // RENDER
-            // ═══════════════════════════════════════
+            // ═══ RENDER MONTH CARD ═══
             html += '<div class="month-card">';
             html += '<div class="month-header ' + status + '" onclick="toggleMonth(this)">';
-            html += '<span>📅 ' + stm.label + '</span>';
+            html += '<span>📅 ' + stm.label;
+            if (stm.uploadedAt) {
+                var upDate = new Date(stm.uploadedAt);
+                html += ' <small style="font-weight:400;opacity:0.7;">(อัปโหลด ' + upDate.toLocaleDateString('th-TH') + ')</small>';
+            }
+            html += '<button class="del-btn" onclick="event.stopPropagation();deleteStatement(\'' + stm.period + '\')" title="ลบ Statement นี้">🗑️</button>';
+            html += '</span>';
             if (status === 'ok') html += '<span class="badge badge-ok">✅ ตรงกัน</span>';
             else if (status === 'err') html += '<span class="badge badge-err">❌ ไม่ตรง ' + issues.length + ' รายการ</span>';
             else if (status === 'warn') html += '<span class="badge badge-warn">⚠️ มีหมายเหตุ ' + notes.length + ' รายการ</span>';
@@ -304,25 +459,24 @@
 
             // --- Statement summary ---
             html += '<div class="section-title">📄 Statement ธนาคาร</div>';
-            html += '<table><tr><th>ยอดยกมา</th><th>ยอดฝากรวม</th><th>ยอดถอนรวม</th><th>ยอดยกไป</th></tr>';
+            html += '<table><tr><th>ยอดยกมา</th><th>ยอดฝากรวม (' + (stm.deposits||[]).length + ' รายการ)</th><th>ยอดถอนรวม (' + (stm.withdrawals||[]).length + ' รายการ)</th><th>ยอดยกไป</th></tr>';
             html += '<tr><td class="right">' + fmt(stm.openBal) + '</td><td class="right" style="color:#059669;">' + fmt(stm.totalDeposit) + '</td><td class="right" style="color:#dc2626;">' + fmt(stm.totalWithdraw) + '</td><td class="right" style="font-weight:700;">' + fmt(stm.closeBal) + '</td></tr></table>';
 
             // --- Withdrawal matching ---
             if (matchResults.length > 0) {
                 html += '<div class="section-title">🔎 เทียบรายการถอนกับระบบ</div>';
                 html += '<table><tr><th>รายการ</th><th>Statement (บาท)</th><th>ระบบ (บาท)</th><th>ผลตรวจ</th></tr>';
-                matchResults.forEach(m => {
-                    const cls = m.noData ? 'na' : (m.match ? 'match' : 'mismatch');
-                    const label = m.noData ? '— ไม่มีข้อมูล' : (m.match ? '✅ ตรง' : '❌ ไม่ตรง');
+                for (var mi = 0; mi < matchResults.length; mi++) {
+                    var m = matchResults[mi];
+                    var cls = m.noData ? 'na' : (m.match ? 'match' : 'mismatch');
+                    var lbl = m.noData ? '— ไม่มีข้อมูล' : (m.match ? '✅ ตรง' : '❌ ไม่ตรง');
                     html += '<tr><td>' + m.label + (m.isExtra ? ' ⚠️' : '') + '</td>';
                     html += '<td class="right">' + fmt(m.stmAmount) + '</td>';
                     html += '<td class="right ' + cls + '">' + (m.sysAmount !== null ? fmt(m.sysAmount) : '—') + '</td>';
-                    html += '<td class="' + cls + '">' + label + '</td></tr>';
-                });
-                // สรุป
-                const stmTotalW = stm.totalWithdraw;
+                    html += '<td class="' + cls + '">' + lbl + '</td></tr>';
+                }
                 html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>รวมถอนทั้งหมด</td>';
-                html += '<td class="right">' + fmt(stmTotalW) + '</td><td class="right">—</td><td></td></tr>';
+                html += '<td class="right">' + fmt(stm.totalWithdraw) + '</td><td class="right">—</td><td></td></tr>';
                 html += '</table>';
             }
 
@@ -335,9 +489,9 @@
             if (sysWithdraw) {
                 html += '<table>';
                 html += '<tr><td>ค่าขยะ</td><td class="right">' + fmt(garbageFee) + '</td></tr>';
-                additionalItems.forEach(it => {
-                    html += '<tr><td>' + (it.name||'—') + '</td><td class="right">' + fmt(it.amount) + '</td></tr>';
-                });
+                for (var ai = 0; ai < additionalItems.length; ai++) {
+                    html += '<tr><td>' + (additionalItems[ai].name||'—') + '</td><td class="right">' + fmt(additionalItems[ai].amount) + '</td></tr>';
+                }
                 if (roundingFee > 0) html += '<tr><td>ค่าดำเนินการ (ปัดเศษ)</td><td class="right">' + fmt(roundingFee) + '</td></tr>';
                 if (travelW > 0) html += '<tr><td>ค่าเดินทางถอนเงิน</td><td class="right">' + fmt(travelW) + '</td></tr>';
                 if (travelE > 0) html += '<tr><td>ค่าเดินทางชำระค่าไฟ</td><td class="right">' + fmt(travelE) + '</td></tr>';
@@ -349,7 +503,7 @@
             }
 
             if (sysElectric) {
-                html += '<div class="section-title">⚡ ข้อมูลไฟฟ้า (electric_lost)</div>';
+                html += '<div class="section-title">⚡ ข้อมูลไฟฟ้า</div>';
                 html += '<table>';
                 html += '<tr><td>ค่าไฟ PEA Total</td><td class="right">' + fmt(sysElectric.pea_total) + '</td></tr>';
                 html += '<tr><td>ส่วนต่างค่าไฟ (electric_diff)</td><td class="right">' + fmt(sysElectric.electric_diff) + '</td></tr>';
@@ -361,7 +515,7 @@
 
             // Right: Accounting + Notifications
             html += '<div class="detail-col">';
-            html += '<div class="section-title">📊 บัญชีกองทุน (accounting)</div>';
+            html += '<div class="section-title">📊 บัญชีกองทุน</div>';
             if (sysAccounting) {
                 html += '<table>';
                 html += '<tr><td>ยอดยกมา</td><td class="right">' + fmt(accCarryForward) + '</td></tr>';
@@ -372,14 +526,14 @@
 
                 if ((sysAccounting.incomeItems||[]).length > 0) {
                     html += '<div class="section-title" style="font-size:0.85rem;">📥 รายรับ</div><table>';
-                    (sysAccounting.incomeItems||[]).forEach(i => {
+                    (sysAccounting.incomeItems||[]).forEach(function(i) {
                         html += '<tr><td>' + (i.name||i.description||'—') + (i.source==='auto'?' <small style="color:#059669;">[auto]</small>':'') + '</td><td class="right">' + fmt(i.amount) + '</td></tr>';
                     });
                     html += '</table>';
                 }
                 if ((sysAccounting.expenseItems||[]).length > 0) {
                     html += '<div class="section-title" style="font-size:0.85rem;">📤 รายจ่าย</div><table>';
-                    (sysAccounting.expenseItems||[]).forEach(i => {
+                    (sysAccounting.expenseItems||[]).forEach(function(i) {
                         html += '<tr><td>' + (i.name||i.description||'—') + (i.source==='auto'?' <small style="color:#059669;">[auto]</small>':'') + '</td><td class="right">' + fmt(i.amount) + '</td></tr>';
                     });
                     html += '</table>';
@@ -391,19 +545,18 @@
             if (sysNotifications.length > 0) {
                 html += '<div class="section-title">📨 การแจ้งเตือน (' + sysNotifications.length + ' หลัง)</div>';
                 html += '<table>';
-                html += '<tr><td>ยอดแจ้งเตือนรวมทั้งหมด</td><td class="right">' + fmt(notifTotalAll) + '</td></tr>';
+                html += '<tr><td>ยอดแจ้งเตือนรวม</td><td class="right">' + fmt(notifTotalAll) + '</td></tr>';
                 html += '<tr><td>├ ค่าส่วนกลาง</td><td class="right">' + fmt(notifCommonTotal) + '</td></tr>';
-                html += '<tr><td>├ ค่าน้ำประปา</td><td class="right">' + fmt(notifWaterTotal) + '</td></tr>';
-                html += '<tr><td>├ ค่าไฟฟ้า</td><td class="right">' + fmt(notifElectricTotal) + '</td></tr>';
+                html += '<tr><td>├ ค่าน้ำ</td><td class="right">' + fmt(notifWaterTotal) + '</td></tr>';
+                html += '<tr><td>├ ค่าไฟ</td><td class="right">' + fmt(notifElectricTotal) + '</td></tr>';
                 html += '<tr><td>└ ค่าขยะ</td><td class="right">' + fmt(notifGarbageTotal) + '</td></tr>';
                 html += '</table>';
-                // เทียบยอดฝากกับยอดแจ้งเตือน
-                const depositDiff = stm.totalDeposit - notifTotalAll;
+                var depositDiff = stm.totalDeposit - notifTotalAll;
                 if (Math.abs(depositDiff) > 1) {
-                    const diffColor = depositDiff > 0 ? '#059669' : '#dc2626';
+                    var diffColor = depositDiff > 0 ? '#059669' : '#dc2626';
                     html += '<p class="note">📌 ยอดฝาก Statement (' + fmt(stm.totalDeposit) + ') vs ยอดแจ้งเตือน (' + fmt(notifTotalAll) + ') → ส่วนต่าง: <strong style="color:' + diffColor + ';">' + fmt(depositDiff) + '</strong>';
                     html += '<br><small>ส่วนต่างอาจเกิดจาก: ผู้พักโอนไม่ตรงยอด / มีเงินฝากเพิ่มเติม / ยังไม่ได้แจ้งเตือนครบ</small></p>';
-                } else if (Math.abs(depositDiff) <= 1 && notifTotalAll > 0) {
+                } else if (notifTotalAll > 0) {
                     html += '<p class="note" style="color:#059669;">✅ ยอดฝากตรงกับยอดแจ้งเตือน</p>';
                 }
             }
@@ -412,8 +565,8 @@
             // Issues & notes
             if (issues.length > 0 || notes.length > 0) {
                 html += '<div style="margin-top:0.8rem;padding:0.8rem;background:#fefce8;border:1px solid #fde68a;border-radius:8px;">';
-                issues.forEach(i => { html += '<div style="color:#dc2626;font-weight:600;margin-bottom:4px;">❌ ' + i + '</div>'; });
-                notes.forEach(n => { html += '<div style="color:#854d0e;margin-bottom:4px;">' + n + '</div>'; });
+                for (var ii = 0; ii < issues.length; ii++) html += '<div style="color:#dc2626;font-weight:600;margin-bottom:4px;">❌ ' + issues[ii] + '</div>';
+                for (var ni = 0; ni < notes.length; ni++) html += '<div style="color:#854d0e;margin-bottom:4px;">' + notes[ni] + '</div>';
                 html += '</div>';
             }
 
@@ -421,16 +574,40 @@
         }
 
         // ═══ Overall Summary ═══
-        let summaryHtml = '<div class="summary-box' + (totalIssues > 0 ? ' has-issues' : '') + '">';
+        var firstStm = statements[0];
+        var lastStm = statements[statements.length - 1];
+        var summaryHtml = '<div class="summary-box' + (totalIssues > 0 ? ' has-issues' : '') + '">';
         summaryHtml += '<h3>' + (totalIssues > 0 ? '❌ พบปัญหา ' + totalIssues + ' รายการ' : '✅ ตรวจสอบเสร็จสิ้น') + '</h3>';
-        summaryHtml += '<div>📅 ช่วงข้อมูล: กันยายน 2568 — มีนาคม 2569 (7 เดือน)</div>';
-        summaryHtml += '<div>🏦 ยอดเปิด: <strong>' + fmt(0) + '</strong> → ยอดปัจจุบัน: <strong>' + fmt(4887.70) + '</strong></div>';
+        summaryHtml += '<div>📅 ช่วงข้อมูล: ' + firstStm.label + ' — ' + lastStm.label + ' (' + statements.length + ' เดือน)</div>';
+        summaryHtml += '<div>🏦 ยอดเปิด: <strong>' + fmt(firstStm.openBal) + '</strong> → ยอดปัจจุบัน: <strong>' + fmt(lastStm.closeBal) + '</strong></div>';
         if (totalNotes > 0) summaryHtml += '<div>📝 มีหมายเหตุ ' + totalNotes + ' รายการ (กดเปิดแต่ละเดือนเพื่อดูรายละเอียด)</div>';
         summaryHtml += '<div class="note">💡 ยอดใน Statement = เงินรวมทั้งบัญชี (กองทุน + เงินฝากจ่ายค่าน้ำ/ค่าไฟ)</div>';
         summaryHtml += '<div class="note">💡 ยอดในบัญชีระบบ (กองทุน) จะไม่เท่ากับ Statement เพราะค่าน้ำ/ค่าไฟเป็น pass-through</div>';
         summaryHtml += '</div>';
 
-        document.getElementById('content').innerHTML = summaryHtml + html;
+        contentEl.innerHTML = summaryHtml + html;
+    }
+
+    // ═══════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════
+    window.onload = async function() {
+        // ตั้งค่า pdf.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        var user = await checkSession(true);
+        if (!user) return;
+        // อนุญาตเฉพาะ admin / head / มีสิทธิ์ accounting
+        var _role = user.role || '';
+        var _perms = [];
+        try { _perms = user.permissions || []; } catch(e) {}
+        if (_role !== 'admin' && _role !== 'head' && _perms.indexOf('accounting') < 0) {
+            alert('ไม่มีสิทธิ์เข้าถึง (role=' + _role + ', perms=' + _perms.join(',') + ')');
+            window.location.replace('dashboard.html');
+            return;
+        }
+
+        await loadAndRender();
     };
     </script>
 
