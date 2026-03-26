@@ -1,0 +1,367 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>ดูมุมมองผู้ใช้ | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260326A">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Admin View Banner ── */
+        .admin-view-bar {
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: #fff;
+            padding: 0.7rem 1.2rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            font-size: 0.88rem; font-weight: 600; flex-wrap: wrap;
+            border-radius: 12px; margin-bottom: 1rem;
+        }
+        .admin-view-bar .avb-badge {
+            background: rgba(255,255,255,0.18); border-radius: 20px;
+            padding: 0.2rem 0.65rem; font-size: 0.78rem; white-space: nowrap;
+        }
+        .admin-view-bar .avb-label { flex: 1; }
+
+        /* ── House Picker ── */
+        .house-picker-card {
+            background: var(--c-surface);
+            border: 1.5px solid var(--c-border);
+            border-radius: 14px; padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+        }
+        .house-picker-card label { font-weight: 600; font-size: 0.9rem; white-space: nowrap; }
+        .house-picker-card select {
+            flex: 1; min-width: 200px; padding: 0.5rem 0.75rem;
+            border: 1.5px solid var(--c-border); border-radius: 8px;
+            font-family: 'Kanit', sans-serif; font-size: 0.9rem;
+            background: var(--c-surface); color: var(--c-text-1);
+        }
+
+        /* ── Hero Payment Card (read-only) ── */
+        .view-hero {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+            border-radius: 18px; padding: 1.4rem 1.4rem 1.2rem;
+            color: #fff; margin-bottom: 1rem; position: relative; overflow: hidden;
+        }
+        .view-hero::before {
+            content: '';
+            position: absolute; top: -30px; right: -30px;
+            width: 150px; height: 150px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .view-hero-greeting { font-size: 0.85rem; opacity: 0.75; margin-bottom: 0.1rem; }
+        .view-hero-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.05rem; }
+        .view-hero-house { font-size: 0.82rem; opacity: 0.7; }
+        .view-hero-divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 0.8rem 0; }
+        .view-hero-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; }
+        .view-hero-label { font-size: 0.8rem; opacity: 0.7; }
+        .view-hero-amount { font-size: 1.6rem; font-weight: 700; margin: 0.2rem 0 0.1rem; }
+        .view-hero-period { font-size: 0.78rem; opacity: 0.65; }
+        .view-status-badge { font-size: 0.82rem; padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: 600; white-space: nowrap; margin-top: 0.25rem; display: inline-block; }
+        .view-status-badge.paid     { background: rgba(16,185,129,0.2); color: #6EE7B7; }
+        .view-status-badge.reviewing { background: rgba(251,191,36,0.2); color: #FCD34D; }
+        .view-status-badge.rejected { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+        .view-status-badge.pending  { background: rgba(251,191,36,0.15); color: #FCD34D; }
+        .view-status-badge.none     { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+        .view-cta-disabled {
+            width: 100%; margin-top: 0.9rem; padding: 0.9rem;
+            border-radius: 12px; border: none; font-family: 'Kanit', sans-serif;
+            font-size: 1rem; font-weight: 600; cursor: not-allowed;
+            background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.5);
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .readonly-chip {
+            background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
+            font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 10px;
+        }
+
+        /* ── Billing Breakdown ── */
+        .breakdown-card {
+            background: var(--c-surface); border: 1px solid var(--c-border);
+            border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1rem;
+        }
+        .breakdown-title { font-size: 0.88rem; font-weight: 700; color: var(--c-text-1); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+        .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--c-border); font-size: 0.88rem; }
+        .breakdown-row:last-child { border-bottom: none; font-weight: 700; font-size: 0.95rem; color: var(--c-primary); }
+        .breakdown-row .br-label { color: var(--c-text-2); }
+        .breakdown-row .br-val   { font-weight: 600; }
+
+        /* ── Outstanding Banner ── */
+        .os-banner {
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border: 1.5px solid #F59E0B; border-radius: 12px;
+            padding: 0.85rem 1.1rem; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.75rem;
+        }
+        .os-banner .os-icon { font-size: 1.5rem; }
+        .os-banner .os-info { flex: 1; }
+        .os-banner .os-label { font-size: 0.8rem; color: #92400E; }
+        .os-banner .os-amount { font-size: 1.2rem; font-weight: 700; color: #B45309; }
+
+        /* ── Proxy Banner ── */
+        .proxy-banner {
+            background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+            border: 1.5px solid #6EE7B7; border-radius: 12px;
+            padding: 0.85rem 1.1rem; margin-bottom: 1rem;
+        }
+        .proxy-banner .pb-title { font-weight: 700; color: #065F46; font-size: 0.88rem; margin-bottom: 0.25rem; }
+        .proxy-banner .pb-detail { font-size: 0.8rem; color: #047857; }
+
+        /* ── History Table ── */
+        .history-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 14px; overflow: hidden; margin-bottom: 1rem; }
+        .history-card-title { padding: 0.85rem 1.2rem 0.6rem; font-size: 0.9rem; font-weight: 700; border-bottom: 1px solid var(--c-border); }
+        .history-card table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .history-card th { padding: 0.6rem 0.75rem; text-align: left; background: var(--hover); color: var(--c-text-2); font-weight: 600; font-size: 0.78rem; }
+        .history-card td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--c-border); }
+        .history-card tr:last-child td { border-bottom: none; }
+        .s-paid     { color: #059669; font-weight: 600; }
+        .s-reviewing { color: #D97706; font-weight: 600; }
+        .s-rejected { color: #DC2626; font-weight: 600; }
+        .s-none     { color: var(--c-text-2); }
+
+        /* ── Empty State ── */
+        .view-empty { text-align: center; padding: 3rem 1rem; color: var(--c-text-2); }
+        .view-empty .ve-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+        @media (max-width: 480px) {
+            .view-hero-amount { font-size: 1.35rem; }
+            .history-card th, .history-card td { padding: 0.45rem 0.55rem; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+<div id="ppkNav"></div>
+<div class="ppk-layout">
+    <div class="ppk-main">
+        <div class="ppk-page-content" style="max-width:680px; margin:0 auto;">
+
+            <!-- Admin View Banner -->
+            <div class="admin-view-bar">
+                <span>👁️</span>
+                <span class="avb-label">ดูมุมมองผู้ใช้</span>
+                <span class="avb-badge">🔒 ดูได้อย่างเดียว</span>
+            </div>
+
+            <!-- House Picker -->
+            <div class="house-picker-card">
+                <label for="housePickerSel">🏠 เลือกบ้านพัก/แฟลต</label>
+                <select id="housePickerSel" onchange="onHouseSelect(this.value)">
+                    <option value="">-- เลือกเพื่อดูข้อมูล --</option>
+                </select>
+            </div>
+
+            <!-- Content (loaded dynamically) -->
+            <div id="viewContent">
+                <div class="view-empty">
+                    <div class="ve-icon">🏡</div>
+                    <div>เลือกบ้านพัก/แฟลตเพื่อดูข้อมูล</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="supabase/config.js?v=20260319A"></script>
+<script src="supabase/supabase.min.js?v=20260319A"></script>
+<script src="ppk-api.js?v=20260326A"></script>
+<script src="ppk-app.js?v=20260323E"></script>
+<script src="ppk-utils.js?v=20260323E"></script>
+<script src="ppk-nav.js?v=20260326A"></script>
+<script src="ppk-pwa.js?v=20260319A"></script>
+<script>
+var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+window._ppkNavPage = 'view-as-user';
+
+function _esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+function fmtPeriod(p) {
+    if (!p) return '-';
+    var parts = p.split('-');
+    var mIdx = parts[1] ? parseInt(parts[1]) - 1 : 0;
+    return THAI_MONTHS[mIdx] + ' ' + (parts[0] || '');
+}
+function fmtDate(dt) {
+    if (!dt) return '-';
+    return new Date(dt).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+}
+
+// Load houses into picker
+async function loadHousePicker() {
+    var sel = document.getElementById('housePickerSel');
+    try {
+        var r = await callBackend('getHousingList', {});
+        var houses = (r && r.success && r.data) ? r.data : [];
+        var typeOrder = function(s) { return s.startsWith('บ้าน') ? 0 : s.startsWith('แฟลต') ? 1 : 2; };
+        var getNum   = function(s) { return parseInt((s.match(/\d+/) || ['0'])[0]); };
+        houses.sort(function(a, b) {
+            var ha = a.display_number || '', hb = b.display_number || '';
+            if (typeOrder(ha) !== typeOrder(hb)) return typeOrder(ha) - typeOrder(hb);
+            return getNum(ha) - getNum(hb);
+        });
+        houses.forEach(function(h) {
+            var dn = h.display_number || '';
+            if (!dn) return;
+            var opt = document.createElement('option');
+            opt.value = dn;
+            var statusLabel = h.status === 'occupied' ? '' : h.status === 'available' ? ' (ว่าง)' : ' ('+h.status+')';
+            opt.textContent = dn + statusLabel;
+            sel.appendChild(opt);
+        });
+    } catch(e) {
+        sel.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลด</option>';
+    }
+}
+
+async function onHouseSelect(houseNumber) {
+    var content = document.getElementById('viewContent');
+    if (!houseNumber) {
+        content.innerHTML = '<div class="view-empty"><div class="ve-icon">🏡</div><div>เลือกบ้านพัก/แฟลตเพื่อดูข้อมูล</div></div>';
+        return;
+    }
+    content.innerHTML = '<div class="view-empty"><div class="ve-icon">⏳</div><div>กำลังโหลดข้อมูล...</div></div>';
+    try {
+        var r = await callBackend('getAdminHouseView', { houseNumber: houseNumber });
+        if (!r || !r.success) {
+            content.innerHTML = '<div class="view-empty"><div class="ve-icon">⚠️</div><div>' + _esc(r && r.error || 'โหลดไม่สำเร็จ') + '</div></div>';
+            return;
+        }
+        renderView(r.data);
+    } catch(e) {
+        content.innerHTML = '<div class="view-empty"><div class="ve-icon">❌</div><div>เกิดข้อผิดพลาด: ' + _esc(e.message) + '</div></div>';
+    }
+}
+
+function renderView(d) {
+    var content = document.getElementById('viewContent');
+    var period = d.period || '';
+    var parts = period.split('-');
+    var mIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
+    var periodDisplay = THAI_MONTHS[mIdx] + ' ' + (parts[0] || '');
+
+    // --- Hero card ---
+    var statusBadge = '', ctaLabel = '', ctaClass = '';
+    if (d.slipStatus === 'success') {
+        statusBadge = '<span class="view-status-badge paid">✅ ชำระแล้ว</span>';
+        ctaLabel = '✅ ชำระสำเร็จแล้ว';
+    } else if (d.slipStatus === 'reviewing') {
+        statusBadge = '<span class="view-status-badge reviewing">🔍 รอตรวจสอบ</span>';
+        ctaLabel = '🔍 อยู่ระหว่างตรวจสอบ';
+    } else if (d.slipStatus === 'rejected') {
+        statusBadge = '<span class="view-status-badge rejected">❌ สลิปไม่ผ่าน</span>';
+        ctaLabel = '⚠️ สลิปไม่ผ่าน';
+    } else if (d.currentAmount > 0) {
+        statusBadge = '<span class="view-status-badge pending">⏳ รอชำระ</span>';
+        ctaLabel = '📤 ส่งสลิปชำระเงิน';
+    } else {
+        statusBadge = '<span class="view-status-badge none">—</span>';
+        ctaLabel = '📤 ส่งสลิปชำระเงิน';
+    }
+    var amtDisplay = d.currentAmount > 0 ? d.currentAmount.toLocaleString('th-TH') + ' บาท' : 'ยังไม่มียอดแจ้ง';
+    var rejectBannerHtml = '';
+    if (d.slipStatus === 'rejected' && d.reviewNote) {
+        rejectBannerHtml = '<div style="margin-top:0.7rem; background:rgba(239,68,68,0.15); border-radius:10px; padding:0.6rem 0.8rem; font-size:0.82rem; color:#FCA5A5;">'
+            + '❌ สลิปถูกปฏิเสธ: <strong>' + _esc(d.reviewNote) + '</strong></div>';
+    }
+
+    var heroHtml = '<div class="view-hero">'
+        + '<div class="view-hero-greeting">สวัสดี ' + _esc(d.residentName || '—') + '</div>'
+        + '<div class="view-hero-house">🏠 ' + _esc(d.houseNumber) + '</div>'
+        + '<hr class="view-hero-divider">'
+        + '<div class="view-hero-row">'
+            + '<div><div class="view-hero-label">💳 ยอดชำระเดือนนี้</div>'
+            + '<div class="view-hero-amount">' + _esc(amtDisplay) + '</div>'
+            + '<div class="view-hero-period">📅 ' + periodDisplay + '</div></div>'
+            + '<div>' + statusBadge + '</div>'
+        + '</div>'
+        + rejectBannerHtml
+        + '<button class="view-cta-disabled" disabled>'
+            + '<span>' + ctaLabel + '</span>'
+            + '<span class="readonly-chip">🔒 ดูอย่างเดียว</span>'
+        + '</button>'
+        + '</div>';
+
+    // --- Billing breakdown ---
+    var breakdownHtml = '';
+    if (d.currentAmount > 0) {
+        breakdownHtml = '<div class="breakdown-card">'
+            + '<div class="breakdown-title">📋 รายละเอียดยอดเดือนนี้ (' + periodDisplay + ')</div>'
+            + '<div class="breakdown-row"><span class="br-label">💧 ค่าน้ำ</span><span class="br-val">' + (d.water_amount||0).toLocaleString('th-TH') + ' บาท</span></div>'
+            + '<div class="breakdown-row"><span class="br-label">⚡ ค่าไฟ</span><span class="br-val">' + (d.electric_amount||0).toLocaleString('th-TH') + ' บาท</span></div>'
+            + '<div class="breakdown-row"><span class="br-label">🏢 ค่าส่วนกลาง</span><span class="br-val">' + (d.common_fee||0).toLocaleString('th-TH') + ' บาท</span></div>'
+            + '<div class="breakdown-row"><span class="br-label">รวมทั้งสิ้น</span><span class="br-val">' + (d.currentAmount||0).toLocaleString('th-TH') + ' บาท</span></div>'
+            + '</div>';
+    }
+
+    // --- Outstanding banner ---
+    var osBannerHtml = '';
+    if (d.totalOutstanding > 0) {
+        osBannerHtml = '<div class="os-banner">'
+            + '<div class="os-icon">⚠️</div>'
+            + '<div class="os-info"><div class="os-label">ยอดคงค้างสะสม</div>'
+            + '<div class="os-amount">' + d.totalOutstanding.toLocaleString('th-TH') + ' บาท</div></div>'
+            + '</div>';
+    }
+
+    // --- Proxy banner ---
+    var proxyBannerHtml = '';
+    if (d.proxyName) {
+        proxyBannerHtml = '<div class="proxy-banner">'
+            + '<div class="pb-title">🔄 ผู้ชำระแทน: ' + _esc(d.proxyName) + (d.proxyHouse ? ' (' + _esc(d.proxyHouse) + ')' : '') + '</div>'
+            + (d.proxyNotes ? '<div class="pb-detail">📝 ' + _esc(d.proxyNotes) + '</div>' : '')
+            + '</div>';
+    }
+
+    // --- History table ---
+    var historyHtml = '<div class="history-card"><div class="history-card-title">📊 ประวัติการชำระเงิน (ย้อนหลัง)</div><table>'
+        + '<thead><tr><th>งวด</th><th>ยอด (บาท)</th><th>น้ำ</th><th>ไฟ</th><th>วันส่งสลิป</th><th>สถานะ</th></tr></thead><tbody>';
+    if (!d.history || d.history.length === 0) {
+        historyHtml += '<tr><td colspan="6" style="text-align:center;color:var(--c-text-2);padding:1.5rem;">ยังไม่มีประวัติ</td></tr>';
+    } else {
+        d.history.forEach(function(h) {
+            var sc = h.slip_status === 'success' ? 's-paid' : h.slip_status === 'reviewing' ? 's-reviewing' : h.slip_status === 'rejected' ? 's-rejected' : 's-none';
+            var sl = h.slip_status === 'success' ? '✅ ชำระแล้ว' : h.slip_status === 'reviewing' ? '🔍 รอตรวจ' : h.slip_status === 'rejected' ? '❌ ไม่ผ่าน' : '—';
+            historyHtml += '<tr>'
+                + '<td>' + fmtPeriod(h.period) + '</td>'
+                + '<td style="text-align:right; font-weight:600;">' + (h.amount||0).toLocaleString('th-TH') + '</td>'
+                + '<td style="text-align:right;">' + (h.water_amount||0).toLocaleString('th-TH') + '</td>'
+                + '<td style="text-align:right;">' + (h.electric_amount||0).toLocaleString('th-TH') + '</td>'
+                + '<td>' + fmtDate(h.submitted_at) + '</td>'
+                + '<td class="' + sc + '">' + sl + '</td>'
+                + '</tr>';
+        });
+    }
+    historyHtml += '</tbody></table></div>';
+
+    content.innerHTML = heroHtml + breakdownHtml + osBannerHtml + proxyBannerHtml + historyHtml;
+}
+
+window.onload = async function() {
+    await checkSession(true);
+    // ตรวจสิทธิ์ — admin/head เท่านั้น
+    var user = {};
+    try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+    if (user.role !== 'admin' && user.role !== 'head') {
+        if (typeof navigate === 'function') navigate('?page=dashboard');
+        else window.location.replace('dashboard.html');
+        return;
+    }
+    if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'view-as-user');
+    await loadHousePicker();
+};
+</script>
+</body>
+</html>

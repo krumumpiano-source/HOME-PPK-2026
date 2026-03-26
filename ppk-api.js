@@ -3052,6 +3052,88 @@ async function _routeAction(action, data) {
             return { success: true, data: gpsResult };
         }
 
+        /* ── Admin: ดูมุมมองผู้ใช้ทุกบ้าน (read-only) ──── */
+        case 'getAdminHouseView': {
+            var ahvSess = await _getSessionRole();
+            if (!ahvSess || (ahvSess.role !== 'admin' && ahvSess.role !== 'head')) {
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            }
+            var ahvHouse = data.houseNumber;
+            if (!ahvHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var ahvNow = new Date();
+            var ahvPeriod = (ahvNow.getFullYear() + 543) + '-' + String(ahvNow.getMonth() + 1).padStart(2, '0');
+            // ดึงข้อมูลทั้งหมดพร้อมกัน
+            var ahvResults = await Promise.all([
+                sbGet('residents',        { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1' }).catch(function() { return []; }),
+                sbGet('outstanding',      { house_number: 'eq.' + ahvHouse, order: 'period.desc', limit: '13' }).catch(function() { return []; }),
+                sbGet('slip_submissions', { house_number: 'eq.' + ahvHouse, order: 'submitted_at.desc', limit: '20' }).catch(function() { return []; }),
+                sbGet('payment_proxies',  { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', limit: '1' }).catch(function() { return []; })
+            ]);
+            var ahvResRows = ahvResults[0], ahvOutRows = ahvResults[1], ahvSlipRows = ahvResults[2], ahvProxyRows = ahvResults[3];
+            // ชื่อผู้พัก
+            var ahvRes = ahvResRows && ahvResRows[0];
+            var ahvResName = ahvRes ? ((ahvRes.prefix||'') + (ahvRes.firstname||'') + ' ' + (ahvRes.lastname||'')).trim() : '';
+            // ข้อมูลงวดปัจจุบัน
+            var ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod; });
+            var ahvCurSlip = (ahvSlipRows || []).find(function(s) { return s.period === ahvPeriod; });
+            var ahvSlipStatus = 'none', ahvReviewNote = '', ahvSlipId = null;
+            if (ahvCurSlip) {
+                ahvSlipId = ahvCurSlip.id;
+                if (ahvCurSlip.status === 'approved') ahvSlipStatus = 'success';
+                else if (ahvCurSlip.status === 'rejected') { ahvSlipStatus = 'rejected'; ahvReviewNote = ahvCurSlip.review_note || ''; }
+                else ahvSlipStatus = 'reviewing';
+            }
+            var ahvTotalOs = (ahvOutRows || []).reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
+            // ประวัติรายเดือน (join outstanding + slip ล่าสุดของแต่ละงวด)
+            var ahvHistory = (ahvOutRows || []).map(function(o) {
+                var s = (ahvSlipRows || []).find(function(sl) { return sl.period === o.period; });
+                var ss = 'none';
+                if (s) {
+                    if (s.status === 'approved') ss = 'success';
+                    else if (s.status === 'rejected') ss = 'rejected';
+                    else ss = 'reviewing';
+                }
+                return {
+                    period:           o.period,
+                    amount:           parseFloat(o.total_amount) || 0,
+                    water_amount:     parseFloat(o.water_amount) || 0,
+                    electric_amount:  parseFloat(o.electric_amount) || 0,
+                    common_fee:       parseFloat(o.common_fee) || 0,
+                    slip_status:      ss,
+                    submitted_at:     s ? s.submitted_at : null
+                };
+            });
+            // Proxy info
+            var ahvProxy = ahvProxyRows && ahvProxyRows[0];
+            var ahvProxyName = '', ahvProxyHouse = '';
+            if (ahvProxy) {
+                try {
+                    var ahvPU = await sbGet('users', { id: 'eq.' + ahvProxy.proxy_user_id, select: 'prefix,firstname,lastname', limit: '1' });
+                    if (ahvPU && ahvPU[0]) ahvProxyName = ((ahvPU[0].prefix||'') + (ahvPU[0].firstname||'') + ' ' + (ahvPU[0].lastname||'')).trim();
+                    var ahvPR = await sbGet('residents', { user_id: 'eq.' + ahvProxy.proxy_user_id, is_active: 'eq.true', limit: '1', select: 'house_number' });
+                    if (ahvPR && ahvPR[0]) ahvProxyHouse = ahvPR[0].house_number || '';
+                } catch(e) {}
+            }
+            return { success: true, data: {
+                houseNumber:     ahvHouse,
+                residentName:    ahvResName,
+                period:          ahvPeriod,
+                currentAmount:   ahvCurOut ? parseFloat(ahvCurOut.total_amount) || 0 : 0,
+                water_amount:    ahvCurOut ? parseFloat(ahvCurOut.water_amount) || 0 : 0,
+                electric_amount: ahvCurOut ? parseFloat(ahvCurOut.electric_amount) || 0 : 0,
+                common_fee:      ahvCurOut ? parseFloat(ahvCurOut.common_fee) || 0 : 0,
+                totalOutstanding: ahvTotalOs,
+                slipStatus:      ahvSlipStatus,
+                reviewNote:      ahvReviewNote,
+                slipId:          ahvSlipId,
+                dueDate:         ahvCurOut ? ahvCurOut.due_date : null,
+                history:         ahvHistory,
+                proxyName:       ahvProxyName,
+                proxyHouse:      ahvProxyHouse,
+                proxyNotes:      ahvProxy ? (ahvProxy.notes || '') : ''
+            }};
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
