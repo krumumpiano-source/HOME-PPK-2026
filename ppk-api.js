@@ -1710,6 +1710,12 @@ async function _routeAction(action, data) {
                             } catch(e) {}
                             var upaOut = null;
                             try { var upaOutR = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, limit: '1' }); upaOut = upaOutR && upaOutR[0]; } catch(e) {}
+                            // fallback: ถ้าไม่มี outstanding ให้ดึงจาก notifications (แหล่งจริงที่ admin แจ้งยอด)
+                            var upaNotif = null;
+                            if (!upaOut) {
+                                try { var upaNotifR = await sbGet('notifications', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'sent_at.desc', limit: '1' }); upaNotif = upaNotifR && upaNotifR[0]; } catch(e) {}
+                            }
+                            var upaSrc = upaOut || upaNotif;
                             var upaSlip = null;
                             try { var upaSlipR = await sbGet('slip_submissions', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }); upaSlip = upaSlipR && upaSlipR[0]; } catch(e) {}
                             var upaSlipStatus = 'none', upaReviewNote = '', upaSlipId = null;
@@ -1721,10 +1727,11 @@ async function _routeAction(action, data) {
                             }
                             userProxyAssignments.push({
                                 house_number: upaP.house_number, resident_name: upaResName, period: period,
-                                amount: upaOut ? parseFloat(upaOut.total_amount) || 0 : 0,
-                                water_amount: upaOut ? parseFloat(upaOut.water_amount) || 0 : 0,
-                                electric_amount: upaOut ? parseFloat(upaOut.electric_amount) || 0 : 0,
-                                common_fee: upaOut ? parseFloat(upaOut.common_fee) || 0 : 0,
+                                amount: upaSrc ? parseFloat(upaSrc.total_amount) || 0 : 0,
+                                water_amount: upaSrc ? parseFloat(upaSrc.water_amount) || 0 : 0,
+                                electric_amount: upaSrc ? parseFloat(upaSrc.electric_amount) || 0 : 0,
+                                common_fee: upaSrc ? parseFloat(upaSrc.common_fee) || 0 : 0,
+                                due_date: upaSrc ? (upaSrc.due_date || null) : null,
                                 slip_status: upaSlipStatus, review_note: upaReviewNote, slip_id: upaSlipId, notes: upaP.notes || ''
                             });
                         }
