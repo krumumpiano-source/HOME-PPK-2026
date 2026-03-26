@@ -400,10 +400,46 @@
                 <tbody id="additionalItemsBody">
                     <!-- รายการค่าอื่นๆ จะถูกเพิ่มที่นี่ -->
                 </tbody>
+                <tbody id="operatingCostsBody">
+                    <tr style="background:#fff3e0;">
+                        <td colspan="2" style="font-weight:600;color:#78350f;font-size:0.95rem;">📋 ค่าดำเนินการ</td>
+                    </tr>
+                    <tr>
+                        <td>🔄 ค่าปัดเศษ <span style="color:#999;font-size:0.85rem;">(อัตโนมัติ)</span></td>
+                        <td class="amount" id="roundingFee">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🚗 ค่าเดินทางถอนเงิน
+                            <input type="number" id="travelWithdraw" value="" min="0" step="10" placeholder="0"
+                                   style="width:80px;margin-left:0.5rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="travelWithdrawDisplay">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🚗 ค่าเดินทางชำระค่าไฟ
+                            <input type="number" id="travelElectric" value="" min="0" step="10" placeholder="0"
+                                   style="width:80px;margin-left:0.5rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="travelElectricDisplay">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🚗 ค่าเดินทางชำระค่าขยะ
+                            <input type="number" id="travelGarbage" value="" min="0" step="10" placeholder="0"
+                                   style="width:80px;margin-left:0.5rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="travelGarbageDisplay">0.00</td>
+                    </tr>
+                </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td>💵 ยอดรวมสำหรับถอนธนาคาร</td>
-                        <td class="amount" id="grandTotal" style="color:#fff;">0.00</td>
+                        <td>💵 ยอดเบิกจากธนาคาร (จำนวนเต็ม)</td>
+                        <td class="amount" id="grandTotal" style="color:#fff;">0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -421,8 +457,10 @@
                 <strong>📋 คำอธิบาย</strong>
                 • ค่าน้ำรวม: ดึงจากข้อมูลบันทึกค่าน้ำประจำเดือน<br>
                 • ค่าไฟรวม: ยอดที่การไฟฟ้าเรียกเก็บ (ดึงจากข้อมูลบันทึกค่าไฟ)<br>
-                • ค่าขยะ: ค่าเริ่มต้น 310 บาท สามารถแก้ไขได้<br>
-                • ค่าใช้จ่ายอื่นๆ: สามารถเพิ่มรายการและจำนวนเงินได้ตามต้องการ
+                • ค่าขยะ: สามารถแก้ไขจำนวนเงินได้<br>
+                • ค่าใช้จ่ายอื่นๆ: สามารถเพิ่มรายการและจำนวนเงินได้ตามต้องการ<br>
+                • ค่าปัดเศษ: คำนวณอัตโนมัติ (ปัดยอดขึ้นเป็นจำนวนเต็ม เพราะธนาคารไม่มีเหรียญให้)<br>
+                • ค่าเดินทาง: ค่าดำเนินการเดินทางของคณะกรรมการ (กรอกจำนวนเงินได้)
             </div>
         </div>
         
@@ -507,6 +545,9 @@
             document.getElementById('electricTotal').textContent = 'กำลังโหลด...';
             document.getElementById('garbageFee').value = '';
             document.getElementById('garbageDisplay').textContent = '0.00';
+            document.getElementById('travelWithdraw').value = '';
+            document.getElementById('travelElectric').value = '';
+            document.getElementById('travelGarbage').value = '';
             additionalItems = [];
             renderAdditionalItems();
             calculateTotal();
@@ -536,13 +577,20 @@
                         electricTotal = (electricResult.data && electricResult.data.total) || 0;
                     }
                     if (withdrawResult && withdrawResult.success && withdrawResult.data) {
-                        // คืนค่า garbageFee และ additionalItems ที่เคยบันทึกไว้
+                        // คืนค่า garbageFee, additionalItems, operatingCosts ที่เคยบันทึกไว้
                         const saved = withdrawResult.data;
                         if (saved.garbageFee > 0) {
                             document.getElementById('garbageFee').value = saved.garbageFee;
                             document.getElementById('garbageDisplay').textContent = formatMoney(saved.garbageFee);
                         }
                         additionalItems = saved.additionalItems || [];
+                        // คืนค่าค่าดำเนินการ
+                        if (saved.operatingCosts) {
+                            const oc = saved.operatingCosts;
+                            if (oc.travelWithdraw > 0) document.getElementById('travelWithdraw').value = oc.travelWithdraw;
+                            if (oc.travelElectric > 0) document.getElementById('travelElectric').value = oc.travelElectric;
+                            if (oc.travelGarbage > 0) document.getElementById('travelGarbage').value = oc.travelGarbage;
+                        }
                     }
                 } catch (e) {
                     if (token !== _loadToken) return;
@@ -634,8 +682,22 @@
                 additionalTotal += parseFloat(item.amount) || 0;
             });
             
-            const grandTotal = waterTotal + electricTotal + garbageFee + additionalTotal;
-            document.getElementById('grandTotal').textContent = formatMoney(grandTotal);
+            const travelWithdraw = parseFloat(document.getElementById('travelWithdraw').value) || 0;
+            const travelElectric = parseFloat(document.getElementById('travelElectric').value) || 0;
+            const travelGarbage = parseFloat(document.getElementById('travelGarbage').value) || 0;
+            
+            // ยอดค่าใช้จ่ายจริง (อาจมีทศนิยม)
+            const rawTotal = waterTotal + electricTotal + garbageFee + additionalTotal + travelWithdraw + travelElectric + travelGarbage;
+            
+            // ปัดขึ้นเป็นจำนวนเต็ม (ธนาคารถอนได้เฉพาะจำนวนเต็ม)
+            const roundedTotal = Math.ceil(rawTotal);
+            const roundingFee = roundedTotal - rawTotal;
+            
+            document.getElementById('roundingFee').textContent = formatMoney(roundingFee);
+            document.getElementById('travelWithdrawDisplay').textContent = formatMoney(travelWithdraw);
+            document.getElementById('travelElectricDisplay').textContent = formatMoney(travelElectric);
+            document.getElementById('travelGarbageDisplay').textContent = formatMoney(travelGarbage);
+            document.getElementById('grandTotal').textContent = formatMoney(roundedTotal);
         }
         
         // บันทึกข้อมูล
@@ -651,6 +713,14 @@
                 let additionalTotal = 0;
                 additionalItems.forEach(item => { additionalTotal += parseFloat(item.amount) || 0; });
 
+                const travelWithdraw = parseFloat(document.getElementById('travelWithdraw').value) || 0;
+                const travelElectric = parseFloat(document.getElementById('travelElectric').value) || 0;
+                const travelGarbage = parseFloat(document.getElementById('travelGarbage').value) || 0;
+
+                const rawTotal = waterTotal + electricTotal + garbageFee + additionalTotal + travelWithdraw + travelElectric + travelGarbage;
+                const roundedTotal = Math.ceil(rawTotal);
+                const roundingFee = roundedTotal - rawTotal;
+
                 // กรองเฉพาะ item ที่กรอกครบแล้ว (ตัดตัวว่างออก)
                 const validItems = additionalItems.filter(item => item.name && item.amount > 0);
 
@@ -658,7 +728,13 @@
                     period: period,
                     garbageFee: garbageFee,
                     additionalItems: validItems,
-                    totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
+                    operatingCosts: {
+                        roundingFee: Math.round(roundingFee * 100) / 100,
+                        travelWithdraw: travelWithdraw,
+                        travelElectric: travelElectric,
+                        travelGarbage: travelGarbage
+                    },
+                    totalWithdraw: roundedTotal
                 });
                 if (result && result.success) {
                     localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));

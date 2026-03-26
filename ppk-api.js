@@ -1064,6 +1064,7 @@ async function _routeAction(action, data) {
             var swVal = JSON.stringify({
                 garbageFee: data.garbageFee || 0,
                 additionalItems: data.additionalItems || [],
+                operatingCosts: data.operatingCosts || {},
                 totalWithdraw: data.totalWithdraw || 0,
                 savedAt: new Date().toISOString()
             });
@@ -2380,9 +2381,10 @@ async function _routeAction(action, data) {
                     lostFlatAmt = parseFloat(ld.lost_flat) || 0;
                 }
             } catch(e) {}
-            // ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ จาก monthly_withdraw
+            // ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ + ค่าดำเนินการ จาก monthly_withdraw
             var withdrawGarbage = 0;
             var withdrawAdditionalItems = [];
+            var withdrawOperatingCosts = {};
             try {
                 var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
                 if (wdRows && wdRows[0]) {
@@ -2396,6 +2398,7 @@ async function _routeAction(action, data) {
                             }
                         }
                     }
+                    withdrawOperatingCosts = wd.operatingCosts || {};
                 }
             } catch(e) {}
             var incomeItems = [];
@@ -2408,6 +2411,15 @@ async function _routeAction(action, data) {
             for (var wi = 0; wi < withdrawAdditionalItems.length; wi++) {
                 expenseItems.push({ name: withdrawAdditionalItems[wi].name, amount: withdrawAdditionalItems[wi].amount });
             }
+            // ค่าดำเนินการ
+            var ocRounding2 = parseFloat(withdrawOperatingCosts.roundingFee) || 0;
+            var ocTW2 = parseFloat(withdrawOperatingCosts.travelWithdraw) || 0;
+            var ocTE2 = parseFloat(withdrawOperatingCosts.travelElectric) || 0;
+            var ocTG2 = parseFloat(withdrawOperatingCosts.travelGarbage) || 0;
+            if (ocRounding2 > 0) expenseItems.push({ name: 'ค่าดำเนินการ (ปัดเศษ)', amount: ocRounding2 });
+            if (ocTW2 > 0) expenseItems.push({ name: 'ค่าเดินทางถอนเงิน', amount: ocTW2 });
+            if (ocTE2 > 0) expenseItems.push({ name: 'ค่าเดินทางชำระค่าไฟ', amount: ocTE2 });
+            if (ocTG2 > 0) expenseItems.push({ name: 'ค่าเดินทางชำระค่าขยะ', amount: ocTG2 });
             return { success: true, incomeItems: incomeItems, expenseItems: expenseItems };
         }
         case 'saveAccounting': {
@@ -3330,9 +3342,10 @@ async function _autoSyncAccounting(period) {
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
         }
     } catch(e) {}
-    // ── 3. ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ จาก monthly_withdraw
+    // ── 3. ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ + ค่าดำเนินการ จาก monthly_withdraw
     var withdrawGarbage = 0;
     var withdrawAdditionalItems = [];
+    var withdrawOperatingCosts = {};
     try {
         var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
         if (wdRows && wdRows[0] && wdRows[0].value) {
@@ -3346,6 +3359,7 @@ async function _autoSyncAccounting(period) {
                     }
                 }
             }
+            withdrawOperatingCosts = wd.operatingCosts || {};
         }
     } catch(e) {}
     // ── 4. ลบเฉพาะรายการ auto ของ period นี้
@@ -3403,6 +3417,43 @@ async function _autoSyncAccounting(period) {
             type: 'expense', category: 'auto',
             description: withdrawAdditionalItems[wi].name,
             amount: withdrawAdditionalItems[wi].amount,
+            recorded_at: ts
+        });
+    }
+    // ── 8. Insert ค่าดำเนินการ (ปัดเศษ + ค่าเดินทาง) ──
+    var ocRounding = parseFloat(withdrawOperatingCosts.roundingFee) || 0;
+    var ocTravelWithdraw = parseFloat(withdrawOperatingCosts.travelWithdraw) || 0;
+    var ocTravelElectric = parseFloat(withdrawOperatingCosts.travelElectric) || 0;
+    var ocTravelGarbage = parseFloat(withdrawOperatingCosts.travelGarbage) || 0;
+    if (ocRounding > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าดำเนินการ (ปัดเศษ)', amount: ocRounding,
+            recorded_at: ts
+        });
+    }
+    if (ocTravelWithdraw > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าเดินทางถอนเงิน', amount: ocTravelWithdraw,
+            recorded_at: ts
+        });
+    }
+    if (ocTravelElectric > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าเดินทางชำระค่าไฟ', amount: ocTravelElectric,
+            recorded_at: ts
+        });
+    }
+    if (ocTravelGarbage > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าเดินทางชำระค่าขยะ', amount: ocTravelGarbage,
             recorded_at: ts
         });
     }
