@@ -874,6 +874,12 @@
                 records.push(recData);
             });
             
+            // คำนวณส่วนต่างปัดเศษ (ยอดที่เรียกเก็บจริง - ยอดก่อนปัด)
+            const _totalCalcAmount = records.reduce((s, r) => s + (r.amount || 0), 0);
+            let _totalRawForSubmit = 0;
+            document.querySelectorAll('#electricTableBody tr').forEach(row => {
+                if (row.dataset.house) _totalRawForSubmit += parseFloat(row.dataset.rawAmount) || 0;
+            });
             const electricData = {
                 month: month,
                 year: year,
@@ -883,6 +889,7 @@
                 pea_total: parseFloat(document.getElementById('pea_total').value) || 0,
                 lost_house: parseFloat(document.getElementById('lost_house').value) || 0,
                 lost_flat: parseFloat(document.getElementById('lost_flat').value) || 0,
+                rounding_surplus: Math.round((_totalCalcAmount - _totalRawForSubmit) * 100) / 100,
                 records: records,
                 savedAt: new Date().toISOString()
             };

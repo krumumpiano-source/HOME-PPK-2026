@@ -1721,6 +1721,17 @@
                 <div id="houseResidentsList">
                     <!-- Rendered by JS -->
                 </div>
+
+                <!-- ── Proxy Payment Section ── -->
+                <div style="margin-top:1.5rem; border-top:1.5px solid var(--border); padding-top:1.2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                        <strong style="color:var(--primary); font-size:0.97rem;">🔄 ผู้ชำระแทน</strong>
+                        <button class="btn btn-primary" id="assignProxyBtn" onclick="openAssignProxyModal()" style="font-size:0.82rem; padding:0.4rem 0.85rem;">🔄 กำหนดผู้ชำระแทน</button>
+                    </div>
+                    <div id="proxyInfoBox">
+                        <div style="color:var(--muted); font-size:0.88rem; padding:0.6rem 0.8rem; background:var(--hover); border-radius:8px;">⚠️ ยังไม่ได้กำหนดผู้ชำระแทน</div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeModal('houseDetails')">ปิด</button>
@@ -1728,8 +1739,38 @@
         </div>
     </div>
 
-    <!-- Modal: Move Resident -->
-    <div class="modal-overlay" id="modal-moveResident">
+    <!-- Modal: Assign Proxy Payment -->
+    <div class="modal-overlay" id="modal-assignProxy">
+        <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+                <span class="modal-title">🔄 กำหนดผู้ชำระแทน</span>
+                <button class="modal-close" onclick="closeModal('assignProxy')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" id="assignProxyHouseInfo" style="margin-bottom:1rem;"></div>
+                <div class="form-group">
+                    <label>เลือกผู้ชำระแทน <span style="color:#ef4444">*</span></label>
+                    <select id="assignProxyUserSelect" style="width:100%;">
+                        <option value="">-- กำลังโหลด... --</option>
+                    </select>
+                    <small style="color:var(--muted); margin-top:0.3rem; display:block;">แสดงเฉพาะผู้ใช้งานที่มีบัญชีในระบบ</small>
+                </div>
+                <div class="form-group">
+                    <label>หมายเหตุ (ไม่บังคับ)</label>
+                    <input type="text" id="assignProxyNotes" placeholder="เช่น ผู้พักไม่สะดวกใช้แอปพลิเคชัน" style="width:100%;">
+                </div>
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:0.75rem; font-size:0.85rem; color:#92400e; margin-top:0.5rem;">
+                    ⚠️ ผู้ที่ถูกกำหนดจะสามารถเห็นยอดบิลและส่งสลิปแทนได้จนกว่าจะยกเลิก
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('assignProxy')">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveProxyAssignment()">✅ บันทึกการมอบหมาย</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Move Resident -->    <div class="modal-overlay" id="modal-moveResident">
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title">🔀 ย้ายผู้พักอาศัย</span>
@@ -2518,6 +2559,7 @@
         // ========== Resident View Mode Functions ==========
         let currentResidentViewMode = 'manageHousing';
         let currentHouseForDetails = null;
+        function _escHtml(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
         function setResidentViewMode(mode) {
             currentResidentViewMode = mode;
@@ -2900,7 +2942,121 @@
             }
 
             openModal('houseDetails');
+            // โหลดข้อมูล proxy ของบ้านนี้ (non-blocking)
+            loadProxyForHouse(currentHouseForDetails);
         }
+
+        // ── Proxy Payment Management ──────────────────────────
+        async function loadProxyForHouse(houseNumber) {
+            const box = document.getElementById('proxyInfoBox');
+            if (!box || !houseNumber || houseNumber === '(ไม่ระบุบ้าน)') return;
+            box.innerHTML = '<div style="font-size:0.85rem;color:var(--muted);padding:0.4rem 0;">⏳ กำลังโหลด...</div>';
+            try {
+                const result = await callBackend('getProxyForHouse', { houseNumber });
+                if (result && result.success && result.data) {
+                    const d = result.data;
+                    const dt = d.assigned_at ? new Date(d.assigned_at).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' }) : '-';
+                    box.innerHTML = `
+                        <div style="border:1px solid #bbf7d0; border-radius:8px; padding:0.75rem 1rem; background:#f0fdf4;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                                <div>
+                                    <div style="font-weight:700; font-size:0.92rem; color:#166534;">👤 ${_escHtml(d.proxy_name)}</div>
+                                    ${d.proxy_house ? `<div style="font-size:0.82rem; color:#6b7280; margin-top:0.15rem;">🏠 บ้านของตัวเอง: ${_escHtml(d.proxy_house)}</div>` : ''}
+                                    <div style="font-size:0.78rem; color:#6b7280; margin-top:0.2rem;">กำหนดเมื่อ ${dt}${d.assigned_by_name ? ' โดย ' + _escHtml(d.assigned_by_name) : ''}</div>
+                                    ${d.notes ? `<div style="font-size:0.8rem; color:#4b5563; margin-top:0.25rem;">📝 ${_escHtml(d.notes)}</div>` : ''}
+                                </div>
+                                <button class="btn btn-danger" style="font-size:0.78rem; padding:0.3rem 0.7rem; white-space:nowrap;" onclick="removeProxyForHouse('${houseNumber.replace(/'/g,"\\'")}')">❌ ยกเลิกมอบหมาย</button>
+                            </div>
+                        </div>`;
+                    document.getElementById('assignProxyBtn').textContent = '🔄 เปลี่ยนผู้ชำระแทน';
+                } else {
+                    box.innerHTML = '<div style="color:var(--muted); font-size:0.88rem; padding:0.6rem 0.8rem; background:var(--hover); border-radius:8px;">⚠️ ยังไม่ได้กำหนดผู้ชำระแทน</div>';
+                    document.getElementById('assignProxyBtn').textContent = '🔄 กำหนดผู้ชำระแทน';
+                }
+            } catch(e) {
+                box.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; padding:0.4rem 0.8rem;">ไม่สามารถโหลดข้อมูลได้</div>';
+            }
+        }
+
+        async function openAssignProxyModal() {
+            if (!currentHouseForDetails || currentHouseForDetails === '(ไม่ระบุบ้าน)') return;
+            document.getElementById('assignProxyHouseInfo').textContent = `🏠 กำหนดผู้ชำระแทนสำหรับ: ${currentHouseForDetails}`;
+            document.getElementById('assignProxyNotes').value = '';
+            // โหลดรายชื่อ users ทั้งหมดที่มีในระบบ
+            const sel = document.getElementById('assignProxyUserSelect');
+            sel.innerHTML = '<option value="">⏳ กำลังโหลด...</option>';
+            try {
+                const residents = getResidentsData();
+                // กรอง: active, มีบ้าน, ไม่ใช่บ้านที่กำลัง assign
+                const eligible = residents.filter(r =>
+                    r.status !== 'inactive' &&
+                    r.house_number &&
+                    r.house_number !== currentHouseForDetails &&
+                    (r.user_id || r.userId) &&
+                    r.residentType !== 'cohabitant'
+                );
+                eligible.sort((a, b) => {
+                    const na = `${a.firstname||''}${a.lastname||''}`;
+                    const nb = `${b.firstname||''}${b.lastname||''}`;
+                    return na.localeCompare(nb, 'th');
+                });
+                sel.innerHTML = '<option value="">-- เลือกผู้ชำระแทน --</option>';
+                eligible.forEach(r => {
+                    const name = `${r.prefix||''}${r.firstname||''} ${r.lastname||''}`.trim();
+                    const uid = r.user_id || r.userId;
+                    const opt = document.createElement('option');
+                    opt.value = uid;
+                    opt.textContent = `${name} (${r.house_number})`;
+                    sel.appendChild(opt);
+                });
+                if (eligible.length === 0) {
+                    sel.innerHTML = '<option value="">ไม่พบผู้ใช้ที่สามารถกำหนดได้</option>';
+                }
+            } catch(e) {
+                sel.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลด</option>';
+            }
+            openModal('assignProxy');
+        }
+
+        async function saveProxyAssignment() {
+            const userId = document.getElementById('assignProxyUserSelect').value;
+            const notes = document.getElementById('assignProxyNotes').value.trim();
+            if (!userId) { ppkAlert('กรุณาเลือกผู้ชำระแทน'); return; }
+            if (!currentHouseForDetails) return;
+            const selEl = document.getElementById('assignProxyUserSelect');
+            const selText = selEl.options[selEl.selectedIndex]?.text || '';
+            const ok = await ppkConfirm(`ยืนยันกำหนดให้\n${selText}\nเป็นผู้ชำระแทน ${currentHouseForDetails}?`);
+            if (!ok) return;
+            try {
+                const result = await callBackend('setProxyAssignment', { houseNumber: currentHouseForDetails, proxyUserId: userId, notes });
+                if (result && result.success) {
+                    ppkToast('บันทึกการมอบหมายเรียบร้อยแล้ว', 'success');
+                    closeModal('assignProxy');
+                    loadProxyForHouse(currentHouseForDetails);
+                } else {
+                    ppkAlert('⚠️ ' + (result?.error || 'ไม่สามารถบันทึกได้'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        async function removeProxyForHouse(houseNumber) {
+            const ok = await ppkConfirm(`ยืนยันยกเลิกการมอบหมายผู้ชำระแทน\nสำหรับ ${houseNumber}?`, { type: 'danger', okText: 'ยกเลิกมอบหมาย', cancelText: 'ไม่ยกเลิก' });
+            if (!ok) return;
+            try {
+                const result = await callBackend('removeProxyAssignment', { houseNumber });
+                if (result && result.success) {
+                    ppkToast('ยกเลิกการมอบหมายเรียบร้อยแล้ว', 'success');
+                    loadProxyForHouse(houseNumber);
+                } else {
+                    ppkAlert('⚠️ ' + (result?.error || 'ไม่สามารถยกเลิกได้'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+        // ─────────────────────────────────────────────────────
 
         async function addResidentToCurrentHouse() {
             closeModal('houseDetails');

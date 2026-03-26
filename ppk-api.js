@@ -1165,17 +1165,24 @@ async function _routeAction(action, data) {
             if (!data.houseNumber) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
             if (!data.period) return { success: false, error: 'ไม่ระบุงวด' };
             if (!data.amount || parseFloat(data.amount) <= 0) return { success: false, error: 'จำนวนเงินไม่ถูกต้อง' };
-            // ตรวจสอบว่า house_number ตรงกับ session (ป้องกันส่งแทนคนอื่น)
             var slipSess = await _getSessionRole();
-            var _isProxySubmit = !!(data.submittedByName && data.submittedByHouse);
+            var _submittedByUserId = slipSess ? slipSess.userId : null;
             if (slipSess && slipSess.role !== 'admin' && slipSess.role !== 'head') {
                 var myResUser = null;
                 try { var muArr = await sbGet('users', { id: 'eq.' + slipSess.userId, select: 'email', limit: '1' }); myResUser = muArr && muArr[0]; } catch(e) {}
                 var myResObj = await _findResidentForUser(slipSess.userId, myResUser ? myResUser.email : null);
                 var myHouse = myResObj ? (myResObj.house_number || '') : '';
-                // อนุญาต proxy mode (ผู้พักส่งแทนบ้านอื่น) ถ้ามี submittedByName และ submittedByHouse
-                if (myHouse && data.houseNumber !== myHouse && !_isProxySubmit) {
-                    return { success: false, error: 'คุณไม่สามารถส่งสลิปแทนบ้านอื่นได้' };
+                if (myHouse && data.houseNumber !== myHouse) {
+                    // ตรวจสอบว่ามี active proxy assignment ให้บ้านนี้
+                    var proxyCheck = await sbGet('payment_proxies', {
+                        house_number: 'eq.' + data.houseNumber,
+                        proxy_user_id: 'eq.' + slipSess.userId,
+                        is_active: 'eq.true',
+                        limit: '1'
+                    }).catch(function() { return []; });
+                    if (!proxyCheck || proxyCheck.length === 0) {
+                        return { success: false, error: 'คุณไม่มีสิทธิ์ส่งสลิปแทนบ้านนี้ กรุณาติดต่อผู้ดูแลระบบ' };
+                    }
                 }
             }
             // ตรวจสลิปซ้ำ (ส่งแล้ว pending หรือ approved ใน period เดียวกัน)
@@ -1205,18 +1212,19 @@ async function _routeAction(action, data) {
                 } catch(e) {}
             }
             var row = await sbPost('slip_submissions', {
-                house_number:  data.houseNumber  || '',
-                resident_id:   validResidentId,
-                period:        data.period       || '',
-                amount:        data.amount       || 0,
-                slip_url:      data.slipUrl      || null,
-                transfer_date: data.transferDate || null,
-                bank_name:     data.bankName     || null,
-                account_name:  proxyNote || data.accountName || null,
-                qr_amount:     data.qrAmount     || null,
-                qr_ref:        data.qrRef        || null,
-                qr_raw:        data.qrRaw        || null,
-                status:        'pending'
+                house_number:         data.houseNumber  || '',
+                resident_id:          validResidentId,
+                period:               data.period       || '',
+                amount:               data.amount       || 0,
+                slip_url:             data.slipUrl      || null,
+                transfer_date:        data.transferDate || null,
+                bank_name:            data.bankName     || null,
+                account_name:         proxyNote || data.accountName || null,
+                qr_amount:            data.qrAmount     || null,
+                qr_ref:               data.qrRef        || null,
+                qr_raw:               data.qrRaw        || null,
+                submitted_by_user_id: _submittedByUserId || null,
+                status:               'pending'
             });
             return { success: true, data: row };
         }
@@ -1682,7 +1690,47 @@ async function _routeAction(action, data) {
                 var totalOutstanding = (outRows || []).reduce(function(s, r) {
                     return s + (parseFloat(r.total_amount) || 0);
                 }, 0);
-                return { success: true, role: 'user', announcements: announcements, data: {
+                // ดึง proxy assignments ของ user นี้
+                var userProxyAssignments = [];
+                try {
+                    var upaToken = getSessionToken();
+                    var upaSessRows = await sbGet('sessions', { token: 'eq.' + upaToken, select: 'user_id', limit: '1' }).catch(function() { return []; });
+                    var upaUserId = upaSessRows && upaSessRows[0] ? upaSessRows[0].user_id : null;
+                    if (!upaUserId) {
+                        try { var upaStored = JSON.parse(localStorage.getItem('currentUser') || 'null'); if (upaStored) upaUserId = upaStored.id; } catch(e) {}
+                    }
+                    if (upaUserId) {
+                        upaRows = await sbGet('payment_proxies', { proxy_user_id: 'eq.' + upaUserId, is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
+                        for (var upai = 0; upai < (upaRows || []).length; upai++) {
+                            var upaP = upaRows[upai];
+                            var upaResName = '';
+                            try {
+                                var upaRR = await sbGet('residents', { house_number: 'eq.' + upaP.house_number, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1', select: 'prefix,firstname,lastname' });
+                                if (upaRR && upaRR[0]) { var ur = upaRR[0]; upaResName = ((ur.prefix||'') + (ur.firstname||'') + ' ' + (ur.lastname||'')).trim(); }
+                            } catch(e) {}
+                            var upaOut = null;
+                            try { var upaOutR = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, limit: '1' }); upaOut = upaOutR && upaOutR[0]; } catch(e) {}
+                            var upaSlip = null;
+                            try { var upaSlipR = await sbGet('slip_submissions', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }); upaSlip = upaSlipR && upaSlipR[0]; } catch(e) {}
+                            var upaSlipStatus = 'none', upaReviewNote = '', upaSlipId = null;
+                            if (upaSlip) {
+                                upaSlipId = upaSlip.id;
+                                if (upaSlip.status === 'approved') upaSlipStatus = 'success';
+                                else if (upaSlip.status === 'rejected') { upaSlipStatus = 'rejected'; upaReviewNote = upaSlip.review_note || ''; }
+                                else upaSlipStatus = 'reviewing';
+                            }
+                            userProxyAssignments.push({
+                                house_number: upaP.house_number, resident_name: upaResName, period: period,
+                                amount: upaOut ? parseFloat(upaOut.total_amount) || 0 : 0,
+                                water_amount: upaOut ? parseFloat(upaOut.water_amount) || 0 : 0,
+                                electric_amount: upaOut ? parseFloat(upaOut.electric_amount) || 0 : 0,
+                                common_fee: upaOut ? parseFloat(upaOut.common_fee) || 0 : 0,
+                                slip_status: upaSlipStatus, review_note: upaReviewNote, slip_id: upaSlipId, notes: upaP.notes || ''
+                            });
+                        }
+                    }
+                } catch(e) { /* proxy assignments non-critical */ }
+                return { success: true, role: 'user', announcements: announcements, proxyAssignments: userProxyAssignments, data: {
                     houseNumber: houseNumber,
                     period: period,
                     currentAmount: currentOut ? parseFloat(currentOut.total_amount) || 0 : 0,
@@ -2812,6 +2860,196 @@ async function _routeAction(action, data) {
                 try { await _autoSyncAccounting(periodsToSync[psi]); } catch(e) { console.warn('re-sync period:', periodsToSync[psi], e); }
             }
             return { success: true, message: 'ล้างข้อมูลเก่าและ sync ใหม่เรียบร้อย (' + periodsToSync.length + ' เดือน)' };
+        }
+
+        /* ── Proxy Assignment (admin) ────────────── */
+        case 'setProxyAssignment': {
+            // Admin/head เท่านั้น
+            var paSess = await _getSessionRole();
+            if (!paSess || (paSess.role !== 'admin' && paSess.role !== 'head')) {
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            }
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            if (!data.proxyUserId) return { success: false, error: 'ไม่ระบุผู้ชำระแทน' };
+            // ปิด assignment เก่าของบ้านนี้ก่อน
+            var oldProxy = await sbGet('payment_proxies', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', limit: '10' }).catch(function() { return []; });
+            if (oldProxy && oldProxy.length > 0) {
+                for (var opi = 0; opi < oldProxy.length; opi++) {
+                    await sbPatch('payment_proxies', { id: 'eq.' + oldProxy[opi].id }, { is_active: false, updated_at: new Date().toISOString() });
+                }
+            }
+            // หา house_id จาก housing table
+            var paHouseRow = await sbGet('housing', { house_number: 'eq.' + data.houseNumber, limit: '1' }).catch(function() { return []; });
+            var paHouseId = paHouseRow && paHouseRow[0] ? paHouseRow[0].id : null;
+            // หา proxy_resident_id
+            var paResRows = await sbGet('residents', { user_id: 'eq.' + data.proxyUserId, is_active: 'eq.true', limit: '1' }).catch(function() { return []; });
+            var paResId = paResRows && paResRows[0] ? paResRows[0].id : null;
+            var newProxy = await sbPost('payment_proxies', {
+                house_id:         paHouseId,
+                house_number:     data.houseNumber,
+                proxy_user_id:    data.proxyUserId,
+                proxy_resident_id: paResId,
+                assigned_by:      paSess.userId,
+                assigned_at:      new Date().toISOString(),
+                is_active:        true,
+                notes:            data.notes || null
+            });
+            return { success: true, data: newProxy };
+        }
+
+        case 'removeProxyAssignment': {
+            var rpSess = await _getSessionRole();
+            if (!rpSess || (rpSess.role !== 'admin' && rpSess.role !== 'head')) {
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            }
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var rpRows = await sbGet('payment_proxies', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', limit: '10' }).catch(function() { return []; });
+            if (rpRows && rpRows.length > 0) {
+                for (var rpi = 0; rpi < rpRows.length; rpi++) {
+                    await sbPatch('payment_proxies', { id: 'eq.' + rpRows[rpi].id }, { is_active: false, updated_at: new Date().toISOString() });
+                }
+            }
+            return { success: true };
+        }
+
+        case 'getProxyForHouse': {
+            // ดึง proxy assignment ปัจจุบันของบ้าน
+            var gphSess = await _getSessionRole();
+            if (!gphSess || (gphSess.role !== 'admin' && gphSess.role !== 'head')) {
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            }
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var gphRows = await sbGet('payment_proxies', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', limit: '1' }).catch(function() { return []; });
+            if (!gphRows || gphRows.length === 0) return { success: true, data: null };
+            var gphProxy = gphRows[0];
+            // ดึงชื่อผู้ชำระแทนจาก users
+            var gphUser = null;
+            try { var gphUserRows = await sbGet('users', { id: 'eq.' + gphProxy.proxy_user_id, select: 'id,firstname,lastname,prefix', limit: '1' }); gphUser = gphUserRows && gphUserRows[0]; } catch(e) {}
+            // ดึงชื่อผู้ assign
+            var gphAssigner = null;
+            if (gphProxy.assigned_by) {
+                try { var gphARows = await sbGet('users', { id: 'eq.' + gphProxy.assigned_by, select: 'firstname,lastname', limit: '1' }); gphAssigner = gphARows && gphARows[0]; } catch(e) {}
+            }
+            // ดึงบ้านของ proxy user
+            var gphProxyRes = null;
+            try { var gphPRRows = await sbGet('residents', { user_id: 'eq.' + gphProxy.proxy_user_id, is_active: 'eq.true', limit: '1', select: 'house_number' }); gphProxyRes = gphPRRows && gphPRRows[0]; } catch(e) {}
+            return { success: true, data: {
+                id: gphProxy.id,
+                house_number: gphProxy.house_number,
+                proxy_user_id: gphProxy.proxy_user_id,
+                proxy_name: gphUser ? ((gphUser.prefix||'') + (gphUser.firstname||'') + ' ' + (gphUser.lastname||'')).trim() : gphProxy.proxy_user_id,
+                proxy_house: gphProxyRes ? gphProxyRes.house_number : '',
+                assigned_by_name: gphAssigner ? ((gphAssigner.firstname||'') + ' ' + (gphAssigner.lastname||'')).trim() : '',
+                assigned_at: gphProxy.assigned_at,
+                notes: gphProxy.notes || ''
+            }};
+        }
+
+        case 'getMyProxyAssignments': {
+            // ดึง assignments ทั้งหมดที่ current user ถูกมอบหมายให้ชำระแทน
+            var gmaSess = await _getSessionRole();
+            if (!gmaSess) return { success: true, data: [] };
+            var gmaUserId = gmaSess.userId;
+            // ดึง active proxy assignments
+            var gmaProxies = await sbGet('payment_proxies', { proxy_user_id: 'eq.' + gmaUserId, is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
+            if (!gmaProxies || gmaProxies.length === 0) return { success: true, data: [] };
+            // สำหรับแต่ละบ้าน: ดึง outstanding + slip ปัจจุบัน + ชื่อผู้พัก
+            var gmaNow = new Date();
+            var gmaPeriod = (gmaNow.getFullYear() + 543) + '-' + String(gmaNow.getMonth() + 1).padStart(2, '0');
+            var gmaResult = [];
+            for (var gmai = 0; gmai < gmaProxies.length; gmai++) {
+                var gmaP = gmaProxies[gmai];
+                // ชื่อผู้พักหลัก (PDPA: ชื่อเท่านั้น)
+                var gmaResName = '';
+                try {
+                    var gmaResRows = await sbGet('residents', { house_number: 'eq.' + gmaP.house_number, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1', select: 'prefix,firstname,lastname' });
+                    if (gmaResRows && gmaResRows[0]) {
+                        var gr = gmaResRows[0];
+                        gmaResName = ((gr.prefix||'') + (gr.firstname||'') + ' ' + (gr.lastname||'')).trim();
+                    }
+                } catch(e) {}
+                // outstanding งวดปัจจุบัน
+                var gmaOut = null;
+                try {
+                    var gmaOutRows = await sbGet('outstanding', { house_number: 'eq.' + gmaP.house_number, period: 'eq.' + gmaPeriod, limit: '1' });
+                    gmaOut = gmaOutRows && gmaOutRows[0];
+                } catch(e) {}
+                // slip งวดปัจจุบัน
+                var gmaSlip = null;
+                try {
+                    var gmaSlipRows = await sbGet('slip_submissions', { house_number: 'eq.' + gmaP.house_number, period: 'eq.' + gmaPeriod, order: 'submitted_at.desc', limit: '1' });
+                    gmaSlip = gmaSlipRows && gmaSlipRows[0];
+                } catch(e) {}
+                var gmaSlipStatus = 'none';
+                var gmaReviewNote = '';
+                var gmaSlipId = null;
+                if (gmaSlip) {
+                    gmaSlipId = gmaSlip.id;
+                    if (gmaSlip.status === 'approved') gmaSlipStatus = 'success';
+                    else if (gmaSlip.status === 'rejected') { gmaSlipStatus = 'rejected'; gmaReviewNote = gmaSlip.review_note || ''; }
+                    else gmaSlipStatus = 'reviewing';
+                }
+                gmaResult.push({
+                    house_number:   gmaP.house_number,
+                    resident_name:  gmaResName,
+                    period:         gmaPeriod,
+                    amount:         gmaOut ? parseFloat(gmaOut.total_amount) || 0 : 0,
+                    water_amount:   gmaOut ? parseFloat(gmaOut.water_amount) || 0 : 0,
+                    electric_amount: gmaOut ? parseFloat(gmaOut.electric_amount) || 0 : 0,
+                    common_fee:     gmaOut ? parseFloat(gmaOut.common_fee) || 0 : 0,
+                    slip_status:    gmaSlipStatus,
+                    review_note:    gmaReviewNote,
+                    slip_id:        gmaSlipId,
+                    assigned_at:    gmaP.assigned_at,
+                    notes:          gmaP.notes || ''
+                });
+            }
+            return { success: true, data: gmaResult };
+        }
+
+        case 'getProxySlips': {
+            // ประวัติสลิปทั้งหมดที่ current user ส่งแทน
+            var gpsSess = await _getSessionRole();
+            if (!gpsSess) return { success: true, data: [] };
+            var gpsUserId = gpsSess.userId;
+            // ดึง user's house_number
+            var gpsMyHouse = '';
+            try {
+                var gpsMuArr = await sbGet('users', { id: 'eq.' + gpsUserId, select: 'email', limit: '1' });
+                var gpsMyRes = await _findResidentForUser(gpsUserId, gpsMuArr && gpsMuArr[0] ? gpsMuArr[0].email : null);
+                gpsMyHouse = gpsMyRes ? (gpsMyRes.house_number || '') : '';
+            } catch(e) {}
+            // ดึงสลิปที่ submitted_by_user_id = gpsUserId และไม่ใช่บ้านตัวเอง
+            var gpsSlips = await sbGet('slip_submissions', { submitted_by_user_id: 'eq.' + gpsUserId, order: 'submitted_at.desc', limit: '100' }).catch(function() { return []; });
+            // กรองออกบ้านตัวเอง
+            gpsSlips = (gpsSlips || []).filter(function(s) { return s.house_number !== gpsMyHouse; });
+            if (gpsSlips.length === 0) return { success: true, data: [] };
+            // รวม house_numbers ที่ไม่ซ้ำ → ดึงชื่อผู้พักทีเดียว
+            var gpsHouseSet = {};
+            gpsSlips.forEach(function(s) { gpsHouseSet[s.house_number] = true; });
+            var gpsHouseNames = {};
+            for (var gpsHk in gpsHouseSet) {
+                try {
+                    var gpsRRows = await sbGet('residents', { house_number: 'eq.' + gpsHk, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1', select: 'prefix,firstname,lastname' });
+                    if (gpsRRows && gpsRRows[0]) {
+                        var gpr = gpsRRows[0];
+                        gpsHouseNames[gpsHk] = ((gpr.prefix||'') + (gpr.firstname||'') + ' ' + (gpr.lastname||'')).trim();
+                    } else { gpsHouseNames[gpsHk] = ''; }
+                } catch(e) { gpsHouseNames[gpsHk] = ''; }
+            }
+            var gpsResult = gpsSlips.map(function(s) {
+                return {
+                    id:            s.id,
+                    house_number:  s.house_number,
+                    resident_name: gpsHouseNames[s.house_number] || '',
+                    period:        s.period,
+                    amount:        parseFloat(s.amount) || 0,
+                    status:        s.status,
+                    review_note:   s.review_note || '',
+                    submitted_at:  s.submitted_at
+                };
+            });
+            return { success: true, data: gpsResult };
         }
 
         default:

@@ -834,37 +834,26 @@
             if (user.role === 'admin' || user.role === 'head') return; // admin/head ใช้ override panel ของตัวเอง
             myHouseNumber = unitNumber;
             myUserName = ((user.firstname || '') + ' ' + (user.lastname || '')).trim();
+
+            // ดึงเฉพาะบ้านที่ admin มอบหมายให้เราชำระแทน
+            var assignments = [];
+            try {
+                var aRes = await callBackend('getMyProxyAssignments', {});
+                if (aRes && aRes.success) assignments = aRes.data || [];
+            } catch(e) {}
+
+            // ถ้าไม่มีการมอบหมายเลย ให้ซ่อน toggle ไม่แสดงเมนูส่งแทน
+            if (assignments.length === 0) return;
+
             document.getElementById('proxy-toggle-container').style.display = 'block';
 
-            var houses = [], residents = [];
-            try {
-                var hRes = await cachedCall('getHousingList', {}, 600000);
-                if (hRes && hRes.success) houses = hRes.data || [];
-            } catch(e) {}
-            try {
-                var rRes = await cachedCall('getResidentsList', {}, 600000);
-                if (rRes && rRes.success) residents = rRes.data || [];
-            } catch(e) {}
-
-            houses.sort(function(a, b) {
-                var typeA = (a.display_number||'').indexOf('บ้าน') === 0 ? 0 : 1;
-                var typeB = (b.display_number||'').indexOf('บ้าน') === 0 ? 0 : 1;
-                if (typeA !== typeB) return typeA - typeB;
-                return parseInt((a.display_number||'').match(/\d+/)||[0]) - parseInt((b.display_number||'').match(/\d+/)||[0]);
-            });
-
             var sel = document.getElementById('proxy-house-select');
-            houses.forEach(function(h) {
-                var dn = h.display_number || '';
-                if (!dn || dn === myHouseNumber) return;
-                if (h.status !== 'occupied') return;
-                var res = residents.find(function(r){ return r.house_number === dn && r.resident_type !== 'cohabitant'; });
-                var resName = res ? ((res.prefix||'') + (res.firstname||'') + ' ' + (res.lastname||'')).trim() : '';
+            assignments.forEach(function(a) {
                 var opt = document.createElement('option');
-                opt.value = dn;
-                opt.setAttribute('data-resident-name', resName);
-                opt.setAttribute('data-resident-id', res ? res.id : '');
-                opt.textContent = dn + (resName ? ' \u2014 ' + resName : '');
+                opt.value = a.house_number;
+                opt.setAttribute('data-resident-name', a.resident_name || '');
+                opt.setAttribute('data-resident-id', '');
+                opt.textContent = a.house_number + (a.resident_name ? ' \u2014 ' + a.resident_name : '');
                 sel.appendChild(opt);
             });
         }
