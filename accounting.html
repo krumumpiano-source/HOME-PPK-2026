@@ -551,6 +551,10 @@
                     <div class="balance-card-label">รายจ่ายรวม</div>
                     <div class="balance-card-value" id="totalExpense">0.00</div>
                 </div>
+                <div class="balance-card" style="border-left:4px solid #2563eb;">
+                    <div class="balance-card-label">คงเหลือประจำเดือน</div>
+                    <div class="balance-card-value" id="monthlyBalance" style="color:#2563eb;">0.00</div>
+                </div>
                 <div class="balance-card carry-over">
                     <div class="balance-card-label">ยอดยกไป (เดือนถัดไป)</div>
                     <div class="balance-card-value" id="carryOver">0.00</div>
@@ -954,9 +958,13 @@
             const totalExpense = expenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
             const carryOver = carryForwardAmount + totalIncome - totalExpense;
             
+            const monthlyBalance = totalIncome - totalExpense;
             document.getElementById('carryForward').textContent = formatMoney(carryForwardAmount);
             document.getElementById('totalIncome').textContent = formatMoney(totalIncome);
             document.getElementById('totalExpense').textContent = formatMoney(totalExpense);
+            const mbEl = document.getElementById('monthlyBalance');
+            mbEl.textContent = formatMoney(monthlyBalance);
+            mbEl.style.color = monthlyBalance >= 0 ? '#2563eb' : '#dc2626';
             document.getElementById('carryOver').textContent = formatMoney(carryOver);
         }
         
