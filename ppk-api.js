@@ -2373,7 +2373,14 @@ async function _routeAction(action, data) {
                 var sb = b.source === 'auto' ? (_expSortOrder[b.name] || (b.name.indexOf('ค่าไฟขั้นต่ำ') >= 0 ? 4 : b.name.indexOf('ค่าดำเนิน') >= 0 ? 5 : b.name.indexOf('ค่าเดินทาง') >= 0 ? 6 : 4.5)) : 100;
                 return sa - sb;
             });
-            return { success: true, incomeItems: (incRows || []).map(mapRow2), expenseItems: _expMapped, carryForward: carryForward2 };
+            // sort auto income items: ค่าส่วนกลาง ก่อน ส่วนต่างค่าไฟ
+            var _incMapped = (incRows || []).map(mapRow2);
+            _incMapped.sort(function(a, b) {
+                var sa = a.source === 'auto' ? (a.name.indexOf('ค่าส่วนกลาง') >= 0 ? 1 : a.name.indexOf('ส่วนต่าง') >= 0 ? 2 : 3) : 100;
+                var sb = b.source === 'auto' ? (b.name.indexOf('ค่าส่วนกลาง') >= 0 ? 1 : b.name.indexOf('ส่วนต่าง') >= 0 ? 2 : 3) : 100;
+                return sa - sb;
+            });
+            return { success: true, incomeItems: _incMapped, expenseItems: _expMapped, carryForward: carryForward2 };
         }
         case 'calculateAutoEntries': {
             var period = data.period || '';
