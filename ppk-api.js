@@ -1069,6 +1069,8 @@ async function _routeAction(action, data) {
                 savedAt: new Date().toISOString()
             });
             await sbUpsert('settings', { key: swKey, value: swVal }, 'key');
+            // sync ค่าใช้จ่ายไปยังบัญชีกองกลางอัตโนมัติ
+            try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
             return { success: true };
         }
         case 'getSettings': {
