@@ -288,7 +288,7 @@ async function switchTab(tab) {
     });
     if (!_tabLoaded[tab]) {
         _tabLoaded[tab] = true;
-        if (tab === 'history') renderHistory(_dashData);
+        if (tab === 'history') await loadAndRenderFullHistory();
         else if (tab === 'slip') renderSlip(_dashData);
         else if (tab === 'requests') await loadAndRenderRequests();
         else if (tab === 'profile') await loadAndRenderProfile();
@@ -369,6 +369,18 @@ function filterHistoryYear() {
     var sel = document.getElementById('yearFilterSel');
     var panel = document.getElementById('panel-history');
     document.getElementById('histTbody').innerHTML = buildHistRows(panel._histData || [], sel ? sel.value : '');
+}
+async function loadAndRenderFullHistory() {
+    var panel = document.getElementById('panel-history');
+    panel.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--c-text-2);">\u23f3 \u0e01\u0e33\u0e25\u0e31\u0e07\u0e42\u0e2b\u0e25\u0e14\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25...</div>';
+    var r = await callBackend('getAdminHouseFullHistory', { houseNumber: _curHouse });
+    if (!r.success) {
+        panel.innerHTML = '<div style="text-align:center;padding:2rem;color:#EF4444;">\u26a0\ufe0f ' + _esc(r.error || '\u0e42\u0e2b\u0e25\u0e14\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08') + '</div>';
+        return;
+    }
+    var records = r.data || [];
+    var totalOutstanding = _dashData ? (_dashData.totalOutstanding || 0) : 0;
+    renderHistory({ history: records, totalOutstanding: totalOutstanding });
 }
 
 /* ===== TAB 3: SLIP ===== */

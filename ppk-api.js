@@ -3193,6 +3193,70 @@ async function _routeAction(action, data) {
             }};
         }
 
+        case 'getAdminHouseFullHistory': {
+            var ahfhSess = await _getSessionRole();
+            if (!ahfhSess || (ahfhSess.role !== 'admin' && ahfhSess.role !== 'head'))
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var ahfhHouse = data.houseNumber;
+            if (!ahfhHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var ahfhParallel = await Promise.all([
+                sbGet('water_bills',      { house_number: 'eq.' + ahfhHouse, order: 'period.desc', limit: '100' }).catch(function() { return []; }),
+                sbGet('electric_bills',   { house_number: 'eq.' + ahfhHouse, order: 'period.desc', limit: '100' }).catch(function() { return []; }),
+                sbGet('slip_submissions', { house_number: 'eq.' + ahfhHouse, order: 'submitted_at.desc', limit: '200' }).catch(function() { return []; }),
+                sbGet('outstanding',      { house_number: 'eq.' + ahfhHouse, order: 'period.desc', limit: '100' }).catch(function() { return []; }),
+                sbGet('settings',         {}).catch(function() { return []; }),
+                sbGet('exemptions',       { house_number: 'eq.' + ahfhHouse }).catch(function() { return []; })
+            ]);
+            var ahfhW = ahfhParallel[0] || [], ahfhE = ahfhParallel[1] || [];
+            var ahfhSlips = ahfhParallel[2] || [], ahfhOut = ahfhParallel[3] || [];
+            var ahfhSetts = ahfhParallel[4] || [], ahfhExempt = ahfhParallel[5] || [];
+            var ahfhSettMap = {};
+            ahfhSetts.forEach(function(s) { ahfhSettMap[s.key] = s.value; });
+            var ahfhIsFlat = ahfhHouse.startsWith('แฟลต');
+            var ahfhCfRate = parseFloat(ahfhIsFlat ? ahfhSettMap.common_fee_flat : ahfhSettMap.common_fee_house) || 0;
+            var ahfhGfRate = parseFloat(ahfhSettMap.garbage_fee) || 0;
+            var ahfhHasExempt = ahfhExempt.some(function(ex) { return ex.type === 'common_fee'; });
+            // รวบรวม period ทั้งหมดจากทุกตาราง
+            var ahfhPeriods = {};
+            ahfhW.forEach(function(r) { ahfhPeriods[r.period] = 1; });
+            ahfhE.forEach(function(r) { ahfhPeriods[r.period] = 1; });
+            ahfhOut.forEach(function(r) { ahfhPeriods[r.period] = 1; });
+            var ahfhRecords = Object.keys(ahfhPeriods).map(function(period) {
+                var wRow = ahfhW.find(function(r) { return r.period === period; });
+                var eRow = ahfhE.find(function(r) { return r.period === period; });
+                var oRow = ahfhOut.find(function(r) { return r.period === period; });
+                var slipRows = ahfhSlips.filter(function(r) { return r.period === period; });
+                var latestSlip = slipRows[0];
+                var wAmt = wRow ? (parseFloat(wRow.amount) || 0) : (oRow ? (parseFloat(oRow.water_amount) || 0) : 0);
+                var eAmt = eRow ? (parseFloat(eRow.bill_amount || eRow.amount) || 0) : (oRow ? (parseFloat(oRow.electric_amount) || 0) : 0);
+                var cf = oRow ? (parseFloat(oRow.common_fee) || 0) : (ahfhHasExempt ? 0 : ahfhCfRate);
+                var gf = oRow ? (parseFloat(oRow.garbage_fee) || 0) : ahfhGfRate;
+                var total = oRow ? (parseFloat(oRow.total_amount) || 0) : (wAmt + eAmt + cf + gf);
+                var slipStatus = 'none', slipReviewNote = '';
+                if (latestSlip) {
+                    if (latestSlip.status === 'approved') slipStatus = 'success';
+                    else if (latestSlip.status === 'rejected') { slipStatus = 'rejected'; slipReviewNote = latestSlip.review_note || ''; }
+                    else slipStatus = 'reviewing';
+                }
+                return {
+                    period:             period,
+                    amount:             total,
+                    water_amount:       wAmt,
+                    electric_amount:    eAmt,
+                    common_fee:         cf,
+                    garbage_fee:        gf,
+                    outstanding_status: oRow ? (oRow.status || null) : null,
+                    due_date:           oRow ? (oRow.due_date || null) : null,
+                    slip_status:        slipStatus,
+                    review_note:        slipReviewNote,
+                    submitted_at:       latestSlip ? latestSlip.submitted_at : null,
+                    slip_url:           latestSlip ? (latestSlip.slip_url || null) : null
+                };
+            });
+            ahfhRecords.sort(function(a, b) { return b.period.localeCompare(a.period); });
+            return { success: true, data: ahfhRecords };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
