@@ -1302,7 +1302,7 @@
 
         // ========== พิมพ์บันทึกข้อความราชการ ==========
         function printMemo() {
-            const p = getPeriod();
+            const p = getSelectedPeriod();
             const monthName = THAI_MONTHS[parseInt(p.month) - 1];
             const totalIncome = incomeItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
             const totalExpense = expenseItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
