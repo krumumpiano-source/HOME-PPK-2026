@@ -655,7 +655,7 @@
         <!-- ปุ่มดำเนินการ -->
         <div class="section no-print" style="text-align:center; display:flex; gap:0.6rem; justify-content:center; flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="saveData()">💾 บันทึกข้อมูล</button>
-            <button class="btn" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+            <button class="btn" onclick="printMemo()">🖨️ พิมพ์รายงาน</button>
             <button class="btn" onclick="exportExcel()" style="background:#22c55e;color:#fff;border-color:#16a34a;">📊 Export Excel</button>
             <button class="btn" onclick="purgeAndRebuild()" style="background:#ef4444;color:#fff;border-color:#dc2626;" title="ลบข้อมูลเก่า (ค่าน้ำ/ค่าไฟ/ยอดรับชำระ) ออกจากทุกเดือน แล้ว Rebuild ใหม่ทั้งหมด">🗑️ ล้างข้อมูลเก่า &amp; Rebuild</button>
         </div>
@@ -1298,6 +1298,99 @@
         // ============================
         function initSidebar() {
             renderPPKNav('ppkNav', 'accounting');
+        }
+
+        // ========== พิมพ์บันทึกข้อความราชการ ==========
+        function printMemo() {
+            const p = getPeriod();
+            const monthName = THAI_MONTHS[parseInt(p.month) - 1];
+            const totalIncome = incomeItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+            const totalExpense = expenseItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+            const carryOver = carryForwardAmount + totalIncome - totalExpense;
+
+            let rowNum = 0;
+            let incomeRows = '';
+            incomeItems.forEach(item => {
+                rowNum++;
+                incomeRows += '<tr><td style="text-align:center;">' + rowNum + '</td><td>' + formatDate(item.date) + '</td><td>' + (item.description || '') + '</td><td style="text-align:right;">' + formatMoney(item.amount) + '</td><td></td><td>' + (item.note || '-') + '</td></tr>';
+            });
+            let expenseRows = '';
+            expenseItems.forEach(item => {
+                rowNum++;
+                expenseRows += '<tr><td style="text-align:center;">' + rowNum + '</td><td>' + formatDate(item.date) + '</td><td>' + (item.description || '') + '</td><td></td><td style="text-align:right;">' + formatMoney(item.amount) + '</td><td>' + (item.note || '-') + '</td></tr>';
+            });
+
+            const printDate = new Date();
+            const printDateStr = printDate.getDate() + ' ' + THAI_MONTHS[printDate.getMonth()] + ' ' + (printDate.getFullYear() + 543);
+
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>บันทึกข้อความ - บัญชีกองทุน</title>' +
+            '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">' +
+            '<style>' +
+            '@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }' +
+            '@media print { body { margin:0; padding:0; } .no-print { display:none !important; } }' +
+            '* { box-sizing: border-box; }' +
+            'body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 16pt; line-height: 1.15; padding: 0; margin: 0; }' +
+            '.memo-header { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 12px; }' +
+            '.memo-title { font-size: 29pt; font-weight: bold; }' +
+            '.memo-fields { margin-bottom: 12px; font-size: 20pt; }' +
+            '.memo-field { display: flex; gap: 8px; margin-bottom: 2px; }' +
+            '.memo-label { font-weight: bold; white-space: nowrap; }' +
+            '.memo-value { flex: 1; border-bottom: 1px dotted #000; }' +
+            '.memo-body { text-indent: 2.5cm; margin-bottom: 8px; }' +
+            'table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14pt; }' +
+            'th { font-weight: bold; border: 1px solid #000; padding: 4px 6px; text-align: center; }' +
+            'td { border: 1px solid #000; padding: 3px 6px; }' +
+            '.section-hdr td { font-weight: bold; text-align: left; background: #f5f5f5; }' +
+            '.total-row { font-weight: bold; }' +
+            '.summary-box { margin: 16px 0; border: 1px solid #000; padding: 10px 16px; font-size: 15pt; }' +
+            '.summary-box div { margin-bottom: 4px; }' +
+            '.signature-section { margin-top: 24px; display: flex; justify-content: space-around; page-break-inside: avoid; }' +
+            '.signature-box { width: 30%; text-align: center; }' +
+            '.signature-line { margin-top: 40px; border-top: 1px dotted #000; padding-top: 4px; }' +
+            '.toolbar { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:0.8rem 1.5rem; text-align:center; margin-bottom:1rem; }' +
+            '.toolbar button { background:#059669; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.5rem; font:inherit; font-size:1rem; cursor:pointer; }' +
+            '</style></head><body>' +
+            '<div class="no-print toolbar">' +
+            '<div style="margin-bottom:0.5rem;font-weight:bold;">📄 บันทึกข้อความ — บัญชีรายรับรายจ่าย ' + monthName + ' ' + p.year + '</div>' +
+            '<button onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>' +
+            '</div>' +
+            '<div class="memo-header"><div class="memo-title">บันทึกข้อความ</div></div>' +
+            '<div class="memo-fields">' +
+            '<div class="memo-field"><span class="memo-label">ส่วนราชการ</span><span class="memo-value">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</span></div>' +
+            '<div class="memo-field"><span class="memo-label">ที่</span><span class="memo-value">............/............</span></div>' +
+            '<div class="memo-field"><span class="memo-label">วันที่</span><span class="memo-value">' + printDateStr + '</span></div>' +
+            '<div class="memo-field"><span class="memo-label">เรื่อง</span><span class="memo-value">รายงานบัญชีรายรับรายจ่ายกองทุนบ้านพักครู ประจำเดือน' + monthName + ' พ.ศ. ' + p.year + '</span></div>' +
+            '</div>' +
+            '<hr style="border:none;border-top:1.5px solid #000;margin:0.2cm 0 0.3cm 0;">' +
+            '<div style="margin-bottom:8px;"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>' +
+            '<div class="memo-body">ตามที่โรงเรียนพะเยาพิทยาคมได้มอบหมายให้งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู ดำเนินการจัดทำบัญชีเงินกองทุนบ้านพักครู นั้น</div>' +
+            '<div class="memo-body">บัดนี้ ได้ดำเนินการจัดทำบัญชีรายรับรายจ่ายประจำเดือน' + monthName + ' พ.ศ. ' + p.year + ' เรียบร้อยแล้ว มีรายละเอียดดังนี้</div>' +
+            '<div class="summary-box">' +
+            '<div>ยอดยกมา (จากเดือนก่อน): <strong>' + formatMoney(carryForwardAmount) + '</strong> บาท</div>' +
+            '<div>รายรับรวม: <strong>' + formatMoney(totalIncome) + '</strong> บาท</div>' +
+            '<div>รายจ่ายรวม: <strong>' + formatMoney(totalExpense) + '</strong> บาท</div>' +
+            '<div>ยอดยกไป (เดือนถัดไป): <strong>' + formatMoney(carryOver) + '</strong> บาท</div>' +
+            '</div>' +
+            '<table><thead><tr><th style="width:8%;">ลำดับ</th><th style="width:15%;">วันที่</th><th>รายการ</th><th style="width:15%;">รายรับ (บาท)</th><th style="width:15%;">รายจ่าย (บาท)</th><th style="width:12%;">หมายเหตุ</th></tr></thead>' +
+            '<tbody>' +
+            (incomeRows ? '<tr class="section-hdr"><td colspan="6">📥 รายรับ</td></tr>' + incomeRows : '') +
+            (expenseRows ? '<tr class="section-hdr"><td colspan="6">📤 รายจ่าย</td></tr>' + expenseRows : '') +
+            '</tbody>' +
+            '<tfoot>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">รวมรายรับ</td><td style="text-align:right;">' + formatMoney(totalIncome) + '</td><td></td><td></td></tr>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">รวมรายจ่าย</td><td></td><td style="text-align:right;">' + formatMoney(totalExpense) + '</td><td></td></tr>' +
+            '</tfoot></table>' +
+            '<div style="margin:12px 0 0 0;text-indent:2.5cm;">จึงเรียนมาเพื่อโปรดทราบ</div>' +
+            '<div class="signature-section">' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>ผู้จัดทำ / เหรัญญิก</div></div>' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>ผู้ตรวจสอบ</div></div>' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>หัวหน้างานบ้านพัก</div></div>' +
+            '</div>' +
+            '</body></html>';
+
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
         }
     
         async function doLogout() {
