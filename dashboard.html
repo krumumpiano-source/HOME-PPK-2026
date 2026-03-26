@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Ôªø<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>???????? | HOME PPK 2026</title>
+    <title>‡πÅ‡∏î‡∏ä‡∏ö‡∏≠‡∏£‡πå‡∏î | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
     <style>
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
@@ -198,17 +198,17 @@
                 <div class="ppk-stats">
                     <div class="ppk-stat" onclick="navigate('?page=team-management')">
                         <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value danger" id="statPendingReg">ó</div>
+                        <div class="ppk-stat-value danger" id="statPendingReg">ÔøΩ</div>
                         <div class="ppk-stat-label">???????????????</div>
                     </div>
                     <div class="ppk-stat" onclick="navigate('?page=check-slip')">
                         <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value danger" id="statPendingSlips">ó</div>
+                        <div class="ppk-stat-value danger" id="statPendingSlips">ÔøΩ</div>
                         <div class="ppk-stat-label">?????????????</div>
                     </div>
                     <div class="ppk-stat" onclick="navigate('?page=check-request')">
                         <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value danger" id="statPendingReqs">ó</div>
+                        <div class="ppk-stat-value danger" id="statPendingReqs">ÔøΩ</div>
                         <div class="ppk-stat-label">?????????????????</div>
                     </div>
                 </div>
@@ -218,12 +218,12 @@
             <div id="paymentSection" style="display:none;">
                 <div class="hero-payment" id="heroPayment">
                     <div class="hero-greeting" id="heroGreeting">??????</div>
-                    <div class="hero-house" id="heroHouse">?? ??????? ó</div>
+                    <div class="hero-house" id="heroHouse">?? ??????? ÔøΩ</div>
                     <hr class="hero-divider">
                     <div class="hero-row">
                         <div class="hero-col">
                             <div class="hero-label">?? ???????????????</div>
-                            <div class="hero-amount" id="currentMonthAmount">ó</div>
+                            <div class="hero-amount" id="currentMonthAmount">ÔøΩ</div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
                         <div class="hero-col" style="text-align:right;">
@@ -242,7 +242,7 @@
                     <div class="ob-icon">??</div>
                     <div class="ob-info">
                         <div class="ob-label">?????????????</div>
-                        <div class="ob-amount" id="outstandingAmount">ó</div>
+                        <div class="ob-amount" id="outstandingAmount">ÔøΩ</div>
                     </div>
                     <button class="ob-btn" id="outstandingBtn" onclick="outstandingBtnClick()">???????</button>
                 </div>
@@ -406,7 +406,7 @@
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var firstName = user.firstname || '';
             document.getElementById('heroGreeting').textContent = '??????' + (firstName ? ', ' + firstName : '');
-            document.getElementById('heroHouse').textContent = '?? ' + (houseNumber || 'ó');
+            document.getElementById('heroHouse').textContent = '?? ' + (houseNumber || 'ÔøΩ');
 
             // Amount display
             var amtEl = document.getElementById('currentMonthAmount');
@@ -439,7 +439,7 @@
                 rejectBanner.style.display = '';
                 rejectBanner.innerHTML = '?? <strong>?????????????</strong>'
                     + (reviewNote ? '<br>??????: <strong>' + reviewNote.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
-                    + '<br>????????????????????????? <strong>ì?? ??????????? ó ?????????î</strong> ????????????????????';
+                    + '<br>????????????????????????? <strong>ÔøΩ?? ??????????? ÔøΩ ?????????ÔøΩ</strong> ????????????????????';
             } else if (rejectBanner) {
                 rejectBanner.style.display = 'none';
             }
@@ -462,7 +462,7 @@
                 ctaEl.className = 'hero-cta reviewing';
                 ctaEl.onclick = null;
             } else if (slipStatus === 'rejected') {
-                ctaEl.innerHTML = '?? ??????????? ó ?????????';
+                ctaEl.innerHTML = '?? ??????????? ÔøΩ ?????????';
                 ctaEl.className = 'hero-cta';
                 ctaEl.style.background = '#FEE2E2';
                 ctaEl.style.color = '#DC2626';
