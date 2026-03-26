@@ -529,9 +529,6 @@
                     <label for="bill_year">ปี พ.ศ.</label>
                     <select id="bill_year" onchange="loadMonthData()"></select>
                 </div>
-                <div class="form-group" style="min-width:auto;">
-                    <button class="btn btn-success" onclick="calculateFromSystem()">⚡ คำนวณอัตโนมัติ</button>
-                </div>
             </div>
         </div>
         
@@ -822,56 +819,6 @@
         }
         
         // loadCarryForward — ดึงจาก Backend ผ่าน loadMonthData() แล้ว (result.carryForward)
-        
-        // ============================
-        // AUTO CALCULATION
-        // ============================
-        async function calculateFromSystem() {
-            const { month, year, key } = getSelectedPeriod();
-            const period = year + '-' + month;
-
-            try {
-                    // ไม่ใช้ cache เพราะ user กดปุ่มเองต้องการข้อมูลสดเสมอ
-                    const result = await callBackend('calculateAutoEntries', { period });
-                    if (result && result.success) {
-                        // ล้างรายการ auto เดิม
-                        incomeItems = incomeItems.filter(item => !item.auto);
-                        expenseItems = expenseItems.filter(item => !item.auto);
-
-                        // เพิ่มรายรับอัตโนมัติ
-                        (result.incomeItems || []).forEach(item => {
-                            incomeItems.unshift({
-                                date: new Date().toISOString().split('T')[0],
-                                description: item.name,
-                                amount: item.amount,
-                                note: '',
-                                auto: true,
-                                image: null
-                            });
-                        });
-
-                        // เพิ่มรายจ่ายอัตโนมัติ
-                        (result.expenseItems || []).forEach(item => {
-                            expenseItems.unshift({
-                                date: new Date().toISOString().split('T')[0],
-                                description: item.name,
-                                amount: item.amount,
-                                note: '',
-                                auto: true,
-                                image: null
-                            });
-                        });
-
-                        renderAll();
-                        ppkAlert('คำนวณรายการอัตโนมัติจาก Backend เรียบร้อยแล้ว');
-                        return;
-                    }
-                } catch (e) {
-                    console.error('คำนวณจาก backend ไม่สำเร็จ:', e);
-                }
-        }
-
-        // calculateFromLocalStorage ถูกลบแล้ว — ใช้ Backend calculateAutoEntries แทน
         
         // ============================
         // RENDER FUNCTIONS
