@@ -2365,7 +2365,15 @@ async function _routeAction(action, data) {
                 var totalPrevExp2 = (allPrevExp2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
                 carryForward2 = totalPrevInc2 - totalPrevExp2;
             } catch(e) { carryForward2 = 0; }
-            return { success: true, incomeItems: (incRows || []).map(mapRow2), expenseItems: (expRows || []).map(mapRow2), carryForward: carryForward2 };
+            // sort auto expense items ตามลำดับที่กำหนด
+            var _expSortOrder = { 'ค่า Lost ไฟฟ้า (บ้านพัก)': 1, 'ค่า Lost ไฟฟ้า (แฟลต)': 2, 'ค่าขยะ': 3 };
+            var _expMapped = (expRows || []).map(mapRow2);
+            _expMapped.sort(function(a, b) {
+                var sa = a.source === 'auto' ? (_expSortOrder[a.name] || (a.name.indexOf('ค่าไฟขั้นต่ำ') >= 0 ? 4 : a.name.indexOf('ค่าดำเนิน') >= 0 ? 5 : a.name.indexOf('ค่าเดินทาง') >= 0 ? 6 : 4.5)) : 100;
+                var sb = b.source === 'auto' ? (_expSortOrder[b.name] || (b.name.indexOf('ค่าไฟขั้นต่ำ') >= 0 ? 4 : b.name.indexOf('ค่าดำเนิน') >= 0 ? 5 : b.name.indexOf('ค่าเดินทาง') >= 0 ? 6 : 4.5)) : 100;
+                return sa - sb;
+            });
+            return { success: true, incomeItems: (incRows || []).map(mapRow2), expenseItems: _expMapped, carryForward: carryForward2 };
         }
         case 'calculateAutoEntries': {
             var period = data.period || '';
@@ -2409,6 +2417,18 @@ async function _routeAction(action, data) {
                     withdrawOperatingCosts = wd.operatingCosts || {};
                 }
             } catch(e) {}
+            // fallback: ถ้า monthly_withdraw ไม่มีค่าขยะ ดึงจาก notifications
+            if (withdrawGarbage <= 0) {
+                try {
+                    var gfSettRow2 = await sbGet('settings', { key: 'eq.garbage_fee' });
+                    var gfRate2 = (gfSettRow2 && gfSettRow2[0]) ? parseFloat(gfSettRow2[0].value) || 0 : 0;
+                    if (gfRate2 > 0) {
+                        var gfNotifs2 = await sbGet('notifications', { period: 'eq.' + period, select: 'garbage_fee' }).catch(function(){ return []; });
+                        var gfTotal2 = (gfNotifs2 || []).reduce(function(s,r){ return s + (parseFloat(r.garbage_fee) || 0); }, 0);
+                        if (gfTotal2 > 0) withdrawGarbage = gfTotal2;
+                    }
+                } catch(e) {}
+            }
             var incomeItems = [];
             var expenseItems = [];
             if (commonTotal > 0)    incomeItems.push({ name: 'ค่าส่วนกลาง', amount: commonTotal });
@@ -3421,6 +3441,18 @@ async function _autoSyncAccounting(period) {
             withdrawOperatingCosts = wd.operatingCosts || {};
         }
     } catch(e) {}
+    // fallback: ถ้า monthly_withdraw ไม่มีค่าขยะ ดึงจาก settings garbage_fee (rate) + notifications (count)
+    if (withdrawGarbage <= 0) {
+        try {
+            var gfSettRow = await sbGet('settings', { key: 'eq.garbage_fee' });
+            var gfRate = (gfSettRow && gfSettRow[0]) ? parseFloat(gfSettRow[0].value) || 0 : 0;
+            if (gfRate > 0) {
+                var gfNotifs = await sbGet('notifications', { period: 'eq.' + period, select: 'garbage_fee' }).catch(function(){ return []; });
+                var gfTotal = (gfNotifs || []).reduce(function(s,r){ return s + (parseFloat(r.garbage_fee) || 0); }, 0);
+                if (gfTotal > 0) withdrawGarbage = gfTotal;
+            }
+        } catch(e) {}
+    }
     // ── 4. ลบเฉพาะรายการ auto ของ period นี้
     await sbDelete('accounting_entries', { period: 'eq.' + period, category: 'eq.auto' });
     var pParts = period.split('-');
