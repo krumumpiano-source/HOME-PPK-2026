@@ -2996,10 +2996,12 @@
                     r.user_id &&
                     r.resident_type !== 'cohabitant'
                 );
+                const _typeOrder = s => s.startsWith('บ้าน') ? 0 : s.startsWith('แฟลต') ? 1 : 2;
+                const _getNum   = s => parseInt((s.match(/\d+/) || ['0'])[0]);
                 eligible.sort((a, b) => {
-                    const na = `${a.firstname||''}${a.lastname||''}`;
-                    const nb = `${b.firstname||''}${b.lastname||''}`;
-                    return na.localeCompare(nb, 'th');
+                    const ha = a.house_number || '', hb = b.house_number || '';
+                    if (_typeOrder(ha) !== _typeOrder(hb)) return _typeOrder(ha) - _typeOrder(hb);
+                    return _getNum(ha) - _getNum(hb);
                 });
                 if (eligible.length === 0) {
                     sel.innerHTML = '<option value="">ไม่พบผู้ใช้ที่สามารถกำหนดได้</option>';
