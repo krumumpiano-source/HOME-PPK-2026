@@ -3114,9 +3114,18 @@ async function _routeAction(action, data) {
                     if (ahvPR && ahvPR[0]) ahvProxyHouse = ahvPR[0].house_number || '';
                 } catch(e) {}
             }
+            var ahvAllSlips = (ahvSlipRows || []).map(function(s) {
+                var st = 'none';
+                if (s.status === 'approved') st = 'success';
+                else if (s.status === 'rejected') st = 'rejected';
+                else if (s.status) st = 'reviewing';
+                return { id: s.id, period: s.period, amount: parseFloat(s.amount)||0, receipt_number: s.receipt_number||'', status: st, review_note: s.review_note||'', submitted_at: s.submitted_at, image_url: s.image_url||null };
+            });
             return { success: true, data: {
                 houseNumber:     ahvHouse,
                 residentName:    ahvResName,
+                residentPosition: ahvRes ? (ahvRes.position || '') : '',
+                residentPhone:   ahvRes ? (ahvRes.phone || '') : '',
                 period:          ahvPeriod,
                 currentAmount:   ahvCurOut ? parseFloat(ahvCurOut.total_amount) || 0 : 0,
                 water_amount:    ahvCurOut ? parseFloat(ahvCurOut.water_amount) || 0 : 0,
@@ -3126,11 +3135,61 @@ async function _routeAction(action, data) {
                 slipStatus:      ahvSlipStatus,
                 reviewNote:      ahvReviewNote,
                 slipId:          ahvSlipId,
+                slipImageUrl:    ahvCurSlip ? (ahvCurSlip.image_url || null) : null,
+                slipReceiptNumber: ahvCurSlip ? (ahvCurSlip.receipt_number || '') : '',
+                slipSubmittedAt: ahvCurSlip ? (ahvCurSlip.submitted_at || null) : null,
+                slipAmount:      ahvCurSlip ? (parseFloat(ahvCurSlip.amount) || 0) : 0,
                 dueDate:         ahvCurOut ? ahvCurOut.due_date : null,
                 history:         ahvHistory,
+                allSlips:        ahvAllSlips,
                 proxyName:       ahvProxyName,
                 proxyHouse:      ahvProxyHouse,
                 proxyNotes:      ahvProxy ? (ahvProxy.notes || '') : ''
+            }};
+        }
+
+        case 'getAdminHouseRequests': {
+            var ahrSess = await _getSessionRole();
+            if (!ahrSess || (ahrSess.role !== 'admin' && ahrSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var ahrHouse = data.houseNumber;
+            if (!ahrHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var ahrRows = await sbGet('requests', { house_number: 'eq.' + ahrHouse, order: 'created_at.desc', limit: '50' }).catch(function() { return []; });
+            return { success: true, data: ahrRows || [] };
+        }
+
+        case 'getAdminHouseProfile': {
+            var ahpSess = await _getSessionRole();
+            if (!ahpSess || (ahpSess.role !== 'admin' && ahpSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var ahpHouse = data.houseNumber;
+            if (!ahpHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var ahpResults = await Promise.all([
+                sbGet('residents', { house_number: 'eq.' + ahpHouse, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1' }).catch(function() { return []; }),
+                sbGet('residents', { house_number: 'eq.' + ahpHouse, is_active: 'eq.true', resident_type: 'eq.cohabitant' }).catch(function() { return []; }),
+                sbGet('housing', { house_number: 'eq.' + ahpHouse, limit: '1' }).catch(function() { return []; })
+            ]);
+            var ahpRes = ahpResults[0] && ahpResults[0][0];
+            var ahpCoRows = ahpResults[1] || [];
+            var ahpHou = ahpResults[2] && ahpResults[2][0];
+            var ahpUserInfo = {};
+            if (ahpRes && ahpRes.user_id) {
+                var ahpURows = await sbGet('users', { id: 'eq.' + ahpRes.user_id, select: 'email,phone', limit: '1' }).catch(function() { return []; });
+                if (ahpURows && ahpURows[0]) ahpUserInfo = ahpURows[0];
+            }
+            return { success: true, data: {
+                houseNumber:   ahpHouse,
+                residentName:  ahpRes ? ((ahpRes.prefix||'') + (ahpRes.firstname||'') + ' ' + (ahpRes.lastname||'')).trim() : '',
+                position:      ahpRes ? (ahpRes.position || '') : '',
+                phone:         ahpUserInfo.phone || (ahpRes ? (ahpRes.phone || '') : ''),
+                email:         ahpUserInfo.email || '',
+                photo_url:     ahpRes ? (ahpRes.photo_url || '') : '',
+                resident_type: ahpRes ? (ahpRes.resident_type || '') : '',
+                move_in_date:  ahpRes ? (ahpRes.move_in_date || '') : '',
+                coresidents:   ahpCoRows.map(function(r) {
+                    return { name: ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(), relation: r.relation || '', phone: r.phone || '' };
+                }),
+                housing_floor: ahpHou ? (ahpHou.floor || '') : '',
+                housing_type:  ahpHou ? (ahpHou.type || '') : '',
+                housing_notes: ahpHou ? (ahpHou.notes || '') : ''
             }};
         }
 
