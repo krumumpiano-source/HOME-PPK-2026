@@ -2410,7 +2410,7 @@ async function _routeAction(action, data) {
                     amount: it.amount || 0,
                     receipt_url: it.receiptUrl || null,
                     recorded_by: recordedBy,
-                    recorded_at: new Date().toISOString()
+                    recorded_at: it.date || new Date().toISOString()
                 });
             }
             // บันทึกรายจ่าย — category = 'auto' หรือ note text
@@ -2424,7 +2424,7 @@ async function _routeAction(action, data) {
                     amount: et.amount || 0,
                     receipt_url: et.receiptUrl || null,
                     recorded_by: recordedBy,
-                    recorded_at: new Date().toISOString()
+                    recorded_at: et.date || new Date().toISOString()
                 });
             }
             return { success: true };

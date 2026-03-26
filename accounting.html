@@ -708,6 +708,28 @@
             <button class="btn" onclick="purgeAndRebuild()" style="background:#ef4444;color:#fff;border-color:#dc2626;" title="ลบข้อมูลเก่า (ค่าน้ำ/ค่าไฟ/ยอดรับชำระ) ออกจากทุกเดือน แล้ว Rebuild ใหม่ทั้งหมด">🗑️ ล้างข้อมูลเก่า &amp; Rebuild</button>
         </div>
         
+        <!-- ส่วนลงนาม (แสดงเฉพาะตอนพิมพ์) -->
+        <div class="section signature-section" style="page-break-inside:avoid; margin-top:2rem;">
+            <div class="section-title">✍️ ลงนามรับรอง</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem;margin-top:2.5rem;text-align:center;">
+                <div>
+                    <div style="margin-bottom:3rem;">ลงชื่อ ............................</div>
+                    <div>(..............................................)</div>
+                    <div style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;">ผู้จัดทำ / เหรัญญิก</div>
+                </div>
+                <div>
+                    <div style="margin-bottom:3rem;">ลงชื่อ ............................</div>
+                    <div>(..............................................)</div>
+                    <div style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;">ผู้ตรวจสอบ</div>
+                </div>
+                <div>
+                    <div style="margin-bottom:3rem;">ลงชื่อ ............................</div>
+                    <div>(..............................................)</div>
+                    <div style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;">หัวหน้างานบ้านพัก</div>
+                </div>
+            </div>
+        </div>
+        
         <div class="footer-note">
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -1103,7 +1125,7 @@
         }
 
         async function purgeAndRebuild() {
-            const ok = await ppkConfirm('จะลบรายการ ค่าน้ำประปา / ค่าไฟ PEA / ยอดรับชำระ ออกจากทุกเดือนในบัญชี แล้ว Rebuild ใหม่\n\nรายการ manual (ค่าขยะ ค่าตัดหญ้า ฟร)จะไม่ถูกลบ\nต้องการดำเนินการต่อ?');
+            const ok = await ppkConfirm('จะลบรายการ ค่าน้ำประปา / ค่าไฟ PEA / ยอดรับชำระ ออกจากทุกเดือนในบัญชี แล้ว Rebuild ใหม่\n\nรายการ manual (ค่าขยะ ค่าตัดหญ้า ฯลฯ) จะไม่ถูกลบ\nต้องการดำเนินการต่อ?');
             if (!ok) return;
             try {
                 const r = await callBackend('purgeStaleAutoEntries', {});
@@ -1177,7 +1199,8 @@
                             amount: item.amount,
                             source: item.auto ? 'auto' : 'manual',
                             note: item.note || '',
-                            receiptUrl: receiptUrl
+                            receiptUrl: receiptUrl,
+                            date: item.date || ''
                         });
                     }
                     const backendExpense = [];
@@ -1192,7 +1215,8 @@
                             amount: item.amount,
                             source: item.auto ? 'auto' : 'manual',
                             note: item.note || '',
-                            receiptUrl: receiptUrl
+                            receiptUrl: receiptUrl,
+                            date: item.date || ''
                         });
                     }
 
