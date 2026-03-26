@@ -2384,15 +2384,9 @@ async function _routeAction(action, data) {
         }
         case 'calculateAutoEntries': {
             var period = data.period || '';
-            // ดึงค่าส่วนกลางจาก notifications + exemptions
-            var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number' }).catch(function() { return []; });
-            var _exemptRows2 = await sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; });
-            var _exemptSet2 = {};
-            (_exemptRows2 || []).forEach(function(ex) { if (ex.house_number) _exemptSet2[ex.house_number] = true; });
-            var commonTotal = (notifRes || []).reduce(function(s, r) {
-                if (_exemptSet2[r.house_number]) return s;
-                return s + (parseFloat(r.common_fee) || 0);
-            }, 0);
+            // ดึงค่าส่วนกลางจาก notifications (ใช้ค่าที่บันทึกไว้เฉพาะเดือน)
+            var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
+            var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
             // ดึง pea_total + lost_house + lost_flat จาก settings และคำนวณส่วนต่างจาก electric_bills จริง
             var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
             try {
@@ -3395,17 +3389,13 @@ async function _autoSyncAccounting(period) {
     // รายรับ: ค่าส่วนกลาง + ส่วนต่างค่าไฟปัดเศษ
     // รายจ่าย: Lost ไฟฟ้า (บ้านพัก + แฟลต) + ค่าขยะ
 
-    // ── 1. ดึงค่าส่วนกลาง + ค่าไฟ + หมายเลขบ้าน จาก notifications
+    // ── 1. ดึงค่าส่วนกลาง + ค่าไฟ + หมายเลขบ้าน จาก notifications (ใช้ค่าที่บันทึกไว้เฉพาะเดือน)
     var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number,electric_amount' }).catch(function() { return []; });
-    // ── 1.1 ดึงบ้านที่ยกเว้นค่าส่วนกลาง + ค่าไฟขั้นต่ำ จาก exemptions
+    var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
+    // ── 1.1 ดึงบ้านที่ยกเว้นค่าส่วนกลาง (สำหรับคำนวณค่าไฟขั้นต่ำบ้านว่าง)
     var _exemptRows = await sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; });
     var _exemptSet = {};
     (_exemptRows || []).forEach(function(ex) { if (ex.house_number) _exemptSet[ex.house_number] = true; });
-    // คำนวณค่าส่วนกลาง โดยหักบ้านที่ยกเว้นออก (แก้ข้อมูลเก่าที่เก็บ common_fee ไม่เป็น 0)
-    var commonTotal = (notifRes || []).reduce(function(s, r) {
-        if (_exemptSet[r.house_number]) return s;
-        return s + (parseFloat(r.common_fee) || 0);
-    }, 0);
     var _minChargeVal = 9;
     try {
         var _mcRows = await sbGet('settings', { key: 'eq.electric_min_charge' });
