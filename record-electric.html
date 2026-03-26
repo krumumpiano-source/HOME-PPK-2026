@@ -880,16 +880,22 @@
             document.querySelectorAll('#electricTableBody tr').forEach(row => {
                 if (row.dataset.house) _totalRawForSubmit += parseFloat(row.dataset.rawAmount) || 0;
             });
+            // คำนวณส่วนต่าง (grandTotal - peaTotal) สำหรับเข้าบัญชีกองกลาง
+            const _peaForSubmit = parseFloat(document.getElementById('pea_total').value) || 0;
+            const _lostHouseForSubmit = parseFloat(document.getElementById('lost_house').value) || 0;
+            const _lostFlatForSubmit = parseFloat(document.getElementById('lost_flat').value) || 0;
+            const _grandTotalForSubmit = _totalRawForSubmit + _lostHouseForSubmit + _lostFlatForSubmit;
             const electricData = {
                 month: month,
                 year: year,
                 period: year + '-' + month,
                 method: electricMethod,
                 readingDate: document.getElementById('reading_date').value || null,
-                pea_total: parseFloat(document.getElementById('pea_total').value) || 0,
-                lost_house: parseFloat(document.getElementById('lost_house').value) || 0,
-                lost_flat: parseFloat(document.getElementById('lost_flat').value) || 0,
+                pea_total: _peaForSubmit,
+                lost_house: _lostHouseForSubmit,
+                lost_flat: _lostFlatForSubmit,
                 rounding_surplus: Math.round((_totalCalcAmount - _totalRawForSubmit) * 100) / 100,
+                electric_diff: Math.round((_grandTotalForSubmit - _peaForSubmit) * 100) / 100,
                 records: records,
                 savedAt: new Date().toISOString()
             };

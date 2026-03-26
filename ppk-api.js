@@ -923,12 +923,13 @@ async function _routeAction(action, data) {
                     try { await sbDelete('electric_bills', { id: 'in.(' + _oldEIds.join(',') + ')' }); } catch(e) { console.warn('cleanup old electric_bills:', e); }
                 }
                 // บันทึก PEA total + Lost + rounding_surplus ลง settings (ต่อ period)
-                if (data.pea_total || data.lost_house || data.lost_flat || data.rounding_surplus) {
+                if (data.pea_total || data.lost_house || data.lost_flat || data.rounding_surplus || data.electric_diff) {
                     var lostData = JSON.stringify({
                         pea_total: data.pea_total || 0,
                         lost_house: data.lost_house || 0,
                         lost_flat: data.lost_flat || 0,
-                        rounding_surplus: data.rounding_surplus || 0
+                        rounding_surplus: data.rounding_surplus || 0,
+                        electric_diff: data.electric_diff || 0
                     });
                     await sbUpsert('settings', { key: 'electric_lost_' + data.period, value: lostData }, 'key');
                 }
@@ -2368,13 +2369,13 @@ async function _routeAction(action, data) {
             // ดึงค่าส่วนกลางจาก notifications (ยอดที่แจ้งไปจริง รวมการยกเว้น + admin override)
             var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
             var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-            // ดึง rounding_surplus + lost_house + lost_flat จาก settings
-            var roundingSurplus = 0, lostHouseAmt = 0, lostFlatAmt = 0;
+            // ดึง electric_diff + lost_house + lost_flat จาก settings
+            var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
             try {
                 var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
                 if (lostRows && lostRows[0]) {
                     var ld = JSON.parse(lostRows[0].value);
-                    roundingSurplus = parseFloat(ld.rounding_surplus) || 0;
+                    electricDiff = parseFloat(ld.electric_diff) || 0;
                     lostHouseAmt = parseFloat(ld.lost_house) || 0;
                     lostFlatAmt = parseFloat(ld.lost_flat) || 0;
                 }
@@ -2391,7 +2392,7 @@ async function _routeAction(action, data) {
             var incomeItems = [];
             var expenseItems = [];
             if (commonTotal > 0)    incomeItems.push({ name: 'ค่าส่วนกลาง', amount: commonTotal });
-            if (roundingSurplus > 0) incomeItems.push({ name: 'ส่วนต่างค่าไฟจากการปัดเศษ', amount: roundingSurplus });
+            if (electricDiff > 0) incomeItems.push({ name: 'ส่วนต่างค่าไฟ', amount: electricDiff });
             if (lostHouseAmt > 0)  expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt });
             if (lostFlatAmt > 0)   expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt });
             if (withdrawGarbage > 0) expenseItems.push({ name: 'ค่าขยะ', amount: withdrawGarbage });
@@ -2861,7 +2862,8 @@ async function _routeAction(action, data) {
                 'ค่าไฟฟ้า (เก็บจากผู้พัก)',
                 'ค่าไฟฟ้า (จ่าย PEA)',
                 'ค่าขยะ (เก็บจากผู้พัก)',
-                'ค่าขยะ (จ่ายเทศบาล)'
+                'ค่าขยะ (จ่ายเทศบาล)',
+                'ส่วนต่างค่าไฟจากการปัดเศษ'  // ชื่อเก่า เปลี่ยนเป็น "ส่วนต่างค่าไฟ"
             ];
             var deletedCount = 0;
             for (var sdi = 0; sdi < staleDesc.length; sdi++) {
@@ -3305,13 +3307,13 @@ async function _autoSyncAccounting(period) {
     // ── 1. ดึงค่าส่วนกลางจาก notifications
     var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
     var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-    // ── 2. ดึง rounding_surplus + lost จาก settings
-    var roundingSurplus = 0, lostHouseAmt = 0, lostFlatAmt = 0;
+    // ── 2. ดึง electric_diff + lost จาก settings
+    var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
     try {
         var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
         if (lostRows && lostRows[0]) {
             var ld = JSON.parse(lostRows[0].value);
-            roundingSurplus = parseFloat(ld.rounding_surplus) || 0;
+            electricDiff = parseFloat(ld.electric_diff) || 0;
             lostHouseAmt = parseFloat(ld.lost_house) || 0;
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
         }
@@ -3340,12 +3342,12 @@ async function _autoSyncAccounting(period) {
             amount: commonTotal, recorded_at: ts
         });
     }
-    if (roundingSurplus > 0) {
+    if (electricDiff > 0) {
         await sbPost('accounting_entries', {
             period: period, year: pYear, month: pMonth,
             type: 'income', category: 'auto',
-            description: 'ส่วนต่างค่าไฟจากการปัดเศษ',
-            amount: roundingSurplus, recorded_at: ts
+            description: 'ส่วนต่างค่าไฟ',
+            amount: electricDiff, recorded_at: ts
         });
     }
     // ── 6. Insert รายจ่าย auto ──
