@@ -3390,20 +3390,28 @@ async function _autoSyncAccounting(period) {
     // รายจ่าย: Lost ไฟฟ้า (บ้านพัก + แฟลต) + ค่าขยะ
 
     // ── 1. ดึงค่าส่วนกลาง + ค่าไฟ + หมายเลขบ้าน จาก notifications (ใช้ค่าที่บันทึกไว้เฉพาะเดือน)
-    var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number,electric_amount' }).catch(function() { return []; });
-    var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-    // ── 1.1 ดึงบ้านที่ยกเว้นค่าส่วนกลาง (สำหรับคำนวณค่าไฟขั้นต่ำบ้านว่าง)
-    var _exemptRows = await sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; });
+    var notifRes, _exemptRows, _mcRows, lostRows, wdRows;
+    // ── Parallel fetch: notifications, exemptions, min_charge, electric_lost, monthly_withdraw ──
+    var _fetchResults = await Promise.all([
+        sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number,electric_amount,garbage_fee' }).catch(function() { return []; }),
+        sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; }),
+        sbGet('settings', { key: 'eq.electric_min_charge' }).catch(function() { return []; }),
+        sbGet('settings', { key: 'eq.electric_lost_' + period }).catch(function() { return []; }),
+        sbGet('settings', { key: 'eq.monthly_withdraw_' + period }).catch(function() { return []; })
+    ]);
+    notifRes = _fetchResults[0] || [];
+    _exemptRows = _fetchResults[1] || [];
+    _mcRows = _fetchResults[2] || [];
+    lostRows = _fetchResults[3] || [];
+    wdRows = _fetchResults[4] || [];
+
+    var commonTotal = (notifRes).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
     var _exemptSet = {};
-    (_exemptRows || []).forEach(function(ex) { if (ex.house_number) _exemptSet[ex.house_number] = true; });
-    var _minChargeVal = 9;
-    try {
-        var _mcRows = await sbGet('settings', { key: 'eq.electric_min_charge' });
-        if (_mcRows && _mcRows[0] && _mcRows[0].value) _minChargeVal = parseFloat(_mcRows[0].value) || 9;
-    } catch(e) {}
-    // คำนวณค่าไฟขั้นต่ำบ้านว่าง: ยกเว้นค่าส่วนกลาง + ค่าไฟ = ค่าขั้นต่ำ
+    (_exemptRows).forEach(function(ex) { if (ex.house_number) _exemptSet[ex.house_number] = true; });
+    var _minChargeVal = (_mcRows && _mcRows[0] && _mcRows[0].value) ? parseFloat(_mcRows[0].value) || 9 : 9;
+    // คำนวณค่าไฟขั้นต่ำบ้านว่าง
     var _vacantCount = 0, _vacantMinTotal = 0;
-    (notifRes || []).forEach(function(n) {
+    (notifRes).forEach(function(n) {
         var hn = n.house_number || '';
         var elAmt = parseFloat(n.electric_amount) || 0;
         if (_exemptSet[hn] && elAmt > 0 && Math.abs(elAmt - _minChargeVal) < 0.01) {
@@ -3411,30 +3419,25 @@ async function _autoSyncAccounting(period) {
             _vacantMinTotal += elAmt;
         }
     });
-    // ── 2. ดึง pea_total + lost จาก settings และคำนวณส่วนต่างจาก electric_bills จริง
+    // ── 2. คำนวณส่วนต่างค่าไฟ
     var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
-    try {
-        var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
-        if (lostRows && lostRows[0]) {
+    if (lostRows && lostRows[0]) {
+        try {
             var ld = JSON.parse(lostRows[0].value);
             lostHouseAmt = parseFloat(ld.lost_house) || 0;
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
             var peaTotal = parseFloat(ld.pea_total) || 0;
-            // คำนวณส่วนต่างจากยอดเก็บจริง (SUM amount) + lost - PEA
             if (peaTotal > 0) {
                 var eBills = await sbGet('electric_bills', { period: 'eq.' + period, select: 'amount' }).catch(function() { return []; });
                 var eBillTotal = (eBills || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
                 electricDiff = Math.round((eBillTotal + lostHouseAmt + lostFlatAmt - peaTotal) * 100) / 100;
             }
-        }
-    } catch(e) {}
-    // ── 3. ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ + ค่าดำเนินการ จาก monthly_withdraw
-    var withdrawGarbage = 0;
-    var withdrawAdditionalItems = [];
-    var withdrawOperatingCosts = {};
-    try {
-        var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
-        if (wdRows && wdRows[0] && wdRows[0].value) {
+        } catch(e) {}
+    }
+    // ── 3. ค่าขยะ + ค่าใช้จ่ายอื่นๆ + ค่าดำเนินการ
+    var withdrawGarbage = 0, withdrawAdditionalItems = [], withdrawOperatingCosts = {};
+    if (wdRows && wdRows[0] && wdRows[0].value) {
+        try {
             var wd = JSON.parse(wdRows[0].value);
             withdrawGarbage = parseFloat(wd.garbageFee) || 0;
             if (wd.additionalItems && wd.additionalItems.length) {
@@ -3446,125 +3449,45 @@ async function _autoSyncAccounting(period) {
                 }
             }
             withdrawOperatingCosts = wd.operatingCosts || {};
-        }
-    } catch(e) {}
-    // fallback: ถ้า monthly_withdraw ไม่มีค่าขยะ ดึงจาก settings garbage_fee (rate) + notifications (count)
+        } catch(e) {}
+    }
+    // fallback ค่าขยะจาก notifications
     if (withdrawGarbage <= 0) {
         try {
             var gfSettRow = await sbGet('settings', { key: 'eq.garbage_fee' });
             var gfRate = (gfSettRow && gfSettRow[0]) ? parseFloat(gfSettRow[0].value) || 0 : 0;
             if (gfRate > 0) {
-                var gfNotifs = await sbGet('notifications', { period: 'eq.' + period, select: 'garbage_fee' }).catch(function(){ return []; });
-                var gfTotal = (gfNotifs || []).reduce(function(s,r){ return s + (parseFloat(r.garbage_fee) || 0); }, 0);
+                var gfTotal = (notifRes).reduce(function(s,r){ return s + (parseFloat(r.garbage_fee) || 0); }, 0);
                 if (gfTotal > 0) withdrawGarbage = gfTotal;
             }
         } catch(e) {}
     }
-    // ── 4. ลบเฉพาะรายการ auto ของ period นี้
+    // ── 4. ลบ auto entries เก่า
     await sbDelete('accounting_entries', { period: 'eq.' + period, category: 'eq.auto' });
     var pParts = period.split('-');
     var pYear  = parseInt(pParts[0]) || new Date().getFullYear();
     var pMonth = parseInt(pParts[1]) || (new Date().getMonth() + 1);
     var ts = new Date().toISOString();
-    // ── 5. Insert รายรับ auto ──
-    if (commonTotal > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'income', category: 'auto',
-            description: 'ค่าส่วนกลาง',
-            amount: commonTotal, recorded_at: ts
-        });
-    }
-    if (electricDiff > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'income', category: 'auto',
-            description: 'ส่วนต่างค่าไฟ',
-            amount: electricDiff, recorded_at: ts
-        });
-    }
-    // ── 6. Insert รายจ่าย auto ──
-    if (lostHouseAmt > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt,
-            recorded_at: ts
-        });
-    }
-    if (lostFlatAmt > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt,
-            recorded_at: ts
-        });
-    }
-    // ── 6.1 ค่าไฟขั้นต่ำบ้านว่าง (ยกเว้นค่าส่วนกลาง + ค่าไฟ = ค่าขั้นต่ำ) ──
-    if (_vacantMinTotal > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่าไฟขั้นต่ำบ้านว่าง (' + _vacantCount + ' หลัง \u00d7 ' + _minChargeVal + ' บ.)',
-            amount: _vacantMinTotal,
-            recorded_at: ts
-        });
-    }
-    if (withdrawGarbage > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่าขยะ', amount: withdrawGarbage,
-            recorded_at: ts
-        });
-    }
-    // ── 7. Insert ค่าใช้จ่ายอื่นๆ จากยอดเบิก ──
+    // ── 5. Build all entries + batch insert ──
+    var _autoEntries = [];
+    if (commonTotal > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: 'ค่าส่วนกลาง', amount: commonTotal, recorded_at: ts });
+    if (electricDiff > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: 'ส่วนต่างค่าไฟ', amount: electricDiff, recorded_at: ts });
+    if (lostHouseAmt > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt, recorded_at: ts });
+    if (lostFlatAmt > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt, recorded_at: ts });
+    if (_vacantMinTotal > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าไฟขั้นต่ำบ้านว่าง (' + _vacantCount + ' หลัง \u00d7 ' + _minChargeVal + ' บ.)', amount: _vacantMinTotal, recorded_at: ts });
+    if (withdrawGarbage > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าขยะ', amount: withdrawGarbage, recorded_at: ts });
     for (var wi = 0; wi < withdrawAdditionalItems.length; wi++) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: withdrawAdditionalItems[wi].name,
-            amount: withdrawAdditionalItems[wi].amount,
-            recorded_at: ts
-        });
+        _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: withdrawAdditionalItems[wi].name, amount: withdrawAdditionalItems[wi].amount, recorded_at: ts });
     }
-    // ── 8. Insert ค่าดำเนินการ (ปัดเศษ + ค่าเดินทาง) ──
     var ocRounding = parseFloat(withdrawOperatingCosts.roundingFee) || 0;
     var ocTravelWithdraw = parseFloat(withdrawOperatingCosts.travelWithdraw) || 0;
     var ocTravelElectric = parseFloat(withdrawOperatingCosts.travelElectric) || 0;
     var ocTravelGarbage = parseFloat(withdrawOperatingCosts.travelGarbage) || 0;
-    if (ocRounding > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่าดำเนินการ (ปัดเศษ)', amount: ocRounding,
-            recorded_at: ts
-        });
-    }
-    if (ocTravelWithdraw > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่าเดินทางถอนเงิน', amount: ocTravelWithdraw,
-            recorded_at: ts
-        });
-    }
-    if (ocTravelElectric > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่าเดินทางชำระค่าไฟ', amount: ocTravelElectric,
-            recorded_at: ts
-        });
-    }
-    if (ocTravelGarbage > 0) {
-        await sbPost('accounting_entries', {
-            period: period, year: pYear, month: pMonth,
-            type: 'expense', category: 'auto',
-            description: 'ค่าเดินทางชำระค่าขยะ', amount: ocTravelGarbage,
-            recorded_at: ts
-        });
-    }
+    if (ocRounding > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าดำเนินการ (ปัดเศษ)', amount: ocRounding, recorded_at: ts });
+    if (ocTravelWithdraw > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าเดินทางถอนเงิน', amount: ocTravelWithdraw, recorded_at: ts });
+    if (ocTravelElectric > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าเดินทางชำระค่าไฟ', amount: ocTravelElectric, recorded_at: ts });
+    if (ocTravelGarbage > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าเดินทางชำระค่าขยะ', amount: ocTravelGarbage, recorded_at: ts });
+    if (_autoEntries.length > 0) await sbPost('accounting_entries', _autoEntries);
 }
 
 /* ══════════════════════════════════════════
