@@ -851,8 +851,6 @@
                     const tr = document.createElement('tr');
                     tr.className = 'income-row';
                     const hasImage = item.image ? `<span class="img-badge" onclick="viewImage('income', ${index})">📷 ดูรูป</span>` : `<button class="img-btn no-print" onclick="attachImage('income', ${index})">📷 เพิ่ม</button>`;
-                    const isCommonFeeAuto = item.auto && (item.description||'').indexOf('ค่าส่วนกลาง') >= 0;
-                    const editCfBtn = isCommonFeeAuto ? `<button class="action-btn edit no-print" onclick="editCommonFeeOverride(${item.amount})" title="แก้ไขค่าส่วนกลาง" style="background:var(--warning,#f59e0b);color:#fff;">✏️</button>` : '';
                     tr.innerHTML = `
                         <td>${rowNum++}</td>
                         <td>${formatDate(item.date)}</td>
@@ -862,7 +860,7 @@
                         <td>${hasImage}</td>
                         <td>${String(item.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '-'}</td>
                         <td class="no-print">
-                            ${editCfBtn}<button class="action-btn delete" onclick="deleteIncome(${index})" title="ลบ">🗑️</button>
+                            <button class="action-btn delete" onclick="deleteIncome(${index})" title="ลบ">🗑️</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -995,29 +993,6 @@
             }
         }
 
-        async function editCommonFeeOverride(currentAmount) {
-            const period = periodSelect.value;
-            if (!period) return;
-            const input = prompt(`แก้ไขค่าส่วนกลาง (${period})\nยอดปัจจุบัน: ${currentAmount} บาท\nกรอกยอดที่ถูกต้อง (หรือเว้นว่างเพื่อยกเลิก override):`, currentAmount);
-            if (input === null) return;
-            const trimmed = input.trim();
-            const amount = trimmed === '' ? null : parseFloat(trimmed);
-            if (trimmed !== '' && (isNaN(amount) || amount < 0)) {
-                ppkAlert('จำนวนเงินไม่ถูกต้อง');
-                return;
-            }
-            try {
-                const res = await callBackend('saveAccountingCfOverride', { period, amount: trimmed === '' ? null : amount });
-                if (res && res.success) {
-                    await loadMonthData();
-                } else {
-                    ppkAlert('บันทึกไม่สำเร็จ: ' + (res && res.message || 'unknown'));
-                }
-            } catch(e) {
-                ppkAlert('เกิดข้อผิดพลาด: ' + e.message);
-            }
-        }
-        
         async function deleteExpense(index) {
             if (await ppkConfirm('ต้องการลบรายการนี้?')) {
                 expenseItems.splice(index, 1);

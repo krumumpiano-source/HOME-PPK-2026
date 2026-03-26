@@ -1086,21 +1086,6 @@ async function _routeAction(action, data) {
             }
             return { success: true };
         }
-        /* ── saveAccountingCfOverride — บันทึก/ลบ override ค่าส่วนกลางเฉพาะเดือน ─── */
-        case 'saveAccountingCfOverride': {
-            var _cfoPeriod = data.period || '';
-            if (!_cfoPeriod) return { success: false, message: 'missing period' };
-            var _cfoKey = 'accounting_cf_override_' + _cfoPeriod;
-            if (data.amount === null || data.amount === undefined || data.amount === '') {
-                // ลบ override (กลับไปใช้การคำนวณปกติ)
-                await sbDelete('settings', { key: 'eq.' + _cfoKey }).catch(function() {});
-            } else {
-                var _cfoAmt = parseFloat(data.amount);
-                if (isNaN(_cfoAmt) || _cfoAmt < 0) return { success: false, message: 'invalid amount' };
-                await sbUpsert('settings', { key: _cfoKey, value: String(_cfoAmt) }, 'key');
-            }
-            return { success: true };
-        }
         case 'getAnnouncements': {
             var rows = await sbGet('announcements', { is_active: 'eq.true', order: 'created_at.desc', limit: '20' });
             return { success: true, data: rows };
@@ -2399,17 +2384,17 @@ async function _routeAction(action, data) {
         }
         case 'calculateAutoEntries': {
             var period = data.period || '';
-            // ดึงค่าส่วนกลางจาก notifications + ตรวจ override เฉพาะเดือน
-            var [notifRes, cfOverrideRows] = await Promise.all([
-                sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; }),
-                sbGet('settings', { key: 'eq.accounting_cf_override_' + period }).catch(function() { return []; })
+            // ดึงค่าส่วนกลางจาก notifications + ตรวจ exemptions เพื่อกรองบ้านที่ยกเว้น
+            var [notifRes, _caeExemptRows] = await Promise.all([
+                sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number' }).catch(function() { return []; }),
+                sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; })
             ]);
-            var commonTotal;
-            if (cfOverrideRows && cfOverrideRows[0] && cfOverrideRows[0].value !== null && cfOverrideRows[0].value !== '') {
-                commonTotal = parseFloat(cfOverrideRows[0].value) || 0;
-            } else {
-                commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-            }
+            var _caeExemptSet = {};
+            (_caeExemptRows || []).forEach(function(ex) { if (ex.house_number) _caeExemptSet[ex.house_number] = true; });
+            var commonTotal = (notifRes || []).reduce(function(s, r) {
+                if (_caeExemptSet[r.house_number]) return s;
+                return s + (parseFloat(r.common_fee) || 0);
+            }, 0);
             // ดึง pea_total + lost_house + lost_flat จาก settings และคำนวณส่วนต่างจาก electric_bills จริง
             var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
             try {
@@ -3414,31 +3399,28 @@ async function _autoSyncAccounting(period) {
 
     // ── 1. ดึงค่าส่วนกลาง + ค่าไฟ + หมายเลขบ้าน จาก notifications (ใช้ค่าที่บันทึกไว้เฉพาะเดือน)
     var notifRes, _exemptRows, _mcRows, lostRows, wdRows;
-    // ── Parallel fetch: notifications, exemptions, min_charge, electric_lost, monthly_withdraw, cf_override ──
+    // ── Parallel fetch: notifications, exemptions, min_charge, electric_lost, monthly_withdraw ──
     var _fetchResults = await Promise.all([
         sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number,electric_amount,garbage_fee' }).catch(function() { return []; }),
         sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; }),
         sbGet('settings', { key: 'eq.electric_min_charge' }).catch(function() { return []; }),
         sbGet('settings', { key: 'eq.electric_lost_' + period }).catch(function() { return []; }),
-        sbGet('settings', { key: 'eq.monthly_withdraw_' + period }).catch(function() { return []; }),
-        sbGet('settings', { key: 'eq.accounting_cf_override_' + period }).catch(function() { return []; })
+        sbGet('settings', { key: 'eq.monthly_withdraw_' + period }).catch(function() { return []; })
     ]);
     notifRes = _fetchResults[0] || [];
     _exemptRows = _fetchResults[1] || [];
     _mcRows = _fetchResults[2] || [];
     lostRows = _fetchResults[3] || [];
     wdRows = _fetchResults[4] || [];
-    var _cfOverrideRows = _fetchResults[5] || [];
 
-    // ใช้ override ถ้ากำหนดไว้ (แก้ไขค่าส่วนกลางเฉพาะเดือน)
-    var commonTotal;
-    if (_cfOverrideRows && _cfOverrideRows[0] && _cfOverrideRows[0].value !== null && _cfOverrideRows[0].value !== '') {
-        commonTotal = parseFloat(_cfOverrideRows[0].value) || 0;
-    } else {
-        commonTotal = (notifRes).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-    }
+    // build exemptSet ก่อนเสมอ เพื่อกรองออกจาก SUM ค่าส่วนกลาง
     var _exemptSet = {};
     (_exemptRows).forEach(function(ex) { if (ex.house_number) _exemptSet[ex.house_number] = true; });
+    // SUM เฉพาะบ้านที่ไม่ถูกยกเว้น (กรอง exempt ออก ป้องกัน data เก่าที่บันทึกก่อนมีระบบ exempt)
+    var commonTotal = (notifRes).reduce(function(s, r) {
+        if (_exemptSet[r.house_number]) return s;
+        return s + (parseFloat(r.common_fee) || 0);
+    }, 0);
     var _minChargeVal = (_mcRows && _mcRows[0] && _mcRows[0].value) ? parseFloat(_mcRows[0].value) || 9 : 9;
     // คำนวณค่าไฟขั้นต่ำบ้านว่าง
     var _vacantCount = 0, _vacantMinTotal = 0;
