@@ -2366,7 +2366,7 @@ async function _routeAction(action, data) {
                 carryForward2 = totalPrevInc2 - totalPrevExp2;
             } catch(e) { carryForward2 = 0; }
             // sort auto expense items ตามลำดับที่กำหนด
-            var _expSortOrder = { 'ค่า Lost ไฟฟ้า (บ้านพัก)': 1, 'ค่า Lost ไฟฟ้า (แฟลต)': 2, 'ค่าขยะ': 3 };
+            var _expSortOrder = { 'ส่วนต่างค่าไฟ (ติดลบ)': 1, 'ค่า Lost ไฟฟ้า (บ้านพัก)': 2, 'ค่า Lost ไฟฟ้า (แฟลต)': 3, 'ค่าขยะ': 4 };
             var _expMapped = (expRows || []).map(mapRow2);
             _expMapped.sort(function(a, b) {
                 var sa = a.source === 'auto' ? (_expSortOrder[a.name] || (a.name.indexOf('ค่าไฟขั้นต่ำ') >= 0 ? 4 : a.name.indexOf('ค่าดำเนิน') >= 0 ? 5 : a.name.indexOf('ค่าเดินทาง') >= 0 ? 6 : 4.5)) : 100;
@@ -2448,6 +2448,7 @@ async function _routeAction(action, data) {
             var expenseItems = [];
             if (commonTotal > 0)    incomeItems.push({ name: 'ค่าส่วนกลาง', amount: commonTotal });
             if (electricDiff > 0) incomeItems.push({ name: 'ส่วนต่างค่าไฟ', amount: electricDiff });
+            if (electricDiff < 0) expenseItems.push({ name: 'ส่วนต่างค่าไฟ (ติดลบ)', amount: Math.abs(electricDiff) });
             if (lostHouseAmt > 0)  expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt });
             if (lostFlatAmt > 0)   expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt });
             if (withdrawGarbage > 0) expenseItems.push({ name: 'ค่าขยะ', amount: withdrawGarbage });
@@ -3485,6 +3486,7 @@ async function _autoSyncAccounting(period) {
     var _autoEntries = [];
     if (commonTotal > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: 'ค่าส่วนกลาง', amount: commonTotal, recorded_at: ts });
     if (electricDiff > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: 'ส่วนต่างค่าไฟ', amount: electricDiff, recorded_at: ts });
+    if (electricDiff < 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ส่วนต่างค่าไฟ (ติดลบ)', amount: Math.abs(electricDiff), recorded_at: ts });
     if (lostHouseAmt > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt, recorded_at: ts });
     if (lostFlatAmt > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt, recorded_at: ts });
     if (_vacantMinTotal > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าไฟขั้นต่ำบ้านว่าง (' + _vacantCount + ' หลัง \u00d7 ' + _minChargeVal + ' บ.)', amount: _vacantMinTotal, recorded_at: ts });
