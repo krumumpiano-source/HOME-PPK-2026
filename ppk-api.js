@@ -3205,11 +3205,15 @@ async function _routeAction(action, data) {
                 sbGet('slip_submissions', { house_number: 'eq.' + ahfhHouse, order: 'submitted_at.desc', limit: '200' }).catch(function() { return []; }),
                 sbGet('outstanding',      { house_number: 'eq.' + ahfhHouse, order: 'period.desc', limit: '100' }).catch(function() { return []; }),
                 sbGet('settings',         {}).catch(function() { return []; }),
-                sbGet('exemptions',       { house_number: 'eq.' + ahfhHouse }).catch(function() { return []; })
+                sbGet('exemptions',       { house_number: 'eq.' + ahfhHouse }).catch(function() { return []; }),
+                sbGet('notifications',    { house_number: 'eq.' + ahfhHouse, select: 'period,due_date', order: 'period.desc', limit: '100' }).catch(function() { return []; })
             ]);
             var ahfhW = ahfhParallel[0] || [], ahfhE = ahfhParallel[1] || [];
             var ahfhSlips = ahfhParallel[2] || [], ahfhOut = ahfhParallel[3] || [];
             var ahfhSetts = ahfhParallel[4] || [], ahfhExempt = ahfhParallel[5] || [];
+            /* Build notifications due_date map: period → due_date */
+            var ahfhNotifMap = {};
+            (ahfhParallel[6] || []).forEach(function(n) { if (n.period && n.due_date && !ahfhNotifMap[n.period]) ahfhNotifMap[n.period] = n.due_date; });
             var ahfhSettMap = {};
             ahfhSetts.forEach(function(s) { ahfhSettMap[s.key] = s.value; });
             var ahfhIsFlat = ahfhHouse.startsWith('แฟลต');
@@ -3246,7 +3250,7 @@ async function _routeAction(action, data) {
                     common_fee:         cf,
                     garbage_fee:        gf,
                     outstanding_status: oRow ? (oRow.status || null) : null,
-                    due_date:           oRow ? (oRow.due_date || null) : null,
+                    due_date:           (oRow && oRow.due_date) ? oRow.due_date : (ahfhNotifMap[period] || null),
                     slip_status:        slipStatus,
                     review_note:        slipReviewNote,
                     submitted_at:       latestSlip ? latestSlip.submitted_at : null,
