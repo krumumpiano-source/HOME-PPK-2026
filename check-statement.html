@@ -427,12 +427,20 @@
             var accExpense = sysAccounting ? (sysAccounting.expenseItems||[]).reduce(function(s,i) { return s + (parseFloat(i.amount)||0); }, 0) : 0;
             var accCarryOver = accCarryForward + accIncome - accExpense;
 
-            // ── Notifications ──
-            var notifTotalAll = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.total_amount)||0); }, 0);
-            var notifCommonTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.common_fee)||0); }, 0);
-            var notifWaterTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.water_amount)||0); }, 0);
-            var notifElectricTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.electric_amount)||0); }, 0);
-            var notifGarbageTotal = sysNotifications.reduce(function(s,n) { return s + (parseFloat(n.garbage_fee)||0); }, 0);
+            // ── Notifications (หักบ้านยกเว้นค่าส่วนกลาง) ──
+            var _exRows = [];
+            try { var _exR = await callBackend('getExemptions', {}); if (_exR && _exR.success) _exRows = _exR.data || []; } catch(e) {}
+            var _exSet = {};
+            (_exRows || []).forEach(function(ex) { if (ex.house_number) _exSet[ex.house_number] = true; });
+            var notifTotalAll = 0, notifCommonTotal = 0, notifWaterTotal = 0, notifElectricTotal = 0, notifGarbageTotal = 0;
+            sysNotifications.forEach(function(n) {
+                var cf = _exSet[n.house_number] ? 0 : (parseFloat(n.common_fee) || 0);
+                notifCommonTotal += cf;
+                notifWaterTotal += parseFloat(n.water_amount) || 0;
+                notifElectricTotal += parseFloat(n.electric_amount) || 0;
+                notifGarbageTotal += parseFloat(n.garbage_fee) || 0;
+                notifTotalAll += cf + (parseFloat(n.water_amount) || 0) + (parseFloat(n.electric_amount) || 0) + (parseFloat(n.garbage_fee) || 0);
+            });
 
             // ── สถานะ ──
             var hasNoSystemData = !sysWithdraw && !sysElectric && sysNotifications.length === 0;
