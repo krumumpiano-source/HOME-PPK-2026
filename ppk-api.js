@@ -3250,7 +3250,8 @@ async function _routeAction(action, data) {
                     slip_status:        slipStatus,
                     review_note:        slipReviewNote,
                     submitted_at:       latestSlip ? latestSlip.submitted_at : null,
-                    slip_url:           latestSlip ? (latestSlip.slip_url || null) : null
+                    slip_url:           latestSlip ? (latestSlip.slip_url || null) : null,
+                    slip_amount:        latestSlip ? (parseFloat(latestSlip.amount) || 0) : 0
                 };
             });
             ahfhRecords.sort(function(a, b) { return b.period.localeCompare(a.period); });
