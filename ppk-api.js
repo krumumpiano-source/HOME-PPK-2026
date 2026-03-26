@@ -3330,9 +3330,28 @@ async function _autoSyncAccounting(period) {
     // รายรับ: ค่าส่วนกลาง + ส่วนต่างค่าไฟปัดเศษ
     // รายจ่าย: Lost ไฟฟ้า (บ้านพัก + แฟลต) + ค่าขยะ
 
-    // ── 1. ดึงค่าส่วนกลางจาก notifications
-    var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
+    // ── 1. ดึงค่าส่วนกลาง + ค่าไฟ + หมายเลขบ้าน จาก notifications
+    var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee,house_number,electric_amount' }).catch(function() { return []; });
     var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
+    // ── 1.1 ดึงบ้านที่ยกเว้นค่าส่วนกลาง + ค่าไฟขั้นต่ำ จาก settings
+    var _exemptRows = await sbGet('exemptions', { type: 'eq.common_fee', select: 'house_number' }).catch(function() { return []; });
+    var _exemptSet = {};
+    (_exemptRows || []).forEach(function(ex) { if (ex.house_number) _exemptSet[ex.house_number] = true; });
+    var _minChargeVal = 9;
+    try {
+        var _mcRows = await sbGet('settings', { key: 'eq.electric_min_charge' });
+        if (_mcRows && _mcRows[0] && _mcRows[0].value) _minChargeVal = parseFloat(_mcRows[0].value) || 9;
+    } catch(e) {}
+    // คำนวณค่าไฟขั้นต่ำบ้านว่าง: ยกเว้นค่าส่วนกลาง + ค่าไฟ = ค่าขั้นต่ำ
+    var _vacantCount = 0, _vacantMinTotal = 0;
+    (notifRes || []).forEach(function(n) {
+        var hn = n.house_number || '';
+        var elAmt = parseFloat(n.electric_amount) || 0;
+        if (_exemptSet[hn] && elAmt > 0 && Math.abs(elAmt - _minChargeVal) < 0.01) {
+            _vacantCount++;
+            _vacantMinTotal += elAmt;
+        }
+    });
     // ── 2. ดึง electric_diff + lost จาก settings
     var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
     try {
@@ -3401,6 +3420,16 @@ async function _autoSyncAccounting(period) {
             period: period, year: pYear, month: pMonth,
             type: 'expense', category: 'auto',
             description: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt,
+            recorded_at: ts
+        });
+    }
+    // ── 6.1 ค่าไฟขั้นต่ำบ้านว่าง (ยกเว้นค่าส่วนกลาง + ค่าไฟ = ค่าขั้นต่ำ) ──
+    if (_vacantMinTotal > 0) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: 'ค่าไฟขั้นต่ำบ้านว่าง (' + _vacantCount + ' หลัง \u00d7 ' + _minChargeVal + ' บ.)',
+            amount: _vacantMinTotal,
             recorded_at: ts
         });
     }
