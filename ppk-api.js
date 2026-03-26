@@ -2372,13 +2372,13 @@ async function _routeAction(action, data) {
             // ดึงค่าส่วนกลางจาก notifications (ยอดที่แจ้งไปจริง รวมการยกเว้น + admin override)
             var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
             var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-            // ดึง electric_diff + lost_house + lost_flat จาก settings
+            // ดึง electric_diff + rounding_surplus + lost_house + lost_flat จาก settings
             var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
             try {
                 var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
                 if (lostRows && lostRows[0]) {
                     var ld = JSON.parse(lostRows[0].value);
-                    electricDiff = parseFloat(ld.electric_diff) || 0;
+                    electricDiff = (parseFloat(ld.electric_diff) || 0) + (parseFloat(ld.rounding_surplus) || 0);
                     lostHouseAmt = parseFloat(ld.lost_house) || 0;
                     lostFlatAmt = parseFloat(ld.lost_flat) || 0;
                 }
@@ -3378,13 +3378,13 @@ async function _autoSyncAccounting(period) {
             _vacantMinTotal += elAmt;
         }
     });
-    // ── 2. ดึง electric_diff + lost จาก settings
+    // ── 2. ดึง electric_diff + rounding_surplus + lost จาก settings
     var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
     try {
         var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
         if (lostRows && lostRows[0]) {
             var ld = JSON.parse(lostRows[0].value);
-            electricDiff = parseFloat(ld.electric_diff) || 0;
+            electricDiff = (parseFloat(ld.electric_diff) || 0) + (parseFloat(ld.rounding_surplus) || 0);
             lostHouseAmt = parseFloat(ld.lost_house) || 0;
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
         }
