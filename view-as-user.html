@@ -294,7 +294,7 @@
 <script src="supabase/config.js?v=20260319A"></script>
 <script src="supabase/supabase.min.js?v=20260319A"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
-<script src="ppk-api.js?v=20260327A"></script>
+<script src="ppk-api.js?v=20260327B"></script>
 <script src="ppk-app.js?v=20260323E"></script>
 <script src="ppk-utils.js?v=20260323E"></script>
 <script src="ppk-nav.js?v=20260326A"></script>
@@ -446,7 +446,17 @@ async function loadAndRenderFullHistory() {
     var yrSet = {};
     _histAllRecords.forEach(function(rec) { var y = rec.period ? rec.period.split('-')[0] : ''; if (y) yrSet[y] = 1; });
     var years = Object.keys(yrSet).sort(function(a, b) { return parseInt(b) - parseInt(a); });
-    var curYear = years.length ? years[0] : String(new Date().getFullYear() + 543);
+    /* Default to most recent year that has non-zero data */
+    var curYear = '';
+    for (var i = 0; i < years.length; i++) {
+        var hy = years[i];
+        var hasData = _histAllRecords.some(function(rec) {
+            return rec.period && rec.period.startsWith(hy) && (parseFloat(rec.amount) || 0) > 0;
+        });
+        if (hasData) { curYear = hy; break; }
+    }
+    /* fallback: most recent year or show all */
+    if (!curYear) curYear = years.length ? years[0] : '';
     /* Build HTML skeleton */
     panel.innerHTML = _hBuildSkeleton(years, curYear);
     /* Render */
@@ -454,7 +464,8 @@ async function loadAndRenderFullHistory() {
 }
 
 function _hBuildSkeleton(years, curYear) {
-    var yrOpts = years.map(function(y) { return '<option value="'+y+'"'+(y===curYear?' selected':'')+'>'+y+'</option>'; }).join('');
+    var yrOpts = '<option value=""'+(curYear===''?' selected':'')+'>' + '\u0e17\u0e38\u0e01\u0e1b\u0e35</option>'
+        + years.map(function(y) { return '<option value="'+y+'"'+(y===curYear?' selected':'')+'>'+y+'</option>'; }).join('');
     return '<div class="h-filter-bar"><label>\ud83d\udcc5 \u0e1b\u0e35:</label>'
         + '<select id="hYearSel" onchange="filterHistoryYear()">' + yrOpts + '</select></div>'
         /* stat cards */
@@ -522,7 +533,7 @@ function _hUpdateStats(billData, slipData, yr) {
     billData.forEach(function(r) { w += r.water; e += r.electric; c += r.common; t += r.total; });
     var fmt = function(v) { return v > 0 ? v.toLocaleString('th-TH') + ' \u0e1a.' : '-'; };
     var lbl = document.getElementById('hStatLbl');
-    if (lbl) lbl.textContent = '\u0e22\u0e2d\u0e14\u0e41\u0e08\u0e49\u0e0a\u0e33\u0e23\u0e30\u0e23\u0e27\u0e21 (\u0e1b\u0e35 ' + yr + ')';
+    if (lbl) lbl.textContent = '\u0e22\u0e2d\u0e14\u0e41\u0e08\u0e49\u0e0a\u0e33\u0e23\u0e30\u0e23\u0e27\u0e21' + (yr ? ' (\u0e1b\u0e35 ' + yr + ')' : ' (\u0e17\u0e38\u0e01\u0e1b\u0e35)');
     var el = function(id) { return document.getElementById(id); };
     if (el('hStatTotal'))  el('hStatTotal').textContent  = fmt(t);
     if (el('hStatWater'))  el('hStatWater').textContent  = fmt(w);
@@ -579,6 +590,8 @@ function _hRenderCharts(data, yr) {
     if (_hChartBar)      { _hChartBar.destroy();      _hChartBar      = null; }
     if (_hChartDoughnut) { _hChartDoughnut.destroy(); _hChartDoughnut = null; }
     if (_hChartLine)     { _hChartLine.destroy();     _hChartLine     = null; }
+    /* Guard: Chart.js not loaded */
+    if (typeof Chart === 'undefined') { console.warn('Chart.js not loaded'); return; }
     var byM = {};
     for (var i = 1; i <= 12; i++) byM[String(i).padStart(2,'0')] = {w:0,e:0,c:0,t:0};
     var useMulti = false, multiKeys = [], multiByKey = {};
