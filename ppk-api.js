@@ -2380,13 +2380,22 @@ async function _routeAction(action, data) {
                     lostFlatAmt = parseFloat(ld.lost_flat) || 0;
                 }
             } catch(e) {}
-            // ดึงค่าขยะจาก monthly_withdraw
+            // ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ จาก monthly_withdraw
             var withdrawGarbage = 0;
+            var withdrawAdditionalItems = [];
             try {
                 var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
                 if (wdRows && wdRows[0]) {
                     var wd = JSON.parse(wdRows[0].value);
                     withdrawGarbage = parseFloat(wd.garbageFee) || 0;
+                    if (wd.additionalItems && wd.additionalItems.length) {
+                        for (var ai = 0; ai < wd.additionalItems.length; ai++) {
+                            var itm = wd.additionalItems[ai];
+                            if (itm.name && parseFloat(itm.amount) > 0) {
+                                withdrawAdditionalItems.push({ name: itm.name, amount: parseFloat(itm.amount) });
+                            }
+                        }
+                    }
                 }
             } catch(e) {}
             var incomeItems = [];
@@ -2396,6 +2405,9 @@ async function _routeAction(action, data) {
             if (lostHouseAmt > 0)  expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (บ้านพัก)', amount: lostHouseAmt });
             if (lostFlatAmt > 0)   expenseItems.push({ name: 'ค่า Lost ไฟฟ้า (แฟลต)', amount: lostFlatAmt });
             if (withdrawGarbage > 0) expenseItems.push({ name: 'ค่าขยะ', amount: withdrawGarbage });
+            for (var wi = 0; wi < withdrawAdditionalItems.length; wi++) {
+                expenseItems.push({ name: withdrawAdditionalItems[wi].name, amount: withdrawAdditionalItems[wi].amount });
+            }
             return { success: true, incomeItems: incomeItems, expenseItems: expenseItems };
         }
         case 'saveAccounting': {
@@ -3318,13 +3330,22 @@ async function _autoSyncAccounting(period) {
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
         }
     } catch(e) {}
-    // ── 3. ดึงค่าขยะจาก monthly_withdraw
+    // ── 3. ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ จาก monthly_withdraw
     var withdrawGarbage = 0;
+    var withdrawAdditionalItems = [];
     try {
         var wdRows = await sbGet('settings', { key: 'eq.monthly_withdraw_' + period });
         if (wdRows && wdRows[0] && wdRows[0].value) {
             var wd = JSON.parse(wdRows[0].value);
             withdrawGarbage = parseFloat(wd.garbageFee) || 0;
+            if (wd.additionalItems && wd.additionalItems.length) {
+                for (var ai = 0; ai < wd.additionalItems.length; ai++) {
+                    var itm = wd.additionalItems[ai];
+                    if (itm.name && parseFloat(itm.amount) > 0) {
+                        withdrawAdditionalItems.push({ name: itm.name, amount: parseFloat(itm.amount) });
+                    }
+                }
+            }
         }
     } catch(e) {}
     // ── 4. ลบเฉพาะรายการ auto ของ period นี้
@@ -3372,6 +3393,16 @@ async function _autoSyncAccounting(period) {
             period: period, year: pYear, month: pMonth,
             type: 'expense', category: 'auto',
             description: 'ค่าขยะ', amount: withdrawGarbage,
+            recorded_at: ts
+        });
+    }
+    // ── 7. Insert ค่าใช้จ่ายอื่นๆ จากยอดเบิก ──
+    for (var wi = 0; wi < withdrawAdditionalItems.length; wi++) {
+        await sbPost('accounting_entries', {
+            period: period, year: pYear, month: pMonth,
+            type: 'expense', category: 'auto',
+            description: withdrawAdditionalItems[wi].name,
+            amount: withdrawAdditionalItems[wi].amount,
             recorded_at: ts
         });
     }

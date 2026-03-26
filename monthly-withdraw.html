@@ -301,7 +301,7 @@
         @page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }
         @media print {
             body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 16pt; line-height: 1.15; }
-            .sidebar, .back-btn, .btn, .add-item-btn, .additional-item button, .no-print {
+            .sidebar, .back-btn, .btn, .add-item-btn, .additional-item button, .no-print, .no-print-cell {
                 display: none !important;
             }
             .dashboard-container {
@@ -582,26 +582,32 @@
             tbody.innerHTML = '';
             
             additionalItems.forEach((item, index) => {
-                // ส่วน input
-                const div = document.createElement('div');
-                div.className = 'additional-item';
-                div.innerHTML = `
-                    <input type="text" placeholder="ชื่อรายการ" value="${item.name}" 
-                           onchange="updateAdditionalItem(${index}, 'name', this.value)">
-                    <input type="number" placeholder="จำนวนเงิน" value="${item.amount}" min="0"
-                           onchange="updateAdditionalItem(${index}, 'amount', this.value)">
-                    <button onclick="removeAdditionalItem(${index})" title="ลบรายการ">×</button>
-                `;
-                container.appendChild(div);
+                const isComplete = item.name && item.amount > 0;
                 
-                // ส่วนตาราง
-                if (item.name && item.amount > 0) {
+                if (isComplete) {
+                    // แสดงเฉพาะในตาราง — ไม่แสดง input
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
+                        <td class="no-print-cell" style="width:30px;text-align:center;">
+                            <button onclick="removeAdditionalItem(${index})" title="ลบรายการ"
+                                    style="background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.8rem;">×</button>
+                        </td>
                         <td>📦 ${item.name}</td>
                         <td class="amount">${formatMoney(parseFloat(item.amount) || 0)}</td>
                     `;
                     tbody.appendChild(tr);
+                } else {
+                    // ยังกรอกไม่ครบ — แสดง input row
+                    const div = document.createElement('div');
+                    div.className = 'additional-item';
+                    div.innerHTML = `
+                        <input type="text" placeholder="ชื่อรายการ" value="${item.name}" 
+                               onchange="updateAdditionalItem(${index}, 'name', this.value)">
+                        <input type="number" placeholder="จำนวนเงิน" value="${item.amount || ''}" min="0"
+                               onchange="updateAdditionalItem(${index}, 'amount', this.value)">
+                        <button onclick="removeAdditionalItem(${index})" title="ลบรายการ">×</button>
+                    `;
+                    container.appendChild(div);
                 }
             });
         }
