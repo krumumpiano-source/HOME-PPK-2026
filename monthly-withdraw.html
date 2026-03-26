@@ -585,14 +585,14 @@
                 const isComplete = item.name && item.amount > 0;
                 
                 if (isComplete) {
-                    // แสดงเฉพาะในตาราง — ไม่แสดง input
+                    // แสดงเฉพาะในตาราง — ไม่แสดง input (2 คอลัมน์เท่าเดิม)
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="no-print-cell" style="width:30px;text-align:center;">
-                            <button onclick="removeAdditionalItem(${index})" title="ลบรายการ"
-                                    style="background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.8rem;">×</button>
+                        <td>
+                            <button class="no-print-cell" onclick="removeAdditionalItem(${index})" title="ลบรายการ"
+                                    style="background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.8rem;margin-right:0.4rem;vertical-align:middle;">×</button>
+                            📦 ${item.name}
                         </td>
-                        <td>📦 ${item.name}</td>
                         <td class="amount">${formatMoney(parseFloat(item.amount) || 0)}</td>
                     `;
                     tbody.appendChild(tr);
@@ -651,10 +651,13 @@
                 let additionalTotal = 0;
                 additionalItems.forEach(item => { additionalTotal += parseFloat(item.amount) || 0; });
 
+                // กรองเฉพาะ item ที่กรอกครบแล้ว (ตัดตัวว่างออก)
+                const validItems = additionalItems.filter(item => item.name && item.amount > 0);
+
                 const result = await callBackend('saveWithdraw', {
                     period: period,
                     garbageFee: garbageFee,
-                    additionalItems: additionalItems,
+                    additionalItems: validItems,
                     totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
                 });
                 if (result && result.success) {
