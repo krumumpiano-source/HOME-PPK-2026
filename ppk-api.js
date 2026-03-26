@@ -2372,15 +2372,21 @@ async function _routeAction(action, data) {
             // ดึงค่าส่วนกลางจาก notifications (ยอดที่แจ้งไปจริง รวมการยกเว้น + admin override)
             var notifRes = await sbGet('notifications', { period: 'eq.' + period, select: 'common_fee' }).catch(function() { return []; });
             var commonTotal = (notifRes || []).reduce(function(s, r) { return s + (parseFloat(r.common_fee) || 0); }, 0);
-            // ดึง electric_diff + rounding_surplus + lost_house + lost_flat จาก settings
+            // ดึง pea_total + lost_house + lost_flat จาก settings และคำนวณส่วนต่างจาก electric_bills จริง
             var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
             try {
                 var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
                 if (lostRows && lostRows[0]) {
                     var ld = JSON.parse(lostRows[0].value);
-                    electricDiff = (parseFloat(ld.electric_diff) || 0) + (parseFloat(ld.rounding_surplus) || 0);
                     lostHouseAmt = parseFloat(ld.lost_house) || 0;
                     lostFlatAmt = parseFloat(ld.lost_flat) || 0;
+                    var peaTotal = parseFloat(ld.pea_total) || 0;
+                    // คำนวณส่วนต่างจากยอดเก็บจริง (SUM amount) + lost - PEA
+                    if (peaTotal > 0) {
+                        var eBills = await sbGet('electric_bills', { period: 'eq.' + period, select: 'amount' }).catch(function() { return []; });
+                        var eBillTotal = (eBills || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                        electricDiff = Math.round((eBillTotal + lostHouseAmt + lostFlatAmt - peaTotal) * 100) / 100;
+                    }
                 }
             } catch(e) {}
             // ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ + ค่าดำเนินการ จาก monthly_withdraw
@@ -3378,15 +3384,21 @@ async function _autoSyncAccounting(period) {
             _vacantMinTotal += elAmt;
         }
     });
-    // ── 2. ดึง electric_diff + rounding_surplus + lost จาก settings
+    // ── 2. ดึง pea_total + lost จาก settings และคำนวณส่วนต่างจาก electric_bills จริง
     var electricDiff = 0, lostHouseAmt = 0, lostFlatAmt = 0;
     try {
         var lostRows = await sbGet('settings', { key: 'eq.electric_lost_' + period });
         if (lostRows && lostRows[0]) {
             var ld = JSON.parse(lostRows[0].value);
-            electricDiff = (parseFloat(ld.electric_diff) || 0) + (parseFloat(ld.rounding_surplus) || 0);
             lostHouseAmt = parseFloat(ld.lost_house) || 0;
             lostFlatAmt = parseFloat(ld.lost_flat) || 0;
+            var peaTotal = parseFloat(ld.pea_total) || 0;
+            // คำนวณส่วนต่างจากยอดเก็บจริง (SUM amount) + lost - PEA
+            if (peaTotal > 0) {
+                var eBills = await sbGet('electric_bills', { period: 'eq.' + period, select: 'amount' }).catch(function() { return []; });
+                var eBillTotal = (eBills || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                electricDiff = Math.round((eBillTotal + lostHouseAmt + lostFlatAmt - peaTotal) * 100) / 100;
+            }
         }
     } catch(e) {}
     // ── 3. ดึงค่าขยะ + ค่าใช้จ่ายอื่นๆ + ค่าดำเนินการ จาก monthly_withdraw
