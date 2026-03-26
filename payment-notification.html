@@ -543,6 +543,22 @@
                 }
             }
 
+            // ── บันทึกสถานะยกเว้นค่าส่วนกลางลง DB (per-house) ──
+            overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกการยกเว้น...';
+            var exemptOps = [];
+            ['houseTableBody', 'flatTableBody'].forEach(function(tbId) {
+                var rows = document.getElementById(tbId).querySelectorAll('tr[data-index]');
+                for (var ri = 0; ri < rows.length; ri++) {
+                    var cells = rows[ri].querySelectorAll('td');
+                    var hn = (cells[0].textContent || '').trim();
+                    if (!hn) continue;
+                    var btn = rows[ri].querySelector('.exempt-btn');
+                    var isExempt = btn && btn.classList.contains('exempted');
+                    exemptOps.push(callBackend('setHouseExemption', { house_number: hn, exempt: isExempt }));
+                }
+            });
+            try { await Promise.all(exemptOps); } catch(e) { console.warn('save exemptions:', e); }
+
             overlay.classList.remove('show');
             overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกรูปภาพ...';
 

@@ -2728,6 +2728,32 @@ async function _routeAction(action, data) {
             return { success: true, data: exMap };
         }
 
+        /* ── setHouseExemption — ยกเว้น/ยกเลิกยกเว้นค่าส่วนกลาง (per-house, ปลอดภัยไม่ลบบ้านอื่น) ─── */
+        case 'setHouseExemption': {
+            var _shHn = data.house_number || '';
+            var _shExempt = !!data.exempt;
+            if (!_shHn) return { success: false, message: 'missing house_number' };
+            if (_shExempt) {
+                // ตรวจว่ามี exemption อยู่แล้วไหม
+                var _shExisting = await sbGet('exemptions', { house_number: 'eq.' + _shHn, type: 'eq.common_fee' }).catch(function() { return []; });
+                if (_shExisting && _shExisting.length > 0) return { success: true };
+                // ดึง house_id จาก housing table
+                var _shHousing = await sbGet('housing', { house_number: 'eq.' + _shHn, select: 'id', limit: '1' }).catch(function() { return []; });
+                var _shHouseId = (_shHousing && _shHousing[0]) ? _shHousing[0].id : null;
+                await sbPost('exemptions', {
+                    house_id: _shHouseId,
+                    house_number: _shHn,
+                    type: 'common_fee',
+                    reason: data.reason || '',
+                    start_date: new Date().toISOString().split('T')[0]
+                });
+            } else {
+                // ลบ exemption ของบ้านนี้ (ถ้ามี)
+                await sbDelete('exemptions', { house_number: 'eq.' + _shHn, type: 'eq.common_fee' }).catch(function() {});
+            }
+            return { success: true };
+        }
+
         /* ── saveExemptions — บันทึกการยกเว้นค่าส่วนกลางลง DB ─── */
         case 'saveExemptions': {
             var exData = data.exemptions || {};
