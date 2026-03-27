@@ -1211,18 +1211,21 @@
 <p style="color:#64748b;font-size:13px">—<br>${emailSigFinal}</p></div>`;
 
       let emailSent = false;
+      let emailError = '';
 
       if (unit.email) {
         try {
           const er = await callBackend('sendEmail', { to: unit.email, subject, html });
           emailSent = er && er.success;
-        } catch(e) { console.error('sendReceiptEmail error:', e); }
+          if (!emailSent) emailError = (er && er.error) || 'ไม่ทราบสาเหตุ';
+        } catch(e) { console.error('sendReceiptEmail error:', e); emailError = e.message || 'เกิดข้อผิดพลาด'; }
       }
 
       if (emailSent) {
         ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
       } else {
-        ppkAlert(unit.email ? '❌ ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่' : '⚠️ ไม่พบอีเมลของผู้พัก');
+        var errMsg = unit.email ? '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '') : '⚠️ ไม่พบอีเมลของผู้พัก';
+        ppkAlert(errMsg, { type: 'error' });
       }
       return emailSent;
     }
