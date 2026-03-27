@@ -50,6 +50,12 @@ serve(async (req: Request) => {
     let fromEmail    = Deno.env.get('EMAIL_FROM')     || '';
     let fromName     = Deno.env.get('EMAIL_FROM_NAME') || 'บ้านพักครู PPK';
 
+    // Validate fromEmail — ถ้าไม่ใช่ email จริง ให้ใช้ default
+    const fromEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!fromEmail || !fromEmailRegex.test(fromEmail.trim())) {
+      fromEmail = 'onboarding@resend.dev';
+    }
+
     // Fallback: ดึงจาก DB settings (ถ้า secrets ยังไม่ได้ตั้ง)
     if (!resendApiKey) {
       const supabaseUrl  = Deno.env.get('SUPABASE_URL')!;
@@ -62,8 +68,16 @@ serve(async (req: Request) => {
       const settingsMap: Record<string, string> = {};
       (rows || []).forEach((r: any) => { settingsMap[r.key] = r.value; });
       resendApiKey = settingsMap['resend_api_key'] || '';
-      fromEmail    = settingsMap['email_from']     || '';
+      const dbFrom = settingsMap['email_from'] || '';
+      if (dbFrom && fromEmailRegex.test(dbFrom.trim())) {
+        fromEmail = dbFrom.trim();
+      }
       fromName     = settingsMap['email_from_name'] || fromName;
+    }
+
+    // จำกัดความยาว fromName เพื่อป้องกัน > 320 chars
+    if (fromName.length > 78) {
+      fromName = fromName.substring(0, 78);
     }
 
     if (!resendApiKey) {
@@ -75,6 +89,12 @@ serve(async (req: Request) => {
 
     const from = fromEmail ? `${fromName} <${fromEmail}>` : `${fromName} <onboarding@resend.dev>`;
 
+    // Resend free tier (onboarding@resend.dev) — ใช้ format ปลอดภัย
+    // ถ้า fromEmail เป็น onboarding@resend.dev ให้ส่งแค่ email ตรงๆ (ไม่มี display name ภาษาไทย)
+    const safeFrom = fromEmail === 'onboarding@resend.dev'
+      ? 'onboarding@resend.dev'
+      : `${fromName} <${fromEmail}>`;
+
     // Validate from address
     const fromAddrMatch = from.match(/<([^>]+)>/);
     const fromAddr = fromAddrMatch ? fromAddrMatch[1] : fromEmail;
@@ -85,10 +105,10 @@ serve(async (req: Request) => {
       });
     }
 
-    console.log('send-email payload:', JSON.stringify({ from, to: toList, subject: subject?.substring(0, 50) }));
+    console.log('send-email payload:', JSON.stringify({ from: safeFrom, to: toList, subject: subject?.substring(0, 50) }));
 
     const body: any = {
-      from,
+      from: safeFrom,
       to: toList.map(a => a.trim()),
       subject,
       html: html || `<html><body><pre style="font-family:Kanit,sans-serif">${text || ''}</pre></body></html>`,
@@ -108,8 +128,8 @@ serve(async (req: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error('Resend error:', JSON.stringify(data), 'from:', from, 'to:', toList);
-      return new Response(JSON.stringify({ error: data.message || 'Resend API error', detail: { from, to: toList } }), {
+      console.error('Resend error:', JSON.stringify(data), 'from:', safeFrom, 'to:', toList);
+      return new Response(JSON.stringify({ error: data.message || 'Resend API error', detail: { from: safeFrom, to: toList } }), {
         status: res.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
