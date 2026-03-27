@@ -742,7 +742,7 @@
         } else if(status === 'approved'){
           actionsHtml = '<div class="action-btns">' +
             '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
-            '<button class="btn btn-sm btn-success" onclick="sendReceiptEmail(\'' + type + '\',' + index + ')" title="ส่งใบเสร็จทางอีเมล">📧 ส่งใบเสร็จ</button>' +
+            '<button class="btn btn-sm btn-success" onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="ส่งใบเสร็จทางอีเมล">📧 ส่งใบเสร็จ</button>' +
           '</div>';
         } else if(status === 'unpaid'){
           actionsHtml = '<div class="action-btns">' +
@@ -1151,6 +1151,12 @@
       }
     }
 
+    // wrapper สำหรับปุ่มรายตัว — จัดการ loading state
+    async function sendReceiptEmailBtn(btn, type, index) {
+      btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+      try { await sendReceiptEmail(type, index); } finally { btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ'; }
+    }
+
     // ส่งใบเสร็จทางอีเมล
     async function sendReceiptEmail(type, index){
       const list = type === 'houses' ? housesData : flatsData;
@@ -1188,6 +1194,11 @@
         } catch(e) { console.error('sendReceiptEmail error:', e); }
       }
 
+      if (emailSent) {
+        ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
+      } else {
+        ppkAlert(unit.email ? '❌ ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่' : '⚠️ ไม่พบอีเมลของผู้พัก');
+      }
       return emailSent;
     }
 
