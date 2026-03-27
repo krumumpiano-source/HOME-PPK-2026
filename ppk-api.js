@@ -1807,7 +1807,23 @@ async function _routeAction(action, data) {
                     ]);
                     notifFallbackRows = (notifFallbackRows || []).filter(function(n) { return !n.message || n.message.indexOf('SLIP_REJECTED') !== 0; });
                 }
-                var currentOut = outRows[0]; // ใช้บิลล่าสุดที่มีในระบบ
+                // Self-healing: ถ้ามี outstanding ที่มี approved slip แล้ว -> auto-mark paid
+                if (outRows && outRows.length > 0) {
+                    var _approvedPeriods = {};
+                    (slipRows || []).forEach(function(sl) { if (sl.status === 'approved' && sl.period) _approvedPeriods[sl.period] = true; });
+                    var _healedOut = [];
+                    for (var _hi = 0; _hi < outRows.length; _hi++) {
+                        if (outRows[_hi].status === 'paid') continue; // ข้ามที่ paid แล้ว
+                        if (_approvedPeriods[outRows[_hi].period]) {
+                            // มี approved slip แต่ outstanding ยังไม่ paid -> แก้ไขเงียบๆ
+                            sbPatch('outstanding', { id: 'eq.' + outRows[_hi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
+                        } else {
+                            _healedOut.push(outRows[_hi]);
+                        }
+                    }
+                    outRows = _healedOut;
+                }
+                var currentOut = outRows[0]; // ใช้บิลล่าสุดที่ยังไม่ชำระ
                 var currentNotif = notifFallbackRows[0] || null;
                 
                 // ตรวจสอบว่า notification มีรอบบิลใหม่กว่า outstanding หรือไม่
@@ -1995,8 +2011,18 @@ async function _routeAction(action, data) {
                     amount_paid: data.amount, payment_date: new Date().toISOString().split('T')[0],
                     payment_method: 'transfer', slip_id: data.id, recorded_by: reviewedBy
                 });
+                // mark outstanding -> paid: outstandingId or lookup by house_number + period
                 if (data.outstandingId) {
                     await sbPatch('outstanding', { id: 'eq.' + data.outstandingId }, { status: 'paid', updated_at: new Date().toISOString() });
+                } else {
+                    try {
+                        var _outLookup = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, period: 'eq.' + data.period, status: 'neq.paid', limit: '10' });
+                        if (_outLookup && _outLookup.length > 0) {
+                            for (var _oi = 0; _oi < _outLookup.length; _oi++) {
+                                await sbPatch('outstanding', { id: 'eq.' + _outLookup[_oi].id }, { status: 'paid', updated_at: new Date().toISOString() });
+                            }
+                        }
+                    } catch(e) { console.warn('reviewSlip: auto-mark outstanding paid error', e); }
                 }
             }
             return { success: true };
