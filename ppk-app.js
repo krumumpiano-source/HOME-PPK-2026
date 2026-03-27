@@ -57,6 +57,16 @@
   // เพื่อให้ renderPPKNav() และ ppkAlert/ppkConfirm พร้อมใช้งานทันทีเมื่อ DOM โหลด
 })();
 
+// ── Page View Tracking — บันทึกหน้าที่เปิดใช้งาน ───────────────
+document.addEventListener('ppkReady', function () {
+  try {
+    var _pg = (location.pathname.split('/').pop() || '').replace('.html', '');
+    if (_pg && _pg !== 'login' && _pg !== 'register' && _pg !== 'forgot-password' && localStorage.getItem('sessionToken')) {
+      callBackend('logPageView', { page: _pg }).catch(function () {});
+    }
+  } catch (e) { /* ignore */ }
+});
+
 // ════════════════════════════════════════════════════════════
 //  Global Utilities — พร้อมใช้ทันทีไม่ต้องรอ SDK
 // ════════════════════════════════════════════════════════════

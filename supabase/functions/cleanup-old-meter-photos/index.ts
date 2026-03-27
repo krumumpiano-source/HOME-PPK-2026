@@ -1,9 +1,10 @@
 // ============================================================
-//  Supabase Edge Function: cleanup-old-meter-photos (v2)
-//  History:
-//    v1: ใช้ created_at + limit 100
-//    v2: แก้เป็น recorded_at, เพิ่ม batch 500, เพิ่ม auth check,
-//        เคลียร์ meter_photo_url หลังลบรูป, รองรับ scheduled mode
+//  Supabase Edge Function: cleanup-old-meter-photos
+//  ลบรูปมิเตอร์น้ำที่อายุเกิน 1 ปีออกจาก Storage
+//  (แต่คงไว้ DB record + ค่า OCR ตลอดกาล)
+//
+//  Deploy: supabase functions deploy cleanup-old-meter-photos
+//  Run manually หรือตั้ง pg_cron ให้รันทุกเดือน
 // ============================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -15,51 +16,36 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // ── Auth check: ต้องมี Authorization header ──
-    const authHeader = req.headers.get('authorization') || '';
-    if (!authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const sb = createClient(supabaseUrl, serviceKey);
 
-    // cutoff: 1 ปีที่แล้ว
+    // หา record ที่ meter_photo_url ไม่ว่าง และ created_at > 1 ปีที่แล้ว และยังไม่ได้ลบรูป
     const cutoffDate = new Date();
     cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
 
-    // ── ดึง records ที่มีรูปมิเตอร์ + ยังไม่ถูกลบ + เก่ากว่า 1 ปี ──
-    // ใช้ recorded_at (ไม่ใช่ created_at ซึ่งไม่มีใน schema)
     const { data: bills, error } = await sb
       .from('water_bills')
       .select('id, meter_photo_url, house_number, period')
       .not('meter_photo_url', 'is', null)
       .is('photo_deleted_at', null)
-      .lt('recorded_at', cutoffDate.toISOString())
-      .limit(500);  // เพิ่มจาก 100 → 500 เพื่อรองรับข้อมูลมากขึ้น
+      .lt('created_at', cutoffDate.toISOString())
+      .limit(100);
 
     if (error) throw error;
 
     let deleted = 0;
     let failed  = 0;
-    const results: { id: string; status: string; house_number?: string; period?: string; error?: string }[] = [];
+    const results: any[] = [];
 
     for (const bill of (bills || [])) {
       try {
         const url = bill.meter_photo_url;
-        if (!url) { failed++; continue; }
-
-        // แยก path จาก public URL → storage path
         const match = url.match(/\/storage\/v1\/object\/public\/meter-photos\/(.+)/);
         if (!match) {
           failed++;
@@ -68,27 +54,14 @@ serve(async (req: Request) => {
         }
 
         const filePath = decodeURIComponent(match[1]);
-        const { error: delErr } = await sb.storage
-          .from('meter-photos')
-          .remove([filePath]);
+        const { error: delErr } = await sb.storage.from('meter-photos').remove([filePath]);
 
         if (!delErr) {
-          // ลบรูปสำเร็จ → อัปเดต DB: mark ว่าลบแล้ว + เคลียร์ URL
-          await sb
-            .from('water_bills')
-            .update({
-              photo_deleted_at: new Date().toISOString(),
-              meter_photo_url: null  // เคลียร์ URL เพื่อไม่อ้างอิงไฟล์ที่ไม่มี
-            })
+          await sb.from('water_bills')
+            .update({ photo_deleted_at: new Date().toISOString() })
             .eq('id', bill.id);
-
           deleted++;
-          results.push({
-            id: bill.id,
-            house_number: bill.house_number,
-            period: bill.period,
-            status: 'deleted'
-          });
+          results.push({ id: bill.id, house_number: bill.house_number, period: bill.period, status: 'deleted' });
         } else {
           failed++;
           console.error(`Failed to delete ${filePath}:`, delErr.message);
@@ -113,7 +86,7 @@ serve(async (req: Request) => {
 
   } catch (err) {
     console.error('cleanup-old-meter-photos error:', err);
-    return new Response(JSON.stringify({ success: false, error: String(err) }), {
+    return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

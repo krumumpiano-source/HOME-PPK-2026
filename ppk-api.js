@@ -221,6 +221,20 @@ async function sbDelete(table, filter) {
 }
 
 /* ══════════════════════════════════════════
+   Activity Logging (fire-and-forget)
+══════════════════════════════════════════ */
+function _logActivity(action, userId, description, meta) {
+    try {
+        sbPost('logs', {
+            action:      action || 'unknown',
+            user_id:     userId || null,
+            description: description || '',
+            meta:        meta || {}
+        }).catch(function(e) { console.warn('[LOG]', e.message); });
+    } catch(e) { /* ignore */ }
+}
+
+/* ══════════════════════════════════════════
    SHA-256 ใน Browser
 ══════════════════════════════════════════ */
 async function sha256hex(str) {
@@ -544,10 +558,19 @@ async function _routeAction(action, data) {
             // อัปเดต header ให้ Supabase client รู้จัก session ใหม่
             localStorage.setItem('sessionToken', token);
             _refreshSbHeaders();
+            _logActivity('login', u.id, (u.firstname||'') + ' ' + (u.lastname||'') + ' เข้าสู่ระบบ', { role: u.role, house_number: resident ? resident.house_number : '' });
             return { success: true, user: userObj, token: token };
         }
-        case 'logout':   return ppkLogout();
-        case 'register': return ppkRegister(data);
+        case 'logout': {
+            var _lusr; try { _lusr = JSON.parse(localStorage.getItem('currentUser')||'{}'); } catch(e){ _lusr={}; }
+            if (_lusr && _lusr.id) _logActivity('logout', _lusr.id, (_lusr.firstname || '') + ' ' + (_lusr.lastname || '') + ' ออกจากระบบ', { role: _lusr.role });
+            return ppkLogout();
+        }
+        case 'register': {
+            var _regResult = await ppkRegister(data);
+            if (_regResult && _regResult.success !== false) _logActivity('register', null, (data.firstname || '') + ' ' + (data.lastname || '') + ' สมัครสมาชิก', { email: data.email });
+            return _regResult;
+        }
 
         case 'getCurrentUser': {
             // คืน user + resident data จาก DB
@@ -584,6 +607,7 @@ async function _routeAction(action, data) {
             await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
             // ลบ flag must_change_pw (ถ้ามี)
             try { await sbDelete('settings', { key: 'eq.must_change_pw_' + userId }); } catch(e) {}
+            _logActivity('change_password', userId, 'เปลี่ยนรหัสผ่าน', {});
             return { success: true };
         }
 
@@ -797,6 +821,7 @@ async function _routeAction(action, data) {
                 reviewed_at: new Date().toISOString(), review_note: data.note || ''
             });
             invalidateResidentCache();
+            _logActivity('approve_registration', data.reviewedBy || null, 'อนุมัติการลงทะเบียน ' + (reg.firstname || '') + ' ' + (reg.lastname || ''), { regId: regId, house_number: data.house_number, email: reg.email });
             return { success: true, userId: uid, residentId: residentId };
         }
         case 'rejectRegistration': {
@@ -806,6 +831,7 @@ async function _routeAction(action, data) {
                 status: 'rejected', reviewed_by: data.reviewedBy || null,
                 reviewed_at: new Date().toISOString(), review_note: data.note || ''
             });
+            _logActivity('reject_registration', data.reviewedBy || null, 'ปฏิเสธการลงทะเบียน', { regId: regId, note: data.note });
             return { success: true };
         }
 
@@ -878,9 +904,11 @@ async function _routeAction(action, data) {
                 }
                 // Auto-sync บัญชี
                 try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
+                _logActivity('submit_water_bill', user.id, 'บันทึกค่าน้ำ งวด ' + data.period + ' (' + _wBatch.length + ' หลัง)', { period: data.period, count: _wBatch.length });
                 return { success: true, data: inserted };
             }
             var row = await sbPost('water_bills', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, year: data.year, month: data.month, prev_meter: data.prevMeter, curr_meter: data.currMeter, units_used: data.unitsUsed, rate_per_unit: data.ratePerUnit, amount: data.amount, recorded_by: data.recordedBy });
+            _logActivity('submit_water_bill', data.recordedBy, 'บันทึกค่าน้ำ ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { house_number: data.houseNumber, period: data.period });
             return { success: true, data: row };
         }
         case 'getElectricBills': {
@@ -964,9 +992,11 @@ async function _routeAction(action, data) {
                 }
                 // Auto-sync บัญชี
                 try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
+                _logActivity('submit_electric_bill', user.id, 'บันทึกค่าไฟ งวด ' + data.period + ' (' + _eBatch.length + ' หลัง)', { period: data.period, count: _eBatch.length });
                 return { success: true, data: inserted };
             }
             var row = await sbPost('electric_bills', { house_id: data.houseId, house_number: data.houseNumber, period: data.period, year: data.year, month: data.month, prev_meter: data.prevMeter, curr_meter: data.currMeter, units_used: data.unitsUsed, rate_per_unit: data.ratePerUnit, bill_amount: data.billAmount, amount: data.amount, method: data.method || 'bill', recorded_by: data.recordedBy });
+            _logActivity('submit_electric_bill', data.recordedBy, 'บันทึกค่าไฟ ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { house_number: data.houseNumber, period: data.period });
             return { success: true, data: row };
         }
         case 'getOutstanding': {
@@ -1255,6 +1285,7 @@ async function _routeAction(action, data) {
                 house_number: data.houseNumber || data.house_number || data.current_house || (s ? s.house_number : ''),
                 details:      detailsCopy
             });
+            _logActivity('submit_request', s ? s.user_id : null, 'ส่งคำร้อง' + (data.type || ''), { requestId: reqId, type: data.type, house_number: data.houseNumber || data.house_number });
             return { success: true, data: row, requestId: reqId };
         }
 
@@ -1324,6 +1355,7 @@ async function _routeAction(action, data) {
                 submitted_by_user_id: _submittedByUserId || null,
                 status:               'pending'
             });
+            _logActivity('submit_slip', slipSess ? slipSess.userId : null, 'ส่งสลิปชำระเงิน ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { house_number: data.houseNumber, period: data.period, amount: data.amount });
             return { success: true, data: row };
         }
 
@@ -2025,6 +2057,7 @@ async function _routeAction(action, data) {
                     } catch(e) { console.warn('reviewSlip: auto-mark outstanding paid error', e); }
                 }
             }
+            _logActivity('review_slip', data.reviewedBy || null, (data.status === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ') + 'สลิป ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { slipId: data.id, status: data.status, house_number: data.houseNumber, period: data.period });
             return { success: true };
         }
 
@@ -2037,6 +2070,7 @@ async function _routeAction(action, data) {
                 total_amount: data.totalAmount || 0, due_date: data.dueDate || null,
                 message: data.message || '', sent_by: data.sentBy || ''
             });
+            _logActivity('send_notification', data.sentBy || null, 'ส่งแจ้งเตือนบิล ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { house_number: data.houseNumber, period: data.period, total: data.totalAmount });
             return { success: true, data: row };
         }
 
@@ -2114,6 +2148,7 @@ async function _routeAction(action, data) {
                     }
                 } catch (e) { console.warn('Auto-delete attachments failed:', e); }
             }
+            _logActivity('review_request', null, (data.status || '') + ' คำร้อง', { requestId: reqIdToReview, status: data.status });
             return { success: true };
         }
         case 'updateQueue': {
@@ -2921,6 +2956,7 @@ async function _routeAction(action, data) {
                     try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'user', updated_at: new Date().toISOString() }); } catch(e) {}
                 }
             }
+            _logActivity('update_permissions', null, 'อัปเดตสิทธิ์ผู้ใช้ ' + userIds.length + ' คน', { userIds: userIds });
             return { success: true, message: 'บันทึกสิทธิ์เรียบร้อย' };
         }
 
@@ -3647,6 +3683,113 @@ async function _routeAction(action, data) {
             });
             ahfhRecords.sort(function(a, b) { return b.period.localeCompare(a.period); });
             return { success: true, data: ahfhRecords };
+        }
+
+        /* ── Activity Logging ─────────────────────── */
+        case 'logPageView': {
+            var pvSess = await _getSessionRole();
+            var pvUserId = pvSess ? pvSess.userId : null;
+            var pvPage = (data.page || '').replace(/^.*\//, '').replace('.html', '') || 'unknown';
+            _logActivity('page_view', pvUserId, pvPage, { page: pvPage, role: pvSess ? pvSess.role : '' });
+            return { success: true };
+        }
+
+        case 'getActivityLogs': {
+            var alSess = await _getSessionRole();
+            if (!alSess || (alSess.role !== 'admin' && alSess.role !== 'head')) {
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            }
+            var alLimit = parseInt(data.limit) || 50;
+            var alOffset = parseInt(data.offset) || 0;
+            var alParams = { order: 'created_at.desc', limit: String(alLimit) };
+            if (alOffset > 0) alParams.offset = String(alOffset);
+            if (data.action && data.action !== 'all') alParams.action = 'eq.' + data.action;
+            if (data.userId) alParams.user_id = 'eq.' + data.userId;
+            if (data.dateFrom) alParams['created_at'] = 'gte.' + data.dateFrom + 'T00:00:00';
+            if (data.dateTo) {
+                var alDateToFilter = 'lte.' + data.dateTo + 'T23:59:59';
+                if (alParams['created_at']) {
+                    var alAllRows = await sbGet('logs', { order: 'created_at.desc', limit: '5000' });
+                    var alFrom = data.dateFrom ? new Date(data.dateFrom + 'T00:00:00') : null;
+                    var alTo = new Date(data.dateTo + 'T23:59:59');
+                    alAllRows = (alAllRows || []).filter(function(r) {
+                        var t = new Date(r.created_at);
+                        if (alFrom && t < alFrom) return false;
+                        if (t > alTo) return false;
+                        if (data.action && data.action !== 'all' && r.action !== data.action) return false;
+                        if (data.userId && r.user_id !== data.userId) return false;
+                        return true;
+                    });
+                    var alTotal = alAllRows.length;
+                    var alPaged = alAllRows.slice(alOffset, alOffset + alLimit);
+                    var alUserIds = {};
+                    alPaged.forEach(function(r) { if (r.user_id) alUserIds[r.user_id] = true; });
+                    var alUIds = Object.keys(alUserIds);
+                    var alUserMap = {};
+                    if (alUIds.length > 0) {
+                        try {
+                            var alUsers = await sbGet('users', { id: 'in.(' + alUIds.join(',') + ')', select: 'id,firstname,lastname,prefix,role' });
+                            (alUsers || []).forEach(function(u) { alUserMap[u.id] = u; });
+                        } catch(e) {}
+                    }
+                    alPaged.forEach(function(r) {
+                        var u = alUserMap[r.user_id];
+                        r._userName = u ? ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() : (r.user_id || '-');
+                        r._userRole = u ? (u.role || '') : '';
+                    });
+                    return { success: true, data: alPaged, total: alTotal };
+                } else {
+                    alParams['created_at'] = alDateToFilter;
+                }
+            }
+            var alRows = await sbGet('logs', alParams);
+            var alCountRows = await sbGet('logs', (function() {
+                var cp = {};
+                if (data.action && data.action !== 'all') cp.action = 'eq.' + data.action;
+                if (data.userId) cp.user_id = 'eq.' + data.userId;
+                if (data.dateFrom) cp['created_at'] = 'gte.' + data.dateFrom + 'T00:00:00';
+                cp.select = 'id';
+                cp.limit = '5000';
+                return cp;
+            })());
+            var alTotal2 = (alCountRows || []).length;
+            var alUserIds2 = {};
+            (alRows || []).forEach(function(r) { if (r.user_id) alUserIds2[r.user_id] = true; });
+            var alUIds2 = Object.keys(alUserIds2);
+            var alUserMap2 = {};
+            if (alUIds2.length > 0) {
+                try {
+                    var alUsers2 = await sbGet('users', { id: 'in.(' + alUIds2.join(',') + ')', select: 'id,firstname,lastname,prefix,role' });
+                    (alUsers2 || []).forEach(function(u) { alUserMap2[u.id] = u; });
+                } catch(e) {}
+            }
+            (alRows || []).forEach(function(r) {
+                var u = alUserMap2[r.user_id];
+                r._userName = u ? ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() : (r.user_id || '-');
+                r._userRole = u ? (u.role || '') : '';
+            });
+            return { success: true, data: alRows || [], total: alTotal2 };
+        }
+
+        case 'getActivityStats': {
+            var asSess = await _getSessionRole();
+            if (!asSess || (asSess.role !== 'admin' && asSess.role !== 'head')) {
+                return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            }
+            var asToday = new Date().toISOString().split('T')[0];
+            var asTodayLogs = await sbGet('logs', { 'created_at': 'gte.' + asToday + 'T00:00:00', select: 'action,user_id', limit: '5000' });
+            var asLoginCount = 0, asPageViewCount = 0, asActiveUsers = {};
+            (asTodayLogs || []).forEach(function(r) {
+                if (r.action === 'login') asLoginCount++;
+                if (r.action === 'page_view') asPageViewCount++;
+                if (r.user_id) asActiveUsers[r.user_id] = true;
+            });
+            return { success: true, data: {
+                todayLogins: asLoginCount,
+                todayPageViews: asPageViewCount,
+                todayActiveUsers: Object.keys(asActiveUsers).length,
+                todayTotalActions: (asTodayLogs || []).length
+            }};
         }
 
         default:

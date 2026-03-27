@@ -1,0 +1,402 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>Activity Log | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+    :root{--bg:#f8fafc;--surface:#ffffff;--border:#e5e7eb;--text:#0f172a;--muted:#64748b;--thead:#e2e8f0;--hover:#f1f5f9;--shadow:0 8px 24px rgba(15,23,42,.06);--primary:#2563eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;}
+    *{box-sizing:border-box;}
+    body{margin:0;min-height:100vh;font-family:'Kanit',sans-serif;background:var(--bg);color:var(--text);}
+    @media(max-width:768px){.dashboard-container,.main-container{padding-bottom:2rem!important;}}
+    .dashboard-container{min-height:100vh;padding:2rem;padding-left:max(1.25rem,env(safe-area-inset-left,0px));padding-right:max(1.25rem,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:1.2rem;align-items:center;}
+    @media(max-width:600px){.dashboard-container{padding:1.2rem .6rem;}}
+    .section{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:1.5rem;width:100%;max-width:1100px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+    .section-title{font-size:1.15rem;font-weight:700;}
+    .section-subtitle{font-size:.85rem;color:var(--muted);margin-top:2px;}
+    .page-header{text-align:center;width:100%;max-width:1100px;}
+    .page-header h2{font-size:1.5rem;margin:0;}
+    .back-btn{background:none;border:none;color:var(--primary);cursor:pointer;font-size:.95rem;font-family:inherit;padding:.4rem .8rem;border-radius:8px;width:100%;max-width:1100px;text-align:left;}
+    .back-btn:hover{background:var(--hover);}
+
+    /* Summary boxes */
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:.5rem;}
+    .stat-card{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:14px;padding:1rem;text-align:center;}
+    .stat-card.green{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#bbf7d0;}
+    .stat-card.orange{background:linear-gradient(135deg,#fffbeb,#fef3c7);border-color:#fde68a;}
+    .stat-card.purple{background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-color:#e9d5ff;}
+    .stat-value{font-size:1.8rem;font-weight:700;color:var(--primary);}
+    .stat-card.green .stat-value{color:#16a34a;}
+    .stat-card.orange .stat-value{color:#d97706;}
+    .stat-card.purple .stat-value{color:#7c3aed;}
+    .stat-label{font-size:.8rem;color:var(--muted);margin-top:4px;}
+
+    /* Controls */
+    .controls-row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;}
+    .form-group{display:flex;flex-direction:column;gap:4px;min-width:140px;flex:1;}
+    .form-group label{font-size:.8rem;font-weight:600;color:var(--muted);}
+    .form-group select,.form-group input{padding:.55rem .7rem;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.9rem;background:#fff;}
+    .btn{padding:.6rem 1.2rem;border:none;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;transition:all .2s;}
+    .btn-primary{background:var(--primary);color:#fff;}
+    .btn-primary:hover{background:#1d4ed8;}
+    .btn-sm{padding:.4rem .8rem;font-size:.82rem;}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+    .btn-outline:hover{background:var(--hover);}
+
+    /* Table */
+    .table-container{overflow-x:auto;margin-top:.5rem;}
+    table{width:100%;border-collapse:collapse;font-size:.88rem;}
+    thead{background:var(--thead);}
+    th{padding:.65rem .7rem;text-align:left;font-weight:600;white-space:nowrap;font-size:.82rem;color:var(--muted);}
+    td{padding:.6rem .7rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tbody tr:hover{background:var(--hover);cursor:pointer;}
+    .action-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;}
+    .badge-login{background:#dbeafe;color:#1e40af;}
+    .badge-logout{background:#e2e8f0;color:#475569;}
+    .badge-page_view{background:#f0fdf4;color:#166534;}
+    .badge-submit{background:#fef3c7;color:#92400e;}
+    .badge-review{background:#ede9fe;color:#6d28d9;}
+    .badge-admin{background:#fee2e2;color:#991b1b;}
+    .badge-default{background:#f1f5f9;color:#475569;}
+    .role-tag{font-size:.72rem;color:var(--muted);margin-left:4px;}
+    .text-muted{color:var(--muted);font-size:.82rem;}
+    .text-center{text-align:center;}
+
+    /* Pagination */
+    .pagination{display:flex;justify-content:center;align-items:center;gap:.75rem;margin-top:1rem;flex-wrap:wrap;}
+    .pagination .page-info{font-size:.85rem;color:var(--muted);}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;justify-content:center;align-items:center;padding:1rem;}
+    .modal-overlay.active{display:flex;}
+    .modal-content{background:#fff;border-radius:18px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+    .modal-close{float:right;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);line-height:1;}
+    .modal-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem;padding-right:2rem;}
+    .detail-row{display:flex;gap:.5rem;margin-bottom:.6rem;font-size:.88rem;}
+    .detail-label{font-weight:600;min-width:100px;color:var(--muted);}
+    .detail-value{flex:1;word-break:break-all;}
+    pre.meta-json{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.8rem;font-size:.78rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;}
+    .no-data{text-align:center;padding:2rem;color:var(--muted);font-size:.95rem;}
+    .loading{text-align:center;padding:2rem;color:var(--muted);}
+    </style>
+</head>
+<body>
+<div id="ppkNav"></div>
+<div class="dashboard-container">
+    <button class="back-btn" onclick="history.back()">← กลับ</button>
+    <div class="page-header"><h2>📊 Activity Log</h2></div>
+
+    <!-- Summary Stats -->
+    <div class="section" id="statsSection">
+        <div class="section-head">
+            <div>
+                <div class="section-title">📈 สรุปกิจกรรมวันนี้</div>
+                <div class="section-subtitle" id="statsDate"></div>
+            </div>
+        </div>
+        <div class="summary-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="statActiveUsers">-</div>
+                <div class="stat-label">👤 ผู้ใช้งานวันนี้</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-value" id="statLogins">-</div>
+                <div class="stat-label">🔑 เข้าสู่ระบบ</div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-value" id="statPageViews">-</div>
+                <div class="stat-label">📄 เปิดหน้า</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-value" id="statTotalActions">-</div>
+                <div class="stat-label">⚡ กิจกรรมทั้งหมด</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="section">
+        <div class="section-head">
+            <div>
+                <div class="section-title">🔍 ค้นหากิจกรรม</div>
+            </div>
+        </div>
+        <div class="controls-row">
+            <div class="form-group">
+                <label>ประเภท</label>
+                <select id="filterAction">
+                    <option value="all">ทั้งหมด</option>
+                    <option value="login">🔑 เข้าสู่ระบบ</option>
+                    <option value="logout">🚪 ออกจากระบบ</option>
+                    <option value="page_view">📄 เปิดหน้า</option>
+                    <option value="register">📝 สมัครสมาชิก</option>
+                    <option value="submit_slip">💳 ส่งสลิป</option>
+                    <option value="review_slip">🔍 ตรวจสลิป</option>
+                    <option value="submit_request">📋 ส่งคำร้อง</option>
+                    <option value="review_request">📋 ตรวจคำร้อง</option>
+                    <option value="submit_water_bill">💧 บันทึกค่าน้ำ</option>
+                    <option value="submit_electric_bill">⚡ บันทึกค่าไฟ</option>
+                    <option value="approve_registration">✅ อนุมัติสมาชิก</option>
+                    <option value="reject_registration">❌ ปฏิเสธสมาชิก</option>
+                    <option value="send_notification">📢 แจ้งเตือนบิล</option>
+                    <option value="change_password">🔒 เปลี่ยนรหัสผ่าน</option>
+                    <option value="update_permissions">🛡️ แก้ไขสิทธิ์</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>ตั้งแต่วันที่</label>
+                <input type="date" id="filterDateFrom">
+            </div>
+            <div class="form-group">
+                <label>ถึงวันที่</label>
+                <input type="date" id="filterDateTo">
+            </div>
+            <button class="btn btn-primary" onclick="loadLogs(0)">🔍 ค้นหา</button>
+            <button class="btn btn-outline btn-sm" onclick="resetFilters()">ล้าง</button>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="section">
+        <div class="section-head">
+            <div>
+                <div class="section-title">📋 รายการกิจกรรม</div>
+                <div class="section-subtitle" id="logCount"></div>
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>เวลา</th>
+                        <th>ผู้ใช้</th>
+                        <th>ประเภท</th>
+                        <th>รายละเอียด</th>
+                    </tr>
+                </thead>
+                <tbody id="logBody">
+                    <tr><td colspan="4" class="loading">⏳ กำลังโหลด...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="paginationArea"></div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div class="modal-title">📋 รายละเอียดกิจกรรม</div>
+        <div id="detailBody"></div>
+    </div>
+</div>
+
+<script src="ppk-app.js?v=20260328A"></script>
+<script src="ppk-utils.js?v=20260323E"></script>
+<script src="ppk-nav.js?v=20260328A"></script>
+<script>
+    var PAGE_SIZE = 50;
+    var currentOffset = 0;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        requireAuth();
+        renderPPKNav('ppkNav', 'activity-log');
+
+        // Admin-only guard
+        var u = getCurrentUser();
+        if (u.role !== 'admin' && u.role !== 'head') {
+            document.querySelector('.dashboard-container').innerHTML =
+                '<div class="no-data">🚫 หน้านี้สำหรับผู้ดูแลระบบเท่านั้น</div>';
+            return;
+        }
+
+        // Default date: today
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDateFrom').value = today;
+        document.getElementById('filterDateTo').value = today;
+        document.getElementById('statsDate').textContent = formatDateThai(today);
+
+        loadStats();
+        loadLogs(0);
+    });
+
+    function loadStats() {
+        callBackend('getActivityStats', {}).then(function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                document.getElementById('statActiveUsers').textContent = d.todayActiveUsers || 0;
+                document.getElementById('statLogins').textContent = d.todayLogins || 0;
+                document.getElementById('statPageViews').textContent = d.todayPageViews || 0;
+                document.getElementById('statTotalActions').textContent = d.todayTotalActions || 0;
+            }
+        }).catch(function () {});
+    }
+
+    function loadLogs(offset) {
+        currentOffset = offset || 0;
+        var params = {
+            action: document.getElementById('filterAction').value,
+            dateFrom: document.getElementById('filterDateFrom').value,
+            dateTo: document.getElementById('filterDateTo').value,
+            limit: PAGE_SIZE,
+            offset: currentOffset
+        };
+
+        document.getElementById('logBody').innerHTML = '<tr><td colspan="4" class="loading">⏳ กำลังโหลด...</td></tr>';
+
+        callBackend('getActivityLogs', params).then(function (res) {
+            if (!res || !res.success) {
+                document.getElementById('logBody').innerHTML = '<tr><td colspan="4" class="no-data">❌ ' + (res ? res.error : 'ไม่สามารถโหลดข้อมูลได้') + '</td></tr>';
+                return;
+            }
+            var logs = res.data || [];
+            var total = res.total || logs.length;
+            document.getElementById('logCount').textContent = 'ทั้งหมด ' + total + ' รายการ';
+
+            if (logs.length === 0) {
+                document.getElementById('logBody').innerHTML = '<tr><td colspan="4" class="no-data">ไม่พบกิจกรรม</td></tr>';
+                document.getElementById('paginationArea').innerHTML = '';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < logs.length; i++) {
+                var log = logs[i];
+                var dt = formatDateTime(log.created_at);
+                var badge = getActionBadge(log.action);
+                var desc = escHtml(log.description || '-');
+                var userName = escHtml(log._userName || log.user_id || '-');
+                var roleTag = log._userRole ? '<span class="role-tag">(' + escHtml(log._userRole) + ')</span>' : '';
+                html += '<tr onclick="showDetail(' + i + ')" data-idx="' + i + '">' +
+                    '<td class="text-muted" style="white-space:nowrap;">' + dt + '</td>' +
+                    '<td>' + userName + roleTag + '</td>' +
+                    '<td>' + badge + '</td>' +
+                    '<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + desc + '</td>' +
+                    '</tr>';
+            }
+            document.getElementById('logBody').innerHTML = html;
+
+            // Store logs for detail view
+            window._currentLogs = logs;
+
+            // Pagination
+            renderPagination(total);
+        }).catch(function (err) {
+            document.getElementById('logBody').innerHTML = '<tr><td colspan="4" class="no-data">❌ ' + escHtml(err.message || 'โหลดข้อมูลไม่สำเร็จ') + '</td></tr>';
+        });
+    }
+
+    function renderPagination(total) {
+        var totalPages = Math.ceil(total / PAGE_SIZE);
+        var currentPage = Math.floor(currentOffset / PAGE_SIZE) + 1;
+        if (totalPages <= 1) {
+            document.getElementById('paginationArea').innerHTML = '';
+            return;
+        }
+        var html = '';
+        if (currentPage > 1) {
+            html += '<button class="btn btn-outline btn-sm" onclick="loadLogs(' + ((currentPage - 2) * PAGE_SIZE) + ')">← ก่อนหน้า</button>';
+        }
+        html += '<span class="page-info">หน้า ' + currentPage + ' / ' + totalPages + '</span>';
+        if (currentPage < totalPages) {
+            html += '<button class="btn btn-outline btn-sm" onclick="loadLogs(' + (currentPage * PAGE_SIZE) + ')">ถัดไป →</button>';
+        }
+        document.getElementById('paginationArea').innerHTML = html;
+    }
+
+    function showDetail(idx) {
+        var log = window._currentLogs[idx];
+        if (!log) return;
+        var html = '';
+        html += '<div class="detail-row"><div class="detail-label">ID</div><div class="detail-value">' + escHtml(log.id) + '</div></div>';
+        html += '<div class="detail-row"><div class="detail-label">เวลา</div><div class="detail-value">' + formatDateTime(log.created_at) + '</div></div>';
+        html += '<div class="detail-row"><div class="detail-label">ผู้ใช้</div><div class="detail-value">' + escHtml(log._userName || log.user_id || '-') + '</div></div>';
+        html += '<div class="detail-row"><div class="detail-label">ประเภท</div><div class="detail-value">' + getActionBadge(log.action) + ' ' + escHtml(log.action) + '</div></div>';
+        html += '<div class="detail-row"><div class="detail-label">รายละเอียด</div><div class="detail-value">' + escHtml(log.description || '-') + '</div></div>';
+        if (log.meta && Object.keys(log.meta).length > 0) {
+            html += '<div class="detail-row"><div class="detail-label">ข้อมูลเพิ่มเติม</div></div>';
+            html += '<pre class="meta-json">' + escHtml(JSON.stringify(log.meta, null, 2)) + '</pre>';
+        }
+        document.getElementById('detailBody').innerHTML = html;
+        document.getElementById('detailModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+
+    document.getElementById('detailModal').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+    });
+
+    function resetFilters() {
+        document.getElementById('filterAction').value = 'all';
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDateFrom').value = today;
+        document.getElementById('filterDateTo').value = today;
+        loadLogs(0);
+    }
+
+    // ── Helpers ──
+    var ACTION_LABELS = {
+        login: '🔑 เข้าสู่ระบบ', logout: '🚪 ออกจากระบบ',
+        page_view: '📄 เปิดหน้า', register: '📝 สมัครสมาชิก',
+        submit_slip: '💳 ส่งสลิป', review_slip: '🔍 ตรวจสลิป',
+        submit_request: '📋 ส่งคำร้อง', review_request: '📋 ตรวจคำร้อง',
+        submit_water_bill: '💧 ค่าน้ำ', submit_electric_bill: '⚡ ค่าไฟ',
+        approve_registration: '✅ อนุมัติสมาชิก', reject_registration: '❌ ปฏิเสธสมาชิก',
+        send_notification: '📢 แจ้งเตือน', change_password: '🔒 เปลี่ยนรหัส',
+        update_permissions: '🛡️ แก้ไขสิทธิ์'
+    };
+
+    function getActionBadge(action) {
+        var label = ACTION_LABELS[action] || action;
+        var cls = 'badge-default';
+        if (action === 'login') cls = 'badge-login';
+        else if (action === 'logout') cls = 'badge-logout';
+        else if (action === 'page_view') cls = 'badge-page_view';
+        else if (action.indexOf('submit') === 0 || action === 'register') cls = 'badge-submit';
+        else if (action.indexOf('review') === 0 || action.indexOf('approve') === 0 || action.indexOf('reject') === 0) cls = 'badge-review';
+        else if (action.indexOf('update') === 0 || action.indexOf('send') === 0 || action.indexOf('change') === 0) cls = 'badge-admin';
+        return '<span class="action-badge ' + cls + '">' + escHtml(label) + '</span>';
+    }
+
+    function formatDateTime(iso) {
+        if (!iso) return '-';
+        var d = new Date(iso);
+        var dd = String(d.getDate()).padStart(2, '0');
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var yy = d.getFullYear() + 543;
+        var hh = String(d.getHours()).padStart(2, '0');
+        var mi = String(d.getMinutes()).padStart(2, '0');
+        return dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
+    }
+
+    function formatDateThai(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        var months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        return d.getDate() + ' ' + months[d.getMonth()] + ' ' + (d.getFullYear() + 543);
+    }
+
+    function escHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+</script>
+</body>
+</html>
