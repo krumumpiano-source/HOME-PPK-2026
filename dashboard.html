@@ -537,8 +537,8 @@
                 ctaEl.className = 'hero-cta';
             }
 
-            // Outstanding
-            if (outstanding > 0) {
+            // Outstanding — ซ่อนถ้าชำระแล้ว
+            if (outstanding > 0 && slipStatus !== 'success') {
                 document.getElementById('outstandingSection').style.display = '';
                 document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' บาท';
             } else {
