@@ -122,6 +122,36 @@
         }
         .proxy-banner .pb-title { font-weight: 700; color: #065F46; font-size: 0.88rem; margin-bottom: 0.25rem; }
         .proxy-banner .pb-detail { font-size: 0.8rem; color: #047857; }
+        /* ── Proxy Hero Card (admin view — read-only) ── */
+        .proxy-hero-card-view {
+            background: linear-gradient(135deg, #065F46 0%, #059669 55%, #34D399 100%);
+            border-radius: 18px; padding: 1.4rem 1.4rem 1.2rem;
+            color: #fff; margin-bottom: 1rem; position: relative; overflow: hidden;
+        }
+        .proxy-hero-card-view::before {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 150px; height: 150px; background: rgba(255,255,255,0.06); border-radius: 50%;
+        }
+        .proxy-hero-card-view .phcv-proxy-badge {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+            background: rgba(255,255,255,0.18); border-radius: 20px;
+            padding: 0.15rem 0.6rem; display: inline-block; margin-bottom: 0.45rem;
+        }
+        .proxy-hero-card-view .phcv-house { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .proxy-hero-card-view .phcv-name { font-size: 0.82rem; opacity: 0.78; margin-bottom: 0.75rem; }
+        .proxy-hero-card-view .phcv-divider { border: none; border-top: 1px solid rgba(255,255,255,0.25); margin: 0.65rem 0; }
+        .proxy-hero-card-view .phcv-row { display: flex; gap: 1rem; align-items: flex-start; }
+        .proxy-hero-card-view .phcv-col { flex: 1; }
+        .proxy-hero-card-view .phcv-label { font-size: 0.8rem; opacity: 0.78; margin-bottom: 0.1rem; }
+        .proxy-hero-card-view .phcv-amount { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+        .proxy-hero-card-view .phcv-amount.zero { opacity: 0.65; font-size: 1.15rem; }
+        .proxy-hero-card-view .phcv-period { font-size: 0.76rem; opacity: 0.68; margin-top: 0.12rem; }
+        .proxy-hero-card-view .phcv-reject-note {
+            background: rgba(220,38,38,0.18); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 10px; padding: .6rem .85rem; margin-top: .7rem;
+            font-size: .82rem; color: #FCA5A5; line-height: 1.5;
+        }
+        .proxy-hero-card-view .phcv-reject-note strong { color: #fff; }
         .view-card {
             background: var(--c-surface); border: 1px solid var(--c-border);
             border-radius: 14px; overflow: hidden; margin-bottom: 1rem;
@@ -421,7 +451,7 @@ function renderDashboard(d) {
         });
         recentHtml += '</tbody></table></div>';
     }
-    panel.innerHTML = heroHtml + bkHtml + osHtml + proxyHtml + recentHtml;
+    panel.innerHTML = heroHtml + bkHtml + osHtml + proxyHtml + proxyAssignHtml + recentHtml;
 }
 
 /* ===== TAB 2: HISTORY ===== */
