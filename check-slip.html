@@ -1067,9 +1067,11 @@
             const { monthName, year: yr } = getSelectedPeriod();
             const paidDate = new Date().toLocaleDateString('th-TH');
             try {
-              if (unit.email) {
+              const _autoEmail = (unit.email || '').trim();
+              const _autoEmailOk = _autoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_autoEmail) && _autoEmail.length <= 320;
+              if (_autoEmailOk) {
                 const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
-                await callBackend('sendEmail', { to: unit.email, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+                await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
               }
             } catch(e) {}
             ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
@@ -1141,9 +1143,11 @@
 
       let emailSent = false;
 
-      if (unit.email) {
+      const _remEmail = (unit.email || '').trim();
+      const _remEmailOk = _remEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_remEmail) && _remEmail.length <= 320;
+      if (_remEmailOk) {
         try {
-          const er = await callBackend('sendEmail', { to: unit.email, subject, html });
+          const er = await callBackend('sendEmail', { to: _remEmail, subject, html });
           emailSent = er && er.success;
         } catch (e) { console.error('sendEmail reminder error:', e); }
       }

@@ -32,6 +32,19 @@ serve(async (req: Request) => {
       });
     }
 
+    // Validate email addresses
+    const toList: string[] = Array.isArray(to) ? to : [to];
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    for (const addr of toList) {
+      const trimmed = (addr || '').trim();
+      if (!trimmed || trimmed.length > 320 || !emailRegex.test(trimmed)) {
+        return new Response(JSON.stringify({ error: `อีเมลไม่ถูกต้อง: ${trimmed.substring(0, 50)}${trimmed.length > 50 ? '...' : ''}` }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // ดึง API key จาก env vars (ตั้งใน Supabase Dashboard → Edge Functions → Secrets)
     let resendApiKey = Deno.env.get('RESEND_API_KEY') || '';
     let fromEmail    = Deno.env.get('EMAIL_FROM')     || '';
@@ -64,7 +77,7 @@ serve(async (req: Request) => {
 
     const body: any = {
       from,
-      to: Array.isArray(to) ? to : [to],
+      to: toList.map(a => a.trim()),
       subject,
       html: html || `<html><body><pre style="font-family:Kanit,sans-serif">${text || ''}</pre></body></html>`,
     };
