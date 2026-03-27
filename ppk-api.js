@@ -3070,9 +3070,7 @@ async function _routeAction(action, data) {
             for (var ei = 0; ei < efbTables.length; ei++) {
                 var efbT = efbTables[ei];
                 try {
-                    var efbRows = await sbGet(efbT, { order: 'created_at.desc' }).catch(function() {
-                        return sbGet(efbT, {});
-                    });
+                    var efbRows = await sbGet(efbT, {});
                     efbResult[efbT] = efbRows || [];
                 } catch(e) {
                     efbResult[efbT] = [];
