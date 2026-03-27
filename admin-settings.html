@@ -1274,19 +1274,19 @@
                     <div class="section-title">📧 อีเมล</div>
                     <div class="section-desc">ตั้งค่าระบบส่งอีเมลแจ้งเตือนและใบเสร็จอัตโนมัติ</div>
 
-                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Resend.com) <span class="acc-arrow">▼</span></button>
+                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Gmail SMTP) <span class="acc-arrow">▼</span></button>
                     <div class="accordion-body open" style="padding:0.6rem 0.1rem;">
-                    <div class="section-desc" style="margin-bottom:0.75rem;">ใช้ส่งอีเมลแจ้งเตือนและใบเสร็จ — สมัครฟรีที่ <a href="https://resend.com" target="_blank" style="color:var(--primary)">resend.com</a> (3,000 อีเมล/เดือน ฟรี)</div>
+                    <div class="section-desc" style="margin-bottom:0.75rem;">ส่งอีเมลแจ้งเตือนและใบเสร็จผ่าน Gmail — ต้องสร้าง <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--primary)">App Password</a> จาก Google Account</div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Resend API Key</label>
-                            <input type="password" id="resend_api_key" placeholder="re_xxxxxxxxxxxxxxxxxxxx">
-                            <span class="hint">ขอได้จาก resend.com → API Keys</span>
+                            <label>Gmail App Password (รหัสแอป)</label>
+                            <input type="password" id="gmail_app_password" placeholder="xxxx xxxx xxxx xxxx">
+                            <span class="hint">สร้างที่ Google Account → Security → App Passwords (ต้องเปิด 2FA ก่อน)</span>
                         </div>
                         <div class="form-group">
-                            <label>อีเมลผู้ส่ง (From Email)</label>
-                            <input type="email" id="email_from" placeholder="noreply@yourdomain.com">
-                            <span class="hint">ต้องยืนยัน Domain ใน Resend ก่อน</span>
+                            <label>อีเมลสำหรับใช้ส่ง (Gmail / Google Workspace)</label>
+                            <input type="email" id="email_from" placeholder="pongsatorn.b@ppk.ac.th">
+                            <span class="hint">อีเมลนี้จะเป็นผู้ส่งในอีเมลแจ้งเตือนและใบเสร็จทั้งหมด</span>
                         </div>
                         <div class="form-group">
                             <label>ชื่อผู้ส่ง (From Name)</label>
@@ -1912,7 +1912,7 @@
                 const r = await callBackend('getEmailSettings');
                 if (r && r.success && r.settings) {
                     const s = r.settings;
-                    ['resend_api_key','email_from','email_from_name'].forEach(k => {
+                    ['gmail_app_password','email_from','email_from_name'].forEach(k => {
                         const el = document.getElementById(k);
                         if (el && s[k]) el.value = s[k];
                     });
@@ -1922,7 +1922,7 @@
 
         async function saveEmailSettings() {
             const settings = {};
-            ['resend_api_key','email_from','email_from_name'].forEach(k => {
+            ['gmail_app_password','email_from','email_from_name'].forEach(k => {
                 const el = document.getElementById(k);
                 if (el) settings[k] = el.value.trim();
             });
@@ -1942,7 +1942,7 @@
                     subject: '🧪 ทดสอบระบบอีเมล — บ้านพักครู',
                     html: '<div style="font-family:Kanit,sans-serif"><p>ทดสอบการส่งอีเมลจากระบบบ้านพักครู</p><p>หากได้รับอีเมลนี้ แสดงว่าระบบพร้อมใช้งาน ✅</p></div>'
                 });
-                ppkAlert(r && r.success ? '✅ ส่งอีเมลทดสอบสำเร็จ! ตรวจสอบกล่องจดหมาย ' + email : '❌ ไม่สำเร็จ: ' + (r?.error || 'ตรวจสอบ Resend API Key'));
+                ppkAlert(r && r.success ? '✅ ส่งอีเมลทดสอบสำเร็จ! ตรวจสอบกล่องจดหมาย ' + email : '❌ ไม่สำเร็จ: ' + (r?.error || 'ตรวจสอบอีเมลและ Gmail App Password'));
             } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message); }
         }
 
@@ -5297,7 +5297,7 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260328A"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>
