@@ -342,8 +342,15 @@ function fmtMoney(n) { return (parseFloat(n)||0).toLocaleString('th-TH'); }
 async function loadHousePicker() {
     var sel = document.getElementById('housePickerSel');
     try {
-        var r = await callBackend('getHousingList', {});
+        var results = await Promise.all([ callBackend('getHousingList', {}), callBackend('getResidentsList', {}) ]);
+        var r = results[0];
         var houses = (r && r.success && r.data) ? r.data : [];
+        var resMap = {};
+        ((results[1] && results[1].data) || []).forEach(function(res) {
+            if (res.house_number && !resMap[res.house_number] && res.resident_type !== 'cohabitant') {
+                resMap[res.house_number] = ((res.prefix||'') + (res.firstname||'') + ' ' + (res.lastname||'')).trim();
+            }
+        });
         var typeOrder = function(s) { return s.startsWith('\u0e1a\u0e49\u0e32\u0e19') ? 0 : s.startsWith('\u0e41\u0e1f\u0e25\u0e15') ? 1 : 2; };
         var getNum = function(s) { return parseInt((s.match(/\d+/) || ['0'])[0]); };
         houses.sort(function(a, b) {
@@ -356,8 +363,9 @@ async function loadHousePicker() {
             if (!dn) return;
             var opt = document.createElement('option');
             opt.value = dn;
+            var resName = resMap[dn] || '';
             var statusLabel = h.status === 'occupied' ? '' : h.status === 'available' ? ' (\u0e27\u0e48\u0e32\u0e07)' : ' (' + (h.status||'') + ')';
-            opt.textContent = dn + statusLabel;
+            opt.textContent = resName ? dn + ' \u2014 ' + resName + statusLabel : dn + statusLabel;
             sel.appendChild(opt);
         });
     } catch(e) { sel.innerHTML = '<option value="">\u0e40\u0e01\u0e34\u0e14\u0e02\u0e49\u0e2d\u0e1c\u0e34\u0e14\u0e1e\u0e25\u0e32\u0e14</option>'; }
