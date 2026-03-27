@@ -125,7 +125,7 @@ foreach ($fn in $functions) {
     }
     
     try {
-        supabase functions deploy $fn --project-ref $ProjectRef
+        supabase functions deploy $fn --project-ref $ProjectRef --no-verify-jwt
         if ($LASTEXITCODE -eq 0) {
             Write-Host "   ✅ Deploy สำเร็จ: $fn" -ForegroundColor Green
             $success++
