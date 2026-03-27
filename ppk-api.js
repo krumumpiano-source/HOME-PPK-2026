@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HOME PPK 2026 — Supabase API Wrapper
  * ดัดแปลงจากรูปแบบ Band Management By SoulCiety
  *
@@ -1637,8 +1637,8 @@ async function _routeAction(action, data) {
                 ];
                 if (sessHouseNumber) {
                     adminQueries.push(
-                        sbGet('outstanding', { house_number: 'eq.' + sessHouseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
-                        sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, period: 'eq.' + adminPeriod, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
+                        sbGet('outstanding', { house_number: 'eq.' + sessHouseNumber, order: 'period.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, order: 'submitted_at.desc', limit: '12' }).catch(function() { return []; })
                     );
                 }
                 var adminResults = await Promise.all(adminQueries);
@@ -1646,9 +1646,10 @@ async function _routeAction(action, data) {
                 var residentData = null;
                 if (sessHouseNumber) {
                     var adminOutRows = adminResults[3] || [];
+                    var adminCurrentOut = adminOutRows[0]; // ใช้บิลล่าสุดที่มีในระบบ
+                    if (adminCurrentOut && adminCurrentOut.period) adminPeriod = adminCurrentOut.period;
                     var adminSlipRows = adminResults[4] || [];
-                    var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
-                    var adminLatestSlip = adminSlipRows[0];
+                    var adminLatestSlip = adminSlipRows.find(function(s) { return s.period === adminPeriod; }); // หาสลิปที่ตรงกับบิลล่าสุด
                     var adminSlipStatus = 'none';
                     var adminReviewNote = '';
                     if (adminLatestSlip) {
@@ -1660,7 +1661,7 @@ async function _routeAction(action, data) {
                         houseNumber: sessHouseNumber,
                         period: adminPeriod,
                         currentAmount: adminCurrentOut ? parseFloat(adminCurrentOut.total_amount) || 0 : 0,
-                        totalOutstanding: adminOutRows.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0),
+                        totalOutstanding: adminOutRows.reduce(function(s, r) { return (r.status !== 'paid') ? s + (parseFloat(r.total_amount) || 0) : s; }, 0),
                         slipStatus: adminSlipStatus,
                         reviewNote: adminReviewNote,
                         slipId: adminLatestSlip ? adminLatestSlip.id : null,
@@ -1678,12 +1679,13 @@ async function _routeAction(action, data) {
                 var outRows = [], slipRows = [];
                 if (houseNumber) {
                     [outRows, slipRows] = await Promise.all([
-                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
-                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
+                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, order: 'period.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, order: 'submitted_at.desc', limit: '12' }).catch(function() { return []; })
                     ]);
                 }
-                var currentOut = (outRows || []).find(function(o) { return o.period === period; });
-                var latestSlip = slipRows && slipRows[0];
+                var currentOut = outRows[0]; // ใช้บิลล่าสุดที่มีในระบบ
+                if (currentOut && currentOut.period) period = currentOut.period;
+                var latestSlip = slipRows.find(function(s) { return s.period === period; }); // หาสลิปที่ตรงกับบิลล่าสุด
                 var slipStatus = 'none';
                 var reviewNote = '';
                 if (latestSlip) {
@@ -1692,7 +1694,7 @@ async function _routeAction(action, data) {
                     else slipStatus = 'reviewing';
                 }
                 var totalOutstanding = (outRows || []).reduce(function(s, r) {
-                    return s + (parseFloat(r.total_amount) || 0);
+                    return (r.status !== 'paid') ? s + (parseFloat(r.total_amount) || 0) : s;
                 }, 0);
                 // ดึง proxy assignments ของ user นี้
                 var userProxyAssignments = [];
