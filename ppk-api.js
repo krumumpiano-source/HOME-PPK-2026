@@ -1568,7 +1568,7 @@ async function _routeAction(action, data) {
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type' }).catch(function() { return []; }),
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
-                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; }),
+                sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee,due_date,sent_at', limit: '200' }).catch(function() { return []; }),
                 sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number,house_id' }).catch(function() { return []; }),
                 sbGet('housing',        { select: 'id,house_number,type' }).catch(function() { return []; })
             ]);
@@ -1607,9 +1607,13 @@ async function _routeAction(action, data) {
             }
 
             // สร้าง map ของบ้านที่มี notification (= admin กดแจ้งยอดแล้ว)
-            var notifMap = {};
+            var notifMap = {}, notifDueDateMap = {}, notifSentAtMap = {};
             (notifRows || []).forEach(function(n) {
-                if (n.house_number) notifMap[n.house_number] = parseFloat(n.common_fee) || 0;
+                if (n.house_number) {
+                    notifMap[n.house_number] = parseFloat(n.common_fee) || 0;
+                    if (n.due_date) notifDueDateMap[n.house_number] = n.due_date;
+                    if (n.sent_at) notifSentAtMap[n.house_number] = n.sent_at;
+                }
             });
             var hasNotifications = Object.keys(notifMap).length > 0;
 
@@ -1667,6 +1671,8 @@ async function _routeAction(action, data) {
                 s.email = resEmailMap[s.house_number] || '';
                 s.exempt_common = exemptSet[s.house_number] ? true : false;
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
+                s.due_date      = notifDueDateMap[s.house_number] || null;
+                s.notified_at   = notifSentAtMap[s.house_number] || null;
                 return s;
             }).sort(_naturalCmp);
             return { success: true, data: result };
