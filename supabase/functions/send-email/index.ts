@@ -75,6 +75,18 @@ serve(async (req: Request) => {
 
     const from = fromEmail ? `${fromName} <${fromEmail}>` : `${fromName} <onboarding@resend.dev>`;
 
+    // Validate from address
+    const fromAddrMatch = from.match(/<([^>]+)>/);
+    const fromAddr = fromAddrMatch ? fromAddrMatch[1] : fromEmail;
+    if (fromAddr && fromAddr.length > 320) {
+      return new Response(JSON.stringify({ error: 'from address ยาวเกินไป' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('send-email payload:', JSON.stringify({ from, to: toList, subject: subject?.substring(0, 50) }));
+
     const body: any = {
       from,
       to: toList.map(a => a.trim()),
@@ -96,8 +108,8 @@ serve(async (req: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error('Resend error:', data);
-      return new Response(JSON.stringify({ error: data.message || 'Resend API error' }), {
+      console.error('Resend error:', JSON.stringify(data), 'from:', from, 'to:', toList);
+      return new Response(JSON.stringify({ error: data.message || 'Resend API error', detail: { from, to: toList } }), {
         status: res.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
