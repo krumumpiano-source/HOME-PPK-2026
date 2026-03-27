@@ -1020,11 +1020,16 @@ async function _routeAction(action, data) {
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var [rows, resRows] = await Promise.all([
                 sbGet('slip_submissions', q).catch(function() { return []; }),
-                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; })
+                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type' }).catch(function() { return []; })
             ]);
-            var resMap = {};
-            (resRows || []).forEach(function(r) { resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim(); });
-            (rows || []).forEach(function(s) { s.resident_name = resMap[s.house_number] || ''; });
+            var resMap = {}, resEmailMap2 = {};
+            (resRows || []).forEach(function(r) {
+                if (r.house_number) {
+                    if (!resMap[r.house_number] || r.resident_type !== 'cohabitant') resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                    if (r.email && r.resident_type !== 'cohabitant' && !resEmailMap2[r.house_number]) resEmailMap2[r.house_number] = r.email;
+                }
+            });
+            (rows || []).forEach(function(s) { s.resident_name = resMap[s.house_number] || ''; s.email = resEmailMap2[s.house_number] || ''; });
             return { success: true, data: rows };
         }
         case 'getNotificationHistory': {
@@ -1561,7 +1566,7 @@ async function _routeAction(action, data) {
             var [wRows, eRows, resRows, settRows, notifRows, exemptRows, housingRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
-                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; }),
+                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type' }).catch(function() { return []; }),
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
                 sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee', limit: '200' }).catch(function() { return []; }),
                 sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number,house_id' }).catch(function() { return []; }),
@@ -1608,14 +1613,18 @@ async function _routeAction(action, data) {
             });
             var hasNotifications = Object.keys(notifMap).length > 0;
 
-            var resMap = {};
+            var resMap = {}, resEmailMap = {};
             (resRows || []).forEach(function(r) {
                 if (r.house_number) {
                     var name = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
                     if (resMap[r.house_number]) {
-                        resMap[r.house_number] += '\n' + name;
+                        if (r.resident_type !== 'cohabitant') resMap[r.house_number] = name;
                     } else {
                         resMap[r.house_number] = name;
+                    }
+                    // เก็บ email ของผู้พักหลัก (ไม่ใช่ผู้อยู่ร่วม)
+                    if (r.email && r.resident_type !== 'cohabitant' && !resEmailMap[r.house_number]) {
+                        resEmailMap[r.house_number] = r.email;
                     }
                 }
             });
@@ -1655,6 +1664,7 @@ async function _routeAction(action, data) {
             }
             var result = Object.values(summaryMap).map(function(s) {
                 s.resident_name = resMap[s.house_number] || '';
+                s.email = resEmailMap[s.house_number] || '';
                 s.exempt_common = exemptSet[s.house_number] ? true : false;
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
                 return s;
