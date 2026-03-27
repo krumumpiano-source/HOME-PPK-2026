@@ -1810,7 +1810,7 @@ async function _routeAction(action, data) {
                 // Self-healing: ถ้ามี outstanding ที่มี approved slip แล้ว -> auto-mark paid
                 if (outRows && outRows.length > 0) {
                     var _approvedPeriods = {};
-                    (slipRows || []).forEach(function(sl) { if (sl.status === 'approved' && sl.period) _approvedPeriods[sl.period] = true; });
+                    (slipRows || []).forEach(function(sl) { if ((sl.status === 'approved' || sl.status === 'match') && sl.period) _approvedPeriods[sl.period] = true; });
                     var _healedOut = [];
                     for (var _hi = 0; _hi < outRows.length; _hi++) {
                         if (outRows[_hi].status === 'paid') continue; // ข้ามที่ paid แล้ว
