@@ -114,6 +114,22 @@
     const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const fmt = v => parseFloat(v||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const num = v => parseFloat(v || 0) || 0;
+    function prevPeriod(period) {
+        var p = String(period || '').split('-');
+        var y = parseInt(p[0], 10);
+        var m = parseInt(p[1], 10);
+        if (!y || !m) return '';
+        m -= 1;
+        if (m <= 0) { m = 12; y -= 1; }
+        return y + '-' + String(m).padStart(2, '0');
+    }
+    function periodToThaiLabel(period) {
+        var p = String(period || '').split('-');
+        var y = parseInt(p[0], 10);
+        var m = parseInt(p[1], 10);
+        if (!y || !m || m < 1 || m > 12) return period || '-';
+        return THAI_MONTHS[m - 1] + ' ' + y;
+    }
     function isNear(a, b, tolerance) { return Math.abs(num(a) - num(b)) <= (tolerance || 1); }
     function guessWithdrawalInfo(amount, ctx) {
         var amt = num(amount);
@@ -382,30 +398,57 @@
 
             // ── ดึงข้อมูลจากระบบ ──
             var sysNotifications = [];
+            var prevP = prevPeriod(stm.period);
+            var notifCurRows = [];
+            var notifPrevRows = [];
 
             try {
-                var r3 = await callBackend('getNotificationHistory', { period: stm.period, limit: 200 });
-                if (r3 && r3.success) sysNotifications = r3.data || [];
+                var _notifFetch = await Promise.all([
+                    callBackend('getNotificationHistory', { period: stm.period, limit: 200 }),
+                    prevP ? callBackend('getNotificationHistory', { period: prevP, limit: 200 }) : Promise.resolve({ success: true, data: [] })
+                ]);
+                var rCur = _notifFetch[0];
+                var rPrev = _notifFetch[1];
+                notifCurRows = (rCur && rCur.success) ? (rCur.data || []) : [];
+                notifPrevRows = (rPrev && rPrev.success) ? (rPrev.data || []) : [];
             } catch(e) {}
 
             // ── วิเคราะห์ข้อมูล (ใช้เฉพาะแจ้งชำระ + ยอดถอนใน statement) ──
 
-            // ── Notifications (ใช้ค่าที่บันทึกไว้เฉพาะเดือนตรงๆ) ──
-            // notifCommonTotal กรองบ้านที่ยกเว้นค่าส่วนกลางออก
-            var notifCommonTotal = sysNotifications.reduce(function(s,n) {
-                if (_globalExemptSet[n.house_number]) return s;
-                return s + num(n.common_fee);
-            }, 0);
-            var notifWaterTotal = sysNotifications.reduce(function(s,n) { return s + num(n.water_amount); }, 0);
-            var notifElectricTotal = sysNotifications.reduce(function(s,n) { return s + num(n.electric_amount); }, 0);
-            var notifGarbageTotal = sysNotifications.reduce(function(s,n) { return s + num(n.garbage_fee); }, 0);
-            // คำนวณ notifTotalAll จากส่วนประกอบ (เพื่อให้สอดคล้องกับ notifCommonTotal ที่กรองแล้ว)
-            var notifTotalAll = notifWaterTotal + notifElectricTotal + notifCommonTotal + notifGarbageTotal;
+            function calcNotifTotals(rows) {
+                var c = (rows || []).reduce(function(s,n) {
+                    if (_globalExemptSet[n.house_number]) return s;
+                    return s + num(n.common_fee);
+                }, 0);
+                var w = (rows || []).reduce(function(s,n) { return s + num(n.water_amount); }, 0);
+                var e = (rows || []).reduce(function(s,n) { return s + num(n.electric_amount); }, 0);
+                var g = (rows || []).reduce(function(s,n) { return s + num(n.garbage_fee); }, 0);
+                return { rows: rows || [], common: c, water: w, electric: e, garbage: g, total: c + w + e + g };
+            }
+            var notifCur = calcNotifTotals(notifCurRows);
+            var notifPrev = calcNotifTotals(notifPrevRows);
+
+            // เลือกงวดแจ้งชำระที่เหมาะสุด: งวดเดียวกัน หรือ งวดก่อนหน้า (ตามการถอนเงินจริงที่อาจข้ามเดือน)
+            var _wd = num(stm.totalWithdraw);
+            var _diffCur = Math.abs(_wd - num(notifCur.total));
+            var _diffPrev = Math.abs(_wd - num(notifPrev.total));
+            var usePrev = (notifPrev.total > 0) && (notifCur.total <= 0 || _diffPrev < _diffCur);
+            var comparedPeriod = usePrev ? prevP : stm.period;
+            var comparedLabel = periodToThaiLabel(comparedPeriod);
+            var comparedSource = usePrev ? 'งวดก่อนหน้า' : 'งวดเดียวกัน';
+            var chosenNotif = usePrev ? notifPrev : notifCur;
+
+            sysNotifications = chosenNotif.rows;
+            var notifCommonTotal = chosenNotif.common;
+            var notifWaterTotal = chosenNotif.water;
+            var notifElectricTotal = chosenNotif.electric;
+            var notifGarbageTotal = chosenNotif.garbage;
+            var notifTotalAll = chosenNotif.total;
 
             // ── ตรวจเฉพาะ ยอดแจ้งชำระรวม vs ยอดถอนรวมใน statement ──
             var withdrawDiff = Math.round((num(stm.totalWithdraw) - num(notifTotalAll)) * 100) / 100;
             if (Math.abs(withdrawDiff) > 1) {
-                issues.push('ยอดถอนรวมใน Statement = ' + fmt(stm.totalWithdraw) + ' แต่ยอดแจ้งชำระรวม = ' + fmt(notifTotalAll) + ' (ต่าง ' + fmt(withdrawDiff) + ')');
+                issues.push('ยอดถอนรวมใน Statement = ' + fmt(stm.totalWithdraw) + ' แต่ยอดแจ้งชำระรวม (' + comparedLabel + ') = ' + fmt(notifTotalAll) + ' (ต่าง ' + fmt(withdrawDiff) + ')');
             }
 
             // ── จับคู่รายการถอนแบบ heuristic ──
@@ -429,7 +472,7 @@
                 }
             }
             // ── สถานะ ──
-            var hasNoSystemData = sysNotifications.length === 0;
+            var hasNoSystemData = (notifCur.rows.length === 0 && notifPrev.rows.length === 0);
             var status = hasNoSystemData ? 'nodata' : (issues.length > 0 ? 'err' : 'ok');
             if (issues.length > 0) totalIssues += issues.length;
             if (notes.length > 0) totalNotes += notes.length;
@@ -454,7 +497,7 @@
             html += '<div class="section-title">📄 Statement ธนาคาร</div>';
             html += '<table><tr><th>ยอดยกมา</th><th>ยอดฝากรวม (' + (stm.deposits||[]).length + ' รายการ)</th><th>ยอดถอนรวม (' + (stm.withdrawals||[]).length + ' รายการ)</th><th>ยอดยกไป</th></tr>';
             html += '<tr><td class="right">' + fmt(stm.openBal) + '</td><td class="right" style="color:#059669;">' + fmt(stm.totalDeposit) + '</td><td class="right" style="color:#dc2626;">' + fmt(stm.totalWithdraw) + '</td><td class="right" style="font-weight:700;">' + fmt(stm.closeBal) + '</td></tr></table>';
-            html += '<p class="note">สูตรตรวจหลัก: ยอดถอนรวมใน Statement <strong>' + fmt(stm.totalWithdraw) + '</strong> เทียบกับยอดแจ้งชำระรวม <strong>' + fmt(notifTotalAll) + '</strong></p>';
+            html += '<p class="note">สูตรตรวจหลัก: ยอดถอนรวมใน Statement <strong>' + fmt(stm.totalWithdraw) + '</strong> เทียบยอดแจ้งชำระงวด <strong>' + comparedLabel + '</strong> (' + comparedSource + ') = <strong>' + fmt(notifTotalAll) + '</strong></p>';
 
             // --- Withdrawal matching ---
             if (matchResults.length > 0) {
@@ -469,7 +512,7 @@
                     html += '<td class="' + cls + '">' + (m.note || '—') + '</td></tr>';
                 }
                 html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>รวมถอนทั้งหมด</td>';
-                html += '<td class="right">' + fmt(stm.totalWithdraw) + '</td><td class="right">' + fmt(notifTotalAll) + '</td><td>เทียบกับยอดแจ้งชำระรวม</td></tr>';
+                html += '<td class="right">' + fmt(stm.totalWithdraw) + '</td><td class="right">' + fmt(notifTotalAll) + '</td><td>เทียบกับงวด ' + comparedLabel + ' (' + comparedSource + ')</td></tr>';
                 html += '</table>';
             }
 
@@ -489,7 +532,7 @@
             // Right: Notifications
             html += '<div class="detail-col">';
             if (sysNotifications.length > 0) {
-                html += '<div class="section-title">📨 การแจ้งเตือน (' + sysNotifications.length + ' หลัง)</div>';
+                html += '<div class="section-title">📨 การแจ้งเตือนงวด ' + comparedLabel + ' (' + sysNotifications.length + ' หลัง)</div>';
                 html += '<table>';
                 html += '<tr><td>ยอดแจ้งเตือนรวม</td><td class="right">' + fmt(notifTotalAll) + '</td></tr>';
                 html += '<tr><td>├ ค่าส่วนกลาง</td><td class="right">' + fmt(notifCommonTotal) + '</td></tr>';
@@ -498,8 +541,8 @@
                 html += '<tr><td>└ ค่าขยะ</td><td class="right">' + fmt(notifGarbageTotal) + '</td></tr>';
                 html += '</table>';
                 var wdColor = Math.abs(withdrawDiff) <= 1 ? '#059669' : '#dc2626';
-                html += '<p class="note">ℹ️ ยอดถอน Statement (' + fmt(stm.totalWithdraw) + ') เทียบยอดแจ้งชำระ (' + fmt(notifTotalAll) + ') → ส่วนต่าง: <strong style="color:' + wdColor + ';">' + fmt(withdrawDiff) + '</strong>';
-                html += '<br><small>หน้านี้คิดจาก 2 ค่าเท่านั้น: ยอดแจ้งชำระรวม และยอดถอนรวมใน statement</small></p>';
+                html += '<p class="note">ℹ️ ยอดถอน Statement (' + fmt(stm.totalWithdraw) + ') เทียบยอดแจ้งชำระงวด ' + comparedLabel + ' (' + comparedSource + ') = ' + fmt(notifTotalAll) + ' → ส่วนต่าง: <strong style="color:' + wdColor + ';">' + fmt(withdrawDiff) + '</strong>';
+                html += '<br><small>ระบบเลือกเทียบให้อัตโนมัติระหว่างงวดเดียวกันกับงวดก่อนหน้า โดยเลือกงวดที่ส่วนต่างน้อยกว่า</small></p>';
             }
             html += '</div></div>';
 
