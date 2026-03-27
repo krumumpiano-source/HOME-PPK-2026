@@ -122,27 +122,89 @@
         .outstanding-banner .ob-btn:hover { background: #92400E; }
 
         /* ── Proxy Assignment Banner ── */
-        .proxy-assign-section { margin-bottom: 1rem; }
-        .proxy-assign-section .pa-header { font-size: 0.82rem; color: #065F46; font-weight: 600; margin-bottom: 0.5rem; padding: 0 0.2rem; }
-        .proxy-assign-card {
-            border: 1.5px solid #6EE7B7; border-radius: 12px;
-            padding: 0.85rem 1rem; margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
-            display: flex; align-items: center; gap: 0.75rem;
+        .proxy-assign-section { margin-bottom: 0; }
+        .proxy-assign-section .pa-header {
+            font-size: 0.82rem; color: #065F46; font-weight: 600;
+            margin-bottom: 0.5rem; padding: 0 0.2rem;
+            display: flex; align-items: center; gap: 0.4rem;
         }
-        .proxy-assign-card .pac-icon { font-size: 1.5rem; flex-shrink: 0; }
-        .proxy-assign-card .pac-info { flex: 1; min-width: 0; }
-        .proxy-assign-card .pac-house { font-weight: 700; color: #065F46; font-size: 0.92rem; }
-        .proxy-assign-card .pac-name { font-size: 0.8rem; color: #047857; margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .proxy-assign-card .pac-amount { font-size: 0.78rem; color: #374151; margin-top: 0.1rem; }
-        .proxy-assign-card .pac-status { flex-shrink: 0; }
-        .proxy-assign-card .pac-btn {
-            background: #059669; color: #fff; border: none; border-radius: 8px;
-            padding: 0.4rem 0.8rem; font-family: 'Kanit', sans-serif;
-            font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+
+        /* ── Proxy Hero Card (full card, เหมือน hero-payment แต่สีเขียว) ── */
+        .proxy-hero-card {
+            background: linear-gradient(135deg, #065F46 0%, #059669 55%, #34D399 100%);
+            border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
+            color: #fff; position: relative; overflow: hidden;
         }
-        .proxy-assign-card .pac-btn:disabled { background: #6B7280; cursor: default; }
-        .proxy-assign-card .pac-btn.paid { background: #D1FAE5; color: #065F46; cursor: default; }
+        .proxy-hero-card::before {
+            content: ''; position: absolute; top: -30%; right: -20%;
+            width: 200px; height: 200px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .proxy-hero-card .phc-label-proxy {
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;
+            background: rgba(255,255,255,0.18); border-radius: 20px;
+            padding: 0.18rem 0.65rem; display: inline-block; margin-bottom: 0.5rem;
+        }
+        .proxy-hero-card .phc-house {
+            font-size: 1.15rem; font-weight: 700; margin-bottom: 0.3rem;
+        }
+        .proxy-hero-card .phc-name {
+            font-size: 0.82rem; opacity: 0.8; margin-bottom: 0.8rem;
+        }
+        .proxy-hero-card .phc-divider {
+            border: none; border-top: 1px solid rgba(255,255,255,0.25);
+            margin: 0.7rem 0;
+        }
+        .proxy-hero-card .phc-row {
+            display: flex; gap: 1rem; align-items: flex-start;
+        }
+        .proxy-hero-card .phc-col { flex: 1; }
+        .proxy-hero-card .phc-amount-label { font-size: 0.82rem; opacity: 0.8; margin-bottom: 0.1rem; }
+        .proxy-hero-card .phc-amount {
+            font-size: 1.8rem; font-weight: 700; line-height: 1.1;
+        }
+        .proxy-hero-card .phc-amount.zero { opacity: 0.7; font-size: 1.2rem; }
+        .proxy-hero-card .phc-period { font-size: 0.78rem; opacity: 0.7; margin-top: 0.15rem; }
+        .proxy-hero-card .phc-status {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.3rem 0.7rem; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 600; margin-top: 0.5rem;
+        }
+        .proxy-hero-card .phc-status.pending { background: rgba(251,191,36,0.25); color: #FCD34D; }
+        .proxy-hero-card .phc-status.paid { background: rgba(16,185,129,0.25); color: #6EE7B7; }
+        .proxy-hero-card .phc-status.overdue { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+        .proxy-hero-card .phc-status.rejected { background: rgba(239,68,68,0.25); color: #FCA5A5; }
+        .proxy-hero-card .phc-reject-banner {
+            background: rgba(220,38,38,0.18); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 10px; padding: .6rem .85rem; margin-top: .7rem;
+            font-size: .85rem; color: #FCA5A5; line-height: 1.5; display: none;
+        }
+        .proxy-hero-card .phc-reject-banner strong { color: #fff; }
+        .proxy-hero-card .phc-cta {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; padding: 0.85rem;
+            background: rgba(255,255,255,0.92); color: #065F46;
+            border: none; border-radius: 14px;
+            font-family: 'Kanit', sans-serif; font-size: 1.05rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; margin-top: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .proxy-hero-card .phc-cta:hover { background: #fff; transform: translateY(-2px); }
+        .proxy-hero-card .phc-cta:active { transform: scale(0.98); }
+        .proxy-hero-card .phc-cta.reviewing { background: rgba(251,191,36,0.2); color: #F59E0B; cursor: default; }
+        .proxy-hero-card .phc-cta.success { background: rgba(16,185,129,0.2); color: #10B981; cursor: default; }
+        .proxy-hero-card .phc-cancel-btn {
+            background: transparent; border: 1px solid rgba(239,68,68,0.45);
+            color: #FCA5A5; border-radius: 8px; padding: .4rem .9rem;
+            font-size: .82rem; cursor: pointer; margin-top: .55rem;
+            width: 100%; transition: background .2s; font-family: 'Kanit', sans-serif;
+        }
+        .proxy-hero-card .phc-cancel-btn:hover { background: rgba(220,38,38,0.15); }
+        @media (max-width: 480px) {
+            .proxy-hero-card { padding: 1.2rem; border-radius: 16px; }
+            .proxy-hero-card .phc-amount { font-size: 1.5rem; }
+            .proxy-hero-card .phc-cta { font-size: 0.95rem; padding: 0.75rem; }
+        }
 
         /* ── Quick Actions Row ── */
         .quick-actions {
@@ -485,42 +547,86 @@
         }
 
         var _proxyList = [];
+
         function renderProxyAssignments(list) {
             var sec = document.getElementById('proxyAssignSection');
             if (!sec) return;
             if (!list || list.length === 0) { sec.style.display = 'none'; return; }
             _proxyList = list;
             sec.style.display = '';
+
             var html = '<div class="pa-header">🔄 บ้านที่คุณได้รับมอบหมายให้ชำระแทน (' + list.length + ')</div>';
+
             list.forEach(function(a, idx) {
-                var houseLabel = a.house_number || '-';
-                var resName = a.resident_name || 'ผู้พัก';
-                var amtText = a.amount > 0 ? a.amount.toLocaleString('th-TH') + ' บาท' : 'ยังไม่มียอดแจ้ง';
-                var statusHtml = '', btnHtml = '';
-                if (a.slip_status === 'success') {
-                    statusHtml = '<span style="font-size:0.78rem;color:#059669;">✅ ชำระแล้ว</span>';
-                    btnHtml = '<button class="pac-btn paid" disabled>✅ ชำระแล้ว</button>';
-                } else if (a.slip_status === 'reviewing') {
-                    statusHtml = '<span style="font-size:0.78rem;color:#D97706;">🔍 รอตรวจสอบ</span>';
-                    btnHtml = '<button class="pac-btn" disabled style="background:#D97706;">🔍 รอตรวจสอบ</button>';
-                } else if (a.slip_status === 'rejected') {
-                    statusHtml = '<span style="font-size:0.78rem;color:#DC2626;">❌ สลิปไม่ผ่าน</span>';
-                    btnHtml = '<button class="pac-btn" style="background:#DC2626;" onclick="proxyGoUpload(' + idx + ')">⚠️ ส่งใหม่</button>';
-                } else if (a.amount > 0) {
-                    btnHtml = '<button class="pac-btn" onclick="proxyGoUpload(' + idx + ')">📤 ส่งสลิป</button>';
-                } else {
-                    btnHtml = '<button class="pac-btn" style="background:#6B7280;" disabled>ยังไม่มียอด</button>';
+                var houseLabel = _escHtml(a.house_number || '-');
+                var resName    = _escHtml(a.resident_name || 'ผู้พัก');
+                var period     = a.period || '';
+                var parts      = period.split('-');
+                var monthIdx   = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
+                var yearBE     = parts[0] || String(new Date().getFullYear() + 543);
+                var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
+                var amount     = a.amount || 0;
+                var slipStatus = a.slip_status || 'none';
+                var reviewNote = _escHtml(a.review_note || '');
+
+                /* ── ยอดเงิน ── */
+                var amtHtml = amount > 0
+                    ? amount.toLocaleString('th-TH') + ' บาท'
+                    : 'ยังไม่มียอดแจ้ง';
+                var amtClass = amount > 0 ? 'phc-amount' : 'phc-amount zero';
+
+                /* ── Status badge ── */
+                var badgeHtml = '';
+                if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">✅ ชำระแล้ว</div>';
+                else if (slipStatus === 'reviewing') badgeHtml = '<div class="phc-status pending">🔍 รอตรวจสอบ</div>';
+                else if (slipStatus === 'rejected')  badgeHtml = '<div class="phc-status rejected">❌ สลิปไม่ผ่าน</div>';
+                else if (amount > 0)                 badgeHtml = '<div class="phc-status overdue">⏳ รอชำระ</div>';
+
+                /* ── Rejection banner ── */
+                var rejectBannerHtml = '';
+                if (slipStatus === 'rejected') {
+                    rejectBannerHtml = '<div class="phc-reject-banner" style="display:block;">'
+                        + '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                        + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote + '</strong>' : '')
+                        + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>"⚠️ ส่งสลิปใหม่"</strong></div>';
                 }
-                html += '<div class="proxy-assign-card">'
-                    + '<div class="pac-icon">🏠</div>'
-                    + '<div class="pac-info">'
-                        + '<div class="pac-house">' + houseLabel + '</div>'
-                        + '<div class="pac-name">' + resName + '</div>'
-                        + '<div class="pac-amount">' + amtText + (statusHtml ? ' &bull; ' + statusHtml : '') + '</div>'
+
+                /* ── CTA button ── */
+                var ctaHtml = '';
+                var cancelHtml = '';
+                if (slipStatus === 'success') {
+                    ctaHtml = '<button class="phc-cta success" disabled>✅ ชำระสำเร็จแล้ว</button>';
+                } else if (slipStatus === 'reviewing') {
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>🔍 อยู่ระหว่างตรวจสอบ</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
+                } else if (slipStatus === 'rejected') {
+                    ctaHtml = '<button class="phc-cta" style="background:#FEE2E2;color:#DC2626;" onclick="proxyGoUpload(' + idx + ')">⚠️ สลิปไม่ผ่าน — กดส่งใหม่</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
+                } else if (amount > 0) {
+                    ctaHtml = '<button class="phc-cta" onclick="proxyGoUpload(' + idx + ')">📤 ส่งสลิปชำระเงิน</button>';
+                } else {
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>ยังไม่มียอดแจ้งเดือนนี้</button>';
+                }
+
+                html += '<div class="proxy-hero-card">'
+                    + '<div class="phc-label-proxy">🔄 ชำระแทน</div>'
+                    + '<div class="phc-house">🏠 ' + houseLabel + '</div>'
+                    + '<div class="phc-name">' + resName + '</div>'
+                    + '<hr class="phc-divider">'
+                    + '<div class="phc-row">'
+                        + '<div class="phc-col">'
+                            + '<div class="phc-amount-label">💳 ยอดชำระเดือนนี้</div>'
+                            + '<div class="' + amtClass + '">' + amtHtml + '</div>'
+                            + '<div class="phc-period">📅 ' + periodDisplay + '</div>'
+                        + '</div>'
+                        + '<div class="phc-col" style="text-align:right;">' + badgeHtml + '</div>'
                     + '</div>'
-                    + '<div class="pac-status">' + btnHtml + '</div>'
+                    + rejectBannerHtml
+                    + ctaHtml
+                    + cancelHtml
                     + '</div>';
             });
+
             sec.innerHTML = html;
         }
 
@@ -533,10 +639,40 @@
                 proxyMode: true,
                 period: a.period || '',
                 periodKey: periodKey,
-                notifiedAmount: a.amount > 0 ? a.amount : 0
+                notifiedAmount: a.amount > 0 ? a.amount : 0,
+                residentName: a.resident_name || ''
             };
             localStorage.setItem('pendingSlipInfo', JSON.stringify(info));
             navigate('?page=upload-slip');
+        }
+
+        async function proxyCancelSlip(idx) {
+            var a = _proxyList[idx];
+            if (!a || !a.slip_id) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
+            var ok = await ppkConfirm(
+                'ยืนยันการยกเลิกสลิปของบ้าน ' + (a.house_number || '') + '?\n\nสลิปจะถูกลบออกจากระบบ',
+                { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' }
+            );
+            if (!ok) return;
+            try {
+                var result = await callBackend('cancelSlip', { id: a.slip_id });
+                if (result && result.success) {
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
+                    try {
+                        var keys = [];
+                        for (var i = 0; i < localStorage.length; i++) {
+                            var k = localStorage.key(i);
+                            if (k && k.indexOf('apicache_getDashboardData') === 0) keys.push(k);
+                        }
+                        keys.forEach(function(k) { localStorage.removeItem(k); });
+                    } catch(e) {}
+                    setTimeout(function() { loadDashboard(); }, 400);
+                } else {
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
+                }
+            } catch(e) {
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
         }
 
         function heroCtaClick() {
