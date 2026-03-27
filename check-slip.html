@@ -1167,6 +1167,7 @@
       const unit = list[index];
       if(!unit) return;
       if(!unit.approval) { ppkAlert('ยังไม่ได้อนุมัติการชำระเงินของห้องนี้'); return; }
+      console.log('[sendReceiptEmail] unit.email =', JSON.stringify(unit.email), 'unit.unitNumber =', unit.unitNumber);
 
       const { monthName, year } = getSelectedPeriod();
       const sysSettings = cachedAdminSettings || {};
@@ -1213,9 +1214,13 @@
       let emailSent = false;
       let emailError = '';
 
-      if (unit.email) {
+      // ตรวจสอบว่า email ถูกต้อง
+      const emailTo = (unit.email || '').trim();
+      const emailValid = emailTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTo) && emailTo.length <= 320;
+
+      if (emailValid) {
         try {
-          const er = await callBackend('sendEmail', { to: unit.email, subject, html });
+          const er = await callBackend('sendEmail', { to: emailTo, subject, html });
           emailSent = er && er.success;
           if (!emailSent) emailError = (er && er.error) || 'ไม่ทราบสาเหตุ';
         } catch(e) { console.error('sendReceiptEmail error:', e); emailError = e.message || 'เกิดข้อผิดพลาด'; }
@@ -1224,7 +1229,7 @@
       if (emailSent) {
         ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
       } else {
-        var errMsg = unit.email ? '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '') : '⚠️ ไม่พบอีเมลของผู้พัก';
+        var errMsg = !emailTo ? '⚠️ ไม่พบอีเมลของผู้พัก' : !emailValid ? '⚠️ อีเมลไม่ถูกต้อง: ' + emailTo : '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '');
         ppkAlert(errMsg, { type: 'error' });
       }
       return emailSent;
