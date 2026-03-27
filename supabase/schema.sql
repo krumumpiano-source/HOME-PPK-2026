@@ -442,3 +442,75 @@ create table if not exists public.password_resets (
   attempts    int default 0,
   created_at  timestamptz default now()
 );
+
+-- ============================================================
+-- MIGRATIONS v2 — เพิ่ม columns/tables ที่ ppk-api.js ต้องการ
+-- Safe to re-run (ใช้ IF NOT EXISTS / IF EXISTS ทุก statement)
+-- ============================================================
+
+-- ── water_bills: OCR + meter photo support ──
+alter table if exists public.water_bills
+  add column if not exists meter_photo_url  text,
+  add column if not exists photo_deleted_at timestamptz,
+  add column if not exists ocr_raw_text     text,
+  add column if not exists ocr_confidence   numeric(5,2),
+  add column if not exists read_by          text;
+
+-- ── slip_submissions: QR data + proxy support ──
+alter table if exists public.slip_submissions
+  add column if not exists submitted_by_user_id text,
+  add column if not exists qr_amount            numeric(10,2),
+  add column if not exists qr_ref               text,
+  add column if not exists qr_raw               text;
+
+-- ── payment_proxies: มอบหมายชำระแทน ──
+create table if not exists public.payment_proxies (
+  id                text primary key default ('PXY' || upper(substr(gen_random_uuid()::text, 1, 8))),
+  house_id          text references public.housing(id) on delete set null,
+  house_number      text not null,
+  proxy_user_id     text not null references public.users(id) on delete cascade,
+  proxy_resident_id text references public.residents(id) on delete set null,
+  assigned_by       text references public.users(id) on delete set null,
+  assigned_at       timestamptz default now(),
+  is_active         boolean default true,
+  notes             text,
+  updated_at        timestamptz default now()
+);
+
+create index if not exists idx_payment_proxies_active
+  on public.payment_proxies(proxy_user_id, is_active)
+  where is_active = true;
+
+-- ── data_backups: Auto-snapshot ก่อนการเขียนทุกครั้ง ──
+create table if not exists public.data_backups (
+  id              text primary key default ('BAK' || upper(substr(gen_random_uuid()::text, 1, 8))),
+  action          text not null,
+  description     text,
+  affected_table  text not null,
+  filter_key      text,
+  filter_value    text,
+  record_count    int default 0,
+  previous_data   jsonb default '[]',
+  created_by      text,
+  created_at      timestamptz default now()
+);
+
+create index if not exists idx_data_backups_created
+  on public.data_backups(created_at desc);
+
+-- ============================================================
+-- ADDITIONAL INDEXES — queries ที่ใช้บ่อยแต่ยังไม่มี index
+-- ============================================================
+
+create index if not exists idx_residents_user_id_active
+  on public.residents(user_id) where is_active = true;
+create index if not exists idx_residents_email
+  on public.residents(email) where email is not null;
+create index if not exists idx_coresidents_resident_id
+  on public.coresidents(resident_id);
+create index if not exists idx_outstanding_house_status
+  on public.outstanding(house_number, status);
+create index if not exists idx_notifications_period_house
+  on public.notifications(period, house_number);
+create index if not exists idx_exemptions_type_house
+  on public.exemptions(type, house_number);

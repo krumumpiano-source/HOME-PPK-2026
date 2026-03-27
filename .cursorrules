@@ -1,0 +1,19 @@
+# แนะนำให้ AI อ่านและปฏิบัติตามกฏเหล่านี้อย่างเคร่งครัด
+# Rules for AI Assistant (Cursor / Gemini)
+
+1. **Auto-Commit Rule (Hands-Off Version Control):**
+   - Every time a user's request involves modifying code or completing a feature/fix, and the task is successfully completed, you MUST automatically prepare a Git commit.
+   - Do NOT ask the user to commit manually. You must automate the process.
+
+2. **Commit Process:**
+   - Run `git add .` (or specific files if necessary).
+   - Generate a clear, concise, and highly descriptive commit message using the Conventional Commits format (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`).
+   - Ensure the commit message is written in Thai or English based on the context of the change.
+   - Run `git commit -m "your generated message"`.
+
+3. **Auto-Push Rule:**
+   - After a successful commit, you MUST execute `git push` to sync changes with the remote repository.
+   - Provide a brief summary to the user detailing what was committed and pushed.
+
+4. **Zero Manual Work for User:**
+   - The user has explicitly stated they want this to be 100% automated. Execute terminal commands on their behalf to finalize the version control syncing without making them do it manually.

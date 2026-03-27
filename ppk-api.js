@@ -18,9 +18,14 @@
       window._PPK_CONFIG
     ) {
       var cfg = window._PPK_CONFIG;
-      // ใช้ anon key — RLS policies เปิดให้ anon เข้าถึงได้ (no-auth mode)
+      // ใช้ anon key + session token header สำหรับ tiered RLS
       window._sb = window.supabase.createClient(cfg.url, cfg.anon, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
+        global: {
+          headers: {
+            'x-session-token': localStorage.getItem('sessionToken') || ''
+          }
+        }
       });
       // Backward compat
       window.SUPABASE_URL      = cfg.url;
@@ -57,6 +62,26 @@ function navigate(page) {
 ────────────────────────────────────────── */
 function getSessionToken() {
     return localStorage.getItem('sessionToken') || '';
+}
+
+/* ──────────────────────────────────────────
+   อัปเดต session token ใน Supabase headers
+   เรียกหลัง login/setFirstPassword สำเร็จ
+────────────────────────────────────────── */
+function _refreshSbHeaders() {
+    var tk = localStorage.getItem('sessionToken') || '';
+    if (window._sb) {
+        try {
+            // Supabase JS v2: อัปเดต global headers
+            if (window._sb.rest && window._sb.rest.headers) {
+                window._sb.rest.headers['x-session-token'] = tk;
+            }
+            // หรือผ่าน realtime headers
+            if (window._sb.realtime && window._sb.realtime.headers) {
+                window._sb.realtime.headers['x-session-token'] = tk;
+            }
+        } catch(e) { console.warn('_refreshSbHeaders:', e); }
+    }
 }
 
 /* ──────────────────────────────────────────
@@ -277,6 +302,7 @@ async function ppkLogout() {
     localStorage.removeItem('sessionToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('_sessionCheckTs');
+    _refreshSbHeaders();  // เคลียร์ header เพื่อไม่ส่ง token เก่า
     window.location.href = 'login.html';
 }
 
@@ -515,6 +541,9 @@ async function _routeAction(action, data) {
                     expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                 });
             } catch(e) { console.warn('สร้าง session ไม่สำเร็จ:', e); }
+            // อัปเดต header ให้ Supabase client รู้จัก session ใหม่
+            localStorage.setItem('sessionToken', token);
+            _refreshSbHeaders();
             return { success: true, user: userObj, token: token };
         }
         case 'logout':   return ppkLogout();
@@ -1009,11 +1038,70 @@ async function _routeAction(action, data) {
             var _nBody = { house_id: data.houseId, house_number: data.houseNumber, period: data.period, water_amount: data.waterAmount, electric_amount: data.electricAmount, common_fee: data.commonFee, garbage_fee: data.garbageFee, total_amount: data.totalAmount, due_date: data.dueDate, message: data.message, sent_by: data.sentBy };
             if (data.sentAt) _nBody.sent_at = data.sentAt;
             var row = await sbPost('notifications', _nBody);
+            // ── สร้าง/อัปเดต outstanding record ให้ dashboard เห็นยอดแจ้ง ──
+            try {
+                var _oHn = data.houseNumber || '';
+                var _oPeriod = data.period || '';
+                if (_oHn && _oPeriod) {
+                    // หา house_id จาก housing table (ถ้าไม่ได้ส่งมา)
+                    var _oHouseId = data.houseId || null;
+                    if (!_oHouseId) {
+                        var _oHouseRows = await sbGet('housing', { house_number: 'eq.' + _oHn, select: 'id', limit: '1' }).catch(function() { return []; });
+                        _oHouseId = _oHouseRows && _oHouseRows[0] ? _oHouseRows[0].id : null;
+                    }
+                    // หา resident_id ของบ้านนี้
+                    var _oResId = null;
+                    try {
+                        var _oResRows = await sbGet('residents', { house_number: 'eq.' + _oHn, is_active: 'eq.true', select: 'id', limit: '1' });
+                        _oResId = _oResRows && _oResRows[0] ? _oResRows[0].id : null;
+                    } catch(e) {}
+                    // แยก year, month จาก period (YYYY-MM)
+                    var _oParts = _oPeriod.split('-');
+                    var _oYear = parseInt(_oParts[0]) || 0;
+                    var _oMonth = parseInt(_oParts[1]) || 0;
+                    // ตรวจว่ามี outstanding row อยู่แล้วหรือไม่
+                    var _existOut = await sbGet('outstanding', { house_number: 'eq.' + _oHn, period: 'eq.' + _oPeriod, limit: '1' }).catch(function() { return []; });
+                    var _oTotal = parseFloat(data.totalAmount) || 0;
+                    if (_existOut && _existOut[0]) {
+                        // อัปเดต outstanding ที่มีอยู่ (เฉพาะที่ยังไม่ได้ชำระ)
+                        if (_existOut[0].status !== 'paid') {
+                            await sbPatch('outstanding', { id: 'eq.' + _existOut[0].id }, {
+                                water_amount: parseFloat(data.waterAmount) || 0,
+                                electric_amount: parseFloat(data.electricAmount) || 0,
+                                common_fee: parseFloat(data.commonFee) || 0,
+                                garbage_fee: parseFloat(data.garbageFee) || 0,
+                                total_amount: _oTotal,
+                                due_date: data.dueDate || null,
+                                updated_at: new Date().toISOString()
+                            });
+                        }
+                    } else if (_oTotal > 0 && _oHouseId) {
+                        // สร้าง outstanding ใหม่
+                        await sbPost('outstanding', {
+                            house_id: _oHouseId,
+                            house_number: _oHn,
+                            resident_id: _oResId,
+                            period: _oPeriod,
+                            year: _oYear,
+                            month: _oMonth,
+                            water_amount: parseFloat(data.waterAmount) || 0,
+                            electric_amount: parseFloat(data.electricAmount) || 0,
+                            common_fee: parseFloat(data.commonFee) || 0,
+                            garbage_fee: parseFloat(data.garbageFee) || 0,
+                            total_amount: _oTotal,
+                            due_date: data.dueDate || null,
+                            status: 'unpaid'
+                        });
+                    }
+                }
+            } catch(outErr) { console.warn('saveNotification → outstanding sync error:', outErr); }
             return { success: true, data: row };
         }
         case 'deleteNotifications': {
             if (!data.period) return { success: false, error: 'ไม่ระบุ period' };
             try { await sbDelete('notifications', { period: 'eq.' + data.period }); } catch(e) {}
+            // ── ลบ outstanding ที่ยังไม่ได้ชำระของ period นี้ด้วย ──
+            try { await sbDelete('outstanding', { period: 'eq.' + data.period, status: 'eq.unpaid' }); } catch(e) {}
             return { success: true };
         }
         case 'getRequests': {
@@ -1081,9 +1169,10 @@ async function _routeAction(action, data) {
         }
         case 'saveSettings': {
             var entries = Object.entries(data.settings || {});
-            for (var i = 0; i < entries.length; i++) {
-                await sbUpsert('settings', { key: entries[i][0], value: String(entries[i][1]) }, 'key');
-            }
+            if (entries.length === 0) return { success: true };
+            // Batch upsert: 1 query แทน N queries
+            var batch = entries.map(function(e) { return { key: e[0], value: String(e[1]) }; });
+            await sbUpsert('settings', batch, 'key');
             return { success: true };
         }
         case 'getAnnouncements': {
@@ -1638,7 +1727,8 @@ async function _routeAction(action, data) {
                 if (sessHouseNumber) {
                     adminQueries.push(
                         sbGet('outstanding', { house_number: 'eq.' + sessHouseNumber, order: 'period.desc', limit: '12' }).catch(function() { return []; }),
-                        sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, order: 'submitted_at.desc', limit: '12' }).catch(function() { return []; })
+                        sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, order: 'submitted_at.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('notifications', { house_number: 'eq.' + sessHouseNumber, order: 'sent_at.desc', limit: '5' }).catch(function() { return []; })
                     );
                 }
                 var adminResults = await Promise.all(adminQueries);
@@ -1647,7 +1737,20 @@ async function _routeAction(action, data) {
                 if (sessHouseNumber) {
                     var adminOutRows = adminResults[3] || [];
                     var adminCurrentOut = adminOutRows[0]; // ใช้บิลล่าสุดที่มีในระบบ
+                    
+                    // ── Fallback: ดึง notifications มาเทียบเผื่อระบบไม่ได้สร้าง outstanding ──
+                    var adminNotifRows = adminResults[5] || [];
+                    adminNotifRows = adminNotifRows.filter(function(n) { return !n.message || n.message.indexOf('SLIP_REJECTED') !== 0; });
+                    var adminNotifFallback = adminNotifRows[0] || null;
+
+                    if (adminCurrentOut && adminNotifFallback && adminNotifFallback.period > adminCurrentOut.period) {
+                        adminCurrentOut = null; // ยอดแจ้งใหม่กว่า บังคับใช้ notification
+                    } else if (adminCurrentOut) {
+                        adminNotifFallback = null;
+                    }
+
                     if (adminCurrentOut && adminCurrentOut.period) adminPeriod = adminCurrentOut.period;
+                    else if (adminNotifFallback && adminNotifFallback.period) adminPeriod = adminNotifFallback.period;
                     var adminSlipRows = adminResults[4] || [];
                     var adminLatestSlip = adminSlipRows.find(function(s) { return s.period === adminPeriod; }); // หาสลิปที่ตรงกับบิลล่าสุด
                     var adminSlipStatus = 'none';
@@ -1657,15 +1760,18 @@ async function _routeAction(action, data) {
                         else if (adminLatestSlip.status === 'rejected') { adminSlipStatus = 'rejected'; adminReviewNote = adminLatestSlip.review_note || ''; }
                         else adminSlipStatus = 'reviewing';
                     }
+                    var adminCurrentAmount = adminCurrentOut ? parseFloat(adminCurrentOut.total_amount) || 0 : (adminNotifFallback ? parseFloat(adminNotifFallback.total_amount) || 0 : 0);
+                    var adminTotalOutstanding = adminOutRows.reduce(function(s, r) { return (r.status !== 'paid') ? s + (parseFloat(r.total_amount) || 0) : s; }, 0);
+                    if (adminTotalOutstanding === 0 && adminNotifFallback) adminTotalOutstanding = parseFloat(adminNotifFallback.total_amount) || 0;
                     residentData = {
                         houseNumber: sessHouseNumber,
                         period: adminPeriod,
-                        currentAmount: adminCurrentOut ? parseFloat(adminCurrentOut.total_amount) || 0 : 0,
-                        totalOutstanding: adminOutRows.reduce(function(s, r) { return (r.status !== 'paid') ? s + (parseFloat(r.total_amount) || 0) : s; }, 0),
+                        currentAmount: adminCurrentAmount,
+                        totalOutstanding: adminTotalOutstanding,
                         slipStatus: adminSlipStatus,
                         reviewNote: adminReviewNote,
                         slipId: adminLatestSlip ? adminLatestSlip.id : null,
-                        dueDate: adminCurrentOut ? adminCurrentOut.due_date : null
+                        dueDate: adminCurrentOut ? adminCurrentOut.due_date : (adminNotifFallback ? adminNotifFallback.due_date : null)
                     };
                 }
                 return { success: true, role: 'admin', announcements: announcements, data: {
@@ -1676,15 +1782,27 @@ async function _routeAction(action, data) {
             } else {
                 var houseNumber = sessHouseNumber;
                 var period = (now2.getFullYear() + 543) + '-' + String(now2.getMonth() + 1).padStart(2, '0');
-                var outRows = [], slipRows = [];
+                var outRows = [], slipRows = [], notifFallbackRows = [];
                 if (houseNumber) {
-                    [outRows, slipRows] = await Promise.all([
+                    [outRows, slipRows, notifFallbackRows] = await Promise.all([
                         sbGet('outstanding', { house_number: 'eq.' + houseNumber, order: 'period.desc', limit: '12' }).catch(function() { return []; }),
-                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, order: 'submitted_at.desc', limit: '12' }).catch(function() { return []; })
+                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, order: 'submitted_at.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('notifications', { house_number: 'eq.' + houseNumber, order: 'sent_at.desc', limit: '12' }).catch(function() { return []; })
                     ]);
+                    notifFallbackRows = (notifFallbackRows || []).filter(function(n) { return !n.message || n.message.indexOf('SLIP_REJECTED') !== 0; });
                 }
                 var currentOut = outRows[0]; // ใช้บิลล่าสุดที่มีในระบบ
+                var currentNotif = notifFallbackRows[0] || null;
+                
+                // ตรวจสอบว่า notification มีรอบบิลใหม่กว่า outstanding หรือไม่
+                if (currentOut && currentNotif && currentNotif.period > currentOut.period) {
+                    currentOut = null; // บังคับให้ใช้ currentNotif ข้าม outstanding เก่าไป
+                } else if (currentOut) {
+                    currentNotif = null; // ถ้า outstanding อัปเดตล่าสุดแล้ว ไม่ต้องใช้ fallback
+                }
+
                 if (currentOut && currentOut.period) period = currentOut.period;
+                else if (currentNotif && currentNotif.period) period = currentNotif.period;
                 var latestSlip = slipRows.find(function(s) { return s.period === period; }); // หาสลิปที่ตรงกับบิลล่าสุด
                 var slipStatus = 'none';
                 var reviewNote = '';
@@ -1696,7 +1814,11 @@ async function _routeAction(action, data) {
                 var totalOutstanding = (outRows || []).reduce(function(s, r) {
                     return (r.status !== 'paid') ? s + (parseFloat(r.total_amount) || 0) : s;
                 }, 0);
-                // ดึง proxy assignments ของ user นี้
+                // ถ้ายอดค้างชำระใน outstanding เป็น 0 แต่มี notification ของรอบบิลใหม่ให้อ้างอิงยอดนั้นแทน
+                if (totalOutstanding === 0 && currentNotif) {
+                    totalOutstanding = parseFloat(currentNotif.total_amount) || 0;
+                }
+                // ดึง proxy assignments ของ user นี้ (batch fetch — ลด queries จาก 4N → 5)
                 var userProxyAssignments = [];
                 try {
                     var upaToken = getSessionToken();
@@ -1706,52 +1828,60 @@ async function _routeAction(action, data) {
                         try { var upaStored = JSON.parse(localStorage.getItem('currentUser') || 'null'); if (upaStored) upaUserId = upaStored.id; } catch(e) {}
                     }
                     if (upaUserId) {
-                        upaRows = await sbGet('payment_proxies', { proxy_user_id: 'eq.' + upaUserId, is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
-                        for (var upai = 0; upai < (upaRows || []).length; upai++) {
-                            var upaP = upaRows[upai];
-                            var upaResName = '';
-                            try {
-                                var upaRR = await sbGet('residents', { house_number: 'eq.' + upaP.house_number, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1', select: 'prefix,firstname,lastname' });
-                                if (upaRR && upaRR[0]) { var ur = upaRR[0]; upaResName = ((ur.prefix||'') + (ur.firstname||'') + ' ' + (ur.lastname||'')).trim(); }
-                            } catch(e) {}
-                            var upaOut = null;
-                            try { var upaOutR = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, limit: '1' }); upaOut = upaOutR && upaOutR[0]; } catch(e) {}
-                            // fallback: ถ้าไม่มี outstanding ให้ดึงจาก notifications (แหล่งจริงที่ admin แจ้งยอด)
-                            var upaNotif = null;
-                            if (!upaOut) {
-                                try { var upaNotifR = await sbGet('notifications', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'sent_at.desc', limit: '1' }); upaNotif = upaNotifR && upaNotifR[0]; } catch(e) {}
+                        var upaRows = await sbGet('payment_proxies', { proxy_user_id: 'eq.' + upaUserId, is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
+                        if (upaRows && upaRows.length > 0) {
+                            var proxyHNs = upaRows.map(function(p) { return p.house_number; });
+                            var hnList = proxyHNs.join(',');
+                            // Batch fetch ทุกอย่างพร้อมกัน (5 queries แทน 4N)
+                            var batchProxy = await Promise.all([
+                                sbGet('residents', { house_number: 'in.(' + hnList + ')', is_active: 'eq.true', resident_type: 'neq.cohabitant', select: 'house_number,prefix,firstname,lastname' }).catch(function() { return []; }),
+                                sbGet('outstanding', { house_number: 'in.(' + hnList + ')', period: 'eq.' + period }).catch(function() { return []; }),
+                                sbGet('notifications', { house_number: 'in.(' + hnList + ')', period: 'eq.' + period, order: 'sent_at.desc' }).catch(function() { return []; }),
+                                sbGet('slip_submissions', { house_number: 'in.(' + hnList + ')', period: 'eq.' + period, order: 'submitted_at.desc' }).catch(function() { return []; })
+                            ]);
+                            // สร้าง maps จาก batch results
+                            var _resMap = {}, _outMap = {}, _notifMap = {}, _slipMap = {};
+                            (batchProxy[0] || []).forEach(function(r) { if (!_resMap[r.house_number]) _resMap[r.house_number] = ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(); });
+                            (batchProxy[1] || []).forEach(function(o) { if (!_outMap[o.house_number]) _outMap[o.house_number] = o; });
+                            (batchProxy[2] || []).forEach(function(n) { if (!_notifMap[n.house_number]) _notifMap[n.house_number] = n; });
+                            (batchProxy[3] || []).forEach(function(s) { if (!_slipMap[s.house_number]) _slipMap[s.house_number] = s; });
+                            for (var upai = 0; upai < upaRows.length; upai++) {
+                                var upaP = upaRows[upai];
+                                var upaHn = upaP.house_number;
+                                var upaSrc = _outMap[upaHn] || _notifMap[upaHn];
+                                var upaSlip = _slipMap[upaHn];
+                                var upaSlipStatus = 'none', upaReviewNote = '', upaSlipId = null;
+                                if (upaSlip) {
+                                    upaSlipId = upaSlip.id;
+                                    if (upaSlip.status === 'approved') upaSlipStatus = 'success';
+                                    else if (upaSlip.status === 'rejected') { upaSlipStatus = 'rejected'; upaReviewNote = upaSlip.review_note || ''; }
+                                    else upaSlipStatus = 'reviewing';
+                                }
+                                userProxyAssignments.push({
+                                    house_number: upaHn, resident_name: _resMap[upaHn] || '', period: period,
+                                    amount: upaSrc ? parseFloat(upaSrc.total_amount) || 0 : 0,
+                                    water_amount: upaSrc ? parseFloat(upaSrc.water_amount) || 0 : 0,
+                                    electric_amount: upaSrc ? parseFloat(upaSrc.electric_amount) || 0 : 0,
+                                    common_fee: upaSrc ? parseFloat(upaSrc.common_fee) || 0 : 0,
+                                    due_date: upaSrc ? (upaSrc.due_date || null) : null,
+                                    slip_status: upaSlipStatus, review_note: upaReviewNote, slip_id: upaSlipId, notes: upaP.notes || ''
+                                });
                             }
-                            var upaSrc = upaOut || upaNotif;
-                            var upaSlip = null;
-                            try { var upaSlipR = await sbGet('slip_submissions', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }); upaSlip = upaSlipR && upaSlipR[0]; } catch(e) {}
-                            var upaSlipStatus = 'none', upaReviewNote = '', upaSlipId = null;
-                            if (upaSlip) {
-                                upaSlipId = upaSlip.id;
-                                if (upaSlip.status === 'approved') upaSlipStatus = 'success';
-                                else if (upaSlip.status === 'rejected') { upaSlipStatus = 'rejected'; upaReviewNote = upaSlip.review_note || ''; }
-                                else upaSlipStatus = 'reviewing';
-                            }
-                            userProxyAssignments.push({
-                                house_number: upaP.house_number, resident_name: upaResName, period: period,
-                                amount: upaSrc ? parseFloat(upaSrc.total_amount) || 0 : 0,
-                                water_amount: upaSrc ? parseFloat(upaSrc.water_amount) || 0 : 0,
-                                electric_amount: upaSrc ? parseFloat(upaSrc.electric_amount) || 0 : 0,
-                                common_fee: upaSrc ? parseFloat(upaSrc.common_fee) || 0 : 0,
-                                due_date: upaSrc ? (upaSrc.due_date || null) : null,
-                                slip_status: upaSlipStatus, review_note: upaReviewNote, slip_id: upaSlipId, notes: upaP.notes || ''
-                            });
                         }
                     }
                 } catch(e) { /* proxy assignments non-critical */ }
+                // คำนวณ currentAmount: ใช้ outstanding ก่อน, fallback เป็น notification
+                var _dashCurrentAmount = currentOut ? parseFloat(currentOut.total_amount) || 0 : (currentNotif ? parseFloat(currentNotif.total_amount) || 0 : 0);
+                var _dashDueDate = currentOut ? currentOut.due_date : (currentNotif ? currentNotif.due_date : null);
                 return { success: true, role: 'user', announcements: announcements, proxyAssignments: userProxyAssignments, data: {
                     houseNumber: houseNumber,
                     period: period,
-                    currentAmount: currentOut ? parseFloat(currentOut.total_amount) || 0 : 0,
+                    currentAmount: _dashCurrentAmount,
                     totalOutstanding: totalOutstanding,
                     slipStatus: slipStatus,
                     reviewNote: reviewNote,
                     slipId: latestSlip ? latestSlip.id : null,
-                    dueDate: currentOut ? currentOut.due_date : null
+                    dueDate: _dashDueDate
                 }};
             }
         }
