@@ -3053,6 +3053,34 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── exportFullBackup — ดึงข้อมูลทั้งระบบเพื่อสำรอง ─── */
+        case 'exportFullBackup': {
+            var efbSess = await _getSessionRole();
+            if (!efbSess || efbSess.role !== 'admin') return { success: false, error: 'เฉพาะ admin เท่านั้น' };
+            var efbTables = [
+                'users', 'housing', 'residents', 'coresidents',
+                'water_bills', 'electric_bills', 'water_rates',
+                'outstanding', 'slip_submissions', 'payment_history',
+                'notifications', 'requests', 'queue',
+                'accounting_entries', 'monthly_withdraw', 'exemptions',
+                'settings', 'announcements', 'logs',
+                'data_backups', 'pending_registrations', 'permissions'
+            ];
+            var efbResult = {};
+            for (var ei = 0; ei < efbTables.length; ei++) {
+                var efbT = efbTables[ei];
+                try {
+                    var efbRows = await sbGet(efbT, { order: 'created_at.desc' }).catch(function() {
+                        return sbGet(efbT, {});
+                    });
+                    efbResult[efbT] = efbRows || [];
+                } catch(e) {
+                    efbResult[efbT] = [];
+                    console.warn('exportFullBackup skip:', efbT, e.message);
+                }
+            }
+            return { success: true, data: efbResult, exportedAt: new Date().toISOString() };
+        }
         /* ── getBackups — ดึงรายการสำรองข้อมูล ─── */
         case 'getBackups': {
             var bkQ = { order: 'created_at.desc', limit: '200' };
