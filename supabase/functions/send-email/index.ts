@@ -48,7 +48,7 @@ serve(async (req: Request) => {
     // ดึง API key จาก env vars (ตั้งใน Supabase Dashboard → Edge Functions → Secrets)
     let resendApiKey = Deno.env.get('RESEND_API_KEY') || '';
     let fromEmail    = Deno.env.get('EMAIL_FROM')     || '';
-    let fromName     = Deno.env.get('EMAIL_FROM_NAME') || 'บ้านพักครู PPK';
+    let fromName     = Deno.env.get('EMAIL_FROM_NAME') || 'HOME PPK';
 
     // Validate fromEmail — ถ้าไม่ใช่ email จริง ให้ใช้ default
     const fromEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
