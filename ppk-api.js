@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HOME PPK 2026 — Supabase API Wrapper
  * ดัดแปลงจากรูปแบบ Band Management By SoulCiety
  *
@@ -3327,6 +3327,14 @@ async function _routeAction(action, data) {
             var ahvResName = ahvRes ? ((ahvRes.prefix||'') + (ahvRes.firstname||'') + ' ' + (ahvRes.lastname||'')).trim() : '';
             // ข้อมูลงวดปัจจุบัน
             var ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod; });
+            // fallback: ถ้าไม่มีใน outstanding ให้ดึงจาก notifications
+            var ahvCurNotif = null;
+            if (!ahvCurOut) {
+                try {
+                    var ahvNotifR = await sbGet('notifications', { house_number: 'eq.' + ahvHouse, period: 'eq.' + ahvPeriod, order: 'sent_at.desc', limit: '1' });
+                    ahvCurNotif = ahvNotifR && ahvNotifR[0];
+                } catch(e) {}
+            }
             var ahvCurSlip = (ahvSlipRows || []).find(function(s) { return s.period === ahvPeriod; });
             var ahvSlipStatus = 'none', ahvReviewNote = '', ahvSlipId = null;
             if (ahvCurSlip) {
@@ -3366,6 +3374,64 @@ async function _routeAction(action, data) {
                     if (ahvPR && ahvPR[0]) ahvProxyHouse = ahvPR[0].house_number || '';
                 } catch(e) {}
             }
+
+            // -- proxyAssignments: บ้านที่ผู้พักบ้านนี้ได้รับมอบหมายให้ชำระแทน --
+            var ahvProxyAssignments = [];
+            try {
+                // ดึง residents ทั้งหมดของบ้านนี้เพื่อรวบรวม user_ids และ resident_ids
+                var ahvAllResRows = await sbGet('residents', { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', select: 'id,user_id,email' }).catch(function() { return []; });
+                var ahvAllResIds = (ahvAllResRows || []).map(function(r) { return r.id; }).filter(Boolean);
+                var ahvAllUids = (ahvAllResRows || []).map(function(r) { return r.user_id; }).filter(Boolean);
+                var orphanEmails = (ahvAllResRows || []).filter(function(r) { return !r.user_id && r.email; }).map(function(r) { return r.email; });
+                if (orphanEmails.length > 0) {
+                    var ahvUByEmail = await sbGet('users', { email: 'in.(' + orphanEmails.join(',') + ')', select: 'id' }).catch(function() { return []; });
+                    (ahvUByEmail || []).forEach(function(u) { if (u.id && ahvAllUids.indexOf(u.id) === -1) ahvAllUids.push(u.id); });
+                }
+                if (ahvAllUids.length === 0) {
+                    var ahvSessUs = await sbGet('sessions', { house_number: 'eq.' + ahvHouse, select: 'user_id', limit: '5' }).catch(function() { return []; });
+                    (ahvSessUs || []).forEach(function(s) { if (s.user_id && ahvAllUids.indexOf(s.user_id) === -1) ahvAllUids.push(s.user_id); });
+                }
+                var ahvPARows = [];
+                if (ahvAllUids.length > 0) {
+                    ahvPARows = await sbGet('payment_proxies', { proxy_user_id: 'in.(' + ahvAllUids.join(',') + ')', is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
+                }
+                if (ahvPARows.length === 0 && ahvAllResIds.length > 0) {
+                    ahvPARows = await sbGet('payment_proxies', { proxy_resident_id: 'in.(' + ahvAllResIds.join(',') + ')', is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
+                }
+                if (ahvPARows && ahvPARows.length > 0) {
+                    for (var ahvPAi = 0; ahvPAi < ahvPARows.length; ahvPAi++) {
+                        var ahvPA = ahvPARows[ahvPAi];
+                        var ahvPAResName = '';
+                        try {
+                            var ahvPARR = await sbGet('residents', { house_number: 'eq.' + ahvPA.house_number, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1', select: 'prefix,firstname,lastname' });
+                            if (ahvPARR && ahvPARR[0]) { var ahvPARRR = ahvPARR[0]; ahvPAResName = ((ahvPARRR.prefix||'') + (ahvPARRR.firstname||'') + ' ' + (ahvPARRR.lastname||'')).trim(); }
+                        } catch(e) {}
+                        var ahvPAOut = null;
+                        try { var ahvPAOutR = await sbGet('outstanding', { house_number: 'eq.' + ahvPA.house_number, period: 'eq.' + ahvPeriod, limit: '1' }); ahvPAOut = ahvPAOutR && ahvPAOutR[0]; } catch(e) {}
+                        if (!ahvPAOut) {
+                            try { var ahvPANotifR = await sbGet('notifications', { house_number: 'eq.' + ahvPA.house_number, period: 'eq.' + ahvPeriod, order: 'sent_at.desc', limit: '1' }); if (ahvPANotifR && ahvPANotifR[0]) ahvPAOut = ahvPANotifR[0]; } catch(e) {}
+                        }
+                        var ahvPASlip = null;
+                        try { var ahvPASlipR = await sbGet('slip_submissions', { house_number: 'eq.' + ahvPA.house_number, period: 'eq.' + ahvPeriod, order: 'submitted_at.desc', limit: '1' }); ahvPASlip = ahvPASlipR && ahvPASlipR[0]; } catch(e) {}
+                        var ahvPASlipStatus = 'none', ahvPAReviewNote = '', ahvPASlipId = null;
+                        if (ahvPASlip) {
+                            ahvPASlipId = ahvPASlip.id;
+                            if (ahvPASlip.status === 'approved') ahvPASlipStatus = 'success';
+                            else if (ahvPASlip.status === 'rejected') { ahvPASlipStatus = 'rejected'; ahvPAReviewNote = ahvPASlip.review_note || ''; }
+                            else ahvPASlipStatus = 'reviewing';
+                        }
+                        ahvProxyAssignments.push({
+                            house_number: ahvPA.house_number, resident_name: ahvPAResName, period: ahvPeriod,
+                            amount: ahvPAOut ? parseFloat(ahvPAOut.total_amount) || 0 : 0,
+                            water_amount: ahvPAOut ? parseFloat(ahvPAOut.water_amount) || 0 : 0,
+                            electric_amount: ahvPAOut ? parseFloat(ahvPAOut.electric_amount) || 0 : 0,
+                            common_fee: ahvPAOut ? parseFloat(ahvPAOut.common_fee) || 0 : 0,
+                            due_date: ahvPAOut ? (ahvPAOut.due_date || null) : null,
+                            slip_status: ahvPASlipStatus, review_note: ahvPAReviewNote, slip_id: ahvPASlipId, notes: ahvPA.notes || ''
+                        });
+                    }
+                }
+            } catch(e) { /* non-critical */ }
             var ahvAllSlips = (ahvSlipRows || []).map(function(s) {
                 var st = 'none';
                 if (s.status === 'approved') st = 'success';
@@ -3379,10 +3445,10 @@ async function _routeAction(action, data) {
                 residentPosition: ahvRes ? (ahvRes.position || '') : '',
                 residentPhone:   ahvRes ? (ahvRes.phone || '') : '',
                 period:          ahvPeriod,
-                currentAmount:   ahvCurOut ? parseFloat(ahvCurOut.total_amount) || 0 : 0,
-                water_amount:    ahvCurOut ? parseFloat(ahvCurOut.water_amount) || 0 : 0,
-                electric_amount: ahvCurOut ? parseFloat(ahvCurOut.electric_amount) || 0 : 0,
-                common_fee:      ahvCurOut ? parseFloat(ahvCurOut.common_fee) || 0 : 0,
+                currentAmount:   ahvCurOut ? parseFloat(ahvCurOut.total_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.total_amount) || 0 : 0),
+                water_amount:    ahvCurOut ? parseFloat(ahvCurOut.water_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.water_amount) || 0 : 0),
+                electric_amount: ahvCurOut ? parseFloat(ahvCurOut.electric_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.electric_amount) || 0 : 0),
+                common_fee:      ahvCurOut ? parseFloat(ahvCurOut.common_fee) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.common_fee) || 0 : 0),
                 totalOutstanding: ahvTotalOs,
                 slipStatus:      ahvSlipStatus,
                 reviewNote:      ahvReviewNote,
@@ -3391,12 +3457,13 @@ async function _routeAction(action, data) {
                 slipReceiptNumber: ahvCurSlip ? (ahvCurSlip.receipt_number || '') : '',
                 slipSubmittedAt: ahvCurSlip ? (ahvCurSlip.submitted_at || null) : null,
                 slipAmount:      ahvCurSlip ? (parseFloat(ahvCurSlip.amount) || 0) : 0,
-                dueDate:         ahvCurOut ? ahvCurOut.due_date : null,
+                dueDate:         ahvCurOut ? ahvCurOut.due_date : (ahvCurNotif ? ahvCurNotif.due_date : null),
                 history:         ahvHistory,
                 allSlips:        ahvAllSlips,
                 proxyName:       ahvProxyName,
                 proxyHouse:      ahvProxyHouse,
-                proxyNotes:      ahvProxy ? (ahvProxy.notes || '') : ''
+                proxyNotes:      ahvProxy ? (ahvProxy.notes || '') : '',
+                proxyAssignments: ahvProxyAssignments
             }};
         }
 
