@@ -440,6 +440,33 @@ function renderDashboard(d) {
         + '</div>' : '';
     var osHtml = d.totalOutstanding > 0 ? '<div class="os-banner"><div class="os-icon">\u26a0\ufe0f</div><div style="flex:1;"><div class="os-label">\u0e22\u0e2d\u0e14\u0e04\u0e07\u0e04\u0e49\u0e32\u0e07\u0e2a\u0e30\u0e2a\u0e21 (\u0e17\u0e38\u0e01\u0e07\u0e27\u0e14)</div><div class="os-amount">' + fmtMoney(d.totalOutstanding) + ' \u0e1a\u0e32\u0e17</div></div></div>' : '';
     var proxyHtml = d.proxyName ? '<div class="proxy-banner"><div class="pb-title">\ud83d\udd04 \u0e1c\u0e39\u0e49\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e17\u0e19: ' + _esc(d.proxyName) + (d.proxyHouse ? ' (' + _esc(d.proxyHouse) + ')' : '') + '</div>' + (d.proxyNotes ? '<div class="pb-detail">\ud83d\udcdd ' + _esc(d.proxyNotes) + '</div>' : '') + '</div>' : '';
+    // ── proxy assignments: บ้านที่ผู้พักนี้รับผิดชอบชำระแทน ──
+    var proxyAssignHtml = '';
+    if (d.proxyAssignments && d.proxyAssignments.length > 0) {
+        proxyAssignHtml += '<div style="font-size:0.82rem;font-weight:700;color:var(--c-text-2);margin:0.75rem 0 0.4rem;text-transform:uppercase;letter-spacing:0.05em;">\uD83D\uDD04 \u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e17\u0e19</div>';
+        d.proxyAssignments.forEach(function(pa) {
+            var paBadge = '';
+            if (pa.slip_status === 'success')        paBadge = '<span class="view-status-badge paid" style="font-size:0.75rem;">\u2705 \u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e49\u0e27</span>';
+            else if (pa.slip_status === 'reviewing') paBadge = '<span class="view-status-badge reviewing" style="font-size:0.75rem;">\uD83D\uDD0D \u0e23\u0e2d\u0e15\u0e23\u0e27\u0e08</span>';
+            else if (pa.slip_status === 'rejected')  paBadge = '<span class="view-status-badge rejected" style="font-size:0.75rem;">\u274C \u0e44\u0e21\u0e48\u0e1c\u0e48\u0e32\u0e19</span>';
+            else if (pa.amount > 0)                  paBadge = '<span class="view-status-badge pending" style="font-size:0.75rem;">\u23F3 \u0e23\u0e2d\u0e0a\u0e33\u0e23\u0e30</span>';
+            else                                     paBadge = '<span class="view-status-badge none" style="font-size:0.75rem;">\u2014</span>';
+            var paAmtCls = pa.amount > 0 ? 'phcv-amount' : 'phcv-amount zero';
+            var paAmtTxt = pa.amount > 0 ? fmtMoney(pa.amount) + ' \u0e1a\u0e32\u0e17' : '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e22\u0e2d\u0e14';
+            var paRejectHtml = (pa.slip_status === 'rejected' && pa.review_note) ? '<div class="phcv-reject-note">\u274C \u0e2a\u0e25\u0e34\u0e1b\u0e16\u0e39\u0e01\u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18: <strong>' + _esc(pa.review_note) + '</strong></div>' : '';
+            var paParts = (pa.period || '').split('-');
+            var paPeriodDisplay = paParts[1] ? (THAI_MONTHS[parseInt(paParts[1]) - 1] || '') + ' ' + (paParts[0] || '') : (pa.period || '');
+            proxyAssignHtml += '<div class="proxy-hero-card-view">'
+                + '<div class="phcv-proxy-badge">\uD83D\uDD04 \u0e0a\u0e33\u0e23\u0e30\u0e41\u0e17\u0e19</div>'
+                + '<div class="phcv-house">\uD83C\uDFE0 \u0e1a\u0e49\u0e32\u0e19\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 ' + _esc(pa.house_number) + '</div>'
+                + (pa.resident_name ? '<div class="phcv-name">' + _esc(pa.resident_name) + '</div>' : '')
+                + '<hr class="phcv-divider">'
+                + '<div class="phcv-row"><div class="phcv-col"><div class="phcv-label">\uD83D\uDCB3 \u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30</div><div class="' + paAmtCls + '">' + paAmtTxt + '</div><div class="phcv-period">\uD83D\uDCC5 ' + paPeriodDisplay + '</div></div><div>' + paBadge + '</div></div>'
+                + paRejectHtml
+                + '<button class="view-cta-disabled" disabled style="margin-top:0.9rem;width:100%;padding:0.85rem;border-radius:12px;border:none;font-family:\'Kanit\',sans-serif;font-size:0.95rem;font-weight:600;cursor:not-allowed;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;gap:0.5rem;">\uD83D\uDCE4 \u0e2a\u0e48\u0e07\u0e2a\u0e25\u0e34\u0e1b <span class="readonly-chip">\uD83D\uDD12 \u0e14\u0e39\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27</span></button>'
+                + '</div>';
+        });
+    }
     var recentHist = (d.history || []).slice(0, 3);
     var recentHtml = '';
     if (recentHist.length > 0) {
