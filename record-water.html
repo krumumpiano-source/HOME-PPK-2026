@@ -1086,7 +1086,7 @@
             pw.document.write('<div class="sig-section">');
             pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div class="sig-pos">ผู้บันทึกมิเตอร์น้ำ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>');
             pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>');
+            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>');
             pw.document.write('</div></div></body></html>');
             pw.document.close();
             pw.onload=function(){setTimeout(function(){pw.print();},500);};
@@ -1146,7 +1146,7 @@
             w.document.write('<div class="para">บัดนี้ ได้ดำเนินการจดมิเตอร์น้ำและคำนวณค่าน้ำประจำเดือน'+monthName+' พ.ศ. '+year+' เรียบร้อยแล้ว ในอัตราค่าน้ำ <strong>'+rate+' บาทต่อหน่วย</strong> จำนวนทั้งสิ้น <strong>'+totalHouses+'</strong> หลังคาเรือน รวมปริมาณการใช้น้ำ <strong>'+totalUsage.toLocaleString()+' หน่วย</strong> รวมยอดเงินค่าน้ำทั้งสิ้น <strong>'+totalAmount.toLocaleString()+' บาท</strong> รายละเอียดปรากฏตามตารางแนบ</div>');
             w.document.write('<div class="para">จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</div>');
             w.document.write('<div class="sig-area"><div class="sig-box"><div class="sig-space"></div><div class="sig-dotline"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div>ผู้รับผิดชอบงานมาตรน้ำบ้านพักครู</div><div>วันที่&nbsp;........./........./.........</div></div></div>');
-            w.document.write('<div class="sig-area" style="margin-top:0.5cm"><div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div>วันที่&nbsp;........./........./.........</div></div></div>');
+            w.document.write('<div class="sig-area" style="margin-top:0.5cm"><div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div>วันที่&nbsp;........./........./.........</div></div></div>');
             w.document.write('</div>');
             // ── หน้า 2: ตารางแนบ ──
             w.document.write('<div class="page page-break">');
@@ -1162,7 +1162,7 @@
             w.document.write('<tr class="tr-sum"><td colspan="3" style="text-align:right">รวมทั้งปี</td><td class="tr">'+grandTotalUsage.toLocaleString()+'</td><td></td><td class="tr">'+grandTotalAmount.toLocaleString()+'</td><td></td></tr>');
             w.document.write('</tbody></table>');
             w.document.write('<div class="sig2-area"><div class="sig2-box"><div class="sig-space"></div><div class="sig-dotline"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div>ผู้รับผิดชอบงานมาตรน้ำบ้านพักครู</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            w.document.write('<div class="sig2-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div>วันที่&nbsp;........./........./.........</div></div></div>');
+            w.document.write('<div class="sig2-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div>วันที่&nbsp;........./........./.........</div></div></div>');
             w.document.write('</div>');
             w.document.write('</body></html>');
             w.document.close();
@@ -1212,7 +1212,7 @@
             html+='<div class="sig-section">';
             html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div class="sig-pos">ผู้บันทึกมิเตอร์น้ำ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
             html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
             html+='</div></div></body></html>';
             return html;
         }
@@ -1298,7 +1298,7 @@
             html+='<div class="sig-section">';
             html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'.....................')+')</div><div class="sig-pos">ผู้รับผิดชอบงานมาตรน้ำ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
             html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'.....................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'.....................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(headName||'.....................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
             html+='</div></div></body></html>';
             return html;
         }
