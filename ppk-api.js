@@ -1048,9 +1048,10 @@ async function _routeAction(action, data) {
             if (data.status) q.status = 'eq.' + data.status;
             if (data.period) q.period = 'eq.' + data.period;
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
-            var [rows, resRows] = await Promise.all([
+            var [rows, resRows, proxyRows2] = await Promise.all([
                 sbGet('slip_submissions', q).catch(function() { return []; }),
-                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type' }).catch(function() { return []; })
+                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id' }).catch(function() { return []; }),
+                sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; })
             ]);
             var resMap = {}, resEmailMap2 = {};
             (resRows || []).forEach(function(r) {
@@ -1059,7 +1060,28 @@ async function _routeAction(action, data) {
                     if (r.email && r.resident_type !== 'cohabitant' && !resEmailMap2[r.house_number]) resEmailMap2[r.house_number] = r.email;
                 }
             });
-            (rows || []).forEach(function(s) { s.resident_name = resMap[s.house_number] || ''; s.email = resEmailMap2[s.house_number] || ''; });
+            var resUserEmail2 = {};
+            (resRows || []).forEach(function(r) {
+                if (r.user_id && r.email) resUserEmail2[r.user_id] = r.email;
+            });
+            var proxyEmailMap2 = {};
+            var proxyUserIds2 = (proxyRows2 || []).map(function(p) { return p.proxy_user_id; }).filter(Boolean);
+            if (proxyUserIds2.length > 0) {
+                var usersForProxy2 = await sbGet('users', { id: 'in.(' + proxyUserIds2.join(',') + ')', select: 'id,email' }).catch(function() { return []; });
+                (usersForProxy2 || []).forEach(function(u) {
+                    if (u.id && u.email && !resUserEmail2[u.id]) resUserEmail2[u.id] = u.email;
+                });
+            }
+            (proxyRows2 || []).forEach(function(p) {
+                if (p.house_number && p.proxy_user_id && resUserEmail2[p.proxy_user_id]) {
+                    proxyEmailMap2[p.house_number] = resUserEmail2[p.proxy_user_id];
+                }
+            });
+            (rows || []).forEach(function(s) {
+                s.resident_name = resMap[s.house_number] || '';
+                s.email = resEmailMap2[s.house_number] || '';
+                s.proxy_email = proxyEmailMap2[s.house_number] || '';
+            });
             return { success: true, data: rows };
         }
         case 'getNotificationHistory': {
@@ -1595,14 +1617,15 @@ async function _routeAction(action, data) {
         case 'getBillSummaryAll': {
             var period = data.period || '';
             // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications, exemptions, housing
-            var [wRows, eRows, resRows, settRows, notifRows, exemptRows, housingRows] = await Promise.all([
+            var [wRows, eRows, resRows, settRows, notifRows, exemptRows, housingRows, proxyRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
-                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type' }).catch(function() { return []; }),
+                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id' }).catch(function() { return []; }),
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
                 sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee,due_date,sent_at', limit: '200' }).catch(function() { return []; }),
                 sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number,house_id' }).catch(function() { return []; }),
-                sbGet('housing',        { select: 'id,house_number,type' }).catch(function() { return []; })
+                sbGet('housing',        { select: 'id,house_number,type' }).catch(function() { return []; }),
+                sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; })
             ]);
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
@@ -1698,9 +1721,28 @@ async function _routeAction(action, data) {
                     if (!summaryMap[hn]) summaryMap[hn] = { house_number: hn, water_amount: 0, electric_amount: 0, common_fee: getCommonForHouse(hn), prev_meter: null, curr_meter: null };
                 });
             }
+            // proxy email map
+            var proxyEmailMap = {};
+            var resUserEmailMap = {};
+            (resRows || []).forEach(function(r) {
+                if (r.user_id && r.email) resUserEmailMap[r.user_id] = r.email;
+            });
+            var proxyUserIds = (proxyRows || []).map(function(p) { return p.proxy_user_id; }).filter(Boolean);
+            if (proxyUserIds.length > 0) {
+                var usersForProxy = await sbGet('users', { id: 'in.(' + proxyUserIds.join(',') + ')', select: 'id,email' }).catch(function() { return []; });
+                (usersForProxy || []).forEach(function(u) {
+                    if (u.id && u.email && !resUserEmailMap[u.id]) resUserEmailMap[u.id] = u.email;
+                });
+            }
+            (proxyRows || []).forEach(function(p) {
+                if (p.house_number && p.proxy_user_id && resUserEmailMap[p.proxy_user_id]) {
+                    proxyEmailMap[p.house_number] = resUserEmailMap[p.proxy_user_id];
+                }
+            });
             var result = Object.values(summaryMap).map(function(s) {
                 s.resident_name = resMap[s.house_number] || '';
-                s.email = resEmailMap[s.house_number] || '';
+                s.email         = resEmailMap[s.house_number] || '';
+                s.proxy_email   = proxyEmailMap[s.house_number] || '';
                 s.exempt_common = exemptSet[s.house_number] ? true : false;
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
                 s.due_date      = notifDueDateMap[s.house_number] || null;
@@ -2005,7 +2047,7 @@ async function _routeAction(action, data) {
                         ? '<p>ยอดที่ส่ง: <strong>' + paidAmt.toLocaleString('th-TH') + ' บาท</strong><br>ยอดที่ต้องชำระ: <strong>' + notifAmt.toLocaleString('th-TH') + ' บาท</strong><br>ส่วนต่าง: <strong style="color:#dc2626;">' + (diffAmt > 0 ? '+' : '') + diffAmt.toLocaleString('th-TH') + ' บาท</strong></p>'
                         : '';
                     var rjHtml = '<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">'
-                        + '<p>เรียน คุณ' + (data.residentName || 'ผู้พักอาศัย') + '</p>'
+                        + '<p>เรียน ' + (data.residentName || 'ผู้พักอาศัย') + '</p>'
                         + '<div style="background:#fef2f2;border:2px solid #dc2626;padding:16px;border-radius:10px;margin:12px 0">'
                         + '<p>⚠️ <strong>สลิปการชำระถูกปฏิเสธ</strong></p>'
                         + '<p>บ้านพัก: <strong>' + data.houseNumber + '</strong></p>'
