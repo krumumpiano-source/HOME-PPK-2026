@@ -1122,7 +1122,7 @@
                 var yr=await callBackend('getWaterBills',{year:year});
                 if(yr&&yr.success&&yr.data){
                     var md={};
-                    yr.data.forEach(function(b){var m=b.period?parseInt(b.period.split('-')[1]):0;if(!md[m])md[m]={u:0,a:0,c:0};md[m].u+=parseInt(b.units||b.usage||0);md[m].a+=parseFloat(b.amount||b.bill_amount||0);md[m].c++;});
+                    yr.data.forEach(function(b){var m=b.period?parseInt(b.period.split('-')[1]):0;if(!md[m])md[m]={u:0,a:0,c:0};md[m].u+=parseInt(b.units_used||0);md[m].a+=parseFloat(b.amount||0);md[m].c++;});
                     for(var m=1;m<=monthIdx;m++){var d=md[m]||{u:0,a:0,c:0};var has=d.c>0;yearlyRows+='<tr><td class="tc">'+m+'</td><td>'+thaiMonths[m-1]+' '+year+'</td><td class="tc">'+(has?d.c:'-')+'</td><td class="tr">'+(has?d.u.toLocaleString():'-')+'</td><td class="tr">'+(has?d.a.toLocaleString():'-')+'</td></tr>';grandTotalUsage+=d.u;grandTotalAmount+=d.a;}
                 }
             } catch(e){yearlyRows='<tr><td class="tc">'+monthIdx+'</td><td>'+monthName+' '+year+'</td><td class="tc">'+totalHouses+'</td><td class="tr">'+totalUsage.toLocaleString()+'</td><td class="tr">'+totalAmount.toLocaleString()+'</td></tr>';grandTotalUsage=totalUsage;grandTotalAmount=totalAmount;}
@@ -1181,7 +1181,7 @@
             try {
                 var result=await callBackend('getWaterBills',{year:year});
                 if(result&&result.success&&result.data){
-                    result.data.forEach(function(bill){var m=bill.period?parseInt(bill.period.split('-')[1]):0;if(!yearlyData[m])yearlyData[m]={units:0,amount:0,count:0};yearlyData[m].units+=parseInt(bill.units||bill.usage||0);yearlyData[m].amount+=parseFloat(bill.amount||bill.bill_amount||0);yearlyData[m].count++;});
+                    result.data.forEach(function(bill){var m=bill.period?parseInt(bill.period.split('-')[1]):0;if(!yearlyData[m])yearlyData[m]={units:0,amount:0,count:0};yearlyData[m].units+=parseInt(bill.units_used||0);yearlyData[m].amount+=parseFloat(bill.amount||0);yearlyData[m].count++;});
                 }
             } catch(e){console.error('getWaterBills yearly error:',e);}
             var tableRows=''; var grandTotalUnits=0; var grandTotalAmount=0;
