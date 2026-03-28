@@ -434,13 +434,24 @@
         <div class="button-group">
             <button class="btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
             <button class="btn btn-print" onclick="printReport()">🖨️ พิมพ์รายเดือน</button>
-            <button class="btn btn-print" onclick="printYearlyReport()">📊 สรุปทั้งปี</button>
-            <button class="btn" onclick="printMemo()" style="background: linear-gradient(to right, #fef3c7, #fde68a); color: #92400e;">📋 บันทึกข้อความ</button>
-            <button class="btn" onclick="exportExcel()" style="background: linear-gradient(to right, #d1fae5, #a7f3d0); color: #065f46;">📥 ส่งออก Excel</button>
-            <button class="btn" onclick="document.getElementById('importExcelFile').click()" style="background: linear-gradient(to right, #dbeafe, #bfdbfe); color: #1e40af;">📤 นำเข้า Excel</button>
+            <!-- เมนูเพิ่มเติม -->
+            <div style="position:relative;display:inline-block" id="moreMenuWrap">
+                <button class="btn btn-secondary" onclick="toggleMoreMenu()" id="moreMenuBtn" style="padding:0.8rem 1.2rem;">⋯ เพิ่มเติม</button>
+                <div id="moreMenuDropdown" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:0.5rem;min-width:200px;z-index:999;">
+                    <button onclick="printYearlyReport();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#065f46;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📊 สรุปทั้งปี</button>
+                    <button onclick="printMemo();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#92400e;" onmouseover="this.style.background='#fffbeb'" onmouseout="this.style.background='none'">📋 บันทึกข้อความ</button>
+                    <hr style="margin:0.3rem 0.5rem;border:none;border-top:1px solid #e5e7eb;">
+                    <button onclick="exportExcel();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#065f46;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📥 ส่งออก Excel</button>
+                    <button onclick="document.getElementById('importExcelFile').click();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#1e40af;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='none'">📤 นำเข้า Excel</button>
+                </div>
+            </div>
             <input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
-            <button class="btn btn-secondary" onclick="navigate('?page=team-management')">❌ ยกเลิก</button>
         </div>
+        <script>
+        function toggleMoreMenu(){var d=document.getElementById('moreMenuDropdown');d.style.display=d.style.display==='none'?'block':'none';}
+        function closeMoreMenu(){document.getElementById('moreMenuDropdown').style.display='none';}
+        document.addEventListener('click',function(e){if(!document.getElementById('moreMenuWrap').contains(e.target))closeMoreMenu();});
+        </script>
         
         <div class="success-message" id="successMessage">
             ✅ บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!
