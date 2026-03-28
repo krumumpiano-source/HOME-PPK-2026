@@ -1170,104 +1170,11 @@
         }
 
         
-        // ฟังก์ชันพิมพ์สรุปทั้งปี
-        async function printYearlyReport() {
-            var year=document.getElementById('bill_year').value;
-            var rate=document.getElementById('water_rate').value;
-            var thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-            var today=new Date();
-            var printDate=today.getDate()+' '+thaiMonths[today.getMonth()]+' พ.ศ. '+(today.getFullYear()+543);
-            var yearlyData={};
-            try {
-                var result=await callBackend('getWaterBills',{year:year});
-                if(result&&result.success&&result.data){
-                    result.data.forEach(function(bill){var m=bill.period?parseInt(bill.period.split('-')[1]):0;if(!yearlyData[m])yearlyData[m]={units:0,amount:0,count:0};yearlyData[m].units+=parseInt(bill.units_used||0);yearlyData[m].amount+=parseFloat(bill.amount||0);yearlyData[m].count++;});
-                }
-            } catch(e){console.error('getWaterBills yearly error:',e);}
-            var tableRows=''; var grandTotalUnits=0; var grandTotalAmount=0;
-            for(var m=1;m<=12;m++){
-                var md=yearlyData[m]||{units:0,amount:0,count:0};var has=md.count>0;
-                tableRows+='<tr><td class="tc">'+m+'</td><td>'+thaiMonths[m-1]+' '+year+'</td><td class="tc">'+(has?md.count:'-')+'</td><td class="tr">'+(has?md.units.toLocaleString():'-')+'</td><td class="tc">'+(has&&rate?rate:'-')+'</td><td class="tr">'+(has?md.amount.toLocaleString():'-')+'</td><td class="tr">'+(has&&md.count>0?Math.round(md.amount/md.count).toLocaleString():'-')+'</td></tr>';
-                grandTotalUnits+=md.units; grandTotalAmount+=md.amount;
-            }
-            var _sys=cachedAdminSettings||{};
-            var recorderName=_sys.meterRecorder||_sys.meter_recorder||'';
-            var checkerName=_sys.meterChecker||_sys.meter_checker||'';
-            var headName=_sys.headOfPromotion||_sys.head_of_promotion||'';
-            // ครุฑมีเฉพาะบันทึกข้อความ - หน้าอื่นเป็นเอกสารแนบ
-            var css='@page{size:A4 portrait;margin:0}@page lp{size:A4 landscape;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:16pt;line-height:1.5;color:#000}.page{padding:1.8cm 2.0cm 1.5cm 3.0cm}.header-block{display:flex;align-items:center;margin-bottom:0.3cm}.garuda-left{flex-shrink:0;margin-right:0.4cm}.title-col{flex:1;text-align:center}.doc-title{display:inline-block;font-size:29pt;font-weight:bold;border-bottom:4px double #000;padding-bottom:0.12cm}.sub{text-align:center;font-size:14pt;margin-bottom:0.08cm}.period{text-align:center;font-size:16pt;font-weight:bold;margin-bottom:0.2cm}.meta{display:flex;justify-content:space-between;font-size:14pt;margin-bottom:0.15cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.2cm 0}table{border-collapse:collapse;width:100%;font-size:15pt;margin:0.2cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.15cm 0.22cm;font-weight:bold;text-align:center}tbody td{border:0.5pt solid #000;padding:0.1cm 0.22cm}.tc{text-align:center}.tr{text-align:right}.tr-sum td{font-weight:bold;background:#ececec}.sig-section{margin-top:0.8cm;display:flex;justify-content:space-around}.sig-box{text-align:center;min-width:5.8cm}.sig-space{height:1.2cm}.sig-line{width:5.8cm;margin:0 auto 0.08cm auto;border-top:0.5pt dotted #000;padding-top:0.1cm}.sig-solid{width:5.8cm;margin:0 auto 0.08cm auto;border-top:2px solid #000;padding-top:0.1cm}.sig-name{font-weight:bold}@media print{body{margin:0!important;padding:0!important}.page{padding:1.8cm 2.0cm 1.5cm 3.0cm}.page-break{padding:1.5cm 1.5cm 1.5cm 3.0cm}}';
-            var pw=window.open('','_blank');
-            pw.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>สรุปค่าน้ำทั้งปี</title>');
-            pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
-            pw.document.write('<style>'+css+'</style></head><body><div class="page">');
-            pw.document.write('<div class="title-col" style="text-align:center"><span class="doc-title" style="font-size:22pt">เอกสารแนบ: รายงานสรุปค่าน้ำบ้านพักครูรายปี</span></div>');
-            pw.document.write('<div class="sub">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&nbsp;&nbsp;โรงเรียนพะเยาพิทยาคม</div>');
-            pw.document.write('<div class="period">ปีงบประมาณ / ปีการศึกษา&nbsp;&nbsp;พ.ศ. '+year+'</div>');
-            pw.document.write('<div class="meta">'+(rate?'<span>อัตราค่าน้ำ&nbsp;<strong>'+rate+' บาทต่อหน่วย</strong></span>':'<span></span>')+'<span>วันที่พิมพ์&nbsp;'+printDate+'</span></div>');
-            pw.document.write('<hr class="rule">');
-            pw.document.write('<table><thead><tr><th style="width:2.2em">ลำดับ</th><th>เดือน</th><th style="width:5em">จำนวน<br>บ้านพัก</th><th style="width:6em">รวมหน่วย<br>ใช้</th><th style="width:5em">อัตรา<br>(บาท/หน่วย)</th><th style="width:6em">รวมยอดเงิน<br>(บาท)</th><th style="width:6em">เฉลี่ย<br>ต่อหลัง (บาท)</th></tr></thead><tbody>');
-            pw.document.write(tableRows);
-            pw.document.write('<tr class="tr-sum"><td colspan="4" style="text-align:right">รวมทั้งปี</td><td></td><td class="tr">'+grandTotalAmount.toLocaleString()+'</td><td></td></tr>');
-            pw.document.write('</tbody></table>');
-            pw.document.write('<div class="sig-section">');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div>ผู้รับผิดชอบงานมาตรน้ำ</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div>ผู้ตรวจสอบ</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริมฯ</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('</div>');
-            pw.document.write('</div></body></html>');
-            pw.document.close();
-            pw.onload=function(){setTimeout(function(){pw.print();},500);};
-        }
-    
-                // === ระบบส่งขออนุมัติรายงาน ===
-        function generateMonthlyReportHTML() {
-            var month=document.getElementById('bill_month').value;
-            var year=document.getElementById('bill_year').value;
-            var rate=document.getElementById('water_rate').value;
-            var thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-            var monthName=thaiMonths[parseInt(month)-1];
-            var today=new Date();
-            var printDate=today.getDate()+' '+thaiMonths[today.getMonth()]+' พ.ศ. '+(today.getFullYear()+543);
-            var rows=document.querySelectorAll('#meterTableBody tr');
-            var tableRows=''; var totalUsage=0; var totalAmount=0; var rowNum=1;
-            rows.forEach(function(row){
-                if(!row.dataset.house) return;
-                var prevMeter=row.querySelector('.prev-meter').value||'0';
-                var currMeter=row.querySelector('.curr-meter').value||'0';
-                var usage=parseInt(row.querySelector('.usage-value').textContent)||0;
-                var amount=parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g,''))||0;
-                var resident=row.cells[2].textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                tableRows+='<tr><td class="tc">'+rowNum+'</td><td>'+row.dataset.house+'</td><td>'+resident+'</td><td class="tr">'+parseInt(prevMeter).toLocaleString()+'</td><td class="tr">'+parseInt(currMeter).toLocaleString()+'</td><td class="tr">'+usage.toLocaleString()+'</td><td class="tr">'+amount.toLocaleString()+'</td></tr>';
-                totalUsage+=usage; totalAmount+=amount; rowNum++;
-            });
-            var _sys=cachedAdminSettings||{};
-            var recorderName=_sys.meterRecorder||_sys.meter_recorder||'';
-            var checkerName=_sys.meterChecker||_sys.meter_checker||'';
-            var headName=_sys.headOfPromotion||_sys.head_of_promotion||'';
-            var css='@page{size:A4 landscape;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:15pt;line-height:1.5;color:#000}.page{padding:2cm 1.5cm 1.5cm 3cm}.title-col{text-align:center}.doc-title{display:inline-block;font-size:22pt;font-weight:bold;border-bottom:4px double #000;padding-bottom:0.12cm}.sub{text-align:center;font-size:14pt;margin-bottom:0.08cm}.period{text-align:center;font-size:15pt;font-weight:bold;margin-bottom:0.2cm}.meta{display:flex;justify-content:space-between;font-size:13pt;margin-bottom:0.15cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.15cm 0}table{border-collapse:collapse;width:100%;font-size:13pt;margin:0.15cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.12cm 0.15cm;font-weight:bold;text-align:center}tbody td{border:0.5pt solid #000;padding:0.08cm 0.15cm}.tc{text-align:center}.tr{text-align:right}.tr-sum td{font-weight:bold;background:#ececec}.sig-section{margin-top:0.5cm;display:flex;justify-content:space-around}.sig-box{text-align:center;min-width:5.5cm}.sig-space{height:1cm}.sig-line{width:5.5cm;margin:0 auto 0.06cm auto;border-top:0.5pt dotted #000;padding-top:0.08cm}.sig-solid{width:5.5cm;margin:0 auto 0.06cm auto;border-top:2px solid #000;padding-top:0.08cm}.sig-name{font-weight:bold;font-size:14pt}.sig-pos{font-size:13pt}@media print{body{margin:0!important;padding:0!important}.page{padding:2cm 1.5cm 1.5cm 3cm}}';
-            var html='<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานค่าน้ำ</title>';
-            html+='<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">';
-            html+='<style>'+css+'</style></head><body><div class="page">';
-            html+='<div class="title-col" style="text-align:center"><span class="doc-title">เอกสารแนบ: รายงานค่าน้ำบ้านพักครู</span></div>';
-            html+='<div class="sub">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&nbsp;&nbsp;โรงเรียนพะเยาพิทยาคม</div>';
-            html+='<div class="period">ประจำเดือน'+monthName+' พ.ศ. '+year+'</div>';
-            html+='<div class="meta"><span>อัตราค่าน้ำ&nbsp;<strong>'+rate+' บาท/หน่วย</strong></span><span>วันที่พิมพ์&nbsp;'+printDate+'</span></div>';
-            html+='<hr class="rule">';
-            html+='<table><thead><tr><th style="width:2em">ลำดับ</th><th style="width:6em">บ้านพัก/<br>แฟลต</th><th>ชื่อผู้พักอาศัย</th><th style="width:7em">มิเตอร์<br>ก่อนหน้า</th><th style="width:7em">มิเตอร์<br>ปัจจุบัน</th><th style="width:5.5em">หน่วยใช้</th><th style="width:7em">ยอดเงิน<br>(บาท)</th></tr></thead><tbody>';
-            html+=tableRows;
-            html+='<tr class="tr-sum"><td colspan="5" style="text-align:right">รวมทั้งสิ้น</td><td class="tr">'+totalUsage.toLocaleString()+'</td><td class="tr">'+totalAmount.toLocaleString()+'</td></tr>';
-            html+='</tbody></table>';
-            html+='<div class="sig-section">';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div class="sig-pos">ผู้บันทึกมิเตอร์น้ำ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
-            html+='</div></div></body></html>';
-            return html;
-        }
-
+        // ฟังก์ชันสร้าง HTML รายงานรายปี (เดือนเป็นคอลัมน์)
         async function generateYearlyReportHTML() {
             var year=document.getElementById('bill_year').value;
             var rate=document.getElementById('water_rate').value;
+            var shortMonths=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
             var thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
             var today=new Date();
             var printDate=today.getDate()+' '+thaiMonths[today.getMonth()]+' พ.ศ. '+(today.getFullYear()+543);
@@ -1275,56 +1182,89 @@
             document.querySelectorAll('#meterTableBody tr').forEach(function(row){
                 if(row.dataset.house) residentMap[row.dataset.house]=row.cells[2].textContent;
             });
+            // สร้าง houseData[house][month] = {prev, curr, units, amount}
             var houseData={};
             try {
                 var result=await callBackend('getWaterBills',{year:year});
                 if(result&&result.success&&result.data){
                     result.data.forEach(function(bill){
-                        var house=bill.house_number||'ไม่ระบุ';
-                        if(!houseData[house]) houseData[house]={months:[],totalUnits:0,totalAmount:0};
-                        var monthNum=bill.period?parseInt(bill.period.split('-')[1]):0;
-                        houseData[house].months.push({month:monthNum,prev:parseInt(bill.prev_meter||0),curr:parseInt(bill.curr_meter||0)});
-                        houseData[house].totalUnits+=parseInt(bill.units_used||0);
-                        houseData[house].totalAmount+=parseFloat(bill.amount||0);
+                        var house=bill.house_number||'?';
+                        if(!houseData[house]) houseData[house]={};
+                        var m=bill.period?parseInt(bill.period.split('-')[1]):0;
+                        houseData[house][m]={
+                            prev:parseInt(bill.prev_meter||0),
+                            curr:parseInt(bill.curr_meter||0),
+                            units:parseInt(bill.units_used||0),
+                            amount:parseFloat(bill.amount||0)
+                        };
                     });
                 }
-            } catch(e){console.error('Error fetching yearly data:',e);}
-            var tableRows=''; var grandTotalUnits=0; var grandTotalAmount=0; var rowNum=1;
+            } catch(e){console.error('getWaterBills yearly:',e);}
             var houses=Object.keys(houseData).sort();
+            var tableRows=''; var rowNum=1;
+            var monthTotals={}; for(var i=1;i<=12;i++) monthTotals[i]={units:0,amount:0};
+            var grandUnits=0,grandAmount=0;
             houses.forEach(function(house){
-                var d=houseData[house];
-                d.months.sort(function(a,b){return a.month-b.month;});
-                var firstPrev=d.months.length>0?d.months[0].prev:0;
-                var lastCurr=d.months.length>0?d.months[d.months.length-1].curr:0;
                 var resName=(residentMap[house]||'-').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                tableRows+='<tr><td class="tc">'+rowNum+'</td><td>'+house+'</td><td>'+resName+'</td><td class="tr">'+firstPrev.toLocaleString()+'</td><td class="tr">'+lastCurr.toLocaleString()+'</td><td class="tr">'+d.totalUnits.toLocaleString()+'</td><td class="tr">'+d.totalAmount.toLocaleString()+'</td></tr>';
-                grandTotalUnits+=d.totalUnits; grandTotalAmount+=d.totalAmount; rowNum++;
+                var totalU=0,totalA=0;
+                tableRows+='<tr><td class="tc">'+rowNum+'</td><td class="tc">'+house+'</td><td style="white-space:nowrap">'+resName+'</td>';
+                for(var m=1;m<=12;m++){
+                    var d=houseData[house][m];
+                    if(d){
+                        tableRows+='<td class="mc"><span class="meter">'+d.prev+'→'+d.curr+'</span><br><span class="units">'+d.units+'</span> / <b>'+d.amount.toLocaleString()+'</b></td>';
+                        totalU+=d.units; totalA+=d.amount;
+                        monthTotals[m].units+=d.units; monthTotals[m].amount+=d.amount;
+                    } else {
+                        tableRows+='<td class="mc">-</td>';
+                    }
+                }
+                tableRows+='<td class="tr"><b>'+totalU.toLocaleString()+'</b></td><td class="tr"><b>'+totalA.toLocaleString()+'</b></td></tr>';
+                grandUnits+=totalU; grandAmount+=totalA; rowNum++;
             });
+            // แถวรวม
+            tableRows+='<tr class="tr-sum"><td colspan="3" style="text-align:right">รวมแต่ละเดือน</td>';
+            for(var m=1;m<=12;m++){
+                var mt=monthTotals[m];
+                tableRows+='<td class="mc">'+(mt.units>0?('<span class="units">'+mt.units.toLocaleString()+'</span> / <b>'+mt.amount.toLocaleString()+'</b>'):'-')+'</td>';
+            }
+            tableRows+='<td class="tr"><b>'+grandUnits.toLocaleString()+'</b></td><td class="tr"><b>'+grandAmount.toLocaleString()+'</b></td></tr>';
             var _sys=cachedAdminSettings||{};
             var recorderName=_sys.meterRecorder||_sys.meter_recorder||'';
             var checkerName=_sys.meterChecker||_sys.meter_checker||'';
             var headName=_sys.headOfPromotion||_sys.head_of_promotion||'';
-            var css='@page{size:A4 landscape;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:15pt;line-height:1.5;color:#000}.page{padding:2cm 1.5cm 1.5cm 3cm}.title-col{text-align:center}.doc-title{display:inline-block;font-size:22pt;font-weight:bold;border-bottom:4px double #000;padding-bottom:0.12cm}.sub{text-align:center;font-size:14pt;margin-bottom:0.08cm}.period{text-align:center;font-size:16pt;font-weight:bold;margin-bottom:0.2cm}.meta{display:flex;justify-content:space-between;font-size:13pt;margin-bottom:0.15cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.15cm 0}table{border-collapse:collapse;width:100%;font-size:13pt;margin:0.15cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.12cm 0.15cm;font-weight:bold;text-align:center}tbody td{border:0.5pt solid #000;padding:0.08cm 0.15cm}.tc{text-align:center}.tr{text-align:right}.tr-sum td{font-weight:bold;background:#ececec}.sig-section{margin-top:0.5cm;display:flex;justify-content:space-around}.sig-box{text-align:center;min-width:5.5cm}.sig-space{height:1cm}.sig-line{width:5.5cm;margin:0 auto 0.06cm auto;border-top:0.5pt dotted #000;padding-top:0.08cm}.sig-solid{width:5.5cm;margin:0 auto 0.06cm auto;border-top:2px solid #000;padding-top:0.08cm}.sig-name{font-weight:bold;font-size:14pt}.sig-pos{font-size:13pt}@media print{body{margin:0!important;padding:0!important}.page{padding:2cm 1.5cm 1.5cm 3cm}}';
+            // Header เดือน
+            var thCols='';
+            for(var m=0;m<12;m++) thCols+='<th>'+shortMonths[m]+'<br><span style="font-weight:normal;font-size:7pt">เดิม→ใหม่<br>หน่วย / เงิน</span></th>';
+            var css='@page{size:A4 landscape;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:11pt;line-height:1.3;color:#000}.page{padding:1cm 0.8cm 1cm 1.5cm}.title-col{text-align:center}.doc-title{display:inline-block;font-size:16pt;font-weight:bold;border-bottom:3px double #000;padding-bottom:0.08cm}.sub{text-align:center;font-size:10pt;margin-bottom:0.05cm}.period{text-align:center;font-size:12pt;font-weight:bold;margin-bottom:0.1cm}.meta{display:flex;justify-content:space-between;font-size:9pt;margin-bottom:0.08cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.1cm 0}table{border-collapse:collapse;width:100%;font-size:8pt;margin:0.1cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.06cm 0.08cm;font-weight:bold;text-align:center;font-size:8pt;line-height:1.2}tbody td{border:0.5pt solid #000;padding:0.04cm 0.06cm;font-size:8pt;line-height:1.2}.tc{text-align:center}.tr{text-align:right}.mc{text-align:center;white-space:nowrap}.meter{font-size:7pt;color:#555}.units{font-size:7.5pt}.tr-sum td{font-weight:bold;background:#ececec}.sig-section{margin-top:0.4cm;display:flex;justify-content:space-around;font-size:10pt}.sig-box{text-align:center;min-width:4.5cm}.sig-space{height:0.8cm}.sig-line{width:4.5cm;margin:0 auto 0.04cm auto;border-top:0.5pt dotted #000;padding-top:0.06cm}.sig-solid{width:4.5cm;margin:0 auto 0.04cm auto;border-top:2px solid #000;padding-top:0.06cm}.sig-name{font-weight:bold;font-size:10pt}.sig-pos{font-size:9pt}@media print{body{margin:0!important;padding:0!important}.page{padding:1cm 0.8cm 1cm 1.5cm}}';
             var html='<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานสรุปค่าน้ำรายปี</title>';
             html+='<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">';
             html+='<style>'+css+'</style></head><body><div class="page">';
-            html+='<div class="title-col" style="text-align:center"><span class="doc-title">เอกสารแนบ: รายงานสรุปค่าน้ำบ้านพักครูรายปี</span></div>';
+            html+='<div class="title-col"><span class="doc-title">เอกสารแนบ: รายงานสรุปค่าน้ำบ้านพักครูรายปี</span></div>';
             html+='<div class="sub">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&nbsp;&nbsp;โรงเรียนพะเยาพิทยาคม</div>';
-            html+='<div class="period">ปีงบประมาณ / ปีการศึกษา&nbsp;&nbsp;พ.ศ. '+year+'</div>';
-            html+='<div class="meta">'+(rate?'<span>อัตราค่าน้ำ&nbsp;<strong>'+rate+' บาทต่อหน่วย</strong></span>':'<span></span>')+'<span>วันที่พิมพ์&nbsp;'+printDate+'</span></div>';
+            html+='<div class="period">ปี พ.ศ. '+year+(rate?'&nbsp;&nbsp;&nbsp;อัตรา '+rate+' บาท/หน่วย':'')+'</div>';
+            html+='<div class="meta"><span></span><span>วันที่พิมพ์&nbsp;'+printDate+'</span></div>';
             html+='<hr class="rule">';
-            html+='<table><thead><tr><th style="width:2em">ลำดับ</th><th style="width:6em">บ้านพัก/<br>แฟลต</th><th>ชื่อผู้พักอาศัย</th><th style="width:7em">มิเตอร์<br>ต้นปี</th><th style="width:7em">มิเตอร์<br>ปลายปี</th><th style="width:5.5em">รวมหน่วย<br>ใช้ทั้งปี</th><th style="width:7em">รวมยอดเงิน<br>(บาท)</th></tr></thead><tbody>';
+            html+='<table><thead><tr><th style="width:1.5em">ลำดับ</th><th style="width:3em">บ้านพัก</th><th style="min-width:4em">ชื่อผู้พักอาศัย</th>';
+            html+=thCols;
+            html+='<th>รวม<br>หน่วย</th><th>รวม<br>เงิน</th></tr></thead><tbody>';
             html+=tableRows;
-            html+='<tr class="tr-sum"><td colspan="5" style="text-align:right">รวมทั้งปี</td><td class="tr">'+grandTotalUnits.toLocaleString()+'</td><td class="tr">'+grandTotalAmount.toLocaleString()+'</td></tr>';
             html+='</tbody></table>';
             html+='<div class="sig-section">';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div class="sig-pos">ผู้รับผิดชอบงานมาตรน้ำ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
-            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'.....................')+')</div><div class="sig-pos">ผู้รับผิดชอบงานมาตรน้ำ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'.....................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'.....................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;...../...../.....</div></div>';
             html+='</div></div></body></html>';
             return html;
         }
 
+        // ฟังก์ชันพิมพ์สรุปทั้งปี (เรียก generateYearlyReportHTML)
+        async function printYearlyReport() {
+            var html=await generateYearlyReportHTML();
+            var pw=window.open('','_blank');
+            pw.document.write(html);
+            pw.document.close();
+            pw.onload=function(){setTimeout(function(){pw.print();},500);};
+        }
         async function submitMonthlyApproval() {
             if(!confirm('ต้องการส่งขออนุมัติรายงานค่าน้ำรายเดือนนี้ใช่หรือไม่?')) return;
             try {
