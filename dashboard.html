@@ -47,6 +47,20 @@
             font-size: 2rem; font-weight: 700; line-height: 1.1;
         }
         .hero-payment .hero-amount.zero { opacity: 0.7; font-size: 1.3rem; }
+        .hero-breakdown {
+            margin: 6px 0 2px; padding: 6px 0 0; border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+        .hb-item {
+            display: flex; align-items: center; gap: 6px; font-size: 0.82rem; padding: 1px 0; color: #444;
+        }
+        .hb-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .hb-dot.water { background: #3B82F6; }
+        .hb-dot.electric { background: #F59E0B; }
+        .hb-dot.common { background: #10B981; }
+        .hb-label { flex: 1; }
+        .hb-val { font-weight: 600; }
         .hero-payment .hero-period {
             font-size: 0.8rem; opacity: 0.7; margin-top: 0.15rem;
         }
@@ -286,6 +300,11 @@
                         <div class="hero-col">
                             <div class="hero-label">💳 ยอดชำระเดือนนี้</div>
                             <div class="hero-amount" id="currentMonthAmount">—</div>
+                            <div id="heroBillBreakdown" class="hero-breakdown" style="display:none;">
+                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val" id="hbWater">—</span></div>
+                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val" id="hbElectric">—</span></div>
+                                <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val" id="hbCommon">—</span></div>
+                            </div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
                         <div class="hero-col" style="text-align:right;">
@@ -481,6 +500,23 @@
                 amtEl.textContent = 'ยังไม่มียอดแจ้ง';
                 amtEl.className = 'hero-amount zero';
             }
+
+            // Bill breakdown
+            var bdEl = document.getElementById('heroBillBreakdown');
+            if (bdEl) {
+                var wAmt = data.waterAmount || 0;
+                var eAmt = data.electricAmount || 0;
+                var cAmt = data.commonFee || 0;
+                if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
+                    bdEl.style.display = '';
+                    document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' บาท';
+                } else {
+                    bdEl.style.display = 'none';
+                }
+            }
+
             document.getElementById('heroPeriod').textContent = '📅 ' + periodDisplay;
 
             // Due date warning
@@ -588,6 +624,19 @@
                     : 'ยังไม่มียอดแจ้ง';
                 var amtClass = amount > 0 ? 'phc-amount' : 'phc-amount zero';
 
+                /* ── Bill breakdown ── */
+                var wAmt = a.water_amount || 0;
+                var eAmt = a.electric_amount || 0;
+                var cAmt = a.common_fee || 0;
+                var breakdownHtml = '';
+                if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
+                    breakdownHtml = '<div class="hero-breakdown">'
+                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val">' + wAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val">' + eAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val">' + cAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '</div>';
+                }
+
                 /* ── Status badge ── */
                 var badgeHtml = '';
                 if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">✅ ชำระแล้ว</div>';
@@ -630,6 +679,7 @@
                         + '<div class="phc-col">'
                             + '<div class="phc-amount-label">💳 ยอดชำระเดือนนี้</div>'
                             + '<div class="' + amtClass + '">' + amtHtml + '</div>'
+                            + breakdownHtml
                             + '<div class="phc-period">📅 ' + periodDisplay + '</div>'
                         + '</div>'
                         + '<div class="phc-col" style="text-align:right;">' + badgeHtml + '</div>'
