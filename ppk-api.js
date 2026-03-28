@@ -3840,6 +3840,50 @@ async function _routeAction(action, data) {
             }};
         }
 
+        /* == Report Approval Workflow == */
+        case 'submitReportApproval': {
+            if (!data.reportType || !data.period || !data.reportHtml) return { success: false, error: 'Missing required fields' };
+            var sra = await _getSessionRole();
+            var sraUserId = sra ? sra.userId : null;
+            var existing = await sbGet('report_approvals', { report_type: 'eq.' + data.reportType, period: 'eq.' + data.period, status: 'eq.pending', limit: '1' }).catch(function(){ return []; });
+            if (existing && existing.length > 0) {
+                await sbPatch('report_approvals', { id: 'eq.' + existing[0].id }, { report_html: data.reportHtml, updated_at: new Date().toISOString() });
+                return { success: true, data: { id: existing[0].id, updated: true } };
+            }
+            var row = await sbPost('report_approvals', { report_type: data.reportType, period: data.period, year: data.year || null, submitted_by: sraUserId, report_html: data.reportHtml, status: 'pending' });
+            _logActivity('submit_report_approval', sraUserId, data.reportType + ' ' + data.period, { reportType: data.reportType, period: data.period });
+            return { success: true, data: row };
+        }
+        case 'getReportApprovals': {
+            var graQ = { order: 'submitted_at.desc' };
+            if (data.status) graQ.status = 'eq.' + data.status;
+            if (data.reportType) graQ.report_type = 'eq.' + data.reportType;
+            if (data.period) graQ.period = 'eq.' + data.period;
+            if (!data.limit) graQ.limit = '50';
+            var graRows = await sbGet('report_approvals', graQ).catch(function(){ return []; });
+            return { success: true, data: graRows };
+        }
+        case 'signReportApproval': {
+            if (!data.id) return { success: false, error: 'Missing approval ID' };
+            var sigSess = await _getSessionRole();
+            if (!sigSess || (sigSess.role !== 'admin' && sigSess.role !== 'head')) return { success: false, error: 'No permission' };
+            var sigPatch = { reviewed_by: sigSess.userId, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+            if (data.sigRecorder) sigPatch.sig_recorder = data.sigRecorder;
+            if (data.sigChecker) sigPatch.sig_checker = data.sigChecker;
+            if (data.sigHead) sigPatch.sig_head = data.sigHead;
+            if (data.status) sigPatch.status = data.status;
+            if (data.reviewerNote) sigPatch.reviewer_note = data.reviewerNote;
+            if (data.reportHtml) sigPatch.report_html = data.reportHtml;
+            await sbPatch('report_approvals', { id: 'eq.' + data.id }, sigPatch);
+            _logActivity('sign_report', sigSess.userId, data.status + ' ' + data.id, { id: data.id, status: data.status });
+            return { success: true };
+        }
+        case 'getReportApprovalById': {
+            if (!data.id) return { success: false, error: 'Missing ID' };
+            var raRow = await sbGet('report_approvals', { id: 'eq.' + data.id, limit: '1' }).catch(function(){ return []; });
+            return { success: true, data: raRow && raRow[0] ? raRow[0] : null };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
