@@ -746,9 +746,13 @@
         if(unit.noResident){
           actionsHtml = '<span style="color:var(--muted);font-size:.85rem;">ไม่มีผู้พัก</span>';
         } else if(status === 'approved'){
+          const _sentStyle = unit.receiptEmailSent ? ' style="background:#6b7280;border-color:#6b7280;cursor:default;"' : '';
+          const _sentDisabled = unit.receiptEmailSent ? ' disabled' : '';
+          const _sentLabel = unit.receiptEmailSent ? '✅ ส่งแล้ว' : '📧 ส่งใบเสร็จ';
+          const _sentTitle = unit.receiptEmailSent ? 'ส่งใบเสร็จทางอีเมลแล้ว' : 'ส่งใบเสร็จทางอีเมล';
           actionsHtml = '<div class="action-btns">' +
             '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
-            '<button class="btn btn-sm btn-success" onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="ส่งใบเสร็จทางอีเมล">📧 ส่งใบเสร็จ</button>' +
+            '<button class="btn btn-sm btn-success"' + _sentDisabled + _sentStyle + ' onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="' + _sentTitle + '">' + _sentLabel + '</button>' +
           '</div>';
         } else if(status === 'unpaid'){
           actionsHtml = '<div class="action-btns">' +
@@ -1164,7 +1168,20 @@
     // wrapper สำหรับปุ่มรายตัว — จัดการ loading state
     async function sendReceiptEmailBtn(btn, type, index) {
       btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
-      try { await sendReceiptEmail(type, index); } finally { btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ'; }
+      try {
+        const ok = await sendReceiptEmail(type, index);
+        if (ok) {
+          const list = type === 'houses' ? housesData : flatsData;
+          if (list[index]) list[index].receiptEmailSent = true;
+          btn.disabled = true;
+          btn.innerHTML = '✅ ส่งแล้ว';
+          btn.style.background = '#6b7280';
+          btn.style.borderColor = '#6b7280';
+          btn.title = 'ส่งใบเสร็จทางอีเมลแล้ว';
+        } else {
+          btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ';
+        }
+      } catch(e) { btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ'; }
     }
 
     // ส่งใบเสร็จทางอีเมล
@@ -1298,7 +1315,7 @@
         const _rIdx = list.indexOf(_ru);
         if (_rIdx < 0) { failed++; continue; }
         const _rok = await sendReceiptEmail(type, _rIdx);
-        if(_rok) sent++; else failed++;
+        if (_rok) { sent++; if (list[_rIdx]) list[_rIdx].receiptEmailSent = true; } else failed++;
       }
 
       ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
