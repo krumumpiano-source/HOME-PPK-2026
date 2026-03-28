@@ -1170,6 +1170,52 @@
         }
 
         
+
+        // === ฟังก์ชันสร้าง HTML รายงานรายเดือน ===
+        function generateMonthlyReportHTML() {
+            var month=document.getElementById('bill_month').value;
+            var year=document.getElementById('bill_year').value;
+            var rate=document.getElementById('water_rate').value;
+            var thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+            var monthName=thaiMonths[parseInt(month)-1];
+            var today=new Date();
+            var printDate=today.getDate()+' '+thaiMonths[today.getMonth()]+' พ.ศ. '+(today.getFullYear()+543);
+            var rows=document.querySelectorAll('#meterTableBody tr');
+            var tableRows=''; var totalUsage=0; var totalAmount=0; var rowNum=1;
+            rows.forEach(function(row){
+                if(!row.dataset.house) return;
+                var prevMeter=row.querySelector('.prev-meter').value||'0';
+                var currMeter=row.querySelector('.curr-meter').value||'0';
+                var usage=parseInt(row.querySelector('.usage-value').textContent)||0;
+                var amount=parseInt(row.querySelector('.amount-value').textContent.replace(/[^\d]/g,''))||0;
+                var resident=row.cells[2].textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                tableRows+='<tr><td class="tc">'+rowNum+'</td><td>'+row.dataset.house+'</td><td>'+resident+'</td><td class="tr">'+parseInt(prevMeter).toLocaleString()+'</td><td class="tr">'+parseInt(currMeter).toLocaleString()+'</td><td class="tr">'+usage.toLocaleString()+'</td><td class="tr">'+amount.toLocaleString()+'</td></tr>';
+                totalUsage+=usage; totalAmount+=amount; rowNum++;
+            });
+            var _sys=cachedAdminSettings||{};
+            var recorderName=_sys.meterRecorder||_sys.meter_recorder||'';
+            var checkerName=_sys.meterChecker||_sys.meter_checker||'';
+            var headName=_sys.headOfPromotion||_sys.head_of_promotion||'';
+            var css='@page{size:A4 landscape;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:15pt;line-height:1.5;color:#000}.page{padding:2cm 1.5cm 1.5cm 3cm}.title-col{text-align:center}.doc-title{display:inline-block;font-size:22pt;font-weight:bold;border-bottom:4px double #000;padding-bottom:0.12cm}.sub{text-align:center;font-size:14pt;margin-bottom:0.08cm}.period{text-align:center;font-size:15pt;font-weight:bold;margin-bottom:0.2cm}.meta{display:flex;justify-content:space-between;font-size:13pt;margin-bottom:0.15cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.15cm 0}table{border-collapse:collapse;width:100%;font-size:13pt;margin:0.15cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.12cm 0.15cm;font-weight:bold;text-align:center}tbody td{border:0.5pt solid #000;padding:0.08cm 0.15cm}.tc{text-align:center}.tr{text-align:right}.tr-sum td{font-weight:bold;background:#ececec}.sig-section{margin-top:0.5cm;display:flex;justify-content:space-around}.sig-box{text-align:center;min-width:5.5cm}.sig-space{height:1cm}.sig-line{width:5.5cm;margin:0 auto 0.06cm auto;border-top:0.5pt dotted #000;padding-top:0.08cm}.sig-solid{width:5.5cm;margin:0 auto 0.06cm auto;border-top:2px solid #000;padding-top:0.08cm}.sig-name{font-weight:bold;font-size:14pt}.sig-pos{font-size:13pt}@media print{body{margin:0!important;padding:0!important}.page{padding:2cm 1.5cm 1.5cm 3cm}}';
+            var html='<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานค่าน้ำ</title>';
+            html+='<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">';
+            html+='<style>'+css+'</style></head><body><div class="page">';
+            html+='<div class="title-col" style="text-align:center"><span class="doc-title">เอกสารแนบ: รายงานค่าน้ำบ้านพักครู</span></div>';
+            html+='<div class="sub">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&nbsp;&nbsp;โรงเรียนพะเยาพิทยาคม</div>';
+            html+='<div class="period">ประจำเดือน'+monthName+' พ.ศ. '+year+'</div>';
+            html+='<div class="meta"><span>อัตราค่าน้ำ&nbsp;<strong>'+rate+' บาท/หน่วย</strong></span><span>วันที่พิมพ์&nbsp;'+printDate+'</span></div>';
+            html+='<hr class="rule">';
+            html+='<table><thead><tr><th style="width:2em">ลำดับ</th><th style="width:6em">บ้านพัก/<br>แฟลต</th><th>ชื่อผู้พักอาศัย</th><th style="width:7em">มิเตอร์<br>ก่อนหน้า</th><th style="width:7em">มิเตอร์<br>ปัจจุบัน</th><th style="width:5.5em">หน่วยใช้</th><th style="width:7em">ยอดเงิน<br>(บาท)</th></tr></thead><tbody>';
+            html+=tableRows;
+            html+='<tr class="tr-sum"><td colspan="5" style="text-align:right">รวมทั้งสิ้น</td><td class="tr">'+totalUsage.toLocaleString()+'</td><td class="tr">'+totalAmount.toLocaleString()+'</td></tr>';
+            html+='</tbody></table>';
+            html+='<div class="sig-section">';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div class="sig-pos">ผู้บันทึกมิเตอร์น้ำ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div class="sig-pos">ผู้ตรวจสอบ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
+            html+='<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div class="sig-pos">หัวหน้างานส่งเสริมฯ</div><div class="sig-pos">วันที่&nbsp;........./........./.........</div></div>';
+            html+='</div></div></body></html>';
+            return html;
+        }
         // ฟังก์ชันสร้าง HTML รายงานรายปี (เดือนเป็นคอลัมน์)
         async function generateYearlyReportHTML() {
             var year=document.getElementById('bill_year').value;
