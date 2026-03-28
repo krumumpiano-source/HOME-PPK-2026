@@ -450,6 +450,7 @@
               unitNumber: unitNumber,
               name: bill.resident_name || '',
               email: bill.email || '',
+              proxyEmail: bill.proxy_email || '',
               waterAmount: parseFloat(bill.water_amount) || 0,
               electricAmount: parseFloat(bill.electric_amount) || 0,
               commonFee: parseFloat(bill.common_fee) || 0,
@@ -495,6 +496,7 @@
                 unitNumber: unitNumber,
                 name: slip.resident_name || '',
                 email: slip.email || '',
+                proxyEmail: slip.proxy_email || '',
                 waterAmount: 0, electricAmount: 0, commonFee: 0,
                 notifiedAmount: parseFloat(slip.notified_amount) || 0,
                 paidAmount: parseFloat(slip.amount) || 0,
@@ -1135,7 +1137,7 @@
 
       const subject = `แจ้งเตือนค่าสาธารณูปโภค ${monthName} ${year} — บ้านพัก ${unit.unitNumber}`;
       const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">
-<p>เรียน คุณ${unit.name || 'ผู้พักอาศัย'}</p>
+<p>เรียน ${unit.name || 'ผู้พักอาศัย'}</p>
 <p>เรื่อง: <strong>แจ้งเตือนการชำระค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}</strong></p>
 <pre style="background:#fef9c3;padding:12px;border-radius:8px;border:1px solid #fde047">${details}</pre>
 <p>${emailReminderNote}</p>
@@ -1143,7 +1145,7 @@
 
       let emailSent = false;
 
-      const _remEmail = (unit.email || '').trim();
+      const _remEmail = (unit.email || unit.proxyEmail || '').trim();
       const _remEmailOk = _remEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_remEmail) && _remEmail.length <= 320;
       if (_remEmailOk) {
         try {
@@ -1190,7 +1192,7 @@
 
       const subject = `ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year} - ${unit.unitNumber}`;
       const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.8;color:#0f172a">
-<p>เรียน คุณ${unit.name || 'ผู้พักอาศัย'}</p>
+<p>เรียน ${unit.name || 'ผู้พักอาศัย'}</p>
 <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:18px;margin:12px 0">
   <p style="margin:0 0 12px;font-size:16px">✅ <strong>ใบเสร็จรับเงินค่าสาธารณูปโภค ${monthName} ${year}</strong></p>
   <table style="width:100%;border-collapse:collapse;font-size:14px">
@@ -1219,7 +1221,7 @@
       let emailError = '';
 
       // ตรวจสอบว่า email ถูกต้อง
-      const emailTo = (unit.email || '').trim();
+      const emailTo = (unit.email || unit.proxyEmail || '').trim();
       const emailValid = emailTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTo) && emailTo.length <= 320;
 
       if (emailValid) {

@@ -292,6 +292,8 @@
                             <div id="heroStatusBadge"></div>
                         </div>
                     </div>
+                    <div id="heroDueDateWarning" style="display:none;background:#fef9c3;border:1px solid #facc15;border-radius:8px;padding:8px 12px;margin:8px 0 4px;text-align:center;font-size:14px;color:#92400e;font-weight:bold;">
+                    </div>
                     <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
                     <div class="hero-reject-banner" id="heroRejectBanner"></div>
                     <button class="hero-cancel-btn" id="heroCancelBtn" onclick="cancelSlipClick()" style="display:none;">🗑️ ยกเลิกสลิปที่ส่งไว้</button>
@@ -480,6 +482,17 @@
                 amtEl.className = 'hero-amount zero';
             }
             document.getElementById('heroPeriod').textContent = '📅 ' + periodDisplay;
+
+            // Due date warning
+            var dueDateWarn = document.getElementById('heroDueDateWarning');
+            if (data.dueDate && amount > 0 && slipStatus !== 'success') {
+                var dd = new Date(data.dueDate);
+                var ddStr = dd.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+                dueDateWarn.textContent = '⏰ กรุณาชำระภายในวันที่ ' + ddStr;
+                dueDateWarn.style.display = '';
+            } else {
+                dueDateWarn.style.display = 'none';
+            }
 
             // Status badge
             var badgeEl = document.getElementById('heroStatusBadge');
