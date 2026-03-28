@@ -797,6 +797,14 @@
     }
 
     function renderAll(){
+      // restore receipt-sent state from localStorage before rendering
+      const { key } = getSelectedPeriod();
+      const _sentKey = 'receiptSent_' + key;
+      let _sentSet = new Set();
+      try { _sentSet = new Set(JSON.parse(localStorage.getItem(_sentKey) || '[]')); } catch(e) {}
+      [...housesData, ...flatsData].forEach(function(u) {
+        if (_sentSet.has(u.unitNumber)) u.receiptEmailSent = true;
+      });
       renderTable('houses');
       renderTable('flats');
     }
@@ -1173,6 +1181,13 @@
         if (ok) {
           const list = type === 'houses' ? housesData : flatsData;
           if (list[index]) list[index].receiptEmailSent = true;
+          // persist to localStorage
+          const { key } = getSelectedPeriod();
+          const _sentKey = 'receiptSent_' + key;
+          let _sentArr = [];
+          try { _sentArr = JSON.parse(localStorage.getItem(_sentKey) || '[]'); } catch(e) {}
+          if (!_sentArr.includes(list[index].unitNumber)) _sentArr.push(list[index].unitNumber);
+          localStorage.setItem(_sentKey, JSON.stringify(_sentArr));
           btn.disabled = true;
           btn.innerHTML = '✅ ส่งแล้ว';
           btn.style.background = '#6b7280';
@@ -1315,7 +1330,17 @@
         const _rIdx = list.indexOf(_ru);
         if (_rIdx < 0) { failed++; continue; }
         const _rok = await sendReceiptEmail(type, _rIdx);
-        if (_rok) { sent++; if (list[_rIdx]) list[_rIdx].receiptEmailSent = true; } else failed++;
+        if (_rok) {
+          sent++;
+          if (list[_rIdx]) list[_rIdx].receiptEmailSent = true;
+          // persist to localStorage
+          const { key: _rKey } = getSelectedPeriod();
+          const _rSentKey = 'receiptSent_' + _rKey;
+          let _rSentArr = [];
+          try { _rSentArr = JSON.parse(localStorage.getItem(_rSentKey) || '[]'); } catch(e) {}
+          if (!_rSentArr.includes(list[_rIdx].unitNumber)) _rSentArr.push(list[_rIdx].unitNumber);
+          localStorage.setItem(_rSentKey, JSON.stringify(_rSentArr));
+        } else failed++;
       }
 
       ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
