@@ -581,9 +581,7 @@
                         }
                     }
                     if (_coErrors.length > 0) {
-                        ppkAlert('⚠️ บันทึกผู้ร่วมพักบางรายไม่สำเร็จ:
-' + _coErrors.join('
-'));
+                        ppkAlert('⚠️ บันทึกผู้ร่วมพักบางรายไม่สำเร็จ:\n' + _coErrors.join('\n'));
                         saveBtn.disabled = false;
                         saveBtn.textContent = '💾 บันทึกข้อมูล';
                         return;
