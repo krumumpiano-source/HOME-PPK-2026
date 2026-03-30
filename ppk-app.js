@@ -189,3 +189,30 @@ if (typeof window.cachedCall !== 'function') {
     });
   };
 }
+
+// Global error monitoring — log client-side errors to the DB
+window.onerror = function (msg, src, line, col) {
+  try {
+    if (typeof window.callBackend === 'function') {
+      window.callBackend('logActivity', {
+        action: 'client_error',
+        details: String(msg).substring(0, 200),
+        extra: { src: src, line: line, col: col }
+      }).catch(function () {});
+    }
+  } catch (e) {}
+  return false;
+};
+
+window.addEventListener('unhandledrejection', function (e) {
+  try {
+    var msg = e.reason && (e.reason.message || String(e.reason)) || 'unhandledrejection';
+    if (typeof window.callBackend === 'function') {
+      window.callBackend('logActivity', {
+        action: 'client_error',
+        details: String(msg).substring(0, 200),
+        extra: { type: 'unhandledrejection' }
+      }).catch(function () {});
+    }
+  } catch (e2) {}
+});

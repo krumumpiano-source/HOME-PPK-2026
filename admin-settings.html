@@ -1344,6 +1344,22 @@
                         <div style="color:#64748b; padding:1rem 0; text-align:center;">กดปุ่ม "โหลดรายการสำรอง" เพื่อดูข้อมูล</div>
                     </div>
                 </div>
+
+                <!-- Section: PDPA Anonymization -->
+                <div class="section" style="border:2px solid var(--danger); border-radius:12px; padding:1.25rem; background:rgba(239,68,68,0.04);">
+                    <div class="section-title">🔏 PDPA — ลบข้อมูลส่วนบุคคล</div>
+                    <div class="section-desc" style="margin-bottom:.75rem;">
+                        ลบข้อมูลส่วนบุคคล (ชื่อ อีเมล เบอร์โทร) ของผู้ใช้ที่ระบุตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล โดยระบบจะแทนที่ข้อมูลด้วยค่าว่าง/ไม่ระบุ โดยไม่ลบแถวออกจากฐานข้อมูล
+                    </div>
+                    <div style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;">
+                        <div class="form-group" style="flex:1;min-width:180px;margin:0;">
+                            <label>รหัสผู้ใช้ (User ID) ที่ต้องการลบข้อมูล</label>
+                            <input type="text" id="pdpaUserId" placeholder="กรอก UUID ของผู้ใช้..." style="width:100%;">
+                        </div>
+                        <button class="btn btn-danger" id="btnPdpaAnon" onclick="pdpaAnonymize()">🔏 ลบข้อมูลส่วนบุคคล</button>
+                    </div>
+                    <div id="pdpaStatus" style="display:none;margin-top:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.9rem;"></div>
+                </div>
             </div>
 
             <!-- Modal: Approve Registration -->
@@ -3947,6 +3963,31 @@
                 }
             } catch(e) {
                 ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        // ========== PDPA Anonymization ==========
+        async function pdpaAnonymize() {
+            var userId = (document.getElementById('pdpaUserId').value || '').trim();
+            if (!userId) { ppkAlert('กรุณากรอก User ID ที่ต้องการลบข้อมูล'); return; }
+            var confirmed = await ppkConfirm('⚠️ ลบข้อมูลส่วนบุคคล\n\nUser ID: ' + userId + '\n\nข้อมูลชื่อ อีเมล และเบอร์โทรจะถูกแทนที่ด้วยค่าว่าง/ไม่ระบุ\nการดำเนินการนี้ไม่สามารถย้อนกลับได้\n\nต้องการดำเนินการหรือไม่?');
+            if (!confirmed) return;
+            var btn = document.getElementById('btnPdpaAnon');
+            var statusEl = document.getElementById('pdpaStatus');
+            if (btn) btn.disabled = true;
+            if (statusEl) { statusEl.style.display = 'block'; statusEl.style.background = '#eff6ff'; statusEl.style.color = '#1e40af'; statusEl.textContent = '⏳ กำลังดำเนินการ...'; }
+            try {
+                var r = await callBackend('anonymizeUser', { userId: userId });
+                if (r && r.success) {
+                    if (statusEl) { statusEl.style.background = '#d1fae5'; statusEl.style.color = '#065f46'; statusEl.textContent = '✅ ลบข้อมูลส่วนบุคคลสำเร็จ'; }
+                    document.getElementById('pdpaUserId').value = '';
+                } else {
+                    if (statusEl) { statusEl.style.background = '#fee2e2'; statusEl.style.color = '#991b1b'; statusEl.textContent = '❌ ' + ((r && r.error) || 'ไม่สำเร็จ'); }
+                }
+            } catch(e) {
+                if (statusEl) { statusEl.style.background = '#fee2e2'; statusEl.style.color = '#991b1b'; statusEl.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message; }
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 

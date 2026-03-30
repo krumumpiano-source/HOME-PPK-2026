@@ -106,7 +106,10 @@
                 <div>
                     <h3 class="section-title">รายงานที่ส่งขออนุมัติ</h3>
                 </div>
-                <span id="reportCount" style="color:var(--muted);font-size:.9rem;"></span>
+                <div style="display:flex;align-items:center;gap:.6rem;">
+                    <span id="reportCount" style="color:var(--muted);font-size:.9rem;"></span>
+                    <button class="btn btn-sm" onclick="exportReportCSV()" title="ส่งออก CSV">⬇ CSV</button>
+                </div>
             </div>
             <div id="reportList" class="card-list">
                 <div class="empty-state">⏳ กำลังโหลด...</div>
@@ -242,6 +245,44 @@
         return canvas.toDataURL('image/png');
     }
 
+    // Holds last-loaded report items for CSV export
+    var _reportItems = [];
+
+    // === Export CSV ===
+    function exportReportCSV() {
+        if (!_reportItems.length) { alert('ไม่มีข้อมูลสำหรับส่งออก'); return; }
+        var typeMap = {
+            'water_monthly': 'ค่าน้ำรายเดือน',
+            'water_yearly': 'ค่าน้ำรายปี',
+            'electric_monthly': 'ค่าไฟรายเดือน',
+            'electric_yearly': 'ค่าไฟรายปี'
+        };
+        var statusMap = { 'approved': 'อนุมัติแล้ว', 'rejected': 'ไม่อนุมัติ', 'pending': 'รอการอนุมัติ' };
+        var rows = [['ลำดับ', 'ประเภทรายงาน', 'งวด', 'สถานะ', 'ส่งเมื่อ', 'หมายเหตุผู้ตรวจ']];
+        _reportItems.forEach(function(item, i) {
+            var dt = item.submitted_at ? new Date(item.submitted_at).toLocaleString('th-TH') : '';
+            rows.push([
+                i + 1,
+                typeMap[item.report_type] || item.report_type || '',
+                item.period || '',
+                statusMap[item.status] || item.status || '',
+                dt,
+                item.reviewer_note || ''
+            ]);
+        });
+        var csv = rows.map(function(r) {
+            return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var bom = '\uFEFF';
+        var blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'รายงาน_' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
     // === Load approvals ===
     async function loadApprovals() {
         var status = document.getElementById('filterStatus').value;
@@ -259,6 +300,7 @@
                 return;
             }
             var items = result.data || [];
+            _reportItems = items;
             document.getElementById('reportCount').textContent = items.length + ' รายการ';
 
             if (!items.length) {

@@ -439,7 +439,7 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
     'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf',
-    'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup'];
+    'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser'];
 
 // ── Storage bucket helper: auto-create if not exists ──
 var _bucketReady = {};
@@ -586,6 +586,14 @@ async function _routeAction(action, data) {
             var _lusr = null; try { _lusr = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch(e) {}
             if (_lusr && _lusr.id) _logActivity('logout', _lusr.id, (_lusr.firstname || '') + ' ' + (_lusr.lastname || '') + ' ออกจากระบบ', { role: _lusr.role });
             return ppkLogout();
+        }
+        case 'logActivity': {
+            // ใช้โดย ppk-app.js สำหรับ error monitoring
+            var laAction = String(data.action || 'client_error').substring(0, 50);
+            var laDesc = String(data.details || data.description || '').substring(0, 200);
+            var laMeta = (data.extra || data.meta) || {};
+            _logActivity(laAction, sessUserId || null, laDesc, laMeta);
+            return { success: true };
         }
         case 'register': {
             var _regResult = await ppkRegister(data);
@@ -1777,7 +1785,8 @@ async function _routeAction(action, data) {
                 var adminQueries = [
                     sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
                     sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
-                    sbGet('requests', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; })
+                    sbGet('requests', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
+                    sbGet('outstanding', { period: 'eq.' + adminPeriod, select: 'status', limit: '1000' }).catch(function() { return []; })
                 ];
                 if (sessHouseNumber) {
                     adminQueries.push(
@@ -1787,10 +1796,15 @@ async function _routeAction(action, data) {
                 }
                 var adminResults = await Promise.all(adminQueries);
                 var pendingReg = adminResults[0], pendingSlips = adminResults[1], pendingReqs = adminResults[2];
+                var periodStats = adminResults[3] || [];
+                var totalRooms = periodStats.length;
+                var paidRooms = periodStats.filter(function(r) { return r.status === 'paid'; }).length;
+                var collectionRate = totalRooms > 0 ? Math.round(paidRooms / totalRooms * 100) : null;
+                var outstandingRooms = totalRooms > 0 ? (totalRooms - paidRooms) : null;
                 var residentData = null;
                 if (sessHouseNumber) {
-                    var adminOutRows = adminResults[3] || [];
-                    var adminSlipRows = adminResults[4] || [];
+                    var adminOutRows = adminResults[4] || [];
+                    var adminSlipRows = adminResults[5] || [];
                     var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
                     var adminLatestSlip = adminSlipRows[0];
                     var adminSlipStatus = 'none';
@@ -1817,7 +1831,9 @@ async function _routeAction(action, data) {
                 return { success: true, role: 'admin', announcements: announcements, data: {
                     pendingRegistrations: (pendingReg || []).length,
                     pendingSlips: (pendingSlips || []).length,
-                    pendingRequests: (pendingReqs || []).length
+                    pendingRequests: (pendingReqs || []).length,
+                    collectionRate: collectionRate,
+                    outstandingRooms: outstandingRooms
                 }, residentData: residentData };
             } else {
                 var houseNumber = sessHouseNumber;
@@ -3159,6 +3175,27 @@ async function _routeAction(action, data) {
             var dkCut = new Date(Date.now() - dkDays * 86400000).toISOString();
             await sbDelete('data_backups', { created_at: 'lt.' + dkCut });
             return { success: true, message: 'ลบข้อมูลสำรองที่เก่ากว่า ' + dkDays + ' วันเรียบร้อยแล้ว' };
+        }
+
+        /* ── anonymizeUser — PDPA: แทนที่ข้อมูลส่วนบุคคลด้วยค่าว่าง ─── */
+        case 'anonymizeUser': {
+            if (sessRole !== 'admin') return { success: false, error: 'ไม่มีสิทธิ์' };
+            var anonId = data.userId;
+            if (!anonId || typeof anonId !== 'string' || !/^[0-9a-f-]{36}$/i.test(anonId))
+                return { success: false, error: 'User ID ไม่ถูกต้อง' };
+            var anonUpdate = {
+                email: 'deleted-' + anonId.slice(0, 8) + '@ppk.local',
+                firstname: 'ลบข้อมูลแล้ว',
+                lastname: '',
+                phone: ''
+            };
+            try {
+                await sbPatch('users', { id: 'eq.' + anonId }, anonUpdate);
+            } catch (anonErr) {
+                return { success: false, error: anonErr.message || 'อัปเดตไม่สำเร็จ' };
+            }
+            await _logActivity('pdpa_anonymize', sessUserId, 'anonymized user ' + anonId, { targetUserId: anonId }).catch(function() {});
+            return { success: true };
         }
 
         /* ── purgeStaleAutoEntries — ล้างข้อมูล auto เก่า (ค่าน้ำ/ค่าไฟ/ยอดรับชำระ) ทุก period ─── */

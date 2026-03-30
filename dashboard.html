@@ -287,6 +287,16 @@
                         <div class="ppk-stat-value danger" id="statPendingReqs">—</div>
                         <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
                     </div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-slip')" title="อัตราการชำระเงินเดือนนี้">
+                        <div class="ppk-stat-icon">💰</div>
+                        <div class="ppk-stat-value" id="statCollectionRate">—</div>
+                        <div class="ppk-stat-label">% ชำระแล้วเดือนนี้</div>
+                    </div>
+                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="จำนวนห้องที่ยังค้างชำระ">
+                        <div class="ppk-stat-icon">⏳</div>
+                        <div class="ppk-stat-value" id="statOutstandingRooms">—</div>
+                        <div class="ppk-stat-label">ห้องค้างชำระ</div>
+                    </div>
                 </div>
             </div>
 
@@ -813,6 +823,27 @@
             _stat('statPendingReg',   data.pendingRegistrations || 0);
             _stat('statPendingSlips', data.pendingSlips || 0);
             _stat('statPendingReqs',  data.pendingRequests || 0);
+
+            // Collection rate
+            var rateEl = document.getElementById('statCollectionRate');
+            if (rateEl) {
+                var rate = data.collectionRate;
+                if (rate == null) { rateEl.textContent = '—'; rateEl.className = 'ppk-stat-value'; }
+                else {
+                    rateEl.textContent = rate + '%';
+                    rateEl.className = 'ppk-stat-value ' + (rate >= 80 ? 'ok' : rate >= 50 ? 'warning' : 'danger');
+                }
+            }
+            // Outstanding rooms
+            var outEl = document.getElementById('statOutstandingRooms');
+            if (outEl) {
+                var out = data.outstandingRooms;
+                if (out == null) { outEl.textContent = '—'; outEl.className = 'ppk-stat-value'; }
+                else {
+                    outEl.textContent = String(out);
+                    outEl.className = 'ppk-stat-value ' + (out > 0 ? 'danger' : 'ok');
+                }
+            }
         }
 
         async function loadDashboard() {
