@@ -561,7 +561,10 @@
         
         <!-- ตารางรายรับ-รายจ่าย (รวม) -->
         <div class="section">
-            <div class="section-title" style="color:var(--primary);">📒 รายรับ-รายจ่าย</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+                <div class="section-title" style="margin-bottom:0;color:var(--primary);">📒 รายรับ-รายจ่าย</div>
+                <input type="search" id="accountingSearchInput" placeholder="🔍 ค้นหารายการ..." oninput="filterAccountingTable()" style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px;">
+            </div>
             <div class="table-wrapper">
                 <table id="accountingTable">
                     <thead>
@@ -827,7 +830,28 @@
             renderAccountingTable();
             updateSummary();
         }
-        
+
+        // ค้นหา/กรองแถวในตารางรายรับ-รายจ่าย
+        function filterAccountingTable() {
+            var q = (document.getElementById('accountingSearchInput').value || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('#accountingBody tr');
+            var shown = 0;
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                var match = !q || text.indexOf(q) !== -1;
+                row.style.display = match ? '' : 'none';
+                if (match) shown++;
+            });
+            var noResult = document.getElementById('accountingNoResult');
+            if (!noResult) {
+                noResult = document.createElement('tr');
+                noResult.id = 'accountingNoResult';
+                noResult.innerHTML = '<td colspan="8" style="text-align:center;color:#999;padding:1rem;">ไม่พบรายการที่ค้นหา</td>';
+                document.getElementById('accountingBody').appendChild(noResult);
+            }
+            noResult.style.display = (q && shown === 0) ? '' : 'none';
+        }
+
         function renderAccountingTable() {
             const tbody = document.getElementById('accountingBody');
             tbody.innerHTML = '';

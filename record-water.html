@@ -399,7 +399,10 @@
         <div class="section" style="max-width:none;width:100%">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.25rem">
                 <div class="section-title" style="margin-bottom:0">📝 บันทึกเลขมิเตอร์</div>
-                <button id="btnToggleOverride" onclick="toggleOverrideCol()" title="กดเพื่อแสดง/ซ่อนคอลัมน์หน่วยรวมกรณีเปลี่ยนมิเตอร์">🔧 เปลี่ยนมิเตอร์</button>
+                <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                    <input type="search" id="waterSearchInput" placeholder="🔍 ค้นหาบ้านพัก/ผู้พัก..." oninput="filterWaterTable()" style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px;">
+                    <button id="btnToggleOverride" onclick="toggleOverrideCol()" title="กดเพื่อแสดง/ซ่อนคอลัมน์หน่วยรวมกรณีเปลี่ยนมิเตอร์">🔧 เปลี่ยนมิเตอร์</button>
+                </div>
             </div>
             
             <div class="table-scroll-wrapper">
@@ -443,9 +446,11 @@
                     <hr style="margin:0.3rem 0.5rem;border:none;border-top:1px solid #e5e7eb;">
                     <button onclick="exportExcel();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#065f46;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📥 ส่งออก Excel</button>
                     <button onclick="document.getElementById('importExcelFile').click();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#1e40af;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='none'">📤 นำเข้า Excel</button>
+                    <button onclick="document.getElementById('importCsvFile').click();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#15803d;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📄 นำเข้า CSV <span style="font-size:11px;color:#6b7280;">(house_number, prev, curr)</span></button>
                 </div>
             </div>
             <input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
+            <input type="file" id="importCsvFile" accept=".csv,text/csv" style="display:none" onchange="importCsv(event)">
         </div>
         <script>
         function toggleMoreMenu(){var d=document.getElementById('moreMenuDropdown');d.style.display=d.style.display==='none'?'block':'none';}
@@ -693,6 +698,28 @@
             btn.classList.toggle('active', !tbl.classList.contains('hide-override'));
         }
 
+        // ค้นหา/กรองแถวในตารางมิเตอร์น้ำ
+        function filterWaterTable() {
+            var q = (document.getElementById('waterSearchInput').value || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('#meterTableBody tr');
+            var shown = 0;
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                var match = !q || text.indexOf(q) !== -1;
+                row.style.display = match ? '' : 'none';
+                if (match) shown++;
+            });
+            // แสดงข้อความถ้าไม่พบ
+            var noResult = document.getElementById('waterNoResult');
+            if (!noResult) {
+                noResult = document.createElement('tr');
+                noResult.id = 'waterNoResult';
+                noResult.innerHTML = '<td colspan="8" style="text-align:center;color:#999;padding:1rem;">ไม่พบรายการที่ค้นหา</td>';
+                document.getElementById('meterTableBody').appendChild(noResult);
+            }
+            noResult.style.display = (q && shown === 0) ? '' : 'none';
+        }
+
         // เมื่อเปลี่ยนรอบบิล โหลดข้อมูลใหม่
         document.getElementById('bill_month').addEventListener('change', function() { var s = localStorage.getItem(_waterReadingKey()); document.getElementById('reading_date').value = s || now.toISOString().split('T')[0]; renderResidentsTable(); });
         document.getElementById('bill_year').addEventListener('change', function() { var s = localStorage.getItem(_waterReadingKey()); document.getElementById('reading_date').value = s || now.toISOString().split('T')[0]; renderResidentsTable(); });
@@ -896,6 +923,61 @@
                 XLSX.utils.book_append_sheet(wb, ws, 'ค่าน้ำ ' + monthName);
                 XLSX.writeFile(wb, 'ค่าน้ำ_' + year + '_' + month + '.xlsx');
             });
+        }
+
+        // ── นำเข้า CSV (house_number,prev_meter,curr_meter) ──
+        function importCsv(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var text = e.target.result;
+                    var lines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+                    if (lines.length < 2) { ppkAlert('❌ ไฟล์ CSV ต้องมีอย่างน้อย 1 แถวข้อมูล (ไม่นับหัวตาราง)'); return; }
+
+                    // ข้าม header row ถ้ามี (ตรวจว่าบรรทัดแรกมีตัวเลขไหม)
+                    var startIdx = 0;
+                    var firstCols = lines[0].split(',');
+                    if (isNaN(parseFloat(firstCols[1]))) startIdx = 1; // มี header
+
+                    // Parse rows
+                    var importMap = {};
+                    var errors = [];
+                    for (var i = startIdx; i < lines.length; i++) {
+                        var cols = lines[i].split(',');
+                        var house = (cols[0] || '').trim().replace(/^["']|["']$/g, '');
+                        var prev  = parseFloat((cols[1] || '').trim()) || 0;
+                        var curr  = parseFloat((cols[2] || '').trim()) || 0;
+                        if (!house) continue;
+                        if (curr > 0 && curr < prev) { errors.push('บ้าน ' + house + ': มิเตอร์ปัจจุบัน (' + curr + ') น้อยกว่าก่อนหน้า (' + prev + ')'); continue; }
+                        importMap[house] = { prev: prev, curr: curr };
+                    }
+                    if (errors.length > 0) { ppkAlert('⚠️ พบข้อมูลผิดปกติ:\n' + errors.join('\n')); return; }
+                    if (Object.keys(importMap).length === 0) { ppkAlert('❌ ไม่พบข้อมูลที่ใช้ได้ในไฟล์ CSV'); return; }
+
+                    // เติมข้อมูลลงตาราง
+                    var filled = 0, notFound = [];
+                    var domRows = document.querySelectorAll('#meterTableBody tr');
+                    domRows.forEach(function(tr) {
+                        var h = tr.dataset.house;
+                        if (!h || !importMap[h]) { if (h && !importMap[h]) notFound.push(h); return; }
+                        tr.querySelector('.prev-meter').value = importMap[h].prev;
+                        tr.querySelector('.curr-meter').value = importMap[h].curr;
+                        calculateRow(tr.querySelector('.curr-meter'));
+                        filled++;
+                    });
+                    calculateAll();
+                    _formDirty = true;
+                    var msg = '✅ นำเข้า CSV สำเร็จ ' + filled + ' รายการ';
+                    if (notFound.length > 0) msg += '\n⚠️ ไม่พบในตาราง: ' + notFound.join(', ');
+                    ppkAlert(msg, { type: filled > 0 ? 'success' : 'warning', title: 'นำเข้า CSV' });
+                } catch(err) {
+                    ppkAlert('❌ อ่านไฟล์ CSV ไม่สำเร็จ: ' + err.message);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
         }
 
         function importExcel(event) {

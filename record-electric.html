@@ -405,7 +405,10 @@
         
         <!-- ตารางบันทึกค่าไฟ -->
         <div class="section">
-            <div class="section-title">📝 บันทึกค่าไฟ</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+                <div class="section-title" style="margin-bottom:0">📝 บันทึกค่าไฟ</div>
+                <input type="search" id="electricSearchInput" placeholder="🔍 ค้นหาบ้านพัก/ผู้พัก..." oninput="filterElectricTable()" style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px;">
+            </div>
             
             <div class="table-scroll-wrapper">
                 <table class="meter-table">
@@ -803,6 +806,28 @@
             calculateSummary();
         }
         
+        // ค้นหา/กรองแถวในตารางค่าไฟ
+        function filterElectricTable() {
+            var q = (document.getElementById('electricSearchInput').value || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('#electricTableBody tr');
+            var shown = 0;
+            rows.forEach(function(row) {
+                if (!row.dataset.house) return; // ข้าม loading/placeholder rows
+                var text = row.textContent.toLowerCase();
+                var match = !q || text.indexOf(q) !== -1;
+                row.style.display = match ? '' : 'none';
+                if (match) shown++;
+            });
+            var noResult = document.getElementById('electricNoResult');
+            if (!noResult) {
+                noResult = document.createElement('tr');
+                noResult.id = 'electricNoResult';
+                noResult.innerHTML = '<td colspan="7" style="text-align:center;color:#999;padding:1rem;">ไม่พบรายการที่ค้นหา</td>';
+                document.getElementById('electricTableBody').appendChild(noResult);
+            }
+            noResult.style.display = (q && shown === 0) ? '' : 'none';
+        }
+
         // คำนวณสรุป
         function calculateSummary() {
             const rows = document.querySelectorAll('#electricTableBody tr');

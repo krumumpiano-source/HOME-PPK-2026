@@ -524,7 +524,24 @@
             if (data.dueDate && amount > 0 && slipStatus !== 'success') {
                 var dd = new Date(data.dueDate);
                 var ddStr = dd.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-                dueDateWarn.textContent = '⏰ กรุณาชำระภายในวันที่ ' + ddStr;
+                var daysLeft = Math.ceil((dd - new Date()) / (1000 * 60 * 60 * 24));
+                var daysText = '';
+                if (daysLeft < 0) {
+                    daysText = ' (เลยกำหนดแล้ว ' + Math.abs(daysLeft) + ' วัน)';
+                    dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
+                } else if (daysLeft === 0) {
+                    daysText = ' (ครบกำหนดวันนี้!)';
+                    dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
+                } else if (daysLeft <= 3) {
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
+                    dueDateWarn.style.background = '#ffedd5'; dueDateWarn.style.borderColor = '#f97316'; dueDateWarn.style.color = '#9a3412';
+                } else if (daysLeft <= 7) {
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
+                    dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
+                } else {
+                    dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
+                }
+                dueDateWarn.textContent = '⏰ กรุณาชำระภายในวันที่ ' + ddStr + daysText;
                 dueDateWarn.style.display = '';
             } else {
                 dueDateWarn.style.display = 'none';
