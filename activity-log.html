@@ -254,7 +254,7 @@
     }
 
     function loadUserList() {
-        callBackend('getUsers', {}).then(function(res) {
+        callBackend('getUsersList', {}).then(function(res) {
             if (!res || !res.success) return;
             var users = res.data || [];
             var sel = document.getElementById('filterUser');
