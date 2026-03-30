@@ -134,9 +134,16 @@
         </div>
         <div class="controls-row">
             <div class="form-group">
+                <label>ผู้ใช้</label>
+                <select id="filterUser">
+                    <option value="">ทุกคน</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>ประเภท</label>
                 <select id="filterAction">
                     <option value="all">ทั้งหมด</option>
+                    <option value="all_no_pageview">ทั้งหมด (ไม่รวมเปิดหน้า)</option>
                     <option value="login">🔑 เข้าสู่ระบบ</option>
                     <option value="logout">🚪 ออกจากระบบ</option>
                     <option value="page_view">📄 เปิดหน้า</option>
@@ -222,12 +229,14 @@
             return;
         }
 
-        // Default date: today
+        // Default date: 7 days ago → today
         var today = new Date().toISOString().split('T')[0];
-        document.getElementById('filterDateFrom').value = today;
+        var sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+        document.getElementById('filterDateFrom').value = sevenDaysAgo;
         document.getElementById('filterDateTo').value = today;
         document.getElementById('statsDate').textContent = formatDateThai(today);
 
+        loadUserList();
         loadStats();
         loadLogs(0);
     });
@@ -244,10 +253,28 @@
         }).catch(function () {});
     }
 
+    function loadUserList() {
+        callBackend('getUsers', {}).then(function(res) {
+            if (!res || !res.success) return;
+            var users = res.data || [];
+            var sel = document.getElementById('filterUser');
+            users.sort(function(a, b) { return ((a.firstname || '') + (a.lastname || '')).localeCompare((b.firstname || '') + (b.lastname || '')); });
+            users.forEach(function(u) {
+                var opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = (u.prefix || '') + (u.firstname || '') + ' ' + (u.lastname || '') + (u.role ? ' (' + u.role + ')' : '');
+                sel.appendChild(opt);
+            });
+        }).catch(function() {});
+    }
+
     function loadLogs(offset) {
         currentOffset = offset || 0;
+        var actionVal = document.getElementById('filterAction').value;
         var params = {
-            action: document.getElementById('filterAction').value,
+            action: actionVal === 'all_no_pageview' ? 'all' : actionVal,
+            excludePageView: actionVal === 'all_no_pageview' ? true : false,
+            userId: document.getElementById('filterUser').value || '',
             dateFrom: document.getElementById('filterDateFrom').value,
             dateTo: document.getElementById('filterDateTo').value,
             limit: PAGE_SIZE,
@@ -343,8 +370,10 @@
 
     function resetFilters() {
         document.getElementById('filterAction').value = 'all';
+        document.getElementById('filterUser').value = '';
         var today = new Date().toISOString().split('T')[0];
-        document.getElementById('filterDateFrom').value = today;
+        var sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+        document.getElementById('filterDateFrom').value = sevenDaysAgo;
         document.getElementById('filterDateTo').value = today;
         loadLogs(0);
     }
