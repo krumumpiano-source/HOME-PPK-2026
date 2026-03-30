@@ -1790,7 +1790,7 @@ async function _routeAction(action, data) {
                 ];
                 if (sessHouseNumber) {
                     adminQueries.push(
-                        sbGet('outstanding', { house_number: 'eq.' + sessHouseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('outstanding', { house_number: 'eq.' + sessHouseNumber, status: 'neq.paid', moved_out_at: 'is.null', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
                         sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, period: 'eq.' + adminPeriod, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
                     );
                 }
@@ -1841,7 +1841,7 @@ async function _routeAction(action, data) {
                 var outRows = [], slipRows = [];
                 if (houseNumber) {
                     [outRows, slipRows] = await Promise.all([
-                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
+                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', moved_out_at: 'is.null', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
                         sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
                     ]);
                 }
@@ -1904,7 +1904,7 @@ async function _routeAction(action, data) {
                                 if (upaRR && upaRR[0]) { var ur = upaRR[0]; upaResName = ((ur.prefix||'') + (ur.firstname||'') + ' ' + (ur.lastname||'')).trim(); }
                             } catch(e) {}
                             var upaOut = null;
-                            try { var upaOutR = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, limit: '1' }); upaOut = upaOutR && upaOutR[0]; } catch(e) {}
+                            try { var upaOutR = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, moved_out_at: 'is.null', limit: '1' }); upaOut = upaOutR && upaOutR[0]; } catch(e) {}
                             // fallback: ถ้าไม่มี outstanding ให้ดึงจาก notifications (แหล่งจริงที่ admin แจ้งยอด)
                             var upaNotif = null;
                             if (!upaOut) {
@@ -2434,7 +2434,10 @@ async function _routeAction(action, data) {
             }
             if (data.is_active    !== undefined) resUp.is_active    = data.is_active;
             await sbPatch('residents', { id: 'eq.' + rid }, resUp);
-            // อัปเดต users table ด้วย (phone, email, password)
+            // sync coresidents ให้ตามไปด้วยเมื่อเปลี่ยนบ้าน
+            if (data.house_number !== undefined && resUp.house_id) {
+                try { await sbPatch('coresidents', { resident_id: 'eq.' + rid }, { house_id: resUp.house_id }); } catch(e) {}
+            }
             var resRow = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id', limit: '1' });
             if (resRow && resRow[0] && resRow[0].user_id) {
                 var userUp = { updated_at: new Date().toISOString() };
@@ -2462,19 +2465,50 @@ async function _routeAction(action, data) {
         }
         case 'removeResident': {
             var rid = data.id;
-            var resRows = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id,email', limit: '1' });
-            // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
-            try { var _bakRm = await sbGet('residents', { id: 'eq.' + rid }); await _autoBackup('removeResident', 'ลบ/ปิดใช้งานผู้พักอาศัย ' + rid, 'residents', 'id', rid, null, _bakRm); } catch(e) {}
+            var resRows = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id,email,house_id,house_number', limit: '1' });
+            var _rmRes = resRows && resRows[0] ? resRows[0] : null;
+            var _rmHouseId     = _rmRes ? _rmRes.house_id     : null;
+            var _rmHouseNumber = _rmRes ? _rmRes.house_number : null;
+
+            // สำรองข้อมูล resident เดิมก่อน
+            try {
+                var _bakRm = await sbGet('residents', { id: 'eq.' + rid });
+                // สำรอง coresidents ด้วยในชุดเดียวกัน
+                var _bakCorRm = await sbGet('coresidents', { resident_id: 'eq.' + rid });
+                await _autoBackup('removeResident', 'ลบ/ปิดใช้งานผู้พักอาศัย ' + rid, 'residents', 'id', rid, null,
+                    { residents: _bakRm, coresidents: _bakCorRm });
+            } catch(e) {}
+
+            // 1. soft-delete resident
             await sbPatch('residents', { id: 'eq.' + rid }, { is_active: false, updated_at: new Date().toISOString() });
-            var _rmUserId = resRows && resRows[0] ? resRows[0].user_id : null;
-            // Fallback: ถ้าไม่มี user_id ให้ค้นจาก email
-            if (!_rmUserId && resRows && resRows[0] && resRows[0].email) {
-                var _rmByEmail = await sbGet('users', { email: 'eq.' + resRows[0].email.toLowerCase(), select: 'id', limit: '1' });
+
+            // 2. soft-delete user ที่เชื่อมอยู่
+            var _rmUserId = _rmRes ? _rmRes.user_id : null;
+            if (!_rmUserId && _rmRes && _rmRes.email) {
+                var _rmByEmail = await sbGet('users', { email: 'eq.' + _rmRes.email.toLowerCase(), select: 'id', limit: '1' });
                 if (_rmByEmail && _rmByEmail[0]) _rmUserId = _rmByEmail[0].id;
             }
             if (_rmUserId) {
                 await sbPatch('users', { id: 'eq.' + _rmUserId }, { is_active: false, updated_at: new Date().toISOString() });
             }
+
+            // 3. ลบ coresidents ของผู้พักนี้ (backup เก็บไว้ข้างบนแล้ว)
+            try { await sbDelete('coresidents', { resident_id: 'eq.' + rid }); } catch(e) {}
+
+            // 4. reset housing status กลับเป็น available
+            if (_rmHouseId) {
+                try { await sbPatch('housing', { id: 'eq.' + _rmHouseId }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+
+            // 5. mark outstanding ค้างชำระว่าเป็นของคนที่ย้ายออกไปแล้ว
+            //    คนใหม่จะไม่เห็น rows เหล่านี้ใน dashboard
+            if (_rmHouseNumber) {
+                try {
+                    await sbPatch('outstanding', { house_number: 'eq.' + _rmHouseNumber, status: 'neq.paid' },
+                        { moved_out_at: new Date().toISOString() });
+                } catch(e) {}
+            }
+
             invalidateResidentCache();
             return { success: true };
         }
