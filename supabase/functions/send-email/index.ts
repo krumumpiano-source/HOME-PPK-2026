@@ -136,6 +136,27 @@ serve(async (req: Request) => {
     }
 
     const toList: string[] = Array.isArray(to) ? to : [to];
+
+    // ✅ Rate limit guard: จำกัดจำนวนผู้รับและความยาว content
+    if (toList.length > 10) {
+      return new Response(JSON.stringify({ error: 'จำนวนผู้รับเกินกำหนด (สูงสุด 10 คนต่อครั้ง)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (subject && subject.length > 200) {
+      return new Response(JSON.stringify({ error: 'หัวข้ออีเมลยาวเกินไป (สูงสุด 200 ตัวอักษร)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (html && html.length > 50000) {
+      return new Response(JSON.stringify({ error: 'เนื้อหา HTML ยาวเกินไป (สูงสุด 50,000 ตัวอักษร)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     for (const addr of toList) {
       const trimmed = (addr || '').trim();

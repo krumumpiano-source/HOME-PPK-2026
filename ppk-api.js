@@ -60,6 +60,25 @@ function getSessionToken() {
 }
 
 /* ──────────────────────────────────────────
+   Input Validators (server-side guards)
+────────────────────────────────────────── */
+function _isValidEmail(email) {
+    if (!email || typeof email !== 'string') return false;
+    if (email.length > 320) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+function _isValidPhone(phone) {
+    if (!phone) return true; // phone is optional in register
+    var digits = String(phone).replace(/[\s\-().]/g, '');
+    return /^\d{9,15}$/.test(digits);
+}
+function _isValidText(val, min, max) {
+    if (typeof val !== 'string') return false;
+    var len = val.trim().length;
+    return len >= (min || 0) && len <= (max || 255);
+}
+
+/* ──────────────────────────────────────────
    รอ _sb client พร้อม
 ────────────────────────────────────────── */
 function _waitSb(cb, tries) {
@@ -296,6 +315,11 @@ async function ppkLogout() {
 
 async function ppkRegister(data) {
     var email = (data.email || '').trim().toLowerCase();
+    // Input validation
+    if (!_isValidEmail(email)) return { success: false, error: 'รูปแบบอีเมลไม่ถูกต้อง' };
+    if (!_isValidText(data.firstname || '', 1, 100)) return { success: false, error: 'กรุณากรอกชื่อ (1-100 ตัวอักษร)' };
+    if (!_isValidText(data.lastname || '', 1, 100)) return { success: false, error: 'กรุณากรอกนามสกุล (1-100 ตัวอักษร)' };
+    if (data.phone && !_isValidPhone(data.phone)) return { success: false, error: 'รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ตัวเลข 9-15 หลัก)' };
     var hash = await sha256hexSalted(data.password || '', email);
     // ตรวจสอบอีเมลซ้ำ
     var existU = await sbGet('users', { email: 'eq.' + email, select: 'id', limit: '1' });
@@ -384,7 +408,9 @@ async function checkSession(autoRedirect) {
     if (autoRedirect) {
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('currentUser');
-        window.location.replace('login.html');
+        localStorage.removeItem('_sessionCheckTs');
+        if (typeof ppkToast === 'function') ppkToast('หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่', 'warning');
+        setTimeout(function() { window.location.replace('login.html'); }, 1500);
     }
     return null;
 }
@@ -469,9 +495,15 @@ async function _routeAction(action, data) {
         case 'login': {
             var email = (data.email || '').trim().toLowerCase();
             if (!email) return { success: false, error: 'กรุณากรอกอีเมล' };
+            if (!_isValidEmail(email)) return { success: false, error: 'รูปแบบอีเมลไม่ถูกต้อง' };
             var uRows = await sbGet('users', { email: 'eq.' + email, is_active: 'eq.true', limit: '1' });
             if (!uRows || uRows.length === 0) return { success: false, error: 'ไม่พบบัญชีผู้ใช้ หรืออีเมลไม่ถูกต้อง' };
             var u = uRows[0];
+            // ✅ ตรวจสอบ account lockout
+            if (u.locked_until && new Date(u.locked_until) > new Date()) {
+                var remainMin = Math.ceil((new Date(u.locked_until) - new Date()) / 60000);
+                return { success: false, error: 'บัญชีนี้ถูกล็อกชั่วคราว กรุณารออีก ' + remainMin + ' นาที (กรอกรหัสผ่านผิดซ้ำหลายครั้ง)' };
+            }
             // ตรวจ flag must_change_pw จาก settings table
             var mustChangePw = false;
             try {
@@ -500,7 +532,23 @@ async function _routeAction(action, data) {
                 matched = true;
                 try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
             }
-            if (!matched) return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
+            if (!matched) {
+                // ✅ นับครั้งที่ผิด + ล็อคถ้าเกิน 5 ครั้ง
+                var newAttempts = (parseInt(u.failed_attempts) || 0) + 1;
+                var lockPatch = { failed_attempts: newAttempts, updated_at: new Date().toISOString() };
+                if (newAttempts >= 5) {
+                    lockPatch.locked_until = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+                    _logActivity('account_locked', u.id, 'บัญชีถูกล็อกอัตโนมัติ (กรอกรหัสผ่านผิด ' + newAttempts + ' ครั้ง)', { email: email });
+                }
+                try { await sbPatch('users', { id: 'eq.' + u.id }, lockPatch); } catch(e) {}
+                if (newAttempts >= 5) {
+                    return { success: false, error: 'รหัสผ่านไม่ถูกต้อง บัญชีถูกล็อกชั่วคราว 15 นาที' };
+                }
+                var remaining = Math.max(1, 5 - newAttempts);
+                return { success: false, error: 'รหัสผ่านไม่ถูกต้อง (เหลืออีก ' + remaining + ' ครั้งก่อนถูกล็อก)' };
+            }
+            // ✅ Login สำเร็จ — reset lockout counter
+            try { await sbPatch('users', { id: 'eq.' + u.id }, { failed_attempts: 0, locked_until: null, updated_at: new Date().toISOString() }); } catch(e) {}
             // ดึงข้อมูล resident ที่ active (fallback email + auto-link)
             var resident = await _findResidentForUser(u.id, u.email);
             // ดึงสิทธิ์จาก permissions table
@@ -518,7 +566,9 @@ async function _routeAction(action, data) {
                 permissions: _loginPerms
             };
             // สร้าง session ใน DB
-            var token = 'session-' + u.id + '-' + Date.now();
+            var token = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+                ? crypto.randomUUID()
+                : ('tok-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36));
             try {
                 await sbPost('sessions', {
                     token: token,
@@ -526,7 +576,7 @@ async function _routeAction(action, data) {
                     role: u.role || 'resident',
                     resident_id: resident ? resident.id : null,
                     house_number: resident ? (resident.house_number || '') : '',
-                    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
                 });
             } catch(e) { console.warn('สร้าง session ไม่สำเร็จ:', e); }
             _logActivity('login', u.id, u.firstname + ' ' + u.lastname + ' เข้าสู่ระบบ', { role: u.role, house_number: resident ? resident.house_number : '' });
@@ -606,10 +656,13 @@ async function _routeAction(action, data) {
             var u2 = uRows && uRows[0] ? uRows[0] : null;
             if (!u2) return { success: true };
             var resident2 = await _findResidentForUser(u2.id, u2.email);
-            var token2 = 'session-' + u2.id + '-' + Date.now();
+            var token2 = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+                ? crypto.randomUUID()
+                : ('tok-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36));
             try {
-                await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString() });
+                await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString() });
             } catch(e) {}
+            _logActivity('set_first_password', userId, (u2.firstname || '') + ' ' + (u2.lastname || '') + ' ตั้งรหัสผ่านครั้งแรก', { email: u2.email });
             var userObj2 = { id: u2.id, email: u2.email, prefix: u2.prefix || '', firstname: u2.firstname || '', lastname: u2.lastname || '', role: u2.role || 'resident', is_active: true, position: u2.position || '', houseNumber: resident2 ? (resident2.house_number || '') : '', residentId: resident2 ? resident2.id : null };
             return { success: true, user: userObj2, token: token2 };
         }
