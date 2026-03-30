@@ -3634,78 +3634,110 @@ async function _routeAction(action, data) {
             }
             var alLimit = parseInt(data.limit) || 50;
             var alOffset = parseInt(data.offset) || 0;
-            var alParams = { order: 'created_at.desc', limit: String(alLimit) };
-            if (alOffset > 0) alParams.offset = String(alOffset);
-            if (data.action && data.action !== 'all') alParams.action = 'eq.' + data.action;
-            if (data.userId) alParams.user_id = 'eq.' + data.userId;
             var alExcludePageView = data.excludePageView === true || data.excludePageView === 'true';
-            if (data.dateFrom) alParams['created_at'] = 'gte.' + data.dateFrom + 'T00:00:00';
-            if (data.dateTo) {
-                var alDateToFilter = 'lte.' + data.dateTo + 'T23:59:59';
-                if (alParams['created_at']) {
-                    // ต้อง query แยก filter สำหรับ range
-                    var alAllRows = await sbGet('logs', { order: 'created_at.desc', limit: '5000' });
-                    var alFrom = data.dateFrom ? new Date(data.dateFrom + 'T00:00:00') : null;
-                    var alTo = new Date(data.dateTo + 'T23:59:59');
-                    alAllRows = (alAllRows || []).filter(function(r) {
-                        var t = new Date(r.created_at);
-                        if (alFrom && t < alFrom) return false;
-                        if (t > alTo) return false;
-                        if (data.action && data.action !== 'all' && r.action !== data.action) return false;
-                        if (data.userId && r.user_id !== data.userId) return false;
-                        if (alExcludePageView && r.action === 'page_view') return false;
-                        return true;
-                    });
-                    var alTotal = alAllRows.length;
-                    var alPaged = alAllRows.slice(alOffset, alOffset + alLimit);
-                    // Enrich with user names
-                    var alUserIds = {};
-                    alPaged.forEach(function(r) { if (r.user_id) alUserIds[r.user_id] = true; });
-                    var alUIds = Object.keys(alUserIds);
-                    var alUserMap = {};
-                    if (alUIds.length > 0) {
-                        try {
-                            var alUsers = await sbGet('users', { id: 'in.(' + alUIds.join(',') + ')', select: 'id,firstname,lastname,prefix,role' });
-                            (alUsers || []).forEach(function(u) { alUserMap[u.id] = u; });
-                        } catch(e) {}
-                    }
-                    alPaged.forEach(function(r) {
-                        var u = alUserMap[r.user_id];
-                        r._userName = u ? ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() : (r.user_id || '-');
-                        r._userRole = u ? (u.role || '') : '';
-                    });
-                    return { success: true, data: alPaged, total: alTotal };
+            var alActionFilter = (data.action && data.action !== 'all') ? data.action : null;
+            var alFrom = data.dateFrom ? new Date(data.dateFrom + 'T00:00:00') : null;
+            var alTo = data.dateTo ? new Date(data.dateTo + 'T23:59:59') : null;
+
+            // ── ดึงข้อมูลจากหลายตารางพร้อมกัน ──
+            var [alLogRows, alSlipRows, alSessRows, alReqRows, alAllUsers] = await Promise.all([
+                sbGet('logs', { order: 'created_at.desc', limit: '3000' }).catch(function() { return []; }),
+                sbGet('slip_submissions', { order: 'submitted_at.desc', limit: '1000', select: 'id,house_number,period,amount,status,submitted_at,reviewed_at,reviewed_by,resident_id' }).catch(function() { return []; }),
+                sbGet('sessions', { order: 'created_at.desc', limit: '1000', select: 'user_id,role,created_at' }).catch(function() { return []; }),
+                sbGet('requests', { order: 'submitted_at.desc', limit: '500', select: 'id,type,user_id,house_number,status,submitted_at,reviewed_at,reviewed_by' }).catch(function() { return []; }),
+                sbGet('users', { is_active: 'eq.true', select: 'id,firstname,lastname,prefix,role' }).catch(function() { return []; })
+            ]);
+
+            // สร้าง userMap
+            var alUserMap = {};
+            (alAllUsers || []).forEach(function(u) { alUserMap[u.id] = u; });
+
+            // ── แปลงข้อมูลทุกแหล่งเป็น unified timeline entries ──
+            var alCombined = [];
+
+            // 1) logs table
+            (alLogRows || []).forEach(function(r) {
+                alCombined.push({ id: r.id, action: r.action, user_id: r.user_id, description: r.description, meta: r.meta, created_at: r.created_at, _src: 'log' });
+            });
+
+            // 2) sessions → login events (ถ้ายังไม่มีใน logs)
+            var alLogLoginKeys = {};
+            (alLogRows || []).filter(function(r) { return r.action === 'login'; }).forEach(function(r) {
+                var key = (r.user_id || '') + '_' + (r.created_at || '').substring(0, 13);
+                alLogLoginKeys[key] = true;
+            });
+            (alSessRows || []).forEach(function(r) {
+                var key = (r.user_id || '') + '_' + (r.created_at || '').substring(0, 13);
+                if (!alLogLoginKeys[key]) {
+                    var u = alUserMap[r.user_id];
+                    var uName = u ? ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() : '';
+                    alCombined.push({ id: 'sess_' + r.user_id + '_' + r.created_at, action: 'login', user_id: r.user_id, description: uName + ' เข้าสู่ระบบ', meta: { role: r.role }, created_at: r.created_at, _src: 'session' });
                 }
-            }
-            var alRows = await sbGet('logs', alParams);
-            // Count total (approximate — query without limit)
-            var alCountRows = await sbGet('logs', (function() {
-                var cp = {};
-                if (data.action && data.action !== 'all') cp.action = 'eq.' + data.action;
-                if (data.userId) cp.user_id = 'eq.' + data.userId;
-                if (data.dateFrom) cp['created_at'] = 'gte.' + data.dateFrom + 'T00:00:00';
-                cp.select = 'id';
-                cp.limit = '5000';
-                return cp;
-            })());
-            var alTotal = (alCountRows || []).length;
-            // Enrich with user names
-            var alUserIds2 = {};
-            (alRows || []).forEach(function(r) { if (r.user_id) alUserIds2[r.user_id] = true; });
-            var alUIds2 = Object.keys(alUserIds2);
-            var alUserMap2 = {};
-            if (alUIds2.length > 0) {
-                try {
-                    var alUsers2 = await sbGet('users', { id: 'in.(' + alUIds2.join(',') + ')', select: 'id,firstname,lastname,prefix,role' });
-                    (alUsers2 || []).forEach(function(u) { alUserMap2[u.id] = u; });
-                } catch(e) {}
-            }
-            (alRows || []).forEach(function(r) {
-                var u = alUserMap2[r.user_id];
-                r._userName = u ? ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() : (r.user_id || '-');
+            });
+
+            // 3) slip_submissions → submit_slip + review_slip
+            var alLogSlipKeys = {};
+            (alLogRows || []).filter(function(r) { return r.action === 'submit_slip' || r.action === 'review_slip'; }).forEach(function(r) {
+                var key = r.action + '_' + (r.meta && r.meta.house_number ? r.meta.house_number : '') + '_' + (r.created_at || '').substring(0, 16);
+                alLogSlipKeys[key] = true;
+            });
+            (alSlipRows || []).forEach(function(r) {
+                var subKey = 'submit_slip_' + (r.house_number||'') + '_' + (r.submitted_at||'').substring(0, 16);
+                if (!alLogSlipKeys[subKey]) {
+                    alCombined.push({ id: 'slip_sub_' + r.id, action: 'submit_slip', user_id: null, description: 'ส่งสลิปชำระเงิน ' + (r.house_number||'') + ' งวด ' + (r.period||''), meta: { house_number: r.house_number, period: r.period, amount: r.amount }, created_at: r.submitted_at, _src: 'slip' });
+                }
+                if (r.reviewed_at && r.reviewed_by) {
+                    var revKey = 'review_slip_' + (r.house_number||'') + '_' + (r.reviewed_at||'').substring(0, 16);
+                    if (!alLogSlipKeys[revKey]) {
+                        alCombined.push({ id: 'slip_rev_' + r.id, action: 'review_slip', user_id: r.reviewed_by, description: (r.status === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ') + 'สลิป ' + (r.house_number||'') + ' งวด ' + (r.period||''), meta: { house_number: r.house_number, period: r.period, status: r.status }, created_at: r.reviewed_at, _src: 'slip' });
+                    }
+                }
+            });
+
+            // 4) requests → submit_request + review_request
+            var alLogReqKeys = {};
+            (alLogRows || []).filter(function(r) { return r.action === 'submit_request' || r.action === 'review_request'; }).forEach(function(r) {
+                var key = r.action + '_' + (r.meta && r.meta.requestId ? r.meta.requestId : '') + '_' + (r.created_at || '').substring(0, 16);
+                alLogReqKeys[key] = true;
+            });
+            (alReqRows || []).forEach(function(r) {
+                var subKey = 'submit_request_' + r.id + '_' + (r.submitted_at||'').substring(0, 16);
+                if (!alLogReqKeys[subKey]) {
+                    alCombined.push({ id: 'req_sub_' + r.id, action: 'submit_request', user_id: r.user_id, description: 'ส่งคำร้อง ' + (r.type||'') + ' ' + (r.house_number||''), meta: { requestId: r.id, type: r.type, house_number: r.house_number }, created_at: r.submitted_at, _src: 'request' });
+                }
+                if (r.reviewed_at && r.reviewed_by) {
+                    var revKey2 = 'review_request_' + r.id + '_' + (r.reviewed_at||'').substring(0, 16);
+                    if (!alLogReqKeys[revKey2]) {
+                        alCombined.push({ id: 'req_rev_' + r.id, action: 'review_request', user_id: r.reviewed_by, description: (r.status||'') + ' คำร้อง ' + (r.type||'') + ' ' + (r.house_number||''), meta: { requestId: r.id, status: r.status }, created_at: r.reviewed_at, _src: 'request' });
+                    }
+                }
+            });
+
+            // ── filter ──
+            alCombined = alCombined.filter(function(r) {
+                if (!r.created_at) return false;
+                var t = new Date(r.created_at);
+                if (alFrom && t < alFrom) return false;
+                if (alTo && t > alTo) return false;
+                if (alActionFilter && r.action !== alActionFilter) return false;
+                if (alExcludePageView && r.action === 'page_view') return false;
+                return true;
+            });
+
+            // เรียงตามเวลาล่าสุดก่อน
+            alCombined.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+
+            var alTotal = alCombined.length;
+            var alPaged = alCombined.slice(alOffset, alOffset + alLimit);
+
+            // Enrich user names
+            alPaged.forEach(function(r) {
+                var u = alUserMap[r.user_id];
+                r._userName = u ? ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() : (r.user_id ? r.user_id : '-');
                 r._userRole = u ? (u.role || '') : '';
             });
-            return { success: true, data: alRows || [], total: alTotal };
+
+            return { success: true, data: alPaged, total: alTotal };
         }
 
         case 'getActivityStats': {
