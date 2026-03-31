@@ -354,13 +354,48 @@
         }
 
         function renderUserDashboard(data) {
+            var houseNumber = data.houseNumber || '';
+
+            // ผู้ใช้ที่ยังไม่มีบ้านพัก — แสดง banner รอจัดสรร
+            if (!houseNumber) {
+                document.getElementById('paymentSection').style.display = 'none';
+                document.getElementById('hubMenuCard').style.display = 'none';
+                document.getElementById('quickActionsSection').style.display = 'none';
+                var user = {};
+                try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+                var firstName = user.firstname || '';
+                var floatingEl = document.getElementById('floatingUserBanner');
+                if (!floatingEl) {
+                    floatingEl = document.createElement('div');
+                    floatingEl.id = 'floatingUserBanner';
+                    var paySection = document.getElementById('paymentSection');
+                    paySection.parentNode.insertBefore(floatingEl, paySection);
+                }
+                floatingEl.innerHTML =
+                    '<div class="ppk-card" style="text-align:center; padding:2rem 1.5rem; margin-bottom:1rem;">' +
+                        '<div style="font-size:3rem; margin-bottom:0.75rem;">🏠</div>' +
+                        '<div style="font-size:1.2rem; font-weight:700; color:var(--c-text); margin-bottom:0.5rem;">สวัสดี' + (firstName ? ', ' + firstName : '') + '</div>' +
+                        '<div style="font-size:1rem; color:var(--c-text-secondary); margin-bottom:1rem;">ขณะนี้คุณยังไม่ได้รับมอบหมายบ้านพัก<br>กรุณารอการจัดสรรจากคณะทำงาน</div>' +
+                        '<div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">' +
+                            '<a href="request-form.html" onclick="navigate(\'?page=request-form\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;">📝 ยื่นคำร้องขอเข้าพัก</a>' +
+                            '<a href="regulations.html" onclick="navigate(\'?page=regulations\');return false;" class="ppk-btn ppk-btn-outline" style="text-decoration:none;">📖 ดูระเบียบ</a>' +
+                        '</div>' +
+                    '</div>';
+                floatingEl.style.display = '';
+                return;
+            }
+
+            // ผู้ใช้ปกติที่มีบ้านพักแล้ว
+            var floatingEl = document.getElementById('floatingUserBanner');
+            if (floatingEl) floatingEl.style.display = 'none';
+
             document.getElementById('paymentSection').style.display = '';
             document.getElementById('hubMenuCard').style.display = '';
+            document.getElementById('quickActionsSection').style.display = '';
 
             var amount = data.currentAmount || 0;
             var outstanding = data.totalOutstanding || 0;
             var period = data.period || '';
-            var houseNumber = data.houseNumber || '';
             var slipStatus = data.slipStatus || 'none';
             var reviewNote = data.reviewNote || '';
             var slipId = data.slipId || null;
