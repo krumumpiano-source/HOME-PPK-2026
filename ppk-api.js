@@ -2141,6 +2141,10 @@ async function _routeAction(action, data) {
                 }
             }
             invalidateResidentCache();
+            // Auto-reject pending registrations ที่อีเมลตรงกัน (แอดมินสร้าง user ให้แล้ว)
+            if (email) {
+                try { await sbPatch('pending_registrations', { email: 'eq.' + email, status: 'eq.pending' }, { status: 'rejected', reviewed_at: new Date().toISOString(), review_note: 'ปิดอัตโนมัติ — แอดมินเพิ่มผู้พักอาศัยด้วยอีเมลนี้แล้ว' }); } catch(e) {}
+            }
             var _result = { success: true, userId: uid, residentId: newRes ? newRes.id : null };
             if (_resWarning) _result.warning = _resWarning;
             return _result;
@@ -2187,8 +2191,19 @@ async function _routeAction(action, data) {
                         urEmail = urU && urU[0] ? (urU[0].email || '').trim().toLowerCase() : '';
                     }
                     userUp.password_hash = await sha256hexSalted(pw2, urEmail);
+                    // แอดมินตั้งรหัสผ่านให้ → reset lockout ด้วย
+                    userUp.failed_attempts = 0;
+                    userUp.locked_until = null;
                 }
                 await sbPatch('users', { id: 'eq.' + resRow[0].user_id }, userUp);
+                // แอดมินตั้งรหัสผ่านให้ → ลบ flag must_change_pw (ไม่ต้องบังคับเปลี่ยนอีก)
+                if (data.password && resRow[0].user_id) {
+                    try { await sbDelete('settings', { key: 'eq.must_change_pw_' + resRow[0].user_id }); } catch(e) {}
+                }
+                // เปลี่ยนอีเมลโดยไม่ตั้งรหัสผ่านใหม่ → hash เดิมใช้ไม่ได้ (email เป็น salt) → บังคับตั้งรหัสผ่านใหม่
+                if (data.email && !data.password && resRow[0].user_id) {
+                    try { await sbUpsert('settings', { key: 'must_change_pw_' + resRow[0].user_id, value: 'true' }, 'key'); } catch(e) {}
+                }
             }
             invalidateResidentCache();
             return { success: true };
