@@ -4531,9 +4531,11 @@
             }
 
             try {
+                var currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
                 const result = await callBackend('rejectRegistration', {
                     regId: regId,
-                    note: note
+                    note: note,
+                    reviewedBy: (currentUser && currentUser.id) ? currentUser.id : null
                 });
 
                 if (result && result.success) {

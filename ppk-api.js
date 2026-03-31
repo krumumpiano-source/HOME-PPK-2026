@@ -773,10 +773,13 @@ async function _routeAction(action, data) {
         case 'rejectRegistration': {
             var regId = data.regId || data.id;
             if (!regId) return { success: false, error: 'ไม่ระบุ regId' };
-            await sbPatch('pending_registrations', { id: 'eq.' + regId }, {
+            var rejResult = await sbPatch('pending_registrations', { id: 'eq.' + regId }, {
                 status: 'rejected', reviewed_by: data.reviewedBy || null,
                 reviewed_at: new Date().toISOString(), review_note: data.note || ''
             });
+            if (!rejResult || rejResult.length === 0) {
+                return { success: false, error: 'ไม่สามารถอัปเดตสถานะได้ — อาจเกิดจากสิทธิ์ RLS หรือไม่พบรายการ กรุณารัน rls.sql ใหม่' };
+            }
             return { success: true };
         }
 
