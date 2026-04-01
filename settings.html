@@ -581,9 +581,7 @@
                         }
                     }
                     if (_coErrors.length > 0) {
-                        ppkAlert('⚠️ บันทึกผู้ร่วมพักบางรายไม่สำเร็จ:
-' + _coErrors.join('
-'));
+                        ppkAlert('⚠️ บันทึกผู้ร่วมพักบางรายไม่สำเร็จ:\n' + _coErrors.join('\n'));
                         saveBtn.disabled = false;
                         saveBtn.textContent = '💾 บันทึกข้อมูล';
                         return;
@@ -942,7 +940,7 @@
     </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>

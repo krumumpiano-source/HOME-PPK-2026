@@ -583,7 +583,7 @@
     </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260324B"></script>
     <script src="ppk-utils.js?v=20260324B"></script>
     <script src="ppk-nav.js?v=20260324B"></script>
@@ -724,7 +724,7 @@
                 var elecBills   = (results[1] && results[1].data) || [];
                 var notifs      = (results[2] && results[2].data) || [];
                 var pendSlips   = (results[3] && results[3].data) || [];
-                var withdraws   = (results[4] && results[4].data) || [];
+                var withdrawData = (results[4] && results[4].data) || null;
 
                 // กรองเฉพาะเดือนปัจจุบัน + นับ distinct house_number (ป้องกันนับซ้ำ)
                 var _waterFiltered = waterBills.filter(function(b) { return b.period === currentPeriod; });
@@ -751,7 +751,7 @@
 
                 var notifCount = notifs.filter(function(n) { return (n.period || '') === currentPeriod; }).length;
                 var pendSlipCount = pendSlips.length;
-                var withdrawCount = withdraws.filter(function(w) { return w.period === currentPeriod; }).length;
+                var withdrawCount = withdrawData ? 1 : 0;
 
                 var totalHouses = (kpiData && kpiData.totalHouses) || 0;
                 var notifTarget = totalHouses || waterCount || elecCount || 1;

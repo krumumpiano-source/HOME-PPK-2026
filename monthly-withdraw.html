@@ -206,7 +206,7 @@
             color: #059669;
         }
         .summary-table .total-row {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            background: linear-gradient(135deg, #d97706, #b45309);
             color: #fff;
         }
         .summary-table .total-row td {
@@ -301,7 +301,7 @@
         @page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }
         @media print {
             body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 16pt; line-height: 1.15; }
-            .sidebar, .back-btn, .btn, .add-item-btn, .additional-item button, .no-print {
+            .sidebar, .back-btn, .btn, .add-item-btn, .additional-item button, .no-print, .no-print-cell {
                 display: none !important;
             }
             .dashboard-container {
@@ -400,10 +400,46 @@
                 <tbody id="additionalItemsBody">
                     <!-- รายการค่าอื่นๆ จะถูกเพิ่มที่นี่ -->
                 </tbody>
+                <tbody id="operatingCostsBody">
+                    <tr style="background:#fff3e0;">
+                        <td colspan="2" style="font-weight:600;color:#78350f;font-size:0.95rem;">📋 ค่าดำเนินการ</td>
+                    </tr>
+                    <tr>
+                        <td>🔄 ค่าปัดเศษ <span style="color:#999;font-size:0.85rem;">(อัตโนมัติ)</span></td>
+                        <td class="amount" id="roundingFee">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🚗 ค่าเดินทางถอนเงิน
+                            <input type="number" id="travelWithdraw" value="" min="0" step="10" placeholder="0"
+                                   style="width:80px;margin-left:0.5rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="travelWithdrawDisplay">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🚗 ค่าเดินทางชำระค่าไฟ
+                            <input type="number" id="travelElectric" value="" min="0" step="10" placeholder="0"
+                                   style="width:80px;margin-left:0.5rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="travelElectricDisplay">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            🚗 ค่าเดินทางชำระค่าขยะ
+                            <input type="number" id="travelGarbage" value="" min="0" step="10" placeholder="0"
+                                   style="width:80px;margin-left:0.5rem;padding:0.3rem;border-radius:6px;border:1px solid #d4a574;"
+                                   onchange="calculateTotal()">
+                        </td>
+                        <td class="amount" id="travelGarbageDisplay">0.00</td>
+                    </tr>
+                </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td>💵 ยอดรวมสำหรับถอนธนาคาร</td>
-                        <td class="amount" id="grandTotal" style="color:#fff;">0.00</td>
+                        <td>💵 ยอดเบิกจากธนาคาร (จำนวนเต็ม)</td>
+                        <td class="amount" id="grandTotal" style="color:#fff;">0</td>
                     </tr>
                 </tfoot>
             </table>
@@ -421,15 +457,17 @@
                 <strong>📋 คำอธิบาย</strong>
                 • ค่าน้ำรวม: ดึงจากข้อมูลบันทึกค่าน้ำประจำเดือน<br>
                 • ค่าไฟรวม: ยอดที่การไฟฟ้าเรียกเก็บ (ดึงจากข้อมูลบันทึกค่าไฟ)<br>
-                • ค่าขยะ: ค่าเริ่มต้น 310 บาท สามารถแก้ไขได้<br>
-                • ค่าใช้จ่ายอื่นๆ: สามารถเพิ่มรายการและจำนวนเงินได้ตามต้องการ
+                • ค่าขยะ: สามารถแก้ไขจำนวนเงินได้<br>
+                • ค่าใช้จ่ายอื่นๆ: สามารถเพิ่มรายการและจำนวนเงินได้ตามต้องการ<br>
+                • ค่าปัดเศษ: คำนวณอัตโนมัติ (ปัดยอดขึ้นเป็นจำนวนเต็ม เพราะธนาคารไม่มีเหรียญให้)<br>
+                • ค่าเดินทาง: ค่าดำเนินการเดินทางของคณะกรรมการ (กรอกจำนวนเงินได้)
             </div>
         </div>
         
         <!-- ปุ่มดำเนินการ -->
         <div class="section no-print" style="text-align:center;">
             <button class="btn" onclick="saveData()" style="margin-right:1rem;">💾 บันทึกข้อมูล</button>
-            <button class="btn print-btn" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+            <button class="btn print-btn" onclick="printMemo()">🖨️ พิมพ์รายงาน</button>
         </div>
         
         <div class="footer-note">
@@ -474,7 +512,7 @@
             const currentYear = new Date().getFullYear() + 543;
             yearSelect.innerHTML = '';
             
-            for (let y = currentYear; y >= currentYear - 2; y--) {
+            for (let y = currentYear + 1; y >= 2568; y--) {
                 const opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;
@@ -507,6 +545,9 @@
             document.getElementById('electricTotal').textContent = 'กำลังโหลด...';
             document.getElementById('garbageFee').value = '';
             document.getElementById('garbageDisplay').textContent = '0.00';
+            document.getElementById('travelWithdraw').value = '';
+            document.getElementById('travelElectric').value = '';
+            document.getElementById('travelGarbage').value = '';
             additionalItems = [];
             renderAdditionalItems();
             calculateTotal();
@@ -536,13 +577,20 @@
                         electricTotal = (electricResult.data && electricResult.data.total) || 0;
                     }
                     if (withdrawResult && withdrawResult.success && withdrawResult.data) {
-                        // คืนค่า garbageFee และ additionalItems ที่เคยบันทึกไว้
+                        // คืนค่า garbageFee, additionalItems, operatingCosts ที่เคยบันทึกไว้
                         const saved = withdrawResult.data;
                         if (saved.garbageFee > 0) {
                             document.getElementById('garbageFee').value = saved.garbageFee;
                             document.getElementById('garbageDisplay').textContent = formatMoney(saved.garbageFee);
                         }
                         additionalItems = saved.additionalItems || [];
+                        // คืนค่าค่าดำเนินการ
+                        if (saved.operatingCosts) {
+                            const oc = saved.operatingCosts;
+                            if (oc.travelWithdraw > 0) document.getElementById('travelWithdraw').value = oc.travelWithdraw;
+                            if (oc.travelElectric > 0) document.getElementById('travelElectric').value = oc.travelElectric;
+                            if (oc.travelGarbage > 0) document.getElementById('travelGarbage').value = oc.travelGarbage;
+                        }
                     }
                 } catch (e) {
                     if (token !== _loadToken) return;
@@ -582,26 +630,32 @@
             tbody.innerHTML = '';
             
             additionalItems.forEach((item, index) => {
-                // ส่วน input
-                const div = document.createElement('div');
-                div.className = 'additional-item';
-                div.innerHTML = `
-                    <input type="text" placeholder="ชื่อรายการ" value="${item.name}" 
-                           onchange="updateAdditionalItem(${index}, 'name', this.value)">
-                    <input type="number" placeholder="จำนวนเงิน" value="${item.amount}" min="0"
-                           onchange="updateAdditionalItem(${index}, 'amount', this.value)">
-                    <button onclick="removeAdditionalItem(${index})" title="ลบรายการ">×</button>
-                `;
-                container.appendChild(div);
+                const isComplete = item.name && item.amount > 0;
                 
-                // ส่วนตาราง
-                if (item.name && item.amount > 0) {
+                if (isComplete) {
+                    // แสดงเฉพาะในตาราง — ไม่แสดง input (2 คอลัมน์เท่าเดิม)
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>📦 ${item.name}</td>
+                        <td>
+                            <button class="no-print-cell" onclick="removeAdditionalItem(${index})" title="ลบรายการ"
+                                    style="background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.8rem;margin-right:0.4rem;vertical-align:middle;">×</button>
+                            📦 ${item.name}
+                        </td>
                         <td class="amount">${formatMoney(parseFloat(item.amount) || 0)}</td>
                     `;
                     tbody.appendChild(tr);
+                } else {
+                    // ยังกรอกไม่ครบ — แสดง input row
+                    const div = document.createElement('div');
+                    div.className = 'additional-item';
+                    div.innerHTML = `
+                        <input type="text" placeholder="ชื่อรายการ" value="${item.name}" 
+                               onchange="updateAdditionalItem(${index}, 'name', this.value)">
+                        <input type="number" placeholder="จำนวนเงิน" value="${item.amount || ''}" min="0"
+                               onchange="updateAdditionalItem(${index}, 'amount', this.value)">
+                        <button onclick="removeAdditionalItem(${index})" title="ลบรายการ">×</button>
+                    `;
+                    container.appendChild(div);
                 }
             });
         }
@@ -628,8 +682,22 @@
                 additionalTotal += parseFloat(item.amount) || 0;
             });
             
-            const grandTotal = waterTotal + electricTotal + garbageFee + additionalTotal;
-            document.getElementById('grandTotal').textContent = formatMoney(grandTotal);
+            const travelWithdraw = parseFloat(document.getElementById('travelWithdraw').value) || 0;
+            const travelElectric = parseFloat(document.getElementById('travelElectric').value) || 0;
+            const travelGarbage = parseFloat(document.getElementById('travelGarbage').value) || 0;
+            
+            // ยอดค่าใช้จ่ายจริง (อาจมีทศนิยม)
+            const rawTotal = waterTotal + electricTotal + garbageFee + additionalTotal + travelWithdraw + travelElectric + travelGarbage;
+            
+            // ปัดขึ้นเป็นจำนวนเต็ม (ธนาคารถอนได้เฉพาะจำนวนเต็ม)
+            const roundedTotal = Math.ceil(rawTotal);
+            const roundingFee = roundedTotal - rawTotal;
+            
+            document.getElementById('roundingFee').textContent = formatMoney(roundingFee);
+            document.getElementById('travelWithdrawDisplay').textContent = formatMoney(travelWithdraw);
+            document.getElementById('travelElectricDisplay').textContent = formatMoney(travelElectric);
+            document.getElementById('travelGarbageDisplay').textContent = formatMoney(travelGarbage);
+            document.getElementById('grandTotal').textContent = formatMoney(roundedTotal);
         }
         
         // บันทึกข้อมูล
@@ -645,11 +713,28 @@
                 let additionalTotal = 0;
                 additionalItems.forEach(item => { additionalTotal += parseFloat(item.amount) || 0; });
 
+                const travelWithdraw = parseFloat(document.getElementById('travelWithdraw').value) || 0;
+                const travelElectric = parseFloat(document.getElementById('travelElectric').value) || 0;
+                const travelGarbage = parseFloat(document.getElementById('travelGarbage').value) || 0;
+
+                const rawTotal = waterTotal + electricTotal + garbageFee + additionalTotal + travelWithdraw + travelElectric + travelGarbage;
+                const roundedTotal = Math.ceil(rawTotal);
+                const roundingFee = roundedTotal - rawTotal;
+
+                // กรองเฉพาะ item ที่กรอกครบแล้ว (ตัดตัวว่างออก)
+                const validItems = additionalItems.filter(item => item.name && item.amount > 0);
+
                 const result = await callBackend('saveWithdraw', {
                     period: period,
                     garbageFee: garbageFee,
-                    additionalItems: additionalItems,
-                    totalWithdraw: waterTotal + electricTotal + garbageFee + additionalTotal
+                    additionalItems: validItems,
+                    operatingCosts: {
+                        roundingFee: Math.round(roundingFee * 100) / 100,
+                        travelWithdraw: travelWithdraw,
+                        travelElectric: travelElectric,
+                        travelGarbage: travelGarbage
+                    },
+                    totalWithdraw: roundedTotal
                 });
                 if (result && result.success) {
                     localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
@@ -678,6 +763,144 @@
         // Nav — handled by ppk-nav.js
         window._ppkNavPage = 'monthly-withdraw';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'monthly-withdraw'); }
+
+        // ========== พิมพ์บันทึกข้อความราชการ ==========
+        function printMemo() {
+            const { month, year } = getPeriod();
+            const monthName = THAI_MONTHS[parseInt(month) - 1];
+            const waterTotal = parseMoney(document.getElementById('waterTotal').textContent);
+            const electricTotal = parseMoney(document.getElementById('electricTotal').textContent);
+            const garbageFee = parseFloat(document.getElementById('garbageFee').value) || 0;
+            const grandTotal = parseMoney(document.getElementById('grandTotal').textContent);
+            const roundingFee = parseMoney(document.getElementById('roundingFee').textContent);
+            const travelWithdraw = parseFloat(document.getElementById('travelWithdraw').value) || 0;
+            const travelElectric = parseFloat(document.getElementById('travelElectric').value) || 0;
+            const travelGarbage = parseFloat(document.getElementById('travelGarbage').value) || 0;
+
+            // สร้าง rows สำหรับตาราง
+            let rowNum = 0;
+            let tableRows = '';
+            const addRow = (name, amount) => {
+                if (amount > 0) {
+                    rowNum++;
+                    tableRows += '<tr><td style="text-align:center;">' + rowNum + '</td><td>' + name + '</td><td style="text-align:right;">' + formatMoney(amount) + '</td></tr>';
+                }
+            };
+            addRow('ค่าน้ำรวม', waterTotal);
+            addRow('ค่าไฟรวม (ที่การไฟฟ้าเรียกเก็บ)', electricTotal);
+            addRow('ค่าขยะ', garbageFee);
+            // ค่าใช้จ่ายอื่นๆ
+            additionalItems.forEach(item => {
+                if (item.name && item.amount > 0) addRow(item.name, parseFloat(item.amount));
+            });
+            addRow('ค่าดำเนินการ (ปัดเศษ)', roundingFee);
+            addRow('ค่าเดินทางถอนเงิน', travelWithdraw);
+            addRow('ค่าเดินทางชำระค่าไฟ', travelElectric);
+            addRow('ค่าเดินทางชำระค่าขยะ', travelGarbage);
+
+            const printDate = new Date();
+            const printDateStr = printDate.getDate() + ' ' + THAI_MONTHS[printDate.getMonth()] + ' ' + (printDate.getFullYear() + 543);
+
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>บันทึกข้อความ - ยอดเบิกประจำเดือน</title>' +
+            '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">' +
+            '<style>' +
+            '@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }' +
+            '@media print { body { margin:0; padding:0; } .no-print { display:none !important; } }' +
+            '* { box-sizing: border-box; }' +
+            'body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 16pt; line-height: 1.15; padding: 0; margin: 0; }' +
+            '.memo-header { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 12px; }' +
+            '.memo-title { font-size: 29pt; font-weight: bold; }' +
+            '.memo-fields { margin-bottom: 12px; font-size: 20pt; }' +
+            '.memo-field { display: flex; gap: 8px; margin-bottom: 2px; }' +
+            '.memo-label { font-weight: bold; white-space: nowrap; }' +
+            '.memo-value { flex: 1; border-bottom: 1px dotted #000; }' +
+            '.memo-body { text-indent: 2.5cm; margin-bottom: 8px; }' +
+            'table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14pt; }' +
+            'th { font-weight: bold; border: 1px solid #000; padding: 4px 6px; text-align: center; }' +
+            'td { border: 1px solid #000; padding: 3px 6px; }' +
+            '.total-row { font-weight: bold; background: #f5f5f5; }' +
+            '.signature-section { margin-top: 24px; display: flex; justify-content: space-around; page-break-inside: avoid; }' +
+            '.signature-box { width: 40%; text-align: center; }' +
+            '.signature-line { margin-top: 40px; border-top: 1px dotted #000; padding-top: 4px; }' +
+            '.toolbar { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:0.8rem 1.5rem; text-align:center; margin-bottom:1rem; }' +
+            '.toolbar button { background:#059669; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.5rem; font:inherit; font-size:1rem; cursor:pointer; }' +
+            '</style></head><body>' +
+            '<div class="no-print toolbar">' +
+            '<div style="margin-bottom:0.5rem;font-weight:bold;">📄 บันทึกข้อความ — ยอดเบิกประจำเดือน ' + monthName + ' ' + year + '</div>' +
+            '<button onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>' +
+            '</div>' +
+            '<div class="memo-header"><div class="memo-title">บันทึกข้อความ</div></div>' +
+            '<div class="memo-fields">' +
+            '<div class="memo-field"><span class="memo-label">ส่วนราชการ</span><span class="memo-value">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</span></div>' +
+            '<div class="memo-field"><span class="memo-label">ที่</span><span class="memo-value">............/............</span></div>' +
+            '<div class="memo-field"><span class="memo-label">วันที่</span><span class="memo-value">' + printDateStr + '</span></div>' +
+            '<div class="memo-field"><span class="memo-label">เรื่อง</span><span class="memo-value">ขออนุมัติเบิกเงินกองทุนบ้านพักครู ประจำเดือน' + monthName + ' พ.ศ. ' + year + '</span></div>' +
+            '</div>' +
+            '<hr style="border:none;border-top:1.5px solid #000;margin:0.2cm 0 0.3cm 0;">' +
+            '<div style="margin-bottom:8px;"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>' +
+            '<div class="memo-body">ตามที่โรงเรียนพะเยาพิทยาคมได้มอบหมายให้งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู ดำเนินการจัดเก็บค่าสาธารณูปโภคบ้านพักครู นั้น</div>' +
+            '<div class="memo-body">บัดนี้ ได้ดำเนินการรวบรวมยอดค่าใช้จ่ายประจำเดือน' + monthName + ' พ.ศ. ' + year + ' เรียบร้อยแล้ว จึงขออนุมัติเบิกเงินจากบัญชีกองทุนบ้านพักครู รวมจำนวน <strong>' + formatMoney(grandTotal) + ' บาท</strong> (' + numberToThaiText(grandTotal) + ') รายละเอียดดังนี้</div>' +
+            '<table><thead><tr><th style="width:10%;">ลำดับ</th><th>รายการ</th><th style="width:25%;">จำนวนเงิน (บาท)</th></tr></thead>' +
+            '<tbody>' + tableRows + '</tbody>' +
+            '<tfoot><tr class="total-row"><td colspan="2" style="text-align:center;">รวมยอดเบิกทั้งสิ้น</td><td style="text-align:right;">' + formatMoney(grandTotal) + '</td></tr></tfoot>' +
+            '</table>' +
+            '<div style="margin:12px 0 0 0;text-indent:2.5cm;">จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</div>' +
+            '<div class="signature-section">' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>ผู้จัดทำ / เหรัญญิก</div></div>' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>หัวหน้างานบ้านพัก</div></div>' +
+            '</div>' +
+            '<div style="text-align:center;margin-top:30px;font-size:14pt;">' +
+            '<div style="font-weight:bold;">ความเห็นผู้อำนวยการ</div>' +
+            '<div style="margin-top:5px;">☐ อนุมัติ &emsp; ☐ ไม่อนุมัติ</div>' +
+            '<div style="margin-top:30px;">ลงชื่อ.....................................<br>(..............................................)<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>' +
+            '</div>' +
+            '</body></html>';
+
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+        }
+
+        // ========== แปลงตัวเลขเป็นภาษาไทย ==========
+        function numberToThaiText(num) {
+            if (num === 0) return 'ศูนย์บาทถ้วน';
+            const digits = ['', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
+            const positions = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
+            const baht = Math.floor(num);
+            const satang = Math.round((num - baht) * 100);
+            function convertGroup(n) {
+                if (n === 0) return '';
+                const str = String(n);
+                let result = '';
+                const len = str.length;
+                for (let i = 0; i < len; i++) {
+                    const d = parseInt(str[i]);
+                    const pos = len - i - 1;
+                    if (d === 0) continue;
+                    if (pos === 1 && d === 1) { result += 'สิบ'; continue; }
+                    if (pos === 1 && d === 2) { result += 'ยี่สิบ'; continue; }
+                    if (pos === 0 && d === 1 && len > 1) { result += 'เอ็ด'; continue; }
+                    result += digits[d] + positions[pos];
+                }
+                return result;
+            }
+            let text = '';
+            if (baht > 0) {
+                if (baht >= 1000000) {
+                    text += convertGroup(Math.floor(baht / 1000000)) + 'ล้าน';
+                    text += convertGroup(baht % 1000000);
+                } else {
+                    text += convertGroup(baht);
+                }
+                text += 'บาท';
+            }
+            if (satang > 0) {
+                text += convertGroup(satang) + 'สตางค์';
+            } else {
+                text += 'ถ้วน';
+            }
+            return text;
+        }
     
         async function doLogout() {
             if (typeof ppkLogout === 'function') { ppkLogout(); return; }
@@ -688,7 +911,7 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>

@@ -1,5 +1,5 @@
-﻿// HOME PPK 2026 — Service Worker v1
-var CACHE_NAME = 'ppk-v20260324A';
+﻿// HOME PPK 2026 � Service Worker v1
+var CACHE_NAME = 'ppk-v20260328A';
 var PRECACHE = [
   './',
   './dashboard.html',
@@ -40,7 +40,7 @@ self.addEventListener('activate', function(e) {
 self.addEventListener('fetch', function(e) {
   // Skip non-GET and Supabase API calls
   if (e.request.url.includes('supabase.co') || e.request.method !== 'GET') return;
-  // JS/CSS: network-first (ป้องกัน stale code หลัง deploy)
+  // JS/CSS: network-first (??????? stale code ???? deploy)
   var isCode = e.request.url.match(/\.(js|css)(\?|$)/);
   if (isCode) {
     e.respondWith(

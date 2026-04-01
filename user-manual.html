@@ -1,0 +1,1160 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งาน | HOME PPK 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-primary: #4F46E5;
+            --c-primary-light: #818CF8;
+            --c-primary-dark: #3730A3;
+            --c-primary-bg: #EEF2FF;
+            --c-cyan: #06B6D4;
+            --c-bg: #F8FAFC;
+            --c-surface: #FFFFFF;
+            --c-border: #E2E8F0;
+            --c-text: #1E293B;
+            --c-text-2: #475569;
+            --c-text-3: #94A3B8;
+            --c-success: #22C55E;
+            --c-success-bg: #F0FDF4;
+            --c-warning: #F59E0B;
+            --c-warning-bg: #FFFBEB;
+            --c-danger: #EF4444;
+            --c-danger-bg: #FEF2F2;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--c-text);
+            background: var(--c-bg);
+        }
+
+        /* ── Header ── */
+        .manual-header {
+            background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
+            color: #fff;
+            padding: 3rem 1.5rem;
+            text-align: center;
+        }
+        .manual-header .logo-box {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 80px; height: 80px; border-radius: 20px;
+            background: rgba(255,255,255,0.15); font-size: 2.5rem;
+            margin-bottom: 1rem; backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .manual-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .manual-header p { font-size: 1rem; opacity: 0.9; font-weight: 300; }
+
+        /* ── Container ── */
+        .manual-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        /* ── Table of Contents ── */
+        .toc {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .toc h2 {
+            font-size: 1.15rem;
+            color: var(--c-primary);
+            margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .toc ol {
+            padding-left: 1.2rem;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .toc a {
+            color: var(--c-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .toc a:hover {
+            color: var(--c-cyan);
+            text-decoration: underline;
+        }
+
+        /* ── Sections ── */
+        .section {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .section-number {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--c-primary), var(--c-cyan));
+            color: #fff; font-weight: 700; font-size: 1rem;
+            margin-right: 0.7rem;
+        }
+        .section h2 {
+            font-size: 1.35rem;
+            color: var(--c-text);
+            margin-bottom: 1.2rem;
+            display: flex; align-items: center;
+        }
+
+        /* ── Steps ── */
+        .step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.8rem;
+            padding-bottom: 1.8rem;
+            border-bottom: 1px dashed var(--c-border);
+        }
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .step-number {
+            flex-shrink: 0;
+            width: 32px; height: 32px;
+            background: var(--c-primary-bg);
+            color: var(--c-primary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem;
+            margin-top: 0.2rem;
+        }
+        .step-content { flex: 1; }
+        .step-content h3 {
+            font-size: 1rem;
+            color: var(--c-text);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .step-content p {
+            color: var(--c-text-2);
+            font-size: 0.92rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* ── Note/Tip boxes ── */
+        .note {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.88rem;
+            margin: 0.8rem 0;
+            display: flex; gap: 0.5rem; align-items: flex-start;
+        }
+        .note-info { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
+        .note-warning { background: #FFFBEB; border: 1px solid #FCD34D; color: #92400E; }
+        .note-success { background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; }
+        .note-danger { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; }
+        .note-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+        /* ── Arrow Indicator ── */
+        .arrow-down {
+            text-align: center;
+            padding: 0.8rem 0;
+            color: var(--c-primary);
+            font-size: 1.5rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           MOCKUP PHONE FRAME
+           ═══════════════════════════════════════════ */
+        .mockup-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0 0.5rem;
+        }
+        .phone-frame {
+            width: 320px;
+            background: #1a1a2e;
+            border-radius: 32px;
+            padding: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25), inset 0 0 0 2px #333;
+            position: relative;
+        }
+        .phone-notch {
+            width: 100px; height: 24px;
+            background: #1a1a2e;
+            border-radius: 0 0 14px 14px;
+            margin: 0 auto;
+            position: absolute; top: 12px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        .phone-screen {
+            background: #fff;
+            border-radius: 22px;
+            overflow: hidden;
+            min-height: 480px;
+            position: relative;
+        }
+
+        /* ── Login Screen Mockup ── */
+        .mock-login-bg {
+            background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
+            min-height: 480px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+        .mock-card {
+            background: rgba(255,255,255,0.97);
+            border-radius: 14px;
+            padding: 1.3rem 1rem;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .mock-logo-center { text-align: center; margin-bottom: 0.7rem; }
+        .mock-logo-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #4F46E5, #06B6D4);
+            font-size: 1.3rem; margin-bottom: 0.3rem;
+        }
+        .mock-logo-center h4 { color: #4F46E5; font-size: 0.95rem; font-weight: 700; margin: 0; }
+        .mock-logo-center p { color: #64748B; font-size: 0.65rem; margin: 0.15rem 0 0; line-height: 1.3; }
+        .mock-card h5 { text-align: center; color: #1E1B4B; font-size: 0.9rem; margin: 0.5rem 0; }
+
+        .mock-input {
+            display: block; width: 100%; padding: 0.5rem 0.7rem;
+            border: 1.5px solid #E5E7EB; border-radius: 8px;
+            font-family: 'Kanit', sans-serif; font-size: 0.78rem;
+            color: #1E293B; background: #fff;
+            margin-bottom: 0.5rem; box-sizing: border-box;
+        }
+        .mock-input::placeholder { color: #CBD5E1; }
+        .mock-input.has-value { border-color: #4F46E5; }
+        .mock-input.readonly { background: #F1F5F9; color: #64748B; }
+
+        .mock-label {
+            font-size: 0.72rem; color: #374151; font-weight: 500;
+            margin-bottom: 0.2rem; display: block;
+        }
+
+        .mock-btn {
+            display: block; width: 100%;
+            background: linear-gradient(135deg, #4F46E5, #06B6D4);
+            color: #fff; border: none; border-radius: 8px;
+            padding: 0.55rem; font-family: 'Kanit', sans-serif;
+            font-size: 0.82rem; font-weight: 700;
+            cursor: default; margin-top: 0.5rem;
+        }
+        .mock-btn-outline {
+            display: block; width: 100%;
+            background: #fff; color: #4F46E5;
+            border: 1.5px solid #E5E7EB; border-radius: 8px;
+            padding: 0.45rem; font-family: 'Kanit', sans-serif;
+            font-size: 0.78rem; font-weight: 600;
+            cursor: default; margin-top: 0.4rem;
+        }
+        .mock-btn-white {
+            display: inline-block;
+            background: #fff; color: #4F46E5;
+            border: none; border-radius: 8px;
+            padding: 0.4rem 1rem; font-family: 'Kanit', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            cursor: default; margin-top: 0.4rem;
+        }
+
+        .mock-link {
+            color: #4F46E5; font-size: 0.72rem;
+            text-align: center; display: block;
+            margin-top: 0.3rem; text-decoration: none;
+        }
+        .mock-footer {
+            text-align: center; font-size: 0.58rem; color: #9CA3AF;
+            margin-top: 0.6rem; line-height: 1.3;
+        }
+        .mock-error {
+            color: #DC2626; font-size: 0.72rem; text-align: center;
+            margin: 0.3rem 0;
+        }
+
+        /* ── Password field with eye ── */
+        .mock-pw-wrap {
+            position: relative; margin-bottom: 0.5rem;
+        }
+        .mock-pw-wrap .mock-input { padding-right: 2rem; margin-bottom: 0; }
+        .mock-pw-eye {
+            position: absolute; right: 0.5rem; top: 50%;
+            transform: translateY(-50%); font-size: 0.85rem;
+            color: #9CA3AF; cursor: default;
+        }
+
+        /* ── Dashboard Mockup ── */
+        .mock-dash-topbar {
+            background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
+            padding: 0.7rem 0.8rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            color: #fff;
+        }
+        .mock-hamburger { font-size: 1rem; }
+        .mock-dash-topbar span { font-size: 0.82rem; font-weight: 600; }
+        .mock-dash-body { padding: 0.8rem; background: #F8FAFC; min-height: 420px; }
+
+        .mock-hero-card {
+            background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
+            border-radius: 14px; padding: 1rem; color: #fff;
+            margin-bottom: 0.7rem; position: relative;
+            box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+        }
+        .mock-hero-greeting { font-size: 0.78rem; font-weight: 300; opacity: 0.9; }
+        .mock-hero-house { font-size: 0.72rem; opacity: 0.8; margin-top: 0.15rem; }
+        .mock-hero-divider { height: 1px; background: rgba(255,255,255,0.2); margin: 0.5rem 0; }
+        .mock-hero-label { font-size: 0.7rem; opacity: 0.8; }
+        .mock-hero-amount { font-size: 1.6rem; font-weight: 700; margin: 0.1rem 0; }
+        .mock-hero-month { font-size: 0.68rem; opacity: 0.8; }
+        .mock-hero-badge {
+            position: absolute; top: 0.6rem; right: 0.6rem;
+            font-size: 0.6rem; padding: 0.15rem 0.5rem;
+            border-radius: 20px; font-weight: 600;
+        }
+        .badge-pending { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+        .badge-reviewing { background: rgba(245,158,11,0.2); color: #FCD34D; }
+        .badge-success { background: rgba(34,197,94,0.2); color: #86EFAC; }
+
+        /* Quick Action Grid */
+        .mock-quick-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 0.5rem; margin-bottom: 0.7rem;
+        }
+        .mock-quick-btn {
+            background: #fff; border: 1px solid #E2E8F0;
+            border-radius: 10px; padding: 0.6rem;
+            text-align: center; font-size: 0.7rem; color: #374151;
+            font-weight: 500;
+        }
+        .mock-quick-btn .icon { font-size: 1.1rem; display: block; margin-bottom: 0.2rem; }
+
+        /* ── Outstanding Card ── */
+        .mock-outstanding {
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border: 1.5px solid #F59E0B;
+            border-radius: 12px; padding: 0.8rem;
+            margin-bottom: 0.7rem;
+        }
+        .mock-outstanding-title { font-size: 0.72rem; color: #92400E; font-weight: 500; }
+        .mock-outstanding-amount { font-size: 1.3rem; font-weight: 700; color: #B45309; }
+
+        /* ── Upload Slip Mockup ── */
+        .mock-upload-body { padding: 0.8rem; background: #F8FAFC; min-height: 420px; }
+        .mock-upload-title {
+            font-size: 0.95rem; font-weight: 700; color: #4F46E5;
+            margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.3rem;
+        }
+        .mock-form-section {
+            background: #fff; border: 1px solid #E2E8F0;
+            border-radius: 10px; padding: 0.8rem; margin-bottom: 0.6rem;
+        }
+        .mock-section-title {
+            font-size: 0.78rem; font-weight: 700; color: #4F46E5;
+            margin-bottom: 0.5rem;
+        }
+        .mock-info-row {
+            display: flex; justify-content: space-between;
+            padding: 0.3rem 0; font-size: 0.72rem;
+            border-bottom: 1px dashed #F1F5F9;
+        }
+        .mock-info-row:last-child { border-bottom: none; }
+        .mock-info-label { color: #64748B; }
+        .mock-info-value { font-weight: 600; color: #1E293B; }
+        .mock-info-value.red { color: #E11D48; }
+        .mock-info-value.blue { color: #2563EB; }
+
+        .mock-file-area {
+            border: 2px dashed #CBD5E1;
+            border-radius: 10px; padding: 1rem;
+            text-align: center; font-size: 0.72rem;
+            color: #64748B; margin-top: 0.5rem;
+        }
+        .mock-file-area .icon { font-size: 1.5rem; display: block; margin-bottom: 0.3rem; color: #4F46E5; }
+
+        .mock-file-preview {
+            display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;
+        }
+        .mock-file-thumb {
+            width: 60px; height: 60px; border-radius: 8px;
+            background: linear-gradient(135deg, #E0E7FF, #C7D2FE);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; position: relative;
+        }
+        .mock-file-remove {
+            position: absolute; top: -4px; right: -4px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #EF4444; color: #fff; font-size: 0.55rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ── First Login Modal ── */
+        .mock-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10; border-radius: 22px;
+        }
+        .mock-modal {
+            background: #fff; border-radius: 14px;
+            padding: 1.2rem 1rem; width: 88%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .mock-modal h4 { color: #4F46E5; font-size: 0.88rem; margin: 0 0 0.3rem; }
+        .mock-modal p { color: #555; font-size: 0.7rem; margin: 0 0 0.7rem; line-height: 1.4; }
+
+        /* ── Caption under mockup ── */
+        .mockup-caption {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--c-text-3);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* ── Highlight Box ── */
+        .highlight-box {
+            background: var(--c-primary-bg);
+            border-left: 4px solid var(--c-primary);
+            border-radius: 0 10px 10px 0;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* ── Indicator Circle ── */
+        .indicator-circle {
+            position: absolute;
+            border: 3px solid #EF4444;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+            animation: pulse-ring 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.08); }
+        }
+
+        /* ── Print Styles ── */
+        @media print {
+            body { background: #fff; }
+            .manual-header { break-after: avoid; }
+            .section { break-inside: avoid; }
+            .phone-frame { box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .manual-header h1 { font-size: 1.5rem; }
+            .section { padding: 1.2rem; }
+            .phone-frame { width: 280px; }
+            .step { flex-direction: column; gap: 0.5rem; }
+            .manual-container { padding: 1rem 0.5rem 3rem; }
+        }
+
+        /* ── Annotation Arrows on Mockup ── */
+        .mock-annotation {
+            position: absolute;
+            background: #EF4444;
+            color: #fff;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            z-index: 20;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+        }
+        .mock-annotation::after {
+            content: '';
+            position: absolute;
+            border: 5px solid transparent;
+        }
+        .mock-annotation.arrow-right::after {
+            right: -10px; top: 50%; transform: translateY(-50%);
+            border-left-color: #EF4444;
+        }
+        .mock-annotation.arrow-left::after {
+            left: -10px; top: 50%; transform: translateY(-50%);
+            border-right-color: #EF4444;
+        }
+        .mock-annotation.arrow-down::after {
+            bottom: -10px; left: 50%; transform: translateX(-50%);
+            border-top-color: #EF4444;
+        }
+        .mock-annotation.arrow-up::after {
+            top: -10px; left: 50%; transform: translateX(-50%);
+            border-bottom-color: #EF4444;
+        }
+
+        /* Flow diagram */
+        .flow-diagram {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 0;
+            margin: 1rem 0;
+        }
+        .flow-step {
+            background: #fff; border: 2px solid var(--c-primary);
+            border-radius: 10px; padding: 0.5rem 1.2rem;
+            font-size: 0.85rem; font-weight: 500;
+            text-align: center; max-width: 260px;
+            position: relative;
+        }
+        .flow-step.active {
+            background: linear-gradient(135deg, #4F46E5, #06B6D4);
+            color: #fff; border-color: transparent;
+        }
+        .flow-arrow {
+            font-size: 1.3rem; color: var(--c-primary);
+            padding: 0.2rem 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═════════════ HEADER ═════════════ -->
+<header class="manual-header">
+    <div class="logo-box">🏠</div>
+    <h1>HOME PPK 2026</h1>
+    <p>คู่มือการใช้งานระบบบริหารจัดการบ้านพักครู</p>
+    <p style="font-size:0.85rem; opacity:0.7; margin-top:0.3rem;">โรงเรียนพะเยาพิทยาคม</p>
+</header>
+
+<!-- ═════════════ CONTAINER ═════════════ -->
+<div class="manual-container">
+
+    <!-- ── สารบัญ ── -->
+    <div class="toc">
+        <h2>📋 สารบัญ</h2>
+        <ol>
+            <li><a href="#section1">การเข้าสู่ระบบครั้งแรก (ตั้งรหัสผ่าน)</a></li>
+            <li><a href="#section2">การเช็คยอดชำระเงิน</a></li>
+            <li><a href="#section3">การส่งสลิปชำระเงิน</a></li>
+        </ol>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         SECTION 1: การเข้าสู่ระบบครั้งแรก
+         ═══════════════════════════════════════════════════ -->
+    <div class="section" id="section1">
+        <h2>
+            <span class="section-number">1</span>
+            การเข้าสู่ระบบครั้งแรก (ตั้งรหัสผ่าน)
+        </h2>
+
+        <div class="note note-info">
+            <span class="note-icon">ℹ️</span>
+            <span>สำหรับผู้ใช้ที่เข้าระบบครั้งแรก ผู้ดูแลระบบจะสร้างบัญชีให้พร้อมอีเมล ท่านจะยังไม่มีรหัสผ่าน — ระบบจะนำทางไปตั้งรหัสผ่านอัตโนมัติ</span>
+        </div>
+
+        <!-- Flow Diagram -->
+        <div class="flow-diagram">
+            <div class="flow-step active">📧 กรอกอีเมลที่ได้รับจากผู้ดูแล</div>
+            <div class="flow-arrow">▼</div>
+            <div class="flow-step">🔐 ระบบแสดงหน้าตั้งรหัสผ่าน</div>
+            <div class="flow-arrow">▼</div>
+            <div class="flow-step">✅ ตั้งรหัสผ่านสำเร็จ → เข้าหน้าหลัก</div>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>เปิดหน้าเข้าสู่ระบบ</h3>
+                <p>เข้าที่เว็บไซต์ HOME PPK 2026 จะพบหน้าเข้าสู่ระบบ ให้กรอก<strong>อีเมล</strong>ที่ผู้ดูแลระบบสร้างให้</p>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-login-bg">
+                                <div class="mock-card">
+                                    <div class="mock-logo-center">
+                                        <div class="mock-logo-icon">🏠</div>
+                                        <h4>HOME PPK 2026</h4>
+                                        <p>ระบบบริหารจัดการบ้านพักครู<br>โรงเรียนพะเยาพิทยาคม</p>
+                                    </div>
+                                    <h5>เข้าสู่ระบบ</h5>
+                                    <span class="mock-label">อีเมล</span>
+                                    <input class="mock-input has-value" type="text" value="teacher@ppk.ac.th" readonly style="pointer-events:none">
+                                    <span class="mock-label">รหัสผ่าน</span>
+                                    <div class="mock-pw-wrap">
+                                        <input class="mock-input" type="text" placeholder="รหัสผ่านอย่างน้อย 8 ตัว" readonly style="pointer-events:none">
+                                        <span class="mock-pw-eye">👁</span>
+                                    </div>
+                                    <div class="mock-btn">เข้าสู่ระบบ</div>
+                                    <span class="mock-link">ลืมรหัสผ่าน?</span>
+                                    <span class="mock-link">ลืมอีเมล?</span>
+                                    <span class="mock-link">สมัครใช้บริการ</span>
+                                    <div class="mock-footer">ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 1.1 — หน้าเข้าสู่ระบบ กรอกอีเมลที่ได้รับ</p>
+
+                <div class="highlight-box">
+                    💡 <strong>เข้าสู่ระบบครั้งแรก:</strong> กรอกเฉพาะ<strong>อีเมล</strong> ไม่ต้องกรอกรหัสผ่าน แล้วกดปุ่ม "เข้าสู่ระบบ" ระบบจะตรวจพบว่าเป็นการเข้าใช้ครั้งแรกโดยอัตโนมัติ
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>ระบบแสดงหน้าตั้งรหัสผ่าน</h3>
+                <p>เนื่องจากเป็นการเข้าใช้ครั้งแรก ระบบจะแสดง<strong>หน้าต่างตั้งรหัสผ่าน</strong>ขึ้นมาอัตโนมัติ ให้ท่านกรอก:</p>
+                <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--c-text-2); font-size: 0.92rem;">
+                    <li><strong>รหัสผ่านใหม่</strong> — อย่างน้อย 8 ตัวอักษร</li>
+                    <li><strong>ยืนยันรหัสผ่านใหม่</strong> — พิมพ์ซ้ำอีกครั้งให้ตรงกัน</li>
+                </ul>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-login-bg" style="min-height:480px;">
+                                <!-- Background login card (blurred) -->
+                                <div class="mock-card" style="opacity:0.3; filter:blur(2px);">
+                                    <div class="mock-logo-center">
+                                        <div class="mock-logo-icon">🏠</div>
+                                        <h4>HOME PPK 2026</h4>
+                                    </div>
+                                    <h5>เข้าสู่ระบบ</h5>
+                                </div>
+                            </div>
+                            <!-- First Login Overlay -->
+                            <div class="mock-overlay">
+                                <div class="mock-modal">
+                                    <h4>🔐 ยินดีต้อนรับ! ตั้งรหัสผ่านของคุณ</h4>
+                                    <p>สวัสดีคุณ <strong>ครูสมชาย</strong> กรุณาตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ</p>
+                                    <span class="mock-label">รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</span>
+                                    <div class="mock-pw-wrap">
+                                        <input class="mock-input" type="text" value="●●●●●●●●●●" readonly style="pointer-events:none">
+                                        <span class="mock-pw-eye">👁</span>
+                                    </div>
+                                    <span class="mock-label">ยืนยันรหัสผ่านใหม่</span>
+                                    <div class="mock-pw-wrap">
+                                        <input class="mock-input" type="text" value="●●●●●●●●●●" readonly style="pointer-events:none">
+                                        <span class="mock-pw-eye">👁</span>
+                                    </div>
+                                    <div class="mock-btn" style="margin-top:0.7rem;">ยืนยันตั้งรหัสผ่าน</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 1.2 — หน้าต่างตั้งรหัสผ่านสำหรับผู้ใช้ครั้งแรก</p>
+
+                <div class="note note-warning">
+                    <span class="note-icon">⚠️</span>
+                    <span>รหัสผ่านต้องมีอย่างน้อย <strong>8 ตัวอักษร</strong> และทั้งสองช่องต้องตรงกัน</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>ตั้งรหัสผ่านสำเร็จ → เข้าสู่หน้าหลัก</h3>
+                <p>เมื่อกดปุ่ม <strong>"ยืนยันตั้งรหัสผ่าน"</strong> สำเร็จ ระบบจะนำท่านไปยัง<strong>หน้าหลัก (Dashboard)</strong> โดยอัตโนมัติ</p>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">☰</span>
+                                <span>🏠 HOME PPK 2026</span>
+                            </div>
+                            <div class="mock-dash-body">
+                                <div class="mock-hero-card">
+                                    <div class="mock-hero-badge badge-pending">⏳ รอชำระ</div>
+                                    <div class="mock-hero-greeting">สวัสดี, ครูสมชาย</div>
+                                    <div class="mock-hero-house">🏠 บ้านพักเลขที่ 12</div>
+                                    <div class="mock-hero-divider"></div>
+                                    <div class="mock-hero-label">💳 ยอดชำระเดือนนี้</div>
+                                    <div class="mock-hero-amount">฿ 850.00</div>
+                                    <div class="mock-hero-month">📅 มีนาคม 2569</div>
+                                    <div class="mock-btn-white" style="margin-top:0.6rem;">📤 ส่งสลิปชำระเงิน</div>
+                                </div>
+                                <div class="mock-quick-grid">
+                                    <div class="mock-quick-btn"><span class="icon">📤</span>ส่งสลิป</div>
+                                    <div class="mock-quick-btn"><span class="icon">💳</span>ประวัติชำระ</div>
+                                    <div class="mock-quick-btn"><span class="icon">📝</span>ยื่นคำร้อง</div>
+                                    <div class="mock-quick-btn"><span class="icon">⚙️</span>ตั้งค่า</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 1.3 — หน้าหลัก (Dashboard) หลังตั้งรหัสผ่านสำเร็จ</p>
+
+                <div class="note note-success">
+                    <span class="note-icon">✅</span>
+                    <span>ครั้งต่อไปท่านสามารถเข้าระบบด้วย<strong>อีเมล + รหัสผ่าน</strong>ที่ตั้งไว้ได้ตามปกติ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         SECTION 2: การเช็คยอดชำระเงิน
+         ═══════════════════════════════════════════════════ -->
+    <div class="section" id="section2">
+        <h2>
+            <span class="section-number">2</span>
+            การเช็คยอดชำระเงิน
+        </h2>
+
+        <div class="note note-info">
+            <span class="note-icon">ℹ️</span>
+            <span>ยอดชำระเงินจะแสดงอยู่บน<strong>หน้าหลัก (Dashboard)</strong> ทันทีที่เข้าสู่ระบบ โดยไม่ต้องค้นหา</span>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>ดูยอดชำระที่ "การ์ดหลัก" บนหน้า Dashboard</h3>
+                <p>เมื่อเข้าสู่ระบบแล้ว การ์ดสีม่วง-ฟ้าด้านบนสุดจะแสดงข้อมูลสำคัญดังนี้:</p>
+                <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--c-text-2); font-size: 0.92rem;">
+                    <li>💳 <strong>ยอดชำระเดือนนี้</strong> — จำนวนเงินที่ต้องชำระ</li>
+                    <li>📅 <strong>เดือน/ปี</strong> — งวดที่ต้องชำระ</li>
+                    <li>🏠 <strong>เลขที่บ้านพัก</strong> — บ้านพักของท่าน</li>
+                    <li><strong>สถานะ</strong> — แสดงมุมขวาบน</li>
+                </ul>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">☰</span>
+                                <span>🏠 HOME PPK 2026</span>
+                            </div>
+                            <div class="mock-dash-body">
+                                <div class="mock-hero-card" style="position:relative;">
+                                    <div class="mock-hero-badge badge-pending">⏳ รอชำระ</div>
+                                    <div class="mock-hero-greeting">สวัสดี, ครูสมชาย</div>
+                                    <div class="mock-hero-house">🏠 บ้านพักเลขที่ 12</div>
+                                    <div class="mock-hero-divider"></div>
+                                    <div class="mock-hero-label">💳 ยอดชำระเดือนนี้</div>
+                                    <div class="mock-hero-amount">฿ 850.00</div>
+                                    <div class="mock-hero-month">📅 มีนาคม 2569</div>
+                                    <div class="mock-btn-white" style="margin-top:0.6rem;">📤 ส่งสลิปชำระเงิน</div>
+
+                                    <!-- Annotations -->
+                                    <div class="mock-annotation arrow-left" style="right:-8px; top:6px;">สถานะ</div>
+                                    <div class="mock-annotation arrow-right" style="left:-8px; top:65px;">ยอดชำระ</div>
+                                </div>
+
+                                <!-- Outstanding example -->
+                                <div class="mock-outstanding">
+                                    <div class="mock-outstanding-title">⚠️ ยอดคงค้างสะสม</div>
+                                    <div class="mock-outstanding-amount">฿ 1,700.00</div>
+                                    <div style="font-size:0.65rem; color:#92400E; margin-top:0.2rem;">ค้างชำระ 2 เดือน</div>
+                                </div>
+
+                                <div class="mock-quick-grid">
+                                    <div class="mock-quick-btn"><span class="icon">📤</span>ส่งสลิป</div>
+                                    <div class="mock-quick-btn"><span class="icon">💳</span>ประวัติชำระ</div>
+                                    <div class="mock-quick-btn"><span class="icon">📝</span>ยื่นคำร้อง</div>
+                                    <div class="mock-quick-btn"><span class="icon">⚙️</span>ตั้งค่า</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 2.1 — การ์ดหลักแสดงยอดชำระ และการ์ดยอดคงค้างสะสม (ถ้ามี)</p>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>ความหมายของสถานะ</h3>
+                <p>ป้ายสถานะมุมขวาบนของการ์ดหลัก มีความหมายดังนี้:</p>
+
+                <div style="display:flex; flex-direction:column; gap:0.5rem; margin:0.8rem 0;">
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; background:#FEF2F2; border-radius:8px;">
+                        <span style="background:rgba(239,68,68,0.15); color:#EF4444; padding:0.15rem 0.6rem; border-radius:12px; font-size:0.8rem; font-weight:600;">⏳ รอชำระ</span>
+                        <span style="font-size:0.88rem; color:#991B1B;">ยังไม่ได้ชำระ / ยังไม่ได้ส่งสลิป</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; background:#FFFBEB; border-radius:8px;">
+                        <span style="background:rgba(245,158,11,0.15); color:#F59E0B; padding:0.15rem 0.6rem; border-radius:12px; font-size:0.8rem; font-weight:600;">🔍 รอตรวจสอบ</span>
+                        <span style="font-size:0.88rem; color:#92400E;">ส่งสลิปแล้ว รอผู้ดูแลตรวจ</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; background:#F0FDF4; border-radius:8px;">
+                        <span style="background:rgba(34,197,94,0.15); color:#22C55E; padding:0.15rem 0.6rem; border-radius:12px; font-size:0.8rem; font-weight:600;">✅ ชำระแล้ว</span>
+                        <span style="font-size:0.88rem; color:#166534;">ผู้ดูแลตรวจสลิปผ่านแล้ว</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; background:#FEF2F2; border-radius:8px;">
+                        <span style="background:rgba(239,68,68,0.15); color:#EF4444; padding:0.15rem 0.6rem; border-radius:12px; font-size:0.8rem; font-weight:600;">❌ สลิปไม่ผ่าน</span>
+                        <span style="font-size:0.88rem; color:#991B1B;">สลิปถูกปฏิเสธ ต้องส่งใหม่</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>ยอดคงค้างสะสม (ถ้ามี)</h3>
+                <p>หากมียอดค้างชำระจากเดือนก่อนๆ จะมี<strong>การ์ดสีเหลือง</strong>แสดงอยู่ใต้การ์ดหลัก แสดงจำนวนเงินรวมที่ค้างชำระ พร้อมปุ่มส่งสลิป</p>
+
+                <div class="note note-warning">
+                    <span class="note-icon">⚠️</span>
+                    <span>หากมียอดคงค้าง ควรชำระให้ครบถ้วนโดยเร็ว เพื่อหลีกเลี่ยงปัญหาในอนาคต</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>ดูประวัติการชำระเงิน</h3>
+                <p>กดปุ่ม <strong>"💳 ประวัติชำระ"</strong> ที่เมนูลัดด้านล่าง เพื่อดูรายละเอียดการชำระเงินย้อนหลังทุกเดือน</p>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">☰</span>
+                                <span>💳 ประวัติชำระเงิน</span>
+                            </div>
+                            <div class="mock-dash-body">
+                                <!-- Month cards -->
+                                <div style="margin-bottom:0.5rem;">
+                                    <div style="background:#fff; border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:0.5rem;">
+                                        <div style="background:#F0FDF4; padding:0.5rem 0.7rem; display:flex; justify-content:space-between; align-items:center;">
+                                            <span style="font-size:0.78rem; font-weight:600; color:#166534;">📅 มีนาคม 2569</span>
+                                            <span style="font-size:0.65rem; background:#22C55E; color:#fff; padding:0.1rem 0.4rem; border-radius:10px;">✅ ชำระแล้ว</span>
+                                        </div>
+                                        <div style="padding:0.5rem 0.7rem;">
+                                            <div class="mock-info-row">
+                                                <span class="mock-info-label">ค่าไฟฟ้า</span>
+                                                <span class="mock-info-value">฿ 450.00</span>
+                                            </div>
+                                            <div class="mock-info-row">
+                                                <span class="mock-info-label">ค่าน้ำประปา</span>
+                                                <span class="mock-info-value">฿ 200.00</span>
+                                            </div>
+                                            <div class="mock-info-row">
+                                                <span class="mock-info-label">ค่าส่วนกลาง</span>
+                                                <span class="mock-info-value">฿ 200.00</span>
+                                            </div>
+                                            <div class="mock-info-row" style="border-top:1px solid #E2E8F0; padding-top:0.4rem; margin-top:0.2rem;">
+                                                <span class="mock-info-label" style="font-weight:600;">รวม</span>
+                                                <span class="mock-info-value" style="color:#4F46E5; font-size:0.85rem;">฿ 850.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="background:#fff; border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:0.5rem;">
+                                        <div style="background:#FEF2F2; padding:0.5rem 0.7rem; display:flex; justify-content:space-between; align-items:center;">
+                                            <span style="font-size:0.78rem; font-weight:600; color:#991B1B;">📅 กุมภาพันธ์ 2569</span>
+                                            <span style="font-size:0.65rem; background:#EF4444; color:#fff; padding:0.1rem 0.4rem; border-radius:10px;">⏳ ค้างชำระ</span>
+                                        </div>
+                                        <div style="padding:0.5rem 0.7rem;">
+                                            <div class="mock-info-row">
+                                                <span class="mock-info-label">รวม</span>
+                                                <span class="mock-info-value red">฿ 850.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 2.2 — หน้าประวัติการชำระเงิน แสดงรายเดือน</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         SECTION 3: การส่งสลิปชำระเงิน
+         ═══════════════════════════════════════════════════ -->
+    <div class="section" id="section3">
+        <h2>
+            <span class="section-number">3</span>
+            การส่งสลิปชำระเงิน
+        </h2>
+
+        <div class="note note-info">
+            <span class="note-icon">ℹ️</span>
+            <span>หลังโอนเงินชำระค่าบ้านพักแล้ว ให้ถ่ายภาพสลิปการโอน แล้วส่งผ่านระบบเพื่อให้ผู้ดูแลตรวจสอบ</span>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>เข้าหน้าส่งสลิป</h3>
+                <p>สามารถเข้าได้หลายวิธี:</p>
+                <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--c-text-2); font-size: 0.92rem;">
+                    <li>กดปุ่ม <strong>"📤 ส่งสลิปชำระเงิน"</strong> บนการ์ดหลัก</li>
+                    <li>กดปุ่ม <strong>"📤 ส่งสลิป"</strong> ที่เมนูลัด</li>
+                    <li>กดเมนู <strong>"📤 ส่งสลิป"</strong> ที่แถบด้านข้าง</li>
+                </ul>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">☰</span>
+                                <span>🏠 HOME PPK 2026</span>
+                            </div>
+                            <div class="mock-dash-body">
+                                <div class="mock-hero-card" style="position:relative;">
+                                    <div class="mock-hero-badge badge-pending">⏳ รอชำระ</div>
+                                    <div class="mock-hero-greeting">สวัสดี, ครูสมชาย</div>
+                                    <div class="mock-hero-house">🏠 บ้านพักเลขที่ 12</div>
+                                    <div class="mock-hero-divider"></div>
+                                    <div class="mock-hero-label">💳 ยอดชำระเดือนนี้</div>
+                                    <div class="mock-hero-amount">฿ 850.00</div>
+                                    <div class="mock-hero-month">📅 มีนาคม 2569</div>
+                                    <div class="mock-btn-white" style="margin-top:0.6rem; position:relative;">
+                                        📤 ส่งสลิปชำระเงิน
+                                        <!-- Pulse indicator -->
+                                        <span style="position:absolute; right:-6px; top:-6px; width:14px; height:14px; background:#EF4444; border-radius:50%; border:2px solid #fff; animation:pulse-ring 1.5s ease-in-out infinite;"></span>
+                                    </div>
+                                    <div class="mock-annotation arrow-up" style="bottom:-18px; left:50%; transform:translateX(-50%);">กดที่นี่</div>
+                                </div>
+
+                                <div class="mock-quick-grid">
+                                    <div class="mock-quick-btn" style="border:2px solid #EF4444; position:relative;">
+                                        <span class="icon">📤</span>ส่งสลิป
+                                        <div class="mock-annotation arrow-down" style="top:-18px; left:50%; transform:translateX(-50%); font-size:0.55rem;">หรือกดที่นี่</div>
+                                    </div>
+                                    <div class="mock-quick-btn"><span class="icon">💳</span>ประวัติชำระ</div>
+                                    <div class="mock-quick-btn"><span class="icon">📝</span>ยื่นคำร้อง</div>
+                                    <div class="mock-quick-btn"><span class="icon">⚙️</span>ตั้งค่า</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 3.1 — จุดที่สามารถกดเพื่อเข้าหน้าส่งสลิป</p>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>ตรวจสอบข้อมูลยอดชำระ</h3>
+                <p>หน้าส่งสลิปจะแสดงข้อมูลที่สำคัญไว้ให้อัตโนมัติ:</p>
+                <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--c-text-2); font-size: 0.92rem;">
+                    <li><strong>บ้านพักเลขที่</strong> — แสดงอัตโนมัติ</li>
+                    <li><strong>ประจำเดือน</strong> — เดือนที่ต้องชำระ</li>
+                    <li><strong>ยอดที่ต้องชำระ</strong> — จำนวนเงินรวม (สีแดง)</li>
+                </ul>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">←</span>
+                                <span>📤 ส่งสลิปการชำระเงิน</span>
+                            </div>
+                            <div class="mock-upload-body">
+                                <div class="mock-form-section">
+                                    <div class="mock-section-title">📋 ข้อมูลการชำระ</div>
+                                    <div class="mock-info-row">
+                                        <span class="mock-info-label">บ้านพักเลขที่</span>
+                                        <span class="mock-info-value blue">12</span>
+                                    </div>
+                                    <div class="mock-info-row">
+                                        <span class="mock-info-label">ประจำเดือน</span>
+                                        <span class="mock-info-value">มีนาคม 2569</span>
+                                    </div>
+                                    <div class="mock-info-row">
+                                        <span class="mock-info-label">ยอดที่ต้องชำระ</span>
+                                        <span class="mock-info-value red" style="font-size:0.85rem;">฿ 850.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="mock-form-section">
+                                    <div class="mock-section-title">💰 จำนวนเงินที่ชำระ</div>
+                                    <span class="mock-label">กรอกจำนวนเงินที่ชำระ (บาท)</span>
+                                    <input class="mock-input has-value" type="text" value="850" readonly style="pointer-events:none; font-size:0.85rem; font-weight:600;">
+                                </div>
+
+                                <div class="mock-form-section">
+                                    <div class="mock-section-title">📎 แนบไฟล์สลิป</div>
+                                    <div class="mock-file-area">
+                                        <span class="icon">📎</span>
+                                        เพิ่มสลิป<br>
+                                        <span style="font-size:0.6rem; color:#94A3B8;">แนบได้สูงสุด 3 รูป (JPG, PNG)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 3.2 — หน้าส่งสลิป แสดงข้อมูลยอดชำระอัตโนมัติ</p>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>แนบรูปสลิปและยืนยันการส่ง</h3>
+                <p>ขั้นตอนสุดท้าย:</p>
+                <ol style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--c-text-2); font-size: 0.92rem;">
+                    <li><strong>กรอกจำนวนเงิน</strong> — ที่โอนจริง (ระบบจะดึงยอดจากสลิปให้อัตโนมัติถ้าอ่านได้)</li>
+                    <li><strong>กดปุ่ม "📎 เพิ่มสลิป"</strong> — เลือกรูปสลิปจากมือถือ (แนบได้สูงสุด 3 รูป)</li>
+                    <li><strong>กดปุ่ม "ยืนยันการส่งสลิป"</strong> — รอระบบอัปโหลด</li>
+                </ol>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">←</span>
+                                <span>📤 ส่งสลิปการชำระเงิน</span>
+                            </div>
+                            <div class="mock-upload-body">
+                                <div class="mock-form-section">
+                                    <div class="mock-section-title">📋 ข้อมูลการชำระ</div>
+                                    <div class="mock-info-row">
+                                        <span class="mock-info-label">บ้านพักเลขที่</span>
+                                        <span class="mock-info-value blue">12</span>
+                                    </div>
+                                    <div class="mock-info-row">
+                                        <span class="mock-info-label">ประจำเดือน</span>
+                                        <span class="mock-info-value">มีนาคม 2569</span>
+                                    </div>
+                                    <div class="mock-info-row">
+                                        <span class="mock-info-label">ยอดที่ต้องชำระ</span>
+                                        <span class="mock-info-value red">฿ 850.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="mock-form-section">
+                                    <div class="mock-section-title">💰 จำนวนเงินที่ชำระ</div>
+                                    <input class="mock-input has-value" type="text" value="850" readonly style="pointer-events:none; font-weight:600;">
+                                </div>
+
+                                <div class="mock-form-section">
+                                    <div class="mock-section-title">📎 แนบไฟล์สลิป</div>
+                                    <div class="mock-file-preview">
+                                        <div class="mock-file-thumb">
+                                            🧾
+                                            <div class="mock-file-remove">✕</div>
+                                        </div>
+                                    </div>
+                                    <div style="font-size:0.65rem; color:#22C55E; margin-top:0.3rem;">✅ แนบสลิปแล้ว 1 รูป</div>
+                                </div>
+
+                                <div class="mock-btn" style="margin-top:0.5rem;">ยืนยันการส่งสลิป</div>
+                                <div class="mock-btn-outline">← ย้อนกลับ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 3.3 — แนบสลิปเรียบร้อย พร้อมกดยืนยัน</p>
+
+                <div class="note note-success">
+                    <span class="note-icon">✅</span>
+                    <span>หลังส่งสลิปสำเร็จ สถานะจะเปลี่ยนเป็น <strong>"🔍 รอตรวจสอบ"</strong> — ผู้ดูแลจะตรวจสลิปและอัปเดตสถานะให้ภายหลัง</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: After submit -->
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>สถานะหลังส่งสลิป</h3>
+                <p>เมื่อส่งสลิปสำเร็จ กลับไปที่หน้าหลัก จะเห็นการเปลี่ยนแปลง:</p>
+
+                <div class="mockup-wrapper">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="mock-dash-topbar">
+                                <span class="mock-hamburger">☰</span>
+                                <span>🏠 HOME PPK 2026</span>
+                            </div>
+                            <div class="mock-dash-body">
+                                <div class="mock-hero-card">
+                                    <div class="mock-hero-badge badge-reviewing">🔍 รอตรวจสอบ</div>
+                                    <div class="mock-hero-greeting">สวัสดี, ครูสมชาย</div>
+                                    <div class="mock-hero-house">🏠 บ้านพักเลขที่ 12</div>
+                                    <div class="mock-hero-divider"></div>
+                                    <div class="mock-hero-label">💳 ยอดชำระเดือนนี้</div>
+                                    <div class="mock-hero-amount">฿ 850.00</div>
+                                    <div class="mock-hero-month">📅 มีนาคม 2569</div>
+                                    <div style="margin-top:0.6rem; background:rgba(245,158,11,0.15); border-radius:8px; padding:0.4rem 0.7rem; text-align:center;">
+                                        <span style="font-size:0.72rem; color:#F59E0B; font-weight:600;">🔍 กำลังตรวจสอบสลิป</span>
+                                    </div>
+                                </div>
+
+                                <!-- Later: success state -->
+                                <div style="background:#F0FDF4; border:1.5px solid #22C55E; border-radius:10px; padding:0.6rem; text-align:center; margin-bottom:0.7rem;">
+                                    <span style="font-size:0.78rem; color:#166534; font-weight:500;">🎉 เมื่อผู้ดูแลตรวจผ่าน สถานะจะเปลี่ยนเป็น</span>
+                                    <div style="margin-top:0.3rem;">
+                                        <span style="background:#22C55E; color:#fff; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.72rem; font-weight:600;">✅ ชำระแล้ว</span>
+                                    </div>
+                                </div>
+
+                                <div class="mock-quick-grid">
+                                    <div class="mock-quick-btn"><span class="icon">📤</span>ส่งสลิป</div>
+                                    <div class="mock-quick-btn"><span class="icon">💳</span>ประวัติชำระ</div>
+                                    <div class="mock-quick-btn"><span class="icon">📝</span>ยื่นคำร้อง</div>
+                                    <div class="mock-quick-btn"><span class="icon">⚙️</span>ตั้งค่า</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mockup-caption">รูปที่ 3.4 — สถานะเปลี่ยนเป็น "รอตรวจสอบ" หลังส่งสลิป</p>
+
+                <div class="note note-danger">
+                    <span class="note-icon">❌</span>
+                    <span>หากสลิปถูก<strong>ปฏิเสธ</strong> จะมีข้อความแจ้งเหตุผลบนการ์ดหลัก ให้ยกเลิกสลิปเดิมแล้วส่งใหม่</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═════════════ FOOTER ═════════════ -->
+    <div style="text-align:center; padding:2rem 0; color:var(--c-text-3); font-size:0.85rem; border-top:1px solid var(--c-border); margin-top:1rem;">
+        <p style="margin-bottom:0.3rem;"><strong>HOME PPK 2026</strong> — คู่มือการใช้งาน</p>
+        <p>ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว</p>
+        <p>งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</p>
+        <p style="margin-top:0.5rem; font-size:0.78rem; color:#CBD5E1;">เวอร์ชัน 1.0 — มีนาคม 2569</p>
+    </div>
+
+</div>
+
+</body>
+</html>

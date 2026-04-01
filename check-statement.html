@@ -1,0 +1,606 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>ตรวจสอบ Statement | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        :root {
+            --bg: #f8fafc; --surface: #ffffff; --border: #e5e7eb; --text: #0f172a;
+            --muted: #64748b; --primary: #2563eb; --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); min-height: 100vh; margin: 0; color: var(--text); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+        h1 { text-align: center; margin-bottom: 0.5rem; }
+        .subtitle { text-align: center; color: var(--muted); margin-bottom: 1.5rem; }
+        .loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 1.2rem; }
+        .upload-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem; border: 2px dashed var(--primary); }
+        .upload-card h3 { margin: 0 0 1rem 0; color: var(--primary); }
+        .upload-row { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: flex-end; }
+        .upload-row .field { flex: 1; min-width: 180px; }
+        .upload-row label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9rem; }
+        .upload-row input { width: 100%; padding: 0.5rem 0.8rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 0.95rem; }
+        .upload-row input[type="file"] { padding: 0.4rem; }
+        .btn-upload { padding: 0.55rem 1.5rem; background: var(--primary); color: #fff; border: none; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-upload:hover { opacity: 0.9; }
+        .btn-upload:disabled { opacity: 0.5; cursor: not-allowed; }
+        .upload-status { margin-top: 0.8rem; font-size: 0.9rem; min-height: 1.3rem; }
+        .month-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 1.5rem; overflow: hidden; border: 1px solid var(--border); }
+        .month-header { padding: 0.8rem 1.2rem; font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .month-header:hover { opacity: 0.85; }
+        .month-header.ok { background: #ecfdf5; color: #065f46; border-left: 5px solid var(--success); }
+        .month-header.warn { background: #fef9c3; color: #854d0e; border-left: 5px solid var(--warning); }
+        .month-header.err { background: #fef2f2; color: #991b1b; border-left: 5px solid var(--danger); }
+        .month-header.nodata { background: #f1f5f9; color: var(--muted); border-left: 5px solid var(--border); }
+        .month-header .badge { font-size: 0.85rem; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+        .badge-ok { background: #d1fae5; color: #065f46; }
+        .badge-warn { background: #fef08a; color: #854d0e; }
+        .badge-err { background: #fecaca; color: #991b1b; }
+        .month-body { padding: 0 1.2rem 1rem; display: none; }
+        .month-body.open { display: block; }
+        table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.92rem; }
+        th { background: #f1f5f9; text-align: left; padding: 6px 10px; border: 1px solid var(--border); font-weight: 600; }
+        td { padding: 6px 10px; border: 1px solid var(--border); }
+        .right { text-align: right; }
+        .match { color: #059669; font-weight: 600; }
+        .mismatch { color: #dc2626; font-weight: 700; background: #fef2f2; }
+        .na { color: var(--muted); font-style: italic; }
+        .section-title { font-weight: 700; margin-top: 1rem; margin-bottom: 0.3rem; font-size: 0.95rem; }
+        .summary-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
+        .summary-box.has-issues { background: #fef2f2; border-color: #fecaca; }
+        .summary-box h3 { margin: 0 0 0.5rem 0; }
+        .detail-row { display: flex; gap: 2rem; flex-wrap: wrap; }
+        .detail-col { flex: 1; min-width: 280px; }
+        .note { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+        .back-btn { display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1.2rem; background: var(--primary); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .back-btn:hover { opacity: 0.9; }
+        .del-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: var(--danger); padding: 0; margin-left: 0.5rem; }
+        .del-btn:hover { text-decoration: underline; }
+        @media (max-width: 600px) {
+            .container { padding: 0.5rem; }
+            .detail-row { flex-direction: column; gap: 0.5rem; }
+            table { font-size: 0.82rem; }
+            th, td { padding: 4px 6px; }
+            .upload-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="accounting.html" class="back-btn">← กลับหน้าบัญชี</a>
+        <h1>🔍 ตรวจสอบ Statement ธนาคาร</h1>
+        <p class="subtitle">อัปโหลด Statement PDF แล้วเทียบกับข้อมูลในระบบ HOME PPK อัตโนมัติ</p>
+
+        <!-- ═══ UPLOAD SECTION ═══ -->
+        <div class="upload-card" id="uploadSection">
+            <h3>📤 อัปโหลด Statement PDF</h3>
+            <div class="upload-row">
+                <div class="field">
+                    <label>ไฟล์ PDF (เลือกได้หลายไฟล์)</label>
+                    <input type="file" id="pdfFiles" accept=".pdf" multiple>
+                </div>
+                <div class="field" style="max-width:200px;">
+                    <label>🔑 รหัส PDF (ถ้ามี)</label>
+                    <input type="password" id="pdfPassword" placeholder="ใส่รหัสเปิด PDF">
+                </div>
+                <button class="btn-upload" id="btnUpload" onclick="processPDFs()">📥 อ่านและบันทึก</button>
+            </div>
+            <div class="upload-status" id="uploadStatus"></div>
+        </div>
+
+        <div id="content"><div class="loading">⏳ กำลังดึงข้อมูลจากระบบ...</div></div>
+    </div>
+
+    <!-- pdf.js for client-side PDF parsing (supports password) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <script>
+    // ═══════════════════════════════════════════════
+    // THAI MONTHS
+    // ═══════════════════════════════════════════════
+    const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    const fmt = v => parseFloat(v||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const num = v => parseFloat(v || 0) || 0;
+    function prevPeriod(period) {
+        var p = String(period || '').split('-');
+        var y = parseInt(p[0], 10);
+        var m = parseInt(p[1], 10);
+        if (!y || !m) return '';
+        m -= 1;
+        if (m <= 0) { m = 12; y -= 1; }
+        return y + '-' + String(m).padStart(2, '0');
+    }
+    function periodToThaiLabel(period) {
+        var p = String(period || '').split('-');
+        var y = parseInt(p[0], 10);
+        var m = parseInt(p[1], 10);
+        if (!y || !m || m < 1 || m > 12) return period || '-';
+        return THAI_MONTHS[m - 1] + ' ' + y;
+    }
+    function isNear(a, b, tolerance) { return Math.abs(num(a) - num(b)) <= (tolerance || 1); }
+    function guessWithdrawalInfo(amount, ctx) {
+        var amt = num(amount);
+        var electricTotal = num(ctx.electricTotal);
+        var waterTotal = num(ctx.waterTotal);
+        var garbageTotal = num(ctx.garbageTotal);
+        var grassFixed = 1500;
+
+        if (electricTotal > 0 && isNear(amt, electricTotal + grassFixed, 5)) {
+            return { label: 'ค่าไฟ + ค่าตัดหญ้า (คาดว่า)', reference: fmt(electricTotal) + ' + ' + fmt(grassFixed), note: 'คาดว่าเป็นยอดถอนรวมค่าไฟกับค่าตัดหญ้า' };
+        }
+        if (isNear(amt, 310, 1) || (garbageTotal > 0 && isNear(amt, garbageTotal, 1))) {
+            return { label: 'ค่าขยะ', reference: garbageTotal > 0 ? fmt(garbageTotal) : '310.00', note: '310 บาทถือเป็นค่าขยะเกือบแน่นอน' };
+        }
+        if (isNear(amt, grassFixed, 1)) {
+            return { label: 'ค่าตัดหญ้า', reference: fmt(grassFixed), note: 'ยอด 1,500 บาทให้ตีความเป็นค่าตัดหญ้า' };
+        }
+        if (electricTotal > 0 && isNear(amt, electricTotal, 5)) {
+            return { label: 'ค่าไฟฟ้า', reference: fmt(electricTotal), note: 'ตรงกับยอดค่าไฟจากหน้าแจ้งชำระ' };
+        }
+        if (amt >= 10000) {
+            return { label: 'ค่าไฟฟ้า (คาดว่า)', reference: electricTotal > 0 ? fmt(electricTotal) : 'หลักหมื่น', note: 'ยอดระดับหลักหมื่นมักเป็นค่าไฟฟ้า' };
+        }
+        if (waterTotal > 0 && isNear(amt, waterTotal, 5)) {
+            return { label: 'ค่าน้ำ', reference: fmt(waterTotal), note: 'ตรงกับยอดค่าน้ำจากหน้าแจ้งชำระ' };
+        }
+        if (amt >= 1000 && amt < 10000) {
+            return { label: 'ค่าน้ำ (คาดว่า)', reference: waterTotal > 0 ? fmt(waterTotal) : 'หลักพัน', note: 'ยอดระดับหลักพันมักเป็นค่าน้ำ' };
+        }
+        return { label: 'รายการอื่น', reference: '—', note: 'ยังจัดกลุ่มจาก pattern ไม่ได้' };
+    }
+    function toggleMonth(el) { el.nextElementSibling.classList.toggle('open'); }
+
+    // ═══════════════════════════════════════════════
+    // PDF PARSER — Parse GSB (ออมสิน) statement text
+    // ═══════════════════════════════════════════════
+    function parseStatementText(text) {
+        var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        var result = { period: '', label: '', openBal: 0, closeBal: 0, totalDeposit: 0, totalWithdraw: 0, withdrawals: [], deposits: [] };
+
+        // Find period: "รอบวันที่ DD/MM/YYYY - DD/MM/YYYY"
+        for (var i = 0; i < lines.length; i++) {
+            var periodMatch = lines[i].match(/รอบวันที่\s+\d{2}\/(\d{2})\/(\d{4})/);
+            if (periodMatch) {
+                var mm = parseInt(periodMatch[1]);
+                var yy = periodMatch[2];
+                result.period = yy + '-' + String(mm).padStart(2, '0');
+                result.label = THAI_MONTHS[mm - 1] + ' ' + yy;
+                break;
+            }
+        }
+
+        // Find ยอดยกมา / ยอดยกไป
+        for (var i = 0; i < lines.length; i++) {
+            var openMatch = lines[i].match(/ยอดยกมา\s+([\d,]+\.\d{2})/);
+            if (openMatch) { result.openBal = parseFloat(openMatch[1].replace(/,/g, '')); }
+            var closeMatch = lines[i].match(/ยอดยกไป\s+([\d,]+\.\d{2})/);
+            if (closeMatch) { result.closeBal = parseFloat(closeMatch[1].replace(/,/g, '')); }
+            var totalWMatch = lines[i].match(/ยอดรวมรายการถอน\s*=\s*\d+\s*รายการ\s+([\d,]+\.\d{2})/);
+            if (totalWMatch) { result.totalWithdraw = parseFloat(totalWMatch[1].replace(/,/g, '')); }
+            var totalDMatch = lines[i].match(/ยอดรวมรายการฝาก\s*=\s*\d+\s*รายการ\s+([\d,]+\.\d{2})/);
+            if (totalDMatch) { result.totalDeposit = parseFloat(totalDMatch[1].replace(/,/g, '')); }
+        }
+
+        // Parse transaction lines: DD/MM/YYYYDescription Amount Balance Code...
+        var txRegex = /^(\d{2}\/\d{2}\/\d{4})(.*)/;
+        for (var i = 0; i < lines.length; i++) {
+            var m = lines[i].match(txRegex);
+            if (!m) continue;
+            var date = m[1];
+            var rest = m[2];
+            // Extract all numbers (with commas and decimals)
+            var nums = [];
+            var numRegex = /([\d,]+\.\d{2})/g;
+            var nm;
+            while ((nm = numRegex.exec(rest)) !== null) {
+                nums.push(parseFloat(nm[1].replace(/,/g, '')));
+            }
+            if (nums.length < 2) continue; // need at least amount + balance
+
+            var isWithdraw = /Withdraw|ถอน/i.test(rest);
+            var amount = nums[0]; // first number is the transaction amount
+
+            if (isWithdraw) {
+                result.withdrawals.push({ date: date, amount: amount });
+            } else {
+                result.deposits.push({ date: date, amount: amount });
+            }
+        }
+
+        return result;
+    }
+
+    // ═══════════════════════════════════════════════
+    // PDF PROCESSING
+    // ═══════════════════════════════════════════════
+    async function processPDFs() {
+        var fileInput = document.getElementById('pdfFiles');
+        var password = document.getElementById('pdfPassword').value || '';
+        var statusEl = document.getElementById('uploadStatus');
+        var btn = document.getElementById('btnUpload');
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+            statusEl.innerHTML = '<span style="color:var(--danger);">❌ กรุณาเลือกไฟล์ PDF</span>';
+            return;
+        }
+
+        btn.disabled = true;
+        statusEl.innerHTML = '⏳ กำลังอ่าน PDF... (0/' + fileInput.files.length + ')';
+
+        var parsedStatements = [];
+        var errors = [];
+
+        for (var fi = 0; fi < fileInput.files.length; fi++) {
+            var file = fileInput.files[fi];
+            statusEl.innerHTML = '⏳ กำลังอ่าน: ' + file.name + ' (' + (fi+1) + '/' + fileInput.files.length + ')';
+
+            try {
+                var arrayBuffer = await file.arrayBuffer();
+                var loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, password: password || undefined });
+                var pdf = await loadingTask.promise;
+
+                var fullText = '';
+                for (var p = 1; p <= pdf.numPages; p++) {
+                    var page = await pdf.getPage(p);
+                    var textContent = await page.getTextContent();
+                    var pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+
+                // Re-parse with line breaks by position
+                var textByPage = '';
+                for (var p = 1; p <= pdf.numPages; p++) {
+                    var page = await pdf.getPage(p);
+                    var textContent = await page.getTextContent();
+                    var items = textContent.items;
+                    if (items.length === 0) continue;
+
+                    // Group by Y position (same line)
+                    var lineMap = {};
+                    items.forEach(function(item) {
+                        var y = Math.round(item.transform[5]);
+                        if (!lineMap[y]) lineMap[y] = [];
+                        lineMap[y].push({ x: item.transform[4], str: item.str });
+                    });
+
+                    // Sort by Y descending (top to bottom), then X ascending
+                    var yKeys = Object.keys(lineMap).map(Number).sort(function(a,b) { return b - a; });
+                    yKeys.forEach(function(y) {
+                        var parts = lineMap[y].sort(function(a,b) { return a.x - b.x; });
+                        textByPage += parts.map(function(p) { return p.str; }).join(' ') + '\n';
+                    });
+                }
+
+                var parsed = parseStatementText(textByPage);
+                if (parsed.period) {
+                    parsedStatements.push(parsed);
+                } else {
+                    errors.push(file.name + ': ไม่พบข้อมูล period');
+                }
+            } catch(e) {
+                var errMsg = e.message || '';
+                if (errMsg.includes('password') || errMsg.includes('Password')) {
+                    errors.push(file.name + ': ❌ รหัส PDF ไม่ถูกต้อง');
+                } else {
+                    errors.push(file.name + ': ' + errMsg);
+                }
+            }
+        }
+
+        // Save to Supabase settings
+        if (parsedStatements.length > 0) {
+            statusEl.innerHTML = '⏳ กำลังบันทึกลงระบบ...';
+            var settingsToSave = {};
+            parsedStatements.forEach(function(s) {
+                s.uploadedAt = new Date().toISOString();
+                settingsToSave['bank_statement_' + s.period] = JSON.stringify(s);
+            });
+
+            try {
+                await callBackend('saveSettings', { settings: settingsToSave });
+                var names = parsedStatements.map(function(s) { return s.label; }).join(', ');
+                statusEl.innerHTML = '<span style="color:var(--success);">✅ บันทึกสำเร็จ ' + parsedStatements.length + ' เดือน: ' + names + '</span>';
+                if (errors.length > 0) {
+                    statusEl.innerHTML += '<br><span style="color:var(--danger);">' + errors.join('<br>') + '</span>';
+                }
+                // Reload page data
+                setTimeout(function() { loadAndRender(); }, 500);
+            } catch(e) {
+                statusEl.innerHTML = '<span style="color:var(--danger);">❌ บันทึกไม่สำเร็จ: ' + e.message + '</span>';
+            }
+        } else {
+            statusEl.innerHTML = '<span style="color:var(--danger);">❌ ไม่สามารถอ่านข้อมูลได้<br>' + errors.join('<br>') + '</span>';
+        }
+
+        btn.disabled = false;
+    }
+
+    // ═══════════════════════════════════════════════
+    // DELETE STATEMENT
+    // ═══════════════════════════════════════════════
+    async function deleteStatement(period) {
+        if (!confirm('ลบข้อมูล Statement เดือน ' + period + ' ?')) return;
+        try {
+            await callBackend('saveSettings', { settings: { ['bank_statement_' + period]: '' } });
+            loadAndRender();
+        } catch(e) {
+            alert('ลบไม่สำเร็จ: ' + e.message);
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // MAIN: LOAD AND RENDER
+    // ═══════════════════════════════════════════════
+    async function loadAndRender() {
+        var contentEl = document.getElementById('content');
+        contentEl.innerHTML = '<div class="loading">⏳ กำลังดึงข้อมูลจากระบบ...</div>';
+
+        // 1. Load all settings
+        var allSettings = {};
+        try {
+            var r = await callBackend('getSettings', {});
+            if (r && r.success) allSettings = r.data || {};
+        } catch(e) { console.error('getSettings error:', e); }
+
+        // 2. Collect statement data from settings (key: bank_statement_YYYY-MM)
+        var statements = [];
+        var keys = Object.keys(allSettings);
+        for (var ki = 0; ki < keys.length; ki++) {
+            if (keys[ki].indexOf('bank_statement_') === 0 && allSettings[keys[ki]]) {
+                try {
+                    var parsed = JSON.parse(allSettings[keys[ki]]);
+                    if (parsed && parsed.period) statements.push(parsed);
+                } catch(e) {}
+            }
+        }
+
+        // Sort by period
+        statements.sort(function(a, b) { return a.period < b.period ? -1 : 1; });
+
+        if (statements.length === 0) {
+            contentEl.innerHTML = '<div class="summary-box"><h3>📭 ยังไม่มีข้อมูล Statement</h3><div>กรุณาอัปโหลด PDF Statement ธนาคารด้านบน</div></div>';
+            return;
+        }
+
+        // 3. Render each month
+        var html = '';
+        var totalIssues = 0;
+        var totalNotes = 0;
+
+        // fetch exemptions ครั้งเดียวก่อน loop (ใช้ร่วมทุก period)
+        var _globalExemptSet = {};
+        try {
+            var r0ex = await callBackend('getExemptions', {});
+            var _gExData = (r0ex && r0ex.data) || {};
+            Object.keys(_gExData).forEach(function(hid) {
+                var ex = _gExData[hid];
+                if (ex.house_number) _globalExemptSet[ex.house_number] = true;
+            });
+        } catch(e) {}
+
+        for (var si = 0; si < statements.length; si++) {
+            var stm = statements[si];
+            var issues = [];
+            var notes = [];
+
+            // ── ดึงข้อมูลจากระบบ ──
+            var sysNotifications = [];
+            var prevP = prevPeriod(stm.period);
+            var notifCurRows = [];
+            var notifPrevRows = [];
+
+            try {
+                var _notifFetch = await Promise.all([
+                    callBackend('getNotificationHistory', { period: stm.period, limit: 200 }),
+                    prevP ? callBackend('getNotificationHistory', { period: prevP, limit: 200 }) : Promise.resolve({ success: true, data: [] })
+                ]);
+                var rCur = _notifFetch[0];
+                var rPrev = _notifFetch[1];
+                notifCurRows = (rCur && rCur.success) ? (rCur.data || []) : [];
+                notifPrevRows = (rPrev && rPrev.success) ? (rPrev.data || []) : [];
+            } catch(e) {}
+
+            // ── วิเคราะห์ข้อมูล (ใช้เฉพาะแจ้งชำระ + ยอดถอนใน statement) ──
+
+            function calcNotifTotals(rows) {
+                var c = (rows || []).reduce(function(s,n) {
+                    if (_globalExemptSet[n.house_number]) return s;
+                    return s + num(n.common_fee);
+                }, 0);
+                var w = (rows || []).reduce(function(s,n) { return s + num(n.water_amount); }, 0);
+                var e = (rows || []).reduce(function(s,n) { return s + num(n.electric_amount); }, 0);
+                var g = (rows || []).reduce(function(s,n) { return s + num(n.garbage_fee); }, 0);
+                return { rows: rows || [], common: c, water: w, electric: e, garbage: g, total: c + w + e + g };
+            }
+            var notifCur = calcNotifTotals(notifCurRows);
+            var notifPrev = calcNotifTotals(notifPrevRows);
+
+            // เลือกงวดแจ้งชำระที่เหมาะสุด: งวดเดียวกัน หรือ งวดก่อนหน้า (ตามการถอนเงินจริงที่อาจข้ามเดือน)
+            var _wd = num(stm.totalWithdraw);
+            var _diffCur = Math.abs(_wd - num(notifCur.total));
+            var _diffPrev = Math.abs(_wd - num(notifPrev.total));
+            var usePrev = (notifPrev.total > 0) && (notifCur.total <= 0 || _diffPrev < _diffCur);
+            var comparedPeriod = usePrev ? prevP : stm.period;
+            var comparedLabel = periodToThaiLabel(comparedPeriod);
+            var comparedSource = usePrev ? 'งวดก่อนหน้า' : 'งวดเดียวกัน';
+            var chosenNotif = usePrev ? notifPrev : notifCur;
+
+            sysNotifications = chosenNotif.rows;
+            var notifCommonTotal = chosenNotif.common;
+            var notifWaterTotal = chosenNotif.water;
+            var notifElectricTotal = chosenNotif.electric;
+            var notifGarbageTotal = chosenNotif.garbage;
+            var notifTotalAll = chosenNotif.total;
+
+            // ── ตรวจเฉพาะ ยอดแจ้งชำระรวม vs ยอดถอนรวมใน statement ──
+            var withdrawDiff = Math.round((num(stm.totalWithdraw) - num(notifTotalAll)) * 100) / 100;
+            if (Math.abs(withdrawDiff) > 1) {
+                issues.push('ยอดถอนรวมใน Statement = ' + fmt(stm.totalWithdraw) + ' แต่ยอดแจ้งชำระรวม (' + comparedLabel + ') = ' + fmt(notifTotalAll) + ' (ต่าง ' + fmt(withdrawDiff) + ')');
+            }
+
+            // ── จับคู่รายการถอนแบบ heuristic ──
+            var stmW = (stm.withdrawals || []).slice().sort(function(a,b) { return b.amount - a.amount; });
+            var matchResults = [];
+
+            if (stmW.length > 0) {
+                for (var wi = 0; wi < stmW.length; wi++) {
+                    var guess = guessWithdrawalInfo(stmW[wi].amount, {
+                        electricTotal: notifElectricTotal,
+                        waterTotal: notifWaterTotal,
+                        garbageTotal: notifGarbageTotal
+                    });
+                    matchResults.push({
+                        label: guess.label,
+                        stmAmount: stmW[wi].amount,
+                        reference: guess.reference,
+                        note: guess.note,
+                        isUnknown: guess.label === 'รายการอื่น'
+                    });
+                }
+            }
+            // ── สถานะ ──
+            var hasNoSystemData = (notifCur.rows.length === 0 && notifPrev.rows.length === 0);
+            var status = hasNoSystemData ? 'nodata' : (issues.length > 0 ? 'err' : 'ok');
+            if (issues.length > 0) totalIssues += issues.length;
+            if (notes.length > 0) totalNotes += notes.length;
+
+            // ═══ RENDER MONTH CARD ═══
+            html += '<div class="month-card">';
+            html += '<div class="month-header ' + status + '" onclick="toggleMonth(this)">';
+            html += '<span>📅 ' + stm.label;
+            if (stm.uploadedAt) {
+                var upDate = new Date(stm.uploadedAt);
+                html += ' <small style="font-weight:400;opacity:0.7;">(อัปโหลด ' + upDate.toLocaleDateString('th-TH') + ')</small>';
+            }
+            html += '<button class="del-btn" onclick="event.stopPropagation();deleteStatement(\'' + stm.period + '\')" title="ลบ Statement นี้">🗑️</button>';
+            html += '</span>';
+            if (status === 'ok') html += '<span class="badge badge-ok">✅ ยอดแจ้งชำระตรงกับยอดถอน</span>';
+            else if (status === 'err') html += '<span class="badge badge-err">❌ พบจุดต้องตรวจ ' + issues.length + ' รายการ</span>';
+            else html += '<span class="badge" style="background:#e2e8f0;color:#64748b;">📭 ไม่มีข้อมูลในระบบ</span>';
+            html += '</div>';
+            html += '<div class="month-body">';
+
+            // --- Statement summary ---
+            html += '<div class="section-title">📄 Statement ธนาคาร</div>';
+            html += '<table><tr><th>ยอดยกมา</th><th>ยอดฝากรวม (' + (stm.deposits||[]).length + ' รายการ)</th><th>ยอดถอนรวม (' + (stm.withdrawals||[]).length + ' รายการ)</th><th>ยอดยกไป</th></tr>';
+            html += '<tr><td class="right">' + fmt(stm.openBal) + '</td><td class="right" style="color:#059669;">' + fmt(stm.totalDeposit) + '</td><td class="right" style="color:#dc2626;">' + fmt(stm.totalWithdraw) + '</td><td class="right" style="font-weight:700;">' + fmt(stm.closeBal) + '</td></tr></table>';
+            html += '<p class="note">สูตรตรวจหลัก: ยอดถอนรวมใน Statement <strong>' + fmt(stm.totalWithdraw) + '</strong> เทียบยอดแจ้งชำระงวด <strong>' + comparedLabel + '</strong> (' + comparedSource + ') = <strong>' + fmt(notifTotalAll) + '</strong></p>';
+
+            // --- Withdrawal matching ---
+            if (matchResults.length > 0) {
+                html += '<div class="section-title">🔎 วิเคราะห์รายการถอนจาก pattern</div>';
+                html += '<table><tr><th>รายการคาดว่า</th><th>Statement (บาท)</th><th>อ้างอิง</th><th>วิธีสังเกต</th></tr>';
+                for (var mi = 0; mi < matchResults.length; mi++) {
+                    var m = matchResults[mi];
+                    var cls = m.isUnknown ? 'na' : 'match';
+                    html += '<tr><td>' + m.label + (m.isUnknown ? ' ⚠️' : '') + '</td>';
+                    html += '<td class="right">' + fmt(m.stmAmount) + '</td>';
+                    html += '<td class="right ' + cls + '">' + (m.reference || '—') + '</td>';
+                    html += '<td class="' + cls + '">' + (m.note || '—') + '</td></tr>';
+                }
+                html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>รวมถอนทั้งหมด</td>';
+                html += '<td class="right">' + fmt(stm.totalWithdraw) + '</td><td class="right">' + fmt(notifTotalAll) + '</td><td>เทียบกับงวด ' + comparedLabel + ' (' + comparedSource + ')</td></tr>';
+                html += '</table>';
+            }
+
+            // --- Detail columns ---
+            html += '<div class="detail-row">';
+
+            // Left: Statement + Notifications summary
+            html += '<div class="detail-col">';
+            html += '<div class="section-title">🧮 ผลต่างที่ใช้ตัดสิน</div>';
+            html += '<table>';
+            html += '<tr><td>ยอดถอนรวมใน Statement</td><td class="right">' + fmt(stm.totalWithdraw) + '</td></tr>';
+            html += '<tr><td>ยอดแจ้งชำระรวม</td><td class="right">' + fmt(notifTotalAll) + '</td></tr>';
+            html += '<tr style="font-weight:700;border-top:2px solid var(--text);"><td>ส่วนต่าง (ถอน - แจ้งชำระ)</td><td class="right">' + fmt(withdrawDiff) + '</td></tr>';
+            html += '</table>';
+            html += '</div>';
+
+            // Right: Notifications
+            html += '<div class="detail-col">';
+            if (sysNotifications.length > 0) {
+                html += '<div class="section-title">📨 การแจ้งเตือนงวด ' + comparedLabel + ' (' + sysNotifications.length + ' หลัง)</div>';
+                html += '<table>';
+                html += '<tr><td>ยอดแจ้งเตือนรวม</td><td class="right">' + fmt(notifTotalAll) + '</td></tr>';
+                html += '<tr><td>├ ค่าส่วนกลาง</td><td class="right">' + fmt(notifCommonTotal) + '</td></tr>';
+                html += '<tr><td>├ ค่าน้ำ</td><td class="right">' + fmt(notifWaterTotal) + '</td></tr>';
+                html += '<tr><td>├ ค่าไฟ</td><td class="right">' + fmt(notifElectricTotal) + '</td></tr>';
+                html += '<tr><td>└ ค่าขยะ</td><td class="right">' + fmt(notifGarbageTotal) + '</td></tr>';
+                html += '</table>';
+                var wdColor = Math.abs(withdrawDiff) <= 1 ? '#059669' : '#dc2626';
+                html += '<p class="note">ℹ️ ยอดถอน Statement (' + fmt(stm.totalWithdraw) + ') เทียบยอดแจ้งชำระงวด ' + comparedLabel + ' (' + comparedSource + ') = ' + fmt(notifTotalAll) + ' → ส่วนต่าง: <strong style="color:' + wdColor + ';">' + fmt(withdrawDiff) + '</strong>';
+                html += '<br><small>ระบบเลือกเทียบให้อัตโนมัติระหว่างงวดเดียวกันกับงวดก่อนหน้า โดยเลือกงวดที่ส่วนต่างน้อยกว่า</small></p>';
+            }
+            html += '</div></div>';
+
+            // Issues & notes
+            if (issues.length > 0 || notes.length > 0) {
+                html += '<div style="margin-top:0.8rem;padding:0.8rem;background:#fefce8;border:1px solid #fde68a;border-radius:8px;">';
+                for (var ii = 0; ii < issues.length; ii++) html += '<div style="color:#dc2626;font-weight:600;margin-bottom:4px;">❌ ' + issues[ii] + '</div>';
+                for (var ni = 0; ni < notes.length; ni++) html += '<div style="color:#854d0e;margin-bottom:4px;">' + notes[ni] + '</div>';
+                html += '</div>';
+            }
+
+            html += '</div></div>';
+        }
+
+        // ═══ Overall Summary ═══
+        var firstStm = statements[0];
+        var lastStm = statements[statements.length - 1];
+        var summaryHtml = '<div class="summary-box' + (totalIssues > 0 ? ' has-issues' : '') + '">';
+        summaryHtml += '<h3>' + (totalIssues > 0 ? '❌ ยอดแจ้งชำระกับยอดถอนยังไม่ตรง ' + totalIssues + ' รายการ' : '✅ ยอดแจ้งชำระตรงกับยอดถอน') + '</h3>';
+        summaryHtml += '<div>📅 ช่วงข้อมูล: ' + firstStm.label + ' — ' + lastStm.label + ' (' + statements.length + ' เดือน)</div>';
+        summaryHtml += '<div>🏦 ยอดเปิด: <strong>' + fmt(firstStm.openBal) + '</strong> → ยอดปัจจุบัน: <strong>' + fmt(lastStm.closeBal) + '</strong></div>';
+        if (totalNotes > 0) summaryHtml += '<div>📝 มีข้อมูลประกอบ ' + totalNotes + ' รายการ</div>';
+        summaryHtml += '<div class="note">💡 เกณฑ์ตัดสินใช้เพียง: ยอดแจ้งชำระรวม เทียบกับ ยอดถอนรวมใน statement</div>';
+        summaryHtml += '<div class="note">💡 ตารางวิเคราะห์รายการถอนเป็นข้อมูลช่วยดู pattern เท่านั้น ไม่กระทบผลตัดสินหลัก</div>';
+        summaryHtml += '</div>';
+
+        contentEl.innerHTML = summaryHtml + html;
+    }
+
+    // ═══════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════
+    window.onload = async function() {
+        // ตั้งค่า pdf.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        var user = await checkSession(true);
+        if (!user) return;
+        // อนุญาตเฉพาะ admin / head / มีสิทธิ์ accounting
+        var _role = user.role || '';
+        var _perms = [];
+        try { _perms = user.permissions || []; } catch(e) {}
+        if (_role !== 'admin' && _role !== 'head' && _perms.indexOf('accounting') < 0) {
+            alert('ไม่มีสิทธิ์เข้าถึง (role=' + _role + ', perms=' + _perms.join(',') + ')');
+            window.location.replace('dashboard.html');
+            return;
+        }
+
+        await loadAndRender();
+    };
+    </script>
+
+    <script src="supabase/config.js?v=20260319A"></script>
+    <script src="supabase/supabase.min.js?v=20260319A"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
+    <script src="ppk-pwa.js?v=20260319A"></script>
+</body>
+</html>

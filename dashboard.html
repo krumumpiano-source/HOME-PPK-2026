@@ -47,6 +47,20 @@
             font-size: 2rem; font-weight: 700; line-height: 1.1;
         }
         .hero-payment .hero-amount.zero { opacity: 0.7; font-size: 1.3rem; }
+        .hero-breakdown {
+            margin: 6px 0 2px; padding: 6px 0 0; border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+        .hb-item {
+            display: flex; align-items: center; gap: 6px; font-size: 0.82rem; padding: 1px 0; color: #444;
+        }
+        .hb-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .hb-dot.water { background: #3B82F6; }
+        .hb-dot.electric { background: #F59E0B; }
+        .hb-dot.common { background: #10B981; }
+        .hb-label { flex: 1; }
+        .hb-val { font-weight: 600; }
         .hero-payment .hero-period {
             font-size: 0.8rem; opacity: 0.7; margin-top: 0.15rem;
         }
@@ -135,6 +149,91 @@
         }
         .outstanding-banner .ob-btn:hover { background: #92400E; }
 
+        /* ── Proxy Assignment Banner ── */
+        .proxy-assign-section { margin-bottom: 0; }
+        .proxy-assign-section .pa-header {
+            font-size: 0.82rem; color: #065F46; font-weight: 600;
+            margin-bottom: 0.5rem; padding: 0 0.2rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+
+        /* ── Proxy Hero Card (full card, เหมือน hero-payment แต่สีเขียว) ── */
+        .proxy-hero-card {
+            background: linear-gradient(135deg, #065F46 0%, #059669 55%, #34D399 100%);
+            border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
+            color: #fff; position: relative; overflow: hidden;
+        }
+        .proxy-hero-card::before {
+            content: ''; position: absolute; top: -30%; right: -20%;
+            width: 200px; height: 200px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .proxy-hero-card .phc-label-proxy {
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;
+            background: rgba(255,255,255,0.18); border-radius: 20px;
+            padding: 0.18rem 0.65rem; display: inline-block; margin-bottom: 0.5rem;
+        }
+        .proxy-hero-card .phc-house {
+            font-size: 1.15rem; font-weight: 700; margin-bottom: 0.3rem;
+        }
+        .proxy-hero-card .phc-name {
+            font-size: 0.82rem; opacity: 0.8; margin-bottom: 0.8rem;
+        }
+        .proxy-hero-card .phc-divider {
+            border: none; border-top: 1px solid rgba(255,255,255,0.25);
+            margin: 0.7rem 0;
+        }
+        .proxy-hero-card .phc-row {
+            display: flex; gap: 1rem; align-items: flex-start;
+        }
+        .proxy-hero-card .phc-col { flex: 1; }
+        .proxy-hero-card .phc-amount-label { font-size: 0.82rem; opacity: 0.8; margin-bottom: 0.1rem; }
+        .proxy-hero-card .phc-amount {
+            font-size: 1.8rem; font-weight: 700; line-height: 1.1;
+        }
+        .proxy-hero-card .phc-amount.zero { opacity: 0.7; font-size: 1.2rem; }
+        .proxy-hero-card .phc-period { font-size: 0.78rem; opacity: 0.7; margin-top: 0.15rem; }
+        .proxy-hero-card .phc-status {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.3rem 0.7rem; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 600; margin-top: 0.5rem;
+        }
+        .proxy-hero-card .phc-status.pending { background: rgba(251,191,36,0.25); color: #FCD34D; }
+        .proxy-hero-card .phc-status.paid { background: rgba(16,185,129,0.25); color: #6EE7B7; }
+        .proxy-hero-card .phc-status.overdue { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+        .proxy-hero-card .phc-status.rejected { background: rgba(239,68,68,0.25); color: #FCA5A5; }
+        .proxy-hero-card .phc-reject-banner {
+            background: rgba(220,38,38,0.18); border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 10px; padding: .6rem .85rem; margin-top: .7rem;
+            font-size: .85rem; color: #FCA5A5; line-height: 1.5; display: none;
+        }
+        .proxy-hero-card .phc-reject-banner strong { color: #fff; }
+        .proxy-hero-card .phc-cta {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; padding: 0.85rem;
+            background: rgba(255,255,255,0.92); color: #065F46;
+            border: none; border-radius: 14px;
+            font-family: 'Kanit', sans-serif; font-size: 1.05rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; margin-top: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .proxy-hero-card .phc-cta:hover { background: #fff; transform: translateY(-2px); }
+        .proxy-hero-card .phc-cta:active { transform: scale(0.98); }
+        .proxy-hero-card .phc-cta.reviewing { background: rgba(251,191,36,0.2); color: #F59E0B; cursor: default; }
+        .proxy-hero-card .phc-cta.success { background: rgba(16,185,129,0.2); color: #10B981; cursor: default; }
+        .proxy-hero-card .phc-cancel-btn {
+            background: transparent; border: 1px solid rgba(239,68,68,0.45);
+            color: #FCA5A5; border-radius: 8px; padding: .4rem .9rem;
+            font-size: .82rem; cursor: pointer; margin-top: .55rem;
+            width: 100%; transition: background .2s; font-family: 'Kanit', sans-serif;
+        }
+        .proxy-hero-card .phc-cancel-btn:hover { background: rgba(220,38,38,0.15); }
+        @media (max-width: 480px) {
+            .proxy-hero-card { padding: 1.2rem; border-radius: 16px; }
+            .proxy-hero-card .phc-amount { font-size: 1.5rem; }
+            .proxy-hero-card .phc-cta { font-size: 0.95rem; padding: 0.75rem; }
+        }
+
         /* ── Quick Actions Row ── */
         .quick-actions {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
@@ -202,6 +301,16 @@
                         <div class="ppk-stat-value danger" id="statPendingReqs">—</div>
                         <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
                     </div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-slip')" title="อัตราการชำระเงินเดือนนี้">
+                        <div class="ppk-stat-icon">💰</div>
+                        <div class="ppk-stat-value" id="statCollectionRate">—</div>
+                        <div class="ppk-stat-label">% ชำระแล้วเดือนนี้</div>
+                    </div>
+                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="จำนวนห้องที่ยังค้างชำระ">
+                        <div class="ppk-stat-icon">⏳</div>
+                        <div class="ppk-stat-value" id="statOutstandingRooms">—</div>
+                        <div class="ppk-stat-label">ห้องค้างชำระ</div>
+                    </div>
                 </div>
             </div>
 
@@ -215,11 +324,18 @@
                         <div class="hero-col">
                             <div class="hero-label">💳 ยอดชำระเดือนนี้</div>
                             <div class="hero-amount" id="currentMonthAmount">—</div>
+                            <div id="heroBillBreakdown" class="hero-breakdown" style="display:none;">
+                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val" id="hbWater">—</span></div>
+                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val" id="hbElectric">—</span></div>
+                                <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val" id="hbCommon">—</span></div>
+                            </div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
                         <div class="hero-col" style="text-align:right;">
                             <div id="heroStatusBadge"></div>
                         </div>
+                    </div>
+                    <div id="heroDueDateWarning" style="display:none;background:#fef9c3;border:1px solid #facc15;border-radius:8px;padding:8px 12px;margin:8px 0 4px;text-align:center;font-size:14px;color:#92400e;font-weight:bold;">
                     </div>
                     <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
                     <div class="hero-reject-banner" id="heroRejectBanner"></div>
@@ -238,6 +354,9 @@
                     <button class="ob-btn" id="outstandingBtn" onclick="outstandingBtnClick()">ส่งสลิป</button>
                 </div>
             </div>
+
+            <!-- ★ Proxy Assignment Section -->
+            <div id="proxyAssignSection" class="proxy-assign-section" style="display:none;"></div>
 
             <!-- ★ Quick Actions (4 icons) -->
             <div id="quickActionsSection">
@@ -506,7 +625,52 @@
                 amtEl.textContent = 'ยังไม่มียอดแจ้ง';
                 amtEl.className = 'hero-amount zero';
             }
+
+            // Bill breakdown
+            var bdEl = document.getElementById('heroBillBreakdown');
+            if (bdEl) {
+                var wAmt = data.waterAmount || 0;
+                var eAmt = data.electricAmount || 0;
+                var cAmt = data.commonFee || 0;
+                if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
+                    bdEl.style.display = '';
+                    document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' บาท';
+                } else {
+                    bdEl.style.display = 'none';
+                }
+            }
+
             document.getElementById('heroPeriod').textContent = '📅 ' + periodDisplay;
+
+            // Due date warning
+            var dueDateWarn = document.getElementById('heroDueDateWarning');
+            if (data.dueDate && amount > 0 && slipStatus !== 'success') {
+                var dd = new Date(data.dueDate);
+                var ddStr = dd.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+                var daysLeft = Math.ceil((dd - new Date()) / (1000 * 60 * 60 * 24));
+                var daysText = '';
+                if (daysLeft < 0) {
+                    daysText = ' (เลยกำหนดแล้ว ' + Math.abs(daysLeft) + ' วัน)';
+                    dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
+                } else if (daysLeft === 0) {
+                    daysText = ' (ครบกำหนดวันนี้!)';
+                    dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
+                } else if (daysLeft <= 3) {
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
+                    dueDateWarn.style.background = '#ffedd5'; dueDateWarn.style.borderColor = '#f97316'; dueDateWarn.style.color = '#9a3412';
+                } else if (daysLeft <= 7) {
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
+                    dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
+                } else {
+                    dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
+                }
+                dueDateWarn.textContent = '⏰ กรุณาชำระภายในวันที่ ' + ddStr + daysText;
+                dueDateWarn.style.display = '';
+            } else {
+                dueDateWarn.style.display = 'none';
+            }
 
             // Status badge
             var badgeEl = document.getElementById('heroStatusBadge');
@@ -564,12 +728,155 @@
                 ctaEl.className = 'hero-cta';
             }
 
-            // Outstanding
-            if (outstanding > 0) {
+            // Outstanding — ซ่อนถ้าชำระแล้ว
+            if (outstanding > 0 && slipStatus !== 'success') {
                 document.getElementById('outstandingSection').style.display = '';
                 document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' บาท';
             } else {
                 document.getElementById('outstandingSection').style.display = 'none';
+            }
+        }
+
+        var _proxyList = [];
+
+        function renderProxyAssignments(list) {
+            var sec = document.getElementById('proxyAssignSection');
+            if (!sec) return;
+            if (!list || list.length === 0) { sec.style.display = 'none'; return; }
+            _proxyList = list;
+            sec.style.display = '';
+
+            var html = '<div class="pa-header">🔄 บ้านที่คุณได้รับมอบหมายให้ชำระแทน (' + list.length + ')</div>';
+
+            list.forEach(function(a, idx) {
+                var houseLabel = _escHtml(a.house_number || '-');
+                var resName    = _escHtml(a.resident_name || 'ผู้พัก');
+                var period     = a.period || '';
+                var parts      = period.split('-');
+                var monthIdx   = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
+                var yearBE     = parts[0] || String(new Date().getFullYear() + 543);
+                var periodDisplay = THAI_MONTHS[monthIdx] + ' ' + yearBE;
+                var amount     = a.amount || 0;
+                var slipStatus = a.slip_status || 'none';
+                var reviewNote = _escHtml(a.review_note || '');
+
+                /* ── ยอดเงิน ── */
+                var amtHtml = amount > 0
+                    ? amount.toLocaleString('th-TH') + ' บาท'
+                    : 'ยังไม่มียอดแจ้ง';
+                var amtClass = amount > 0 ? 'phc-amount' : 'phc-amount zero';
+
+                /* ── Bill breakdown ── */
+                var wAmt = a.water_amount || 0;
+                var eAmt = a.electric_amount || 0;
+                var cAmt = a.common_fee || 0;
+                var breakdownHtml = '';
+                if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
+                    breakdownHtml = '<div class="hero-breakdown">'
+                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val">' + wAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val">' + eAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val">' + cAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '</div>';
+                }
+
+                /* ── Status badge ── */
+                var badgeHtml = '';
+                if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">✅ ชำระแล้ว</div>';
+                else if (slipStatus === 'reviewing') badgeHtml = '<div class="phc-status pending">🔍 รอตรวจสอบ</div>';
+                else if (slipStatus === 'rejected')  badgeHtml = '<div class="phc-status rejected">❌ สลิปไม่ผ่าน</div>';
+                else if (amount > 0)                 badgeHtml = '<div class="phc-status overdue">⏳ รอชำระ</div>';
+
+                /* ── Rejection banner ── */
+                var rejectBannerHtml = '';
+                if (slipStatus === 'rejected') {
+                    rejectBannerHtml = '<div class="phc-reject-banner" style="display:block;">'
+                        + '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                        + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote + '</strong>' : '')
+                        + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>"⚠️ ส่งสลิปใหม่"</strong></div>';
+                }
+
+                /* ── CTA button ── */
+                var ctaHtml = '';
+                var cancelHtml = '';
+                if (slipStatus === 'success') {
+                    ctaHtml = '<button class="phc-cta success" disabled>✅ ชำระสำเร็จแล้ว</button>';
+                } else if (slipStatus === 'reviewing') {
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>🔍 อยู่ระหว่างตรวจสอบ</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
+                } else if (slipStatus === 'rejected') {
+                    ctaHtml = '<button class="phc-cta" style="background:#FEE2E2;color:#DC2626;" onclick="proxyGoUpload(' + idx + ')">⚠️ สลิปไม่ผ่าน — กดส่งใหม่</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
+                } else if (amount > 0) {
+                    ctaHtml = '<button class="phc-cta" onclick="proxyGoUpload(' + idx + ')">📤 ส่งสลิปชำระเงิน</button>';
+                } else {
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>ยังไม่มียอดแจ้งเดือนนี้</button>';
+                }
+
+                html += '<div class="proxy-hero-card">'
+                    + '<div class="phc-label-proxy">🔄 ชำระแทน</div>'
+                    + '<div class="phc-house">🏠 ' + houseLabel + '</div>'
+                    + '<div class="phc-name">' + resName + '</div>'
+                    + '<hr class="phc-divider">'
+                    + '<div class="phc-row">'
+                        + '<div class="phc-col">'
+                            + '<div class="phc-amount-label">💳 ยอดชำระเดือนนี้</div>'
+                            + '<div class="' + amtClass + '">' + amtHtml + '</div>'
+                            + breakdownHtml
+                            + '<div class="phc-period">📅 ' + periodDisplay + '</div>'
+                        + '</div>'
+                        + '<div class="phc-col" style="text-align:right;">' + badgeHtml + '</div>'
+                    + '</div>'
+                    + rejectBannerHtml
+                    + ctaHtml
+                    + cancelHtml
+                    + '</div>';
+            });
+
+            sec.innerHTML = html;
+        }
+
+        function proxyGoUpload(idx) {
+            var a = _proxyList[idx];
+            if (!a) return;
+            var periodKey = a.period ? a.period.replace('-', '') : '';
+            var info = {
+                unitNumber: a.house_number || '',
+                proxyMode: true,
+                period: a.period || '',
+                periodKey: periodKey,
+                notifiedAmount: a.amount > 0 ? a.amount : 0,
+                residentName: a.resident_name || ''
+            };
+            localStorage.setItem('pendingSlipInfo', JSON.stringify(info));
+            navigate('?page=upload-slip');
+        }
+
+        async function proxyCancelSlip(idx) {
+            var a = _proxyList[idx];
+            if (!a || !a.slip_id) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
+            var ok = await ppkConfirm(
+                'ยืนยันการยกเลิกสลิปของบ้าน ' + (a.house_number || '') + '?\n\nสลิปจะถูกลบออกจากระบบ',
+                { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' }
+            );
+            if (!ok) return;
+            try {
+                var result = await callBackend('cancelSlip', { id: a.slip_id });
+                if (result && result.success) {
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
+                    try {
+                        var keys = [];
+                        for (var i = 0; i < localStorage.length; i++) {
+                            var k = localStorage.key(i);
+                            if (k && k.indexOf('apicache_getDashboardData') === 0) keys.push(k);
+                        }
+                        keys.forEach(function(k) { localStorage.removeItem(k); });
+                    } catch(e) {}
+                    setTimeout(function() { loadDashboard(); }, 400);
+                } else {
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
+                }
+            } catch(e) {
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
@@ -631,6 +938,27 @@
             _stat('statPendingReg',   data.pendingRegistrations || 0);
             _stat('statPendingSlips', data.pendingSlips || 0);
             _stat('statPendingReqs',  data.pendingRequests || 0);
+
+            // Collection rate
+            var rateEl = document.getElementById('statCollectionRate');
+            if (rateEl) {
+                var rate = data.collectionRate;
+                if (rate == null) { rateEl.textContent = '—'; rateEl.className = 'ppk-stat-value'; }
+                else {
+                    rateEl.textContent = rate + '%';
+                    rateEl.className = 'ppk-stat-value ' + (rate >= 80 ? 'ok' : rate >= 50 ? 'warning' : 'danger');
+                }
+            }
+            // Outstanding rooms
+            var outEl = document.getElementById('statOutstandingRooms');
+            if (outEl) {
+                var out = data.outstandingRooms;
+                if (out == null) { outEl.textContent = '—'; outEl.className = 'ppk-stat-value'; }
+                else {
+                    outEl.textContent = String(out);
+                    outEl.className = 'ppk-stat-value ' + (out > 0 ? 'danger' : 'ok');
+                }
+            }
         }
 
         async function loadDashboard() {
@@ -657,7 +985,10 @@
                 if (result.role === 'admin' || result.role === 'head') {
                     renderAdminDashboard(result.data || {});
                     if (result.residentData) renderUserDashboard(result.residentData);
-                } else renderUserDashboard(result.data || {});
+                } else {
+                    renderUserDashboard(result.data || {});
+                    renderProxyAssignments(result.proxyAssignments || []);
+                }
             } catch(e) {
                 console.warn('getDashboardData failed, fallback:', e);
                 renderAnnouncements([]);
@@ -693,7 +1024,7 @@
     </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>

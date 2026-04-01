@@ -299,6 +299,22 @@
                 <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="window.print()">&#128424; พิมพ์รายงาน</button>
             </div>
 
+            <!-- ★ Proxy Payment History -->
+            <div id="proxyHistorySection" style="display:none; margin-top:1.5rem;">
+                <div class="section-title">🔄 ประวัติการชำระแทน (สลิปที่คุณส่งแทนผู้อื่น)</div>
+                <div class="ppk-table-card">
+                    <table>
+                        <thead><tr>
+                            <th>งวด</th><th>บ้าน</th><th>ชื่อผู้พัก</th>
+                            <th>ยอด (บาท)</th><th>วันส่ง</th><th>สถานะ</th><th>หมายเหตุ</th>
+                        </tr></thead>
+                        <tbody id="proxyHistoryBody">
+                            <tr><td colspan="7" style="text-align:center;color:#999;padding:1.5rem;">⏳ กำลังโหลด...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="ppk-footer">
                 ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
                 งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -349,7 +365,7 @@
     function initYearSelector() {
         var sel = document.getElementById('year');
         var cy = new Date().getFullYear() + 543;
-        for (var y = cy + 2; y >= 2568; y--) {
+        for (var y = cy + 1; y >= 2568; y--) {
             var opt = document.createElement('option');
             opt.value = y; opt.textContent = y;
             if (y === cy) opt.selected = true;
@@ -1346,7 +1362,44 @@
         document.getElementById('timeRange').value = 'year';
         document.getElementById('monthWrap').style.display = 'none';
         await loadData();
+        // โหลด proxy history สำหรับผู้ที่รับมอบหมายชำระแทน (non-blocking)
+        var _usr = {}; try { _usr = JSON.parse(localStorage.getItem('currentUser')||'{}'); } catch(e) {}
+        if (_usr.role !== 'admin' && _usr.role !== 'head') loadProxyHistory();
     };
+
+    async function loadProxyHistory() {
+        try {
+            var r = await callBackend('getProxySlips', {});
+            var slips = (r && r.success && r.data) ? r.data : [];
+            if (slips.length === 0) return;
+            var sec = document.getElementById('proxyHistorySection');
+            var tb = document.getElementById('proxyHistoryBody');
+            if (!sec || !tb) return;
+            sec.style.display = '';
+            var STATUS_MAP = { success: '✅ อนุมัติ', approved: '✅ อนุมัติ', rejected: '❌ ไม่ผ่าน', pending: '⏳ รอตรวจสอบ', reviewing: '🔍 รอตรวจสอบ' };
+            var rows = slips.map(function(s) {
+                var periodParts = (s.period || '').split('-');
+                var mIdx = periodParts[1] ? parseInt(periodParts[1]) - 1 : 0;
+                var periodDisp = (THAI_MONTHS[mIdx] || '-') + ' ' + (periodParts[0] || '');
+                var dateStr = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' }) : '-';
+                var statusStr = STATUS_MAP[s.status] || s.status || '-';
+                var statusColor = s.status === 'approved' || s.status === 'success' ? 'color:#059669;' : s.status === 'rejected' ? 'color:#DC2626;' : 'color:#D97706;';
+                var amt = s.amount ? parseFloat(s.amount).toLocaleString('th-TH') : '-';
+                var note = s.review_note || '';
+                var resName = s.resident_name || '-';
+                return '<tr>'
+                    + '<td>' + periodDisp + '</td>'
+                    + '<td style="font-weight:700;">' + (s.house_number || '-') + '</td>'
+                    + '<td>' + resName + '</td>'
+                    + '<td style="text-align:right;">' + amt + '</td>'
+                    + '<td>' + dateStr + '</td>'
+                    + '<td style="' + statusColor + 'font-weight:600;">' + statusStr + '</td>'
+                    + '<td style="font-size:0.82rem;color:#6b7280;">' + note + '</td>'
+                    + '</tr>';
+            }).join('');
+            tb.innerHTML = rows;
+        } catch(e) { console.warn('loadProxyHistory error:', e); }
+    }
 
     async function doLogout() {
         try { await callBackend('logout'); } catch(e) {}
@@ -1358,7 +1411,7 @@
 
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324A"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>

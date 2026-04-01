@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PPK Utils — Beautiful Modal Dialogs
  * แทนที่ confirm() และ alert() ของ Browser ด้วย Modal สวยๆ
  */
@@ -146,7 +146,7 @@
 
   function _detectType(message) {
     if (/ลบ|ล้าง|ยกเลิก|กู้คืน|reset|clear|delete|remove/i.test(message)) return 'danger';
-    if (/ผิดพลาด|error|ล้มเหลว|ไม่สามารถ|ไม่ได้/i.test(message)) return 'error';
+    if (/ไม่สำเร็จ|ผิดพลาด|error|ล้มเหลว|ไม่สามารถ|ไม่ได้/i.test(message)) return 'error';
     if (/เรียบร้อย|สำเร็จ|บันทึก|อัปเดต|เพิ่ม|ส่ง/i.test(message)) return 'success';
     if (/คำเตือน|ระวัง|⚠️|warning/i.test(message)) return 'warning';
     return 'confirm';

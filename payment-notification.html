@@ -84,6 +84,12 @@
         .exempt-btn.exempted:hover { background: #bbf7d0; }
         .exempted-row .common-display { color: #9ca3af; text-decoration: line-through; }
 
+        /* inline edit ค่าส่วนกลาง */
+        .common-display.editable { cursor: pointer; border-bottom: 1px dashed #94a3b8; }
+        .common-display.editable:hover { color: #2563eb; border-color: #2563eb; }
+        .common-edit-input { width: 58px; padding: 1px 4px; border: 1.5px solid #3b82f6; border-radius: 5px; font-size: 0.92rem; font-family: 'Kanit',sans-serif; text-align: center; font-weight: 700; color: #1e40af; outline: none; }
+        .common-edit-input:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.3); }
+
         @media (max-width: 600px) { .form-row { flex-direction: column; gap: 0; } .save-buttons { flex-direction: column; } .btn { width: 100%; justify-content: center; } .notify-table { font-size: 0.8rem; } .notify-table th, .notify-table td { padding: 0.4rem 0.3rem; } .table-header-bar { font-size: 1rem; } .exempt-btn { font-size: 0.72rem; padding: 2px 5px; } }
     </style>
 </head>
@@ -201,8 +207,7 @@
         function initYearSelector() {
             var sel = document.getElementById('bill_year');
             var cy = now.getFullYear() + 543;
-            var minY = 2568;
-            for (var y = cy + 2; y >= minY; y--) {
+            for (var y = cy + 1; y >= 2568; y--) {
                 var opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;
@@ -212,6 +217,37 @@
         }
         initYearSelector();
         document.getElementById('bill_month').value = String(now.getMonth()+1).padStart(2,'0');
+
+        // === inline edit ค่าส่วนกลาง ===
+        var _isAdmin = false;
+        function startEditCommon(span) {
+            if (!_isAdmin) return;
+            var cell = span.closest('.common-cell');
+            var input = cell.querySelector('.common-input');
+            var origVal = parseFloat(input.getAttribute('data-original')) || 0;
+            var curVal = parseFloat(input.value) || origVal;
+            var ed = document.createElement('input');
+            ed.type = 'number'; ed.className = 'common-edit-input';
+            ed.value = curVal; ed.min = '0'; ed.step = '10';
+            span.style.display = 'none';
+            cell.insertBefore(ed, span);
+            ed.focus(); ed.select();
+            function finish() {
+                var nv = parseFloat(ed.value) || 0;
+                if (nv < 0) nv = 0;
+                input.value = nv;
+                input.setAttribute('data-original', nv);
+                span.textContent = nv ? nv.toLocaleString() : '-';
+                span.style.display = '';
+                if (ed.parentNode) ed.parentNode.removeChild(ed);
+                recalcRow(input);
+            }
+            ed.addEventListener('blur', finish);
+            ed.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); ed.blur(); }
+                if (e.key === 'Escape') { ed.value = curVal; ed.blur(); }
+            });
+        }
 
         // === ดึงจำนวนวันทำการกำหนดชำระจาก settings ===
         var _dueDaysCache = null;
@@ -394,7 +430,7 @@
                     '<td class="amount-value">'+(item.water?item.water.toLocaleString():'-')+'</td>'+
                     '<td class="amount-value">'+(item.electric?item.electric.toLocaleString():'-')+'</td>'+
                     '<td class="amount-value"><div class="common-cell">'+
-                        '<span class="common-display">'+(commonVal ? commonVal.toLocaleString() : '-')+'</span>'+
+                        '<span class="common-display'+ (_isAdmin ? ' editable' : '') +'" onclick="startEditCommon(this)">'+(commonVal ? commonVal.toLocaleString() : '-')+'</span>'+
                         '<input type="hidden" class="common-input" value="'+commonVal+'" data-original="'+commonVal+'">'+
                         '<button class="exempt-btn" onclick="toggleExempt(this)" title="กดเพื่อยกเว้นค่าส่วนกลาง">ยกเว้น</button>'+
                     '</div></td>'+
@@ -556,6 +592,22 @@
                 }
             }
 
+            // ── บันทึกสถานะยกเว้นค่าส่วนกลางลง DB (per-house) ──
+            overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกการยกเว้น...';
+            var exemptOps = [];
+            ['houseTableBody', 'flatTableBody'].forEach(function(tbId) {
+                var rows = document.getElementById(tbId).querySelectorAll('tr[data-index]');
+                for (var ri = 0; ri < rows.length; ri++) {
+                    var cells = rows[ri].querySelectorAll('td');
+                    var hn = (cells[0].textContent || '').trim();
+                    if (!hn) continue;
+                    var btn = rows[ri].querySelector('.exempt-btn');
+                    var isExempt = btn && btn.classList.contains('exempted');
+                    exemptOps.push(callBackend('setHouseExemption', { house_number: hn, exempt: isExempt }));
+                }
+            });
+            try { await Promise.all(exemptOps); } catch(e) { console.warn('save exemptions:', e); }
+
             overlay.classList.remove('show');
             overlay.querySelector('div > div:last-child').textContent = 'กำลังบันทึกรูปภาพ...';
 
@@ -598,6 +650,9 @@
             }
             updateTableTitles();
             initDates();
+            if (user.role === 'admin' || user.role === 'head') {
+                _isAdmin = true;
+            }
             await loadBillData();
         };
     
@@ -610,7 +665,7 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260324B"></script>
     <script src="ppk-utils.js?v=20260324B"></script>
     <script src="ppk-nav.js?v=20260324B"></script>

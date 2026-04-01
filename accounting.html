@@ -34,6 +34,7 @@
             --hover: #f8fafc;
             --success-light: #ecfdf5;
             --danger-light: #fef2f2;
+            --primary-light: #dbeafe;
         }
 
         * { box-sizing: border-box; }
@@ -180,7 +181,7 @@
             border-color: var(--primary);
         }
         .btn-primary:hover {
-            background: #059669;
+            background: var(--primary-dark);
         }
         .btn-success {
             background: var(--success);
@@ -283,7 +284,7 @@
             color: var(--success);
             font-weight: 600;
         }
-        .expense-row td:nth-child(4) {
+        .expense-row td:nth-child(5) {
             background: var(--danger-light);
             color: var(--danger);
             font-weight: 600;
@@ -381,7 +382,7 @@
         /* Entry Form */
         .entry-form {
             display: grid;
-            grid-template-columns: auto 1fr 1fr auto auto;
+            grid-template-columns: auto 1fr 1fr 1fr auto auto;
             gap: 0.8rem;
             align-items: end;
             margin-top: 1rem;
@@ -426,6 +427,12 @@
         @media (max-width: 768px) {
             .entry-form {
                 grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .entry-form {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -522,12 +529,6 @@
                     <label for="bill_year">ปี พ.ศ.</label>
                     <select id="bill_year" onchange="loadMonthData()"></select>
                 </div>
-                <div class="form-group" style="min-width:auto;">
-                    <button class="btn btn-primary" onclick="loadMonthData()">🔄 โหลดข้อมูล</button>
-                </div>
-                <div class="form-group" style="min-width:auto;">
-                    <button class="btn btn-success" onclick="calculateFromSystem()">⚡ คำนวณอัตโนมัติ</button>
-                </div>
             </div>
         </div>
         
@@ -547,6 +548,10 @@
                     <div class="balance-card-label">รายจ่ายรวม</div>
                     <div class="balance-card-value" id="totalExpense">0.00</div>
                 </div>
+                <div class="balance-card" style="border-left:4px solid #2563eb;">
+                    <div class="balance-card-label">คงเหลือประจำเดือน</div>
+                    <div class="balance-card-value" id="monthlyBalance" style="color:#2563eb;">0.00</div>
+                </div>
                 <div class="balance-card carry-over">
                     <div class="balance-card-label">ยอดยกไป (เดือนถัดไป)</div>
                     <div class="balance-card-value" id="carryOver">0.00</div>
@@ -554,114 +559,99 @@
             </div>
         </div>
         
-        <!-- ตารางรายรับ -->
+        <!-- ตารางรายรับ-รายจ่าย (รวม) -->
         <div class="section">
-            <div class="section-title" style="color:var(--success);">📥 รายรับ</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+                <div class="section-title" style="margin-bottom:0;color:var(--primary);">📒 รายรับ-รายจ่าย</div>
+                <input type="search" id="accountingSearchInput" placeholder="🔍 ค้นหารายการ..." oninput="filterAccountingTable()" style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px;">
+            </div>
             <div class="table-wrapper">
-                <table id="incomeTable">
+                <table id="accountingTable">
                     <thead>
                         <tr>
                             <th style="width:50px;">ลำดับ</th>
                             <th style="width:100px;">วันที่</th>
                             <th>รายการ</th>
-                            <th style="width:120px;">จำนวนเงิน (บาท)</th>
+                            <th style="width:120px;">รายรับ (บาท)</th>
+                            <th style="width:120px;">รายจ่าย (บาท)</th>
                             <th style="width:80px;">หลักฐาน</th>
-                            <th style="width:120px;">หมายเหตุ</th>
-                            <th style="width:60px;" class="no-print">ลบ</th>
+                            <th style="width:100px;">หมายเหตุ</th>
+                            <th style="width:50px;" class="no-print">ลบ</th>
                         </tr>
                     </thead>
-                    <tbody id="incomeBody"><tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr></tbody>
+                    <tbody id="accountingBody"><tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr></tbody>
                     <tfoot>
                         <tr class="total-row">
                             <td colspan="3" style="text-align:right;">รวมรายรับ</td>
-                            <td id="incomeSumCell">0.00</td>
+                            <td id="incomeSumCell" style="color:var(--success);">0.00</td>
+                            <td></td>
                             <td colspan="3"></td>
                         </tr>
-                    </tfoot>
-                </table>
-            </div>
-            
-            <!-- ฟอร์มเพิ่มรายรับ -->
-            <div class="entry-form no-print">
-                <div class="form-group">
-                    <label>วันที่</label>
-                    <input type="date" id="incomeDate">
-                </div>
-                <div class="form-group">
-                    <label>รายการ</label>
-                    <input type="text" id="incomeDesc" placeholder="เช่น ค่าส่วนกลาง">
-                </div>
-                <div class="form-group">
-                    <label>จำนวนเงิน</label>
-                    <input type="number" id="incomeAmount" min="0" step="0.01" placeholder="0.00">
-                </div>
-                <div class="form-group" style="min-width:auto;">
-                    <label>รูปหลักฐาน</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="incomeImage" accept="image/*" onchange="updateFileLabel(this, 'incomeLabelText')">
-                        <label for="incomeImage" class="file-label" id="incomeFileLabel">
-                            📷 <span id="incomeLabelText">เลือกรูป</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group" style="min-width:auto;">
-                    <button class="btn btn-success" onclick="addIncome()">+ เพิ่ม</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ตารางรายจ่าย -->
-        <div class="section">
-            <div class="section-title" style="color:var(--danger);">📤 รายจ่าย</div>
-            <div class="table-wrapper">
-                <table id="expenseTable">
-                    <thead>
-                        <tr>
-                            <th style="width:50px;">ลำดับ</th>
-                            <th style="width:100px;">วันที่</th>
-                            <th>รายการ</th>
-                            <th style="width:120px;">จำนวนเงิน (บาท)</th>
-                            <th style="width:80px;">หลักฐาน</th>
-                            <th style="width:120px;">หมายเหตุ</th>
-                            <th style="width:60px;" class="no-print">ลบ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="expenseBody"><tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr></tbody>
-                    <tfoot>
                         <tr class="total-row">
                             <td colspan="3" style="text-align:right;">รวมรายจ่าย</td>
-                            <td id="expenseSumCell">0.00</td>
+                            <td></td>
+                            <td id="expenseSumCell" style="color:var(--danger);">0.00</td>
                             <td colspan="3"></td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
             
-            <!-- ฟอร์มเพิ่มรายจ่าย -->
-            <div class="entry-form no-print">
+            <!-- Quick-add รายจ่ายประจำ -->
+            <div class="entry-form no-print" style="background:#fef9ef;border:1px solid #f0b429;border-radius:8px;padding:0.8rem 1rem;margin-bottom:0.5rem;gap:0.6rem;flex-wrap:wrap;">
+                <strong style="color:#b45309;align-self:center;">⚡ เพิ่มด่วน:</strong>
+                <div class="form-group" style="min-width:auto;">
+                    <label>ค่าขยะ</label>
+                    <input type="number" id="garbageAmount" value="310" min="0" step="0.01" style="width:100px;">
+                </div>
+                <div class="form-group" style="min-width:auto;">
+                    <button class="btn btn-danger" style="background:#f59e0b;border-color:#d97706;" onclick="quickAddExpense('ค่าขยะ','garbageAmount')">+ เพิ่มค่าขยะ</button>
+                </div>
+                <div class="form-group" style="min-width:auto;">
+                    <label>ค่าตัดหญ้า</label>
+                    <input type="number" id="grassAmount" min="0" step="0.01" placeholder="0.00" style="width:100px;">
+                </div>
+                <div class="form-group" style="min-width:auto;">
+                    <button class="btn btn-danger" style="background:#84cc16;border-color:#65a30d;" onclick="quickAddExpense('ค่าตัดหญ้า','grassAmount')">+ เพิ่มค่าตัดหญ้า</button>
+                </div>
+            </div>
+            
+            <!-- ฟอร์มเพิ่มรายการ -->
+            <div class="entry-form no-print" style="grid-template-columns: auto auto 1fr 1fr 1fr auto auto;">
+                <div class="form-group" style="min-width:auto;">
+                    <label>ประเภท</label>
+                    <select id="entryType" style="padding:0.5rem;border-radius:6px;border:1px solid var(--border);font-size:0.9rem;">
+                        <option value="income">รายรับ</option>
+                        <option value="expense">รายจ่าย</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>วันที่</label>
-                    <input type="date" id="expenseDate">
+                    <input type="date" id="entryDate">
                 </div>
                 <div class="form-group">
                     <label>รายการ</label>
-                    <input type="text" id="expenseDesc" placeholder="เช่น ค่าขยะ">
+                    <input type="text" id="entryDesc" placeholder="เช่น ค่าส่วนกลาง">
                 </div>
                 <div class="form-group">
                     <label>จำนวนเงิน</label>
-                    <input type="number" id="expenseAmount" min="0" step="0.01" placeholder="0.00">
+                    <input type="number" id="entryAmount" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>หมายเหตุ</label>
+                    <input type="text" id="entryNote" placeholder="(ไม่บังคับ)">
                 </div>
                 <div class="form-group" style="min-width:auto;">
                     <label>รูปหลักฐาน</label>
                     <div class="file-input-wrapper">
-                        <input type="file" id="expenseImage" accept="image/*" onchange="updateFileLabel(this, 'expenseLabelText')">
-                        <label for="expenseImage" class="file-label" id="expenseFileLabel">
-                            📷 <span id="expenseLabelText">เลือกรูป</span>
+                        <input type="file" id="entryImage" accept="image/*" onchange="updateFileLabel(this, 'entryLabelText')">
+                        <label for="entryImage" class="file-label" id="entryFileLabel">
+                            📷 <span id="entryLabelText">เลือกรูป</span>
                         </label>
                     </div>
                 </div>
                 <div class="form-group" style="min-width:auto;">
-                    <button class="btn btn-danger" onclick="addExpense()">+ เพิ่ม</button>
+                    <button class="btn btn-primary" onclick="addEntry()">+ เพิ่ม</button>
                 </div>
             </div>
         </div>
@@ -669,8 +659,31 @@
         <!-- ปุ่มดำเนินการ -->
         <div class="section no-print" style="text-align:center; display:flex; gap:0.6rem; justify-content:center; flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="saveData()">💾 บันทึกข้อมูล</button>
-            <button class="btn" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+            <button class="btn" onclick="printMemo()">🖨️ พิมพ์รายงาน</button>
             <button class="btn" onclick="exportExcel()" style="background:#22c55e;color:#fff;border-color:#16a34a;">📊 Export Excel</button>
+            <a href="check-statement.html?v=20260327C" class="btn" style="background:#7c3aed;color:#fff;border-color:#6d28d9;text-decoration:none;">🔍 ตรวจสอบ Statement</a>
+        </div>
+        
+        <!-- ส่วนลงนาม (แสดงเฉพาะตอนพิมพ์) -->
+        <div class="section signature-section" style="page-break-inside:avoid; margin-top:2rem;">
+            <div class="section-title">✍️ ลงนามรับรอง</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem;margin-top:2.5rem;text-align:center;">
+                <div>
+                    <div style="margin-bottom:3rem;">ลงชื่อ ............................</div>
+                    <div>(..............................................)</div>
+                    <div style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;">ผู้จัดทำ / เหรัญญิก</div>
+                </div>
+                <div>
+                    <div style="margin-bottom:3rem;">ลงชื่อ ............................</div>
+                    <div>(..............................................)</div>
+                    <div style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;">ผู้ตรวจสอบ</div>
+                </div>
+                <div>
+                    <div style="margin-bottom:3rem;">ลงชื่อ ............................</div>
+                    <div>(..............................................)</div>
+                    <div style="color:var(--muted);font-size:0.88rem;margin-top:0.3rem;">หัวหน้างานบ้านพัก</div>
+                </div>
+            </div>
         </div>
         
         <div class="footer-note">
@@ -723,7 +736,7 @@
             const currentYear = new Date().getFullYear() + 543;
             yearSelect.innerHTML = '';
             
-            for (let y = currentYear; y >= currentYear - 3; y--) {
+            for (let y = currentYear + 1; y >= 2568; y--) {
                 const opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;
@@ -772,7 +785,8 @@
             const period = year + '-' + month;
 
             try {
-                    const result = await cachedCall('loadAccountingData', { period }, 300000);
+                    // ใช้ loadAndSyncAccounting: sync DB ก่อน แล้วโหลด (ไม่ cache เพราะต้องการข้อมูลสดเสมอ)
+                    const result = await callBackend('loadAndSyncAccounting', { period });
                     if (result && result.success) {
                         incomeItems = (result.incomeItems || []).map(item => ({
                             date: item.savedAt || new Date().toISOString().split('T')[0],
@@ -799,7 +813,7 @@
                 } catch (e) {
                     console.error('โหลดข้อมูลจาก backend ไม่สำเร็จ:', e);
                 }
-            
+
             // ไม่มี Backend — แสดงข้อมูลว่าง
             incomeItems = [];
             expenseItems = [];
@@ -810,129 +824,104 @@
         // loadCarryForward — ดึงจาก Backend ผ่าน loadMonthData() แล้ว (result.carryForward)
         
         // ============================
-        // AUTO CALCULATION
-        // ============================
-        async function calculateFromSystem() {
-            const { month, year, key } = getSelectedPeriod();
-            const period = year + '-' + month;
-
-            try {
-                    const result = await cachedCall('calculateAutoEntries', { period }, 300000);
-                    if (result && result.success) {
-                        // ล้างรายการ auto เดิม
-                        incomeItems = incomeItems.filter(item => !item.auto);
-                        expenseItems = expenseItems.filter(item => !item.auto);
-
-                        // เพิ่มรายรับอัตโนมัติ
-                        (result.incomeItems || []).forEach(item => {
-                            incomeItems.unshift({
-                                date: new Date().toISOString().split('T')[0],
-                                description: item.name,
-                                amount: item.amount,
-                                note: '',
-                                auto: true,
-                                image: null
-                            });
-                        });
-
-                        // เพิ่มรายจ่ายอัตโนมัติ
-                        (result.expenseItems || []).forEach(item => {
-                            expenseItems.unshift({
-                                date: new Date().toISOString().split('T')[0],
-                                description: item.name,
-                                amount: item.amount,
-                                note: '',
-                                auto: true,
-                                image: null
-                            });
-                        });
-
-                        renderAll();
-                        ppkAlert('คำนวณรายการอัตโนมัติจาก Backend เรียบร้อยแล้ว');
-                        return;
-                    }
-                } catch (e) {
-                    console.error('คำนวณจาก backend ไม่สำเร็จ:', e);
-                }
-        }
-
-        // calculateFromLocalStorage ถูกลบแล้ว — ใช้ Backend calculateAutoEntries แทน
-        
-        // ============================
         // RENDER FUNCTIONS
         // ============================
         function renderAll() {
-            renderIncomeTable();
-            renderExpenseTable();
+            renderAccountingTable();
             updateSummary();
         }
-        
-        function renderIncomeTable() {
-            const tbody = document.getElementById('incomeBody');
-            tbody.innerHTML = '';
-            
-                    if (incomeItems.length === 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = '<td colspan="7" style="color:var(--muted);padding:1rem;">ยังไม่มีรายการรายรับ</td>';
-                tbody.appendChild(tr);
-                return;
-            }
-            
-            incomeItems.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'income-row';
-                const hasImage = item.image ? `<span class="img-badge" onclick="viewImage('income', ${index})">📷 ดูรูป</span>` : `<button class="img-btn no-print" onclick="attachImage('income', ${index})">📷 เพิ่ม</button>`;
-                tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${formatDate(item.date)}</td>
-                    <td style="text-align:left;">${String(item.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
-                    <td>${formatMoney(item.amount)}</td>
-                    <td>${hasImage}</td>
-                    <td>${item.note || '-'}</td>
-                    <td class="no-print">
-                        <button class="action-btn delete" onclick="deleteIncome(${index})" title="ลบ">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+
+        // ค้นหา/กรองแถวในตารางรายรับ-รายจ่าย
+        function filterAccountingTable() {
+            var q = (document.getElementById('accountingSearchInput').value || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('#accountingBody tr');
+            var shown = 0;
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                var match = !q || text.indexOf(q) !== -1;
+                row.style.display = match ? '' : 'none';
+                if (match) shown++;
             });
-            
-            // อัปเดตยอดรวม
-            const sum = incomeItems.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0);
-            document.getElementById('incomeSumCell').textContent = formatMoney(sum);
+            var noResult = document.getElementById('accountingNoResult');
+            if (!noResult) {
+                noResult = document.createElement('tr');
+                noResult.id = 'accountingNoResult';
+                noResult.innerHTML = '<td colspan="8" style="text-align:center;color:#999;padding:1rem;">ไม่พบรายการที่ค้นหา</td>';
+                document.getElementById('accountingBody').appendChild(noResult);
+            }
+            noResult.style.display = (q && shown === 0) ? '' : 'none';
         }
-        
-        function renderExpenseTable() {
-            const tbody = document.getElementById('expenseBody');
+
+        function renderAccountingTable() {
+            const tbody = document.getElementById('accountingBody');
             tbody.innerHTML = '';
             
-                    if (expenseItems.length === 0) {
+            if (incomeItems.length === 0 && expenseItems.length === 0) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = '<td colspan="7" style="color:var(--muted);padding:1rem;">ยังไม่มีรายการรายจ่าย</td>';
+                tr.innerHTML = '<td colspan="8" style="color:var(--muted);padding:1rem;">ยังไม่มีรายการ</td>';
                 tbody.appendChild(tr);
                 return;
             }
             
-            expenseItems.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'expense-row';
-                const hasImage = item.image ? `<span class="img-badge" onclick="viewImage('expense', ${index})">📷 ดูรูป</span>` : `<button class="img-btn no-print" onclick="attachImage('expense', ${index})">📷 เพิ่ม</button>`;
-                tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${formatDate(item.date)}</td>
-                    <td style="text-align:left;">${String(item.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
-                    <td>${formatMoney(item.amount)}</td>
-                    <td>${hasImage}</td>
-                    <td>${item.note || '-'}</td>
-                    <td class="no-print">
-                        <button class="action-btn delete" onclick="deleteExpense(${index})" title="ลบ">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            let rowNum = 1;
             
-            // อัปเดตยอดรวม
-            const sum = expenseItems.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0);
-            document.getElementById('expenseSumCell').textContent = formatMoney(sum);
+            // Section: รายรับ
+            if (incomeItems.length > 0) {
+                const hdr = document.createElement('tr');
+                hdr.innerHTML = '<td colspan="8" style="text-align:left;background:var(--success-light);color:var(--success);font-weight:700;padding:0.5rem 0.8rem;border:1px solid var(--border);">📥 รายรับ</td>';
+                tbody.appendChild(hdr);
+                
+                incomeItems.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'income-row';
+                    const hasImage = item.image ? `<span class="img-badge" onclick="viewImage('income', ${index})">📷 ดูรูป</span>` : `<button class="img-btn no-print" onclick="attachImage('income', ${index})">📷 เพิ่ม</button>`;
+                    tr.innerHTML = `
+                        <td>${rowNum++}</td>
+                        <td>${formatDate(item.date)}</td>
+                        <td style="text-align:left;">${String(item.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
+                        <td>${formatMoney(item.amount)}</td>
+                        <td></td>
+                        <td>${hasImage}</td>
+                        <td>${String(item.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '-'}</td>
+                        <td class="no-print">
+                            <button class="action-btn delete" onclick="deleteIncome(${index})" title="ลบ">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            // Section: รายจ่าย
+            if (expenseItems.length > 0) {
+                const hdr = document.createElement('tr');
+                hdr.innerHTML = '<td colspan="8" style="text-align:left;background:var(--danger-light);color:var(--danger);font-weight:700;padding:0.5rem 0.8rem;border:1px solid var(--border);">📤 รายจ่าย</td>';
+                tbody.appendChild(hdr);
+                
+                expenseItems.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'expense-row';
+                    const hasImage = item.image ? `<span class="img-badge" onclick="viewImage('expense', ${index})">📷 ดูรูป</span>` : `<button class="img-btn no-print" onclick="attachImage('expense', ${index})">📷 เพิ่ม</button>`;
+                    tr.innerHTML = `
+                        <td>${rowNum++}</td>
+                        <td>${formatDate(item.date)}</td>
+                        <td style="text-align:left;">${String(item.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${item.auto ? '<span class="auto-badge">อัตโนมัติ</span>' : ''}</td>
+                        <td></td>
+                        <td>${formatMoney(item.amount)}</td>
+                        <td>${hasImage}</td>
+                        <td>${String(item.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '-'}</td>
+                        <td class="no-print">
+                            <button class="action-btn delete" onclick="deleteExpense(${index})" title="ลบ">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            // Update sums
+            const incSum = incomeItems.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0);
+            const expSum = expenseItems.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0);
+            document.getElementById('incomeSumCell').textContent = formatMoney(incSum);
+            document.getElementById('expenseSumCell').textContent = formatMoney(expSum);
         }
         
         function updateSummary() {
@@ -940,20 +929,26 @@
             const totalExpense = expenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
             const carryOver = carryForwardAmount + totalIncome - totalExpense;
             
+            const monthlyBalance = totalIncome - totalExpense;
             document.getElementById('carryForward').textContent = formatMoney(carryForwardAmount);
             document.getElementById('totalIncome').textContent = formatMoney(totalIncome);
             document.getElementById('totalExpense').textContent = formatMoney(totalExpense);
+            const mbEl = document.getElementById('monthlyBalance');
+            mbEl.textContent = formatMoney(monthlyBalance);
+            mbEl.style.color = monthlyBalance >= 0 ? '#2563eb' : '#dc2626';
             document.getElementById('carryOver').textContent = formatMoney(carryOver);
         }
         
         // ============================
         // ADD/DELETE FUNCTIONS
         // ============================
-        function addIncome() {
-            const date = document.getElementById('incomeDate').value;
-            const desc = document.getElementById('incomeDesc').value.trim();
-            const amount = parseFloat(document.getElementById('incomeAmount').value) || 0;
-            const imageFile = document.getElementById('incomeImage').files[0];
+        function addEntry() {
+            const type = document.getElementById('entryType').value;
+            const date = document.getElementById('entryDate').value;
+            const desc = document.getElementById('entryDesc').value.trim();
+            const amount = parseFloat(document.getElementById('entryAmount').value) || 0;
+            const note = document.getElementById('entryNote').value.trim();
+            const imageFile = document.getElementById('entryImage').files[0];
             
             if (!desc) {
                 ppkAlert('กรุณาระบุรายการ');
@@ -968,92 +963,60 @@
                 date: date || new Date().toISOString().split('T')[0],
                 description: desc,
                 amount: amount,
-                note: '',
+                note: note,
                 auto: false,
                 image: null
             };
+            
+            const targetList = type === 'income' ? incomeItems : expenseItems;
             
             if (imageFile) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     newItem.image = e.target.result;
-                    incomeItems.push(newItem);
-                    clearIncomeForm();
+                    targetList.push(newItem);
+                    clearEntryForm();
                     renderAll();
                 };
                 reader.readAsDataURL(imageFile);
             } else {
-                incomeItems.push(newItem);
-                clearIncomeForm();
+                targetList.push(newItem);
+                clearEntryForm();
                 renderAll();
             }
         }
         
-        function clearIncomeForm() {
-            document.getElementById('incomeDate').value = '';
-            document.getElementById('incomeDesc').value = '';
-            document.getElementById('incomeAmount').value = '';
-            document.getElementById('incomeImage').value = '';
-            document.getElementById('incomeLabelText').textContent = 'เลือกรูป';
-            document.getElementById('incomeFileLabel').classList.remove('has-file');
+        function clearEntryForm() {
+            document.getElementById('entryDate').value = '';
+            document.getElementById('entryDesc').value = '';
+            document.getElementById('entryAmount').value = '';
+            document.getElementById('entryNote').value = '';
+            document.getElementById('entryImage').value = '';
+            document.getElementById('entryLabelText').textContent = 'เลือกรูป';
+            document.getElementById('entryFileLabel').classList.remove('has-file');
         }
         
-        function addExpense() {
-            const date = document.getElementById('expenseDate').value;
-            const desc = document.getElementById('expenseDesc').value.trim();
-            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
-            const imageFile = document.getElementById('expenseImage').files[0];
-            
-            if (!desc) {
-                ppkAlert('กรุณาระบุรายการ');
-                return;
-            }
-            if (amount <= 0) {
-                ppkAlert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
-                return;
-            }
-            
-            const newItem = {
-                date: date || new Date().toISOString().split('T')[0],
-                description: desc,
+        function quickAddExpense(name, amountInputId) {
+            const amount = parseFloat(document.getElementById(amountInputId).value) || 0;
+            if (amount <= 0) { ppkAlert('กรุณาระบุจำนวนเงิน'); return; }
+            expenseItems.push({
+                date: new Date().toISOString().split('T')[0],
+                description: name,
                 amount: amount,
                 note: '',
                 auto: false,
                 image: null
-            };
-            
-            if (imageFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    newItem.image = e.target.result;
-                    expenseItems.push(newItem);
-                    clearExpenseForm();
-                    renderAll();
-                };
-                reader.readAsDataURL(imageFile);
-            } else {
-                expenseItems.push(newItem);
-                clearExpenseForm();
-                renderAll();
-            }
+            });
+            renderAll();
         }
-        
-        function clearExpenseForm() {
-            document.getElementById('expenseDate').value = '';
-            document.getElementById('expenseDesc').value = '';
-            document.getElementById('expenseAmount').value = '';
-            document.getElementById('expenseImage').value = '';
-            document.getElementById('expenseLabelText').textContent = 'เลือกรูป';
-            document.getElementById('expenseFileLabel').classList.remove('has-file');
-        }
-        
+
         async function deleteIncome(index) {
             if (await ppkConfirm('ต้องการลบรายการนี้?')) {
                 incomeItems.splice(index, 1);
                 renderAll();
             }
         }
-        
+
         async function deleteExpense(index) {
             if (await ppkConfirm('ต้องการลบรายการนี้?')) {
                 expenseItems.splice(index, 1);
@@ -1096,22 +1059,34 @@
                     // บันทึกผ่าน Supabase
                     const backendIncome = [];
                     for (const item of incomeItems) {
+                        // อัปโหลดรูป base64 ไปยัง Storage ก่อน (ถ้ายังไม่ได้อัปโหลด)
+                        let receiptUrl = item.image || null;
+                        if (receiptUrl && receiptUrl.startsWith('data:')) {
+                            receiptUrl = await uploadReceiptIfNeeded(item);
+                        }
                         backendIncome.push({
                             name: item.description,
                             amount: item.amount,
                             source: item.auto ? 'auto' : 'manual',
                             note: item.note || '',
-                            receiptUrl: item.image || null
+                            receiptUrl: receiptUrl,
+                            date: item.date || ''
                         });
                     }
                     const backendExpense = [];
                     for (const item of expenseItems) {
+                        // อัปโหลดรูป base64 ไปยัง Storage ก่อน (ถ้ายังไม่ได้อัปโหลด)
+                        let receiptUrl = item.image || null;
+                        if (receiptUrl && receiptUrl.startsWith('data:')) {
+                            receiptUrl = await uploadReceiptIfNeeded(item);
+                        }
                         backendExpense.push({
                             name: item.description,
                             amount: item.amount,
                             source: item.auto ? 'auto' : 'manual',
                             note: item.note || '',
-                            receiptUrl: item.image || null
+                            receiptUrl: receiptUrl,
+                            date: item.date || ''
                         });
                     }
 
@@ -1153,7 +1128,7 @@
                 return d.toLocaleDateString('th-TH', { 
                     day: 'numeric', 
                     month: 'short', 
-                    year: '2-digit' 
+                    year: 'numeric' 
                 });
             } catch {
                 return dateStr;
@@ -1253,26 +1228,29 @@
             rows.push([]);
             rows.push(['ยอดยกมา', '', '', carryForwardAmount]);
             rows.push([]);
-            rows.push(['── รายรับ ──']);
-            rows.push(['ลำดับ', 'วันที่', 'รายการ', 'จำนวนเงิน (บาท)', 'หมายเหตุ']);
-            incomeItems.forEach(function(item, i) {
-                rows.push([i + 1, item.date || '', item.description || '', parseFloat(item.amount) || 0, item.note || '']);
-            });
-            rows.push(['', '', 'รวมรายรับ', totalIncome, '']);
+            rows.push(['ลำดับ', 'วันที่', 'รายการ', 'รายรับ (บาท)', 'รายจ่าย (บาท)', 'หมายเหตุ']);
+            var rowNum = 1;
+            if (incomeItems.length > 0) {
+                rows.push(['', '', '── รายรับ ──', '', '', '']);
+                incomeItems.forEach(function(item) {
+                    rows.push([rowNum++, item.date || '', item.description || '', parseFloat(item.amount) || 0, '', item.note || '']);
+                });
+            }
+            if (expenseItems.length > 0) {
+                rows.push(['', '', '── รายจ่าย ──', '', '', '']);
+                expenseItems.forEach(function(item) {
+                    rows.push([rowNum++, item.date || '', item.description || '', '', parseFloat(item.amount) || 0, item.note || '']);
+                });
+            }
             rows.push([]);
-            rows.push(['── รายจ่าย ──']);
-            rows.push(['ลำดับ', 'วันที่', 'รายการ', 'จำนวนเงิน (บาท)', 'หมายเหตุ']);
-            expenseItems.forEach(function(item, i) {
-                rows.push([i + 1, item.date || '', item.description || '', parseFloat(item.amount) || 0, item.note || '']);
-            });
-            rows.push(['', '', 'รวมรายจ่าย', totalExpense, '']);
-            rows.push([]);
-            rows.push(['ยอดยกไป', '', '', carryOver]);
+            rows.push(['', '', 'รวมรายรับ', totalIncome, '', '']);
+            rows.push(['', '', 'รวมรายจ่าย', '', totalExpense, '']);
+            rows.push(['', '', 'ยอดยกไป', '', '', carryOver]);
 
             var wb = XLSX.utils.book_new();
             var ws = XLSX.utils.aoa_to_sheet(rows);
             // ตั้งความกว้างคอลัมน์
-            ws['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 30 }, { wch: 18 }, { wch: 20 }];
+            ws['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 20 }];
             XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
             XLSX.writeFile(wb, 'บัญชี_' + p.year + '_' + p.month + '.xlsx');
             ppkToast('ดาวน์โหลด Excel เรียบร้อย', 'success');
@@ -1283,6 +1261,99 @@
         // ============================
         function initSidebar() {
             renderPPKNav('ppkNav', 'accounting');
+        }
+
+        // ========== พิมพ์บันทึกข้อความราชการ ==========
+        function printMemo() {
+            const p = getSelectedPeriod();
+            const monthName = THAI_MONTHS[parseInt(p.month) - 1];
+            const totalIncome = incomeItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+            const totalExpense = expenseItems.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+            const carryOver = carryForwardAmount + totalIncome - totalExpense;
+
+            let rowNum = 0;
+            let incomeRows = '';
+            incomeItems.forEach(item => {
+                rowNum++;
+                incomeRows += '<tr><td style="text-align:center;">' + rowNum + '</td><td>' + formatDate(item.date) + '</td><td>' + (item.description || '') + '</td><td style="text-align:right;">' + formatMoney(item.amount) + '</td><td></td><td>' + (item.note || '-') + '</td></tr>';
+            });
+            let expenseRows = '';
+            expenseItems.forEach(item => {
+                rowNum++;
+                expenseRows += '<tr><td style="text-align:center;">' + rowNum + '</td><td>' + formatDate(item.date) + '</td><td>' + (item.description || '') + '</td><td></td><td style="text-align:right;">' + formatMoney(item.amount) + '</td><td>' + (item.note || '-') + '</td></tr>';
+            });
+
+            const printDate = new Date();
+            const printDateStr = printDate.getDate() + ' ' + THAI_MONTHS[printDate.getMonth()] + ' ' + (printDate.getFullYear() + 543);
+
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>บันทึกข้อความ - บัญชีกองทุน</title>' +
+            '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">' +
+            '<style>' +
+            '@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }' +
+            '@media print { body { margin:0; padding:0; } .no-print { display:none !important; } }' +
+            '* { box-sizing: border-box; }' +
+            'body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 16pt; line-height: 1.15; padding: 0; margin: 0; }' +
+            '.memo-header { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 12px; }' +
+            '.memo-title { font-size: 29pt; font-weight: bold; }' +
+            '.memo-fields { margin-bottom: 12px; font-size: 20pt; }' +
+            '.memo-field { display: flex; gap: 8px; margin-bottom: 2px; }' +
+            '.memo-label { font-weight: bold; white-space: nowrap; }' +
+            '.memo-value { flex: 1; border-bottom: 1px dotted #000; }' +
+            '.memo-body { text-indent: 2.5cm; margin-bottom: 8px; }' +
+            'table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14pt; }' +
+            'th { font-weight: bold; border: 1px solid #000; padding: 4px 6px; text-align: center; }' +
+            'td { border: 1px solid #000; padding: 3px 6px; }' +
+            '.section-hdr td { font-weight: bold; text-align: left; background: #f5f5f5; }' +
+            '.total-row { font-weight: bold; }' +
+            '.summary-box { margin: 16px 0; border: 1px solid #000; padding: 10px 16px; font-size: 15pt; }' +
+            '.summary-box div { margin-bottom: 4px; }' +
+            '.signature-section { margin-top: 24px; display: flex; justify-content: space-around; page-break-inside: avoid; }' +
+            '.signature-box { width: 30%; text-align: center; }' +
+            '.signature-line { margin-top: 40px; border-top: 1px dotted #000; padding-top: 4px; }' +
+            '.toolbar { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:0.8rem 1.5rem; text-align:center; margin-bottom:1rem; }' +
+            '.toolbar button { background:#059669; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.5rem; font:inherit; font-size:1rem; cursor:pointer; }' +
+            '</style></head><body>' +
+            '<div class="no-print toolbar">' +
+            '<div style="margin-bottom:0.5rem;font-weight:bold;">📄 บันทึกข้อความ — บัญชีรายรับรายจ่าย ' + monthName + ' ' + p.year + '</div>' +
+            '<button onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>' +
+            '</div>' +
+            '<div class="memo-header"><div class="memo-title">บันทึกข้อความ</div></div>' +
+            '<div class="memo-fields">' +
+            '<div class="memo-field"><span class="memo-label">ส่วนราชการ</span><span class="memo-value">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</span></div>' +
+            '<div class="memo-field"><span class="memo-label">ที่</span><span class="memo-value">............/............</span></div>' +
+            '<div class="memo-field"><span class="memo-label">วันที่</span><span class="memo-value">' + printDateStr + '</span></div>' +
+            '<div class="memo-field"><span class="memo-label">เรื่อง</span><span class="memo-value">รายงานบัญชีรายรับรายจ่ายกองทุนบ้านพักครู ประจำเดือน' + monthName + ' พ.ศ. ' + p.year + '</span></div>' +
+            '</div>' +
+            '<hr style="border:none;border-top:1.5px solid #000;margin:0.2cm 0 0.3cm 0;">' +
+            '<div style="margin-bottom:8px;"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>' +
+            '<div class="memo-body">ตามที่โรงเรียนพะเยาพิทยาคมได้มอบหมายให้งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู ดำเนินการจัดทำบัญชีเงินกองทุนบ้านพักครู นั้น</div>' +
+            '<div class="memo-body">บัดนี้ ได้ดำเนินการจัดทำบัญชีรายรับรายจ่ายประจำเดือน' + monthName + ' พ.ศ. ' + p.year + ' เรียบร้อยแล้ว มีรายละเอียดดังนี้</div>' +
+            '<div class="summary-box">' +
+            '<div>ยอดยกมา (จากเดือนก่อน): <strong>' + formatMoney(carryForwardAmount) + '</strong> บาท</div>' +
+            '<div>รายรับรวม: <strong>' + formatMoney(totalIncome) + '</strong> บาท</div>' +
+            '<div>รายจ่ายรวม: <strong>' + formatMoney(totalExpense) + '</strong> บาท</div>' +
+            '<div>ยอดยกไป (เดือนถัดไป): <strong>' + formatMoney(carryOver) + '</strong> บาท</div>' +
+            '</div>' +
+            '<table><thead><tr><th style="width:8%;">ลำดับ</th><th style="width:15%;">วันที่</th><th>รายการ</th><th style="width:15%;">รายรับ (บาท)</th><th style="width:15%;">รายจ่าย (บาท)</th><th style="width:12%;">หมายเหตุ</th></tr></thead>' +
+            '<tbody>' +
+            (incomeRows ? '<tr class="section-hdr"><td colspan="6">📥 รายรับ</td></tr>' + incomeRows : '') +
+            (expenseRows ? '<tr class="section-hdr"><td colspan="6">📤 รายจ่าย</td></tr>' + expenseRows : '') +
+            '</tbody>' +
+            '<tfoot>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">รวมรายรับ</td><td style="text-align:right;">' + formatMoney(totalIncome) + '</td><td></td><td></td></tr>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">รวมรายจ่าย</td><td></td><td style="text-align:right;">' + formatMoney(totalExpense) + '</td><td></td></tr>' +
+            '</tfoot></table>' +
+            '<div style="margin:12px 0 0 0;text-indent:2.5cm;">จึงเรียนมาเพื่อโปรดทราบ</div>' +
+            '<div class="signature-section">' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>ผู้จัดทำ / เหรัญญิก</div></div>' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>ผู้ตรวจสอบ</div></div>' +
+            '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>หัวหน้างานบ้านพัก</div></div>' +
+            '</div>' +
+            '</body></html>';
+
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
         }
     
         async function doLogout() {
@@ -1295,7 +1366,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>

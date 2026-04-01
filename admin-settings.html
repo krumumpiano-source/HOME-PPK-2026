@@ -645,7 +645,7 @@
                     <span class="tab-btn-icon">⚙️</span> ตั้งค่าระบบ
                 </button>
                 <button class="tab-btn" onclick="showTab('linemail', this)">
-                    <span class="tab-btn-icon">�</span> อีเมล
+                    <span class="tab-btn-icon">📧</span> อีเมล
                 </button>
             </div>
 
@@ -1274,19 +1274,19 @@
                     <div class="section-title">📧 อีเมล</div>
                     <div class="section-desc">ตั้งค่าระบบส่งอีเมลแจ้งเตือนและใบเสร็จอัตโนมัติ</div>
 
-                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Resend.com) <span class="acc-arrow">▼</span></button>
+                    <button class="accordion-toggle open" onclick="toggleAccordion(this)">📧 ตั้งค่าอีเมล (Gmail SMTP) <span class="acc-arrow">▼</span></button>
                     <div class="accordion-body open" style="padding:0.6rem 0.1rem;">
-                    <div class="section-desc" style="margin-bottom:0.75rem;">ใช้ส่งอีเมลแจ้งเตือนและใบเสร็จ — สมัครฟรีที่ <a href="https://resend.com" target="_blank" style="color:var(--primary)">resend.com</a> (3,000 อีเมล/เดือน ฟรี)</div>
+                    <div class="section-desc" style="margin-bottom:0.75rem;">ส่งอีเมลแจ้งเตือนและใบเสร็จผ่าน Gmail — ต้องสร้าง <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--primary)">App Password</a> จาก Google Account</div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Resend API Key</label>
-                            <input type="password" id="resend_api_key" placeholder="re_xxxxxxxxxxxxxxxxxxxx">
-                            <span class="hint">ขอได้จาก resend.com → API Keys</span>
+                            <label>Gmail App Password (รหัสแอป)</label>
+                            <input type="password" id="gmail_app_password" placeholder="xxxx xxxx xxxx xxxx">
+                            <span class="hint">สร้างที่ Google Account → Security → App Passwords (ต้องเปิด 2FA ก่อน)</span>
                         </div>
                         <div class="form-group">
-                            <label>อีเมลผู้ส่ง (From Email)</label>
-                            <input type="email" id="email_from" placeholder="noreply@yourdomain.com">
-                            <span class="hint">ต้องยืนยัน Domain ใน Resend ก่อน</span>
+                            <label>อีเมลสำหรับใช้ส่ง (Gmail / Google Workspace)</label>
+                            <input type="email" id="email_from" placeholder="pongsatorn.b@ppk.ac.th">
+                            <span class="hint">อีเมลนี้จะเป็นผู้ส่งในอีเมลแจ้งเตือนและใบเสร็จทั้งหมด</span>
                         </div>
                         <div class="form-group">
                             <label>ชื่อผู้ส่ง (From Name)</label>
@@ -1303,6 +1303,24 @@
 
             <!-- Tab: Backup -->
             <div class="tab-content" id="tab-backup">
+                <!-- Section: Full Backup Download -->
+                <div class="section" style="border:2px solid var(--primary); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem; background:linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05));">
+                    <div class="section-title">📦 สำรองข้อมูลทั้งระบบ (Full Backup)</div>
+                    <div class="section-desc">ดาวน์โหลดข้อมูลทั้งหมดในระบบเป็นไฟล์ JSON เก็บไว้ในเครื่องคอมพิวเตอร์ของคุณ ครบทุกตาราง ทุกรายการ</div>
+                    <div style="margin:1rem 0; display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        <span class="badge" style="background:#e0e7ff; color:#4338ca;">👤 ผู้ใช้และสิทธิ์</span>
+                        <span class="badge" style="background:#dbeafe; color:#1d4ed8;">🏠 บ้านพัก/ผู้พักอาศัย</span>
+                        <span class="badge" style="background:#d1fae5; color:#065f46;">💧 ค่าน้ำ/⚡ ค่าไฟ</span>
+                        <span class="badge" style="background:#fef3c7; color:#92400e;">💰 ยอดค้าง/ชำระ/สลิป</span>
+                        <span class="badge" style="background:#fce7f3; color:#9d174d;">📊 บัญชี/เบิกจ่าย</span>
+                        <span class="badge" style="background:#f1f5f9; color:#475569;">⚙️ ตั้งค่า/ประกาศ/Log</span>
+                    </div>
+                    <div id="fullbackup-status" style="display:none; margin:0.75rem 0; padding:0.75rem 1rem; border-radius:8px; font-size:0.92rem;"></div>
+                    <button class="btn btn-primary" id="btn-fullbackup" onclick="downloadFullBackup()" style="font-size:1rem; padding:0.6rem 1.5rem;">
+                        💾 ดาวน์โหลดไฟล์สำรองข้อมูลทั้งระบบ
+                    </button>
+                </div>
+
                 <div class="section">
                     <div class="section-title">🔒 ข้อมูลสำรองอัตโนมัติ</div>
                     <div class="section-desc">ระบบสำรองข้อมูลอัตโนมัติทุกครั้งที่มีการบันทึก สามารถกู้คืนได้ทีละ snapshot</div>
@@ -1325,6 +1343,22 @@
                     <div id="backup-list-container">
                         <div style="color:#64748b; padding:1rem 0; text-align:center;">กดปุ่ม "โหลดรายการสำรอง" เพื่อดูข้อมูล</div>
                     </div>
+                </div>
+
+                <!-- Section: PDPA Anonymization -->
+                <div class="section" style="border:2px solid var(--danger); border-radius:12px; padding:1.25rem; background:rgba(239,68,68,0.04);">
+                    <div class="section-title">🔏 PDPA — ลบข้อมูลส่วนบุคคล</div>
+                    <div class="section-desc" style="margin-bottom:.75rem;">
+                        ลบข้อมูลส่วนบุคคล (ชื่อ อีเมล เบอร์โทร) ของผู้ใช้ที่ระบุตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล โดยระบบจะแทนที่ข้อมูลด้วยค่าว่าง/ไม่ระบุ โดยไม่ลบแถวออกจากฐานข้อมูล
+                    </div>
+                    <div style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;">
+                        <div class="form-group" style="flex:1;min-width:180px;margin:0;">
+                            <label>รหัสผู้ใช้ (User ID) ที่ต้องการลบข้อมูล</label>
+                            <input type="text" id="pdpaUserId" placeholder="กรอก UUID ของผู้ใช้..." style="width:100%;">
+                        </div>
+                        <button class="btn btn-danger" id="btnPdpaAnon" onclick="pdpaAnonymize()">🔏 ลบข้อมูลส่วนบุคคล</button>
+                    </div>
+                    <div id="pdpaStatus" style="display:none;margin-top:.6rem;padding:.6rem .9rem;border-radius:8px;font-size:.9rem;"></div>
                 </div>
             </div>
 
@@ -1721,6 +1755,17 @@
                 <div id="houseResidentsList">
                     <!-- Rendered by JS -->
                 </div>
+
+                <!-- ── Proxy Payment Section ── -->
+                <div style="margin-top:1.5rem; border-top:1.5px solid var(--border); padding-top:1.2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                        <strong style="color:var(--primary); font-size:0.97rem;">🔄 ผู้ชำระแทน</strong>
+                        <button class="btn btn-primary" id="assignProxyBtn" onclick="openAssignProxyModal()" style="font-size:0.82rem; padding:0.4rem 0.85rem;">🔄 กำหนดผู้ชำระแทน</button>
+                    </div>
+                    <div id="proxyInfoBox">
+                        <div style="color:var(--muted); font-size:0.88rem; padding:0.6rem 0.8rem; background:var(--hover); border-radius:8px;">⚠️ ยังไม่ได้กำหนดผู้ชำระแทน</div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeModal('houseDetails')">ปิด</button>
@@ -1728,8 +1773,38 @@
         </div>
     </div>
 
-    <!-- Modal: Move Resident -->
-    <div class="modal-overlay" id="modal-moveResident">
+    <!-- Modal: Assign Proxy Payment -->
+    <div class="modal-overlay" id="modal-assignProxy">
+        <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+                <span class="modal-title">🔄 กำหนดผู้ชำระแทน</span>
+                <button class="modal-close" onclick="closeModal('assignProxy')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" id="assignProxyHouseInfo" style="margin-bottom:1rem;"></div>
+                <div class="form-group">
+                    <label>เลือกผู้ชำระแทน <span style="color:#ef4444">*</span></label>
+                    <select id="assignProxyUserSelect" style="width:100%;">
+                        <option value="">-- กำลังโหลด... --</option>
+                    </select>
+                    <small style="color:var(--muted); margin-top:0.3rem; display:block;">แสดงเฉพาะผู้ใช้งานที่มีบัญชีในระบบ</small>
+                </div>
+                <div class="form-group">
+                    <label>หมายเหตุ (ไม่บังคับ)</label>
+                    <input type="text" id="assignProxyNotes" placeholder="เช่น ผู้พักไม่สะดวกใช้แอปพลิเคชัน" style="width:100%;">
+                </div>
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:0.75rem; font-size:0.85rem; color:#92400e; margin-top:0.5rem;">
+                    ⚠️ ผู้ที่ถูกกำหนดจะสามารถเห็นยอดบิลและส่งสลิปแทนได้จนกว่าจะยกเลิก
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('assignProxy')">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveProxyAssignment()">✅ บันทึกการมอบหมาย</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Move Resident -->    <div class="modal-overlay" id="modal-moveResident">
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title">🔀 ย้ายผู้พักอาศัย</span>
@@ -1853,7 +1928,7 @@
                 const r = await callBackend('getEmailSettings');
                 if (r && r.success && r.settings) {
                     const s = r.settings;
-                    ['resend_api_key','email_from','email_from_name'].forEach(k => {
+                    ['gmail_app_password','email_from','email_from_name'].forEach(k => {
                         const el = document.getElementById(k);
                         if (el && s[k]) el.value = s[k];
                     });
@@ -1863,7 +1938,7 @@
 
         async function saveEmailSettings() {
             const settings = {};
-            ['resend_api_key','email_from','email_from_name'].forEach(k => {
+            ['gmail_app_password','email_from','email_from_name'].forEach(k => {
                 const el = document.getElementById(k);
                 if (el) settings[k] = el.value.trim();
             });
@@ -1883,7 +1958,7 @@
                     subject: '🧪 ทดสอบระบบอีเมล — บ้านพักครู',
                     html: '<div style="font-family:Kanit,sans-serif"><p>ทดสอบการส่งอีเมลจากระบบบ้านพักครู</p><p>หากได้รับอีเมลนี้ แสดงว่าระบบพร้อมใช้งาน ✅</p></div>'
                 });
-                ppkAlert(r && r.success ? '✅ ส่งอีเมลทดสอบสำเร็จ! ตรวจสอบกล่องจดหมาย ' + email : '❌ ไม่สำเร็จ: ' + (r?.error || 'ตรวจสอบ Resend API Key'));
+                ppkAlert(r && r.success ? '✅ ส่งอีเมลทดสอบสำเร็จ! ตรวจสอบกล่องจดหมาย ' + email : '❌ ไม่สำเร็จ: ' + (r?.error || 'ตรวจสอบอีเมลและ Gmail App Password'));
             } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message); }
         }
 
@@ -2467,7 +2542,7 @@
 
             // build table
             var html = '<table class="housing-table"><thead><tr>' +
-                '<th>ชื่อ-นามสกุล</th><th>ที่พัก</th><th>ตำแหน่ง</th><th>ผู้ร่วมพัก</th><th>สถานะ</th><th style="width:100px;">จัดการ</th>' +
+                '<th>ชื่อ-นามสกุล</th><th>อีเมล</th><th>ที่พัก</th><th>ตำแหน่ง</th><th>ผู้ร่วมพัก</th><th>สถานะ</th><th style="width:100px;">จัดการ</th>' +
                 '</tr></thead><tbody>';
 
             filtered.forEach(function(r) {
@@ -2498,8 +2573,11 @@
                 var safeId = String(r.id).replace(/'/g, '&apos;');
                 var safeHouse = (r.house_number || '').replace(/'/g, '&apos;');
 
+                var emailDisplay = r.email ? '<a href="mailto:' + r.email + '" style="color:var(--primary); text-decoration:none; font-size:0.82rem;">' + r.email + '</a>' : '<span style="color:var(--muted);">-</span>';
+
                 html += '<tr' + (isSuspended ? ' style="opacity:0.6;"' : '') + '>' +
                     '<td class="ht-name">' + fullName + '</td>' +
+                    '<td style="max-width:200px; word-break:break-all;">' + emailDisplay + '</td>' +
                     '<td>' + (r.house_number ? houseIcon + ' ' + r.house_number : '<span style="color:var(--muted);">-</span>') + '</td>' +
                     '<td style="max-width:160px;">' + (r.position || '-') + (r.subject_group ? '<br><span style="font-size:0.78rem;color:var(--muted);">' + r.subject_group + '</span>' : '') + '</td>' +
                     '<td style="max-width:180px; font-size:0.82rem; color:var(--muted);">' + coStr + '</td>' +
@@ -2518,6 +2596,7 @@
         // ========== Resident View Mode Functions ==========
         let currentResidentViewMode = 'manageHousing';
         let currentHouseForDetails = null;
+        function _escHtml(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
         function setResidentViewMode(mode) {
             currentResidentViewMode = mode;
@@ -2900,7 +2979,123 @@
             }
 
             openModal('houseDetails');
+            // โหลดข้อมูล proxy ของบ้านนี้ (non-blocking)
+            loadProxyForHouse(currentHouseForDetails);
         }
+
+        // ── Proxy Payment Management ──────────────────────────
+        async function loadProxyForHouse(houseNumber) {
+            const box = document.getElementById('proxyInfoBox');
+            if (!box || !houseNumber || houseNumber === '(ไม่ระบุบ้าน)') return;
+            box.innerHTML = '<div style="font-size:0.85rem;color:var(--muted);padding:0.4rem 0;">⏳ กำลังโหลด...</div>';
+            try {
+                const result = await callBackend('getProxyForHouse', { houseNumber });
+                if (result && result.success && result.data) {
+                    const d = result.data;
+                    const dt = d.assigned_at ? new Date(d.assigned_at).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' }) : '-';
+                    box.innerHTML = `
+                        <div style="border:1px solid #bbf7d0; border-radius:8px; padding:0.75rem 1rem; background:#f0fdf4;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                                <div>
+                                    <div style="font-weight:700; font-size:0.92rem; color:#166534;">👤 ${_escHtml(d.proxy_name)}</div>
+                                    ${d.proxy_house ? `<div style="font-size:0.82rem; color:#6b7280; margin-top:0.15rem;">🏠 บ้านของตัวเอง: ${_escHtml(d.proxy_house)}</div>` : ''}
+                                    <div style="font-size:0.78rem; color:#6b7280; margin-top:0.2rem;">กำหนดเมื่อ ${dt}${d.assigned_by_name ? ' โดย ' + _escHtml(d.assigned_by_name) : ''}</div>
+                                    ${d.notes ? `<div style="font-size:0.8rem; color:#4b5563; margin-top:0.25rem;">📝 ${_escHtml(d.notes)}</div>` : ''}
+                                </div>
+                                <button class="btn btn-danger" style="font-size:0.78rem; padding:0.3rem 0.7rem; white-space:nowrap;" onclick="removeProxyForHouse('${houseNumber.replace(/'/g,"\\'")}')">❌ ยกเลิกมอบหมาย</button>
+                            </div>
+                        </div>`;
+                    document.getElementById('assignProxyBtn').textContent = '🔄 เปลี่ยนผู้ชำระแทน';
+                } else {
+                    box.innerHTML = '<div style="color:var(--muted); font-size:0.88rem; padding:0.6rem 0.8rem; background:var(--hover); border-radius:8px;">⚠️ ยังไม่ได้กำหนดผู้ชำระแทน</div>';
+                    document.getElementById('assignProxyBtn').textContent = '🔄 กำหนดผู้ชำระแทน';
+                }
+            } catch(e) {
+                box.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; padding:0.4rem 0.8rem;">ไม่สามารถโหลดข้อมูลได้</div>';
+            }
+        }
+
+        async function openAssignProxyModal() {
+            if (!currentHouseForDetails || currentHouseForDetails === '(ไม่ระบุบ้าน)') return;
+            document.getElementById('assignProxyHouseInfo').textContent = `🏠 กำหนดผู้ชำระแทนสำหรับ: ${currentHouseForDetails}`;
+            document.getElementById('assignProxyNotes').value = '';
+            const sel = document.getElementById('assignProxyUserSelect');
+            sel.innerHTML = '<option value="">⏳ กำลังโหลด...</option>';
+            openModal('assignProxy');
+            try {
+                // ดึงจาก backend โดยตรง (ไม่พึ่ง localStorage)
+                const res = await callBackend('getResidentsList', {});
+                const residents = (res && res.success && res.data) ? res.data : [];
+                // กรอง: มีบ้าน, มี user_id, ไม่ใช่บ้านที่กำลัง assign, ไม่ใช่ผู้อยู่ร่วม
+                const eligible = residents.filter(r =>
+                    r.house_number &&
+                    r.house_number !== currentHouseForDetails &&
+                    r.user_id &&
+                    r.resident_type !== 'cohabitant'
+                );
+                const _typeOrder = s => s.startsWith('บ้าน') ? 0 : s.startsWith('แฟลต') ? 1 : 2;
+                const _getNum   = s => parseInt((s.match(/\d+/) || ['0'])[0]);
+                eligible.sort((a, b) => {
+                    const ha = a.house_number || '', hb = b.house_number || '';
+                    if (_typeOrder(ha) !== _typeOrder(hb)) return _typeOrder(ha) - _typeOrder(hb);
+                    return _getNum(ha) - _getNum(hb);
+                });
+                if (eligible.length === 0) {
+                    sel.innerHTML = '<option value="">ไม่พบผู้ใช้ที่สามารถกำหนดได้</option>';
+                } else {
+                    sel.innerHTML = '<option value="">-- เลือกผู้ชำระแทน --</option>';
+                    eligible.forEach(r => {
+                        const name = `${r.prefix||''}${r.firstname||''} ${r.lastname||''}`.trim();
+                        const opt = document.createElement('option');
+                        opt.value = r.user_id;
+                        opt.textContent = `${name} (${r.house_number})`;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch(e) {
+                sel.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลด</option>';
+            }
+        }
+
+        async function saveProxyAssignment() {
+            const userId = document.getElementById('assignProxyUserSelect').value;
+            const notes = document.getElementById('assignProxyNotes').value.trim();
+            if (!userId) { ppkAlert('กรุณาเลือกผู้ชำระแทน'); return; }
+            if (!currentHouseForDetails) return;
+            const selEl = document.getElementById('assignProxyUserSelect');
+            const selText = selEl.options[selEl.selectedIndex]?.text || '';
+            const ok = await ppkConfirm(`ยืนยันกำหนดให้\n${selText}\nเป็นผู้ชำระแทน ${currentHouseForDetails}?`);
+            if (!ok) return;
+            try {
+                const result = await callBackend('setProxyAssignment', { houseNumber: currentHouseForDetails, proxyUserId: userId, notes });
+                if (result && result.success) {
+                    ppkToast('บันทึกการมอบหมายเรียบร้อยแล้ว', 'success');
+                    closeModal('assignProxy');
+                    loadProxyForHouse(currentHouseForDetails);
+                } else {
+                    ppkAlert('⚠️ ' + (result?.error || 'ไม่สามารถบันทึกได้'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        async function removeProxyForHouse(houseNumber) {
+            const ok = await ppkConfirm(`ยืนยันยกเลิกการมอบหมายผู้ชำระแทน\nสำหรับ ${houseNumber}?`, { type: 'danger', okText: 'ยกเลิกมอบหมาย', cancelText: 'ไม่ยกเลิก' });
+            if (!ok) return;
+            try {
+                const result = await callBackend('removeProxyAssignment', { houseNumber });
+                if (result && result.success) {
+                    ppkToast('ยกเลิกการมอบหมายเรียบร้อยแล้ว', 'success');
+                    loadProxyForHouse(houseNumber);
+                } else {
+                    ppkAlert('⚠️ ' + (result?.error || 'ไม่สามารถยกเลิกได้'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+        // ─────────────────────────────────────────────────────
 
         async function addResidentToCurrentHouse() {
             closeModal('houseDetails');
@@ -3768,6 +3963,86 @@
                 }
             } catch(e) {
                 ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        // ========== PDPA Anonymization ==========
+        async function pdpaAnonymize() {
+            var userId = (document.getElementById('pdpaUserId').value || '').trim();
+            if (!userId) { ppkAlert('กรุณากรอก User ID ที่ต้องการลบข้อมูล'); return; }
+            var confirmed = await ppkConfirm('⚠️ ลบข้อมูลส่วนบุคคล\n\nUser ID: ' + userId + '\n\nข้อมูลชื่อ อีเมล และเบอร์โทรจะถูกแทนที่ด้วยค่าว่าง/ไม่ระบุ\nการดำเนินการนี้ไม่สามารถย้อนกลับได้\n\nต้องการดำเนินการหรือไม่?');
+            if (!confirmed) return;
+            var btn = document.getElementById('btnPdpaAnon');
+            var statusEl = document.getElementById('pdpaStatus');
+            if (btn) btn.disabled = true;
+            if (statusEl) { statusEl.style.display = 'block'; statusEl.style.background = '#eff6ff'; statusEl.style.color = '#1e40af'; statusEl.textContent = '⏳ กำลังดำเนินการ...'; }
+            try {
+                var r = await callBackend('anonymizeUser', { userId: userId });
+                if (r && r.success) {
+                    if (statusEl) { statusEl.style.background = '#d1fae5'; statusEl.style.color = '#065f46'; statusEl.textContent = '✅ ลบข้อมูลส่วนบุคคลสำเร็จ'; }
+                    document.getElementById('pdpaUserId').value = '';
+                } else {
+                    if (statusEl) { statusEl.style.background = '#fee2e2'; statusEl.style.color = '#991b1b'; statusEl.textContent = '❌ ' + ((r && r.error) || 'ไม่สำเร็จ'); }
+                }
+            } catch(e) {
+                if (statusEl) { statusEl.style.background = '#fee2e2'; statusEl.style.color = '#991b1b'; statusEl.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message; }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // ========== Full Backup Download ==========
+        async function downloadFullBackup() {
+            var btn = document.getElementById('btn-fullbackup');
+            var statusEl = document.getElementById('fullbackup-status');
+            if (btn) btn.disabled = true;
+            if (btn) btn.textContent = '⏳ กำลังดึงข้อมูลทั้งระบบ...';
+            if (statusEl) { statusEl.style.display = 'block'; statusEl.style.background = '#eff6ff'; statusEl.style.color = '#1e40af'; statusEl.textContent = '⏳ กำลังเชื่อมต่อฐานข้อมูลและดึงข้อมูลทุกตาราง กรุณารอสักครู่...'; }
+            try {
+                var r = await callBackend('exportFullBackup', {});
+                if (!r || !r.success) {
+                    if (statusEl) { statusEl.style.background = '#fef2f2'; statusEl.style.color = '#991b1b'; statusEl.textContent = '❌ ไม่สำเร็จ: ' + ((r && r.error) || 'ลองใหม่อีกครั้ง'); }
+                    return;
+                }
+                var backupObj = {
+                    _meta: {
+                        system: 'HOME PPK 2026',
+                        exportedAt: r.exportedAt || new Date().toISOString(),
+                        version: '1.0'
+                    },
+                    tables: r.data
+                };
+                // Count records
+                var totalRecords = 0;
+                var tableNames = Object.keys(r.data || {});
+                tableNames.forEach(function(t) { totalRecords += (r.data[t] || []).length; });
+                backupObj._meta.totalTables = tableNames.length;
+                backupObj._meta.totalRecords = totalRecords;
+
+                var jsonStr = JSON.stringify(backupObj, null, 2);
+                var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                var now = new Date();
+                var fname = 'HOME-PPK-BACKUP-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + '.json';
+                a.download = fname;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                var sizeMB = (blob.size / 1048576).toFixed(2);
+                if (statusEl) {
+                    statusEl.style.background = '#f0fdf4'; statusEl.style.color = '#166534';
+                    statusEl.innerHTML = '✅ สำรองข้อมูลสำเร็จ!<br>' +
+                        '📁 ไฟล์: <b>' + fname + '</b> (' + sizeMB + ' MB)<br>' +
+                        '📊 ' + tableNames.length + ' ตาราง, ' + totalRecords.toLocaleString() + ' รายการ';
+                }
+            } catch(e) {
+                if (statusEl) { statusEl.style.background = '#fef2f2'; statusEl.style.color = '#991b1b'; statusEl.textContent = '❌ เกิดข้อผิดพลาด: ' + (e.message || e); }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '💾 ดาวน์โหลดไฟล์สำรองข้อมูลทั้งระบบ'; }
             }
         }
 
@@ -5065,7 +5340,7 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>
