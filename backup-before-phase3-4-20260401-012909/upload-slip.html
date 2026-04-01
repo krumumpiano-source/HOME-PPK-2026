@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -304,49 +304,6 @@
 
         // ============ โหลดยอดที่ต้องชำระ ============
         async function loadBillingInfo(){
-            // ── Departing user: โหลดยอดค้างจาก outstanding ตาม userId ──
-            var _cu = {}; try { _cu = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
-            if (_cu.departing) {
-                try {
-                    var outResult = await callBackend('getOutstanding', { userId: _cu.userId });
-                    var outItems = (outResult && outResult.success) ? (outResult.data || []) : [];
-                    var unpaid = outItems.filter(function(o) { return o.status !== 'paid'; });
-                    if (unpaid.length === 0) {
-                        document.getElementById('display-unit').textContent = 'ย้ายออกแล้ว';
-                        document.getElementById('display-period').textContent = '-';
-                        document.getElementById('display-amount').innerHTML = '<span style="color:#059669;font-weight:600;">✅ ไม่มียอดค้างชำระ</span>';
-                        document.getElementById('paid-amount').value = '';
-                        document.getElementById('paid-amount').disabled = true;
-                        document.querySelector('.submit-btn').disabled = true;
-                        document.querySelector('.submit-btn').textContent = '✅ ชำระครบแล้ว';
-                        window.billingInfo = { unitNumber: '', period: '', notifiedAmount: 0, noBillData: true };
-                        return;
-                    }
-                    // ใช้ outstanding แรกที่ยังไม่จ่าย
-                    var firstOut = unpaid[0];
-                    var totalOut = unpaid.reduce(function(s, o) { return s + (parseFloat(o.total_amount || o.amount) || 0); }, 0);
-                    unitNumber = firstOut.house_number || '';
-                    var outPeriod = firstOut.period || (firstOut.year + '-' + String(firstOut.month).padStart(2, '0'));
-                    document.getElementById('display-unit').textContent = unitNumber + ' (ย้ายออกแล้ว)';
-                    document.getElementById('display-period').textContent = 'ยอดค้างทั้งหมด';
-                    document.getElementById('display-amount').textContent = formatMoney(totalOut) + ' บาท';
-                    document.getElementById('paid-amount').value = totalOut;
-                    window.billingInfo = {
-                        unitNumber: unitNumber,
-                        periodKey: periodKey,
-                        period: outPeriod,
-                        notifiedAmount: totalOut,
-                        residentName: _cu.firstname || '',
-                        isDeparting: true,
-                        userId: _cu.userId
-                    };
-                } catch(e) {
-                    console.error('loadBillingInfo departing error:', e);
-                    document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;">❌ โหลดยอดค้างไม่สำเร็จ</span>';
-                }
-                return;
-            }
-
             document.getElementById('display-unit').textContent = unitNumber || '-';
             document.getElementById('display-period').textContent = formatPeriod(periodKey);
 
@@ -760,9 +717,7 @@
                         qrRef:       _qrData.ref || null,
                         qrRaw:       _qrData.raw || null,
                         submittedByName:  proxyData.submittedByName || null,
-                        submittedByHouse: proxyData.submittedByHouse || null,
-                        isDeparting: (window.billingInfo && window.billingInfo.isDeparting) || false,
-                        userId: (window.billingInfo && window.billingInfo.userId) || null
+                        submittedByHouse: proxyData.submittedByHouse || null
                     }, {}));
                     const _wasEdit = !!_editSlipId;
                     if (submitResult && submitResult.success) {
@@ -877,29 +832,39 @@
 
         async function initProxyPanel(user) {
             if (user.role === 'admin' || user.role === 'head') return; // admin/head ใช้ override panel ของตัวเอง
-            if (user.departing) return; // departing user ไม่ต้องใช้ proxy panel
             myHouseNumber = unitNumber;
             myUserName = ((user.firstname || '') + ' ' + (user.lastname || '')).trim();
-
-            // ดึงเฉพาะบ้านที่ admin มอบหมายให้เราชำระแทน
-            var assignments = [];
-            try {
-                var aRes = await callBackend('getMyProxyAssignments', {});
-                if (aRes && aRes.success) assignments = aRes.data || [];
-            } catch(e) {}
-
-            // ถ้าไม่มีการมอบหมายเลย ให้ซ่อน toggle ไม่แสดงเมนูส่งแทน
-            if (assignments.length === 0) return;
-
             document.getElementById('proxy-toggle-container').style.display = 'block';
 
+            var houses = [], residents = [];
+            try {
+                var hRes = await cachedCall('getHousingList', {}, 600000);
+                if (hRes && hRes.success) houses = hRes.data || [];
+            } catch(e) {}
+            try {
+                var rRes = await cachedCall('getResidentsList', {}, 600000);
+                if (rRes && rRes.success) residents = rRes.data || [];
+            } catch(e) {}
+
+            houses.sort(function(a, b) {
+                var typeA = (a.display_number||'').indexOf('บ้าน') === 0 ? 0 : 1;
+                var typeB = (b.display_number||'').indexOf('บ้าน') === 0 ? 0 : 1;
+                if (typeA !== typeB) return typeA - typeB;
+                return parseInt((a.display_number||'').match(/\d+/)||[0]) - parseInt((b.display_number||'').match(/\d+/)||[0]);
+            });
+
             var sel = document.getElementById('proxy-house-select');
-            assignments.forEach(function(a) {
+            houses.forEach(function(h) {
+                var dn = h.display_number || '';
+                if (!dn || dn === myHouseNumber) return;
+                if (h.status !== 'occupied') return;
+                var res = residents.find(function(r){ return r.house_number === dn && r.resident_type !== 'cohabitant'; });
+                var resName = res ? ((res.prefix||'') + (res.firstname||'') + ' ' + (res.lastname||'')).trim() : '';
                 var opt = document.createElement('option');
-                opt.value = a.house_number;
-                opt.setAttribute('data-resident-name', a.resident_name || '');
-                opt.setAttribute('data-resident-id', '');
-                opt.textContent = a.house_number + (a.resident_name ? ' \u2014 ' + a.resident_name : '');
+                opt.value = dn;
+                opt.setAttribute('data-resident-name', resName);
+                opt.setAttribute('data-resident-id', res ? res.id : '');
+                opt.textContent = dn + (resName ? ' \u2014 ' + resName : '');
                 sel.appendChild(opt);
             });
         }
@@ -991,10 +956,10 @@
     <script src="libs/jsqr.min.js?v=20260323"></script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401A"></script>
-    <script src="ppk-app.js?v=20260401A"></script>
-    <script src="ppk-utils.js?v=20260401A"></script>
-    <script src="ppk-nav.js?v=20260401A"></script>
+    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>
