@@ -1449,6 +1449,14 @@ async function _routeAction(action, data) {
         case 'submitSlip': {
             // Validate inputs
             if (!data.period) return { success: false, error: 'ไม่ระบุงวด' };
+            // ตรวจ format period (YYYY-MM) และห้ามส่งเดือนอนาคต
+            if (!/^\d{4}-\d{2}$/.test(data.period)) return { success: false, error: 'รูปแบบงวดไม่ถูกต้อง (ต้องเป็น YYYY-MM)' };
+            var _pParts = data.period.split('-');
+            var _pYear = parseInt(_pParts[0]), _pMonth = parseInt(_pParts[1]);
+            if (_pMonth < 1 || _pMonth > 12) return { success: false, error: 'เดือนไม่ถูกต้อง' };
+            var _nowP = new Date();
+            var _curYearBE = _nowP.getFullYear() + 543, _curMonth = _nowP.getMonth() + 1;
+            if (_pYear > _curYearBE || (_pYear === _curYearBE && _pMonth > _curMonth)) return { success: false, error: 'ไม่สามารถส่งสลิปล่วงหน้าเดือนอนาคตได้' };
             if (!data.amount || parseFloat(data.amount) <= 0) return { success: false, error: 'จำนวนเงินไม่ถูกต้อง' };
             // ตรวจสอบ departing user
             var slipSess = await _getSessionRole();
@@ -2155,14 +2163,16 @@ async function _routeAction(action, data) {
                                 if (upaRR && upaRR[0]) { var ur = upaRR[0]; upaResName = ((ur.prefix||'') + (ur.firstname||'') + ' ' + (ur.lastname||'')).trim(); }
                             } catch(e) {}
                             var upaOut = null;
-                            try { var upaOutR = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, moved_out_at: 'is.null', limit: '1' }); upaOut = upaOutR && upaOutR[0]; } catch(e) {}
+                            var upaAllOut = [];
+                            try { upaAllOut = await sbGet('outstanding', { house_number: 'eq.' + upaP.house_number, status: 'neq.paid', moved_out_at: 'is.null', order: 'period.asc', limit: '12' }); upaOut = upaAllOut && upaAllOut[0]; } catch(e) {}
                             var upaNotif = null;
                             if (!upaOut) {
                                 try { var upaNotifR = await sbGet('notifications', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'sent_at.desc', limit: '1' }); upaNotif = upaNotifR && upaNotifR[0]; } catch(e) {}
                             }
                             var upaSrc = upaOut || upaNotif;
+                            var upaSlipPeriod = upaSrc ? upaSrc.period : period;
                             var upaSlip = null;
-                            try { var upaSlipR = await sbGet('slip_submissions', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }); upaSlip = upaSlipR && upaSlipR[0]; } catch(e) {}
+                            try { var upaSlipR = await sbGet('slip_submissions', { house_number: 'eq.' + upaP.house_number, period: 'eq.' + upaSlipPeriod, order: 'submitted_at.desc', limit: '1' }); upaSlip = upaSlipR && upaSlipR[0]; } catch(e) {}
                             var upaSlipStatus = 'none', upaReviewNote = '', upaSlipId = null;
                             if (upaSlip) {
                                 upaSlipId = upaSlip.id;
@@ -2171,7 +2181,7 @@ async function _routeAction(action, data) {
                                 else upaSlipStatus = 'reviewing';
                             }
                             userProxyAssignments.push({
-                                house_number: upaP.house_number, resident_name: upaResName, period: period,
+                                house_number: upaP.house_number, resident_name: upaResName, period: upaSlipPeriod,
                                 amount: upaSrc ? parseFloat(upaSrc.total_amount) || 0 : 0,
                                 water_amount: upaSrc ? parseFloat(upaSrc.water_amount) || 0 : 0,
                                 electric_amount: upaSrc ? parseFloat(upaSrc.electric_amount) || 0 : 0,
