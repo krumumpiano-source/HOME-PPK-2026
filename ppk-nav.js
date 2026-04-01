@@ -66,10 +66,19 @@ function renderPPKNav(containerId, activePage) {
 
   // Floating user = ผู้ใช้ที่ยังไม่ได้รับมอบหมายบ้านพัก
   var isFloatingUser = !isAdmin && !houseNumber;
+  // Departing user = ย้ายออกแล้ว แต่ยังค้างชำระ
+  var isDepartingUser = !isAdmin && !!user.departing;
 
   // Resident menu items — ถ้ายังไม่มีบ้าน แสดงเฉพาะ: แดชบอร์ด, คำร้องขอเข้าพัก, ระเบียบ, ตั้งค่า
   var residentLinks;
-  if (isFloatingUser) {
+  if (isDepartingUser) {
+    residentLinks =
+      navSection('\ud83c\udfe0 \u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22') +
+      navLink('dashboard',       '\ud83d\udcca', '\u0e41\u0e14\u0e0a\u0e1a\u0e2d\u0e23\u0e4c\u0e14',       '\u0e22\u0e2d\u0e14\u0e04\u0e49\u0e32\u0e07\u0e0a\u0e33\u0e23\u0e30') +
+      navLink('upload-slip',     '\ud83d\udcf7', '\u0e2a\u0e48\u0e07\u0e2a\u0e25\u0e34\u0e1b',           '\u0e2a\u0e48\u0e07\u0e2b\u0e25\u0e31\u0e01\u0e10\u0e32\u0e19\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30') +
+      navLink('payment-history', '\ud83d\udcb3', '\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e0a\u0e33\u0e23\u0e30', '\u0e22\u0e2d\u0e14\u0e04\u0e49\u0e32\u0e07\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e30\u0e2a\u0e25\u0e34\u0e1b') +
+      navLink('settings',        '\u2699\ufe0f', '\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e31\u0e27',  '\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e48\u0e32\u0e19');
+  } else if (isFloatingUser) {
     residentLinks =
       navSection('\ud83c\udfe0 \u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01\u0e2d\u0e32\u0e28\u0e31\u0e22') +
       navLink('dashboard',       '\ud83d\udcca', '\u0e41\u0e14\u0e0a\u0e1a\u0e2d\u0e23\u0e4c\u0e14',       '\u0e20\u0e32\u0e1e\u0e23\u0e27\u0e21\u0e41\u0e25\u0e30\u0e17\u0e32\u0e07\u0e25\u0e31\u0e14') +

@@ -494,6 +494,7 @@
                     if (cells.length < 7) continue;
                     var hn = (cells[0].textContent || '').trim();
                     if (!hn) continue;
+                    var residentName = (cells[1].textContent || '').trim().replace(/\s+/g, ' ');
                     var water = parseFloat((cells[3].textContent || '0').replace(/,/g, '')) || 0;
                     var electric = parseFloat((cells[4].textContent || '0').replace(/,/g, '')) || 0;
                     var commonInput = cells[5].querySelector('.common-input');
@@ -504,7 +505,8 @@
                         houseNumber: hn, period: period,
                         waterAmount: water, electricAmount: electric,
                         commonFee: common, totalAmount: total,
-                        dueDate: dueDate, sentAt: notifyDate + 'T00:00:00'
+                        dueDate: dueDate, sentAt: notifyDate + 'T00:00:00',
+                        residentName: residentName
                     });
                 }
             });
@@ -521,6 +523,15 @@
             var user; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) { user = {}; }
             var success = 0, fail = 0;
 
+            // Pre-fetch housing map เพื่อส่ง houseId (ลดจำนวน query)
+            var _nHouseMap = {};
+            try {
+                var _nHResult = await callBackend('getHousing', {});
+                if (_nHResult && _nHResult.data) {
+                    (_nHResult.data || []).forEach(function(h) { if (h.house_number) _nHouseMap[h.house_number] = h.id; });
+                }
+            } catch(e) {}
+
             // ลบ notification เดิมของ period นี้ก่อน แล้ว insert ใหม่ทั้งหมด
             try {
                 await callBackend('deleteNotifications', { period: period });
@@ -530,11 +541,13 @@
                 try {
                     var r = allRows[i];
                     await callBackend('saveNotification', {
+                        houseId: _nHouseMap[r.houseNumber] || null,
                         houseNumber: r.houseNumber, period: r.period,
                         waterAmount: r.waterAmount, electricAmount: r.electricAmount,
                         commonFee: r.commonFee, totalAmount: r.totalAmount,
                         dueDate: r.dueDate, sentAt: r.sentAt,
-                        sentBy: user.id || ''
+                        sentBy: user.id || '',
+                        residentName: r.residentName
                     });
                     success++;
                 } catch (e) {

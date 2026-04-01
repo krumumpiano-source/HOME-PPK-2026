@@ -304,6 +304,49 @@
 
         // ============ โหลดยอดที่ต้องชำระ ============
         async function loadBillingInfo(){
+            // ── Departing user: โหลดยอดค้างจาก outstanding ตาม userId ──
+            var _cu = {}; try { _cu = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            if (_cu.departing) {
+                try {
+                    var outResult = await callBackend('getOutstanding', { userId: _cu.userId });
+                    var outItems = (outResult && outResult.success) ? (outResult.data || []) : [];
+                    var unpaid = outItems.filter(function(o) { return o.status !== 'paid'; });
+                    if (unpaid.length === 0) {
+                        document.getElementById('display-unit').textContent = 'ย้ายออกแล้ว';
+                        document.getElementById('display-period').textContent = '-';
+                        document.getElementById('display-amount').innerHTML = '<span style="color:#059669;font-weight:600;">✅ ไม่มียอดค้างชำระ</span>';
+                        document.getElementById('paid-amount').value = '';
+                        document.getElementById('paid-amount').disabled = true;
+                        document.querySelector('.submit-btn').disabled = true;
+                        document.querySelector('.submit-btn').textContent = '✅ ชำระครบแล้ว';
+                        window.billingInfo = { unitNumber: '', period: '', notifiedAmount: 0, noBillData: true };
+                        return;
+                    }
+                    // ใช้ outstanding แรกที่ยังไม่จ่าย
+                    var firstOut = unpaid[0];
+                    var totalOut = unpaid.reduce(function(s, o) { return s + (parseFloat(o.total_amount || o.amount) || 0); }, 0);
+                    unitNumber = firstOut.house_number || '';
+                    var outPeriod = firstOut.period || (firstOut.year + '-' + String(firstOut.month).padStart(2, '0'));
+                    document.getElementById('display-unit').textContent = unitNumber + ' (ย้ายออกแล้ว)';
+                    document.getElementById('display-period').textContent = 'ยอดค้างทั้งหมด';
+                    document.getElementById('display-amount').textContent = formatMoney(totalOut) + ' บาท';
+                    document.getElementById('paid-amount').value = totalOut;
+                    window.billingInfo = {
+                        unitNumber: unitNumber,
+                        periodKey: periodKey,
+                        period: outPeriod,
+                        notifiedAmount: totalOut,
+                        residentName: _cu.firstname || '',
+                        isDeparting: true,
+                        userId: _cu.userId
+                    };
+                } catch(e) {
+                    console.error('loadBillingInfo departing error:', e);
+                    document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;">❌ โหลดยอดค้างไม่สำเร็จ</span>';
+                }
+                return;
+            }
+
             document.getElementById('display-unit').textContent = unitNumber || '-';
             document.getElementById('display-period').textContent = formatPeriod(periodKey);
 
@@ -717,7 +760,9 @@
                         qrRef:       _qrData.ref || null,
                         qrRaw:       _qrData.raw || null,
                         submittedByName:  proxyData.submittedByName || null,
-                        submittedByHouse: proxyData.submittedByHouse || null
+                        submittedByHouse: proxyData.submittedByHouse || null,
+                        isDeparting: (window.billingInfo && window.billingInfo.isDeparting) || false,
+                        userId: (window.billingInfo && window.billingInfo.userId) || null
                     }, {}));
                     const _wasEdit = !!_editSlipId;
                     if (submitResult && submitResult.success) {
@@ -832,6 +877,7 @@
 
         async function initProxyPanel(user) {
             if (user.role === 'admin' || user.role === 'head') return; // admin/head ใช้ override panel ของตัวเอง
+            if (user.departing) return; // departing user ไม่ต้องใช้ proxy panel
             myHouseNumber = unitNumber;
             myUserName = ((user.firstname || '') + ' ' + (user.lastname || '')).trim();
             document.getElementById('proxy-toggle-container').style.display = 'block';
