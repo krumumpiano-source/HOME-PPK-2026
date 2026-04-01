@@ -907,6 +907,8 @@ async function _routeAction(action, data) {
             }
             _logActivity('reject_registration', data.reviewedBy || null, 'ปฏิเสธการลงทะเบียน', { regId: regId, note: data.note });
             return { success: true };
+        }
+        case 'getWaterBills': {
             var q = { order: 'recorded_at.desc' };
             if (data.period) q.period = 'eq.' + data.period;
             if (data.year) { q.period = 'gte.' + data.year + '-01'; q['period'] = undefined; q['period:gte'] = data.year + '-01'; delete q['period:gte']; q.period = 'gte.' + data.year + '-01'; }
