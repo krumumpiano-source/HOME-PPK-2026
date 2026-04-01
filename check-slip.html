@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -440,6 +440,23 @@
           const slipResult = await callBackendGet('getSlipSubmissions', { period });
           const slipData = (slipResult && slipResult.success) ? (slipResult.data || []) : [];
 
+          // ดึงยอดจาก outstanding + notifications เพื่อ cross-check กับ getBillSummaryAll
+          // (ยอดที่แจ้งผู้พักไปจริงอาจต่างจากที่คำนวณใหม่)
+          var outResult = null, notifResult = null;
+          try {
+              [outResult, notifResult] = await Promise.all([
+                  callBackendGet('getOutstanding', {}),
+                  callBackendGet('getNotificationHistory', { period: period })
+              ]);
+          } catch(e) {}
+          var outMap = {}, notifTotalMap = {};
+          ((outResult && outResult.success ? outResult.data : []) || []).forEach(function(o) {
+              if (o.house_number && o.period === period && parseFloat(o.total_amount) > 0) outMap[o.house_number] = parseFloat(o.total_amount);
+          });
+          ((notifResult && notifResult.success ? notifResult.data : []) || []).forEach(function(n) {
+              if (n.house_number && parseFloat(n.total_amount) > 0) notifTotalMap[n.house_number] = parseFloat(n.total_amount);
+          });
+
           // รวมข้อมูล
           billData.forEach((bill, idx) => {
             const unitNumber = String(bill.house_number || '');
@@ -454,7 +471,7 @@
               waterAmount: parseFloat(bill.water_amount) || 0,
               electricAmount: parseFloat(bill.electric_amount) || 0,
               commonFee: parseFloat(bill.common_fee) || 0,
-              notifiedAmount: parseFloat(bill.total_amount || 0) || ((parseFloat(bill.water_amount)||0) + (parseFloat(bill.electric_amount)||0) + (parseFloat(bill.common_fee)||0)),
+              notifiedAmount: notifTotalMap[unitNumber] || outMap[unitNumber] || parseFloat(bill.total_amount || 0) || ((parseFloat(bill.water_amount)||0) + (parseFloat(bill.electric_amount)||0) + (parseFloat(bill.common_fee)||0)),
               paidAmount: slip ? parseFloat(slip.amount) || 0 : null,
               slipImages: [],
               slipDate: slip ? (slip.submitted_at || null) : null,
