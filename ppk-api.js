@@ -2884,7 +2884,7 @@ async function _routeAction(action, data) {
         case 'updateQueue': {
             var ids = data.orderedIds || [];
             for (var i = 0; i < ids.length; i++) {
-                await sbPatch('queue', { id: 'eq.' + ids[i] }, { position: i + 1, updated_at: new Date().toISOString() });
+                await sbPatch('queue', { request_id: 'eq.' + ids[i], status: 'eq.waiting' }, { position: i + 1, updated_at: new Date().toISOString() });
             }
             return { success: true };
         }
