@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -468,9 +468,6 @@
             <button class="tab-btn" data-tab="return" onclick="switchTab('return')">
                 📤 ขอคืนบ้านพัก <span class="tab-badge" id="badgeReturn">0</span>
             </button>
-            <button class="tab-btn" data-tab="swap" onclick="switchTab('swap')">
-                ↔️ ขอสลับบ้าน <span class="tab-badge" id="badgeSwap">0</span>
-            </button>
         </div>
 
         <!-- Tab: Residence Requests -->
@@ -680,45 +677,6 @@
                             </tr>
                         </thead>
                         <tbody id="returnTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab: Swap Requests -->
-        <div class="tab-content" id="tab-swap">
-            <div class="section-card">
-                <h3 class="section-title">↔️ คำร้องขอสลับบ้านพัก</h3>
-                <div class="controls-row">
-                    <div class="form-group">
-                        <label>กรองสถานะ</label>
-                        <select id="filterSwapStatus" onchange="renderSwapRequests()">
-                            <option value="">ทั้งหมด</option>
-                            <option value="pending">รอดำเนินการ</option>
-                            <option value="approved">อนุมัติแล้ว</option>
-                            <option value="rejected">ไม่อนุมัติ</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>ค้นหา</label>
-                        <input type="text" id="searchSwap" placeholder="ชื่อ, หมายเลขบ้าน..." oninput="renderSwapRequests()">
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:50px;">#</th>
-                                <th>วันที่ยื่น</th>
-                                <th>ชื่อ-นามสกุล</th>
-                                <th>บ้านปัจจุบัน</th>
-                                <th>ขอสลับกับบ้าน</th>
-                                <th>เหตุผล</th>
-                                <th>สถานะ</th>
-                                <th style="width:150px;">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="swapTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1153,13 +1111,10 @@
             document.getElementById('statQueue').textContent = residence.filter(d => d.status === 'waiting').length;
 
             // Update badges
-            var transferNonSwap = transfer.filter(d => d.transferType !== 'swap');
-            var swapOnly = transfer.filter(d => d.transferType === 'swap');
             document.getElementById('badgeResidence').textContent = residence.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
             document.getElementById('badgeRepair').textContent = repair.filter(d => d.status !== 'completed' && d.status !== 'cancelled').length;
-            document.getElementById('badgeTransfer').textContent = transferNonSwap.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
+            document.getElementById('badgeTransfer').textContent = transfer.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
             document.getElementById('badgeReturn').textContent = returnData.filter(d => d.status !== 'completed' && d.status !== 'cancelled').length;
-            document.getElementById('badgeSwap').textContent = swapOnly.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
         }
 
         function renderQueue() {
@@ -1362,7 +1317,7 @@
 
         function renderTransferRequests() {
             const tbody = document.getElementById('transferTableBody');
-            let data = getData('transfer').filter(d => d.transferType !== 'swap');
+            let data = getData('transfer');
             
             const statusFilter = document.getElementById('filterTransferStatus').value;
             const searchFilter = document.getElementById('searchTransfer').value.toLowerCase();
@@ -1444,91 +1399,6 @@
             `).join('');
         }
 
-        function renderSwapRequests() {
-            const tbody = document.getElementById('swapTableBody');
-            // swap requests are stored as type:transfer, transferType:swap
-            let data = getData('transfer').filter(d => d.transferType === 'swap');
-            
-            const statusFilter = document.getElementById('filterSwapStatus').value;
-            const searchFilter = document.getElementById('searchSwap').value.toLowerCase();
-
-            if (statusFilter) data = data.filter(d => d.status === statusFilter);
-            if (searchFilter) {
-                data = data.filter(d => 
-                    d.fullname.toLowerCase().includes(searchFilter) ||
-                    d.currentHouse.toLowerCase().includes(searchFilter)
-                );
-            }
-
-            data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
-
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบคำร้องขอสลับบ้าน</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(function(item, index) {
-                var swapTarget = item.requestedHouse || item.swap_target_house || '-';
-                return '<tr>'
-                    + '<td>' + (index + 1) + '</td>'
-                    + '<td>' + formatDate(item.submitDate) + '</td>'
-                    + '<td style="text-align:left;">' + _e(item.prefix) + _e(item.fullname) + '</td>'
-                    + '<td>' + _e(item.currentHouse) + '</td>'
-                    + '<td>' + _e(swapTarget) + '</td>'
-                    + '<td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + _e(item.transferReason) + '">' + _e(item.transferReason) + '</td>'
-                    + '<td>' + getStatusBadge(item.status) + '</td>'
-                    + '<td>'
-                    + '<div style="display:flex;gap:0.3rem;justify-content:center;">'
-                    + '<button class="btn btn-sm btn-info" onclick="showDetail(\'transfer\', \'' + item.id + '\')">📋</button>'
-                    + (item.status === 'pending' ? '<button class="btn btn-sm" style="background:#ecfdf5;color:#10b981;border-color:#a7f3d0;" onclick="handleApproveSwap(\'' + item.id + '\')">✅ อนุมัติสลับ</button>' : '')
-                    + '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;border-color:#fecaca;" onclick="deleteRequestDirect(\'transfer\',\'' + item.id + '\')" title="ลบคำร้อง">🗑️</button>'
-                    + '</div>'
-                    + '</td>'
-                    + '</tr>';
-            }).join('');
-        }
-
-        async function handleApproveSwap(requestId) {
-            var data = getData('transfer');
-            var item = data.find(function(d) { return d.id === requestId; });
-            if (!item) return;
-
-            var swapTarget = item.requestedHouse || item.swap_target_house || '';
-            if (!swapTarget) {
-                ppkAlert('❌ ไม่พบข้อมูลบ้านที่ต้องการสลับ');
-                return;
-            }
-
-            var msg = '🔄 ยืนยันสลับบ้าน?\n\n'
-                + '• ' + (item.prefix || '') + item.fullname + ' (บ้าน ' + item.currentHouse + ')\n'
-                + '• สลับกับบ้าน ' + swapTarget + '\n\n'
-                + 'เมื่อกดยืนยัน ระบบจะสลับผู้อยู่อาศัย + ครอบครัวของทั้ง 2 บ้านทันที';
-
-            if (!confirm(msg)) return;
-
-            try {
-                var result = await callBackend('approveSwap', {
-                    requestId: requestId
-                });
-
-                if (!result || !result.success) {
-                    ppkAlert('❌ อนุมัติสลับไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
-                    return;
-                }
-
-                _clearRequestsCache();
-
-                // update cache
-                item.status = 'approved';
-                saveData('transfer', data);
-
-                renderAll();
-                ppkAlert('✅ สลับบ้านเรียบร้อย\n\n• บ้าน ' + (result.house1 || item.currentHouse) + ' ↔ บ้าน ' + (result.house2 || swapTarget));
-            } catch(e) {
-                ppkAlert('❌ อนุมัติสลับไม่สำเร็จ: ' + (e.message || ''));
-            }
-        }
-
         function renderAll() {
             updateStats();
             renderQueue();
@@ -1536,7 +1406,6 @@
             renderRepairRequests();
             renderTransferRequests();
             renderReturnRequests();
-            renderSwapRequests();
         }
 
         // ========== Modal Functions ==========
@@ -2164,20 +2033,6 @@
                 return;
             }
 
-            // ถ้าเลือก "อนุมัติ" สำหรับ return → ใช้ approveReturn API แทน
-            if (currentEditType === 'return' && newStatus === 'approved') {
-                closeModal('statusModal');
-                await handleApproveReturn(currentEditId, note);
-                return;
-            }
-
-            // ถ้าเลือก "อนุมัติ" สำหรับ transfer → ใช้ approveTransfer API แทน
-            if (currentEditType === 'transfer' && newStatus === 'approved') {
-                closeModal('statusModal');
-                await handleApproveTransfer(currentEditId, note);
-                return;
-            }
-
             try {
                 await updateRequestStatus(currentEditType, currentEditId, newStatus, note);
 
@@ -2200,177 +2055,6 @@
             } catch (e) {
                 console.error('saveStatus error', e);
                 ppkAlert('❌ บันทึกสถานะไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
-            }
-        }
-
-        // ========== Approve Return — แสดงยอดค้าง + ยืนยัน ==========
-        async function handleApproveReturn(id, note) {
-            const data = getData('return');
-            const item = data.find(d => d.id === id);
-            if (!item) { ppkAlert('ไม่พบข้อมูลคำร้อง'); return; }
-
-            // แสดง loading
-            var loadingMsg = '⏳ กำลังตรวจสอบยอดค้างชำระ...';
-            ppkToast(loadingMsg, 'info');
-
-            try {
-                // Query outstanding ของบ้านนี้
-                var outResult = await callBackend('getOutstanding', { houseNumber: item.houseNumber });
-                var outItems = (outResult && outResult.success) ? (outResult.data || []) : [];
-                var unpaid = outItems.filter(function(o) { return o.status !== 'paid'; });
-                var totalOut = unpaid.reduce(function(s, o) { return s + (parseFloat(o.total_amount || o.amount) || 0); }, 0);
-
-                var confirmMsg = '';
-                if (totalOut > 0) {
-                    confirmMsg = '⚠️ อนุมัติคืนบ้าน: ' + (item.prefix || '') + (item.fullname || '') + '\n'
-                        + '🏠 บ้านเลขที่: ' + item.houseNumber + '\n\n'
-                        + '❗ มียอดค้างชำระ ' + totalOut.toLocaleString('th-TH') + ' บาท\n\n'
-                        + '• บ้านจะถูกปลดเป็น "ว่าง" ทันที\n'
-                        + '• ผู้พักจะยังใช้งานระบบได้จนกว่าจะชำระครบ\n'
-                        + '• เมื่อชำระครบ ระบบจะปิดบัญชีอัตโนมัติ\n\n'
-                        + 'ยืนยันอนุมัติ?';
-                } else {
-                    confirmMsg = '✅ อนุมัติคืนบ้าน: ' + (item.prefix || '') + (item.fullname || '') + '\n'
-                        + '🏠 บ้านเลขที่: ' + item.houseNumber + '\n\n'
-                        + '✓ ไม่มียอดค้างชำระ\n'
-                        + '• บ้านจะถูกปลดเป็น "ว่าง" ทันที\n'
-                        + '• ผู้พักจะถูกปิดบัญชีทันที\n\n'
-                        + 'ยืนยันอนุมัติ?';
-                }
-
-                var confirmed = await ppkConfirm(confirmMsg, {
-                    type: totalOut > 0 ? 'warning' : 'info',
-                    okText: 'อนุมัติคืนบ้าน',
-                    cancelText: 'ยกเลิก'
-                });
-                if (!confirmed) return;
-
-                // เรียก approveReturn API
-                var result = await callBackend('approveReturn', {
-                    requestId: id,
-                    note: note || ''
-                });
-
-                if (!result || !result.success) {
-                    ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
-                    return;
-                }
-
-                _clearRequestsCache();
-
-                // อัปเดต local cache
-                if (item) {
-                    item.status = 'approved';
-                    if (note) item.notes = note;
-                    saveData('return', data);
-                }
-
-                renderAll();
-
-                if (totalOut > 0) {
-                    ppkAlert('✅ อนุมัติคืนบ้านเรียบร้อย\n\n• บ้าน ' + item.houseNumber + ' ว่างแล้ว\n• ผู้พักอยู่ระหว่างรอชำระยอดค้าง ' + totalOut.toLocaleString('th-TH') + ' บาท\n• เมื่อชำระครบ ระบบจะปิดบัญชีอัตโนมัติ');
-                } else {
-                    ppkAlert('✅ อนุมัติคืนบ้านเรียบร้อย\n\n• บ้าน ' + item.houseNumber + ' ว่างแล้ว\n• ผู้พักถูกปิดบัญชีเรียบร้อยแล้ว');
-                }
-            } catch (e) {
-                console.error('approveReturn error:', e);
-                ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
-            }
-        }
-
-        // ========== Approve Transfer — เลือกบ้านปลายทาง + ย้าย ==========
-        async function handleApproveTransfer(id, note) {
-            const data = getData('transfer');
-            const item = data.find(d => d.id === id);
-            if (!item) { ppkAlert('ไม่พบข้อมูลคำร้อง'); return; }
-
-            ppkToast('⏳ กำลังโหลดข้อมูลบ้านว่าง...', 'info');
-
-            try {
-                // ดึงบ้านว่าง
-                var housingResult = await callBackend('getHousing', {});
-                var allHousing = (housingResult && housingResult.success) ? (housingResult.data || []) : [];
-                var available = allHousing.filter(function(h) { return h.status === 'available'; });
-
-                // ถ้ามี target_house ที่ระบุใน request → ตรวจว่าว่างไหม
-                var requestedHouse = item.requestedHouse || item.target_house || '';
-                var preSelected = '';
-                if (requestedHouse) {
-                    var found = available.find(function(h) { return h.house_number === requestedHouse; });
-                    if (found) preSelected = requestedHouse;
-                }
-
-                if (available.length === 0) {
-                    ppkAlert('❌ ไม่มีบ้านว่าง ไม่สามารถอนุมัติย้ายได้');
-                    return;
-                }
-
-                var options = available.map(function(h) {
-                    var sel = (h.house_number === preSelected) ? ' selected' : '';
-                    return '<option value="' + h.house_number + '"' + sel + '>' + h.house_number + ' (' + (h.type || '') + ')</option>';
-                }).join('');
-
-                var confirmMsg = '🔄 อนุมัติย้ายบ้าน: ' + (item.prefix || '') + (item.fullname || '') + '\n'
-                    + '📍 บ้านเดิม: ' + (item.currentHouse || '-') + '\n'
-                    + (requestedHouse ? '📍 ขอย้ายไป: ' + requestedHouse + (preSelected ? ' ✅ (ว่าง)' : ' ❌ (ไม่ว่าง)') + '\n' : '');
-
-                // สร้าง modal เลือกบ้านปลายทาง
-                var html = '<div style="background:#fff;border-radius:16px;padding:1.5rem;max-width:500px;margin:0 auto;">'
-                    + '<h3 style="margin:0 0 0.5rem;color:#2563eb;">🔄 อนุมัติย้ายบ้าน</h3>'
-                    + '<p style="margin:0 0 1rem;font-size:0.9rem;color:#6b7280;">' + (item.prefix || '') + (item.fullname || '') + ' — จากบ้าน ' + (item.currentHouse || '-') + '</p>'
-                    + '<div style="margin-bottom:0.8rem;"><label style="font-weight:600;font-size:0.9rem;">เลือกบ้านปลายทาง:</label>'
-                    + '<select id="transferTargetHouse" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;">'
-                    + '<option value="">-- เลือกบ้านว่าง --</option>' + options + '</select></div>'
-                    + '<div style="display:flex;gap:0.5rem;">'
-                    + '<button onclick="confirmApproveTransfer(\'' + id + '\')" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">อนุมัติย้าย</button>'
-                    + '<button onclick="closeTransferModal()" style="flex:1;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">ยกเลิก</button>'
-                    + '</div></div>';
-
-                var overlay = document.createElement('div');
-                overlay.id = 'transferApproveOverlay';
-                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;';
-                overlay.innerHTML = html;
-                document.body.appendChild(overlay);
-            } catch(e) {
-                ppkAlert('❌ โหลดข้อมูลไม่สำเร็จ: ' + (e.message || ''));
-            }
-        }
-
-        function closeTransferModal() {
-            var el = document.getElementById('transferApproveOverlay');
-            if (el) el.remove();
-        }
-
-        async function confirmApproveTransfer(requestId) {
-            var sel = document.getElementById('transferTargetHouse');
-            if (!sel || !sel.value) { ppkAlert('กรุณาเลือกบ้านปลายทาง'); return; }
-            var targetHouse = sel.value;
-
-            try {
-                var result = await callBackend('approveTransfer', {
-                    requestId: requestId,
-                    targetHouseNumber: targetHouse,
-                    note: ''
-                });
-
-                closeTransferModal();
-
-                if (!result || !result.success) {
-                    ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
-                    return;
-                }
-
-                _clearRequestsCache();
-
-                var data = getData('transfer');
-                var item = data.find(d => d.id === requestId);
-                if (item) { item.status = 'approved'; saveData('transfer', data); }
-
-                renderAll();
-                ppkAlert('✅ อนุมัติย้ายบ้านเรียบร้อย\n\n• จาก: ' + (result.oldHouse || '-') + '\n• ไป: ' + (result.newHouse || targetHouse));
-            } catch(e) {
-                closeTransferModal();
-                ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (e.message || ''));
             }
         }
 
@@ -2532,10 +2216,10 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401A"></script>
-    <script src="ppk-app.js?v=20260401A"></script>
-    <script src="ppk-utils.js?v=20260401A"></script>
-    <script src="ppk-nav.js?v=20260401A"></script>
+    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>

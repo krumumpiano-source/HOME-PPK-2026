@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -450,7 +450,6 @@
               unitNumber: unitNumber,
               name: bill.resident_name || '',
               email: bill.email || '',
-              proxyEmail: bill.proxy_email || '',
               waterAmount: parseFloat(bill.water_amount) || 0,
               electricAmount: parseFloat(bill.electric_amount) || 0,
               commonFee: parseFloat(bill.common_fee) || 0,
@@ -465,11 +464,7 @@
               proxyNote: slip ? (slip.account_name || '') : '',
               qrAmount: slip ? (parseFloat(slip.qr_amount) || null) : null,
               qrRef: slip ? (slip.qr_ref || null) : null,
-              noResident: false,
-              prevMeter: bill.prev_meter != null ? parseFloat(bill.prev_meter) : null,
-              currMeter: bill.curr_meter != null ? parseFloat(bill.curr_meter) : null,
-              dueDate: bill.due_date || null,
-              notifiedAt: bill.notified_at || null
+              noResident: false
             };
 
             if (slip && slip.slip_url) {
@@ -496,7 +491,6 @@
                 unitNumber: unitNumber,
                 name: slip.resident_name || '',
                 email: slip.email || '',
-                proxyEmail: slip.proxy_email || '',
                 waterAmount: 0, electricAmount: 0, commonFee: 0,
                 notifiedAmount: parseFloat(slip.notified_amount) || 0,
                 paidAmount: parseFloat(slip.amount) || 0,
@@ -746,13 +740,9 @@
         if(unit.noResident){
           actionsHtml = '<span style="color:var(--muted);font-size:.85rem;">ไม่มีผู้พัก</span>';
         } else if(status === 'approved'){
-          const _sentStyle = unit.receiptEmailSent ? ' style="background:#6b7280;border-color:#6b7280;cursor:default;"' : '';
-          const _sentDisabled = unit.receiptEmailSent ? ' disabled' : '';
-          const _sentLabel = unit.receiptEmailSent ? '✅ ส่งแล้ว' : '📧 ส่งใบเสร็จ';
-          const _sentTitle = unit.receiptEmailSent ? 'ส่งใบเสร็จทางอีเมลแล้ว' : 'ส่งใบเสร็จทางอีเมล';
           actionsHtml = '<div class="action-btns">' +
             '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
-            '<button class="btn btn-sm btn-success"' + _sentDisabled + _sentStyle + ' onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="' + _sentTitle + '">' + _sentLabel + '</button>' +
+            '<button class="btn btn-sm btn-success" onclick="sendReceiptEmail(\'' + type + '\',' + index + ')" title="ส่งใบเสร็จทางอีเมล">📧 ส่งใบเสร็จ</button>' +
           '</div>';
         } else if(status === 'unpaid'){
           actionsHtml = '<div class="action-btns">' +
@@ -797,14 +787,6 @@
     }
 
     function renderAll(){
-      // restore receipt-sent state from localStorage before rendering
-      const { key } = getSelectedPeriod();
-      const _sentKey = 'receiptSent_' + key;
-      let _sentSet = new Set();
-      try { _sentSet = new Set(JSON.parse(localStorage.getItem(_sentKey) || '[]')); } catch(e) {}
-      [...housesData, ...flatsData].forEach(function(u) {
-        if (_sentSet.has(u.unitNumber)) u.receiptEmailSent = true;
-      });
       renderTable('houses');
       renderTable('flats');
     }
@@ -1065,23 +1047,13 @@
         try {
           const { month, year } = getSelectedPeriod();
           const _period = year + '-' + month;
-          // Query outstanding เพื่อส่ง outstandingId → backend จะ auto-mark paid
-          var _outId = null;
-          try {
-            var _outResult = await callBackend('getOutstanding', { houseNumber: unit.unitNumber, status: 'unpaid' });
-            if (_outResult && _outResult.data) {
-              var _outMatch = (_outResult.data || []).filter(function(o) { return o.period === _period; });
-              if (_outMatch.length > 0) _outId = _outMatch[0].id;
-            }
-          } catch(e) {}
           const result = await callBackend('reviewSlip', {
             id: unit.slipId,
             status: 'approved',
             note: '',
             houseNumber: unit.unitNumber,
             period: _period,
-            amount: unit.paidAmount,
-            outstandingId: _outId
+            amount: unit.paidAmount
           });
           if (result && result.success) {
             // ลบ cache bill summary เพื่อโหลดสถานะใหม่
@@ -1091,11 +1063,9 @@
             const { monthName, year: yr } = getSelectedPeriod();
             const paidDate = new Date().toLocaleDateString('th-TH');
             try {
-              const _autoEmail = (unit.email || '').trim();
-              const _autoEmailOk = _autoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_autoEmail) && _autoEmail.length <= 320;
-              if (_autoEmailOk) {
+              if (unit.email) {
                 const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
-                await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+                await callBackend('sendEmail', { to: unit.email, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
               }
             } catch(e) {}
             ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
@@ -1159,7 +1129,7 @@
 
       const subject = `แจ้งเตือนค่าสาธารณูปโภค ${monthName} ${year} — บ้านพัก ${unit.unitNumber}`;
       const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">
-<p>เรียน ${unit.name || 'ผู้พักอาศัย'}</p>
+<p>เรียน คุณ${unit.name || 'ผู้พักอาศัย'}</p>
 <p>เรื่อง: <strong>แจ้งเตือนการชำระค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}</strong></p>
 <pre style="background:#fef9c3;padding:12px;border-radius:8px;border:1px solid #fde047">${details}</pre>
 <p>${emailReminderNote}</p>
@@ -1167,11 +1137,9 @@
 
       let emailSent = false;
 
-      const _remEmail = (unit.email || unit.proxyEmail || '').trim();
-      const _remEmailOk = _remEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_remEmail) && _remEmail.length <= 320;
-      if (_remEmailOk) {
+      if (unit.email) {
         try {
-          const er = await callBackend('sendEmail', { to: _remEmail, subject, html });
+          const er = await callBackend('sendEmail', { to: unit.email, subject, html });
           emailSent = er && er.success;
         } catch (e) { console.error('sendEmail reminder error:', e); }
       }
@@ -1183,39 +1151,12 @@
       }
     }
 
-    // wrapper สำหรับปุ่มรายตัว — จัดการ loading state
-    async function sendReceiptEmailBtn(btn, type, index) {
-      btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
-      try {
-        const ok = await sendReceiptEmail(type, index);
-        if (ok) {
-          const list = type === 'houses' ? housesData : flatsData;
-          if (list[index]) list[index].receiptEmailSent = true;
-          // persist to localStorage
-          const { key } = getSelectedPeriod();
-          const _sentKey = 'receiptSent_' + key;
-          let _sentArr = [];
-          try { _sentArr = JSON.parse(localStorage.getItem(_sentKey) || '[]'); } catch(e) {}
-          if (!_sentArr.includes(list[index].unitNumber)) _sentArr.push(list[index].unitNumber);
-          localStorage.setItem(_sentKey, JSON.stringify(_sentArr));
-          btn.disabled = true;
-          btn.innerHTML = '✅ ส่งแล้ว';
-          btn.style.background = '#6b7280';
-          btn.style.borderColor = '#6b7280';
-          btn.title = 'ส่งใบเสร็จทางอีเมลแล้ว';
-        } else {
-          btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ';
-        }
-      } catch(e) { btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ'; }
-    }
-
     // ส่งใบเสร็จทางอีเมล
     async function sendReceiptEmail(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
       if(!unit.approval) { ppkAlert('ยังไม่ได้อนุมัติการชำระเงินของห้องนี้'); return; }
-      console.log('[sendReceiptEmail] unit.email =', JSON.stringify(unit.email), 'unit.unitNumber =', unit.unitNumber);
 
       const { monthName, year } = getSelectedPeriod();
       const sysSettings = cachedAdminSettings || {};
@@ -1223,63 +1164,30 @@
       const emailReceiptNote = sysSettings.emailReceiptNote || 'ขอบคุณที่ชำระตรงเวลาครับ/ค่ะ';
       const paidDate = unit.approval?.approvedAt ? new Date(unit.approval.approvedAt).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH');
 
-      const dueDateStr = unit.dueDate ? new Date(unit.dueDate).toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'}) : '-';
-      const notifiedAtStr = unit.notifiedAt ? new Date(unit.notifiedAt).toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'}) : '-';
-      const slipDateStr = unit.slipDate
-        ? new Date(unit.slipDate).toLocaleString('th-TH', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})
-        : (unit.approval?.approvedAt ? new Date(unit.approval.approvedAt).toLocaleString('th-TH', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}) : paidDate);
-      const waterUnits = (unit.prevMeter != null && unit.currMeter != null) ? (unit.currMeter - unit.prevMeter) : null;
-      const defaultFooter = 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม';
-      const emailSigFinal = sysSettings.emailSignature || defaultFooter;
-
-      const subject = `ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year} - ${unit.unitNumber}`;
-      const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.8;color:#0f172a">
-<p>เรียน ${unit.name || 'ผู้พักอาศัย'}</p>
-<div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:18px;margin:12px 0">
-  <p style="margin:0 0 12px;font-size:16px">✅ <strong>ใบเสร็จรับเงินค่าสาธารณูปโภค ${monthName} ${year}</strong></p>
-  <table style="width:100%;border-collapse:collapse;font-size:14px">
-    <tr><td style="padding:4px 8px;color:#64748b;width:45%">บ้านพัก/ห้อง</td><td style="padding:4px 8px"><strong>${unit.unitNumber}</strong></td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">ชื่อผู้ชำระ</td><td style="padding:4px 8px"><strong>${unit.name || '-'}</strong></td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">วันที่แจ้งชำระ</td><td style="padding:4px 8px">${notifiedAtStr}</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">วันครบกำหนด</td><td style="padding:4px 8px">${dueDateStr}</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">วันเวลาที่ชำระ</td><td style="padding:4px 8px">${slipDateStr}</td></tr>
-  </table>
-  <hr style="border:none;border-top:1px solid #bbf7d0;margin:12px 0">
-  <table style="width:100%;border-collapse:collapse;font-size:14px">
-    <tr><td style="padding:4px 8px;color:#64748b;width:45%">💧 มิเตอร์น้ำก่อน</td><td style="padding:4px 8px;text-align:right">${unit.prevMeter != null ? unit.prevMeter.toLocaleString('th-TH') : '-'} หน่วย</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">💧 มิเตอร์น้ำหลัง</td><td style="padding:4px 8px;text-align:right">${unit.currMeter != null ? unit.currMeter.toLocaleString('th-TH') : '-'} หน่วย</td></tr>
-    <tr style="background:#dcfce7"><td style="padding:4px 8px;color:#166534">💧 รวมหน่วยน้ำ</td><td style="padding:4px 8px;text-align:right;color:#166534;font-weight:bold">${waterUnits != null ? waterUnits.toLocaleString('th-TH') : '-'} หน่วย</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">💧 ค่าน้ำ</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.waterAmount)} บาท</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">⚡ ค่าไฟ</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.electricAmount)} บาท</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">🏢 ค่าส่วนกลาง</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.commonFee)} บาท</td></tr>
-    <tr style="background:#16a34a;color:#fff"><td style="padding:6px 8px;font-weight:bold">💰 รวมทั้งสิ้น</td><td style="padding:6px 8px;text-align:right;font-weight:bold">${formatMoney(unit.notifiedAmount)} บาท</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">✅ ยอดที่ชำระ</td><td style="padding:4px 8px;text-align:right;color:#16a34a;font-weight:bold">${formatMoney(unit.paidAmount)} บาท</td></tr>
-  </table>
+      const subject = `ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year} - บ้านพัก ${unit.unitNumber}`;
+      const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">
+<p>เรียน คุณ${unit.name || 'ผู้พักอาศัย'}</p>
+<div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px;margin:12px 0">
+<p>✅ <strong>ใบเสร็จรับเงินค่าสาธารณูปโภค ${monthName} ${year}</strong></p>
+<p>บ้านพัก/ห้อง: <strong>${unit.unitNumber}</strong></p>
+<p>ชื่อผู้ชำระ: <strong>${unit.name || '-'}</strong></p>
+<p>ยอดที่แจ้ง: <strong>${formatMoney(unit.notifiedAmount)} บาท</strong></p>
+<p>ยอดที่ชำระ: <strong>${formatMoney(unit.paidAmount)} บาท</strong></p>
+<p>วันที่ชำระ: <strong>${paidDate}</strong></p>
+<p>สถานะ: ✓ ได้รับชำระเรียบร้อยแล้ว</p>
 </div>
 <p>${emailReceiptNote}</p>
-<p style="color:#64748b;font-size:13px">—<br>${emailSigFinal}</p></div>`;
+<p>---<br>${emailSig}</p></div>`;
 
       let emailSent = false;
-      let emailError = '';
 
-      // ตรวจสอบว่า email ถูกต้อง
-      const emailTo = (unit.email || unit.proxyEmail || '').trim();
-      const emailValid = emailTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTo) && emailTo.length <= 320;
-
-      if (emailValid) {
+      if (unit.email) {
         try {
-          const er = await callBackend('sendEmail', { to: emailTo, subject, html });
+          const er = await callBackend('sendEmail', { to: unit.email, subject, html });
           emailSent = er && er.success;
-          if (!emailSent) emailError = (er && er.error) || 'ไม่ทราบสาเหตุ';
-        } catch(e) { console.error('sendReceiptEmail error:', e); emailError = e.message || 'เกิดข้อผิดพลาด'; }
+        } catch(e) { console.error('sendReceiptEmail error:', e); }
       }
 
-      if (emailSent) {
-        ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
-      } else {
-        var errMsg = !emailTo ? '⚠️ ไม่พบอีเมลของผู้พัก' : !emailValid ? '⚠️ อีเมลไม่ถูกต้อง: ' + emailTo : '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '');
-        ppkAlert(errMsg, { type: 'error' });
-      }
       return emailSent;
     }
 
@@ -1311,7 +1219,7 @@
         }
       }
 
-      ppkAlert(`ส่งอีเมลเตือน${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
+      ppkAlert(`ส่งอีเมลเตือน${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ไม่สำเร็จ: ${failed} รายการ`);
     }
 
     // ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)
@@ -1340,20 +1248,10 @@
         const _rIdx = list.indexOf(_ru);
         if (_rIdx < 0) { failed++; continue; }
         const _rok = await sendReceiptEmail(type, _rIdx);
-        if (_rok) {
-          sent++;
-          if (list[_rIdx]) list[_rIdx].receiptEmailSent = true;
-          // persist to localStorage
-          const { key: _rKey } = getSelectedPeriod();
-          const _rSentKey = 'receiptSent_' + _rKey;
-          let _rSentArr = [];
-          try { _rSentArr = JSON.parse(localStorage.getItem(_rSentKey) || '[]'); } catch(e) {}
-          if (!_rSentArr.includes(list[_rIdx].unitNumber)) _rSentArr.push(list[_rIdx].unitNumber);
-          localStorage.setItem(_rSentKey, JSON.stringify(_rSentArr));
-        } else failed++;
+        if(_rok) sent++; else failed++;
       }
 
-      ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
+      ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่สำเร็จ/ไม่มีอีเมล: ${failed} รายการ`);
     }
 
     // ── Export CSV ── ดาวน์โหลดข้อมูลสรุปสลิปเป็นไฟล์ CSV (รองรับภาษาไทยด้วย BOM)
@@ -1421,12 +1319,12 @@
       yearSelect.innerHTML = '';
       const now = new Date();
       const yearBE = toBuddhistYear(now.getFullYear());
-      for (let y = yearBE + 1; y >= 2568; y--) {
+      [yearBE, yearBE-1, yearBE-2].forEach(y => {
         const opt = document.createElement('option');
         opt.value = String(y);
         opt.textContent = String(y);
         yearSelect.appendChild(opt);
-      }
+      });
 
       monthSelect.value = String(now.getMonth()+1).padStart(2,'0');
       yearSelect.value = String(yearBE);
@@ -1496,15 +1394,6 @@
 
       // ส่ง Backend ก่อน
       try {
-          // Query outstanding เพื่อส่ง outstandingId
-          var _mpOutId = null;
-          try {
-            var _mpOutResult = await callBackend('getOutstanding', { houseNumber: unit.unitNumber, status: 'unpaid' });
-            if (_mpOutResult && _mpOutResult.data) {
-              var _mpOutMatch = (_mpOutResult.data || []).filter(function(o) { return o.period === period; });
-              if (_mpOutMatch.length > 0) _mpOutId = _mpOutMatch[0].id;
-            }
-          } catch(e) {}
           // สร้าง slip record (manual)
           const submitResult = await callBackend('submitSlip', {
             houseNumber: unit.unitNumber,
@@ -1522,8 +1411,7 @@
               note:        payNote || 'บันทึกด้วยตนเอง',
               houseNumber: unit.unitNumber,
               period:      period,
-              amount:      paidAmount,
-              outstandingId: _mpOutId
+              amount:      paidAmount
             });
             // ลบ cache bill summary
             localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: period }));
@@ -1615,10 +1503,10 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401A"></script>
-    <script src="ppk-app.js?v=20260401A"></script>
-    <script src="ppk-utils.js?v=20260401A"></script>
-    <script src="ppk-nav.js?v=20260401A"></script>
+    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>แบบรายงานขอซ่อมแซม | HOME PPK 2026</title>
+    <title>แบบขอย้ายที่พัก | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
     <style>
         body {
@@ -51,6 +51,8 @@
         .form-group textarea { min-height: 80px; resize: vertical; }
         .checkbox-group { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin: 0.75rem 0; }
         .checkbox-group input[type="checkbox"] { margin-top: 0.25rem; width: 1.1em; height: 1.1em; }
+        .radio-group { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin: 0.75rem 0; }
+        .radio-group input[type="radio"] { margin-top: 0.25rem; width: 1.1em; height: 1.1em; }
         .name-row { display: flex; gap: 0.6rem; }
         .name-row .form-group { flex: 1; }
         .auto-fill-note {
@@ -97,14 +99,14 @@
 </head>
 <body>
     <div class="form-container">
-        <h2>แบบฟอร์มแจ้งซ่อมแซมบำรุงรักษา</h2>
+        <h2>แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต</h2>
 
-        <form id="repairForm" action="#" method="post" enctype="multipart/form-data">
-            <!-- ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม -->
+        <form id="transferForm" action="#" method="post" enctype="multipart/form-data">
+            <!-- ส่วนที่ 1: ข้อมูลส่วนตัว -->
             <div class="form-section">
-                <h3>ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม</h3>
-                <div class="info-box">
-                    <p><strong>หมายเหตุ:</strong> ข้อมูลผู้แจ้งซ่อมจะถูกดึงมาจากบัญชีผู้ใช้โดยอัตโนมัติ</p>
+                <h3>ส่วนที่ 1: ข้อมูลส่วนตัว</h3>
+                <div class="auto-fill-note">
+                    * ข้อมูลส่วนนี้จะดึงจากระบบโดยอัตโนมัติเมื่อเชื่อมต่อกับฐานข้อมูล
                 </div>
                 <div class="form-group">
                     <label>คำนำหน้า</label>
@@ -119,16 +121,30 @@
                     <input type="text" name="fullname" id="fullname" required>
                 </div>
                 <div class="form-group">
-                    <label>หมายเลขบ้านพักครู</label>
-                    <input type="text" name="house_number" id="house_number" required placeholder="เช่น บ้านพักครูหลังที่ 1">
-                </div>
-                <div class="form-group">
                     <label>หมายเลขโทรศัพท์</label>
                     <input type="tel" name="phone" id="phone" required>
                 </div>
                 <div class="form-group">
+                    <label>ตำแหน่งทางวิชาการ</label>
+                    <select name="position" id="position">
+                        <option value="">เลือกตำแหน่ง</option>
+                        <option value="ครูผู้ช่วย">ครูผู้ช่วย</option>
+                        <option value="ครู">ครู</option>
+                        <option value="ครูชำนาญการ">ครูชำนาญการ (คศ.2)</option>
+                        <option value="ครูชำนาญการพิเศษ">ครูชำนาญการพิเศษ (คศ.3)</option>
+                        <option value="ครูเชี่ยวชาญ">ครูเชี่ยวชาญ (คศ.4)</option>
+                        <option value="ครูเชี่ยวชาญพิเศษ">ครูเชี่ยวชาญพิเศษ (คศ.5)</option>
+                        <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
+                        <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
+                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                        <option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option>
+                        <option value="ลูกจ้างชั่วคราว">ลูกจ้างชั่วคราว</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>กลุ่มสาระการเรียนรู้</label>
                     <select name="subject_group" id="subject_group">
+                        <option value="">-- เลือกกลุ่มสาระ --</option>
                         <option value="ภาษาไทย">ภาษาไทย</option>
                         <option value="คณิตศาสตร์">คณิตศาสตร์</option>
                         <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
@@ -137,77 +153,65 @@
                         <option value="ศิลปะ">ศิลปะ</option>
                         <option value="การงานอาชีพ">การงานอาชีพ</option>
                         <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
-                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
-                        <option value="ลูกจ้าง">ลูกจ้าง</option>
+                        <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option>
+                        <option value="ไม่ระบุ">ไม่ระบุ (เจ้าหน้าที่/ลูกจ้าง)</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>บ้านพัก/ห้องพักปัจจุบัน</label>
+                    <input type="text" name="current_house" id="current_house" placeholder="เลขประจำบ้านพักหรือแฟลต" required>
+                </div>
             </div>
 
-            <!-- ส่วนที่ 2: รายละเอียดงานซ่อมแซม/บำรุงรักษา -->
+            <!-- ส่วนที่ 2: รายละเอียดการขอย้าย -->
             <div class="form-section">
-                <h3>ส่วนที่ 2: รายละเอียดงานซ่อมแซม/บำรุงรักษา</h3>
+                <h3>ส่วนที่ 2: รายละเอียดการขอย้าย</h3>
+                
                 <div class="form-group">
-                    <label>ประเภทงาน (โปรดเลือก)</label>
+                    <label>ประเภทการขอย้าย (โปรดเลือก)</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="transfer_type" value="flat_to_house" required> ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว</label>
+                        <label><input type="radio" name="transfer_type" value="house_to_flat"> ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต</label>
+                        <label><input type="radio" name="transfer_type" value="change_unit"> เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>บ้านพัก/ห้องพักที่ต้องการย้ายไป (หากประสงค์บันทึกเพื่อรอคิว ไม่ต้องระบุเลขบ้านพักหรือแฟลตปลายทาง)</label>
+                    <input type="text" name="target_house" id="target_house" placeholder="เลขประจำบ้านพักหรือแฟลตปลายทาง">
+                </div>
+
+                <div class="form-group">
+                    <label>เหตุผลในการขอย้าย (โปรดเลือก)</label>
                     <div class="checkbox-group">
-                        <label><input type="checkbox" name="work_type" value="electrical"> ระบบไฟฟ้า</label>
-                        <label><input type="checkbox" name="work_type" value="plumbing"> ระบบน้ำประปา</label>
-                        <label><input type="checkbox" name="work_type" value="structure"> โครงสร้างอาคาร (ผนัง หลังคา ฯลฯ)</label>
-                        <label><input type="checkbox" name="work_type" value="fixtures"> อุปกรณ์ตกแต่ง (ประตู หน้าต่าง ลูกบิด ฯลฯ)</label>
-                        <label><input type="checkbox" name="work_type" value="utilities"> ระบบสาธารณูปโภคส่วนกลาง</label>
-                        <label><input type="checkbox" name="work_type" value="other" onchange="toggleOtherWorkType()"> อื่นๆ (โปรดระบุ)</label>
-                        <input type="text" name="other_work_type" id="other_work_type" placeholder="โปรดระบุประเภทงานอื่นๆ" style="margin-left: 1.5rem; margin-top: 0.3rem;" disabled>
+                        <label><input type="checkbox" name="reason" value="family_space"> ต้องการพื้นที่พักอาศัยที่เหมาะสมกับจำนวนสมาชิกในครอบครัว</label>
+                        <label><input type="checkbox" name="reason" value="family_responsibility"> มีภาระครอบครัวที่ต้องการความสะดวกเพิ่มเติม</label>
+                        <label><input type="checkbox" name="reason" value="health_issue"> ปัญหาด้านสุขภาพหรือข้อจำกัดส่วนตัว</label>
+                        <label><input type="checkbox" name="reason" value="other"> อื่น ๆ (โปรดระบุ)</label>
                     </div>
+                    <input type="text" name="other_reason" id="other_reason" placeholder="โปรดระบุเหตุผลอื่น ๆ" style="margin-top: 0.5rem;">
                 </div>
+
                 <div class="form-group">
-                    <label>รายละเอียดปัญหา / ความเสียหาย</label>
-                    <textarea name="problem_detail" rows="5" required placeholder="กรุณาอธิบายรายละเอียดของปัญหาหรือความเสียหายที่พบ"></textarea>
+                    <label>รายละเอียดเพิ่มเติม (ถ้ามี)</label>
+                    <textarea name="additional_info" id="additional_info" rows="3" placeholder="กรุณาระบุรายละเอียดเพิ่มเติมที่ต้องการแจ้งให้ทราบ"></textarea>
                 </div>
             </div>
 
-            <!-- ส่วนที่ 3: ความเร่งด่วนของงาน -->
+            <!-- ส่วนที่ 3: ข้อตกลง -->
             <div class="form-section">
-                <h3>ส่วนที่ 3: ความเร่งด่วนของงาน</h3>
-                <div class="checkbox-group">
-                    <label><input type="radio" name="urgency" value="urgent_high" required> <strong style="color: #dc2626;">ด่วนมาก</strong> (ส่งผลกระทบร้ายแรง)</label>
-                    <label><input type="radio" name="urgency" value="urgent"> <strong style="color: #f59e0b;">ด่วน</strong> (ส่งผลกระทบบางส่วน)</label>
-                    <label><input type="radio" name="urgency" value="normal"> <strong style="color: #10b981;">ปกติ</strong> (ไม่มีผลกระทบเร่งด่วน)</label>
-                </div>
-            </div>
-
-            <!-- ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย -->
-            <div class="form-section">
-                <h3>ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย</h3>
-                <div class="checkbox-group">
-                    <label><input type="radio" name="cost_responsibility" value="self" required onchange="toggleCostEstimate()"> ผู้พักอาศัยรับผิดชอบค่าใช้จ่ายเอง</label>
-                    <label><input type="radio" name="cost_responsibility" value="school" onchange="toggleCostEstimate()"> ขอความอนุเคราะห์จากทางโรงเรียน</label>
-                </div>
-                <div class="form-group" id="cost-estimate-group" style="margin-top: 1rem;">
-                    <label>ค่าใช้จ่ายโดยประมาณ (รายการซ่อมพร้อมราคา)</label>
-                    <div id="cost-items-container">
-                        <!-- รายการค่าใช้จ่ายจะถูกเพิ่มที่นี่ -->
-                    </div>
-                    <button type="button" id="add-cost-btn" onclick="addCostItem()" style="background-color: #4f8cff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 0.5rem;">เพิ่มรายการ</button>
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label>รวมค่าใช้จ่ายทั้งหมด (บาท)</label>
-                        <input type="text" name="total_cost" id="total_cost" readonly style="background-color: #f0f7ff; font-weight: bold;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- ส่วนที่ 5: ข้อตกลง -->
-            <div class="form-section">
-                <h3>ส่วนที่ 5: ข้อตกลง</h3>
-                <p>ข้าพเจ้าขอรับรองว่า ข้อมูลที่แจ้งข้างต้นเป็นความจริงทุกประการ และยินยอมปฏิบัติตามระเบียบงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</p>
+                <h3>ส่วนที่ 3: ข้อตกลง</h3>
+                <p>ข้าพเจ้าขอรับรองว่า ข้อมูลที่ใช้ประกอบการขอย้ายบ้านพัก/เปลี่ยนยูนิตนี้เป็นความจริงทุกประการ และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p>
                 <div class="checkbox-group">
                     <label><input type="checkbox" name="agreement" required> ข้าพเจ้ายอมรับข้อตกลงข้างต้น</label>
                 </div>
             </div>
 
-            <!-- ช่องแนบไฟล์เอกสาร/รูปภาพ -->
+            <!-- ช่องแนบไฟล์เอกสาร -->
             <div class="form-section">
-                <label>แนบไฟล์รูปภาพความเสียหาย หรือเอกสารที่เกี่ยวข้อง (ถ้ามี)</label>
+                <label>แนบไฟล์เอกสารที่เกี่ยวข้อง (ถ้ามี)</label>
                 <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 1rem; text-align: center; background-color: #f9f9f9;">
-                    <input type="file" name="attachments[]" id="file-input" multiple accept="image/*,.pdf" style="display: none;">
+                    <input type="file" name="attachments[]" id="file-input" multiple style="display: none;">
                     <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem;">เลือกไฟล์</button>
                     <p style="margin-top: 0.5rem; color: #666;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
                     <div id="file-list" style="margin-top: 1rem; text-align: left;"></div>
@@ -243,131 +247,40 @@
     </div>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401A"></script>
-    <script src="ppk-app.js?v=20260401A"></script>
-    <script src="ppk-utils.js?v=20260401A"></script>
+    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
 <script>
-    function toggleOtherWorkType() {
-        const otherCheckbox = document.querySelector('input[name="work_type"][value="other"]');
-        const otherInput = document.getElementById('other_work_type');
-        if (otherCheckbox.checked) {
-            otherInput.disabled = false;
-            otherInput.style.backgroundColor = '';
-        } else {
-            otherInput.disabled = true;
-            otherInput.value = '';
-            otherInput.style.backgroundColor = '#e5e5e5';
-        }
-    }
-
-    function toggleCostEstimate() {
-        const selfRadio = document.querySelector('input[name="cost_responsibility"][value="self"]');
-        const costGroup = document.getElementById('cost-estimate-group');
-        const addCostBtn = document.getElementById('add-cost-btn');
-        const costContainer = document.getElementById('cost-items-container');
-        const totalCost = document.getElementById('total_cost');
-
-        if (selfRadio.checked) {
-            // ล็อคช่องค่าใช้จ่ายเมื่อผู้พักอาศัยรับผิดชอบเอง
-            costGroup.style.opacity = '0.5';
-            addCostBtn.disabled = true;
-            addCostBtn.style.backgroundColor = '#9ca3af';
-            addCostBtn.style.cursor = 'not-allowed';
-            costContainer.innerHTML = '';
-            totalCost.value = '';
-            // ปิดการใช้งาน input ทั้งหมดในส่วนนี้
-            costContainer.querySelectorAll('input').forEach(input => {
-                input.disabled = true;
-            });
-        } else {
-            // ปลดล็อคช่องค่าใช้จ่ายเมื่อขอความอนุเคราะห์จากโรงเรียน
-            costGroup.style.opacity = '1';
-            addCostBtn.disabled = false;
-            addCostBtn.style.backgroundColor = '#4f8cff';
-            addCostBtn.style.cursor = 'pointer';
-            // เปิดการใช้งาน input ทั้งหมดในส่วนนี้
-            costContainer.querySelectorAll('input').forEach(input => {
-                input.disabled = false;
-            });
-        }
-    }
-
-    function addCostItem() {
-        const container = document.getElementById('cost-items-container');
-        const div = document.createElement('div');
-        div.classList.add('cost-item');
-        div.innerHTML = `
-            <input type="text" name="cost_item[]" placeholder="รายการซ่อม" required style="flex: 2; min-width: 200px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;">
-            <input type="number" name="cost_price[]" placeholder="ราคา (บาท)" required style="width: 150px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;" onchange="calculateTotalCost()">
-            <button type="button" onclick="removeCostItem(this)" style="background-color: #e53e3e; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">ลบ</button>
-        `;
-        container.appendChild(div);
-    }
-
-    function removeCostItem(button) {
-        button.parentElement.remove();
-        calculateTotalCost();
-    }
-
-    function calculateTotalCost() {
-        const prices = document.querySelectorAll('input[name="cost_price[]"]');
-        let total = 0;
-        prices.forEach(input => {
-            const value = parseFloat(input.value);
-            if (!isNaN(value)) {
-                total += value;
-            }
-        });
-        document.getElementById('total_cost').value = total.toLocaleString('th-TH') + ' บาท';
-    }
-
     function printForm() {
         // รวบรวมข้อมูลจากฟอร์ม
         const prefix = document.getElementById('prefix').value;
         const fullname = document.getElementById('fullname').value;
-        const houseNumber = document.getElementById('house_number').value;
         const phone = document.getElementById('phone').value;
         const subjectGroup = document.getElementById('subject_group').value;
-        const problemDetail = document.querySelector('textarea[name="problem_detail"]').value;
+        const currentHouse = document.getElementById('current_house').value;
+        const targetHouse = document.getElementById('target_house').value;
+        const additionalInfo = document.getElementById('additional_info').value;
 
-        // รวบรวมประเภทงาน
-        const workTypes = [];
-        document.querySelectorAll('input[name="work_type"]:checked').forEach(cb => {
-            if (cb.value === 'other') {
-                const otherText = document.getElementById('other_work_type').value;
-                if (otherText) workTypes.push('อื่นๆ: ' + otherText);
-            } else {
-                workTypes.push(cb.parentElement.textContent.trim());
+        // ประเภทการขอย้าย
+        const transferTypeRadio = document.querySelector('input[name="transfer_type"]:checked');
+        let transferTypeText = '';
+        if (transferTypeRadio) {
+            if (transferTypeRadio.value === 'flat_to_house') transferTypeText = 'ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว';
+            else if (transferTypeRadio.value === 'house_to_flat') transferTypeText = 'ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต';
+            else transferTypeText = 'เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน';
+        }
+
+        // รวบรวมเหตุผลในการขอย้าย
+        const reasons = [];
+        document.querySelectorAll('input[name="reason"]:checked').forEach(cb => {
+            if (cb.value === 'family_space') reasons.push('ต้องการพื้นที่พักอาศัยที่เหมาะสมกับจำนวนสมาชิกในครอบครัว');
+            else if (cb.value === 'family_responsibility') reasons.push('มีภาระครอบครัวที่ต้องการความสะดวกเพิ่มเติม');
+            else if (cb.value === 'health_issue') reasons.push('ปัญหาด้านสุขภาพหรือข้อจำกัดส่วนตัว');
+            else if (cb.value === 'other') {
+                const otherReason = document.getElementById('other_reason').value;
+                if (otherReason) reasons.push('อื่น ๆ: ' + otherReason);
             }
         });
-
-        // ความเร่งด่วน
-        const urgencyRadio = document.querySelector('input[name="urgency"]:checked');
-        let urgencyText = '';
-        if (urgencyRadio) {
-            if (urgencyRadio.value === 'urgent_high') urgencyText = 'ด่วนมาก (ส่งผลกระทบร้ายแรง)';
-            else if (urgencyRadio.value === 'urgent') urgencyText = 'ด่วน (ส่งผลกระทบบางส่วน)';
-            else urgencyText = 'ปกติ (ไม่มีผลกระทบเร่งด่วน)';
-        }
-
-        // ความรับผิดชอบค่าใช้จ่าย
-        const costRadio = document.querySelector('input[name="cost_responsibility"]:checked');
-        let costResponsibility = '';
-        if (costRadio) {
-            if (costRadio.value === 'self') costResponsibility = 'ผู้พักอาศัยรับผิดชอบค่าใช้จ่ายเอง';
-            else costResponsibility = 'ขอความอนุเคราะห์จากทางโรงเรียน';
-        }
-
-        // รายการค่าใช้จ่าย
-        const costItems = document.querySelectorAll('input[name="cost_item[]"]');
-        const costPrices = document.querySelectorAll('input[name="cost_price[]"]');
-        let costHTML = '';
-        for (let i = 0; i < costItems.length; i++) {
-            if (costItems[i].value && costPrices[i].value) {
-                costHTML += '<tr><td style="border: 1px solid #000; padding: 4px; text-align: center;">' + (i + 1) + '</td><td style="border: 1px solid #000; padding: 4px;">' + costItems[i].value + '</td><td style="border: 1px solid #000; padding: 4px; text-align: right;">' + parseFloat(costPrices[i].value).toLocaleString('th-TH') + '</td></tr>';
-            }
-        }
-        const totalCost = document.getElementById('total_cost').value;
 
         // วันที่ปัจจุบัน
         const today = new Date();
@@ -376,7 +289,7 @@
 
         // สร้างหน้าพิมพ์ตามระเบียบสารบรรณ
         const printWindow = window.open('', '_blank');
-        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มแจ้งซ่อมแซมบำรุงรักษา</title>');
+        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มคำร้องขอย้ายบ้านพักหรือเปลี่ยนยูนิต</title>');
         printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
         printWindow.document.write('<style>');
         // ตั้งค่าหน้ากระดาษ A4 ตามระเบียบสารบรรณ
@@ -408,10 +321,6 @@
         printWindow.document.write('.approval-box .approval-content { font-size: 14pt; }');
         printWindow.document.write('.dotted-line-long { display: inline-block; width: 80%; border-bottom: 1px dotted #000; }');
         printWindow.document.write('.dotted-line-full { display: block; width: 100%; border-bottom: 1px dotted #000; height: 1.5em; }');
-        printWindow.document.write('.approval-table { margin-top: 0.3cm; font-size: 12pt; page-break-inside: avoid; }');
-        printWindow.document.write('.approval-table td { vertical-align: top; padding: 0.2cm; }');
-        printWindow.document.write('.approval-table .approval-header { font-weight: bold; }');
-        printWindow.document.write('.position-text { white-space: nowrap; font-size: 10pt; }');
         printWindow.document.write('.dotted-line { display: inline-block; width: 70%; border-bottom: 1px dotted #000; margin-left: 0.1cm; }');
         printWindow.document.write('.dotted-line-short { display: inline-block; width: 4cm; border-bottom: 1px dotted #000; }');
         printWindow.document.write('.dotted-line-date { display: inline-block; width: 3cm; border-bottom: 1px dotted #000; }');
@@ -430,58 +339,68 @@
         printWindow.document.write('<table class="memo-table">');
         printWindow.document.write('<tr><td colspan="2"><b>ส่วนราชการ</b>&emsp;งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&emsp;โรงเรียนพะเยาพิทยาคม</td></tr>');
         printWindow.document.write('<tr><td style="width:60%;"><b>ที่</b>&emsp;พย./พก.&nbsp;<span class="dotted-line-short"></span>/<span class="dotted-line-short"></span></td><td><b>วันที่</b>&emsp;' + dateStr + '</td></tr>');
-        printWindow.document.write('<tr><td colspan="2"><b>เรื่อง</b>&emsp;ขอแจ้งซ่อมแซมบำรุงรักษาสิ่งก่อสร้างบ้านพักครู</td></tr>');
+        printWindow.document.write('<tr><td colspan="2"><b>เรื่อง</b>&emsp;ขอย้ายบ้านพักหรือเปลี่ยนยูนิต</td></tr>');
         printWindow.document.write('</table>');
         printWindow.document.write('<hr class="memo-divider">');
         printWindow.document.write('<div class="salutation"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
         
         // คำนำ
-        printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' ผู้พักอาศัยบ้านพักครู' + houseNumber + ' มีความประสงค์แจ้งซ่อมแซม/บำรุงรักษา โดยมีรายละเอียดดังต่อไปนี้</p>');
+        printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' ผู้พักอาศัย ' + currentHouse + ' มีความประสงค์ขอย้ายบ้านพัก/เปลี่ยนยูนิต โดยมีรายละเอียดดังต่อไปนี้</p>');
         
-        // ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม
+        // ส่วนที่ 1: ข้อมูลส่วนตัว
         printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม</div>');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 1: ข้อมูลส่วนตัว</div>');
         printWindow.document.write('<div class="indent small-text">');
         printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
-        printWindow.document.write('<div>หมายเลขบ้านพักครู: ' + houseNumber + '</div>');
         printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + '</div>');
         printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div>');
+        printWindow.document.write('<div>บ้านพัก/ห้องพักปัจจุบัน: ' + currentHouse + '</div>');
         printWindow.document.write('</div></div>');
         
-        // ส่วนที่ 2: รายละเอียดงานซ่อมแซม
+        // ส่วนที่ 2: รายละเอียดการขอย้าย
         printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 2: รายละเอียดงานซ่อมแซม/บำรุงรักษา</div>');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 2: รายละเอียดการขอย้าย</div>');
         printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div><strong>ประเภทงาน:</strong></div>');
-        workTypes.forEach(wt => {
-            printWindow.document.write('<div style="margin-left: 1cm;"><span class="checkbox">&#10003;</span> ' + wt + '</div>');
+        
+        // ประเภทการขอย้าย
+        printWindow.document.write('<div style="margin-bottom: 0.2cm;"><strong>ประเภทการขอย้าย:</strong></div>');
+        printWindow.document.write('<div><span class="checkbox">' + (transferTypeRadio?.value === 'flat_to_house' ? '&#10003;' : '') + '</span> ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว</div>');
+        printWindow.document.write('<div><span class="checkbox">' + (transferTypeRadio?.value === 'house_to_flat' ? '&#10003;' : '') + '</span> ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต</div>');
+        printWindow.document.write('<div><span class="checkbox">' + (transferTypeRadio?.value === 'change_unit' ? '&#10003;' : '') + '</span> เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน</div>');
+        
+        if (targetHouse) {
+            printWindow.document.write('<div style="margin-top: 0.2cm;">บ้านพัก/ห้องพักที่ต้องการย้ายไป: ' + targetHouse + '</div>');
+        }
+        
+        // เหตุผลในการขอย้าย
+        printWindow.document.write('<div style="margin-top: 0.3cm; margin-bottom: 0.2cm;"><strong>เหตุผลในการขอย้าย:</strong></div>');
+        const allReasons = [
+            { value: 'family_space', text: 'ต้องการพื้นที่พักอาศัยที่เหมาะสมกับจำนวนสมาชิกในครอบครัว' },
+            { value: 'family_responsibility', text: 'มีภาระครอบครัวที่ต้องการความสะดวกเพิ่มเติม' },
+            { value: 'health_issue', text: 'ปัญหาด้านสุขภาพหรือข้อจำกัดส่วนตัว' }
+        ];
+        allReasons.forEach(r => {
+            const checked = document.querySelector('input[name="reason"][value="' + r.value + '"]')?.checked;
+            printWindow.document.write('<div><span class="checkbox">' + (checked ? '&#10003;' : '') + '</span> ' + r.text + '</div>');
         });
-        printWindow.document.write('<div style="margin-top: 0.3cm;"><strong>รายละเอียดปัญหา / ความเสียหาย:</strong></div>');
-        printWindow.document.write('<div style="margin-left: 1cm;">' + problemDetail + '</div>');
-        printWindow.document.write('</div></div>');
+        const otherReasonChecked = document.querySelector('input[name="reason"][value="other"]')?.checked;
+        const otherReasonText = document.getElementById('other_reason').value;
+        printWindow.document.write('<div><span class="checkbox">' + (otherReasonChecked ? '&#10003;' : '') + '</span> อื่น ๆ ' + (otherReasonText ? ': ' + otherReasonText : '<span class="dotted-line-short"></span>') + '</div>');
         
-        // ส่วนที่ 3: ความเร่งด่วน
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 3: ความเร่งด่วนของงาน</div>');
-        printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + urgencyText + '</div>');
-        printWindow.document.write('</div></div>');
-        
-        // ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย
-        printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย</div>');
-        printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + costResponsibility + '</div>');
-        if (costHTML && costRadio && costRadio.value === 'school') {
-            printWindow.document.write('<div style="margin-top: 0.3cm;"><strong>รายการค่าใช้จ่ายโดยประมาณ:</strong></div>');
-            printWindow.document.write('<table><thead><tr><th style="width: 50px;">ลำดับ</th><th>รายการ</th><th style="width: 120px;">ราคา (บาท)</th></tr></thead><tbody>' + costHTML + '</tbody></table>');
-            printWindow.document.write('<div style="text-align: right; font-weight: bold;">รวมทั้งสิ้น: ' + totalCost + '</div>');
+        if (additionalInfo) {
+            printWindow.document.write('<div style="margin-top: 0.2cm;">รายละเอียดเพิ่มเติม: ' + additionalInfo + '</div>');
         }
         printWindow.document.write('</div></div>');
         
+        // ส่วนที่ 3: ข้อตกลง
+        printWindow.document.write('<div class="section">');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 3: ข้อตกลง</div>');
+        printWindow.document.write('<p class="indent small-text" style="text-align: justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลที่ใช้ประกอบการขอย้ายบ้านพัก/เปลี่ยนยูนิตนี้เป็นความจริงทุกประการ และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p>');
+        printWindow.document.write('</div>');
+        
         // ช่องลงชื่อ
         printWindow.document.write('<div class="signature-section small-text">');
-        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้แจ้งซ่อม<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');
         printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div>');
         printWindow.document.write('</div>');
         
@@ -536,7 +455,7 @@
         if (files.length > 0) {
             printWindow.document.write('<div style="page-break-before: always;"></div>');
             printWindow.document.write('<div class="header" style="margin-top: 1cm;">');
-            printWindow.document.write('<div class="header-title">เอกสาร/รูปภาพแนบประกอบคำร้อง</div>');
+            printWindow.document.write('<div class="header-title">เอกสารแนบประกอบคำร้อง</div>');
             printWindow.document.write('</div>');
             
             let filePromises = [];
@@ -574,12 +493,10 @@
                         printWindow.document.write('<img src="' + result.dataUrl + '" style="max-width: 100%; max-height: 25cm; display: block; margin: 0 auto;">');
                         printWindow.document.write('</div>');
                     } else if (result.isPDF) {
-                        // แปลง PDF เป็นรูปภาพแต่ละหน้า
                         printWindow.document.write('<div id="pdf-container-' + result.index + '"></div>');
                     }
                 }
                 
-                // ปิด HTML ก่อน แล้วค่อยประมวลผล PDF
                 printWindow.document.write('<script>');
                 printWindow.document.write('pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";');
                 printWindow.document.write('async function renderPDFs() {');
@@ -623,55 +540,61 @@
             if (!result || !result.success || !result.user) return;
             const user = result.user;
             const res = user.resident || {};
-            const _v = function(resKey, userKey) { return res[resKey] || user[userKey] || user[resKey] || ''; };
+            const _v = function(resKey, userKey) { return res[resKey] || user[userKey || resKey] || ''; };
             const form = document.querySelector('select[name="prefix"]');
-            if (form) form.value = _v('prefix','prefix') || form.value;
+            if (form && _v('prefix')) form.value = _v('prefix');
             const fullname = document.querySelector('input[name="fullname"]');
-            var fn = (_v('firstname','firstname') + ' ' + _v('lastname','lastname')).trim();
+            var fn = (_v('firstname') + ' ' + _v('lastname')).trim();
             if (fullname && fn) fullname.value = fn;
             const phone = document.querySelector('input[name="phone"]');
-            if (phone && _v('phone','phone')) phone.value = _v('phone','phone');
+            if (phone && _v('phone')) phone.value = _v('phone');
+            const posElTf = document.querySelector('select[name="position"]');
+            if (posElTf && _v('position')) posElTf.value = _v('position');
             const group = document.querySelector('select[name="subject_group"]');
-            if (group && _v('subject_group','subject_group')) group.value = _v('subject_group','subject_group');
-            const houseNumber = document.querySelector('input[name="house_number"]');
-            if (houseNumber) houseNumber.value = _v('house_number','houseNumber') || houseNumber.value;
+            if (group && _v('subject_group')) group.value = _v('subject_group');
+            const currentHouse = document.querySelector('input[name="current_house"]');
+            if (currentHouse && _v('house_number','houseNumber')) currentHouse.value = _v('house_number','houseNumber');
         } catch (e) { console.warn('Auto-fill failed', e); }
     }
 
     // ============ Submit Handler ============
-    document.getElementById('repairForm').addEventListener('submit', async function(e) {
+    document.getElementById('transferForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const submitBtn = document.querySelector('.submit-btn');
         submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
         try {
             // ตรวจสอบความครบถ้วนของข้อมูล
-            if (!document.querySelector('input[name="work_type"]:checked')) {
+            if (!document.querySelector('input[name="transfer_type"]:checked')) {
                 submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
-                ppkAlert('กรุณาเลือกประเภทงานซ่อมแซมอย่างน้อย 1 รายการ', 'error');
+                ppkAlert('กรุณาเลือกประเภทการขอย้าย', 'error');
                 return;
             }
-            const workTypes = [];
-            document.querySelectorAll('input[name="work_type"]:checked').forEach(cb => workTypes.push(cb.value));
-            const costItems = [];
-            const itemNames = document.querySelectorAll('input[name="cost_item[]"]');
-            const itemPrices = document.querySelectorAll('input[name="cost_price[]"]');
-            for (let i = 0; i < itemNames.length; i++) {
-                costItems.push({ item: itemNames[i]?.value || '', price: itemPrices[i]?.value || 0 });
+            if (!document.querySelector('input[name="reason"]:checked')) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกเหตุผลในการขอย้ายอย่างน้อย 1 รายการ', 'error');
+                return;
             }
+            const _otherCbTf = document.querySelector('input[name="reason"][value="other"]');
+            if (_otherCbTf && _otherCbTf.checked && !document.getElementById('other_reason').value.trim()) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาระบุเหตุผลอื่น ๆ', 'error');
+                return;
+            }
+            const reasons = [];
+            document.querySelectorAll('input[name="reason"]:checked').forEach(cb => reasons.push(cb.value));
             const data = {
-                type: 'repair',
+                type: 'transfer',
                 prefix: document.querySelector('select[name="prefix"]').value,
                 fullname: document.querySelector('input[name="fullname"]').value,
-                house_number: document.querySelector('input[name="house_number"]').value,
                 phone: document.querySelector('input[name="phone"]').value,
+                position: document.querySelector('select[name="position"]').value,
                 subject_group: document.querySelector('select[name="subject_group"]').value,
-                work_types: workTypes,
-                other_work_type: document.querySelector('input[name="other_work_type"]')?.value || '',
-                problem_detail: document.querySelector('textarea[name="problem_detail"]')?.value || '',
-                urgency: document.querySelector('input[name="urgency"]:checked')?.value || '',
-                cost_responsibility: document.querySelector('input[name="cost_responsibility"]:checked')?.value || '',
-                cost_items: costItems,
-                total_cost: document.querySelector('input[name="total_cost"]')?.value || '0',
+                current_house: document.querySelector('input[name="current_house"]').value,
+                transfer_type: document.querySelector('input[name="transfer_type"]:checked')?.value || '',
+                target_house: document.querySelector('input[name="target_house"]').value,
+                reasons: reasons,
+                other_reason: document.querySelector('input[name="other_reason"]')?.value || '',
+                additional_info: document.querySelector('textarea[name="additional_info"]')?.value || '',
                 attachment_urls: []
             };
             // อัปโหลดไฟล์แนบไปยัง Storage
@@ -687,7 +610,7 @@
                             reader.onload = function(ev) { resolve(ev.target.result); };
                             reader.readAsDataURL(f);
                         });
-                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'repair', houseNumber: document.querySelector('input[name="house_number"]').value || 'unknown' });
+                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'transfer', houseNumber: document.querySelector('input[name="current_house"]').value || 'unknown' });
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
                         } else {
@@ -725,9 +648,9 @@
                 sc += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 หากใช้มือถือ ให้เลือก "บันทึกเป็น PDF" แล้วพิมพ์จากคอมพิวเตอร์ภายหลัง</div>';
                 sc += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
                 sc += '</div></div>';
-                document.getElementById('repairForm').style.display = 'none';
+                document.getElementById('transferForm').style.display = 'none';
                 var panel = document.createElement('div'); panel.innerHTML = sc;
-                document.getElementById('repairForm').parentElement.appendChild(panel);
+                document.getElementById('transferForm').parentElement.appendChild(panel);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             } else { ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ'); }

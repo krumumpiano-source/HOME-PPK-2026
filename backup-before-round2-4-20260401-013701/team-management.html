@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -485,32 +485,6 @@
             </div>
         </div>
 
-        <!-- ── จัดการผู้พักอาศัย (ย้าย/คืนบ้าน) ── -->
-        <div class="section-divider" onclick="toggleAdminActionsSection()" id="adminActionsToggle" style="cursor:pointer;">
-            <span class="toggle-icon">▼</span>
-            🏠 จัดการย้าย/คืนบ้าน
-        </div>
-        <div id="adminActionsContent">
-            <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1rem;">
-                <button class="form-btn" style="flex:1;min-width:200px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:0.8rem;border-radius:12px;font:inherit;font-weight:600;cursor:pointer;" onclick="openForceReturnModal()">
-                    🚫 บังคับคืนบ้าน
-                </button>
-                <button class="form-btn" style="flex:1;min-width:200px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:0.8rem;border-radius:12px;font:inherit;font-weight:600;cursor:pointer;" onclick="openAssignHouseModal()">
-                    🏠 จัดบ้านให้ผู้ใช้ลอย
-                </button>
-                <button class="form-btn" style="flex:1;min-width:200px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:0.8rem;border-radius:12px;font:inherit;font-weight:600;cursor:pointer;" onclick="openForceDeactivateModal()">
-                    🔒 ปิดบัญชี (Departing)
-                </button>
-            </div>
-            <!-- ประวัติผู้พักเก่า -->
-            <div style="margin-top:0.5rem;">
-                <button onclick="loadDepartedHistory()" style="background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:0.6rem 1.2rem;font:inherit;cursor:pointer;font-weight:600;color:#475569;">
-                    📜 ดูประวัติผู้พักที่ย้ายออกแล้ว
-                </button>
-                <div id="departedHistoryContainer" style="display:none;margin-top:0.8rem;"></div>
-            </div>
-        </div>
-
         <!-- ── เมนูลัด ── -->
         <div class="section-divider">🚀 เมนูลัด</div>
         <div class="form-buttons" id="formButtons">
@@ -583,7 +557,7 @@
     </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401A"></script>
+    <script src="ppk-api.js?v=20260324B"></script>
     <script src="ppk-app.js?v=20260324B"></script>
     <script src="ppk-utils.js?v=20260324B"></script>
     <script src="ppk-nav.js?v=20260324B"></script>
@@ -724,7 +698,7 @@
                 var elecBills   = (results[1] && results[1].data) || [];
                 var notifs      = (results[2] && results[2].data) || [];
                 var pendSlips   = (results[3] && results[3].data) || [];
-                var withdrawData = (results[4] && results[4].data) || null;
+                var withdraws   = (results[4] && results[4].data) || [];
 
                 // กรองเฉพาะเดือนปัจจุบัน + นับ distinct house_number (ป้องกันนับซ้ำ)
                 var _waterFiltered = waterBills.filter(function(b) { return b.period === currentPeriod; });
@@ -751,7 +725,7 @@
 
                 var notifCount = notifs.filter(function(n) { return (n.period || '') === currentPeriod; }).length;
                 var pendSlipCount = pendSlips.length;
-                var withdrawCount = withdrawData ? 1 : 0;
+                var withdrawCount = withdraws.filter(function(w) { return w.period === currentPeriod; }).length;
 
                 var totalHouses = (kpiData && kpiData.totalHouses) || 0;
                 var notifTarget = totalHouses || waterCount || elecCount || 1;
@@ -1048,315 +1022,6 @@
         content.style.display = _memberCollapsed ? 'none' : '';
         if (_memberCollapsed) title.classList.add('collapsed');
         else title.classList.remove('collapsed');
-    }
-
-    // ═══ Admin Actions: ย้าย/คืนบ้าน ═══
-    var _adminActionsCollapsed = false;
-    function toggleAdminActionsSection() {
-        _adminActionsCollapsed = !_adminActionsCollapsed;
-        var content = document.getElementById('adminActionsContent');
-        var title = document.getElementById('adminActionsToggle');
-        content.style.display = _adminActionsCollapsed ? 'none' : '';
-        if (_adminActionsCollapsed) title.classList.add('collapsed');
-        else title.classList.remove('collapsed');
-    }
-
-    // ── จัดบ้านให้ผู้ใช้ลอย ──
-    async function openAssignHouseModal() {
-        try {
-            // โหลด users ที่ไม่มี resident (floating)
-            var usersResult = await callBackend('getUsers', {});
-            var allUsers = (usersResult && usersResult.success) ? (usersResult.data || []) : [];
-            var resResult = await callBackend('getResidents', {});
-            var allRes = (resResult && resResult.success) ? (resResult.data || []) : [];
-            var activeResUserIds = {};
-            allRes.forEach(function(r) { if (r.is_active !== false && r.user_id) activeResUserIds[r.user_id] = true; });
-            var floatingUsers = allUsers.filter(function(u) { return u.is_active !== false && u.role !== 'admin' && !activeResUserIds[u.id]; });
-
-            if (floatingUsers.length === 0) {
-                alert('ไม่มีผู้ใช้ที่ลอยอยู่ (ทุกคนมีบ้านแล้ว)');
-                return;
-            }
-
-            // โหลดบ้านว่าง
-            var housingResult = await callBackend('getHousing', {});
-            var allHousing = (housingResult && housingResult.success) ? (housingResult.data || []) : [];
-            var availableHouses = allHousing.filter(function(h) { return h.status === 'available'; });
-
-            if (availableHouses.length === 0) {
-                alert('ไม่มีบ้าน/แฟลตว่าง');
-                return;
-            }
-
-            var html = '<div style="padding:1.5rem;max-width:400px;margin:auto;background:#fff;border-radius:16px;">'
-                + '<h3 style="margin:0 0 1rem;font-size:1.1rem;">🏠 จัดบ้านให้ผู้ใช้ลอย</h3>'
-                + '<label style="font-weight:600;font-size:0.9rem;">เลือกผู้ใช้</label>'
-                + '<select id="assignHouseUser" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;margin-bottom:0.8rem;">';
-            floatingUsers.forEach(function(u) {
-                html += '<option value="' + u.id + '">' + (u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'') + ' (' + (u.email||'') + ')</option>';
-            });
-            html += '</select>'
-                + '<label style="font-weight:600;font-size:0.9rem;">เลือกบ้าน/แฟลต</label>'
-                + '<select id="assignHouseNumber" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;margin-bottom:1rem;">';
-            availableHouses.forEach(function(h) {
-                html += '<option value="' + h.house_number + '" data-id="' + h.id + '">' + h.house_number + ' (' + (h.house_type||'') + ')</option>';
-            });
-            html += '</select>'
-                + '<div style="display:flex;gap:0.5rem;">'
-                + '<button onclick="executeAssignHouse()" style="flex:1;background:#3b82f6;color:#fff;border:none;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">จัดบ้าน</button>'
-                + '<button onclick="closeAssignHouseModal()" style="flex:1;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">ยกเลิก</button>'
-                + '</div></div>';
-
-            var overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;';
-            overlay.id = 'assignHouseOverlay';
-            overlay.innerHTML = html;
-            document.body.appendChild(overlay);
-        } catch(err) {
-            alert('โหลดข้อมูลล้มเหลว: ' + (err.message || err));
-        }
-    }
-
-    function closeAssignHouseModal() {
-        var el = document.getElementById('assignHouseOverlay');
-        if (el) el.remove();
-    }
-
-    async function executeAssignHouse() {
-        var userSel = document.getElementById('assignHouseUser');
-        var houseSel = document.getElementById('assignHouseNumber');
-        if (!userSel || !houseSel) return;
-        var userId = userSel.value;
-        var houseNumber = houseSel.value;
-        if (!userId || !houseNumber) { alert('กรุณาเลือกผู้ใช้และบ้าน'); return; }
-
-        if (!confirm('ยืนยันจัดบ้าน ' + houseNumber + ' ให้ผู้ใช้ที่เลือก?')) return;
-
-        try {
-            // สร้าง dummy request แล้ว approve ผ่าน approveResidence
-            var result = await callBackend('approveResidence', {
-                userId: userId,
-                houseNumber: houseNumber,
-                note: 'จัดบ้านโดย admin (team-management)'
-            });
-            closeAssignHouseModal();
-            if (result && result.success) {
-                alert('จัดบ้านเรียบร้อย');
-                location.reload();
-            } else {
-                alert('ผิดพลาด: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
-            }
-        } catch(err) {
-            closeAssignHouseModal();
-            alert('เกิดข้อผิดพลาด: ' + (err.message || err));
-        }
-    }
-
-    // ── บังคับคืนบ้าน ──
-    async function openForceReturnModal() {
-        try {
-            // โหลดรายชื่อ resident ที่ active
-            var resResult = await callBackend('getResidents', {});
-            var residents = (resResult && resResult.success) ? (resResult.data || []) : [];
-            var activeRes = residents.filter(function(r) { return r.is_active !== false; });
-
-            if (activeRes.length === 0) {
-                ppkAlert('ไม่มีผู้พักอาศัยในระบบ');
-                return;
-            }
-
-            var options = activeRes.map(function(r) {
-                var name = (r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '');
-                return '<option value="' + r.id + '" data-userid="' + (r.user_id || '') + '">' + (r.house_number || '?') + ' — ' + name + '</option>';
-            }).join('');
-
-            var html = '<div style="background:#fff;border-radius:16px;padding:1.5rem;max-width:500px;margin:0 auto;">'
-                + '<h3 style="margin:0 0 1rem;color:#dc2626;">🚫 บังคับคืนบ้าน</h3>'
-                + '<div style="margin-bottom:0.8rem;"><label style="font-weight:600;font-size:0.9rem;">เลือกผู้พัก:</label>'
-                + '<select id="forceReturnResident" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;">'
-                + '<option value="">-- เลือก --</option>' + options + '</select></div>'
-                + '<div style="margin-bottom:0.8rem;"><label style="font-weight:600;font-size:0.9rem;">เหตุผล:</label>'
-                + '<select id="forceReturnReason" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;">'
-                + '<option value="forced">ค้างชำระเกินกำหนด</option>'
-                + '<option value="terminated">ถูกให้ออก/ไล่ออก</option>'
-                + '<option value="death">เสียชีวิต</option>'
-                + '<option value="other">อื่นๆ</option></select></div>'
-                + '<div style="margin-bottom:0.8rem;"><label style="font-weight:600;font-size:0.9rem;">หมายเหตุ:</label>'
-                + '<textarea id="forceReturnNote" rows="2" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;box-sizing:border-box;" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea></div>'
-                + '<div style="display:flex;gap:0.5rem;">'
-                + '<button onclick="executeForceReturn()" style="flex:1;background:#dc2626;color:#fff;border:none;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">ยืนยัน</button>'
-                + '<button onclick="closeForceReturnModal()" style="flex:1;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">ยกเลิก</button>'
-                + '</div></div>';
-
-            var overlay = document.createElement('div');
-            overlay.id = 'forceReturnOverlay';
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;';
-            overlay.innerHTML = html;
-            document.body.appendChild(overlay);
-        } catch(e) {
-            ppkAlert('โหลดข้อมูลไม่สำเร็จ: ' + (e.message || ''));
-        }
-    }
-
-    function closeForceReturnModal() {
-        var el = document.getElementById('forceReturnOverlay');
-        if (el) el.remove();
-    }
-
-    async function executeForceReturn() {
-        var sel = document.getElementById('forceReturnResident');
-        if (!sel || !sel.value) { ppkAlert('กรุณาเลือกผู้พัก'); return; }
-        var residentId = sel.value;
-        var userId = sel.options[sel.selectedIndex].dataset.userid || '';
-        var reason = document.getElementById('forceReturnReason').value;
-        var note = document.getElementById('forceReturnNote').value;
-
-        var confirmed = await ppkConfirm('⚠️ ยืนยันบังคับคืนบ้าน?\n\nเหตุผล: ' + reason + '\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้ง่าย', { type: 'warning', okText: 'ยืนยัน', cancelText: 'ยกเลิก' });
-        if (!confirmed) return;
-
-        try {
-            var result = await callBackend('adminInitiatedReturn', {
-                residentId: residentId,
-                userId: userId,
-                reason: reason,
-                note: note
-            });
-
-            closeForceReturnModal();
-
-            if (result && result.success) {
-                ppkAlert('✅ บังคับคืนบ้านเรียบร้อย\n\nเหตุผล: ' + reason);
-                // Reload member status
-                if (typeof loadMemberStatus === 'function') loadMemberStatus();
-            } else {
-                ppkAlert('❌ ไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
-            }
-        } catch(e) {
-            closeForceReturnModal();
-            ppkAlert('❌ ไม่สำเร็จ: ' + (e.message || ''));
-        }
-    }
-
-    // ── ปิดบัญชี Departing User ──
-    async function openForceDeactivateModal() {
-        try {
-            // ค้นหา departing users
-            var usersResult = await callBackend('getUsers', {});
-            var allUsers = (usersResult && usersResult.success) ? (usersResult.data || []) : [];
-            var departingUsers = allUsers.filter(function(u) { return u.status === 'departing' && u.is_active; });
-
-            if (departingUsers.length === 0) {
-                ppkAlert('ไม่มีผู้ใช้สถานะ "รอชำระก่อนออก" ในระบบ');
-                return;
-            }
-
-            var options = departingUsers.map(function(u) {
-                var name = (u.prefix || '') + (u.firstname || '') + ' ' + (u.lastname || '');
-                return '<option value="' + u.id + '">' + name + ' (' + (u.email || '-') + ')</option>';
-            }).join('');
-
-            var html = '<div style="background:#fff;border-radius:16px;padding:1.5rem;max-width:500px;margin:0 auto;">'
-                + '<h3 style="margin:0 0 1rem;color:#d97706;">🔒 ปิดบัญชีผู้ใช้ (Departing)</h3>'
-                + '<p style="font-size:0.85rem;color:#6b7280;margin:0 0 1rem;">ใช้กรณีต้องการปิดบัญชีทันที เช่น รับเงินสดแล้ว หรือยกเลิกหนี้</p>'
-                + '<div style="margin-bottom:0.8rem;"><label style="font-weight:600;font-size:0.9rem;">เลือกผู้ใช้:</label>'
-                + '<select id="forceDeactivateUser" style="width:100%;padding:0.6rem;border:1.5px solid #e5e7eb;border-radius:8px;font:inherit;margin-top:0.3rem;">'
-                + '<option value="">-- เลือก --</option>' + options + '</select></div>'
-                + '<div style="margin-bottom:0.8rem;"><label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;">'
-                + '<input type="checkbox" id="forceDeactivateWaive" checked> ยกเลิกยอดค้างทั้งหมด (mark as paid)</label></div>'
-                + '<div style="display:flex;gap:0.5rem;">'
-                + '<button onclick="executeForceDeactivate()" style="flex:1;background:#d97706;color:#fff;border:none;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">ปิดบัญชี</button>'
-                + '<button onclick="closeForceDeactivateModal()" style="flex:1;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:0.7rem;font:inherit;font-weight:600;cursor:pointer;">ยกเลิก</button>'
-                + '</div></div>';
-
-            var overlay = document.createElement('div');
-            overlay.id = 'forceDeactivateOverlay';
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;';
-            overlay.innerHTML = html;
-            document.body.appendChild(overlay);
-        } catch(e) {
-            ppkAlert('โหลดข้อมูลไม่สำเร็จ: ' + (e.message || ''));
-        }
-    }
-
-    function closeForceDeactivateModal() {
-        var el = document.getElementById('forceDeactivateOverlay');
-        if (el) el.remove();
-    }
-
-    async function executeForceDeactivate() {
-        var sel = document.getElementById('forceDeactivateUser');
-        if (!sel || !sel.value) { ppkAlert('กรุณาเลือกผู้ใช้'); return; }
-        var userId = sel.value;
-        var waive = document.getElementById('forceDeactivateWaive').checked;
-
-        var confirmed = await ppkConfirm('⚠️ ยืนยันปิดบัญชีผู้ใช้?\n\n' + (waive ? 'ยอดค้างจะถูกยกเลิกทั้งหมด' : 'ยอดค้างจะไม่ถูกเปลี่ยนแปลง'), { type: 'warning', okText: 'ปิดบัญชี', cancelText: 'ยกเลิก' });
-        if (!confirmed) return;
-
-        try {
-            var result = await callBackend('forceDeactivate', { userId: userId, waiveOutstanding: waive });
-            closeForceDeactivateModal();
-            if (result && result.success) {
-                ppkAlert('✅ ปิดบัญชีเรียบร้อย');
-                if (typeof loadMemberStatus === 'function') loadMemberStatus();
-            } else {
-                ppkAlert('❌ ไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'));
-            }
-        } catch(e) {
-            closeForceDeactivateModal();
-            ppkAlert('❌ ไม่สำเร็จ: ' + (e.message || ''));
-        }
-    }
-
-    // ── ประวัติผู้พักที่ย้ายออก ──
-    async function loadDepartedHistory() {
-        var container = document.getElementById('departedHistoryContainer');
-        if (container.style.display !== 'none') {
-            container.style.display = 'none';
-            return;
-        }
-        container.style.display = '';
-        container.innerHTML = '<div style="text-align:center;padding:1rem;color:#9ca3af;">⏳ กำลังโหลด...</div>';
-
-        try {
-            var result = await callBackend('getResidents', {});
-            var all = (result && result.success) ? (result.data || []) : [];
-            var departed = all.filter(function(r) { return !r.is_active && r.departed_at; });
-            departed.sort(function(a, b) { return new Date(b.departed_at) - new Date(a.departed_at); });
-
-            if (departed.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:1rem;color:#9ca3af;">ไม่มีข้อมูลผู้พักที่ย้ายออก</div>';
-                return;
-            }
-
-            var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-            html += '<thead><tr style="background:#f8fafc;">'
-                + '<th style="padding:0.5rem;border:1px solid #e5e7eb;text-align:left;">#</th>'
-                + '<th style="padding:0.5rem;border:1px solid #e5e7eb;text-align:left;">ชื่อ-สกุล</th>'
-                + '<th style="padding:0.5rem;border:1px solid #e5e7eb;">บ้านเดิม</th>'
-                + '<th style="padding:0.5rem;border:1px solid #e5e7eb;">เหตุผล</th>'
-                + '<th style="padding:0.5rem;border:1px solid #e5e7eb;">วันที่ออก</th>'
-                + '</tr></thead><tbody>';
-
-            var reasonLabels = { voluntary: 'สมัครใจ', transfer: 'ย้ายราชการ', retire: 'เกษียณ', resign: 'ลาออก', death: 'เสียชีวิต', forced: 'ถูกบังคับออก', terminated: 'ถูกให้ออก', other: 'อื่นๆ' };
-
-            for (var i = 0; i < departed.length; i++) {
-                var d = departed[i];
-                var name = (d.prefix || '') + (d.firstname || '') + ' ' + (d.lastname || '');
-                var reason = reasonLabels[d.departure_reason] || d.departure_reason || '-';
-                var dateStr = d.departed_at ? new Date(d.departed_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-                html += '<tr>'
-                    + '<td style="padding:0.4rem 0.5rem;border:1px solid #e5e7eb;color:#9ca3af;">' + (i + 1) + '</td>'
-                    + '<td style="padding:0.4rem 0.5rem;border:1px solid #e5e7eb;">' + name + '</td>'
-                    + '<td style="padding:0.4rem 0.5rem;border:1px solid #e5e7eb;text-align:center;">' + (d.house_number || '-') + '</td>'
-                    + '<td style="padding:0.4rem 0.5rem;border:1px solid #e5e7eb;text-align:center;">' + reason + '</td>'
-                    + '<td style="padding:0.4rem 0.5rem;border:1px solid #e5e7eb;text-align:center;">' + dateStr + '</td>'
-                    + '</tr>';
-            }
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        } catch(e) {
-            container.innerHTML = '<div style="color:#ef4444;padding:1rem;">❌ โหลดไม่สำเร็จ: ' + (e.message || '') + '</div>';
-        }
     }
     </script>
     <script src="ppk-pwa.js?v=20260319A"></script>

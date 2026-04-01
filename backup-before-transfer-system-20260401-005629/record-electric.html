@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -405,10 +405,7 @@
         
         <!-- ตารางบันทึกค่าไฟ -->
         <div class="section">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
-                <div class="section-title" style="margin-bottom:0">📝 บันทึกค่าไฟ</div>
-                <input type="search" id="electricSearchInput" placeholder="🔍 ค้นหาบ้านพัก/ผู้พัก..." oninput="filterElectricTable()" style="padding:0.35rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:180px;">
-            </div>
+            <div class="section-title">📝 บันทึกค่าไฟ</div>
             
             <div class="table-scroll-wrapper">
                 <table class="meter-table">
@@ -457,24 +454,13 @@
         <!-- ปุ่ม -->
         <div class="button-group">
             <button class="btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
-            <!-- เมนูเพิ่มเติม -->
-            <div style="position:relative;display:inline-block" id="moreMenuWrap">
-                <button class="btn btn-secondary" onclick="toggleMoreMenu()" id="moreMenuBtn" style="padding:0.8rem 1.2rem;">⋯ เพิ่มเติม</button>
-                <div id="moreMenuDropdown" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:0.5rem;min-width:200px;z-index:999;">
-                    <button onclick="printReport();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#065f46;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">🖨️ พิมพ์รายเดือน</button>
-                    <button onclick="printYearlyReport();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#065f46;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📊 สรุปทั้งปี</button>
-                    <hr style="margin:0.3rem 0.5rem;border:none;border-top:1px solid #e5e7eb;">
-                    <button onclick="exportExcel();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#065f46;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📥 ส่งออก Excel</button>
-                    <button onclick="document.getElementById('importExcelFile').click();closeMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.6rem 1rem;border:none;background:none;font-family:'Kanit',sans-serif;font-size:1rem;cursor:pointer;border-radius:8px;color:#1e40af;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='none'">📤 นำเข้า Excel</button>
-                </div>
-            </div>
+            <button class="btn btn-print" onclick="printReport()">🖨️ พิมพ์รายเดือน</button>
+            <button class="btn btn-print" onclick="printYearlyReport()">📊 สรุปทั้งปี</button>
+            <button class="btn" onclick="exportExcel()" style="background: linear-gradient(to right, #d1fae5, #a7f3d0); color: #065f46;">📥 ส่งออก Excel</button>
+            <button class="btn" onclick="document.getElementById('importExcelFile').click()" style="background: linear-gradient(to right, #dbeafe, #bfdbfe); color: #1e40af;">📤 นำเข้า Excel</button>
             <input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
+            <button class="btn btn-secondary" onclick="navigate('?page=team-management')">❌ ยกเลิก</button>
         </div>
-        <script>
-        function toggleMoreMenu(){var d=document.getElementById('moreMenuDropdown');d.style.display=d.style.display==='none'?'block':'none';}
-        function closeMoreMenu(){document.getElementById('moreMenuDropdown').style.display='none';}
-        document.addEventListener('click',function(e){if(!document.getElementById('moreMenuWrap').contains(e.target))closeMoreMenu();});
-        </script>
         
         <div class="success-message" id="successMessage">
             ✅ บันทึกข้อมูลค่าไฟเรียบร้อยแล้ว!
@@ -806,28 +792,6 @@
             calculateSummary();
         }
         
-        // ค้นหา/กรองแถวในตารางค่าไฟ
-        function filterElectricTable() {
-            var q = (document.getElementById('electricSearchInput').value || '').trim().toLowerCase();
-            var rows = document.querySelectorAll('#electricTableBody tr');
-            var shown = 0;
-            rows.forEach(function(row) {
-                if (!row.dataset.house) return; // ข้าม loading/placeholder rows
-                var text = row.textContent.toLowerCase();
-                var match = !q || text.indexOf(q) !== -1;
-                row.style.display = match ? '' : 'none';
-                if (match) shown++;
-            });
-            var noResult = document.getElementById('electricNoResult');
-            if (!noResult) {
-                noResult = document.createElement('tr');
-                noResult.id = 'electricNoResult';
-                noResult.innerHTML = '<td colspan="7" style="text-align:center;color:#999;padding:1rem;">ไม่พบรายการที่ค้นหา</td>';
-                document.getElementById('electricTableBody').appendChild(noResult);
-            }
-            noResult.style.display = (q && shown === 0) ? '' : 'none';
-        }
-
         // คำนวณสรุป
         function calculateSummary() {
             const rows = document.querySelectorAll('#electricTableBody tr');
@@ -910,28 +874,15 @@
                 records.push(recData);
             });
             
-            // คำนวณส่วนต่างปัดเศษ (ยอดที่เรียกเก็บจริง - ยอดก่อนปัด)
-            const _totalCalcAmount = records.reduce((s, r) => s + (r.amount || 0), 0);
-            let _totalRawForSubmit = 0;
-            document.querySelectorAll('#electricTableBody tr').forEach(row => {
-                if (row.dataset.house) _totalRawForSubmit += parseFloat(row.dataset.rawAmount) || 0;
-            });
-            // คำนวณส่วนต่าง (grandTotal - peaTotal) สำหรับเข้าบัญชีกองกลาง
-            const _peaForSubmit = parseFloat(document.getElementById('pea_total').value) || 0;
-            const _lostHouseForSubmit = parseFloat(document.getElementById('lost_house').value) || 0;
-            const _lostFlatForSubmit = parseFloat(document.getElementById('lost_flat').value) || 0;
-            const _grandTotalForSubmit = _totalRawForSubmit + _lostHouseForSubmit + _lostFlatForSubmit;
             const electricData = {
                 month: month,
                 year: year,
                 period: year + '-' + month,
                 method: electricMethod,
                 readingDate: document.getElementById('reading_date').value || null,
-                pea_total: _peaForSubmit,
-                lost_house: _lostHouseForSubmit,
-                lost_flat: _lostFlatForSubmit,
-                rounding_surplus: Math.round((_totalCalcAmount - _totalRawForSubmit) * 100) / 100,
-                electric_diff: Math.round((_grandTotalForSubmit - _peaForSubmit) * 100) / 100,
+                pea_total: parseFloat(document.getElementById('pea_total').value) || 0,
+                lost_house: parseFloat(document.getElementById('lost_house').value) || 0,
+                lost_flat: parseFloat(document.getElementById('lost_flat').value) || 0,
                 records: records,
                 savedAt: new Date().toISOString()
             };
@@ -1189,119 +1140,259 @@
         
         // ฟังก์ชันพิมพ์รายงาน
         function printReport() {
-            var month=document.getElementById('bill_month').value;
-            var year=document.getElementById('bill_year').value;
-            var thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-            var monthName=thaiMonths[parseInt(month)-1];
-            var today=new Date();
-            var printDate=today.getDate()+' '+thaiMonths[today.getMonth()]+' พ.ศ. '+(today.getFullYear()+543);
-            var rows=document.querySelectorAll('#electricTableBody tr');
-            var tableRows=''; var totalAmount=0; var totalRaw=0; var rowNum=1;
-            var peaTotal=parseFloat(document.getElementById('pea_total').value)||0;
-            var lostHouse=parseFloat(document.getElementById('lost_house').value)||0;
-            var lostFlat=parseFloat(document.getElementById('lost_flat').value)||0;
-            var totalLost=lostHouse+lostFlat;
-            rows.forEach(function(row){
-                if(!row.dataset.house) return;
-                var rawAmt=parseFloat(row.dataset.rawAmount)||0;
-                var amount='0';
-                var amountInput=row.querySelector('.electric-amount');
-                var amountCell=row.querySelector('.electric-amount-cell');
-                if(amountInput){amount=amountInput.value||'0';}else if(amountCell){amount=amountCell.textContent.replace(/[^\d.]/g,'')||'0';}
-                var amountNum=parseFloat(amount)||0;
-                var resident=row.cells[2].textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                tableRows+='<tr><td class="tc">'+rowNum+'</td><td>'+row.dataset.house+'</td><td>'+resident+'</td><td class="tr">'+amountNum.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>';
-                totalAmount+=amountNum; totalRaw+=rawAmt; rowNum++;
+            const month = document.getElementById('bill_month').value;
+            const year = document.getElementById('bill_year').value;
+            
+            const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            const monthName = thaiMonths[parseInt(month) - 1];
+            
+            // วันที่ปัจจุบัน
+            const today = new Date();
+            const printDate = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
+            
+            // เก็บข้อมูลจากตาราง
+            const rows = document.querySelectorAll('#electricTableBody tr');
+            let tableHTML = '';
+            let totalAmount = 0;
+            let totalRaw = 0;
+            let rowNum = 1;
+            
+            // ดึงค่า Lost และค่าไฟการไฟฟ้า
+            const peaTotal = parseFloat(document.getElementById('pea_total').value) || 0;
+            const lostHouse = parseFloat(document.getElementById('lost_house').value) || 0;
+            const lostFlat = parseFloat(document.getElementById('lost_flat').value) || 0;
+            const totalLost = lostHouse + lostFlat;
+            
+            rows.forEach(row => {
+                if (!row.dataset.house) return;
+                const house = row.dataset.house;
+                const resident = row.cells[2].textContent;
+                const rawAmt = parseFloat(row.dataset.rawAmount) || 0;
+                var amount = '0';
+                var amountInput = row.querySelector('.electric-amount');
+                var amountCell = row.querySelector('.electric-amount-cell');
+                if (amountInput) { amount = amountInput.value || '0'; }
+                else if (amountCell) { amount = amountCell.textContent.replace(/[^\d.]/g,'') || '0'; }
+                const amountNum = parseFloat(amount) || 0;
+                
+                tableHTML += '<tr>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: center;">' + rowNum + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + house + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px;">' + resident.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
+                tableHTML += '<td style="border: 1px solid #000; padding: 6px; text-align: right;">' + amountNum.toLocaleString('th-TH') + '</td>';
+                tableHTML += '</tr>';
+                
+                totalAmount += amountNum;
+                totalRaw += rawAmt;
+                rowNum++;
             });
-            var roundingExtra=totalAmount-totalRaw;
-            var grandTotal=totalRaw+totalLost;
-            var diff=grandTotal-peaTotal;
-            var _sys=cachedAdminSettings||{};
-            var recorderName=_sys.meterRecorder||_sys.meter_recorder||'';
-            var checkerName=_sys.meterChecker||_sys.meter_checker||'';
-            var headName=_sys.headOfPromotion||_sys.head_of_promotion||'';
-            // ครุฑมีเฉพาะบันทึกข้อความ - หน้าอื่นเป็นเอกสารแนบ
-            var css='@page{size:A4 portrait;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:16pt;line-height:1.5;color:#000}.page{padding:1.8cm 2.0cm 1.5cm 3.0cm}.header-block{display:flex;align-items:center;margin-bottom:0.3cm}.garuda-left{flex-shrink:0;margin-right:0.4cm}.title-col{flex:1;text-align:center}.doc-title{display:inline-block;font-size:29pt;font-weight:bold;border-bottom:4px double #000;padding-bottom:0.12cm}.sub{text-align:center;font-size:14pt;margin-bottom:0.08cm}.period{text-align:center;font-size:16pt;font-weight:bold;margin-bottom:0.2cm}.meta{display:flex;justify-content:flex-end;font-size:14pt;margin-bottom:0.15cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.2cm 0}table{border-collapse:collapse;width:100%;font-size:15pt;margin:0.15cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.12cm 0.2cm;font-weight:bold;text-align:center}tbody td{border:0.5pt solid #000;padding:0.1cm 0.2cm}.tc{text-align:center}.tr{text-align:right}.tr-sum td{font-weight:bold;background:#ececec}.tr-sub td{font-size:14pt;font-style:italic;background:#f8f8f8}.tr-grand td{font-weight:bold;background:#c8c8c8}.sig-section{margin-top:0.8cm;display:flex;justify-content:space-around}.sig-box{text-align:center;min-width:5.5cm}.sig-space{height:1.2cm}.sig-line{width:5.5cm;margin:0 auto 0.08cm auto;border-top:0.5pt dotted #000;padding-top:0.1cm}.sig-solid{width:5.5cm;margin:0 auto 0.08cm auto;border-top:2px solid #000;padding-top:0.1cm}.sig-name{font-weight:bold}@media print{body{margin:0!important;padding:0!important}.page{padding:1.8cm 2.0cm 1.5cm 3.0cm}}';
-            var pw=window.open('','_blank');
-            pw.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานค่าไฟ</title>');
-            pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
-            pw.document.write('<style>'+css+'</style></head><body><div class="page">');
-            pw.document.write('<div class="title-col" style="text-align:center"><span class="doc-title" style="font-size:22pt">เอกสารแนบ: รายงานค่าไฟฟ้าบ้านพักครู</span></div>');
-            pw.document.write('<div class="sub">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&nbsp;&nbsp;โรงเรียนพะเยาพิทยาคม</div>');
-            pw.document.write('<div class="period">ประจำเดือน'+monthName+' พ.ศ. '+year+'</div>');
-            pw.document.write('<div class="meta">วันที่พิมพ์&nbsp;'+printDate+'</div>');
-            pw.document.write('<hr class="rule">');
-            pw.document.write('<table><thead><tr><th style="width:2.5em">ลำดับ</th><th style="width:7em">บ้านพัก/<br>แฟลต</th><th>ชื่อผู้พักอาศัย</th><th style="width:9em">ยอดค่าไฟ<br>(บาท)</th></tr></thead><tbody>');
-            pw.document.write(tableRows);
-            pw.document.write('<tr class="tr-sum"><td colspan="3" style="text-align:right">รวมค่าไฟ (เรียกเก็บจริง)</td><td class="tr">'+totalAmount.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-sub"><td colspan="3" style="text-align:right">รวมค่าไฟ (ก่อนปัดเศษ)</td><td class="tr">'+totalRaw.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-sub"><td colspan="3" style="text-align:right">ส่วนเพิ่มจากการปัดเศษ</td><td class="tr">'+roundingExtra.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-sub"><td colspan="3" style="text-align:right">ค่า Lost บ้านพัก</td><td class="tr">'+lostHouse.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-sub"><td colspan="3" style="text-align:right">ค่า Lost แฟลต</td><td class="tr">'+lostFlat.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-grand"><td colspan="3" style="text-align:right">รวมทั้งหมด (ก่อนปัด + Lost)</td><td class="tr">'+grandTotal.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-sub"><td colspan="3" style="text-align:right">ค่าไฟการไฟฟ้าเรียกเก็บ</td><td class="tr">'+peaTotal.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('<tr class="tr-grand"><td colspan="3" style="text-align:right">ส่วนต่างจริง</td><td class="tr">'+diff.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td></tr>');
-            pw.document.write('</tbody></table>');
-            pw.document.write('<div class="sig-section">');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div>ผู้บันทึกข้อมูล</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div>ผู้ตรวจสอบ</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริมฯ</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('</div>');
-            pw.document.write('</div></body></html>');
-            pw.document.close();
-            pw.onload=function(){setTimeout(function(){pw.print();},500);};
+            
+            // สร้างหน้าพิมพ์ตามระเบียบสารบรรณ
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานบันทึกค่าไฟ</title>');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            // ตั้งค่าหน้ากระดาษ A4 ตามระเบียบสารบรรณ
+            printWindow.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
+            printWindow.document.write('@media print { body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
+            printWindow.document.write('* { box-sizing: border-box; }');
+            printWindow.document.write('body { font-family: "Sarabun", "TH Sarabun New", sans-serif; font-size: 16pt; line-height: 1.15; margin: 0; padding: 2.5cm 2cm 2cm 3cm; }');
+            printWindow.document.write('.header { text-align: center; margin-bottom: 0.5cm; }');
+            printWindow.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
+            printWindow.document.write('.header-subtitle { font-size: 16pt; }');
+            printWindow.document.write('.header-period { font-size: 16pt; margin-top: 0.2cm; }');
+            printWindow.document.write('.date-line { text-align: right; margin-bottom: 0.3cm; font-size: 14pt; }');
+            printWindow.document.write('table { border-collapse: collapse; width: 100%; margin: 0.3cm 0; font-size: 14pt; page-break-inside: avoid; }');
+            printWindow.document.write('th { font-weight: bold; border: 1px solid #000; padding: 8px; text-align: center; }');
+            printWindow.document.write('td { border: 1px solid #000; padding: 6px; }');
+            printWindow.document.write('.summary-row { font-weight: bold; }');
+            printWindow.document.write('.signature-section { margin-top: 1cm; display: flex; justify-content: space-between; page-break-inside: avoid; }');
+            printWindow.document.write('.signature-box { width: 30%; text-align: center; font-size: 14pt; }');
+            printWindow.document.write('.signature-line { margin-top: 1.5cm; border-top: 1px dotted #000; padding-top: 0.2cm; }');
+            printWindow.document.write('.footer { text-align: center; margin-top: 0.5cm; font-size: 12pt; color: #666; }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            
+            // หัวเอกสาร
+            printWindow.document.write('<div class="header">');
+            printWindow.document.write('<div class="header-title">รายงานบันทึกค่าไฟ</div>');
+            printWindow.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
+            printWindow.document.write('<div class="header-period">ประจำเดือน' + monthName + ' พ.ศ. ' + year + '</div>');
+            printWindow.document.write('</div>');
+            
+            // วันที่พิมพ์
+            printWindow.document.write('<div class="date-line">วันที่พิมพ์: ' + printDate + '</div>');
+            
+            // ตารางข้อมูล
+            printWindow.document.write('<table>');
+            printWindow.document.write('<thead><tr>');
+            printWindow.document.write('<th style="width: 60px;">ลำดับ</th>');
+            printWindow.document.write('<th style="width: 150px;">บ้านพัก/แฟลต</th>');
+            printWindow.document.write('<th>ผู้พักอาศัย</th>');
+            printWindow.document.write('<th style="width: 150px;">ยอดค่าไฟ (บาท)</th>');
+            printWindow.document.write('</tr></thead>');
+            printWindow.document.write('<tbody>');
+            printWindow.document.write(tableHTML);
+            // แถวสรุปค่าไฟ (เรียกเก็บ)
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมค่าไฟ (เรียกเก็บจริง)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + totalAmount.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวสรุปค่าไฟ (ก่อนปัด)
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">รวมค่าไฟ (ก่อนปัดเศษ)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + totalRaw.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวส่วนเพิ่มจากปัดเศษ
+            const roundingExtra = totalAmount - totalRaw;
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ส่วนเพิ่มจากการปัดเศษ</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + roundingExtra.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถว Lost บ้านพัก
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่า Lost บ้านพัก</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostHouse.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถว Lost แฟลต
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่า Lost แฟลต</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + lostFlat.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวรวมทั้งหมด (ก่อนปัด + Lost)
+            const grandTotal = totalRaw + totalLost;
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">รวมทั้งหมด (ก่อนปัด + Lost)</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวค่าไฟการไฟฟ้าเรียกเก็บ
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;">ค่าไฟการไฟฟ้าเรียกเก็บ</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right;">' + peaTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            // แถวส่วนต่างจริง
+            const diff = grandTotal - peaTotal;
+            printWindow.document.write('<tr class="summary-row">');
+            printWindow.document.write('<td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">ส่วนต่างจริง</td>');
+            printWindow.document.write('<td style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">' + diff.toLocaleString('th-TH', {minimumFractionDigits: 2}) + '</td>');
+            printWindow.document.write('</tr>');
+            printWindow.document.write('</tbody></table>');
+            
+            // ช่องลงชื่อ — ดึงชื่อจาก cachedAdminSettings (โหลดจาก Backend ตอน initPage)
+            var _sys = cachedAdminSettings || {};
+            var _recorderName = _sys.meterRecorder || _sys.meter_recorder || '';
+            var _checkerName = _sys.meterChecker || _sys.meter_checker || '';
+            var _headName = _sys.headOfPromotion || _sys.head_of_promotion || '';
+
+            printWindow.document.write('<div class="signature-section">');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            printWindow.document.write('</div>');
+            
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            
+            // รอโหลดฟอนต์แล้วพิมพ์
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                }, 500);
+            };
         }
     
-        
         // ฟังก์ชันพิมพ์สรุปทั้งปี
         async function printYearlyReport() {
-            var year=document.getElementById('bill_year').value;
-            var thaiMonths=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-            var today=new Date();
-            var printDate=today.getDate()+' '+thaiMonths[today.getMonth()]+' พ.ศ. '+(today.getFullYear()+543);
-            var yearlyData={};
+            const year = document.getElementById('bill_year').value;
+            const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            const today = new Date();
+            const printDate = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
+
+            // ดึงข้อมูลทั้งปี
+            let yearlyData = {};
             try {
-                var result=await callBackend('getElectricBills',{year:year});
-                if(result&&result.success&&result.data){
-                    result.data.forEach(function(bill){var m=bill.period?parseInt(bill.period.split('-')[1]):0;if(!yearlyData[m])yearlyData[m]={amount:0,count:0};yearlyData[m].amount+=parseFloat(bill.amount||bill.bill_amount||0);yearlyData[m].count++;});
+                const result = await callBackend('getElectricBills', { year: year });
+                if (result && result.success && result.data) {
+                    result.data.forEach(function(bill) {
+                        var m = bill.period ? parseInt(bill.period.split('-')[1]) : 0;
+                        if (!yearlyData[m]) yearlyData[m] = { amount: 0, count: 0 };
+                        yearlyData[m].amount += parseFloat(bill.amount || bill.bill_amount || 0);
+                        yearlyData[m].count++;
+                    });
                 }
-            } catch(e){console.error('getElectricBills yearly error:',e);}
-            var tableRows=''; var grandTotal=0;
-            for(var m=1;m<=12;m++){
-                var md=yearlyData[m]||{amount:0,count:0};var has=md.count>0;
-                tableRows+='<tr><td class="tc">'+m+'</td><td>'+thaiMonths[m-1]+' '+year+'</td><td class="tc">'+(has?md.count:'-')+'</td><td class="tr">'+(has?md.amount.toLocaleString('th-TH',{minimumFractionDigits:2}):'-')+'</td><td class="tr">'+(has&&md.count>0?(md.amount/md.count).toLocaleString('th-TH',{minimumFractionDigits:2}):'-')+'</td></tr>';
-                grandTotal+=md.amount;
+            } catch (e) { console.error('getElectricBills yearly error:', e); }
+
+            let tableHTML = '';
+            let grandTotal = 0;
+            for (var m = 1; m <= 12; m++) {
+                var md = yearlyData[m] || { amount: 0, count: 0 };
+                var hasData = md.count > 0;
+                tableHTML += '<tr>';
+                tableHTML += '<td style="border:1px solid #000;padding:6px;text-align:center;">' + m + '</td>';
+                tableHTML += '<td style="border:1px solid #000;padding:6px;">' + thaiMonths[m - 1] + ' ' + year + '</td>';
+                tableHTML += '<td style="border:1px solid #000;padding:6px;text-align:center;">' + (hasData ? md.count : '-') + '</td>';
+                tableHTML += '<td style="border:1px solid #000;padding:6px;text-align:right;">' + (hasData ? md.amount.toLocaleString('th-TH') : '-') + '</td>';
+                tableHTML += '</tr>';
+                grandTotal += md.amount;
             }
-            var _sys=cachedAdminSettings||{};
-            var recorderName=_sys.meterRecorder||_sys.meter_recorder||'';
-            var checkerName=_sys.meterChecker||_sys.meter_checker||'';
-            var headName=_sys.headOfPromotion||_sys.head_of_promotion||'';
-            // ครุฑมีเฉพาะบันทึกข้อความ - หน้าอื่นเป็นเอกสารแนบ
-            var css='@page{size:A4 portrait;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"TH SarabunPSK","TH Sarabun New","Sarabun",serif;font-size:16pt;line-height:1.5;color:#000}.page{padding:1.8cm 2.0cm 1.5cm 3.0cm}.header-block{display:flex;align-items:center;margin-bottom:0.3cm}.garuda-left{flex-shrink:0;margin-right:0.4cm}.title-col{flex:1;text-align:center}.doc-title{display:inline-block;font-size:29pt;font-weight:bold;border-bottom:4px double #000;padding-bottom:0.12cm}.sub{text-align:center;font-size:14pt;margin-bottom:0.08cm}.period{text-align:center;font-size:16pt;font-weight:bold;margin-bottom:0.2cm}.meta{display:flex;justify-content:flex-end;font-size:14pt;margin-bottom:0.15cm}.rule{border:none;border-top:0.5pt solid #000;margin:0.2cm 0}table{border-collapse:collapse;width:100%;font-size:15pt;margin:0.2cm 0}thead th{background:#d8d8d8;border:0.5pt solid #000;padding:0.15cm 0.22cm;font-weight:bold;text-align:center}tbody td{border:0.5pt solid #000;padding:0.1cm 0.22cm}.tc{text-align:center}.tr{text-align:right}.tr-sum td{font-weight:bold;background:#ececec}.sig-section{margin-top:0.8cm;display:flex;justify-content:space-around}.sig-box{text-align:center;min-width:5.5cm}.sig-space{height:1.2cm}.sig-line{width:5.5cm;margin:0 auto 0.08cm auto;border-top:0.5pt dotted #000;padding-top:0.1cm}.sig-solid{width:5.5cm;margin:0 auto 0.08cm auto;border-top:2px solid #000;padding-top:0.1cm}.sig-name{font-weight:bold}@media print{body{margin:0!important;padding:0!important}.page{padding:1.8cm 2.0cm 1.5cm 3.0cm}}';
-            var pw=window.open('','_blank');
+
+            var _sys = cachedAdminSettings || {};
+            var _recorderName = _sys.meterRecorder || _sys.meter_recorder || '';
+            var _checkerName = _sys.meterChecker || _sys.meter_checker || '';
+            var _headName = _sys.headOfPromotion || _sys.head_of_promotion || '';
+
+            const pw = window.open('', '_blank');
             pw.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>สรุปค่าไฟทั้งปี</title>');
             pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
-            pw.document.write('<style>'+css+'</style></head><body><div class="page">');
-            pw.document.write('<div class="title-col" style="text-align:center"><span class="doc-title" style="font-size:22pt">เอกสารแนบ: รายงานสรุปค่าไฟฟ้าบ้านพักครูรายปี</span></div>');
-            pw.document.write('<div class="sub">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&nbsp;&nbsp;โรงเรียนพะเยาพิทยาคม</div>');
-            pw.document.write('<div class="period">ปีงบประมาณ / ปีการศึกษา&nbsp;&nbsp;พ.ศ. '+year+'</div>');
-            pw.document.write('<div class="meta">วันที่พิมพ์&nbsp;'+printDate+'</div>');
-            pw.document.write('<hr class="rule">');
-            pw.document.write('<table><thead><tr><th style="width:2.2em">ลำดับ</th><th>เดือน</th><th style="width:5em">จำนวน<br>บ้านพัก</th><th style="width:7em">รวมค่าไฟ<br>(บาท)</th><th style="width:6em">เฉลี่ย<br>ต่อหลัง (บาท)</th></tr></thead><tbody>');
-            pw.document.write(tableRows);
-            pw.document.write('<tr class="tr-sum"><td colspan="3" style="text-align:right">รวมทั้งปี</td><td class="tr">'+grandTotal.toLocaleString('th-TH',{minimumFractionDigits:2})+'</td><td></td></tr>');
-            pw.document.write('</tbody></table>');
-            pw.document.write('<div class="sig-section">');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(recorderName||'...................................')+')</div><div>ผู้รับผิดชอบงานค่าไฟฟ้า</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-name">('+(checkerName||'...................................')+')</div><div>ผู้ตรวจสอบ</div><div>วันที่&nbsp;........./........./.........</div></div>');
-            pw.document.write('<div class="sig-box"><div class="sig-space"></div><div class="sig-solid"></div><div class="sig-name">('+(headName||'...................................')+')</div><div>หัวหน้างานส่งเสริมฯ</div><div>วันที่&nbsp;........./........./.........</div></div>');
+            pw.document.write('<style>');
+            pw.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
+            pw.document.write('@media print { body { margin:0; padding:0; } }');
+            pw.document.write('* { box-sizing: border-box; }');
+            pw.document.write('body { font-family: "Sarabun","TH Sarabun New",sans-serif; font-size: 16pt; line-height: 1.15; margin:0; padding: 2.5cm 2cm 2cm 3cm; }');
+            pw.document.write('.header { text-align: center; margin-bottom: 0.5cm; }');
+            pw.document.write('.header-title { font-size: 18pt; font-weight: bold; }');
+            pw.document.write('.header-subtitle { font-size: 16pt; }');
+            pw.document.write('.header-period { font-size: 16pt; margin-top: 0.2cm; }');
+            pw.document.write('.date-line { text-align: right; margin-bottom: 0.3cm; font-size: 14pt; }');
+            pw.document.write('table { border-collapse: collapse; width: 100%; margin: 0.3cm 0; font-size: 14pt; page-break-inside: avoid; }');
+            pw.document.write('th { font-weight: bold; border: 1px solid #000; padding: 8px; text-align: center; }');
+            pw.document.write('td { border: 1px solid #000; padding: 6px; }');
+            pw.document.write('.signature-section { margin-top: 1cm; display: flex; justify-content: space-between; page-break-inside: avoid; }');
+            pw.document.write('.signature-box { width: 30%; text-align: center; font-size: 14pt; }');
+            pw.document.write('.signature-line { margin-top: 1.5cm; border-top: 1px dotted #000; padding-top: 0.2cm; }');
+            pw.document.write('.footer { text-align: center; margin-top: 0.5cm; font-size: 12pt; color: #666; }');
+            pw.document.write('</style></head><body>');
+
+            pw.document.write('<div class="header">');
+            pw.document.write('<div class="header-title">สรุปรายงานค่าไฟประจำปี</div>');
+            pw.document.write('<div class="header-subtitle">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
+            pw.document.write('<div class="header-period">ปี พ.ศ. ' + year + '</div>');
             pw.document.write('</div>');
-            pw.document.write('</div></body></html>');
+            pw.document.write('<div class="date-line">วันที่พิมพ์: ' + printDate + '</div>');
+
+            pw.document.write('<table><thead><tr>');
+            pw.document.write('<th style="width:50px;">ลำดับ</th>');
+            pw.document.write('<th>เดือน</th>');
+            pw.document.write('<th style="width:100px;">จำนวนบ้านพัก</th>');
+            pw.document.write('<th style="width:150px;">รวมค่าไฟ (บาท)</th>');
+            pw.document.write('</tr></thead><tbody>');
+            pw.document.write(tableHTML);
+            pw.document.write('<tr style="font-weight:bold;">');
+            pw.document.write('<td colspan="3" style="border:1px solid #000;padding:8px;text-align:right;font-weight:bold;">รวมทั้งปี</td>');
+            pw.document.write('<td style="border:1px solid #000;padding:8px;text-align:right;font-weight:bold;">' + grandTotal.toLocaleString('th-TH') + '</td>');
+            pw.document.write('</tr></tbody></table>');
+
+            pw.document.write('<div class="signature-section">');
+            pw.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้บันทึกข้อมูล<br>(' + (_recorderName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            pw.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>ผู้ตรวจสอบ<br>(' + (_checkerName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            pw.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ.........................................<br>หัวหน้างานส่งเสริมฯ<br>(' + (_headName || '.......................................') + ')<br>วันที่........./........./.........</div></div>');
+            pw.document.write('</div>');
+            pw.document.write('</body></html>');
             pw.document.close();
-            pw.onload=function(){setTimeout(function(){pw.print();},500);};
+            pw.onload = function() { setTimeout(function() { pw.print(); }, 500); };
         }
-    
-                async function doLogout() {
+
+        async function doLogout() {
             if (typeof ppkLogout === 'function') { ppkLogout(); return; }
             localStorage.removeItem('sessionToken');
             localStorage.removeItem('currentUser');
@@ -1310,10 +1401,10 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401A"></script>
-    <script src="ppk-app.js?v=20260401A"></script>
-    <script src="ppk-utils.js?v=20260401A"></script>
-    <script src="ppk-nav.js?v=20260401A"></script>
+    <script src="ppk-api.js?v=20260324B"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
