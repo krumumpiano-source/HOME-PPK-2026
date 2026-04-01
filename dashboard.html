@@ -731,7 +731,7 @@
             // Outstanding — แสดงเมื่อมียอดค้างเพิ่มเติมนอกจาก featured period
             // หลัง backend fix: amount = featured period amount, outstanding = ผลรวมทุกเดือนที่ค้าง
             // ถ้า outstanding > amount → มีเดือนอื่นค้างด้วย → แสดง banner สรุป
-            var outItems = result.outstandingItems || [];
+            var outItems = data.outstandingItems || [];
             var extraItems = outItems.filter(function(o) { return o.period !== period; });
             if (outstanding > amount && slipStatus !== 'success') {
                 var sec = document.getElementById('outstandingSection');
@@ -1001,9 +1001,11 @@
                 renderAnnouncements(result.announcements || []);
                 if (result.role === 'admin' || result.role === 'head') {
                     renderAdminDashboard(result.data || {});
-                    if (result.residentData) renderUserDashboard(result.residentData);
+                    if (result.residentData) { result.residentData.outstandingItems = result.outstandingItems; renderUserDashboard(result.residentData); }
                 } else {
-                    renderUserDashboard(result.data || {});
+                    var _ud = result.data || {};
+                    _ud.outstandingItems = result.outstandingItems;
+                    renderUserDashboard(_ud);
                     renderProxyAssignments(result.proxyAssignments || []);
                 }
             } catch(e) {
