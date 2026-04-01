@@ -1932,6 +1932,8 @@ async function _routeAction(action, data) {
             var result = Object.values(summaryMap).map(function(s) {
                 // ใช้ snapshot ชื่อจาก bills (ถูกต้องตาม period) → fallback ชื่อ resident ปัจจุบัน (data เก่า)
                 s.resident_name = s.snapshot_name || resMap[s.house_number] || '';
+                s.email         = resEmailMap[s.house_number] || '';
+                s.proxy_email   = proxyEmailMap[s.house_number] || '';
                 s.exempt_common = exemptSet[s.house_number] ? true : false;
                 s.total_amount  = (s.water_amount || 0) + (s.electric_amount || 0) + (s.common_fee || 0);
                 s.due_date      = notifDueDateMap[s.house_number] || null;
