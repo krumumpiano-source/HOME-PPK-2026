@@ -2086,16 +2086,26 @@ async function _routeAction(action, data) {
                     } catch(e) {}
                 }
 
-                // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี payment_history แล้วหรือยัง → auto-mark paid
+                // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี payment_history หรือ approved slip แล้วหรือยัง → auto-mark paid
                 if (outRows && outRows.length > 0 && houseNumber) {
                     try {
-                        var phRows = await sbGet('payment_history', { house_number: 'eq.' + houseNumber, order: 'period.desc', limit: '50' }).catch(function() { return []; });
+                        var [phRows, slipRows2] = await Promise.all([
+                            sbGet('payment_history', { house_number: 'eq.' + houseNumber, order: 'period.desc', limit: '50' }).catch(function() { return []; }),
+                            sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, status: 'eq.approved', order: 'submitted_at.desc', limit: '50' }).catch(function() { return []; })
+                        ]);
                         var paidPeriods = {};
                         (phRows || []).forEach(function(ph) { if (ph.period) paidPeriods[ph.period] = true; });
+                        var slipPaidPeriods = {};
+                        (slipRows2 || []).forEach(function(sl) { if (sl.period) slipPaidPeriods[sl.period] = sl; });
                         var healedOutRows = [];
                         for (var hi = 0; hi < outRows.length; hi++) {
                             if (paidPeriods[outRows[hi].period]) {
                                 sbPatch('outstanding', { id: 'eq.' + outRows[hi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
+                            } else if (slipPaidPeriods[outRows[hi].period]) {
+                                // approved slip exists but no payment_history → heal both
+                                sbPatch('outstanding', { id: 'eq.' + outRows[hi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
+                                var _hsl = slipPaidPeriods[outRows[hi].period];
+                                sbPost('payment_history', { house_number: houseNumber, period: outRows[hi].period, amount_paid: _hsl.amount || outRows[hi].total_amount, payment_date: (_hsl.reviewed_at || _hsl.submitted_at || new Date().toISOString()).substring(0, 10), payment_method: 'transfer', slip_id: _hsl.id, recorded_by: _hsl.reviewed_by || 'system' }).catch(function() {});
                             } else {
                                 healedOutRows.push(outRows[hi]);
                             }
@@ -4261,11 +4271,42 @@ async function _routeAction(action, data) {
                 sbGet('payment_proxies',  { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', limit: '1' }).catch(function() { return []; })
             ]);
             var ahvResRows = ahvResults[0], ahvOutRows = ahvResults[1], ahvSlipRows = ahvResults[2], ahvProxyRows = ahvResults[3];
+
+            // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี payment_history หรือ approved slip แล้วหรือยัง → auto-mark paid
+            try {
+                var ahvUnpaid = (ahvOutRows || []).filter(function(o) { return o.status !== 'paid'; });
+                if (ahvUnpaid.length > 0) {
+                    var [ahvPH, ahvSlips] = await Promise.all([
+                        sbGet('payment_history', { house_number: 'eq.' + ahvHouse, order: 'period.desc', limit: '50' }).catch(function() { return []; }),
+                        sbGet('slip_submissions', { house_number: 'eq.' + ahvHouse, status: 'eq.approved', order: 'submitted_at.desc', limit: '50' }).catch(function() { return []; })
+                    ]);
+                    var ahvPaidPeriods = {};
+                    (ahvPH || []).forEach(function(ph) { if (ph.period) ahvPaidPeriods[ph.period] = true; });
+                    var ahvSlipPaidPeriods = {};
+                    (ahvSlips || []).forEach(function(sl) { if (sl.period) ahvSlipPaidPeriods[sl.period] = sl; });
+                    for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvHi++) {
+                        if (ahvOutRows[ahvHi].status !== 'paid' && ahvPaidPeriods[ahvOutRows[ahvHi].period]) {
+                            ahvOutRows[ahvHi].status = 'paid';
+                            sbPatch('outstanding', { id: 'eq.' + ahvOutRows[ahvHi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
+                        } else if (ahvOutRows[ahvHi].status !== 'paid' && ahvSlipPaidPeriods[ahvOutRows[ahvHi].period]) {
+                            ahvOutRows[ahvHi].status = 'paid';
+                            sbPatch('outstanding', { id: 'eq.' + ahvOutRows[ahvHi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
+                            var _ahvSl = ahvSlipPaidPeriods[ahvOutRows[ahvHi].period];
+                            sbPost('payment_history', { house_number: ahvHouse, period: ahvOutRows[ahvHi].period, amount_paid: _ahvSl.amount || ahvOutRows[ahvHi].total_amount, payment_date: (_ahvSl.reviewed_at || _ahvSl.submitted_at || new Date().toISOString()).substring(0, 10), payment_method: 'transfer', slip_id: _ahvSl.id, recorded_by: _ahvSl.reviewed_by || 'system' }).catch(function() {});
+                        }
+                    }
+                }
+            } catch(e) {}
+
             // ชื่อผู้พัก
             var ahvRes = ahvResRows && ahvResRows[0];
             var ahvResName = ahvRes ? ((ahvRes.prefix||'') + (ahvRes.firstname||'') + ' ' + (ahvRes.lastname||'')).trim() : '';
-            // ข้อมูลงวดปัจจุบัน
-            var ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod; });
+            // กรองเฉพาะ unpaid + ไม่ใช่ moved_out สำหรับคำนวณยอดค้าง
+            var ahvActiveOutRows = (ahvOutRows || []).filter(function(o) { return o.status !== 'paid' && !o.moved_out_at; });
+            // ข้อมูลงวดปัจจุบัน (ใช้ activeOutRows เพื่อไม่แสดงงวดที่ชำระแล้ว)
+            var ahvCurOut = ahvActiveOutRows.find(function(o) { return o.period === ahvPeriod; });
+            // fallback ลองหาจาก all rows (รวม paid) เพื่อแสดงข้อมูลบิล
+            if (!ahvCurOut) ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod; });
             // fallback: ถ้าไม่มีใน outstanding ให้ดึงจาก notifications
             var ahvCurNotif = null;
             if (!ahvCurOut) {
@@ -4282,7 +4323,8 @@ async function _routeAction(action, data) {
                 else if (ahvCurSlip.status === 'rejected') { ahvSlipStatus = 'rejected'; ahvReviewNote = ahvCurSlip.review_note || ''; }
                 else ahvSlipStatus = 'reviewing';
             }
-            var ahvTotalOs = (ahvOutRows || []).reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
+            // คำนวณ totalOutstanding เฉพาะ unpaid + ไม่ใช่ moved_out เท่านั้น
+            var ahvTotalOs = ahvActiveOutRows.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
             // ประวัติรายเดือน (join outstanding + slip ล่าสุดของแต่ละงวด)
             var ahvHistory = (ahvOutRows || []).map(function(o) {
                 var s = (ahvSlipRows || []).find(function(sl) { return sl.period === o.period; });
