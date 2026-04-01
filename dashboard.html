@@ -109,6 +109,20 @@
             padding: 1rem 1.2rem; margin-bottom: 1rem;
             display: flex; align-items: center; gap: 0.8rem;
         }
+
+        /* ── Departing user mode ── */
+        .departing-banner {
+            background: linear-gradient(135deg, #FEE2E2, #FECACA);
+            border: 2px solid #EF4444; border-radius: 16px;
+            padding: 1.5rem; margin-bottom: 1rem; text-align: center;
+        }
+        .departing-banner .dep-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .departing-banner .dep-title { font-size: 1.15rem; font-weight: 700; color: #991B1B; margin-bottom: 0.3rem; }
+        .departing-banner .dep-desc { font-size: 0.9rem; color: #B91C1C; margin-bottom: 1rem; line-height: 1.5; }
+        .departing-outstanding-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        .departing-outstanding-table th { background: #FECACA; padding: 0.5rem; font-size: 0.85rem; color: #7F1D1D; text-align: left; }
+        .departing-outstanding-table td { padding: 0.5rem; font-size: 0.9rem; border-bottom: 1px solid #FECACA; }
+        .departing-outstanding-table .total-row td { font-weight: 700; background: #FEE2E2; }
         .outstanding-banner .ob-icon { font-size: 1.8rem; }
         .outstanding-banner .ob-info { flex: 1; }
         .outstanding-banner .ob-label { font-size: 0.82rem; color: #92400E; }
@@ -354,13 +368,114 @@
         }
 
         function renderUserDashboard(data) {
+            var houseNumber = data.houseNumber || '';
+            var user = {};
+            try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var firstName = user.firstname || '';
+
+            // ── Departing user mode: ย้ายออกแล้วแต่ยังค้างชำระ ──
+            if (user.departing || data.departing) {
+                document.getElementById('paymentSection').style.display = 'none';
+                document.getElementById('hubMenuCard').style.display = 'none';
+                document.getElementById('quickActionsSection').style.display = 'none';
+                var floatingEl = document.getElementById('floatingUserBanner');
+                if (floatingEl) floatingEl.style.display = 'none';
+
+                var depEl = document.getElementById('departingUserBanner');
+                if (!depEl) {
+                    depEl = document.createElement('div');
+                    depEl.id = 'departingUserBanner';
+                    var paySection = document.getElementById('paymentSection');
+                    paySection.parentNode.insertBefore(depEl, paySection);
+                }
+
+                var outRows = data.outstandingItems || [];
+                var totalOut = 0;
+                var tableRows = outRows.map(function(o) {
+                    var amt = parseFloat(o.total_amount || o.amount) || 0;
+                    totalOut += amt;
+                    var periodLabel = o.period || (o.year + '-' + String(o.month).padStart(2,'0'));
+                    return '<tr><td>' + (o.description || 'ค่าสาธารณูปโภค') + '</td><td>' + periodLabel + '</td><td style="text-align:right;">' + amt.toLocaleString('th-TH') + ' ฿</td></tr>';
+                }).join('');
+
+                if (outRows.length === 0) {
+                    tableRows = '<tr><td colspan="3" style="text-align:center;color:#059669;padding:1rem;">✅ ไม่มียอดค้างชำระ</td></tr>';
+                }
+
+                depEl.innerHTML =
+                    '<div class="departing-banner">' +
+                        '<div class="dep-icon">⚠️</div>' +
+                        '<div class="dep-title">คุณอยู่ระหว่างรอชำระยอดค้างก่อนออกจากระบบ</div>' +
+                        '<div class="dep-desc">บ้านเดิมของคุณถูกส่งคืนเรียบร้อยแล้ว<br>กรุณาชำระยอดค้างทั้งหมดเพื่อปิดบัญชี</div>' +
+                        '<table class="departing-outstanding-table">' +
+                            '<thead><tr><th>รายการ</th><th>เดือน</th><th style="text-align:right;">จำนวน</th></tr></thead>' +
+                            '<tbody>' + tableRows +
+                                (outRows.length > 0 ? '<tr class="total-row"><td colspan="2">รวมยอดค้างทั้งหมด</td><td style="text-align:right;">' + totalOut.toLocaleString('th-TH') + ' ฿</td></tr>' : '') +
+                            '</tbody>' +
+                        '</table>' +
+                        (outRows.length > 0 ? '<a href="upload-slip.html" onclick="navigate(\'?page=upload-slip\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;display:inline-block;width:100%;text-align:center;padding:0.8rem;">📤 ส่งสลิปชำระเงิน</a>' : '<div style="color:#059669;font-weight:600;font-size:1.1rem;margin-top:0.5rem;">✅ ชำระครบแล้ว — รอระบบปิดบัญชีอัตโนมัติ</div>') +
+                    '</div>';
+                depEl.style.display = '';
+
+                // แสดง quick actions แค่ ส่งสลิป + ประวัติชำระ + ตั้งค่า
+                if (outRows.length > 0) {
+                    document.getElementById('quickActionsSection').style.display = '';
+                    var qaEl = document.getElementById('quickActions');
+                    qaEl.innerHTML = [
+                        { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                        { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                        { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
+                    ].map(function(item) {
+                        return '<button class="quick-action" onclick="navigate(\'?page=' + item.page + '\')">'
+                            + '<div class="qa-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
+                            + '<span class="qa-label">' + item.label + '</span></button>';
+                    }).join('');
+                }
+                return;
+            }
+
+            // ผู้ใช้ที่ยังไม่มีบ้านพัก — แสดง banner รอจัดสรร
+            if (!houseNumber) {
+                document.getElementById('paymentSection').style.display = 'none';
+                document.getElementById('hubMenuCard').style.display = 'none';
+                document.getElementById('quickActionsSection').style.display = 'none';
+                var user = {};
+                try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+                var firstName = user.firstname || '';
+                var floatingEl = document.getElementById('floatingUserBanner');
+                if (!floatingEl) {
+                    floatingEl = document.createElement('div');
+                    floatingEl.id = 'floatingUserBanner';
+                    var paySection = document.getElementById('paymentSection');
+                    paySection.parentNode.insertBefore(floatingEl, paySection);
+                }
+                floatingEl.innerHTML =
+                    '<div class="ppk-card" style="text-align:center; padding:2rem 1.5rem; margin-bottom:1rem;">' +
+                        '<div style="font-size:3rem; margin-bottom:0.75rem;">🏠</div>' +
+                        '<div style="font-size:1.2rem; font-weight:700; color:var(--c-text); margin-bottom:0.5rem;">สวัสดี' + (firstName ? ', ' + firstName : '') + '</div>' +
+                        '<div style="font-size:1rem; color:var(--c-text-secondary); margin-bottom:1rem;">ขณะนี้คุณยังไม่ได้รับมอบหมายบ้านพัก<br>กรุณารอการจัดสรรจากคณะทำงาน</div>' +
+                        '<div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">' +
+                            '<a href="request-form.html" onclick="navigate(\'?page=request-form\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;">📝 ยื่นคำร้องขอเข้าพัก</a>' +
+                            '<a href="regulations.html" onclick="navigate(\'?page=regulations\');return false;" class="ppk-btn ppk-btn-outline" style="text-decoration:none;">📖 ดูระเบียบ</a>' +
+                        '</div>' +
+                    '</div>';
+                floatingEl.style.display = '';
+                return;
+            }
+
+            // ผู้ใช้ปกติที่มีบ้านพักแล้ว
+            var floatingEl = document.getElementById('floatingUserBanner');
+            if (floatingEl) floatingEl.style.display = 'none';
+            var depEl = document.getElementById('departingUserBanner');
+            if (depEl) depEl.style.display = 'none';
+
             document.getElementById('paymentSection').style.display = '';
             document.getElementById('hubMenuCard').style.display = '';
+            document.getElementById('quickActionsSection').style.display = '';
 
             var amount = data.currentAmount || 0;
             var outstanding = data.totalOutstanding || 0;
             var period = data.period || '';
-            var houseNumber = data.houseNumber || '';
             var slipStatus = data.slipStatus || 'none';
             var reviewNote = data.reviewNote || '';
             var slipId = data.slipId || null;

@@ -1047,13 +1047,23 @@
         try {
           const { month, year } = getSelectedPeriod();
           const _period = year + '-' + month;
+          // Query outstanding เพื่อส่ง outstandingId → backend จะ auto-mark paid
+          var _outId = null;
+          try {
+            var _outResult = await callBackend('getOutstanding', { houseNumber: unit.unitNumber, status: 'unpaid' });
+            if (_outResult && _outResult.data) {
+              var _outMatch = (_outResult.data || []).filter(function(o) { return o.period === _period; });
+              if (_outMatch.length > 0) _outId = _outMatch[0].id;
+            }
+          } catch(e) {}
           const result = await callBackend('reviewSlip', {
             id: unit.slipId,
             status: 'approved',
             note: '',
             houseNumber: unit.unitNumber,
             period: _period,
-            amount: unit.paidAmount
+            amount: unit.paidAmount,
+            outstandingId: _outId
           });
           if (result && result.success) {
             // ลบ cache bill summary เพื่อโหลดสถานะใหม่
@@ -1394,6 +1404,15 @@
 
       // ส่ง Backend ก่อน
       try {
+          // Query outstanding เพื่อส่ง outstandingId
+          var _mpOutId = null;
+          try {
+            var _mpOutResult = await callBackend('getOutstanding', { houseNumber: unit.unitNumber, status: 'unpaid' });
+            if (_mpOutResult && _mpOutResult.data) {
+              var _mpOutMatch = (_mpOutResult.data || []).filter(function(o) { return o.period === period; });
+              if (_mpOutMatch.length > 0) _mpOutId = _mpOutMatch[0].id;
+            }
+          } catch(e) {}
           // สร้าง slip record (manual)
           const submitResult = await callBackend('submitSlip', {
             houseNumber: unit.unitNumber,
@@ -1411,7 +1430,8 @@
               note:        payNote || 'บันทึกด้วยตนเอง',
               houseNumber: unit.unitNumber,
               period:      period,
-              amount:      paidAmount
+              amount:      paidAmount,
+              outstandingId: _mpOutId
             });
             // ลบ cache bill summary
             localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: period }));
