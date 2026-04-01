@@ -268,6 +268,14 @@
             return yearBE + month;
         }
 
+        function getPreviousPeriodKey(){
+            const now = new Date();
+            const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const yearBE = prev.getFullYear() + 543;
+            const month = String(prev.getMonth() + 1).padStart(2, '0');
+            return yearBE + month;
+        }
+
         // แปลง key 256902 → 2569-02
         function toApiPeriod(key){
             if (!key || key.length < 6) return key;
@@ -398,6 +406,7 @@
             }
 
             // ลองจาก Backend ก่อน
+            var activePeriodKey = periodKey;
             try {
                     const period = toApiPeriod(periodKey);
                     const result = await cachedCall('getBillSummaryAll', { period }, 300000);
@@ -410,6 +419,25 @@
                     }
                 } catch (e) { console.error('getBillSummaryAll error:', e); }
 
+            // ถ้าเดือนปัจจุบันไม่มีบิล → ลองเดือนก่อน (กรณีเข้าหน้าต้นเดือนยังไม่ออกบิลใหม่)
+            if (totalAmount === 0 && periodKey === getCurrentPeriodKey()) {
+                var prevKey = getPreviousPeriodKey();
+                try {
+                    var prevPeriod = toApiPeriod(prevKey);
+                    var prevResult = await cachedCall('getBillSummaryAll', { period: prevPeriod }, 300000);
+                    if (prevResult && prevResult.success && prevResult.data) {
+                        var prevRow = prevResult.data.find(function(r) { return String(r.house_number) === String(unitNumber); });
+                        if (prevRow) {
+                            totalAmount = (parseFloat(prevRow.water_amount) || 0) + (parseFloat(prevRow.electric_amount) || 0) + (parseFloat(prevRow.common_fee) || 0);
+                            residentName = prevRow.resident_name || '';
+                            activePeriodKey = prevKey;
+                            // อัพเดตหัวข้อแสดงงวด
+                            document.getElementById('display-period').textContent = formatPeriod(prevKey) + ' (เดือนที่แล้ว)';
+                        }
+                    }
+                } catch(e) { console.error('getBillSummaryAll prev error:', e); }
+            }
+
             // ถ้า Backend ไม่มีข้อมูล → บล็อกการส่งสลิป
             if (totalAmount === 0) {
                 document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;font-weight:600;">⚠️ ยังไม่มีข้อมูลบิลเดือนนี้</span><br><span style="font-size:0.85rem;color:#666;">กรุณารอแจ้งยอดก่อนจึงจะส่งสลิปได้</span>';
@@ -420,8 +448,8 @@
                 document.querySelector('.submit-btn').textContent = '⛔ ยังไม่เปิดรับชำระเดือนนี้';
                 window.billingInfo = {
                     unitNumber: unitNumber,
-                    periodKey: periodKey,
-                    period: toApiPeriod(periodKey),
+                    periodKey: activePeriodKey,
+                    period: toApiPeriod(activePeriodKey),
                     notifiedAmount: 0,
                     residentName: residentName,
                     noBillData: true
@@ -434,8 +462,8 @@
 
             window.billingInfo = {
                 unitNumber: unitNumber,
-                periodKey: periodKey,
-                period: toApiPeriod(periodKey),
+                periodKey: activePeriodKey,
+                period: toApiPeriod(activePeriodKey),
                 notifiedAmount: totalAmount,
                 residentName: residentName
             };
@@ -1019,10 +1047,10 @@
     <script src="libs/jsqr.min.js?v=20260323"></script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401D"></script>
-    <script src="ppk-app.js?v=20260401D"></script>
-    <script src="ppk-utils.js?v=20260401D"></script>
-    <script src="ppk-nav.js?v=20260401D"></script>
+    <script src="ppk-api.js?v=20260401E"></script>
+    <script src="ppk-app.js?v=20260401E"></script>
+    <script src="ppk-utils.js?v=20260401E"></script>
+    <script src="ppk-nav.js?v=20260401E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>
