@@ -728,10 +728,27 @@
                 ctaEl.className = 'hero-cta';
             }
 
-            // Outstanding — ซ่อนถ้าชำระแล้ว
-            if (outstanding > 0 && slipStatus !== 'success') {
-                document.getElementById('outstandingSection').style.display = '';
-                document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' บาท';
+            // Outstanding — แสดงเมื่อมียอดค้างเพิ่มเติมนอกจาก featured period
+            // หลัง backend fix: amount = featured period amount, outstanding = ผลรวมทุกเดือนที่ค้าง
+            // ถ้า outstanding > amount → มีเดือนอื่นค้างด้วย → แสดง banner สรุป
+            var outItems = result.outstandingItems || [];
+            var extraItems = outItems.filter(function(o) { return o.period !== period; });
+            if (outstanding > amount && slipStatus !== 'success') {
+                var sec = document.getElementById('outstandingSection');
+                sec.style.display = '';
+                // แสดงยอดรวมทั้งหมด + รายการเดือนที่ค้างเพิ่มเติม
+                var extraMonthsHtml = extraItems.map(function(o) {
+                    var p = o.period || '';
+                    var pts = p.split('-');
+                    var mIdx = pts[1] ? parseInt(pts[1]) - 1 : 0;
+                    var mLabel = THAI_MONTHS[mIdx] + ' ' + (pts[0] || '');
+                    var amt = parseFloat(o.total_amount || o.amount) || 0;
+                    return '<span style="display:inline-block;background:#FEF3C7;border-radius:4px;padding:1px 6px;margin:1px;font-size:0.78rem;">'
+                        + mLabel + ': ' + amt.toLocaleString('th-TH') + ' ฿</span>';
+                }).join('');
+                document.getElementById('outstandingAmount').innerHTML =
+                    outstanding.toLocaleString('th-TH') + ' บาท (รวมทุกเดือน)'
+                    + (extraMonthsHtml ? '<div style="margin-top:4px;">' + extraMonthsHtml + '</div>' : '');
             } else {
                 document.getElementById('outstandingSection').style.display = 'none';
             }

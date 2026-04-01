@@ -2065,10 +2065,14 @@ async function _routeAction(action, data) {
                         sbGet('slip_submissions', { submitted_by_user_id: 'eq.' + _dashUserId, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
                     ]);
                 } else if (houseNumber) {
-                    [outRows, slipRows] = await Promise.all([
-                        sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', moved_out_at: 'is.null', order: 'period.desc', limit: '12' }).catch(function() { return []; }),
-                        sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
-                    ]);
+                    // ① ดึง outstanding ทั้งหมดก่อน
+                    outRows = await sbGet('outstanding', { house_number: 'eq.' + houseNumber, status: 'neq.paid', moved_out_at: 'is.null', order: 'period.desc', limit: '12' }).catch(function() { return []; });
+                    // ② ถ้าไม่มีบิลงวดปัจจุบัน แต่มียอดค้างงวดก่อน → ใช้งวดล่าสุดที่ค้างเป็น featured period
+                    if (outRows && outRows.length > 0 && !(outRows.some(function(o) { return o.period === period; }))) {
+                        period = outRows[0].period;
+                    }
+                    // ③ ดึง slip ตาม period ที่ถูกต้องแล้ว
+                    slipRows = await sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
                 }
 
                 // Floating user: ดึง pending residence request (ถ้ามี)
@@ -2171,7 +2175,7 @@ async function _routeAction(action, data) {
                     departing: _isDashDeparting,
                     floating: _isDashFloating,
                     floatingRequest: _floatingRequest,
-                    outstandingItems: _isDashDeparting ? (outRows || []) : undefined,
+                    outstandingItems: outRows || [],
                     proxyAssignments: userProxyAssignments,
                     data: {
                     houseNumber: houseNumber,
