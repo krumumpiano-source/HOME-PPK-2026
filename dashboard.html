@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>ᴪ����� | HOME PPK 2026</title>
+    <title>แดชบอร์ด | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260323E">
     <style>
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
         .dashboard-amount.danger { color: var(--c-danger); }
         .dashboard-amount.ok { color: var(--c-success); }
 
-        /* �� Hero Payment Card �� */
+        /* ── Hero Payment Card ── */
         .hero-payment {
             background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
             border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
@@ -69,7 +69,7 @@
         }
         .hero-payment .hero-col { flex: 1; }
 
-        /* �� Big CTA Button �� */
+        /* ── Big CTA Button ── */
         .hero-cta {
             display: flex; align-items: center; justify-content: center; gap: 0.5rem;
             width: 100%; padding: 0.9rem;
@@ -84,7 +84,7 @@
         .hero-cta.reviewing { background: rgba(251,191,36,0.2); color: #F59E0B; cursor: default; }
         .hero-cta.success { background: rgba(16,185,129,0.2); color: #10B981; cursor: default; }
 
-        /* �� Status badge �� */
+        /* ── Status badge ── */
         .hero-status {
             display: inline-flex; align-items: center; gap: 0.3rem;
             padding: 0.3rem 0.7rem; border-radius: 20px;
@@ -116,13 +116,7 @@
         }
         .hero-cancel-btn:hover { background: rgba(220,38,38,0.15); }
 
-        /* �� Outstanding banner �� */
-        .outstanding-banner {
-            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-            border: 1.5px solid #F59E0B; border-radius: 14px;
-            padding: 1rem 1.2rem; margin-bottom: 1rem;
-            display: flex; align-items: center; gap: 0.8rem;
-        }
+        /* ── Outstanding per-month detail ── */
         .os-detail-section { margin-bottom: 1rem; }
         .os-detail-header {
             background: linear-gradient(135deg, #FEF3C7, #FDE68A);
@@ -173,7 +167,7 @@
             border-radius: 8px; padding: 0.5rem 0.75rem; margin-top: 0.3rem; line-height: 1.5;
         }
 
-        /* �� Departing user mode �� */
+        /* ── Departing user mode ── */
         .departing-banner {
             background: linear-gradient(135deg, #FEE2E2, #FECACA);
             border: 2px solid #EF4444; border-radius: 16px;
@@ -186,19 +180,7 @@
         .departing-outstanding-table th { background: #FECACA; padding: 0.5rem; font-size: 0.85rem; color: #7F1D1D; text-align: left; }
         .departing-outstanding-table td { padding: 0.5rem; font-size: 0.9rem; border-bottom: 1px solid #FECACA; }
         .departing-outstanding-table .total-row td { font-weight: 700; background: #FEE2E2; }
-        .outstanding-banner .ob-icon { font-size: 1.8rem; }
-        .outstanding-banner .ob-info { flex: 1; }
-        .outstanding-banner .ob-label { font-size: 0.82rem; color: #92400E; }
-        .outstanding-banner .ob-amount { font-size: 1.3rem; font-weight: 700; color: #B45309; }
-        .outstanding-banner .ob-btn {
-            background: #B45309; color: #fff; border: none; border-radius: 10px;
-            padding: 0.55rem 1rem; font-family: 'Kanit', sans-serif;
-            font-size: 0.85rem; font-weight: 600; cursor: pointer;
-            transition: all 0.15s; white-space: nowrap;
-        }
-        .outstanding-banner .ob-btn:hover { background: #92400E; }
-
-        /* �� Proxy Assignment Banner �� */
+        /* ── Proxy Assignment Banner ── */
         .proxy-assign-section { margin-bottom: 0; }
         .proxy-assign-section .pa-header {
             font-size: 0.82rem; color: #065F46; font-weight: 600;
@@ -206,7 +188,7 @@
             display: flex; align-items: center; gap: 0.4rem;
         }
 
-        /* �� Proxy Hero Card (full card, ����͹ hero-payment ����������) �� */
+        /* ── Proxy Hero Card (full card, เหมือน hero-payment แต่สีเขียว) ── */
         .proxy-hero-card {
             background: linear-gradient(135deg, #065F46 0%, #059669 55%, #34D399 100%);
             border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
@@ -283,7 +265,7 @@
             .proxy-hero-card .phc-cta { font-size: 0.95rem; padding: 0.75rem; }
         }
 
-        /* �� Quick Actions Row �� */
+        /* ── Quick Actions Row ── */
         .quick-actions {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
             margin-bottom: 1rem;
@@ -311,9 +293,7 @@
             .hero-payment { padding: 1.2rem; border-radius: 16px; }
             .hero-payment .hero-amount { font-size: 1.7rem; }
             .hero-cta { font-size: 1rem; padding: 0.8rem; }
-            .outstanding-banner { flex-wrap: wrap; }
-            .outstanding-banner .ob-btn { width: 100%; text-align: center; margin-top: 0.3rem; }
-            .os-item { flex-direction: column; align-items: stretch; gap: 0.3rem; }
+            .os-item { flex-direction: column; align-items: flex-start; }
             .os-item-amount { text-align: left; }
             .os-item-btn { width: 100%; text-align: center; }
             .quick-actions { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
@@ -331,7 +311,7 @@
 
     <div class="ppk-main" id="dashboardContainer">
         <div class="ppk-topbar">
-            <div class="ppk-topbar-title"><span class="icon">??</span> HOME PPK 2026</div>
+            <div class="ppk-topbar-title"><span class="icon">🏠</span> HOME PPK 2026</div>
         </div>
 
         <div class="ppk-content">
@@ -339,47 +319,47 @@
             <div id="adminStatsSection" style="display:none; margin-bottom:1.25rem;">
                 <div class="ppk-stats">
                     <div class="ppk-stat" onclick="navigate('?page=team-management')">
-                        <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value danger" id="statPendingReg">�</div>
-                        <div class="ppk-stat-label">�Ӣ���Ѥ��͵�Ǩ</div>
+                        <div class="ppk-stat-icon">👥</div>
+                        <div class="ppk-stat-value danger" id="statPendingReg">—</div>
+                        <div class="ppk-stat-label">คำขอสมัครรอตรวจ</div>
                     </div>
                     <div class="ppk-stat" onclick="navigate('?page=check-slip')">
-                        <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value danger" id="statPendingSlips">�</div>
-                        <div class="ppk-stat-label">��Ի�͵�Ǩ�ͺ</div>
+                        <div class="ppk-stat-icon">🔍</div>
+                        <div class="ppk-stat-value danger" id="statPendingSlips">—</div>
+                        <div class="ppk-stat-label">สลิปรอตรวจสอบ</div>
                     </div>
                     <div class="ppk-stat" onclick="navigate('?page=check-request')">
-                        <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value danger" id="statPendingReqs">�</div>
-                        <div class="ppk-stat-label">����ͧ�ʹ���Թ���</div>
+                        <div class="ppk-stat-icon">📋</div>
+                        <div class="ppk-stat-value danger" id="statPendingReqs">—</div>
+                        <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
                     </div>
-                    <div class="ppk-stat" onclick="navigate('?page=check-slip')" title="�ѵ�ҡ�ê�����Թ���͹���">
-                        <div class="ppk-stat-icon">??</div>
-                        <div class="ppk-stat-value" id="statCollectionRate">�</div>
-                        <div class="ppk-stat-label">% �����������͹���</div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-slip')" title="อัตราการชำระเงินเดือนนี้">
+                        <div class="ppk-stat-icon">💰</div>
+                        <div class="ppk-stat-value" id="statCollectionRate">—</div>
+                        <div class="ppk-stat-label">% ชำระแล้วเดือนนี้</div>
                     </div>
-                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="�ӹǹ��ͧ����ѧ��ҧ����">
-                        <div class="ppk-stat-icon">?</div>
-                        <div class="ppk-stat-value" id="statOutstandingRooms">�</div>
-                        <div class="ppk-stat-label">��ͧ��ҧ����</div>
+                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="จำนวนห้องที่ยังค้างชำระ">
+                        <div class="ppk-stat-icon">⏳</div>
+                        <div class="ppk-stat-value" id="statOutstandingRooms">—</div>
+                        <div class="ppk-stat-label">ห้องค้างชำระ</div>
                     </div>
                 </div>
             </div>
 
-            <!-- ? HERO: Payment Card (residents see first) -->
+            <!-- ★ HERO: Payment Card (residents see first) -->
             <div id="paymentSection" style="display:none;">
                 <div class="hero-payment" id="heroPayment">
-                    <div class="hero-greeting" id="heroGreeting">���ʴ�</div>
-                    <div class="hero-house" id="heroHouse">?? ��ҹ�ѡ �</div>
+                    <div class="hero-greeting" id="heroGreeting">สวัสดี</div>
+                    <div class="hero-house" id="heroHouse">🏠 บ้านพัก —</div>
                     <hr class="hero-divider">
                     <div class="hero-row">
                         <div class="hero-col">
-                            <div class="hero-label">?? �ʹ�������͹���</div>
-                            <div class="hero-amount" id="currentMonthAmount">�</div>
+                            <div class="hero-label">💳 ยอดชำระเดือนนี้</div>
+                            <div class="hero-amount" id="currentMonthAmount">—</div>
                             <div id="heroBillBreakdown" class="hero-breakdown" style="display:none;">
-                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">��ҹ��</span><span class="hb-val" id="hbWater">�</span></div>
-                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">�����</span><span class="hb-val" id="hbElectric">�</span></div>
-                                <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">�����ǹ��ҧ</span><span class="hb-val" id="hbCommon">�</span></div>
+                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val" id="hbWater">—</span></div>
+                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val" id="hbElectric">—</span></div>
+                                <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val" id="hbCommon">—</span></div>
                             </div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
@@ -389,19 +369,19 @@
                     </div>
                     <div id="heroDueDateWarning" style="display:none;background:#fef9c3;border:1px solid #facc15;border-radius:8px;padding:8px 12px;margin:8px 0 4px;text-align:center;font-size:14px;color:#92400e;font-weight:bold;">
                     </div>
-                    <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">?? �����Ի������Թ</button>
+                    <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
                     <div class="hero-reject-banner" id="heroRejectBanner"></div>
-                    <button class="hero-cancel-btn" id="heroCancelBtn" onclick="cancelSlipClick()" style="display:none;">??? ¡��ԡ��Ի���������</button>
+                    <button class="hero-cancel-btn" id="heroCancelBtn" onclick="cancelSlipClick()" style="display:none;">🗑️ ยกเลิกสลิปที่ส่งไว้</button>
                 </div>
             </div>
 
-            <!-- ? Outstanding Section � per-month breakdown -->
+            <!-- ★ Outstanding per-month (rendered dynamically) -->
             <div id="outstandingSection" style="display:none;"></div>
 
-            <!-- ? Proxy Assignment Section -->
+            <!-- ★ Proxy Assignment Section -->
             <div id="proxyAssignSection" class="proxy-assign-section" style="display:none;"></div>
 
-            <!-- ? Quick Actions (4 icons) -->
+            <!-- ★ Quick Actions (4 icons) -->
             <div id="quickActionsSection">
                 <div class="quick-actions" id="quickActions"></div>
             </div>
@@ -409,8 +389,8 @@
             <!-- Hub Menu Grid (full menu) -->
             <div class="ppk-card" id="hubMenuCard" style="margin-bottom:1rem; padding:1rem;">
                 <div class="ppk-card-header" style="margin-bottom:0.75rem; padding-bottom:0.5rem;">
-                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">??</div>
-                    <div class="ppk-card-title">���ٷ������</div>
+                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">📱</div>
+                    <div class="ppk-card-title">เมนูทั้งหมด</div>
                 </div>
                 <div id="hubGrid" class="ppk-hub-grid"></div>
             </div>
@@ -418,29 +398,29 @@
             <!-- Announcements -->
             <div class="ppk-card" style="margin-bottom:1rem;">
                 <div class="ppk-card-header">
-                    <div class="ppk-card-icon" style="background:var(--c-info-bg);color:var(--c-info);">??</div>
-                    <div class="ppk-card-title">��С��</div>
+                    <div class="ppk-card-icon" style="background:var(--c-info-bg);color:var(--c-info);">📢</div>
+                    <div class="ppk-card-title">ประกาศ</div>
                 </div>
                 <div id="announceList">
-                    <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">���ѧ��Ŵ������...</div></div>
+                    <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">กำลังโหลดข้อมูล...</div></div>
                 </div>
             </div>
 
             <div class="ppk-footer">
-                �͡Ẻ��оѲ����� ��پ�ȸ� ⾸�����<br>
-                �ҹ�������� �ӡѺ ���� ��оѲ�Һ�ҹ�ѡ��� �ç���¹����ҾԷ�Ҥ�
+                ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+                งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
             </div>
         </div>
     </div>
 
     <script>
-        const THAI_MONTHS = ['���Ҥ�','����Ҿѹ��','�չҤ�','����¹','����Ҥ�','�Զع�¹',
-            '�á�Ҥ�','�ԧ�Ҥ�','�ѹ��¹','���Ҥ�','��Ȩԡ�¹','�ѹ�Ҥ�'];
+        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+            'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-        // �� Global state for CTA buttons ��
+        // ── Global state for CTA buttons ──
         var _ctaData = {};
 
-        // �� Quick actions builder ��
+        // ── Quick actions builder ──
         function buildQuickActions(isAdmin) {
             var el = document.getElementById('quickActions');
             if (!el) return;
@@ -449,10 +429,10 @@
                 return;
             }
             var items = [
-                { page: 'upload-slip', icon: '??', label: '�����Ի', bg: '#EEF2FF' },
-                { page: 'payment-history', icon: '??', label: '����ѵԪ���', bg: '#F0FDF4' },
-                { page: 'form', icon: '??', label: '��蹤���ͧ', bg: '#FFFBEB' },
-                { page: 'settings', icon: '??', label: '��駤��', bg: '#EFF6FF' }
+                { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#FFFBEB' },
+                { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
             el.innerHTML = items.map(function(item) {
                 return '<button class="quick-action" onclick="navigate(\'?page=' + item.page + '\')">'
@@ -470,23 +450,23 @@
             function _hp(p) { return perms.indexOf(p) >= 0; }
 
             var residentItems = [
-                { page: 'upload-slip', icon: '??', label: '�����Ի', bg: '#EEF2FF' },
-                { page: 'payment-history', icon: '??', label: '����ѵԪ���', bg: '#F0FDF4' },
-                { page: 'form', icon: '??', label: '��蹤���ͧ', bg: '#FFFBEB' },
-                { page: 'regulations', icon: '??', label: '�����º', bg: '#FFF7ED' },
-                { page: 'electrical-info', icon: '?', label: '�������俿��', bg: '#FFFBEB' },
-                { page: 'settings', icon: '??', label: '��駤��', bg: '#EFF6FF' }
+                { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#FFFBEB' },
+                { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFF7ED' },
+                { page: 'electrical-info', icon: '⚡', label: 'ความรู้ไฟฟ้า', bg: '#FFFBEB' },
+                { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
             var adminItems = [];
-            if (isAdmin) adminItems.push({ page: 'team-management', icon: '??', label: '�ٹ���Ǻ���', bg: '#EEF2FF', badgeId: 'badge-pending-reg' });
-            if (isAdmin || _hp('water')) adminItems.push({ page: 'record-water', icon: '??', label: '�ѹ�֡��ҹ��', bg: '#EFF6FF' });
-            if (isAdmin || _hp('electric')) adminItems.push({ page: 'record-electric', icon: '?', label: '�ѹ�֡�����', bg: '#FFFBEB' });
-            if (isAdmin || _hp('notify')) adminItems.push({ page: 'payment-notification', icon: '??', label: '�����ʹ����', bg: '#FEF2F2' });
-            if (isAdmin || _hp('slip')) adminItems.push({ page: 'check-slip', icon: '??', label: '��Ǩ��Ի', bg: '#F0FDF4', badgeId: 'badge-pending-slips' });
-            if (isAdmin || _hp('request')) adminItems.push({ page: 'check-request', icon: '??', label: '��Ǩ����ͧ', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' });
-            if (isAdmin || _hp('accounting')) adminItems.push({ page: 'accounting', icon: '??', label: '�ѭ��', bg: '#EEF2FF' });
-            if (isAdmin || _hp('withdraw')) adminItems.push({ page: 'monthly-withdraw', icon: '??', label: '��ԡ��Թ', bg: '#F0FDF4' });
-            if (isAdmin) adminItems.push({ page: 'admin-settings', icon: '??', label: '��駤���ʹ�Թ', bg: '#F1F5F9' });
+            if (isAdmin) adminItems.push({ page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' });
+            if (isAdmin || _hp('water')) adminItems.push({ page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' });
+            if (isAdmin || _hp('electric')) adminItems.push({ page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' });
+            if (isAdmin || _hp('notify')) adminItems.push({ page: 'payment-notification', icon: '📢', label: 'แจ้งยอดชำระ', bg: '#FEF2F2' });
+            if (isAdmin || _hp('slip')) adminItems.push({ page: 'check-slip', icon: '🔍', label: 'ตรวจสลิป', bg: '#F0FDF4', badgeId: 'badge-pending-slips' });
+            if (isAdmin || _hp('request')) adminItems.push({ page: 'check-request', icon: '📋', label: 'ตรวจคำร้อง', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' });
+            if (isAdmin || _hp('accounting')) adminItems.push({ page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' });
+            if (isAdmin || _hp('withdraw')) adminItems.push({ page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' });
+            if (isAdmin) adminItems.push({ page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' });
 
             var el = document.getElementById('hubGrid');
             if (!el) return;
@@ -501,10 +481,10 @@
                 }).join('');
             }
 
-            var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> ����ѡ�����</div>';
+            var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> ผู้พักอาศัย</div>';
             html += renderItems(residentItems);
             if (adminItems.length > 0) {
-                html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> ��зӧҹ</div>';
+                html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> คณะทำงาน</div>';
                 html += renderItems(adminItems);
             }
             el.innerHTML = html;
@@ -518,11 +498,11 @@
         function renderAnnouncements(rows) {
             const el = document.getElementById('announceList');
             if (!Array.isArray(rows) || rows.length === 0) {
-                el.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">??</div><div class="ppk-empty-text">����ջ�С��㹢�й��</div></div>';
+                el.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">📭</div><div class="ppk-empty-text">ไม่มีประกาศในขณะนี้</div></div>';
                 return;
             }
             el.innerHTML = rows.map(function(a) {
-                var prefix = a.type === 'urgent' ? '?? ' : (a.type === 'warning' ? '?? ' : '?? ');
+                var prefix = a.type === 'urgent' ? '🚨 ' : (a.type === 'warning' ? '⚠️ ' : 'ℹ️ ');
                 var cls = a.type === 'urgent' ? ' urgent' : (a.type === 'warning' ? ' warning' : '');
                 var body = a.body ? '<div class="ppk-announce-body">' + _escHtml(a.body) + '</div>' : '';
                 return '<div class="ppk-announce-item' + cls + '">' + prefix + '<strong>' + _escHtml(a.title) + '</strong>' + body + '</div>';
@@ -535,7 +515,7 @@
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var firstName = user.firstname || '';
 
-            // �� Departing user mode: �����͡��������ѧ��ҧ���� ��
+            // ── Departing user mode: ย้ายออกแล้วแต่ยังค้างชำระ ──
             if (user.departing || data.departing) {
                 document.getElementById('paymentSection').style.display = 'none';
                 document.getElementById('hubMenuCard').style.display = 'none';
@@ -557,36 +537,36 @@
                     var amt = parseFloat(o.total_amount || o.amount) || 0;
                     totalOut += amt;
                     var periodLabel = o.period || (o.year + '-' + String(o.month).padStart(2,'0'));
-                    return '<tr><td>' + (o.description || '����Ҹ�óٻ���') + '</td><td>' + periodLabel + '</td><td style="text-align:right;">' + amt.toLocaleString('th-TH') + ' �</td></tr>';
+                    return '<tr><td>' + (o.description || 'ค่าสาธารณูปโภค') + '</td><td>' + periodLabel + '</td><td style="text-align:right;">' + amt.toLocaleString('th-TH') + ' ฿</td></tr>';
                 }).join('');
 
                 if (outRows.length === 0) {
-                    tableRows = '<tr><td colspan="3" style="text-align:center;color:#059669;padding:1rem;">? ������ʹ��ҧ����</td></tr>';
+                    tableRows = '<tr><td colspan="3" style="text-align:center;color:#059669;padding:1rem;">✅ ไม่มียอดค้างชำระ</td></tr>';
                 }
 
                 depEl.innerHTML =
                     '<div class="departing-banner">' +
-                        '<div class="dep-icon">??</div>' +
-                        '<div class="dep-title">�س���������ҧ�ͪ����ʹ��ҧ��͹�͡�ҡ�к�</div>' +
-                        '<div class="dep-desc">��ҹ�����ͧ�س�١�觤׹���º��������<br>��سҪ����ʹ��ҧ�����������ͻԴ�ѭ��</div>' +
+                        '<div class="dep-icon">⚠️</div>' +
+                        '<div class="dep-title">คุณอยู่ระหว่างรอชำระยอดค้างก่อนออกจากระบบ</div>' +
+                        '<div class="dep-desc">บ้านเดิมของคุณถูกส่งคืนเรียบร้อยแล้ว<br>กรุณาชำระยอดค้างทั้งหมดเพื่อปิดบัญชี</div>' +
                         '<table class="departing-outstanding-table">' +
-                            '<thead><tr><th>��¡��</th><th>���͹</th><th style="text-align:right;">�ӹǹ</th></tr></thead>' +
+                            '<thead><tr><th>รายการ</th><th>เดือน</th><th style="text-align:right;">จำนวน</th></tr></thead>' +
                             '<tbody>' + tableRows +
-                                (outRows.length > 0 ? '<tr class="total-row"><td colspan="2">����ʹ��ҧ�������</td><td style="text-align:right;">' + totalOut.toLocaleString('th-TH') + ' �</td></tr>' : '') +
+                                (outRows.length > 0 ? '<tr class="total-row"><td colspan="2">รวมยอดค้างทั้งหมด</td><td style="text-align:right;">' + totalOut.toLocaleString('th-TH') + ' ฿</td></tr>' : '') +
                             '</tbody>' +
                         '</table>' +
-                        (outRows.length > 0 ? '<a href="upload-slip.html" onclick="navigate(\'?page=upload-slip\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;display:inline-block;width:100%;text-align:center;padding:0.8rem;">?? �����Ի������Թ</a>' : '<div style="color:#059669;font-weight:600;font-size:1.1rem;margin-top:0.5rem;">? ���Фú���� � ���к��Դ�ѭ���ѵ���ѵ�</div>') +
+                        (outRows.length > 0 ? '<a href="upload-slip.html" onclick="navigate(\'?page=upload-slip\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;display:inline-block;width:100%;text-align:center;padding:0.8rem;">📤 ส่งสลิปชำระเงิน</a>' : '<div style="color:#059669;font-weight:600;font-size:1.1rem;margin-top:0.5rem;">✅ ชำระครบแล้ว — รอระบบปิดบัญชีอัตโนมัติ</div>') +
                     '</div>';
                 depEl.style.display = '';
 
-                // �ʴ� quick actions ��� �����Ի + ����ѵԪ��� + ��駤��
+                // แสดง quick actions แค่ ส่งสลิป + ประวัติชำระ + ตั้งค่า
                 if (outRows.length > 0) {
                     document.getElementById('quickActionsSection').style.display = '';
                     var qaEl = document.getElementById('quickActions');
                     qaEl.innerHTML = [
-                        { page: 'upload-slip', icon: '??', label: '�����Ի', bg: '#EEF2FF' },
-                        { page: 'payment-history', icon: '??', label: '����ѵԪ���', bg: '#F0FDF4' },
-                        { page: 'settings', icon: '??', label: '��駤��', bg: '#EFF6FF' }
+                        { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                        { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                        { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
                     ].map(function(item) {
                         return '<button class="quick-action" onclick="navigate(\'?page=' + item.page + '\')">'
                             + '<div class="qa-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
@@ -596,7 +576,7 @@
                 return;
             }
 
-            // ����������ѧ����պ�ҹ�ѡ � �ʴ� banner �ͨѴ���
+            // ผู้ใช้ที่ยังไม่มีบ้านพัก — แสดง banner รอจัดสรร
             if (!houseNumber) {
                 document.getElementById('paymentSection').style.display = 'none';
                 document.getElementById('hubMenuCard').style.display = 'none';
@@ -613,19 +593,19 @@
                 }
                 floatingEl.innerHTML =
                     '<div class="ppk-card" style="text-align:center; padding:2rem 1.5rem; margin-bottom:1rem;">' +
-                        '<div style="font-size:3rem; margin-bottom:0.75rem;">??</div>' +
-                        '<div style="font-size:1.2rem; font-weight:700; color:var(--c-text); margin-bottom:0.5rem;">���ʴ�' + (firstName ? ', ' + firstName : '') + '</div>' +
-                        '<div style="font-size:1rem; color:var(--c-text-secondary); margin-bottom:1rem;">��й���س�ѧ�������Ѻ�ͺ���º�ҹ�ѡ<br>��س��͡�èѴ��èҡ��зӧҹ</div>' +
+                        '<div style="font-size:3rem; margin-bottom:0.75rem;">🏠</div>' +
+                        '<div style="font-size:1.2rem; font-weight:700; color:var(--c-text); margin-bottom:0.5rem;">สวัสดี' + (firstName ? ', ' + firstName : '') + '</div>' +
+                        '<div style="font-size:1rem; color:var(--c-text-secondary); margin-bottom:1rem;">ขณะนี้คุณยังไม่ได้รับมอบหมายบ้านพัก<br>กรุณารอการจัดสรรจากคณะทำงาน</div>' +
                         '<div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">' +
-                            '<a href="request-form.html" onclick="navigate(\'?page=request-form\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;">?? ��蹤���ͧ�����Ҿѡ</a>' +
-                            '<a href="regulations.html" onclick="navigate(\'?page=regulations\');return false;" class="ppk-btn ppk-btn-outline" style="text-decoration:none;">?? �������º</a>' +
+                            '<a href="request-form.html" onclick="navigate(\'?page=request-form\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;">📝 ยื่นคำร้องขอเข้าพัก</a>' +
+                            '<a href="regulations.html" onclick="navigate(\'?page=regulations\');return false;" class="ppk-btn ppk-btn-outline" style="text-decoration:none;">📖 ดูระเบียบ</a>' +
                         '</div>' +
                     '</div>';
                 floatingEl.style.display = '';
                 return;
             }
 
-            // �����黡�Է���պ�ҹ�ѡ����
+            // ผู้ใช้ปกติที่มีบ้านพักแล้ว
             var floatingEl = document.getElementById('floatingUserBanner');
             if (floatingEl) floatingEl.style.display = 'none';
             var depEl = document.getElementById('departingUserBanner');
@@ -656,16 +636,16 @@
             var user = {};
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var firstName = user.firstname || '';
-            document.getElementById('heroGreeting').textContent = '���ʴ�' + (firstName ? ', ' + firstName : '');
-            document.getElementById('heroHouse').textContent = '?? ' + (houseNumber || '�');
+            document.getElementById('heroGreeting').textContent = 'สวัสดี' + (firstName ? ', ' + firstName : '');
+            document.getElementById('heroHouse').textContent = '🏠 ' + (houseNumber || '—');
 
             // Amount display
             var amtEl = document.getElementById('currentMonthAmount');
             if (amount > 0) {
-                amtEl.textContent = amount.toLocaleString('th-TH') + ' �ҷ';
+                amtEl.textContent = amount.toLocaleString('th-TH') + ' บาท';
                 amtEl.className = 'hero-amount';
             } else {
-                amtEl.textContent = '�ѧ������ʹ����';
+                amtEl.textContent = 'ยังไม่มียอดแจ้ง';
                 amtEl.className = 'hero-amount zero';
             }
 
@@ -677,15 +657,15 @@
                 var cAmt = data.commonFee || 0;
                 if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
                     bdEl.style.display = '';
-                    document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' �ҷ';
-                    document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' �ҷ';
-                    document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' �ҷ';
+                    document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' บาท';
                 } else {
                     bdEl.style.display = 'none';
                 }
             }
 
-            document.getElementById('heroPeriod').textContent = '?? ' + periodDisplay;
+            document.getElementById('heroPeriod').textContent = '📅 ' + periodDisplay;
 
             // Due date warning
             var dueDateWarn = document.getElementById('heroDueDateWarning');
@@ -695,21 +675,21 @@
                 var daysLeft = Math.ceil((dd - new Date()) / (1000 * 60 * 60 * 24));
                 var daysText = '';
                 if (daysLeft < 0) {
-                    daysText = ' (��¡�˹����� ' + Math.abs(daysLeft) + ' �ѹ)';
+                    daysText = ' (เลยกำหนดแล้ว ' + Math.abs(daysLeft) + ' วัน)';
                     dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
                 } else if (daysLeft === 0) {
-                    daysText = ' (�ú��˹��ѹ���!)';
+                    daysText = ' (ครบกำหนดวันนี้!)';
                     dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
                 } else if (daysLeft <= 3) {
-                    daysText = ' (������ա ' + daysLeft + ' �ѹ)';
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
                     dueDateWarn.style.background = '#ffedd5'; dueDateWarn.style.borderColor = '#f97316'; dueDateWarn.style.color = '#9a3412';
                 } else if (daysLeft <= 7) {
-                    daysText = ' (������ա ' + daysLeft + ' �ѹ)';
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
                     dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
                 } else {
                     dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
                 }
-                dueDateWarn.textContent = '? ��سҪ���������ѹ��� ' + ddStr + daysText;
+                dueDateWarn.textContent = '⏰ กรุณาชำระภายในวันที่ ' + ddStr + daysText;
                 dueDateWarn.style.display = '';
             } else {
                 dueDateWarn.style.display = 'none';
@@ -718,13 +698,13 @@
             // Status badge
             var badgeEl = document.getElementById('heroStatusBadge');
             if (slipStatus === 'success') {
-                badgeEl.innerHTML = '<div class="hero-status paid">? ��������</div>';
+                badgeEl.innerHTML = '<div class="hero-status paid">✅ ชำระแล้ว</div>';
             } else if (slipStatus === 'reviewing') {
-                badgeEl.innerHTML = '<div class="hero-status pending">?? �͵�Ǩ�ͺ</div>';
+                badgeEl.innerHTML = '<div class="hero-status pending">🔍 รอตรวจสอบ</div>';
             } else if (slipStatus === 'rejected') {
-                badgeEl.innerHTML = '<div class="hero-status rejected">? ��Ի�����ҹ</div>';
+                badgeEl.innerHTML = '<div class="hero-status rejected">❌ สลิปไม่ผ่าน</div>';
             } else if (amount > 0) {
-                badgeEl.innerHTML = '<div class="hero-status overdue">? �ͪ���</div>';
+                badgeEl.innerHTML = '<div class="hero-status overdue">⏳ รอชำระ</div>';
             } else {
                 badgeEl.innerHTML = '';
             }
@@ -733,9 +713,9 @@
             var rejectBanner = document.getElementById('heroRejectBanner');
             if (slipStatus === 'rejected' && rejectBanner) {
                 rejectBanner.style.display = '';
-                rejectBanner.innerHTML = '?? <strong>��Ի�١����ʸ</strong>'
-                    + (reviewNote ? '<br>�˵ؼ�: <strong>' + reviewNote.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
-                    + '<br>��سҵ�Ǩ�ͺ�ʹ��Թ���ǡ� <strong>�?? ��Ի�����ҹ � ����������</strong> ������Ѿ��Ŵ��Ի����';
+                rejectBanner.innerHTML = '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                    + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
+                    + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>“⚠️ สลิปไม่ผ่าน — กดส่งใหม่”</strong> เพื่ออัพโหลดสลิปใหม่';
             } else if (rejectBanner) {
                 rejectBanner.style.display = 'none';
             }
@@ -750,33 +730,33 @@
             ctaEl.style.color = '';
             ctaEl.onclick = heroCtaClick;
             if (slipStatus === 'success') {
-                ctaEl.innerHTML = '? ��������������';
+                ctaEl.innerHTML = '✅ ชำระสำเร็จแล้ว';
                 ctaEl.className = 'hero-cta success';
                 ctaEl.onclick = null;
             } else if (slipStatus === 'reviewing') {
-                ctaEl.innerHTML = '?? ���������ҧ��Ǩ�ͺ';
+                ctaEl.innerHTML = '🔍 อยู่ระหว่างตรวจสอบ';
                 ctaEl.className = 'hero-cta reviewing';
                 ctaEl.onclick = null;
             } else if (slipStatus === 'rejected') {
-                ctaEl.innerHTML = '?? ��Ի�����ҹ � ���������';
+                ctaEl.innerHTML = '⚠️ สลิปไม่ผ่าน — กดส่งใหม่';
                 ctaEl.className = 'hero-cta';
                 ctaEl.style.background = '#FEE2E2';
                 ctaEl.style.color = '#DC2626';
             } else if (!houseNumber) {
-                ctaEl.innerHTML = '?? �ѧ�������Ѻ�ͺ���º�ҹ�ѡ';
+                ctaEl.innerHTML = '🏠 ยังไม่ได้รับมอบหมายบ้านพัก';
                 ctaEl.className = 'hero-cta reviewing';
                 ctaEl.onclick = null;
             } else {
-                ctaEl.innerHTML = '?? �����Ի������Թ';
+                ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
                 ctaEl.className = 'hero-cta';
             }
 
-            // Outstanding � �ʴ�������͹�������������´ + ���������Ի�¡�Ǵ
+            // Outstanding — แสดงรายเดือนพร้อมรายละเอียด + ปุ่มส่งสลิปแยกงวด
             var outItems = data.outstandingItems || [];
             if (outItems.length > 0) {
                 var sec = document.getElementById('outstandingSection');
                 sec.style.display = '';
-                // �֧ slip status ����ЧǴ
+                // ดึง slip status แต่ละงวด
                 var slipMap = {};
                 try {
                     var _slipResult = await cachedCall('getSlipSubmissions', { houseNumber: houseNumber, status: '' }, 60000);
@@ -789,12 +769,12 @@
                 var totalOs = outItems.reduce(function(s, o) { return s + (parseFloat(o.total_amount) || 0); }, 0);
                 var html = '<div class="os-detail-section">'
                     + '<div class="os-detail-header">'
-                    + '<div class="os-icon">??</div>'
-                    + '<div class="os-title">�ʹ��ҧ���� (' + outItems.length + ' �Ǵ)</div>'
-                    + '<div class="os-total">' + totalOs.toLocaleString('th-TH') + ' �</div>'
+                    + '<div class="os-icon">⚠️</div>'
+                    + '<div class="os-title">ยอดค้างชำระ (' + outItems.length + ' งวด)</div>'
+                    + '<div class="os-total">' + totalOs.toLocaleString('th-TH') + ' ฿</div>'
                     + '</div>'
                     + '<div class="os-detail-list">'
-                    + '<div class="os-note">?? ��سҪ��з��ЧǴ ��������Ի��������͹�¡�ѹ ����ͤ����١��ͧ㹡�õ�Ǩ�ͺ</div>';
+                    + '<div class="os-note">📌 กรุณาชำระทีละงวด โดยส่งสลิปแต่ละเดือนแยกกัน เพื่อความถูกต้องในการตรวจสอบ</div>';
                 // Sort by period ascending (oldest first)
                 var sortedItems = outItems.slice().sort(function(a, b) { return (a.period || '').localeCompare(b.period || ''); });
                 sortedItems.forEach(function(o) {
@@ -809,26 +789,26 @@
                     var slip = slipMap[p];
                     var statusHtml = '', btnHtml = '';
                     if (slip && slip.status === 'approved') {
-                        statusHtml = '<span class="os-item-status success">? ��������</span>';
-                        btnHtml = '<button class="os-item-btn disabled" disabled>? ��������</button>';
+                        statusHtml = '<span class="os-item-status success">✅ ชำระแล้ว</span>';
+                        btnHtml = '<button class="os-item-btn disabled" disabled>✅ ชำระแล้ว</button>';
                     } else if (slip && slip.status === 'pending') {
-                        statusHtml = '<span class="os-item-status reviewing">?? �͵�Ǩ�ͺ</span>';
-                        btnHtml = '<button class="os-item-btn disabled" disabled>?? �͵�Ǩ</button>';
+                        statusHtml = '<span class="os-item-status reviewing">🔍 รอตรวจสอบ</span>';
+                        btnHtml = '<button class="os-item-btn disabled" disabled>🔍 รอตรวจ</button>';
                     } else if (slip && slip.status === 'rejected') {
-                        statusHtml = '<span class="os-item-status rejected">? �����ҹ</span>';
-                        btnHtml = '<button class="os-item-btn" onclick="goToUploadSlipDetail(\'' + p + '\',' + amt + ',' + water + ',' + elec + ',' + common + ',\'' + _escHtml(mLabel) + '\')">?? �������</button>';
+                        statusHtml = '<span class="os-item-status rejected">❌ ไม่ผ่าน</span>';
+                        btnHtml = '<button class="os-item-btn" onclick="goToUploadSlipDetail(\'' + p + '\',' + amt + ',' + water + ',' + elec + ',' + common + ',\'' + _escHtml(mLabel) + '\')">📤 ส่งใหม่</button>';
                     } else {
-                        btnHtml = '<button class="os-item-btn" onclick="goToUploadSlipDetail(\'' + p + '\',' + amt + ',' + water + ',' + elec + ',' + common + ',\'' + _escHtml(mLabel) + '\')">?? �����Ի</button>';
+                        btnHtml = '<button class="os-item-btn" onclick="goToUploadSlipDetail(\'' + p + '\',' + amt + ',' + water + ',' + elec + ',' + common + ',\'' + _escHtml(mLabel) + '\')">📤 ส่งสลิป</button>';
                     }
                     html += '<div class="os-item">'
-                        + '<div class="os-item-period">?? ' + mLabel + '</div>'
+                        + '<div class="os-item-period">📅 ' + mLabel + '</div>'
                         + '<div class="os-item-details">'
-                        + (water > 0 ? '<span>?? ��� ' + water.toLocaleString('th-TH') + '</span>' : '')
-                        + (elec > 0 ? '<span>? �� ' + elec.toLocaleString('th-TH') + '</span>' : '')
-                        + (common > 0 ? '<span>?? ��ǹ��ҧ ' + common.toLocaleString('th-TH') + '</span>' : '')
+                        + (water > 0 ? '<span>💧 น้ำ ' + water.toLocaleString('th-TH') + '</span>' : '')
+                        + (elec > 0 ? '<span>⚡ ไฟ ' + elec.toLocaleString('th-TH') + '</span>' : '')
+                        + (common > 0 ? '<span>🏢 ส่วนกลาง ' + common.toLocaleString('th-TH') + '</span>' : '')
                         + statusHtml
                         + '</div>'
-                        + '<div class="os-item-amount">' + amt.toLocaleString('th-TH') + ' �</div>'
+                        + '<div class="os-item-amount">' + amt.toLocaleString('th-TH') + ' ฿</div>'
                         + btnHtml
                         + '</div>';
                 });
@@ -848,11 +828,11 @@
             _proxyList = list;
             sec.style.display = '';
 
-            var html = '<div class="pa-header">?? ��ҹ����س����Ѻ�ͺ�����������᷹ (' + list.length + ')</div>';
+            var html = '<div class="pa-header">🔄 บ้านที่คุณได้รับมอบหมายให้ชำระแทน (' + list.length + ')</div>';
 
             list.forEach(function(a, idx) {
                 var houseLabel = _escHtml(a.house_number || '-');
-                var resName    = _escHtml(a.resident_name || '����ѡ');
+                var resName    = _escHtml(a.resident_name || 'ผู้พัก');
                 var period     = a.period || '';
                 var parts      = period.split('-');
                 var monthIdx   = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
@@ -862,69 +842,69 @@
                 var slipStatus = a.slip_status || 'none';
                 var reviewNote = _escHtml(a.review_note || '');
 
-                /* �� �ʹ��Թ �� */
+                /* ── ยอดเงิน ── */
                 var amtHtml = amount > 0
-                    ? amount.toLocaleString('th-TH') + ' �ҷ'
-                    : '�ѧ������ʹ����';
+                    ? amount.toLocaleString('th-TH') + ' บาท'
+                    : 'ยังไม่มียอดแจ้ง';
                 var amtClass = amount > 0 ? 'phc-amount' : 'phc-amount zero';
 
-                /* �� Bill breakdown �� */
+                /* ── Bill breakdown ── */
                 var wAmt = a.water_amount || 0;
                 var eAmt = a.electric_amount || 0;
                 var cAmt = a.common_fee || 0;
                 var breakdownHtml = '';
                 if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
                     breakdownHtml = '<div class="hero-breakdown">'
-                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">��ҹ��</span><span class="hb-val">' + wAmt.toLocaleString('th-TH') + ' �ҷ</span></div>'
-                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">�����</span><span class="hb-val">' + eAmt.toLocaleString('th-TH') + ' �ҷ</span></div>'
-                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">�����ǹ��ҧ</span><span class="hb-val">' + cAmt.toLocaleString('th-TH') + ' �ҷ</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val">' + wAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val">' + eAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val">' + cAmt.toLocaleString('th-TH') + ' บาท</span></div>'
                         + '</div>';
                 }
 
-                /* �� Status badge �� */
+                /* ── Status badge ── */
                 var badgeHtml = '';
-                if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">? ��������</div>';
-                else if (slipStatus === 'reviewing') badgeHtml = '<div class="phc-status pending">?? �͵�Ǩ�ͺ</div>';
-                else if (slipStatus === 'rejected')  badgeHtml = '<div class="phc-status rejected">? ��Ի�����ҹ</div>';
-                else if (amount > 0)                 badgeHtml = '<div class="phc-status overdue">? �ͪ���</div>';
+                if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">✅ ชำระแล้ว</div>';
+                else if (slipStatus === 'reviewing') badgeHtml = '<div class="phc-status pending">🔍 รอตรวจสอบ</div>';
+                else if (slipStatus === 'rejected')  badgeHtml = '<div class="phc-status rejected">❌ สลิปไม่ผ่าน</div>';
+                else if (amount > 0)                 badgeHtml = '<div class="phc-status overdue">⏳ รอชำระ</div>';
 
-                /* �� Rejection banner �� */
+                /* ── Rejection banner ── */
                 var rejectBannerHtml = '';
                 if (slipStatus === 'rejected') {
                     rejectBannerHtml = '<div class="phc-reject-banner" style="display:block;">'
-                        + '?? <strong>��Ի�١����ʸ</strong>'
-                        + (reviewNote ? '<br>�˵ؼ�: <strong>' + reviewNote + '</strong>' : '')
-                        + '<br>��سҵ�Ǩ�ͺ�ʹ��Թ���ǡ� <strong>"?? �����Ի����"</strong></div>';
+                        + '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                        + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote + '</strong>' : '')
+                        + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>"⚠️ ส่งสลิปใหม่"</strong></div>';
                 }
 
-                /* �� CTA button �� */
+                /* ── CTA button ── */
                 var ctaHtml = '';
                 var cancelHtml = '';
                 if (slipStatus === 'success') {
-                    ctaHtml = '<button class="phc-cta success" disabled>? ��������������</button>';
+                    ctaHtml = '<button class="phc-cta success" disabled>✅ ชำระสำเร็จแล้ว</button>';
                 } else if (slipStatus === 'reviewing') {
-                    ctaHtml = '<button class="phc-cta reviewing" disabled>?? ���������ҧ��Ǩ�ͺ</button>';
-                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">??? ¡��ԡ��Ի���������</button>';
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>🔍 อยู่ระหว่างตรวจสอบ</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
                 } else if (slipStatus === 'rejected') {
-                    ctaHtml = '<button class="phc-cta" style="background:#FEE2E2;color:#DC2626;" onclick="proxyGoUpload(' + idx + ')">?? ��Ի�����ҹ � ���������</button>';
-                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">??? ¡��ԡ��Ի���������</button>';
+                    ctaHtml = '<button class="phc-cta" style="background:#FEE2E2;color:#DC2626;" onclick="proxyGoUpload(' + idx + ')">⚠️ สลิปไม่ผ่าน — กดส่งใหม่</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
                 } else if (amount > 0) {
-                    ctaHtml = '<button class="phc-cta" onclick="proxyGoUpload(' + idx + ')">?? �����Ի������Թ</button>';
+                    ctaHtml = '<button class="phc-cta" onclick="proxyGoUpload(' + idx + ')">📤 ส่งสลิปชำระเงิน</button>';
                 } else {
-                    ctaHtml = '<button class="phc-cta reviewing" disabled>�ѧ������ʹ�������͹���</button>';
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>ยังไม่มียอดแจ้งเดือนนี้</button>';
                 }
 
                 html += '<div class="proxy-hero-card">'
-                    + '<div class="phc-label-proxy">?? ����᷹</div>'
-                    + '<div class="phc-house">?? ' + houseLabel + '</div>'
+                    + '<div class="phc-label-proxy">🔄 ชำระแทน</div>'
+                    + '<div class="phc-house">🏠 ' + houseLabel + '</div>'
                     + '<div class="phc-name">' + resName + '</div>'
                     + '<hr class="phc-divider">'
                     + '<div class="phc-row">'
                         + '<div class="phc-col">'
-                            + '<div class="phc-amount-label">?? �ʹ�������͹���</div>'
+                            + '<div class="phc-amount-label">💳 ยอดชำระเดือนนี้</div>'
                             + '<div class="' + amtClass + '">' + amtHtml + '</div>'
                             + breakdownHtml
-                            + '<div class="phc-period">?? ' + periodDisplay + '</div>'
+                            + '<div class="phc-period">📅 ' + periodDisplay + '</div>'
                         + '</div>'
                         + '<div class="phc-col" style="text-align:right;">' + badgeHtml + '</div>'
                     + '</div>'
@@ -955,16 +935,16 @@
 
         async function proxyCancelSlip(idx) {
             var a = _proxyList[idx];
-            if (!a || !a.slip_id) { if (typeof ppkAlert === 'function') ppkAlert('��辺��������Ի'); return; }
+            if (!a || !a.slip_id) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
             var ok = await ppkConfirm(
-                '�׹�ѹ���¡��ԡ��Ի�ͧ��ҹ ' + (a.house_number || '') + '?\n\n��Ի�ж١ź�͡�ҡ�к�',
-                { type: 'danger', okText: '¡��ԡ��Ի', cancelText: '���¡��ԡ' }
+                'ยืนยันการยกเลิกสลิปของบ้าน ' + (a.house_number || '') + '?\n\nสลิปจะถูกลบออกจากระบบ',
+                { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' }
             );
             if (!ok) return;
             try {
                 var result = await callBackend('cancelSlip', { id: a.slip_id });
                 if (result && result.success) {
-                    if (typeof ppkToast === 'function') ppkToast('¡��ԡ��Ի���º��������', 'success');
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
                     try {
                         var keys = [];
                         for (var i = 0; i < localStorage.length; i++) {
@@ -975,10 +955,10 @@
                     } catch(e) {}
                     setTimeout(function() { loadDashboard(); }, 400);
                 } else {
-                    if (typeof ppkAlert === 'function') ppkAlert('?? ' + (result && result.error || '¡��ԡ���������'));
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
                 }
             } catch(e) {
-                if (typeof ppkAlert === 'function') ppkAlert('? ��Դ��ͼԴ��Ҵ: ' + e.message);
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
@@ -986,7 +966,7 @@
             var d = _ctaData;
             if (d.slipStatus === 'success' || d.slipStatus === 'reviewing') return;
             if (!d.houseNumber) {
-                // �ѧ�������Ѻ�ͺ���º�ҹ�ѡ  ������蹤���ͧ
+                // ยังไม่ได้รับมอบหมายบ้านพัก → นำไปยื่นคำร้อง
                 window.location.href = 'request-form.html';
                 return;
             }
@@ -994,14 +974,14 @@
         }
         async function cancelSlipClick() {
             var d = _ctaData;
-            if (!d.slipId) { if (typeof ppkAlert === 'function') ppkAlert('��辺��������Ի'); return; }
-            var ok = await ppkConfirm('�׹�ѹ���¡��ԡ��Ի���������?\n\n��Ի�ж١ź�͡�ҡ�к� �س������ö�����Ի�������', { type: 'danger', okText: '¡��ԡ��Ի', cancelText: '���¡��ԡ' });
+            if (!d.slipId) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
+            var ok = await ppkConfirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้', { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' });
             if (!ok) return;
             try {
                 var result = await callBackend('cancelSlip', { id: d.slipId });
                 if (result && result.success) {
-                    if (typeof ppkToast === 'function') ppkToast('¡��ԡ��Ի���º��������', 'success');
-                    // ��ҧ cache �ء key ��������ǡѺ getDashboardData ���� reload
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
+                    // ล้าง cache ทุก key ที่เกี่ยวกับ getDashboardData แล้ว reload
                     try {
                         var keys = [];
                         for (var i = 0; i < localStorage.length; i++) {
@@ -1012,17 +992,17 @@
                     } catch(e) {}
                     setTimeout(function() { loadDashboard(); }, 400);
                 } else {
-                    if (typeof ppkAlert === 'function') ppkAlert('?? ' + (result && result.error || '¡��ԡ���������'));
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
                 }
             } catch(e) {
-                if (typeof ppkAlert === 'function') ppkAlert('? ��Դ��ͼԴ��Ҵ: ' + e.message);
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
         function outstandingBtnClick() {
             var d = _ctaData;
             if (!d.houseNumber) {
-                if (typeof ppkAlert === 'function') ppkAlert('��سҵ�駤�Һ�ҹ�ѡ��͹�����Ի');
+                if (typeof ppkAlert === 'function') ppkAlert('กรุณาตั้งค่าบ้านพักก่อนส่งสลิป');
                 return;
             }
             goToUploadSlip(d.periodKey, d.outstanding, true);
@@ -1045,7 +1025,7 @@
             var rateEl = document.getElementById('statCollectionRate');
             if (rateEl) {
                 var rate = data.collectionRate;
-                if (rate == null) { rateEl.textContent = '�'; rateEl.className = 'ppk-stat-value'; }
+                if (rate == null) { rateEl.textContent = '—'; rateEl.className = 'ppk-stat-value'; }
                 else {
                     rateEl.textContent = rate + '%';
                     rateEl.className = 'ppk-stat-value ' + (rate >= 80 ? 'ok' : rate >= 50 ? 'warning' : 'danger');
@@ -1055,7 +1035,7 @@
             var outEl = document.getElementById('statOutstandingRooms');
             if (outEl) {
                 var out = data.outstandingRooms;
-                if (out == null) { outEl.textContent = '�'; outEl.className = 'ppk-stat-value'; }
+                if (out == null) { outEl.textContent = '—'; outEl.className = 'ppk-stat-value'; }
                 else {
                     outEl.textContent = String(out);
                     outEl.className = 'ppk-stat-value ' + (out > 0 ? 'danger' : 'ok');
@@ -1073,16 +1053,16 @@
 
             buildQuickActions(isAdmin);
             buildHubGrid();
-            // re-render nav ��ѧ checkSession ����������� permissions ����ش
+            // re-render nav หลัง checkSession เพื่อให้ได้ permissions ล่าสุด
             if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'dashboard');
 
             try {
                 var result = await cachedCall('getDashboardData', {}, isAdmin ? 60000 : 15000);
                 if (!result || !result.success) {
-                    if (typeof ppkAlert === 'function') ppkAlert('��Ŵ��������������� ��س�����ê˹��');
+                    if (typeof ppkAlert === 'function') ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า');
                     return;
                 }
-                if (result._isStale && typeof ppkToast === 'function') ppkToast('�������Ҩ�����繻Ѩ�غѹ ��س�����ê', 'warning');
+                if (result._isStale && typeof ppkToast === 'function') ppkToast('ข้อมูลอาจไม่เป็นปัจจุบัน กรุณารีเฟรช', 'warning');
                 renderAnnouncements(result.announcements || []);
                 if (result.role === 'admin' || result.role === 'head') {
                     renderAdminDashboard(result.data || {});
@@ -1119,7 +1099,7 @@
             navigate('?page=upload-slip');
         }
 
-        // �����Ի�¡�Ǵ � ������������´��ҹ��/��/��ǹ��ҧŧ localStorage
+        // ส่งสลิปแยกงวด — เก็บรายละเอียดค่าน้ำ/ไฟ/ส่วนกลางลง localStorage
         function goToUploadSlipDetail(period, total, water, elec, common, label) {
             var userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
             var unitNumber = userData.houseNumber || '';
