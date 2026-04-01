@@ -2900,6 +2900,11 @@ async function _routeAction(action, data) {
             } catch(e) { console.warn('Delete queue rows failed:', e); }
             // ลบคำร้อง
             await sbDelete('requests', { id: 'eq.' + delReqId });
+            // ตรวจสอบว่าลบสำเร็จจริง (PostgREST อาจ return 204 แม้ไม่มี row ถูกลบ)
+            var delCheck = await sbGet('requests', { id: 'eq.' + delReqId, select: 'id', limit: '1' });
+            if (delCheck && delCheck.length > 0) {
+                return { success: false, error: 'ไม่สามารถลบคำร้องได้ กรุณาลองใหม่' };
+            }
             return { success: true };
         }
 
