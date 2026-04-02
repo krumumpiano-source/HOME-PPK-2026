@@ -48,6 +48,17 @@ supabase/migrations/*_import_*.sql
 # ============================================================
 supabase.exe
 supabase_cli.tar.gz
+
+# ============================================================
+# Test artifacts (Playwright)
+# ============================================================
+node_modules/
+.auth/
+test-results/
+playwright-report/
+blob-report/
+.env.test
+dist/
 supabase/.temp/
 
 node_modules/
