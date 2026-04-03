@@ -2074,7 +2074,8 @@
             w.document.close();
         }
 
-        // ===== Canvas Signature Helpers (shared by any signature canvas) =====        var _sigActive = false, _sigCvs = null, _sigCx = null;
+        // ===== Canvas Signature Helpers (shared by any signature canvas) =====
+        var _sigActive = false, _sigCvs = null, _sigCx = null;
         function _sigPos(e, canvas) {
             var r = canvas.getBoundingClientRect();
             var scaleX = canvas.width / r.width, scaleY = canvas.height / r.height;
