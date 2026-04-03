@@ -2101,11 +2101,16 @@
                     ppkAlert('อนุมัติไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
                     return;
                 }
-                _clearRequestsCache();
+                // Optimistic update — อัปเดต cache ทันที ไม่รอ refetch
+                var _retList = getData('return');
+                var _retIdx = _retList.findIndex(function(x) { return x.id === id; });
+                if (_retIdx !== -1) { _retList[_retIdx].status = 'approved'; saveData('return', _retList); }
                 closeModal('detailModal');
-                await loadAllRequests();
                 renderAll();
                 ppkAlert('✅ อนุมัติคำร้องเรียบร้อยแล้ว — รอดำเนินการย้ายออกเมื่อถึงวันที่กำหนด', 'success');
+                // Refetch ใน background เพื่อ sync ข้อมูลจริงจาก DB
+                _clearRequestsCache();
+                loadAllRequests().then(function() { renderAll(); }).catch(function() {});
             } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
         }
 
@@ -2117,11 +2122,15 @@
                     ppkAlert('บันทึกไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
                     return;
                 }
-                _clearRequestsCache();
+                // Optimistic update
+                var _rejList = getData('return');
+                var _rejIdx = _rejList.findIndex(function(x) { return x.id === id; });
+                if (_rejIdx !== -1) { _rejList[_rejIdx].status = 'rejected'; saveData('return', _rejList); }
                 closeModal('detailModal');
-                await loadAllRequests();
                 renderAll();
                 ppkAlert('บันทึกเรียบร้อยแล้ว', 'success');
+                _clearRequestsCache();
+                loadAllRequests().then(function() { renderAll(); }).catch(function() {});
             } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
         }
 
