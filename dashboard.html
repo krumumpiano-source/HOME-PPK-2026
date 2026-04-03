@@ -811,6 +811,71 @@
             goToUploadSlip(d.periodKey, d.outstanding, true);
         }
 
+        function renderMovedOutDashboard(data) {
+            var outstanding = data.totalOutstanding || 0;
+            var houseNumber = data.houseNumber || '-';
+            var endDate = data.endDate || '';
+            var endDateStr = '';
+            if (endDate) {
+                try {
+                    var ed = new Date(endDate);
+                    var d = ed.getDate(), m = ed.getMonth(), y = ed.getFullYear() + 543;
+                    var thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+                    endDateStr = d + ' ' + thMonths[m] + ' ' + y;
+                } catch(e) { endDateStr = endDate; }
+            }
+            var rows = data.outstandingRows || [];
+
+            // ซ่อน section ที่ไม่เกี่ยวข้อง
+            var hide = ['paymentSection','outstandingSection','heroStatusBadge','heroCancelBtn','heroRejectBanner','proxyAssignSection'];
+            hide.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+
+            // แก้ heroGreeting + heroHouse
+            var greetEl = document.getElementById('heroGreeting');
+            if (greetEl) greetEl.textContent = 'คุณได้ย้ายออกจากบ้านพักแล้ว';
+            var houseEl = document.getElementById('heroHouse');
+            if (houseEl) houseEl.textContent = '🏠 บ้านเลขที่ ' + houseNumber + (endDateStr ? '  ·  ย้ายออก ' + endDateStr : '');
+
+            // แสดง UI ยอดค้าง
+            var ctaEl = document.getElementById('heroCta');
+            if (ctaEl) { ctaEl.style.display = 'none'; }
+
+            var amountEl = document.getElementById('currentMonthAmount');
+            var breakdownEl = document.getElementById('heroBillBreakdown');
+
+            if (outstanding > 0) {
+                if (amountEl) {
+                    amountEl.textContent = outstanding.toLocaleString('th-TH') + ' บาท';
+                    amountEl.closest && amountEl.closest('.hero-amount-label') && (amountEl.closest('.hero-amount-label').textContent = '💳 ยอดค้างชำระทั้งหมด');
+                }
+                // แสดง breakdown รายเดือน
+                if (breakdownEl && rows.length > 0) {
+                    var bHtml = '<div style="margin-top:0.5rem;">';
+                    rows.forEach(function(r) {
+                        var parts = (r.period || '').split('-');
+                        var mIdx = parts[1] ? parseInt(parts[1]) - 1 : 0;
+                        var mName = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][mIdx] || r.period;
+                        bHtml += '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">เดือน ' + mName + ' ' + (parts[0] || '') + '</span><span class="hb-val">' + (r.amount||0).toLocaleString('th-TH') + ' บาท</span></div>';
+                    });
+                    bHtml += '</div>';
+                    breakdownEl.innerHTML = bHtml;
+                    breakdownEl.style.display = '';
+                }
+                // ปุ่มชำระ — ต้องการ contact admin
+                if (ctaEl) {
+                    ctaEl.innerHTML = '📞 ติดต่อเจ้าหน้าที่เพื่อชำระยอดค้าง';
+                    ctaEl.className = 'hero-cta reviewing';
+                    ctaEl.onclick = null;
+                    ctaEl.style.display = '';
+                }
+            } else {
+                // ไม่มียอดค้าง
+                if (amountEl) amountEl.textContent = 'ไม่มียอดค้างชำระ';
+                if (breakdownEl) breakdownEl.innerHTML = '<div style="color:var(--success,#16a34a);font-size:0.9rem;">✅ ชำระครบแล้ว</div>';
+                if (ctaEl) { ctaEl.style.display = 'none'; }
+            }
+        }
+
         function renderAdminDashboard(data) {
             document.getElementById('adminStatsSection').style.display = '';
 
@@ -870,6 +935,8 @@
                 if (result.role === 'admin' || result.role === 'head') {
                     renderAdminDashboard(result.data || {});
                     if (result.residentData) renderUserDashboard(result.residentData);
+                } else if (result.role === 'moved_out') {
+                    renderMovedOutDashboard(result.data || {});
                 } else {
                     renderUserDashboard(result.data || {});
                     renderProxyAssignments(result.proxyAssignments || []);

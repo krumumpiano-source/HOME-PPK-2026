@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -237,8 +237,8 @@
             <!-- ช่องแนบไฟล์เอกสาร -->
             <div class="form-section">
                 <label>แนบไฟล์เอกสารที่เกี่ยวข้อง (สามารถเลือกได้หลายไฟล์)</label>
-                <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 1rem; text-align: center; background-color: #f9f9f9;">
-                    <input type="file" name="attachments[]" id="file-input" multiple style="display: none;">
+                <div id="drop-zone" style="border: 2px dashed #ccc; border-radius: 8px; padding: 1rem; text-align: center; background-color: #f9f9f9; transition: border-color 0.2s, background 0.2s;">
+                    <input type="file" name="attachments[]" id="file-input" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display: none;">
                     <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem; font-family: inherit;">เลือกไฟล์</button>
                     <p style="margin-top: 0.5rem; color: #666;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
                     <div id="file-list" style="margin-top: 1rem; text-align: left;"></div>
@@ -246,17 +246,56 @@
             </div>
 
             <script>
-                document.getElementById('file-input').addEventListener('change', function() {
-                    const fileList = document.getElementById('file-list');
-                    fileList.innerHTML = '';
-                    for (let i = 0; i < this.files.length; i++) {
-                        const file = this.files[i];
-                        const fileItem = document.createElement('div');
-                        fileItem.style.padding = '0.5rem';
-                        fileItem.style.borderBottom = '1px solid #ddd';
-                        fileItem.textContent = file.name;
-                        fileList.appendChild(fileItem);
+                var _attachedFiles = [];
+
+                function _renderFileList() {
+                    var fileList = document.getElementById('file-list');
+                    if (_attachedFiles.length === 0) { fileList.innerHTML = ''; return; }
+                    fileList.innerHTML = _attachedFiles.map(function(f, i) {
+                        var icon = f.type && f.type.indexOf('image') === 0 ? '🖼️' : '📄';
+                        var sizeKB = (f.size / 1024).toFixed(0);
+                        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0.5rem;border-bottom:1px solid #ddd;gap:0.5rem;">'
+                            + '<span style="font-size:0.9rem;">' + icon + ' ' + f.name + ' <span style="color:#999;font-size:0.8rem;">(' + sizeKB + ' KB)</span></span>'
+                            + '<button type="button" onclick="_removeFile(' + i + ')" style="background:none;border:none;color:#ef4444;font-size:1.1rem;cursor:pointer;padding:0 4px;line-height:1;">✕</button>'
+                            + '</div>';
+                    }).join('');
+                }
+
+                function _removeFile(idx) {
+                    _attachedFiles.splice(idx, 1);
+                    _renderFileList();
+                }
+
+                function _addFiles(files) {
+                    for (var i = 0; i < files.length; i++) {
+                        var f = files[i];
+                        // ไม่เพิ่มซ้ำ (ชื่อ + ขนาด)
+                        var dup = _attachedFiles.some(function(ex) { return ex.name === f.name && ex.size === f.size; });
+                        if (!dup) _attachedFiles.push(f);
                     }
+                    _renderFileList();
+                }
+
+                document.getElementById('file-input').addEventListener('change', function() {
+                    _addFiles(this.files);
+                    this.value = ''; // reset ให้เลือกไฟล์เดิมซ้ำได้
+                });
+
+                var dz = document.getElementById('drop-zone');
+                dz.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    dz.style.borderColor = '#4f8cff';
+                    dz.style.background = '#eff6ff';
+                });
+                dz.addEventListener('dragleave', function() {
+                    dz.style.borderColor = '#ccc';
+                    dz.style.background = '#f9f9f9';
+                });
+                dz.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    dz.style.borderColor = '#ccc';
+                    dz.style.background = '#f9f9f9';
+                    if (e.dataTransfer && e.dataTransfer.files) _addFiles(e.dataTransfer.files);
                 });
             </script>
 
@@ -453,18 +492,22 @@
 
             // อัปโหลดไฟล์แนบไปยัง Storage
             var uploadErrors = [];
-            const fileInput = document.getElementById('file-input');
-            if (fileInput && fileInput.files.length > 0) {
+            var _currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            var _uploadHouseNumber = (_currentUser.house_number || _currentUser.houseNumber || 'new');
+            var _filesToUpload = (typeof _attachedFiles !== 'undefined' && _attachedFiles.length > 0)
+                ? _attachedFiles
+                : (document.getElementById('file-input').files || []);
+            if (_filesToUpload && _filesToUpload.length > 0) {
                 submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ...';
-                for (let fi = 0; fi < fileInput.files.length; fi++) {
+                for (let fi = 0; fi < _filesToUpload.length; fi++) {
                     try {
-                        var f = fileInput.files[fi];
+                        var f = _filesToUpload[fi];
                         var b64 = await new Promise(function(resolve) {
                             var reader = new FileReader();
                             reader.onload = function(ev) { resolve(ev.target.result); };
                             reader.readAsDataURL(f);
                         });
-                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: cached.house_number || 'new' });
+                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: _uploadHouseNumber });
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
                         } else {
