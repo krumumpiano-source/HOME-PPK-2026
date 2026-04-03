@@ -453,6 +453,8 @@
 
             // อัปโหลดไฟล์แนบไปยัง Storage
             var uploadErrors = [];
+            var _currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            var _uploadHouseNumber = (_currentUser.house_number || _currentUser.houseNumber || 'new');
             const fileInput = document.getElementById('file-input');
             if (fileInput && fileInput.files.length > 0) {
                 submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ...';
@@ -464,7 +466,7 @@
                             reader.onload = function(ev) { resolve(ev.target.result); };
                             reader.readAsDataURL(f);
                         });
-                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: cached.house_number || 'new' });
+                        var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: _uploadHouseNumber });
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
                         } else {
