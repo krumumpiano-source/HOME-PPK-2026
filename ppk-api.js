@@ -442,22 +442,23 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser',
     'reactivateResident','getMovedOutUsers','forceDeactivateUser','headReviewRequest'];
 
-// ── Storage bucket helper: auto-create if not exists ──
+// ── Storage bucket helper: verify bucket exists ──
 var _bucketReady = {};
 async function _ensureBucket(name) {
     if (_bucketReady[name]) return name;
-    // ลองอัปโหลด test เพื่อดูว่า bucket มีอยู่หรือไม่
-    var testRes = await window._sb.storage.from(name).upload('_ping.txt', new Blob(['ok']), { contentType: 'text/plain', upsert: true });
-    if (testRes.error && /bucket/i.test(testRes.error.message || '')) {
-        // bucket ไม่มี → สร้างใหม่
-        var createRes = await window._sb.storage.createBucket(name, { public: true, fileSizeLimit: 10485760 });
-        if (createRes.error) {
-            console.error('Cannot create bucket ' + name + ':', createRes.error.message);
-            return null;
+    // ลองดึงรายละเอียด bucket (ไม่ต้อง upload test file)
+    try {
+        var listRes = await window._sb.storage.from(name).list('', { limit: 1 });
+        if (listRes.error && /bucket/i.test(listRes.error.message || '')) {
+            // bucket ไม่มี → ลองสร้าง (อาจไม่สำเร็จถ้า anon ไม่มีสิทธิ์)
+            var createRes = await window._sb.storage.createBucket(name, { public: true, fileSizeLimit: 10485760 });
+            if (createRes.error) {
+                console.warn('Bucket ' + name + ' ไม่พบ กรุณาสร้างผ่าน Supabase Dashboard');
+                return name; // ยังคง return name เผื่อ bucket มีอยู่แล้วแต่ list ไม่ได้
+            }
         }
-    } else if (!testRes.error) {
-        // ลบ _ping.txt ที่ทดสอบ
-        await window._sb.storage.from(name).remove(['_ping.txt']);
+    } catch(e) {
+        console.warn('_ensureBucket error:', e);
     }
     _bucketReady[name] = true;
     return name;
