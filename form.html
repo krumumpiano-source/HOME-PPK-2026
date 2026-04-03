@@ -47,6 +47,43 @@
             margin-top: auto;
         }
         @media (max-width: 768px) { .form-cards-grid { grid-template-columns: 1fr; } }
+
+        /* ── Expandable Request Cards ── */
+        .req-card { border:1.5px solid var(--c-border); border-radius:var(--radius-lg); overflow:hidden; background:var(--c-surface); transition:border-color 0.2s, box-shadow 0.2s; }
+        .req-card:hover { border-color:var(--c-primary-light); box-shadow:var(--shadow-md); }
+        .req-card-hdr { padding:0.85rem 1rem; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; user-select:none; }
+        .req-card-hdr:active { background:var(--c-surface-2); }
+        .req-card-left { display:flex; align-items:center; gap:0.6rem; flex:1; min-width:0; }
+        .req-card-icon { width:36px; height:36px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0; }
+        .req-card-info { min-width:0; }
+        .req-card-type { font-weight:600; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .req-card-id { font-size:0.75rem; color:var(--c-text-3); }
+        .req-card-right { display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
+        .req-card-arrow { transition:transform 0.25s; font-size:0.8rem; color:var(--c-text-3); }
+        .req-card.open .req-card-arrow { transform:rotate(180deg); }
+        .req-card-body { display:none; padding:0 1rem 1rem; border-top:1px solid var(--c-border); }
+        .req-card.open .req-card-body { display:block; }
+
+        /* Progress Timeline */
+        .req-timeline { display:flex; align-items:flex-start; margin:0.85rem 0; position:relative; }
+        .req-step { display:flex; flex-direction:column; align-items:center; flex:1; position:relative; z-index:1; }
+        .req-step-dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.82rem; border:2.5px solid var(--c-border); background:var(--c-surface); transition:all 0.3s; }
+        .req-step.done .req-step-dot { background:#10b981; border-color:#10b981; color:#fff; }
+        .req-step.active .req-step-dot { background:var(--c-primary); border-color:var(--c-primary); color:#fff; box-shadow:0 0 0 4px rgba(79,70,229,0.2); }
+        .req-step.fail .req-step-dot { background:#ef4444; border-color:#ef4444; color:#fff; }
+        .req-step-lbl { font-size:0.7rem; color:var(--c-text-3); margin-top:0.3rem; text-align:center; line-height:1.3; max-width:72px; }
+        .req-step.done .req-step-lbl, .req-step.active .req-step-lbl { color:var(--c-text); font-weight:600; }
+        .req-step-line { position:absolute; top:15px; left:calc(50% + 15px); right:calc(-50% + 15px); height:2.5px; background:var(--c-border); z-index:0; }
+        .req-step:last-child .req-step-line { display:none; }
+        .req-step.done .req-step-line { background:#10b981; }
+
+        /* Detail Grid */
+        .req-dl { display:grid; grid-template-columns:auto 1fr; gap:0.3rem 0.75rem; font-size:0.88rem; margin:0.6rem 0; }
+        .req-dl dt { color:var(--c-text-3); font-size:0.82rem; white-space:nowrap; }
+        .req-dl dd { margin:0; font-weight:500; word-break:break-word; }
+        .req-section { font-weight:700; font-size:0.88rem; color:var(--c-primary); margin:0.85rem 0 0.3rem; padding-bottom:0.25rem; border-bottom:1px solid var(--c-border); }
+        .req-sig-img { max-width:200px; max-height:80px; border:1px solid var(--c-border); border-radius:var(--radius-sm); background:#fff; }
+        @media (max-width:640px) { .req-dl { grid-template-columns:1fr; } .req-dl dt { font-weight:600; color:var(--c-text-2); } }
     </style>
 </head>
 <body>
@@ -205,6 +242,252 @@
             }
         }
 
+        // ── Shared helpers ──
+        var _typeLabels = { residence: 'ขอเข้าพักอาศัย', repair: 'แจ้งซ่อมแซม', transfer: 'ขอย้ายบ้านพัก', return: 'ขอคืนบ้านพัก' };
+        var _typeIcons  = { residence: '🏠', repair: '🔧', transfer: '🔄', return: '📤' };
+        var _typeColors = { residence: 'var(--c-primary-bg)', repair: 'var(--c-warning-bg)', transfer: 'var(--c-success-bg)', return: 'var(--c-danger-bg)' };
+        var _statusMap = {
+            pending:   { label: 'รอดำเนินการ',         color: 'var(--c-warning)', icon: '⏳' },
+            reviewing: { label: 'อยู่ระหว่างพิจารณา', color: 'var(--c-cyan)',    icon: '🔍' },
+            waiting:   { label: 'อยู่ในคิวรอบ้านพัก', color: '#8b5cf6',          icon: '🔢' },
+            approved:  { label: 'อนุมัติแล้ว',         color: 'var(--c-success)', icon: '✅' },
+            completed: { label: 'เสร็จสิ้น',           color: 'var(--c-success)', icon: '🎉' },
+            rejected:  { label: 'ไม่ผ่านการอนุมัติ',  color: 'var(--c-danger)',  icon: '❌' },
+            expired:   { label: 'หมดอายุ',             color: 'var(--c-text-3)',  icon: '⌛' },
+            cancelled: { label: 'ยกเลิกแล้ว',           color: 'var(--c-text-3)',  icon: '🚫' }
+        };
+        var _esc = function(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+        var _fmtDate = function(iso) {
+            if (!iso) return '-';
+            var d = new Date(iso);
+            var thM = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+            return d.getDate() + ' ' + thM[d.getMonth()] + ' ' + (d.getFullYear()+543) + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        };
+        var _fmtDateShort = function(iso) {
+            if (!iso) return '-';
+            var d = new Date(iso);
+            var thM = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+            return d.getDate() + ' ' + thM[d.getMonth()] + ' ' + (d.getFullYear()+543);
+        };
+
+        // ── Progress Timeline ──
+        function _renderTimeline(req) {
+            var type = req._type;
+            var st = req.status;
+            var steps;
+            if (type === 'residence') {
+                steps = [
+                    { key: 'submitted', label: 'ยื่นคำร้อง', icon: '📝' },
+                    { key: 'reviewing', label: 'พิจารณา',   icon: '🔍' },
+                    { key: 'waiting',   label: 'คิวรอบ้าน', icon: '🔢' },
+                    { key: 'approved',  label: 'อนุมัติ',    icon: '✅' }
+                ];
+            } else {
+                steps = [
+                    { key: 'submitted', label: 'ยื่นคำร้อง', icon: '📝' },
+                    { key: 'reviewing', label: 'พิจารณา',   icon: '🔍' },
+                    { key: 'approved',  label: type === 'repair' ? 'ดำเนินการ' : 'อนุมัติ', icon: '✅' }
+                ];
+            }
+            var orderMap = { pending: 0, reviewing: 1, waiting: 2, approved: 3, completed: 3, head_reviewed: 1 };
+            var isFail = (st === 'rejected' || st === 'cancelled');
+            var activeIdx = isFail ? (orderMap[st] || 0) : (orderMap[st] || 0);
+            // For residence: pending=0, reviewing=1, waiting=2, approved/completed=3
+            // For others: pending=0, reviewing=1, approved/completed=2
+            if (type !== 'residence' && (st === 'approved' || st === 'completed')) activeIdx = 2;
+            if (type === 'residence' && st === 'waiting') activeIdx = 2;
+            if (type === 'residence' && (st === 'approved' || st === 'completed')) activeIdx = 3;
+
+            var html = '<div class="req-timeline">';
+            for (var i = 0; i < steps.length; i++) {
+                var cls = '';
+                if (isFail && i === activeIdx) cls = 'fail';
+                else if (i < activeIdx) cls = 'done';
+                else if (i === activeIdx) cls = (st === 'approved' || st === 'completed') ? 'done' : 'active';
+                html += '<div class="req-step ' + cls + '">';
+                html += '<div class="req-step-dot">' + (cls === 'done' ? '✓' : (cls === 'fail' ? '✕' : steps[i].icon)) + '</div>';
+                html += '<div class="req-step-lbl">' + steps[i].label + '</div>';
+                if (i < steps.length - 1) html += '<div class="req-step-line"></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        // ── Render detail content for expanded card ──
+        function _renderReqDetail(req) {
+            var d = req.details || {};
+            if (typeof d === 'string') try { d = JSON.parse(d); } catch(e) { d = {}; }
+            var type = req._type;
+            var st = req.status;
+            var html = '';
+
+            // Progress timeline
+            html += _renderTimeline(req);
+
+            // ── สถานะ + วันที่สำคัญ ──
+            var s = _statusMap[st] || { label: st, color: 'var(--c-text-3)', icon: '📄' };
+            html += '<div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:0.75rem;">';
+            html += '<div style="flex:1;min-width:140px;background:color-mix(in srgb,' + s.color + ' 8%,transparent);border:1px solid color-mix(in srgb,' + s.color + ' 20%,transparent);border-radius:var(--radius-md);padding:0.6rem 0.75rem;">';
+            html += '<div style="font-size:0.78rem;color:var(--c-text-3);">สถานะปัจจุบัน</div>';
+            html += '<div style="font-weight:700;color:' + s.color + ';font-size:0.95rem;">' + s.icon + ' ' + s.label + '</div></div>';
+            html += '<div style="flex:1;min-width:140px;background:var(--c-surface-2);border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.6rem 0.75rem;">';
+            html += '<div style="font-size:0.78rem;color:var(--c-text-3);">ยื่นเมื่อ</div>';
+            html += '<div style="font-weight:600;font-size:0.9rem;">' + _fmtDate(req.submitted_at) + '</div></div>';
+            if (req.updated_at && req.updated_at !== req.submitted_at) {
+                html += '<div style="flex:1;min-width:140px;background:var(--c-surface-2);border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.6rem 0.75rem;">';
+                html += '<div style="font-size:0.78rem;color:var(--c-text-3);">อัปเดตล่าสุด</div>';
+                html += '<div style="font-weight:600;font-size:0.9rem;">' + _fmtDate(req.updated_at) + '</div></div>';
+            }
+            html += '</div>';
+
+            // Queue position
+            if (req.queue_position) {
+                html += '<div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:var(--radius-md);padding:0.6rem 0.75rem;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">';
+                html += '<span style="font-size:1.3rem;">🔢</span><div><div style="font-size:0.78rem;color:var(--c-text-3);">ลำดับคิว</div><div style="font-weight:700;color:#7c3aed;font-size:1.1rem;">คิวที่ ' + req.queue_position + '</div></div></div>';
+            }
+
+            // ── รายละเอียดคำร้อง (type-specific) ──
+            html += '<div class="req-section">📄 รายละเอียดคำร้อง</div>';
+            html += '<dl class="req-dl">';
+            html += '<dt>รหัสคำร้อง</dt><dd style="font-family:monospace;font-size:0.82rem;">' + _esc(req.id) + '</dd>';
+
+            if (type === 'residence') {
+                if (d.prefix || d.firstname) html += '<dt>ชื่อ-นามสกุล</dt><dd>' + _esc((d.prefix||'') + (d.firstname||'') + ' ' + (d.lastname||'')) + '</dd>';
+                if (d.phone) html += '<dt>โทรศัพท์</dt><dd>' + _esc(d.phone) + '</dd>';
+                if (d.email) html += '<dt>อีเมล</dt><dd>' + _esc(d.email) + '</dd>';
+                if (d.subject_group) html += '<dt>กลุ่มสาระ</dt><dd>' + _esc(d.subject_group) + '</dd>';
+                if (d.stay_type) html += '<dt>ลักษณะการเข้าพัก</dt><dd>' + (d.stay_type === 'alone' ? '👤 พักคนเดียว' : '👨‍👩‍👧‍👦 พักพร้อมครอบครัว') + '</dd>';
+                if (d.total_residents) html += '<dt>จำนวนผู้เข้าพัก</dt><dd>' + _esc(d.total_residents) + ' คน</dd>';
+                var reasons = d.reason || '';
+                if (typeof reasons === 'string') reasons = reasons.split(',').filter(Boolean);
+                var rl = { 'new_position': 'บรรจุใหม่', 'far_from_home': 'บ้านไกล', 'work_convenience': 'สะดวกในการทำงาน', 'safety': 'ความปลอดภัย' };
+                if (reasons.length) html += '<dt>เหตุผล</dt><dd>' + reasons.map(function(r){ return _esc(rl[r.trim()]||r.trim()); }).join(', ') + (d.other_reason ? ', ' + _esc(d.other_reason) : '') + '</dd>';
+                if (req.house_number && (st === 'approved' || st === 'completed')) html += '<dt>บ้านที่ได้รับ</dt><dd style="color:#059669;font-weight:700;">🏠 ' + _esc(req.house_number) + '</dd>';
+                // ผู้อยู่อาศัยร่วม
+                var residents = d.residents || [];
+                if (typeof residents === 'string') try { residents = JSON.parse(residents); } catch(e) { residents = []; }
+                if (residents.length > 0) {
+                    html += '</dl>';
+                    html += '<div style="font-size:0.85rem;font-weight:600;margin:0.5rem 0 0.3rem;">ผู้อยู่อาศัยร่วม:</div>';
+                    html += '<div style="overflow-x:auto;"><table style="width:100%;font-size:0.82rem;border-collapse:collapse;">';
+                    html += '<tr style="background:var(--c-surface-2);"><th style="padding:0.35rem 0.5rem;border:1px solid var(--c-border);text-align:left;">ชื่อ-นามสกุล</th><th style="padding:0.35rem 0.5rem;border:1px solid var(--c-border);text-align:center;width:80px;">ความสัมพันธ์</th></tr>';
+                    residents.forEach(function(r) {
+                        html += '<tr><td style="padding:0.35rem 0.5rem;border:1px solid var(--c-border);">' + _esc((r.prefix||'') + (r.name||'')) + '</td><td style="padding:0.35rem 0.5rem;border:1px solid var(--c-border);text-align:center;">' + _esc(r.relation||'') + '</td></tr>';
+                    });
+                    html += '</table></div>';
+                    html += '<dl class="req-dl">';
+                }
+            } else if (type === 'repair') {
+                if (d.prefix || d.fullname) html += '<dt>ผู้แจ้ง</dt><dd>' + _esc((d.prefix||'') + (d.fullname||'')) + '</dd>';
+                if (req.house_number) html += '<dt>บ้านพัก</dt><dd>' + _esc(req.house_number) + '</dd>';
+                if (d.phone) html += '<dt>โทรศัพท์</dt><dd>' + _esc(d.phone) + '</dd>';
+                var wt = d.work_types || [];
+                if (typeof wt === 'string') try { wt = JSON.parse(wt); } catch(e) { wt = []; }
+                var wtLabels = { 'plumbing': 'ประปา/ท่อน้ำ', 'electrical': 'ไฟฟ้า', 'structure': 'โครงสร้าง/ผนัง', 'roof': 'หลังคา/รางน้ำ', 'door_window': 'ประตู/หน้าต่าง', 'floor': 'พื้น', 'paint': 'ทาสี', 'other': 'อื่นๆ' };
+                if (wt.length) html += '<dt>ประเภทงานซ่อม</dt><dd>' + wt.map(function(w){ return _esc(wtLabels[w]||w); }).join(', ') + (d.other_work_type ? ' (' + _esc(d.other_work_type) + ')' : '') + '</dd>';
+                var urgLabels = { 'urgent': '🔴 เร่งด่วนมาก', 'high': '🟠 เร่งด่วน', 'normal': '🟡 ปกติ', 'low': '🟢 ไม่เร่งด่วน' };
+                if (d.urgency) html += '<dt>ความเร่งด่วน</dt><dd>' + (urgLabels[d.urgency] || _esc(d.urgency)) + '</dd>';
+                if (d.problem_detail) html += '<dt>รายละเอียดปัญหา</dt><dd style="white-space:pre-wrap;">' + _esc(d.problem_detail) + '</dd>';
+                if (d.cost_responsibility) html += '<dt>ความรับผิดชอบค่าใช้จ่าย</dt><dd>' + _esc(d.cost_responsibility === 'school' ? 'โรงเรียนรับผิดชอบ' : d.cost_responsibility === 'resident' ? 'ผู้พักอาศัยรับผิดชอบ' : d.cost_responsibility) + '</dd>';
+                if (d.total_cost && d.total_cost !== '0') html += '<dt>ประมาณการค่าใช้จ่าย</dt><dd>' + Number(d.total_cost).toLocaleString() + ' บาท</dd>';
+            } else if (type === 'transfer') {
+                if (d.prefix || d.fullname) html += '<dt>ผู้ยื่น</dt><dd>' + _esc((d.prefix||'') + (d.fullname||'')) + '</dd>';
+                if (d.current_house) html += '<dt>บ้านปัจจุบัน</dt><dd>' + _esc(d.current_house) + '</dd>';
+                if (d.target_house) html += '<dt>บ้านที่ต้องการย้ายไป</dt><dd>' + _esc(d.target_house) + '</dd>';
+                var ttLabels = { 'flat_to_house': 'แฟลต → บ้านเดี่ยว', 'house_to_flat': 'บ้านเดี่ยว → แฟลต', 'change_unit': 'เปลี่ยนยูนิต/ห้อง' };
+                if (d.transfer_type) html += '<dt>ประเภทการย้าย</dt><dd>' + (ttLabels[d.transfer_type] || _esc(d.transfer_type)) + '</dd>';
+                var tReasons = d.reasons || [];
+                if (typeof tReasons === 'string') try { tReasons = JSON.parse(tReasons); } catch(e) { tReasons = []; }
+                var trLabels = { 'family_size': 'ขนาดครอบครัวเปลี่ยน', 'work_convenience': 'สะดวกในการทำงาน', 'health': 'สุขภาพ', 'safety': 'ความปลอดภัย', 'other': 'อื่นๆ' };
+                if (tReasons.length) html += '<dt>เหตุผล</dt><dd>' + tReasons.map(function(r){ return _esc(trLabels[r]||r); }).join(', ') + (d.other_reason ? ' (' + _esc(d.other_reason) + ')' : '') + '</dd>';
+                if (d.additional_info) html += '<dt>ข้อมูลเพิ่มเติม</dt><dd style="white-space:pre-wrap;">' + _esc(d.additional_info) + '</dd>';
+            } else if (type === 'return') {
+                if (d.prefix || d.fullname) html += '<dt>ผู้ยื่น</dt><dd>' + _esc((d.prefix||'') + (d.fullname||'')) + '</dd>';
+                if (d.current_house) html += '<dt>บ้านที่คืน</dt><dd>' + _esc(d.current_house) + '</dd>';
+                if (d.return_date) html += '<dt>วันที่คาดว่าจะคืน</dt><dd>' + _fmtDateShort(d.return_date) + '</dd>';
+                if (d.move_in_date) html += '<dt>วันที่เข้าพัก</dt><dd>' + _fmtDateShort(d.move_in_date) + '</dd>';
+                var rReasons = d.reasons || [];
+                if (typeof rReasons === 'string') try { rReasons = JSON.parse(rReasons); } catch(e) { rReasons = []; }
+                var rrLabels = { 'retirement': 'เกษียณอายุ', 'transfer_out': 'ย้ายสถานศึกษา', 'resign': 'ลาออก', 'own_house': 'มีบ้านส่วนตัว', 'other': 'อื่นๆ' };
+                if (rReasons.length) html += '<dt>เหตุผล</dt><dd>' + rReasons.map(function(r){ return _esc(rrLabels[r]||r); }).join(', ') + (d.other_reason ? ' (' + _esc(d.other_reason) + ')' : '') + '</dd>';
+                if (d.additional_info) html += '<dt>ข้อมูลเพิ่มเติม</dt><dd style="white-space:pre-wrap;">' + _esc(d.additional_info) + '</dd>';
+            }
+            html += '</dl>';
+
+            // ── เอกสารแนบ ──
+            var attUrls = d.attachment_urls || [];
+            if (typeof attUrls === 'string') try { attUrls = JSON.parse(attUrls); } catch(e) { attUrls = []; }
+            if (attUrls.length > 0) {
+                html += '<div class="req-section">📎 เอกสารแนบ (' + attUrls.length + ' ไฟล์)</div>';
+                html += '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">';
+                attUrls.forEach(function(att, ai) {
+                    var url = typeof att === 'string' ? att : (att.url || '');
+                    var name = typeof att === 'string' ? ('ไฟล์ ' + (ai+1)) : (att.name || 'ไฟล์ ' + (ai+1));
+                    var isPdf = (att.type || url).toLowerCase().indexOf('pdf') >= 0;
+                    html += '<a href="' + _esc(url) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.4rem 0.7rem;background:var(--c-surface-2);border:1px solid var(--c-border);border-radius:var(--radius-md);font-size:0.82rem;color:var(--c-text);text-decoration:none;">';
+                    html += (isPdf ? '📄' : '🖼️') + ' ' + _esc(name) + '</a>';
+                });
+                html += '</div>';
+            }
+
+            // ── ผลการพิจารณา (ถ้ามี) ──
+            if (req.reviewed_at || req.review_note || req.head_reviewer_name || req.head_reviewed_at) {
+                html += '<div class="req-section">' + (st === 'rejected' ? '❌' : '✅') + ' ผลการพิจารณา</div>';
+                html += '<dl class="req-dl">';
+                if (req.head_reviewer_name) html += '<dt>ผู้อนุมัติ/ลงความเห็น</dt><dd>' + _esc(req.head_reviewer_name) + '</dd>';
+                if (req.reviewed_at) html += '<dt>วันที่พิจารณา</dt><dd>' + _fmtDate(req.reviewed_at) + '</dd>';
+                if (req.review_note) html += '<dt>ความเห็น</dt><dd style="white-space:pre-wrap;background:var(--c-surface-2);padding:0.5rem 0.6rem;border-radius:var(--radius-sm);border-left:3px solid ' + s.color + ';">' + _esc(req.review_note) + '</dd>';
+                if (req.head_comment && req.head_comment !== req.review_note) html += '<dt>ความเห็นหัวหน้างาน</dt><dd style="white-space:pre-wrap;">' + _esc(req.head_comment) + '</dd>';
+                html += '</dl>';
+                if (req.head_signature) {
+                    html += '<div style="margin-top:0.4rem;"><div style="font-size:0.82rem;color:var(--c-text-3);margin-bottom:0.25rem;">ลายเซ็นผู้อนุมัติ:</div>';
+                    html += '<img src="' + _esc(req.head_signature) + '" class="req-sig-img" alt="ลายเซ็น"></div>';
+                }
+            }
+
+            // ── Action Buttons ──
+            html += '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.85rem;padding-top:0.75rem;border-top:1px solid var(--c-border);">';
+            if (type === 'residence') {
+                html += '<button onclick="viewAndPrintRequest(\'' + _esc(req.id) + '\',\'residence\')" style="background:#10b981;color:white;border:none;border-radius:8px;padding:0.45rem 0.9rem;font-size:0.85rem;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:0.3rem;">🖨️ พิมพ์คำร้อง</button>';
+            }
+            if (['pending','reviewing','waiting'].indexOf(st) !== -1) {
+                html += '<button onclick="cancelMyRequest(\'' + _esc(req.id) + '\',\'' + _esc(_typeLabels[type]||type) + '\')" style="background:none;color:#ef4444;border:1.5px solid #fca5a5;border-radius:8px;padding:0.45rem 0.9rem;font-size:0.85rem;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:0.3rem;">✕ ยกเลิกคำร้อง</button>';
+            }
+            html += '</div>';
+
+            return html;
+        }
+
+        // ── Toggle expand/collapse ──
+        function toggleReqCard(idx) {
+            var card = document.getElementById('req-card-' + idx);
+            if (!card) return;
+            card.classList.toggle('open');
+        }
+
+        // ── Build single card HTML ──
+        function _buildCardHTML(req, idx) {
+            var type = req._type;
+            var s = _statusMap[req.status] || { label: req.status || '-', color: 'var(--c-text-3)', icon: '📄' };
+            var dateStr = req.submitted_at ? req.submitted_at.replace('T', ' ').substring(0, 16) : '-';
+            var html = '<div class="req-card" id="req-card-' + idx + '">';
+            // Header (clickable)
+            html += '<div class="req-card-hdr" onclick="toggleReqCard(' + idx + ')">';
+            html += '<div class="req-card-left">';
+            html += '<div class="req-card-icon" style="background:' + (_typeColors[type]||'var(--c-surface-2)') + ';">' + (_typeIcons[type]||'📄') + '</div>';
+            html += '<div class="req-card-info"><div class="req-card-type">' + (_typeLabels[type]||type) + '</div>';
+            html += '<div class="req-card-id">#' + _esc(req.id) + ' · ' + dateStr + '</div></div></div>';
+            html += '<div class="req-card-right">';
+            html += '<span class="ppk-badge" style="background:color-mix(in srgb,' + s.color + ' 12%,transparent);color:' + s.color + ';border:1px solid color-mix(in srgb,' + s.color + ' 25%,transparent);font-size:0.78rem;">' + s.icon + ' ' + s.label + '</span>';
+            html += '<span class="req-card-arrow">▼</span>';
+            html += '</div></div>';
+            // Body (expandable)
+            html += '<div class="req-card-body">' + _renderReqDetail(req) + '</div>';
+            html += '</div>';
+            return html;
+        }
+
         async function loadMyRequests(user, hasHouse) {
             var section = document.getElementById('my-requests-section');
             var content = document.getElementById('my-requests-content');
@@ -213,34 +496,24 @@
             var userId = user.id || '';
             if (!userId) { content.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-text">ไม่พบข้อมูลผู้ใช้</div></div>'; return; }
             var year = String(new Date().getFullYear() + 543);
-            var statusMap = {
-                pending:   { label: 'รอดำเนินการ',         color: 'var(--c-warning)', icon: '⏳' },
-                reviewing: { label: 'อยู่ระหว่างพิจารณา', color: 'var(--c-cyan)',    icon: '🔍' },
-                waiting:   { label: 'อยู่ในคิวรอบ้านพัก', color: '#8b5cf6',          icon: '🔢' },
-                approved:  { label: 'อนุมัติแล้ว',         color: 'var(--c-success)', icon: '✅' },
-                completed: { label: 'เสร็จสิ้น',           color: 'var(--c-success)', icon: '🎉' },
-                rejected:  { label: 'ไม่ผ่านการอนุมัติ',  color: 'var(--c-danger)',  icon: '❌' },
-                expired:   { label: 'หมดอายุ',             color: 'var(--c-text-3)',  icon: '⌛' },
-                cancelled: { label: 'ยกเลิกแล้ว',           color: 'var(--c-text-3)',  icon: '🚫' }
-            };
             var types = hasHouse ? ['repair', 'transfer', 'return'] : ['residence'];
+            // admin/head เห็นทุกประเภทของตัวเอง
+            var role = (user.role || '');
+            if (role === 'admin' || role === 'head') types = ['residence', 'repair', 'transfer', 'return'];
             var allRequests = [];
-            var queueMap = {}; // map request_id → position
+            var queueMap = {};
             try {
-                // ดึงข้อมูลคิว (สำหรับ merge queue_position)
                 try {
                     var qr = await callBackendGet('getQueue', {});
                     if (qr && qr.success && qr.data) {
                         qr.data.forEach(function(q) { if (q.request_id) queueMap[q.request_id] = q.position; });
                     }
                 } catch(e) {}
-
                 for (var i = 0; i < types.length; i++) {
                     var r = await callBackendGet('getRequests', { type: types[i], year: year, user_id: userId });
                     if (r && r.success && r.data) {
                         r.data.forEach(function(req) {
                             req._type = types[i];
-                            // merge queue position
                             if (!req.queue_position && queueMap[req.id]) req.queue_position = queueMap[req.id];
                         });
                         allRequests = allRequests.concat(r.data);
@@ -254,71 +527,29 @@
                     return;
                 }
                 allRequests.sort(function(a, b) { return (b.submitted_at || '').localeCompare(a.submitted_at || ''); });
-                var typeLabels = { residence: 'ขอเข้าพักอาศัย', repair: 'แจ้งซ่อมแซม', transfer: 'ขอย้ายบ้านพัก', return: 'ขอคืนบ้านพัก' };
                 var DISPLAY_LIMIT = 10;
                 var showAll = allRequests.length <= DISPLAY_LIMIT;
                 var displayRequests = showAll ? allRequests : allRequests.slice(0, DISPLAY_LIMIT);
                 var html = '<div style="display:flex;flex-direction:column;gap:0.6rem;" id="req-list-inner">';
-                displayRequests.forEach(function(req) {
-                    var s = statusMap[req.status] || { label: req.status || '-', color: 'var(--c-text-3)', icon: '📄' };
-                    var dateStr = req.submitted_at ? req.submitted_at.replace('T', ' ').substring(0, 16) : '-';
-                    html += '<div style="border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.85rem 1rem;background:var(--c-surface-2);">';
-                    html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">';
-                    html += '<div><span style="font-weight:600;">' + (typeLabels[req._type] || req._type) + '</span>';
-                    html += '<span style="color:var(--c-text-3);font-size:0.82rem;margin-left:0.5rem;">#' + (req.id || '-') + '</span></div>';
-                    html += '<div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">';
-                    // ปุ่มพิมพ์คำร้อง — เปิดหน้าฟอร์มพร้อม pre-fill ข้อมูลจาก details
-                    if (req._type === 'residence') {
-                        html += '<button onclick="viewAndPrintRequest(\'' + (req.id || '') + '\',\'' + req._type + '\')" style="background:#10b981;color:white;border:none;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;" title="พิมพ์/บันทึก PDF">🖨️ พิมพ์</button>';
-                    }
-                    // ปุ่มยกเลิกคำร้อง (เฉพาะสถานะที่ยังไม่สิ้นสุด)
-                    var cancellable = ['pending','reviewing','waiting'];
-                    if (cancellable.indexOf(req.status) !== -1) {
-                        html += '<button onclick="cancelMyRequest(\'' + (req.id || '') + '\',\'' + (typeLabels[req._type] || req._type) + '\')" style="background:none;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;" title="ยกเลิกคำร้อง">✕ ยกเลิก</button>';
-                    }
-                    html += '<span class="ppk-badge" style="background:color-mix(in srgb, ' + s.color + ' 12%, transparent);color:' + s.color + ';border:1px solid color-mix(in srgb, ' + s.color + ' 25%, transparent);">';
-                    html += s.icon + ' ' + s.label + '</span></div></div>';
-                    if (req.queue_position) html += '<div style="color:#8b5cf6;font-size:0.85rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
-                    if (req.review_note) html += '<div style="color:var(--c-text-2);font-size:0.85rem;margin-top:0.4rem;border-top:1px solid var(--c-border);padding-top:0.4rem;">💬 ' + req.review_note + '</div>';
-                    html += '<div style="color:var(--c-text-3);font-size:0.78rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr + '</div></div>';
-                });
+                displayRequests.forEach(function(req, idx) { html += _buildCardHTML(req, idx); });
                 html += '</div>';
                 if (!showAll) {
                     window._myRequestsAll = allRequests;
-                    window._myRequestsMeta = { content: content, typeLabels: typeLabels, statusMap: statusMap };
                     html += '<button id="req-show-all-btn" style="margin-top:0.5rem;width:100%;background:none;border:1px dashed var(--c-border);border-radius:var(--radius-md);padding:0.6rem;color:var(--c-text-2);font-size:0.88rem;cursor:pointer;font-family:inherit;">แสดงทั้งหมด (' + allRequests.length + ' รายการ)</button>';
                 }
                 content.innerHTML = html;
                 if (!showAll) {
                     var btn = document.getElementById('req-show-all-btn');
                     if (btn) btn.addEventListener('click', function() {
-                        var m = window._myRequestsMeta;
-                        if (!m) return;
+                        var all = window._myRequestsAll || [];
                         var full = '<div style="display:flex;flex-direction:column;gap:0.6rem;">';
-                        (window._myRequestsAll || []).forEach(function(req) {
-                            var s = m.statusMap[req.status] || { label: req.status || '-', color: 'var(--c-text-3)', icon: '📄' };
-                            var dateStr2 = req.submitted_at ? req.submitted_at.replace('T', ' ').substring(0, 16) : '-';
-                            full += '<div style="border:1px solid var(--c-border);border-radius:var(--radius-md);padding:0.85rem 1rem;background:var(--c-surface-2);">';
-                            full += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">';
-                            full += '<div><span style="font-weight:600;">' + (m.typeLabels[req._type] || req._type) + '</span>';
-                            full += '<span style="color:var(--c-text-3);font-size:0.82rem;margin-left:0.5rem;">#' + (req.id || '-') + '</span></div>';
-                            full += '<div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">';
-                            if (req._type === 'residence') {
-                                full += '<button onclick="viewAndPrintRequest(\'' + (req.id || '') + '\',\'' + req._type + '\')" style="background:#10b981;color:white;border:none;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;">🖨️ พิมพ์</button>';
-                            }
-                            var cancellable = ['pending','reviewing','waiting'];
-                            if (cancellable.indexOf(req.status) !== -1) {
-                                full += '<button onclick="cancelMyRequest(\'' + (req.id || '') + '\',\'' + (m.typeLabels[req._type] || req._type) + '\')" style="background:none;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer;font-family:inherit;">✕ ยกเลิก</button>';
-                            }
-                            full += '<span class="ppk-badge" style="background:color-mix(in srgb, ' + s.color + ' 12%, transparent);color:' + s.color + ';border:1px solid color-mix(in srgb, ' + s.color + ' 25%, transparent);">' + s.icon + ' ' + s.label + '</span></div></div>';
-                            if (req.queue_position) full += '<div style="color:#8b5cf6;font-size:0.85rem;margin-top:0.4rem;">🔢 คิวที่ ' + req.queue_position + '</div>';
-                            if (req.review_note) full += '<div style="color:var(--c-text-2);font-size:0.85rem;margin-top:0.4rem;border-top:1px solid var(--c-border);padding-top:0.4rem;">💬 ' + req.review_note + '</div>';
-                            full += '<div style="color:var(--c-text-3);font-size:0.78rem;margin-top:0.3rem;">ยื่นเมื่อ: ' + dateStr2 + '</div></div>';
-                        });
+                        all.forEach(function(req, idx) { full += _buildCardHTML(req, idx); });
                         full += '</div>';
-                        m.content.innerHTML = full;
+                        content.innerHTML = full;
                     });
                 }
+                // Auto-expand the first card if only one request
+                if (allRequests.length === 1) { toggleReqCard(0); }
             } catch(e) {
                 content.innerHTML = '<div class="ppk-alert ppk-alert-danger">ไม่สามารถโหลดข้อมูลคำร้องได้ในขณะนี้</div>';
             }
@@ -483,7 +714,7 @@
     </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260403B"></script>
+    <script src="ppk-api.js?v=20260403D"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>
