@@ -815,19 +815,28 @@ async function _routeAction(action, data) {
             if (!regId) return { success: false, error: 'ไม่ระบุ regId' };
             var reg = (await sbGet('pending_registrations', { id: 'eq.' + regId }))[0];
             if (!reg) return { success: false, error: 'ไม่พบคำขอ' };
-            // ตรวจสอบว่า email ซ้ำใน users หรือไม่
-            var existingUsers = await sbGet('users', { email: 'eq.' + reg.email, select: 'id', limit: '1' });
+            // ตรวจสอบว่า email มีอยู่ใน users หรือไม่
+            var existingUsers = await sbGet('users', { email: 'eq.' + reg.email, select: 'id,is_active', limit: '1' });
+            var uid;
             if (existingUsers && existingUsers.length > 0) {
-                return { success: false, error: 'อีเมล ' + reg.email + ' มีอยู่ในระบบแล้ว ไม่สามารถอนุมัติซ้ำได้' };
+                // ใช้ user เดิม — อัปเดตข้อมูลให้ตรงกับคำขอใหม่
+                uid = existingUsers[0].id;
+                await sbPatch('users', { id: 'eq.' + uid }, {
+                    phone: reg.phone, prefix: reg.prefix,
+                    firstname: reg.firstname, lastname: reg.lastname, position: reg.position,
+                    password_hash: reg.password_hash, pdpa_consent: reg.pdpa_consent,
+                    is_active: true
+                });
+            } else {
+                // สร้าง user ใหม่
+                uid = 'USR' + Date.now().toString(36).toUpperCase();
+                await sbPost('users', {
+                    id: uid, email: reg.email, phone: reg.phone, prefix: reg.prefix,
+                    firstname: reg.firstname, lastname: reg.lastname, position: reg.position,
+                    role: 'resident', password_hash: reg.password_hash, pdpa_consent: reg.pdpa_consent,
+                    is_active: true
+                });
             }
-            // สร้าง user
-            var uid = 'USR' + Date.now().toString(36).toUpperCase();
-            await sbPost('users', {
-                id: uid, email: reg.email, phone: reg.phone, prefix: reg.prefix,
-                firstname: reg.firstname, lastname: reg.lastname, position: reg.position,
-                role: 'resident', password_hash: reg.password_hash, pdpa_consent: reg.pdpa_consent,
-                is_active: true
-            });
             // สร้าง resident ถ้ามี house_number
             var residentId = null;
             if (data.house_number) {
