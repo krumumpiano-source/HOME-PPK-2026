@@ -2565,11 +2565,14 @@ async function _routeAction(action, data) {
             // 6. อัปเดต housing → occupied
             await sbPatch('housing', { id: 'eq.' + arHouseId }, { status: 'occupied', updated_at: new Date().toISOString() });
 
-            // 7. อัปเดต request → approved + บันทึก house
+            // 7. อัปเดต request → approved + บันทึก house + ลายเซ็น
             await sbPatch('requests', { id: 'eq.' + arReqId }, {
                 status: 'approved', house_id: arHouseId, house_number: arHouseNum,
                 reviewed_by: arReviewerId || '', reviewed_at: new Date().toISOString(),
-                review_note: data.note || '', updated_at: new Date().toISOString()
+                review_note: data.note || '', updated_at: new Date().toISOString(),
+                head_reviewer_name: data.reviewerName || '',
+                head_signature:     data.signature || null,
+                head_reviewed_at:   new Date().toISOString()
             });
 
             // 8. ลบออกจาก queue

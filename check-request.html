@@ -840,7 +840,7 @@
 
     <!-- Approve House Selection Modal -->
     <div class="modal-overlay" id="approveHouseModal">
-        <div class="modal" style="max-width:500px;">
+        <div class="modal" style="max-width:520px;">
             <div class="modal-header">
                 <h3 class="modal-title">🏠 อนุมัติเข้าพัก — เลือกบ้าน</h3>
                 <button class="modal-close" onclick="closeModal('approveHouseModal')">×</button>
@@ -860,10 +860,35 @@
                         <option value="">⏳ กำลังโหลด...</option>
                     </select>
                 </div>
-                <div id="approveDuplicateWarning" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:0.75rem;margin-top:0.5rem;">
+                <div id="approveDuplicateWarning" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:0.75rem;margin-bottom:0.75rem;">
                     <strong>⚠️ พบชื่อซ้ำในระบบ</strong>
                     <div id="approveDuplicateDetail" style="margin-top:0.3rem;font-size:0.9rem;"></div>
                     <div style="margin-top:0.3rem;font-size:0.85rem;color:#856404;">ตรวจสอบว่าเป็นคนเดียวกันหรือไม่ก่อนอนุมัติ</div>
+                </div>
+                <!-- ลายเซ็นผู้อนุมัติ -->
+                <div class="form-group">
+                    <label>ชื่อผู้อนุมัติ <span style="color:var(--danger);">*</span></label>
+                    <input type="text" id="approveReviewerName" placeholder="ชื่อ-นามสกุลผู้อนุมัติ"
+                        style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
+                </div>
+                <div class="form-group">
+                    <label>ลายเซ็นดิจิทัลผู้อนุมัติ</label>
+                    <div style="border:2px solid #d1d5db;border-radius:10px;background:#f9fafb;padding:0.25rem;touch-action:none;">
+                        <canvas id="approveSignatureCanvas" width="460" height="130"
+                            style="display:block;width:100%;height:130px;cursor:crosshair;border-radius:8px;background:#fff;"
+                            ontouchstart="_sigStart(event,'approveSignatureCanvas')"
+                            ontouchmove="_sigMove(event,'approveSignatureCanvas')"
+                            ontouchend="_sigEnd(event)"
+                            onmousedown="_sigStart(event,'approveSignatureCanvas')"
+                            onmousemove="_sigMove(event,'approveSignatureCanvas')"
+                            onmouseup="_sigEnd(event)"
+                            onmouseleave="_sigEnd(event)"
+                        ></canvas>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.4rem;">
+                        <span style="font-size:0.8rem;color:#9ca3af;">วาดลายเซ็นด้านบน — รองรับ Mouse และ iPad/Apple Pencil</span>
+                        <button type="button" onclick="_sigClear('approveSignatureCanvas')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:0.2rem 0.7rem;font:inherit;font-size:0.82rem;cursor:pointer;color:#6b7280;">🗑️ ลบ</button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -965,6 +990,10 @@
             row.otherReason = row.otherReason || row.other_reason || '';
             // review note
             row.reviewNote = row.reviewNote || row.review_note || '';
+            // head review (admin signature)
+            row.headSignature    = row.headSignature    || row.head_signature    || null;
+            row.headReviewerName = row.headReviewerName || row.head_reviewer_name|| '';
+            row.headReviewedAt   = row.headReviewedAt   || row.head_reviewed_at  || '';
             // reason: string → reasons: array
             if (!row.reasons && row.reason) {
                 row.reasons = row.reason.split(',').map(function(r) { return r.trim(); }).filter(Boolean);
@@ -1631,6 +1660,13 @@
                         </div>
                     </div>
                     ` : ''}
+                    ${item.status === 'approved' ? `
+                    <div style="margin-top:1.25rem;padding:1rem;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;">
+                        <div style="font-weight:700;color:#15803d;margin-bottom:0.5rem;">✅ อนุมัติแล้ว${item.headReviewerName ? ' — ผู้อนุมัติ: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.headReviewedAt ? '<div style="font-size:0.875rem;color:#166534;margin-bottom:0.5rem;">วันที่อนุมัติ: ' + formatDate(item.headReviewedAt) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #d1fae5;border-radius:6px;background:#fff;padding:0.25rem;margin-bottom:0.5rem;">' : ''}
+                        <button type="button" class="btn btn-primary" onclick="printResidenceApproval('${item.id}')" style="font-size:0.875rem;">🖨️ พิมพ์ใบอนุมัติ</button>
+                    </div>` : ''}
                 `;
             } else if (type === 'repair') {
                 var costHTML = '';
@@ -1890,6 +1926,101 @@
             window._currentDetailType = type;
             document.getElementById('deleteRequestBtn').style.display = 'inline-flex';
             openModal('detailModal');
+        }
+
+        function printResidenceApproval(id) {
+            var list = getData('residence') || [];
+            var item = list.find(function(d) { return d.id === id; });
+            if (!item) return;
+            var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+            var approvedDate = item.headReviewedAt ? new Date(item.headReviewedAt) : new Date();
+            var dateStr = approvedDate.getDate() + ' ' + thaiMonths[approvedDate.getMonth()] + ' ' + (approvedDate.getFullYear() + 543);
+            var requestDate = item.submittedAt ? new Date(item.submittedAt) : (item.createdAt ? new Date(item.createdAt) : null);
+            var requestDateStr = requestDate ? (requestDate.getDate() + ' ' + thaiMonths[requestDate.getMonth()] + ' ' + (requestDate.getFullYear() + 543)) : '-';
+            var stayTypeText = { 'single': 'พักคนเดียว', 'family': 'พักกับครอบครัว', 'couple': 'พักกับคู่สมรส' };
+            var sigHtml = item.headSignature
+                ? '<img src="' + item.headSignature + '" style="max-height:80px;display:block;margin:0 auto;">'
+                : '<div style="height:60px;"></div>';
+            var reasonText = getReasonText(item.reasons) + (item.otherReason ? ' / ' + item.otherReason : '');
+            var w = window.open('', '_blank', 'width=794,height=1123');
+            if (!w) { alert('กรุณาอนุญาต popup ในเบราว์เซอร์'); return; }
+            w.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' +
+                '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">' +
+                '<title>ใบอนุมัติให้เข้าพักอาศัย</title>' +
+                '<style>' +
+                'body{font-family:"Sarabun",sans-serif;font-size:14pt;margin:2cm;color:#000;line-height:1.7}' +
+                'h1{text-align:center;font-size:16pt;margin-bottom:0.3cm}' +
+                '.school{text-align:center;font-size:14pt;font-weight:700}' +
+                '.sub{text-align:center;font-size:11pt;margin-bottom:0.6cm}' +
+                'table{width:100%;border-collapse:collapse;margin:0.4cm 0}' +
+                'td{padding:0.2cm 0.3cm;vertical-align:top}' +
+                '.lbl{width:42%;font-weight:600}' +
+                '.sig-box{text-align:center;margin-top:1.5cm}' +
+                '.sig-name{margin-top:0.2cm;font-weight:600}' +
+                '.sig-role{font-size:11pt;color:#555}' +
+                'hr{border:none;border-top:1px solid #999;margin:0.5cm 0}' +
+                '@media print{button{display:none!important}}' +
+                '</style></head><body>' +
+                '<div class="school">โรงเรียนพะเยาพิทยาคม</div>' +
+                '<div class="sub">อำเภอเมือง จังหวัดพะเยา</div>' +
+                '<h1>ใบอนุมัติให้เข้าพักอาศัยในบ้านพักครู</h1>' +
+                '<hr>' +
+                '<table>' +
+                '<tr><td class="lbl">รหัสคำร้อง</td><td>' + _e(item.id) + '</td></tr>' +
+                '<tr><td class="lbl">วันที่ยื่นคำร้อง</td><td>' + requestDateStr + '</td></tr>' +
+                '<tr><td class="lbl">ชื่อ-นามสกุล</td><td>' + _e((item.prefix||'') + (item.fullname||'')) + '</td></tr>' +
+                '<tr><td class="lbl">ตำแหน่ง</td><td>' + _e(item.position||'-') + '</td></tr>' +
+                '<tr><td class="lbl">กลุ่มสาระ / หน่วยงาน</td><td>' + _e(item.subjectGroup||'-') + '</td></tr>' +
+                '<tr><td class="lbl">เบอร์โทรศัพท์</td><td>' + _e(item.phone||'-') + '</td></tr>' +
+                '<tr><td class="lbl">หมายเลขบ้านพัก</td><td>' + _e(item.houseNumber||'-') + '</td></tr>' +
+                '<tr><td class="lbl">ประเภทการพัก</td><td>' + _e(stayTypeText[item.stayType]||item.stayType||'-') + '</td></tr>' +
+                '<tr><td class="lbl">จำนวนผู้เข้าพัก</td><td>' + _e(item.totalResidents||'-') + ' คน</td></tr>' +
+                '<tr><td class="lbl">เหตุผลในการขอเข้าพัก</td><td>' + _e(reasonText||'-') + '</td></tr>' +
+                (item.additionalInfo ? '<tr><td class="lbl">ข้อมูลเพิ่มเติม</td><td>' + _e(item.additionalInfo) + '</td></tr>' : '') +
+                '<tr><td class="lbl">วันที่อนุมัติ</td><td>' + dateStr + '</td></tr>' +
+                '</table>' +
+                '<hr>' +
+                '<div class="sig-box">' +
+                sigHtml +
+                '<div class="sig-name">(' + _e(item.headReviewerName||'....................................') + ')</div>' +
+                '<div class="sig-role">ผู้อนุมัติ</div>' +
+                '</div>' +
+                '<div style="text-align:center;margin-top:1.2cm;">' +
+                '<button onclick="window.print()" style="font-size:13pt;padding:0.4cm 1.2cm;cursor:pointer;">🖨️ พิมพ์เอกสาร</button>' +
+                '</div>' +
+                '</body></html>');
+            w.document.close();
+        }
+
+        // ===== Canvas Signature Helpers (shared by any signature canvas) =====        var _sigActive = false, _sigCvs = null, _sigCx = null;
+        function _sigPos(e, canvas) {
+            var r = canvas.getBoundingClientRect();
+            var scaleX = canvas.width / r.width, scaleY = canvas.height / r.height;
+            var src = (e.touches && e.touches[0]) ? e.touches[0] : e;
+            return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+        }
+        function _sigStart(e, canvasId) {
+            e.preventDefault();
+            _sigCvs = document.getElementById(canvasId);
+            if (!_sigCvs) return;
+            _sigCx = _sigCvs.getContext('2d');
+            _sigCx.strokeStyle = '#1e293b'; _sigCx.lineWidth = 2.5;
+            _sigCx.lineCap = 'round'; _sigCx.lineJoin = 'round';
+            var p = _sigPos(e, _sigCvs);
+            _sigCx.beginPath(); _sigCx.moveTo(p.x, p.y);
+            _sigActive = true;
+        }
+        function _sigMove(e, canvasId) {
+            if (!_sigActive || !_sigCx) return;
+            e.preventDefault();
+            var p = _sigPos(e, _sigCvs);
+            _sigCx.lineTo(p.x, p.y); _sigCx.stroke();
+        }
+        function _sigEnd(e) { _sigActive = false; _sigCx = null; }
+        function _sigClear(canvasId) {
+            var c = document.getElementById(canvasId);
+            if (!c) return;
+            c.getContext('2d').clearRect(0, 0, c.width, c.height);
         }
 
         function openAdminAddRequest() {
@@ -2333,6 +2464,13 @@
             const thaiDate = today.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('approveMoveInDate').value = thaiDate;
 
+            // prefill ชื่อผู้อนุมัติจาก currentUser
+            var _cu = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            document.getElementById('approveReviewerName').value = _cu ? ((_cu.prefix||'') + (_cu.firstname||'') + ' ' + (_cu.lastname||'')).trim() : '';
+
+            // ล้าง canvas
+            _sigClear('approveSignatureCanvas');
+
             // โหลดบ้านว่าง
             const select = document.getElementById('approveHouseSelect');
             select.innerHTML = '<option value="">⏳ กำลังโหลด...</option>';
@@ -2386,11 +2524,22 @@
 
         async function confirmApproveWithHouse() {
             const houseNumber = document.getElementById('approveHouseSelect').value;
-            if (!houseNumber) {
-                ppkAlert('กรุณาเลือกบ้าน/ห้องก่อนอนุมัติ');
-                return;
-            }
+            if (!houseNumber) { ppkAlert('กรุณาเลือกบ้าน/ห้องก่อนอนุมัติ'); return; }
+            const reviewerName = document.getElementById('approveReviewerName').value.trim();
+            if (!reviewerName) { ppkAlert('กรุณาระบุชื่อผู้อนุมัติ'); return; }
             if (!_approveTargetId) return;
+
+            // ดึงลายเซ็นจาก canvas
+            var signatureData = null;
+            var sigCanvas = document.getElementById('approveSignatureCanvas');
+            if (sigCanvas) {
+                // ตรวจว่าวาดหรือเปล่า
+                var ctx = sigCanvas.getContext('2d');
+                var px = ctx.getImageData(0,0,sigCanvas.width,sigCanvas.height).data;
+                var blank = true;
+                for (var pi=3;pi<px.length;pi+=4) { if (px[pi] > 0) { blank = false; break; } }
+                if (!blank) signatureData = sigCanvas.toDataURL('image/png');
+            }
 
             if (!await ppkConfirm('ยืนยันอนุมัติเข้าพักบ้านเลขที่ ' + houseNumber + '?')) return;
 
@@ -2399,7 +2548,9 @@
             try {
                 const result = await callBackend('approveResidence', {
                     requestId: id,
-                    houseNumber: houseNumber
+                    houseNumber: houseNumber,
+                    reviewerName: reviewerName,
+                    signature: signatureData || ''
                 });
 
                 if (!result || !result.success) {
@@ -2425,8 +2576,10 @@
                 }
 
                 closeModal('approveHouseModal');
+                await loadAllRequests();
                 renderAll();
-                ppkAlert('✅ อนุมัติเรียบร้อยแล้ว — บ้านเลขที่ ' + houseNumber);
+                ppkAlert('✅ อนุมัติเรียบร้อยแล้ว — บ้านเลขที่ ' + houseNumber + (signatureData ? '' : '
+ℹ️ ไม่มีลายเซ็น — สามารถดูรายละเอียดแล้วเพิ่มภายหลังได้'), 'success');
             } catch (e) {
                 console.error('อนุมัติไม่สำเร็จ:', e);
                 ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
