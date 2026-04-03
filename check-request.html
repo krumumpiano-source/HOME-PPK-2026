@@ -2096,7 +2096,11 @@
         async function approveReturnRequest(id) {
             if (!await ppkConfirm('✅ อนุมัติคำร้องขอคืนบ้านพักนี้?\n\nระบบจะบันทึกการอนุมัติ และรอให้แอดมินดำเนินการย้ายออกเมื่อถึงวันที่กำหนด', { okText: 'อนุมัติ', cancelText: 'ยกเลิก' })) return;
             try {
-                await callBackend('reviewRequest', { requestId: id, type: 'return', status: 'approved', note: '' });
+                var result = await callBackend('reviewRequest', { requestId: id, type: 'return', status: 'approved', note: '' });
+                if (!result || result.success === false) {
+                    ppkAlert('อนุมัติไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
+                    return;
+                }
                 _clearRequestsCache();
                 closeModal('detailModal');
                 await loadAllRequests();
@@ -2108,7 +2112,11 @@
         async function rejectReturnRequest(id) {
             if (!await ppkConfirm('❌ ปฏิเสธคำร้องขอคืนบ้านพักนี้?', { type: 'danger', okText: 'ปฏิเสธ', cancelText: 'ยกเลิก' })) return;
             try {
-                await callBackend('reviewRequest', { requestId: id, type: 'return', status: 'rejected', note: '' });
+                var result = await callBackend('reviewRequest', { requestId: id, type: 'return', status: 'rejected', note: '' });
+                if (!result || result.success === false) {
+                    ppkAlert('บันทึกไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
+                    return;
+                }
                 _clearRequestsCache();
                 closeModal('detailModal');
                 await loadAllRequests();
