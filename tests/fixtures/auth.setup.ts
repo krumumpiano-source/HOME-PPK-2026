@@ -1,0 +1,61 @@
+﻿/**
+ * Auth Setup — Playwright global setup
+ * Login ด้วย test admin + test user แล้ว save storageState ไว้ reuse
+ */
+import { test as setup, expect } from '@playwright/test';
+import { TEST_ADMIN, TEST_USER } from './test-data';
+
+const ADMIN_AUTH_FILE = '.auth/admin.json';
+const USER_AUTH_FILE = '.auth/user.json';
+
+setup('authenticate as admin', async ({ page }) => {
+  // ไปที่หน้า login
+  await page.goto('/login.html');
+  await page.waitForLoadState('networkidle');
+
+  // กรอก email + password
+  await page.fill('#email', TEST_ADMIN.email);
+  await page.fill('#password', TEST_ADMIN.password);
+
+  // กดปุ่ม login
+  await page.click('#loginBtn');
+
+  // รอ redirect ไป dashboard หรือรอ sessionToken ถูก set
+  await page.waitForFunction(
+    () => !!localStorage.getItem('sessionToken'),
+    null,
+    { timeout: 30_000 }
+  );
+
+  // รอ navigation หลัง login redirect เสร็จ (ป้องกัน execution context destroyed)
+  await page.waitForLoadState('load');
+  await page.waitForLoadState('networkidle');
+
+  // Save storage state (localStorage + cookies)
+  await page.context().storageState({ path: ADMIN_AUTH_FILE });
+});
+
+setup('authenticate as user', async ({ page }) => {
+  // Skip ถ้ายังไม่มี user credentials
+  if (!TEST_USER.email || !TEST_USER.password) {
+    // สร้าง empty storage state เพื่อไม่ให้ tests ที่ depend crash
+    await page.context().storageState({ path: USER_AUTH_FILE });
+    setup.skip();
+    return;
+  }
+
+  await page.goto('/login.html');
+  await page.waitForLoadState('networkidle');
+
+  await page.fill('#email', TEST_USER.email);
+  await page.fill('#password', TEST_USER.password);
+  await page.click('#loginBtn');
+
+  await page.waitForFunction(
+    () => !!localStorage.getItem('sessionToken'),
+    null,
+    { timeout: 30_000 }
+  );
+
+  await page.context().storageState({ path: USER_AUTH_FILE });
+});

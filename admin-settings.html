@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -627,6 +627,9 @@
                 <button class="tab-btn" onclick="showTab('registration', this)" id="tabBtnRegistration">
                     <span class="tab-btn-icon">📝</span> อนุมัติการสมัคร <span class="badge badge-danger" id="pendingCount" style="margin-left:4px; display:none;">0</span>
                 </button>
+                <button class="tab-btn" onclick="showTab('floating', this)">
+                    <span class="tab-btn-icon">🪂</span> ผู้ใช้ลอย <span class="badge" id="floatingCount" style="margin-left:4px; display:none; background:#fbbf24; color:#78350f;">0</span>
+                </button>
             </div>
 
             <!-- Sub-tabs: สิทธิ์ & ประกาศ -->
@@ -1214,6 +1217,48 @@
                             </thead>
                             <tbody id="pendingRegTableBody">
                                 <tr><td colspan="7" style="color:var(--muted);">กดปุ่ม "โหลดรายการใหม่" เพื่อดูรายการรออนุมัติ</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Floating Users -->
+            <div class="tab-content" id="tab-floating">
+                <div class="section">
+                    <div class="section-title">🪂 ผู้ใช้ลอย (ยังไม่ได้จัดบ้าน)</div>
+                    <div class="section-desc">รายชื่อผู้ใช้ที่ได้รับอนุมัติเข้าระบบแล้ว แต่ยังไม่ได้จัดบ้านพักอาศัยให้</div>
+
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                        <button class="btn btn-primary" onclick="loadFloatingUsers()">🔄 โหลดข้อมูลใหม่</button>
+                    </div>
+
+                    <div id="floatingUsersSummary" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;"></div>
+
+                    <div style="margin-bottom:0.75rem;">
+                        <input type="text" id="searchFloating" placeholder="🔍 ค้นชื่อ, อีเมล..."
+                               style="width:100%; max-width:320px; padding:0.4rem 0.7rem; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.88rem;"
+                               oninput="renderFloatingUsers()">
+                    </div>
+
+                    <div id="floatingUsersLoading" style="text-align:center; color:var(--muted); padding:1rem; display:none;">
+                        ⏳ กำลังโหลดข้อมูล...
+                    </div>
+
+                    <div class="table-container">
+                        <table id="floatingUsersTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">#</th>
+                                    <th>ชื่อ-นามสกุล</th>
+                                    <th>อีเมล</th>
+                                    <th>เบอร์โทร</th>
+                                    <th>ตำแหน่ง</th>
+                                    <th>วันที่สมัคร</th>
+                                </tr>
+                            </thead>
+                            <tbody id="floatingUsersTableBody">
+                                <tr><td colspan="6" style="color:var(--muted);">กดปุ่ม "โหลดข้อมูลใหม่" เพื่อดูรายการ</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1917,6 +1962,7 @@
                 else if (tabName === 'registration') loadPendingRegistrations();
                 else if (tabName === 'housing') loadHousingTabData();
                 else if (tabName === 'resident') loadResidentTabData();
+                else if (tabName === 'floating') loadFloatingUsers();
                 else if (tabName === 'linemail') loadEmailSettings();
                 else if (tabName === 'backup') loadBackups();
             }
@@ -4648,6 +4694,66 @@
         // ========== Registration Approval Functions (Step 28) ==========
         let _pendingRegistrations = [];
 
+        // ========== Floating Users (ผู้ใช้ลอย) ==========
+        let _floatingUsers = [];
+
+        async function loadFloatingUsers() {
+            document.getElementById('floatingUsersLoading').style.display = 'block';
+            try {
+                const result = await callBackendGet('getFloatingUsers');
+                if (result && result.success) {
+                    _floatingUsers = result.data || [];
+                    renderFloatingUsers();
+                    var badge = document.getElementById('floatingCount');
+                    if (_floatingUsers.length > 0) {
+                        badge.textContent = _floatingUsers.length;
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    document.getElementById('floatingUsersSummary').innerHTML =
+                        '<div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:0.5rem 1rem; font-size:0.85rem;">' +
+                        '🪂 ผู้ใช้ลอยทั้งหมด <strong>' + _floatingUsers.length + '</strong> คน</div>';
+                } else {
+                    document.getElementById('floatingUsersTableBody').innerHTML =
+                        '<tr><td colspan="6" style="color:var(--danger);">โหลดข้อมูลไม่สำเร็จ: ' + (result?.error || '') + '</td></tr>';
+                }
+            } catch (err) {
+                document.getElementById('floatingUsersTableBody').innerHTML =
+                    '<tr><td colspan="6" style="color:var(--danger);">' + err.message + '</td></tr>';
+            } finally {
+                document.getElementById('floatingUsersLoading').style.display = 'none';
+            }
+        }
+
+        function renderFloatingUsers() {
+            var tbody = document.getElementById('floatingUsersTableBody');
+            var search = (document.getElementById('searchFloating')?.value || '').trim().toLowerCase();
+            var filtered = _floatingUsers;
+            if (search) {
+                filtered = _floatingUsers.filter(function(u) {
+                    var text = ((u.prefix || '') + (u.firstname || '') + ' ' + (u.lastname || '') + ' ' + (u.email || '')).toLowerCase();
+                    return text.indexOf(search) >= 0;
+                });
+            }
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);">🎉 ไม่มีผู้ใช้ลอย</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(function(u, i) {
+                var name = (u.prefix || '') + (u.firstname || '') + ' ' + (u.lastname || '');
+                var date = u.created_at ? new Date(u.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+                return '<tr>' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td style="text-align:left;">' + name + '</td>' +
+                    '<td>' + (u.email || '-') + '</td>' +
+                    '<td>' + (u.phone || '-') + '</td>' +
+                    '<td>' + (u.position || '-') + '</td>' +
+                    '<td>' + date + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
         async function loadPendingRegistrations() {
             document.getElementById('pendingRegLoading').style.display = 'block';
             
@@ -4806,11 +4912,9 @@
             }
 
             try {
-                var currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
                 const result = await callBackend('rejectRegistration', {
                     regId: regId,
-                    note: note,
-                    reviewedBy: (currentUser && currentUser.id) ? currentUser.id : null
+                    note: note
                 });
 
                 if (result && result.success) {
@@ -5340,10 +5444,10 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260402B"></script>
-    <script src="ppk-app.js?v=20260402B"></script>
-    <script src="ppk-utils.js?v=20260402B"></script>
-    <script src="ppk-nav.js?v=20260402B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>
