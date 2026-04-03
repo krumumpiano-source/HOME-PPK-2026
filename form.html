@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แบบฟอร์มคำร้อง | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260403E">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260403F">
     <style>
         .form-cards-grid {
             display: grid;
@@ -361,7 +361,7 @@
                 if (d.total_residents) html += '<dt>จำนวนผู้เข้าพัก</dt><dd>' + _esc(d.total_residents) + ' คน</dd>';
                 var reasons = d.reason || '';
                 if (typeof reasons === 'string') reasons = reasons.split(',').filter(Boolean);
-                var rl = { 'new_position': 'บรรจุใหม่', 'far_from_home': 'บ้านไกล', 'work_convenience': 'สะดวกในการทำงาน', 'safety': 'ความปลอดภัย' };
+                var rl = { 'new_position': 'ย้ายมาปฏิบัติหน้าที่', 'far_from_home': 'อยู่ห่างไกลจากภูมิลำเนา', 'family_responsibility': 'มีภาระครอบครัว', 'no_nearby_residence': 'ไม่มีที่พักอาศัยในบริเวณใกล้เคียง', 'work_convenience': 'สะดวกในการทำงาน', 'safety': 'ความปลอดภัย', 'other': 'อื่นๆ' };
                 if (reasons.length) html += '<dt>เหตุผล</dt><dd>' + reasons.map(function(r){ return _esc(rl[r.trim()]||r.trim()); }).join(', ') + (d.other_reason ? ', ' + _esc(d.other_reason) : '') + '</dd>';
                 if (req.house_number && (st === 'approved' || st === 'completed')) html += '<dt>บ้านที่ได้รับ</dt><dd style="color:#059669;font-weight:700;">🏠 ' + _esc(req.house_number) + '</dd>';
                 // ผู้อยู่อาศัยร่วม
@@ -631,7 +631,7 @@
                 var dateStr = subDate.getDate() + ' ' + thaiMonths[subDate.getMonth()] + ' ' + (subDate.getFullYear() + 543);
                 var stayAlone = d.stay_type === 'alone';
                 var reasons = (d.reason || '').split(',').filter(Boolean);
-                var reasonLabels = { 'new_position': 'บรรจุใหม่', 'far_from_home': 'บ้านไกล', 'work_convenience': 'สะดวกในการทำงาน', 'safety': 'ความปลอดภัย' };
+                var reasonLabels = { 'new_position': 'ย้ายมาปฏิบัติหน้าที่ ณ โรงเรียนพะเยาพิทยาคม', 'far_from_home': 'อยู่ห่างไกลจากภูมิลำเนาเดิม', 'family_responsibility': 'มีภาระครอบครัว (บุตรเล็ก ผู้สูงอายุ ผู้ป่วย)', 'no_nearby_residence': 'ไม่มีที่พักอาศัยในบริเวณใกล้เคียง', 'work_convenience': 'สะดวกในการทำงาน', 'safety': 'ความปลอดภัย', 'other': 'อื่นๆ' };
                 var residentsHTML = '';
                 var residents = d.residents || [];
                 if (typeof residents === 'string') try { residents = JSON.parse(residents); } catch(e) { residents = []; }
@@ -669,7 +669,7 @@
                 if (d.other_reason) pw.document.write('<div><span class="checkbox">&#10003;</span> อื่นๆ: ' + _escHtml(d.other_reason) + '</div>');
                 pw.document.write('</div></div>');
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 4: เอกสารประกอบคำร้อง</div><div class="indent small-text">');
-                var docLabels = { 'id_card': 'สำเนาบัตรประชาชน', 'house_registration': 'สำเนาทะเบียนบ้าน', 'appointment_letter': 'สำเนาคำสั่งบรรจุ/แต่งตั้ง', 'marriage_cert': 'สำเนาทะเบียนสมรส', 'birth_cert': 'สำเนาสูติบัตรบุตร' };
+                var docLabels = { 'id_card': 'สำเนาบัตรข้าราชการ/พนักงานราชการ/ลูกจ้างประจำ', 'house_registration': 'สำเนาทะเบียนบ้าน', 'appointment_letter': 'สำเนาคำสั่งบรรจุ/แต่งตั้ง', 'marriage_cert': 'สำเนาทะเบียนสมรส', 'birth_cert': 'สำเนาสูติบัตรบุตร', 'special_documents': 'เอกสารแสดงความจำเป็นพิเศษ (เช่น ใบรับรองแพทย์, สำเนาทะเบียนบุตร, สำเนาทะเบียนสมรส)', 'appointment_proof': 'หนังสือคำสั่งหรือหลักฐานการบรรจุแต่งตั้ง/ย้าย' };
                 docsChecked.forEach(function(dc) { pw.document.write('<div><span class="checkbox">&#10003;</span> ' + (docLabels[dc]||dc) + '</div>'); });
                 pw.document.write('</div></div>');
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 5: ข้อตกลง</div><p class="indent small-text" style="text-align:justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย</p></div>');
@@ -750,12 +750,12 @@
         window.location.replace('login.html');
     }
     </script>
-    <script src="supabase/config.js?v=20260403E"></script>
-    <script src="supabase/supabase.min.js?v=20260403E"></script>
-    <script src="ppk-api.js?v=20260403E"></script>
-    <script src="ppk-app.js?v=20260403E"></script>
-    <script src="ppk-utils.js?v=20260403E"></script>
-    <script src="ppk-nav.js?v=20260403E"></script>
-    <script src="ppk-pwa.js?v=20260403E"></script>
+    <script src="supabase/config.js?v=20260403F"></script>
+    <script src="supabase/supabase.min.js?v=20260403F"></script>
+    <script src="ppk-api.js?v=20260403F"></script>
+    <script src="ppk-app.js?v=20260403F"></script>
+    <script src="ppk-utils.js?v=20260403F"></script>
+    <script src="ppk-nav.js?v=20260403F"></script>
+    <script src="ppk-pwa.js?v=20260403F"></script>
 </body>
 </html>
