@@ -138,6 +138,22 @@
         /* Edit mode banner */
         #edit-mode-banner { display:none;background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:1rem;margin-bottom:1rem; }
         #edit-mode-banner.active { display:block; }
+        /* Outstanding months panel */
+        #outstanding-panel { display:none;background:#fff7ed;border:2px solid #fb923c;border-radius:14px;padding:1rem 1.1rem;margin-bottom:1.2rem; }
+        .outstanding-title { font-size:0.9rem;font-weight:700;color:#c2410c;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.4rem; }
+        .outstanding-list { display:flex;flex-direction:column;gap:0.5rem; }
+        .outstanding-item { display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.8rem;border-radius:10px;border:1.5px solid #fed7aa;background:#fff;gap:0.5rem;flex-wrap:wrap;cursor:pointer;transition:all 0.15s; }
+        .outstanding-item:hover { background:#fff7ed;border-color:#f97316; }
+        .outstanding-item.active { border-color:#f97316;background:#fff7ed;box-shadow:0 0 0 3px rgba(249,115,22,0.2); }
+        .outstanding-item.has-slip { opacity:0.55;cursor:default; }
+        .out-period-label { font-weight:700;font-size:0.92rem;color:#7c3aed; }
+        .out-amount { font-size:1rem;font-weight:700;color:#dc2626; }
+        .out-badge { font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:20px;font-weight:600;white-space:nowrap; }
+        .out-badge.pending { background:#dbeafe;color:#1e40af; }
+        .out-badge.overdue { background:#fee2e2;color:#991b1b; }
+        .out-badge.select { background:#d1fae5;color:#065f46; }
+        .out-select-btn { background:#f97316;color:#fff;border:none;border-radius:8px;padding:0.35rem 0.8rem;font:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap; }
+        .out-select-btn:hover { background:#ea580c; }
     </style>
 </head>
 <body>
@@ -205,6 +221,11 @@
             <div class="form-group">
                 <label>ประจำเดือน:</label>
                 <div id="display-period" style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">-</div>
+            </div>
+            <!-- Outstanding months panel -->
+            <div id="outstanding-panel">
+                <div class="outstanding-title">🔔 ยอดค้างชำระหลายเดือน — เลือกเดือนที่ต้องการชำระ</div>
+                <div id="outstanding-list" class="outstanding-list"></div>
             </div>
             <div class="form-group">
                 <label for="amount">ยอดที่ต้องชำระ (บาท):</label>
@@ -413,8 +434,108 @@
                     residentName: residentName
                 };
             }
+
+            // โหลดยอดค้างเดือนอื่น ๆ (ไม่ block UI)
+            loadOutstandingMonths();
         }
 
+
+        // ============ โหลดยอดค้างชำระหลายเดือน ============
+        async function loadOutstandingMonths() {
+            if (!unitNumber) return;
+            try {
+                // ดึง outstanding ที่ยังค้าง + slip ที่ส่งแล้ว (เพื่อกรองออก)
+                const [outRes, slipRes] = await Promise.all([
+                    callBackend('getOutstanding', { houseNumber: unitNumber }),
+                    callBackend('getSlipSubmissions', { houseNumber: unitNumber })
+                ]);
+                const outRows = (outRes && outRes.data) || [];
+                const slipRows = (slipRes && slipRes.data) || [];
+
+                // สร้าง set ของ period ที่มีสลิป pending/approved (ไม่ต้องส่งอีก)
+                const alreadySent = new Set();
+                slipRows.forEach(function(s) {
+                    if (s.status === 'pending' || s.status === 'approved') alreadySent.add(s.period);
+                });
+
+                // กรองเฉพาะ unpaid/partial ที่ยังค้าง
+                const unpaid = outRows.filter(function(r) {
+                    return (r.status === 'unpaid' || r.status === 'partial') && parseFloat(r.total_amount) > 0;
+                });
+
+                // ไม่มียอดค้างหรือมีแค่เดือนเดียว (= เดือนปัจจุบัน) ไม่แสดง panel
+                if (unpaid.length <= 1) return;
+
+                // เรียง period จากเก่าไปใหม่
+                unpaid.sort(function(a, b) { return a.period < b.period ? -1 : 1; });
+
+                const currentActivePeriod = window.billingInfo ? window.billingInfo.period : toApiPeriod(periodKey);
+                const now = new Date();
+                const todayKey = (now.getFullYear() + 543) * 100 + (now.getMonth() + 1);
+
+                let html = '';
+                unpaid.forEach(function(r) {
+                    const pk = r.period.replace('-', '');  // 2569-03 → 256903
+                    const pkNum = parseInt(pk);
+                    const isSelected = r.period === currentActivePeriod;
+                    const hasPendingSlip = alreadySent.has(r.period);
+                    const isOverdue = pkNum < todayKey;
+                    const total = parseFloat(r.total_amount) || 0;
+
+                    let badge = '';
+                    if (hasPendingSlip) badge = '<span class="out-badge pending">⏳ รอตรวจสอบ</span>';
+                    else if (isOverdue) badge = '<span class="out-badge overdue">⚠️ ค้างชำระ</span>';
+                    else badge = '<span class="out-badge select">ชำระได้</span>';
+
+                    const activeClass = isSelected ? ' active' : '';
+                    const slipClass = hasPendingSlip ? ' has-slip' : '';
+                    const selectBtn = !hasPendingSlip
+                        ? '<button type="button" class="out-select-btn" onclick="switchToPeriod(\'' + r.period + '\', ' + total + ')">เลือกชำระ</button>'
+                        : '<span style="font-size:0.78rem;color:#6b7280;">ส่งสลิปแล้ว</span>';
+
+                    html += '<div class="outstanding-item' + activeClass + slipClass + '" id="out-item-' + pk + '">';
+                    html += '<div style="display:flex;flex-direction:column;gap:0.15rem;">';
+                    html += '<span class="out-period-label">' + formatPeriod(pk) + '</span>';
+                    html += '<span style="font-size:0.8rem;color:#6b7280;">น้ำ ' + formatMoney(r.water_amount) + ' + ไฟ ' + formatMoney(r.electric_amount) + ' + ส่วนกลาง ' + formatMoney(r.common_fee) + '</span>';
+                    html += '</div>';
+                    html += '<div style="display:flex;align-items:center;gap:0.5rem;">';
+                    html += '<span class="out-amount">฿' + formatMoney(total) + '</span>';
+                    html += badge;
+                    html += selectBtn;
+                    html += '</div></div>';
+                });
+
+                document.getElementById('outstanding-list').innerHTML = html;
+                document.getElementById('outstanding-panel').style.display = '';
+
+            } catch(e) { console.warn('loadOutstandingMonths error:', e); }
+        }
+
+        function switchToPeriod(apiPeriod, amount) {
+            // apiPeriod คือ format 2569-03
+            const pk = apiPeriod.replace('-', '');  // → 256903
+            // อัปเดต UI
+            document.getElementById('display-period').innerHTML = formatPeriod(pk)
+                + ' <span style="background:#fef3c7;color:#92400e;font-size:0.78rem;padding:0.15rem 0.4rem;border-radius:6px;font-weight:600;">📌 เลือกแล้ว</span>';
+            document.getElementById('display-amount').textContent = formatMoney(amount) + ' บาท';
+            document.getElementById('paid-amount').value = amount;
+            document.getElementById('paid-amount').disabled = false;
+            const submitBtn = document.querySelector('.submit-btn');
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ''; submitBtn.textContent = 'ยืนยันการส่งสลิป'; }
+            // อัปเดต billingInfo
+            window.billingInfo = Object.assign({}, window.billingInfo || {}, {
+                periodKey: pk,
+                period: apiPeriod,
+                notifiedAmount: amount,
+                noBillData: false
+            });
+            // highlight item ที่เลือก
+            document.querySelectorAll('.outstanding-item').forEach(function(el) { el.classList.remove('active'); });
+            const sel = document.getElementById('out-item-' + pk);
+            if (sel) sel.classList.add('active');
+            // ล้าง QR status เพราะเปลี่ยน period
+            var qrSt = document.getElementById('qr-status'); if (qrSt) qrSt.style.display = 'none';
+        }
 
         // ============ Tesseract OCR — อ่านยอดเงินจากรูปสลิป ============
         var _tessReady = false, _tessLoading = false;
