@@ -1376,7 +1376,9 @@ async function _routeAction(action, data) {
                 status:       'pending',
                 user_id:      s ? s.user_id : null,
                 house_number: data.houseNumber || data.house_number || data.current_house || (s ? s.house_number : ''),
-                details:      detailsCopy
+                details:      detailsCopy,
+                // ถ้า admin ระบุ submitted_at (ย้อนหลัง) ให้ใช้ค่านั้น
+                ...(data.submitted_at ? { submitted_at: data.submitted_at, updated_at: data.submitted_at } : {})
             });
             _logActivity('submit_request', s ? s.user_id : null, 'ส่งคำร้อง' + (data.type || ''), { requestId: reqId, type: data.type, house_number: data.houseNumber || data.house_number });
             return { success: true, data: row, requestId: reqId };

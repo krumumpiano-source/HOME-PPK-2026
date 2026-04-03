@@ -501,7 +501,12 @@
 
             <!-- Residence Requests Table -->
             <div class="section-card">
-                <h3 class="section-title">📋 คำร้องขอเข้าพักอาศัยทั้งหมด</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+                    <h3 class="section-title" style="margin-bottom:0;">📋 คำร้องขอเข้าพักอาศัยทั้งหมด</h3>
+                    <button class="btn btn-primary btn-sm" onclick="openAdminAddRequest()" style="white-space:nowrap;">
+                        ➕ เพิ่มคำร้อง (แอดมิน)
+                    </button>
+                </div>
                 <div class="controls-row">
                     <div class="form-group">
                         <label>กรองสถานะ</label>
@@ -696,6 +701,106 @@
             <div class="modal-footer" id="modalFooter">
                 <button class="btn btn-danger" id="deleteRequestBtn" onclick="confirmDeleteRequest()" style="background:#ef4444;color:#fff;border-color:#ef4444;display:none;">🗑️ ลบคำร้องนี้</button>
                 <button class="btn" onclick="closeModal('detailModal')">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Add Residence Request Modal -->
+    <div class="modal-overlay" id="adminAddModal">
+        <div class="modal" style="max-width:640px;">
+            <div class="modal-header">
+                <h3 class="modal-title">➕ เพิ่มคำร้องขอเข้าพักอาศัย (แอดมิน)</h3>
+                <button class="modal-close" onclick="closeModal('adminAddModal')">×</button>
+            </div>
+            <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.88rem;color:#78350f;">
+                    ⚠️ ใช้สำหรับเพิ่มคำร้องจากใบคำร้องกระดาษัยที่ยื่นก่อนมีระบบ — คำร้องนี้จะไม่มี user account ในระบบ (user_id = null)
+                </div>
+                <form id="adminAddForm">
+                <!-- ข้อมูลผู้ยื่น -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem 1rem;">
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;กระบนแอดมินเพิ่ม;ติดตามผอเพิ่ม;">คำนำหน้า *</label>
+                        <select id="ar_prefix" style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;">
+                            <option value="นาย">นาย</option>
+                            <option value="นาง">นาง</option>
+                            <option value="นางสาว">นางสาว</option>
+                            <option value="ดร.">ดร.</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">ชื่อ-นามสกุล *</label>
+                        <input id="ar_fullname" type="text" placeholder="ชื่อ สกุล" required
+                            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">ตำแหน่ง</label>
+                        <input id="ar_position" type="text" placeholder="เช่น ครูชำนาญการ"
+                            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">กลุ่มสาระ/องค์กร</label>
+                        <input id="ar_subjectGroup" type="text" placeholder="เช่น วิทยาศาสตร์"
+                            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">เบอร์โทรศัพท์</label>
+                        <input id="ar_phone" type="tel" placeholder="0812345678"
+                            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">อีเมล</label>
+                        <input id="ar_email" type="email" placeholder="example@school.ac.th"
+                            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">ลักษณะเข้าพัก *</label>
+                        <select id="ar_stayType" style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;">
+                            <option value="alone">พักคนเดียว</option>
+                            <option value="family">พักกับครอบครัว</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">วันที่ยื่นคำร้อง *</label>
+                        <input id="ar_submitDate" type="date" required
+                            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;">
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <label style="font-size:0.85rem;font-weight:600;color:#374151;">สถานะ</label>
+                        <select id="ar_status" style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;">
+                            <option value="pending">รอดำเนินการ</option>
+                            <option value="waiting">รอคิวเข้าพัก</option>
+                            <option value="approved">อนุมัติแล้ว</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- เหตุผล -->
+                <div style="margin-top:1rem;">
+                    <label style="font-size:0.85rem;font-weight:600;color:#374151;">เหตุผล</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;" id="ar_reasons_box">
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="new_position">ย้ายมาปฏิบัติหน้าที่</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="far_from_home">อยู่ห่างไกลจากภูมิลำเนา</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="family_responsibility">มีภาระครอบครัว</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="no_nearby_residence">ไม่มีที่พักใกล้เคียง</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="work_convenience">สะดวกในการทำงาน</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="health">ปัญหาสุขภาพ</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.88rem;"><input type="checkbox" value="other">อื่นๆ</label>
+                    </div>
+                    <input id="ar_otherReason" type="text" placeholder="ระบุเหตุผลอื่นๆ..."
+                        style="width:100%;padding:0.5rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.5rem;box-sizing:border-box;">
+                </div>
+                <!-- หมายเหตุเพิ่มเติม -->
+                <div style="margin-top:0.75rem;">
+                    <label style="font-size:0.85rem;font-weight:600;color:#374151;">ข้อมูลเพิ่มเติม</label>
+                    <textarea id="ar_additionalInfo" rows="2" placeholder="ชื่อผู้อยู่ร่วม, หมายเหตุ..."
+                        style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;margin-top:0.25rem;box-sizing:border-box;resize:vertical;"></textarea>
+                </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('adminAddModal')">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="submitAdminResidenceRequest()">💾 บันทึกคำร้อง</button>
             </div>
         </div>
     </div>
@@ -1785,6 +1890,74 @@
             window._currentDetailType = type;
             document.getElementById('deleteRequestBtn').style.display = 'inline-flex';
             openModal('detailModal');
+        }
+
+        function openAdminAddRequest() {
+            // reset form
+            document.getElementById('ar_prefix').value = 'นาย';
+            document.getElementById('ar_fullname').value = '';
+            document.getElementById('ar_position').value = '';
+            document.getElementById('ar_subjectGroup').value = '';
+            document.getElementById('ar_phone').value = '';
+            document.getElementById('ar_email').value = '';
+            document.getElementById('ar_stayType').value = 'alone';
+            document.getElementById('ar_submitDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('ar_status').value = 'pending';
+            document.getElementById('ar_otherReason').value = '';
+            document.getElementById('ar_additionalInfo').value = '';
+            document.querySelectorAll('#ar_reasons_box input[type=checkbox]').forEach(function(cb) { cb.checked = false; });
+            openModal('adminAddModal');
+        }
+
+        async function submitAdminResidenceRequest() {
+            var fullname = document.getElementById('ar_fullname').value.trim();
+            var submitDate = document.getElementById('ar_submitDate').value;
+            if (!fullname) { ppkAlert('กรุณากรอกชื่อ-นามสกุล', 'error'); return; }
+            if (!submitDate) { ppkAlert('กรุณาระบุวันที่ยื่นคำร้อง', 'error'); return; }
+
+            var reasons = [];
+            document.querySelectorAll('#ar_reasons_box input[type=checkbox]:checked').forEach(function(cb) { reasons.push(cb.value); });
+
+            var payload = {
+                type: 'residence',
+                prefix: document.getElementById('ar_prefix').value,
+                fullname: fullname,
+                firstname: fullname.split(' ')[0] || fullname,
+                lastname: fullname.split(' ').slice(1).join(' ') || '',
+                position: document.getElementById('ar_position').value.trim(),
+                subjectGroup: document.getElementById('ar_subjectGroup').value.trim(),
+                subject_group: document.getElementById('ar_subjectGroup').value.trim(),
+                phone: document.getElementById('ar_phone').value.trim(),
+                email: document.getElementById('ar_email').value.trim(),
+                stayType: document.getElementById('ar_stayType').value,
+                stay_type: document.getElementById('ar_stayType').value,
+                reasons: reasons,
+                otherReason: document.getElementById('ar_otherReason').value.trim(),
+                other_reason: document.getElementById('ar_otherReason').value.trim(),
+                additionalInfo: document.getElementById('ar_additionalInfo').value.trim(),
+                additional_info: document.getElementById('ar_additionalInfo').value.trim(),
+                submitDate: submitDate,
+                submitted_at: submitDate + 'T00:00:00.000Z',
+                _adminAdded: true
+            };
+
+            try {
+                var result = await callBackend('submitRequest', payload);
+                if (!result || !result.success) {
+                    ppkAlert('บันทึกไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'), 'error');
+                    return;
+                }
+                // ถ้าเลือก status ไม่ใช่ pending → อัปเดต status ทันที
+                var desiredStatus = document.getElementById('ar_status').value;
+                if (desiredStatus !== 'pending' && result.requestId) {
+                    await callBackend('reviewRequest', { requestId: result.requestId, type: 'residence', status: desiredStatus, note: 'เพิ่มโดยแอดมิน' });
+                }
+                closeModal('adminAddModal');
+                _clearRequestsCache();
+                await loadAllRequests();
+                renderAll();
+                ppkAlert('✅ บันทึกคำร้องเรียบร้อยแล้ว (ID: ' + result.requestId + ')', 'success');
+            } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
         }
 
         // ========== Return Request — 2-step approval ==========
