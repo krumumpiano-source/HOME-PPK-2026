@@ -440,23 +440,6 @@
           const slipResult = await callBackendGet('getSlipSubmissions', { period });
           const slipData = (slipResult && slipResult.success) ? (slipResult.data || []) : [];
 
-          // ดึงยอดจาก outstanding + notifications เพื่อ cross-check กับ getBillSummaryAll
-          // (ยอดที่แจ้งผู้พักไปจริงอาจต่างจากที่คำนวณใหม่)
-          var outResult = null, notifResult = null;
-          try {
-              [outResult, notifResult] = await Promise.all([
-                  callBackendGet('getOutstanding', {}),
-                  callBackendGet('getNotificationHistory', { period: period })
-              ]);
-          } catch(e) {}
-          var outMap = {}, notifTotalMap = {};
-          ((outResult && outResult.success ? outResult.data : []) || []).forEach(function(o) {
-              if (o.house_number && o.period === period && parseFloat(o.total_amount) > 0) outMap[o.house_number] = parseFloat(o.total_amount);
-          });
-          ((notifResult && notifResult.success ? notifResult.data : []) || []).forEach(function(n) {
-              if (n.house_number && parseFloat(n.total_amount) > 0) notifTotalMap[n.house_number] = parseFloat(n.total_amount);
-          });
-
           // รวมข้อมูล
           billData.forEach((bill, idx) => {
             const unitNumber = String(bill.house_number || '');
@@ -471,7 +454,7 @@
               waterAmount: parseFloat(bill.water_amount) || 0,
               electricAmount: parseFloat(bill.electric_amount) || 0,
               commonFee: parseFloat(bill.common_fee) || 0,
-              notifiedAmount: notifTotalMap[unitNumber] || outMap[unitNumber] || parseFloat(bill.total_amount || 0) || ((parseFloat(bill.water_amount)||0) + (parseFloat(bill.electric_amount)||0) + (parseFloat(bill.common_fee)||0)),
+              notifiedAmount: parseFloat(bill.total_amount || 0) || ((parseFloat(bill.water_amount)||0) + (parseFloat(bill.electric_amount)||0) + (parseFloat(bill.common_fee)||0)),
               paidAmount: slip ? parseFloat(slip.amount) || 0 : null,
               slipImages: [],
               slipDate: slip ? (slip.submitted_at || null) : null,
@@ -1082,23 +1065,13 @@
         try {
           const { month, year } = getSelectedPeriod();
           const _period = year + '-' + month;
-          // Query outstanding เพื่อส่ง outstandingId → backend จะ auto-mark paid
-          var _outId = null;
-          try {
-            var _outResult = await callBackend('getOutstanding', { houseNumber: unit.unitNumber, status: 'unpaid' });
-            if (_outResult && _outResult.data) {
-              var _outMatch = (_outResult.data || []).filter(function(o) { return o.period === _period; });
-              if (_outMatch.length > 0) _outId = _outMatch[0].id;
-            }
-          } catch(e) {}
           const result = await callBackend('reviewSlip', {
             id: unit.slipId,
             status: 'approved',
             note: '',
             houseNumber: unit.unitNumber,
             period: _period,
-            amount: unit.paidAmount,
-            outstandingId: _outId
+            amount: unit.paidAmount
           });
           if (result && result.success) {
             // ลบ cache bill summary เพื่อโหลดสถานะใหม่
@@ -1513,15 +1486,6 @@
 
       // ส่ง Backend ก่อน
       try {
-          // Query outstanding เพื่อส่ง outstandingId
-          var _mpOutId = null;
-          try {
-            var _mpOutResult = await callBackend('getOutstanding', { houseNumber: unit.unitNumber, status: 'unpaid' });
-            if (_mpOutResult && _mpOutResult.data) {
-              var _mpOutMatch = (_mpOutResult.data || []).filter(function(o) { return o.period === period; });
-              if (_mpOutMatch.length > 0) _mpOutId = _mpOutMatch[0].id;
-            }
-          } catch(e) {}
           // สร้าง slip record (manual)
           const submitResult = await callBackend('submitSlip', {
             houseNumber: unit.unitNumber,
@@ -1539,8 +1503,7 @@
               note:        payNote || 'บันทึกด้วยตนเอง',
               houseNumber: unit.unitNumber,
               period:      period,
-              amount:      paidAmount,
-              outstandingId: _mpOutId
+              amount:      paidAmount
             });
             // ลบ cache bill summary
             localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: period }));
@@ -1632,10 +1595,10 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260401E"></script>
-    <script src="ppk-app.js?v=20260401E"></script>
-    <script src="ppk-utils.js?v=20260401E"></script>
-    <script src="ppk-nav.js?v=20260401E"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>

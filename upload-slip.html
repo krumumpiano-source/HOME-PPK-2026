@@ -206,11 +206,6 @@
                 <label>ประจำเดือน:</label>
                 <div id="display-period" style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">-</div>
             </div>
-            <!-- รายละเอียดยอดค้าง (แสดงเมื่อมีข้อมูลแยกรายการ) -->
-            <div id="os-breakdown" style="display:none; background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:12px; padding:0.8rem 1rem; margin-bottom:0.8rem;">
-                <div style="font-weight:700;font-size:0.9rem;color:#92400E;margin-bottom:0.5rem;">📋 รายละเอียดยอดค้างชำระ</div>
-                <div id="os-breakdown-rows" style="font-size:0.88rem;color:#78350F;"></div>
-            </div>
             <div class="form-group">
                 <label for="amount">ยอดที่ต้องชำระ (บาท):</label>
                 <div id="display-amount" style="font-size: 1.2rem; font-weight: bold; color: #e11d48; margin-bottom: 1rem;">⏳ กำลังโหลด...</div>
@@ -268,14 +263,6 @@
             return yearBE + month;
         }
 
-        function getPreviousPeriodKey(){
-            const now = new Date();
-            const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const yearBE = prev.getFullYear() + 543;
-            const month = String(prev.getMonth() + 1).padStart(2, '0');
-            return yearBE + month;
-        }
-
         // แปลง key 256902 → 2569-02
         function toApiPeriod(key){
             if (!key || key.length < 6) return key;
@@ -317,49 +304,6 @@
 
         // ============ โหลดยอดที่ต้องชำระ ============
         async function loadBillingInfo(){
-            // ── Departing user: โหลดยอดค้างจาก outstanding ตาม userId ──
-            var _cu = {}; try { _cu = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
-            if (_cu.departing) {
-                try {
-                    var outResult = await callBackend('getOutstanding', { userId: _cu.userId });
-                    var outItems = (outResult && outResult.success) ? (outResult.data || []) : [];
-                    var unpaid = outItems.filter(function(o) { return o.status !== 'paid'; });
-                    if (unpaid.length === 0) {
-                        document.getElementById('display-unit').textContent = 'ย้ายออกแล้ว';
-                        document.getElementById('display-period').textContent = '-';
-                        document.getElementById('display-amount').innerHTML = '<span style="color:#059669;font-weight:600;">✅ ไม่มียอดค้างชำระ</span>';
-                        document.getElementById('paid-amount').value = '';
-                        document.getElementById('paid-amount').disabled = true;
-                        document.querySelector('.submit-btn').disabled = true;
-                        document.querySelector('.submit-btn').textContent = '✅ ชำระครบแล้ว';
-                        window.billingInfo = { unitNumber: '', period: '', notifiedAmount: 0, noBillData: true };
-                        return;
-                    }
-                    // ใช้ outstanding แรกที่ยังไม่จ่าย
-                    var firstOut = unpaid[0];
-                    var totalOut = unpaid.reduce(function(s, o) { return s + (parseFloat(o.total_amount || o.amount) || 0); }, 0);
-                    unitNumber = firstOut.house_number || '';
-                    var outPeriod = firstOut.period || (firstOut.year + '-' + String(firstOut.month).padStart(2, '0'));
-                    document.getElementById('display-unit').textContent = unitNumber + ' (ย้ายออกแล้ว)';
-                    document.getElementById('display-period').textContent = 'ยอดค้างทั้งหมด';
-                    document.getElementById('display-amount').textContent = formatMoney(totalOut) + ' บาท';
-                    document.getElementById('paid-amount').value = totalOut;
-                    window.billingInfo = {
-                        unitNumber: unitNumber,
-                        periodKey: periodKey,
-                        period: outPeriod,
-                        notifiedAmount: totalOut,
-                        residentName: _cu.firstname || '',
-                        isDeparting: true,
-                        userId: _cu.userId
-                    };
-                } catch(e) {
-                    console.error('loadBillingInfo departing error:', e);
-                    document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;">❌ โหลดยอดค้างไม่สำเร็จ</span>';
-                }
-                return;
-            }
-
             document.getElementById('display-unit').textContent = unitNumber || '-';
             document.getElementById('display-period').textContent = formatPeriod(periodKey);
 
@@ -372,29 +316,6 @@
                 residentName = _pendingSlip.residentName || '';
                 document.getElementById('display-amount').textContent = formatMoney(totalAmount) + ' บาท';
                 document.getElementById('paid-amount').value = totalAmount;
-
-                // แสดงรายละเอียดแยกรายการ (ค่าน้ำ/ไฟ/ส่วนกลาง) ถ้ามี
-                if (_pendingSlip.isOutstanding && (_pendingSlip.waterAmount || _pendingSlip.electricAmount || _pendingSlip.commonFee)) {
-                    var bkEl = document.getElementById('os-breakdown');
-                    var rowsEl = document.getElementById('os-breakdown-rows');
-                    if (bkEl && rowsEl) {
-                        var bkHtml = '';
-                        if (_pendingSlip.periodLabel) {
-                            bkHtml += '<div style="margin-bottom:0.4rem;font-weight:600;color:#B45309;">📅 งวด: ' + _pendingSlip.periodLabel + '</div>';
-                        }
-                        var w = parseFloat(_pendingSlip.waterAmount) || 0;
-                        var e = parseFloat(_pendingSlip.electricAmount) || 0;
-                        var c = parseFloat(_pendingSlip.commonFee) || 0;
-                        if (w > 0) bkHtml += '<div style="display:flex;justify-content:space-between;padding:0.2rem 0;">💧 ค่าน้ำประปา<span>' + formatMoney(w) + ' ฿</span></div>';
-                        if (e > 0) bkHtml += '<div style="display:flex;justify-content:space-between;padding:0.2rem 0;">⚡ ค่าไฟฟ้า<span>' + formatMoney(e) + ' ฿</span></div>';
-                        if (c > 0) bkHtml += '<div style="display:flex;justify-content:space-between;padding:0.2rem 0;">🏢 ค่าส่วนกลาง<span>' + formatMoney(c) + ' ฿</span></div>';
-                        bkHtml += '<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-top:1px solid #F59E0B;font-weight:700;color:#B45309;">รวมทั้งสิ้น<span>' + formatMoney(totalAmount) + ' ฿</span></div>';
-                        bkHtml += '<div style="margin-top:0.4rem;font-size:0.82rem;color:#92400E;line-height:1.5;">📌 กรุณาชำระตามยอดข้างต้น แล้วแนบสลิปยืนยัน</div>';
-                        rowsEl.innerHTML = bkHtml;
-                        bkEl.style.display = '';
-                    }
-                }
-
                 window.billingInfo = {
                     unitNumber: unitNumber,
                     periodKey: periodKey,
@@ -406,7 +327,6 @@
             }
 
             // ลองจาก Backend ก่อน
-            var activePeriodKey = periodKey;
             try {
                     const period = toApiPeriod(periodKey);
                     const result = await cachedCall('getBillSummaryAll', { period }, 300000);
@@ -419,25 +339,6 @@
                     }
                 } catch (e) { console.error('getBillSummaryAll error:', e); }
 
-            // ถ้าเดือนปัจจุบันไม่มีบิล → ลองเดือนก่อน (กรณีเข้าหน้าต้นเดือนยังไม่ออกบิลใหม่)
-            if (totalAmount === 0 && periodKey === getCurrentPeriodKey()) {
-                var prevKey = getPreviousPeriodKey();
-                try {
-                    var prevPeriod = toApiPeriod(prevKey);
-                    var prevResult = await cachedCall('getBillSummaryAll', { period: prevPeriod }, 300000);
-                    if (prevResult && prevResult.success && prevResult.data) {
-                        var prevRow = prevResult.data.find(function(r) { return String(r.house_number) === String(unitNumber); });
-                        if (prevRow) {
-                            totalAmount = (parseFloat(prevRow.water_amount) || 0) + (parseFloat(prevRow.electric_amount) || 0) + (parseFloat(prevRow.common_fee) || 0);
-                            residentName = prevRow.resident_name || '';
-                            activePeriodKey = prevKey;
-                            // อัพเดตหัวข้อแสดงงวด
-                            document.getElementById('display-period').textContent = formatPeriod(prevKey) + ' (เดือนที่แล้ว)';
-                        }
-                    }
-                } catch(e) { console.error('getBillSummaryAll prev error:', e); }
-            }
-
             // ถ้า Backend ไม่มีข้อมูล → บล็อกการส่งสลิป
             if (totalAmount === 0) {
                 document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;font-weight:600;">⚠️ ยังไม่มีข้อมูลบิลเดือนนี้</span><br><span style="font-size:0.85rem;color:#666;">กรุณารอแจ้งยอดก่อนจึงจะส่งสลิปได้</span>';
@@ -448,8 +349,8 @@
                 document.querySelector('.submit-btn').textContent = '⛔ ยังไม่เปิดรับชำระเดือนนี้';
                 window.billingInfo = {
                     unitNumber: unitNumber,
-                    periodKey: activePeriodKey,
-                    period: toApiPeriod(activePeriodKey),
+                    periodKey: periodKey,
+                    period: toApiPeriod(periodKey),
                     notifiedAmount: 0,
                     residentName: residentName,
                     noBillData: true
@@ -462,8 +363,8 @@
 
             window.billingInfo = {
                 unitNumber: unitNumber,
-                periodKey: activePeriodKey,
-                period: toApiPeriod(activePeriodKey),
+                periodKey: periodKey,
+                period: toApiPeriod(periodKey),
                 notifiedAmount: totalAmount,
                 residentName: residentName
             };
@@ -816,9 +717,7 @@
                         qrRef:       _qrData.ref || null,
                         qrRaw:       _qrData.raw || null,
                         submittedByName:  proxyData.submittedByName || null,
-                        submittedByHouse: proxyData.submittedByHouse || null,
-                        isDeparting: (window.billingInfo && window.billingInfo.isDeparting) || false,
-                        userId: (window.billingInfo && window.billingInfo.userId) || null
+                        submittedByHouse: proxyData.submittedByHouse || null
                     }, {}));
                     const _wasEdit = !!_editSlipId;
                     if (submitResult && submitResult.success) {
@@ -933,7 +832,6 @@
 
         async function initProxyPanel(user) {
             if (user.role === 'admin' || user.role === 'head') return; // admin/head ใช้ override panel ของตัวเอง
-            if (user.departing) return; // departing user ไม่ต้องใช้ proxy panel
             myHouseNumber = unitNumber;
             myUserName = ((user.firstname || '') + ' ' + (user.lastname || '')).trim();
 
@@ -1047,10 +945,10 @@
     <script src="libs/jsqr.min.js?v=20260323"></script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260402B"></script>
-    <script src="ppk-app.js?v=20260402B"></script>
-    <script src="ppk-utils.js?v=20260402B"></script>
-    <script src="ppk-nav.js?v=20260402B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>

@@ -116,70 +116,25 @@
         }
         .hero-cancel-btn:hover { background: rgba(220,38,38,0.15); }
 
-        /* ── Outstanding per-month detail ── */
-        .os-detail-section { margin-bottom: 1rem; }
-        .os-detail-header {
+        /* ── Outstanding banner ── */
+        .outstanding-banner {
             background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-            border: 1.5px solid #F59E0B; border-radius: 14px 14px 0 0;
-            padding: 0.9rem 1.1rem; display: flex; align-items: center; gap: 0.7rem;
+            border: 1.5px solid #F59E0B; border-radius: 14px;
+            padding: 1rem 1.2rem; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.8rem;
         }
-        .os-detail-header .os-icon { font-size: 1.5rem; }
-        .os-detail-header .os-title { flex: 1; font-weight: 700; font-size: 0.95rem; color: #92400E; }
-        .os-detail-header .os-total { font-size: 1.1rem; font-weight: 700; color: #B45309; }
-        .os-detail-list {
-            border: 1.5px solid #F59E0B; border-top: none; border-radius: 0 0 14px 14px;
-            overflow: hidden;
-        }
-        .os-item {
-            padding: 0.8rem 1rem; border-bottom: 1px solid #FDE68A;
-            display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-            background: #FFFBEB; transition: background .15s;
-        }
-        .os-item:last-child { border-bottom: none; }
-        .os-item:hover { background: #FEF3C7; }
-        .os-item-period {
-            font-weight: 700; font-size: 0.92rem; color: #78350F; min-width: 130px;
-        }
-        .os-item-details {
-            flex: 1; font-size: 0.82rem; color: #92400E; min-width: 180px;
-            display: flex; flex-wrap: wrap; gap: 0.3rem 0.6rem;
-        }
-        .os-item-details span { white-space: nowrap; }
-        .os-item-amount {
-            font-weight: 700; font-size: 1rem; color: #B45309; min-width: 80px; text-align: right;
-        }
-        .os-item-btn {
-            background: #B45309; color: #fff; border: none; border-radius: 8px;
-            padding: 0.4rem 0.75rem; font-family: 'Kanit', sans-serif;
-            font-size: 0.82rem; font-weight: 600; cursor: pointer;
+        .outstanding-banner .ob-icon { font-size: 1.8rem; }
+        .outstanding-banner .ob-info { flex: 1; }
+        .outstanding-banner .ob-label { font-size: 0.82rem; color: #92400E; }
+        .outstanding-banner .ob-amount { font-size: 1.3rem; font-weight: 700; color: #B45309; }
+        .outstanding-banner .ob-btn {
+            background: #B45309; color: #fff; border: none; border-radius: 10px;
+            padding: 0.55rem 1rem; font-family: 'Kanit', sans-serif;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
             transition: all 0.15s; white-space: nowrap;
         }
-        .os-item-btn:hover { background: #92400E; }
-        .os-item-btn.disabled { background: #D1D5DB; color: #9CA3AF; cursor: not-allowed; }
-        .os-item-status {
-            font-size: 0.78rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 600;
-        }
-        .os-item-status.reviewing { background: #DBEAFE; color: #1E40AF; }
-        .os-item-status.success { background: #D1FAE5; color: #065F46; }
-        .os-item-status.rejected { background: #FEE2E2; color: #991B1B; }
-        .os-note {
-            width: 100%; font-size: 0.82rem; color: #78350F; background: #FEF3C7;
-            border-radius: 8px; padding: 0.5rem 0.75rem; margin-top: 0.3rem; line-height: 1.5;
-        }
+        .outstanding-banner .ob-btn:hover { background: #92400E; }
 
-        /* ── Departing user mode ── */
-        .departing-banner {
-            background: linear-gradient(135deg, #FEE2E2, #FECACA);
-            border: 2px solid #EF4444; border-radius: 16px;
-            padding: 1.5rem; margin-bottom: 1rem; text-align: center;
-        }
-        .departing-banner .dep-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
-        .departing-banner .dep-title { font-size: 1.15rem; font-weight: 700; color: #991B1B; margin-bottom: 0.3rem; }
-        .departing-banner .dep-desc { font-size: 0.9rem; color: #B91C1C; margin-bottom: 1rem; line-height: 1.5; }
-        .departing-outstanding-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
-        .departing-outstanding-table th { background: #FECACA; padding: 0.5rem; font-size: 0.85rem; color: #7F1D1D; text-align: left; }
-        .departing-outstanding-table td { padding: 0.5rem; font-size: 0.9rem; border-bottom: 1px solid #FECACA; }
-        .departing-outstanding-table .total-row td { font-weight: 700; background: #FEE2E2; }
         /* ── Proxy Assignment Banner ── */
         .proxy-assign-section { margin-bottom: 0; }
         .proxy-assign-section .pa-header {
@@ -293,9 +248,8 @@
             .hero-payment { padding: 1.2rem; border-radius: 16px; }
             .hero-payment .hero-amount { font-size: 1.7rem; }
             .hero-cta { font-size: 1rem; padding: 0.8rem; }
-            .os-item { flex-direction: column; align-items: flex-start; }
-            .os-item-amount { text-align: left; }
-            .os-item-btn { width: 100%; text-align: center; }
+            .outstanding-banner { flex-wrap: wrap; }
+            .outstanding-banner .ob-btn { width: 100%; text-align: center; margin-top: 0.3rem; }
             .quick-actions { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
             .quick-action .qa-icon { width: 40px; height: 40px; font-size: 1.2rem; }
             .quick-action .qa-label { font-size: 0.7rem; }
@@ -375,8 +329,17 @@
                 </div>
             </div>
 
-            <!-- ★ Outstanding per-month (rendered dynamically) -->
-            <div id="outstandingSection" style="display:none;"></div>
+            <!-- ★ Outstanding Banner (if any) -->
+            <div id="outstandingSection" style="display:none;">
+                <div class="outstanding-banner" id="outstandingBanner">
+                    <div class="ob-icon">⚠️</div>
+                    <div class="ob-info">
+                        <div class="ob-label">ยอดคงค้างสะสม</div>
+                        <div class="ob-amount" id="outstandingAmount">—</div>
+                    </div>
+                    <button class="ob-btn" id="outstandingBtn" onclick="outstandingBtnClick()">ส่งสลิป</button>
+                </div>
+            </div>
 
             <!-- ★ Proxy Assignment Section -->
             <div id="proxyAssignSection" class="proxy-assign-section" style="display:none;"></div>
@@ -509,115 +472,14 @@
             }).join('');
         }
 
-        async function renderUserDashboard(data) {
-            var houseNumber = data.houseNumber || '';
-            var user = {};
-            try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
-            var firstName = user.firstname || '';
-
-            // ── Departing user mode: ย้ายออกแล้วแต่ยังค้างชำระ ──
-            if (user.departing || data.departing) {
-                document.getElementById('paymentSection').style.display = 'none';
-                document.getElementById('hubMenuCard').style.display = 'none';
-                document.getElementById('quickActionsSection').style.display = 'none';
-                var floatingEl = document.getElementById('floatingUserBanner');
-                if (floatingEl) floatingEl.style.display = 'none';
-
-                var depEl = document.getElementById('departingUserBanner');
-                if (!depEl) {
-                    depEl = document.createElement('div');
-                    depEl.id = 'departingUserBanner';
-                    var paySection = document.getElementById('paymentSection');
-                    paySection.parentNode.insertBefore(depEl, paySection);
-                }
-
-                var outRows = data.outstandingItems || [];
-                var totalOut = 0;
-                var tableRows = outRows.map(function(o) {
-                    var amt = parseFloat(o.total_amount || o.amount) || 0;
-                    totalOut += amt;
-                    var periodLabel = o.period || (o.year + '-' + String(o.month).padStart(2,'0'));
-                    return '<tr><td>' + (o.description || 'ค่าสาธารณูปโภค') + '</td><td>' + periodLabel + '</td><td style="text-align:right;">' + amt.toLocaleString('th-TH') + ' ฿</td></tr>';
-                }).join('');
-
-                if (outRows.length === 0) {
-                    tableRows = '<tr><td colspan="3" style="text-align:center;color:#059669;padding:1rem;">✅ ไม่มียอดค้างชำระ</td></tr>';
-                }
-
-                depEl.innerHTML =
-                    '<div class="departing-banner">' +
-                        '<div class="dep-icon">⚠️</div>' +
-                        '<div class="dep-title">คุณอยู่ระหว่างรอชำระยอดค้างก่อนออกจากระบบ</div>' +
-                        '<div class="dep-desc">บ้านเดิมของคุณถูกส่งคืนเรียบร้อยแล้ว<br>กรุณาชำระยอดค้างทั้งหมดเพื่อปิดบัญชี</div>' +
-                        '<table class="departing-outstanding-table">' +
-                            '<thead><tr><th>รายการ</th><th>เดือน</th><th style="text-align:right;">จำนวน</th></tr></thead>' +
-                            '<tbody>' + tableRows +
-                                (outRows.length > 0 ? '<tr class="total-row"><td colspan="2">รวมยอดค้างทั้งหมด</td><td style="text-align:right;">' + totalOut.toLocaleString('th-TH') + ' ฿</td></tr>' : '') +
-                            '</tbody>' +
-                        '</table>' +
-                        (outRows.length > 0 ? '<a href="upload-slip.html" onclick="navigate(\'?page=upload-slip\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;display:inline-block;width:100%;text-align:center;padding:0.8rem;">📤 ส่งสลิปชำระเงิน</a>' : '<div style="color:#059669;font-weight:600;font-size:1.1rem;margin-top:0.5rem;">✅ ชำระครบแล้ว — รอระบบปิดบัญชีอัตโนมัติ</div>') +
-                    '</div>';
-                depEl.style.display = '';
-
-                // แสดง quick actions แค่ ส่งสลิป + ประวัติชำระ + ตั้งค่า
-                if (outRows.length > 0) {
-                    document.getElementById('quickActionsSection').style.display = '';
-                    var qaEl = document.getElementById('quickActions');
-                    qaEl.innerHTML = [
-                        { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
-                        { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
-                        { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
-                    ].map(function(item) {
-                        return '<button class="quick-action" onclick="navigate(\'?page=' + item.page + '\')">'
-                            + '<div class="qa-icon" style="background:' + item.bg + '">' + item.icon + '</div>'
-                            + '<span class="qa-label">' + item.label + '</span></button>';
-                    }).join('');
-                }
-                return;
-            }
-
-            // ผู้ใช้ที่ยังไม่มีบ้านพัก — แสดง banner รอจัดสรร
-            if (!houseNumber) {
-                document.getElementById('paymentSection').style.display = 'none';
-                document.getElementById('hubMenuCard').style.display = 'none';
-                document.getElementById('quickActionsSection').style.display = 'none';
-                var user = {};
-                try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
-                var firstName = user.firstname || '';
-                var floatingEl = document.getElementById('floatingUserBanner');
-                if (!floatingEl) {
-                    floatingEl = document.createElement('div');
-                    floatingEl.id = 'floatingUserBanner';
-                    var paySection = document.getElementById('paymentSection');
-                    paySection.parentNode.insertBefore(floatingEl, paySection);
-                }
-                floatingEl.innerHTML =
-                    '<div class="ppk-card" style="text-align:center; padding:2rem 1.5rem; margin-bottom:1rem;">' +
-                        '<div style="font-size:3rem; margin-bottom:0.75rem;">🏠</div>' +
-                        '<div style="font-size:1.2rem; font-weight:700; color:var(--c-text); margin-bottom:0.5rem;">สวัสดี' + (firstName ? ', ' + firstName : '') + '</div>' +
-                        '<div style="font-size:1rem; color:var(--c-text-secondary); margin-bottom:1rem;">ขณะนี้คุณยังไม่ได้รับมอบหมายบ้านพัก<br>กรุณารอการจัดสรรจากคณะทำงาน</div>' +
-                        '<div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">' +
-                            '<a href="request-form.html" onclick="navigate(\'?page=request-form\');return false;" class="ppk-btn ppk-btn-primary" style="text-decoration:none;">📝 ยื่นคำร้องขอเข้าพัก</a>' +
-                            '<a href="regulations.html" onclick="navigate(\'?page=regulations\');return false;" class="ppk-btn ppk-btn-outline" style="text-decoration:none;">📖 ดูระเบียบ</a>' +
-                        '</div>' +
-                    '</div>';
-                floatingEl.style.display = '';
-                return;
-            }
-
-            // ผู้ใช้ปกติที่มีบ้านพักแล้ว
-            var floatingEl = document.getElementById('floatingUserBanner');
-            if (floatingEl) floatingEl.style.display = 'none';
-            var depEl = document.getElementById('departingUserBanner');
-            if (depEl) depEl.style.display = 'none';
-
+        function renderUserDashboard(data) {
             document.getElementById('paymentSection').style.display = '';
             document.getElementById('hubMenuCard').style.display = '';
-            document.getElementById('quickActionsSection').style.display = '';
 
             var amount = data.currentAmount || 0;
             var outstanding = data.totalOutstanding || 0;
             var period = data.period || '';
+            var houseNumber = data.houseNumber || '';
             var slipStatus = data.slipStatus || 'none';
             var reviewNote = data.reviewNote || '';
             var slipId = data.slipId || null;
@@ -751,69 +613,10 @@
                 ctaEl.className = 'hero-cta';
             }
 
-            // Outstanding — แสดงรายเดือนพร้อมรายละเอียด + ปุ่มส่งสลิปแยกงวด
-            var outItems = data.outstandingItems || [];
-            if (outItems.length > 0) {
-                var sec = document.getElementById('outstandingSection');
-                sec.style.display = '';
-                // ดึง slip status แต่ละงวด
-                var slipMap = {};
-                try {
-                    var _slipResult = await cachedCall('getSlipSubmissions', { houseNumber: houseNumber, status: '' }, 60000);
-                    if (_slipResult && _slipResult.success) {
-                        (_slipResult.data || []).forEach(function(s) {
-                            if (s.period && !slipMap[s.period]) slipMap[s.period] = s;
-                        });
-                    }
-                } catch(e) {}
-                var totalOs = outItems.reduce(function(s, o) { return s + (parseFloat(o.total_amount) || 0); }, 0);
-                var html = '<div class="os-detail-section">'
-                    + '<div class="os-detail-header">'
-                    + '<div class="os-icon">⚠️</div>'
-                    + '<div class="os-title">ยอดค้างชำระ (' + outItems.length + ' งวด)</div>'
-                    + '<div class="os-total">' + totalOs.toLocaleString('th-TH') + ' ฿</div>'
-                    + '</div>'
-                    + '<div class="os-detail-list">'
-                    + '<div class="os-note">📌 กรุณาชำระทีละงวด โดยส่งสลิปแต่ละเดือนแยกกัน เพื่อความถูกต้องในการตรวจสอบ</div>';
-                // Sort by period ascending (oldest first)
-                var sortedItems = outItems.slice().sort(function(a, b) { return (a.period || '').localeCompare(b.period || ''); });
-                sortedItems.forEach(function(o) {
-                    var p = o.period || '';
-                    var pts = p.split('-');
-                    var mIdx = pts[1] ? parseInt(pts[1]) - 1 : 0;
-                    var mLabel = THAI_MONTHS[mIdx] + ' ' + (pts[0] || '');
-                    var amt = parseFloat(o.total_amount) || 0;
-                    var water = parseFloat(o.water_amount) || 0;
-                    var elec = parseFloat(o.electric_amount) || 0;
-                    var common = parseFloat(o.common_fee) || 0;
-                    var slip = slipMap[p];
-                    var statusHtml = '', btnHtml = '';
-                    if (slip && slip.status === 'approved') {
-                        statusHtml = '<span class="os-item-status success">✅ ชำระแล้ว</span>';
-                        btnHtml = '<button class="os-item-btn disabled" disabled>✅ ชำระแล้ว</button>';
-                    } else if (slip && slip.status === 'pending') {
-                        statusHtml = '<span class="os-item-status reviewing">🔍 รอตรวจสอบ</span>';
-                        btnHtml = '<button class="os-item-btn disabled" disabled>🔍 รอตรวจ</button>';
-                    } else if (slip && slip.status === 'rejected') {
-                        statusHtml = '<span class="os-item-status rejected">❌ ไม่ผ่าน</span>';
-                        btnHtml = '<button class="os-item-btn" onclick="goToUploadSlipDetail(\'' + p + '\',' + amt + ',' + water + ',' + elec + ',' + common + ',\'' + _escHtml(mLabel) + '\')">📤 ส่งใหม่</button>';
-                    } else {
-                        btnHtml = '<button class="os-item-btn" onclick="goToUploadSlipDetail(\'' + p + '\',' + amt + ',' + water + ',' + elec + ',' + common + ',\'' + _escHtml(mLabel) + '\')">📤 ส่งสลิป</button>';
-                    }
-                    html += '<div class="os-item">'
-                        + '<div class="os-item-period">📅 ' + mLabel + '</div>'
-                        + '<div class="os-item-details">'
-                        + (water > 0 ? '<span>💧 น้ำ ' + water.toLocaleString('th-TH') + '</span>' : '')
-                        + (elec > 0 ? '<span>⚡ ไฟ ' + elec.toLocaleString('th-TH') + '</span>' : '')
-                        + (common > 0 ? '<span>🏢 ส่วนกลาง ' + common.toLocaleString('th-TH') + '</span>' : '')
-                        + statusHtml
-                        + '</div>'
-                        + '<div class="os-item-amount">' + amt.toLocaleString('th-TH') + ' ฿</div>'
-                        + btnHtml
-                        + '</div>';
-                });
-                html += '</div></div>';
-                sec.innerHTML = html;
+            // Outstanding — ซ่อนถ้าชำระแล้ว
+            if (outstanding > 0 && slipStatus !== 'success') {
+                document.getElementById('outstandingSection').style.display = '';
+                document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' บาท';
             } else {
                 document.getElementById('outstandingSection').style.display = 'none';
             }
@@ -1066,11 +869,9 @@
                 renderAnnouncements(result.announcements || []);
                 if (result.role === 'admin' || result.role === 'head') {
                     renderAdminDashboard(result.data || {});
-                    if (result.residentData) { result.residentData.outstandingItems = result.outstandingItems; renderUserDashboard(result.residentData); }
+                    if (result.residentData) renderUserDashboard(result.residentData);
                 } else {
-                    var _ud = result.data || {};
-                    _ud.outstandingItems = result.outstandingItems;
-                    renderUserDashboard(_ud);
+                    renderUserDashboard(result.data || {});
                     renderProxyAssignments(result.proxyAssignments || []);
                 }
             } catch(e) {
@@ -1099,21 +900,6 @@
             navigate('?page=upload-slip');
         }
 
-        // ส่งสลิปแยกงวด — เก็บรายละเอียดค่าน้ำ/ไฟ/ส่วนกลางลง localStorage
-        function goToUploadSlipDetail(period, total, water, elec, common, label) {
-            var userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            var unitNumber = userData.houseNumber || '';
-            var pts = period.split('-');
-            var periodKey = (pts[0] || '') + (pts[1] || '');
-            localStorage.setItem('pendingSlipInfo', JSON.stringify({
-                unitNumber: unitNumber, periodKey: periodKey, period: period,
-                notifiedAmount: total, isOutstanding: true,
-                waterAmount: water, electricAmount: elec, commonFee: common,
-                periodLabel: label
-            }));
-            navigate('?page=upload-slip');
-        }
-
         async function doLogout() {
             if (typeof ppkLogout === 'function') { ppkLogout(); return; }
             localStorage.removeItem('sessionToken');
@@ -1123,10 +909,10 @@
     </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260402B"></script>
-    <script src="ppk-app.js?v=20260402B"></script>
-    <script src="ppk-utils.js?v=20260402B"></script>
-    <script src="ppk-nav.js?v=20260402B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
+    <script src="ppk-nav.js?v=20260323E"></script>
     <script src="ppk-pwa.js?v=20260319A"></script>
 </body>
 </html>

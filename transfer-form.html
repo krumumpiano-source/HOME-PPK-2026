@@ -173,16 +173,6 @@
                         <label><input type="radio" name="transfer_type" value="flat_to_house" required> ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว</label>
                         <label><input type="radio" name="transfer_type" value="house_to_flat"> ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต</label>
                         <label><input type="radio" name="transfer_type" value="change_unit"> เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน</label>
-                        <label><input type="radio" name="transfer_type" value="swap"> ↔️ สลับบ้านกับผู้พักคนอื่น</label>
-                    </div>
-                </div>
-
-                <!-- ช่องสำหรับ swap: ระบุบ้านที่ต้องการสลับ -->
-                <div class="form-group" id="swapTargetGroup" style="display:none;">
-                    <label style="color:#d97706;font-weight:600;">🔄 บ้านที่ต้องการสลับ (ผู้พักอีกฝ่ายต้องยื่นคำร้องเช่นกัน)</label>
-                    <input type="text" name="swap_target_house" id="swap_target_house" placeholder="เลขบ้านที่ต้องการสลับ">
-                    <div class="warning-note" style="margin-top:0.5rem;">
-                        ⚠️ การสลับบ้านต้องมีคำร้อง 2 ฝ่าย — ผู้พักอีกบ้านต้องยื่นคำร้องสลับกลับมาด้วย จึงจะอนุมัติได้
                     </div>
                 </div>
 
@@ -257,9 +247,9 @@
     </div>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260402B"></script>
-    <script src="ppk-app.js?v=20260402B"></script>
-    <script src="ppk-utils.js?v=20260402B"></script>
+    <script src="ppk-api.js?v=20260327P"></script>
+    <script src="ppk-app.js?v=20260323E"></script>
+    <script src="ppk-utils.js?v=20260323E"></script>
 <script>
     function printForm() {
         // รวบรวมข้อมูลจากฟอร์ม
@@ -565,14 +555,6 @@
             const currentHouse = document.querySelector('input[name="current_house"]');
             if (currentHouse && _v('house_number','houseNumber')) currentHouse.value = _v('house_number','houseNumber');
         } catch (e) { console.warn('Auto-fill failed', e); }
-
-        // Swap toggle: show/hide swap field
-        document.querySelectorAll('input[name="transfer_type"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                var swapGroup = document.getElementById('swapTargetGroup');
-                if (swapGroup) swapGroup.style.display = this.value === 'swap' ? '' : 'none';
-            });
-        });
     }
 
     // ============ Submit Handler ============
@@ -610,7 +592,6 @@
                 current_house: document.querySelector('input[name="current_house"]').value,
                 transfer_type: document.querySelector('input[name="transfer_type"]:checked')?.value || '',
                 target_house: document.querySelector('input[name="target_house"]').value,
-                swap_target_house: (document.getElementById('swap_target_house') || {}).value || '',
                 reasons: reasons,
                 other_reason: document.querySelector('input[name="other_reason"]')?.value || '',
                 additional_info: document.querySelector('textarea[name="additional_info"]')?.value || '',
