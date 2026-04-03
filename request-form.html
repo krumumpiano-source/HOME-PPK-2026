@@ -93,16 +93,90 @@
         .cost-item .form-group { flex: 1; margin-bottom: 0; }
         .cost-remove-btn { background: #FEE2E2; border: 1px solid #FECACA; color: #DC2626; padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.85rem; }
         .residents-container { display: flex; flex-direction: column; gap: 0.6rem; }
+        /* ─── Admin: backdated date ─── */
+        .admin-date-section { background: #fffbeb; border: 2px solid #fbbf24; border-radius: 14px; padding: 1.2rem 1.5rem; margin-bottom: 1rem; }
+        .admin-date-section .form-section-title { color: #92400e; margin-bottom: 0.75rem; }
+        /* ─── Admin: pending review panel ─── */
+        .admin-review-panel { background: #fffbeb; border: 2px solid #f59e0b; border-radius: 14px; padding: 1.2rem 1.5rem; margin-bottom: 1.2rem; }
+        .admin-review-panel-title { font-size: 1.05rem; font-weight: 700; color: #92400e; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.85rem; }
+        .pending-req-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #fff; border: 1px solid #fde68a; border-radius: 10px; margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap; }
+        .pending-req-info { flex: 1; min-width: 180px; }
+        .pending-req-info b { font-size: 0.95rem; }
+        .pending-req-info small { display: block; font-size: 0.79rem; color: #6b7280; margin-top: 0.15rem; }
+        .review-btn { background: #4F46E5; color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1rem; font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .review-btn:hover { background: #3730a3; }
+        /* ─── Review Modal ─── */
+        #review-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 2000; overflow-y: auto; padding: 1rem; }
+        .review-modal-box { background: #fff; border-radius: 18px; padding: 1.5rem; max-width: 700px; margin: 1rem auto; position: relative; }
+        .review-modal-close { position: absolute; top: 1rem; right: 1rem; background: #f1f5f9; border: none; border-radius: 50%; width: 2rem; height: 2rem; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .review-modal-close:hover { background: #e2e8f0; }
+        #sig-canvas { border: 2px solid #cbd5e1; border-radius: 10px; touch-action: none; cursor: crosshair; width: 100%; display: block; background: #fff; }
+        .quick-comment-btn { background: #f1f5f9; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.4rem 0.75rem; font: inherit; font-size: 0.82rem; cursor: pointer; transition: background 0.15s; }
+        .quick-comment-btn:hover { background: #e0e7ff; border-color: #a5b4fc; }
+        /* ─── Wait-for-review banner ─── */
+        .wait-review-banner { background: #fef3c7; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 0.75rem; }
+        .print-ready-banner { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 0.75rem; }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <div id="ppkNav"></div>
 
+    <!-- Review Modal (admin only) -->
+    <div id="review-modal">
+        <div class="review-modal-box">
+            <button class="review-modal-close" onclick="closeReviewModal()" title="ปิด">✕</button>
+            <h3 style="margin:0 0 1rem;color:#1e3a8a;font-size:1.15rem;">📝 ลงความเห็นและลายเซ็นหัวหน้างาน</h3>
+            <div id="review-request-details"></div>
+            <div class="form-group">
+                <label style="font-weight:700;">ความเห็นหัวหน้างาน</label>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+                    <button type="button" class="quick-comment-btn" onclick="insertQuickComment('เห็นควรอนุมัติ เนื่องจากผู้ยื่นคำร้องมีความจำเป็นต้องพักอาศัย')">✅ เห็นควรอนุมัติ</button>
+                    <button type="button" class="quick-comment-btn" onclick="insertQuickComment('ไม่เห็นควรอนุมัติ เนื่องจาก...')">❌ ไม่เห็นควรอนุมัติ</button>
+                    <button type="button" class="quick-comment-btn" onclick="insertQuickComment('เห็นควรพิจารณาตามระเบียบ')">📋 พิจารณาตามระเบียบ</button>
+                </div>
+                <textarea id="head-comment-input" rows="4" placeholder="พิมพ์ความเห็นของหัวหน้างาน..." style="padding:0.65rem 0.9rem;border:1.5px solid #e5e7eb;border-radius:10px;font:inherit;font-size:0.95rem;resize:vertical;width:100%;box-sizing:border-box;"></textarea>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem;">
+                <label style="font-weight:700;">ลายเซ็นดิจิทัล (วาดบนพื้นที่ด้านล่าง)</label>
+                <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap;">
+                    <button type="button" class="quick-comment-btn" onclick="clearSigCanvas()" style="color:#dc2626;border-color:#fca5a5;">🗑️ ล้าง</button>
+                    <button type="button" class="quick-comment-btn" onclick="undoSigCanvas()">↩️ ย้อนกลับ</button>
+                </div>
+                <canvas id="sig-canvas" width="620" height="180"></canvas>
+                <div style="font-size:0.78rem;color:#6b7280;margin-top:0.35rem;">ใช้นิ้ว/ปากกา Apple Pencil วาดลงบนพื้นที่ข้างต้น</div>
+            </div>
+            <div style="display:flex;gap:0.75rem;margin-top:1.2rem;flex-wrap:wrap;">
+                <button type="button" id="save-review-btn" onclick="saveHeadReview()" style="flex:1;min-width:200px;background:linear-gradient(135deg,#4F46E5,#06B6D4);color:#fff;border:none;border-radius:10px;padding:0.85rem;font:inherit;font-size:1rem;font-weight:700;cursor:pointer;">💾 บันทึกความเห็นและลายเซ็น</button>
+                <button type="button" onclick="closeReviewModal()" style="background:#f1f5f9;color:#374151;border:1.5px solid #e5e7eb;border-radius:10px;padding:0.85rem 1.5rem;font:inherit;cursor:pointer;">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="main-container" id="mainContainer">
     <div class="form-container">
+
+        <!-- Admin: Pending Requests Panel (แสดงเฉพาะแอดมิน) -->
+        <div id="admin-review-panel" class="admin-review-panel" style="display:none;">
+            <div class="admin-review-panel-title">
+                🔔 คำร้องรอลงความเห็น
+                <button type="button" onclick="loadPendingResidenceRequests()" style="margin-left:auto;background:#fff;border:1.5px solid #fbbf24;color:#92400e;border-radius:8px;padding:0.3rem 0.75rem;font:inherit;font-size:0.82rem;cursor:pointer;">↺ รีเฟรช</button>
+            </div>
+            <div id="pending-requests-list"><div style="color:#92400e;text-align:center;padding:0.5rem;">กำลังโหลด...</div></div>
+        </div>
+
         <h2>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</h2>
+
+        <!-- Admin: Backdated Date Section (แสดงเฉพาะแอดมิน) -->
+        <div id="admin-date-section" class="admin-date-section" style="display:none;">
+            <div class="form-section-title">📅 กำหนดวันที่เอกสาร (สำหรับแอดมินเท่านั้น)</div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>วันที่ยื่นคำร้อง (กรอกย้อนหลัง)</label>
+                <input type="date" id="admin-form-date" name="form_date">
+                <div style="font-size:0.82rem;color:#92400e;margin-top:0.3rem;">ระบบจะใช้วันนี้โดยอัตโนมัติถ้าไม่เลือก — ใช้เมื่อต้องการบันทึกข้อมูลย้อนหลัง</div>
+            </div>
+        </div>
 
         <form id="requestForm" action="#" method="post" enctype="multipart/form-data">
             <!-- ส่วนที่ 1: ข้อมูลส่วนตัว -->
@@ -301,7 +375,7 @@
 
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
                 <button type="button" onclick="navigate('?page=form')" style="background: linear-gradient(to right, #d1d5db, #9ca3af); border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; font-family: inherit;">ย้อนกลับ</button>
-                <button type="button" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; font-family: inherit;">พิมพ์คำร้อง</button>
+                <button type="button" id="preview-print-btn" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.1rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; font-family: inherit;">🖨️ พรีวิว (ยังไม่บันทึก)</button>
                 <button type="submit" class="submit-btn">ส่งคำร้อง</button>
             </div>
         </form>
@@ -487,7 +561,8 @@
                 reason: reasons.join(','),
                 other_reason: document.querySelector('input[name="other_reason"]').value,
                 documents_checked: documents,
-                attachment_urls: []
+                attachment_urls: [],
+                form_date: document.getElementById('admin-form-date') ? document.getElementById('admin-form-date').value : ''
             };
 
             // อัปโหลดไฟล์แนบไปยัง Storage
@@ -527,40 +602,56 @@
 
             if (result && result.success) {
                 const reqId = result.requestId || '-';
+                // บันทึก requestId ไว้สำหรับตรวจสอบสถานะและพิมพ์
+                window._lastRequestId = reqId;
+                localStorage.setItem('_lastResidenceRequestId', reqId);
+
                 submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
 
+                // ตรวจว่า admin หรือไม่ (admin พิมพ์ได้ทันที)
+                var _cu = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                var _isAdmin = (_cu.role === 'admin' || _cu.role === 'head');
+
                 // ซ่อนฟอร์ม แสดงหน้าสำเร็จพร้อมตัวเลือก
-                var formContainer = document.querySelector('.form-container') || document.getElementById('requestForm').closest('div');
                 var successHTML = '<div id="submitSuccessPanel" style="background:white;border-radius:16px;padding:2rem;text-align:center;max-width:600px;margin:2rem auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">';
                 successHTML += '<div style="font-size:3rem;margin-bottom:0.5rem;">✅</div>';
                 successHTML += '<h2 style="color:#059669;margin:0 0 0.5rem;">บันทึกคำร้องเข้าระบบเรียบร้อยแล้ว</h2>';
                 successHTML += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;margin-bottom:1rem;">';
                 successHTML += '<div style="font-size:0.9rem;color:#6b7280;">รหัสคำร้อง</div>';
                 successHTML += '<div style="font-size:1.5rem;font-weight:bold;color:#059669;letter-spacing:2px;">' + reqId + '</div></div>';
-                successHTML += '<div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:12px;padding:1rem;margin-bottom:1rem;text-align:left;">';
-                successHTML += '<div style="font-weight:bold;color:#1e40af;margin-bottom:0.3rem;">📋 สถานะ: รอคณะกรรมการดำเนินการ</div>';
-                successHTML += '<div style="color:#1e3a5f;font-size:0.88rem;">คำร้องของท่านถูกบันทึกในระบบแล้ว ขณะนี้อยู่ระหว่างรอคณะกรรมการบ้านพักพิจารณา ท่านสามารถติดตามสถานะได้ที่หน้า "แบบฟอร์มคำร้อง"</div></div>';
-                successHTML += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:1rem;margin-bottom:1.5rem;text-align:left;">';
-                successHTML += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">🖨️ สิ่งที่ต้องทำต่อ</div>';
-                successHTML += '<div style="color:#78350f;font-size:0.88rem;">กรุณา <b>พิมพ์คำร้อง</b> แล้วนำเสนอเซ็นตามลำดับ ดังนี้<br>';
-                successHTML += '① ผู้ยื่นคำร้องเซ็นชื่อ → ② หัวหน้ากลุ่มสาระ/งาน → ③ รองผู้อำนวยการ → ④ ผู้อำนวยการ<br>';
-                successHTML += 'จากนั้นส่งเอกสารที่เซ็นครบแล้วให้คณะกรรมการบ้านพัก</div></div>';
-                successHTML += '<div style="display:flex;flex-direction:column;gap:0.8rem;">';
-                successHTML += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
-                successHTML += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 หากใช้มือถือ ให้เลือก "บันทึกเป็น PDF" แล้วพิมพ์จากคอมพิวเตอร์ภายหลัง</div>';
-                successHTML += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
+
+                if (_isAdmin) {
+                    // แอดมินกรอกให้ → พิมพ์ได้ทันที (ข้าม workflow รอหัวหน้า)
+                    successHTML += '<div class="print-ready-banner" style="text-align:left;">';
+                    successHTML += '<div style="font-weight:bold;color:#065f46;margin-bottom:0.3rem;">✅ โหมดแอดมิน: พิมพ์ได้ทันที</div>';
+                    successHTML += '<div style="color:#064e3b;font-size:0.88rem;">เนื่องจากแอดมินเป็นผู้กรอก — สามารถพิมพ์คำร้องได้ทันที หรือกลับมาลงความเห็นในแผง "คำร้องรอลงความเห็น" ด้านบน</div></div>';
+                    successHTML += '<div style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;">';
+                    successHTML += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
+                } else {
+                    // ผู้ใช้ทั่วไป — ต้องรอหัวหน้าลงความเห็นก่อน
+                    successHTML += '<div class="wait-review-banner" style="text-align:left;">';
+                    successHTML += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">⏳ ขั้นตอนถัดไป: รอหัวหน้างานลงความเห็น</div>';
+                    successHTML += '<div style="color:#78350f;font-size:0.88rem;">คำร้องของท่านถูกบันทึกในระบบแล้ว <b>ยังไม่สามารถพิมพ์ได้ในขณะนี้</b><br>';
+                    successHTML += 'กรุณารอให้หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู ลงความเห็นและลายเซ็นดิจิทัลก่อน<br>';
+                    successHTML += 'จากนั้นท่านจึงจะสามารถพิมพ์คำร้องได้</div></div>';
+                    successHTML += '<div style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;">';
+                    successHTML += '<button onclick="checkPrintStatus(\'' + reqId + '\')" id="check-status-btn" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🔄 ตรวจสอบสถานะ (หัวหน้าลงความเห็นแล้วหรือยัง)</button>';
+                    successHTML += '<div id="print-ready-area" style="display:none;">';
+                    successHTML += '<div class="print-ready-banner" style="text-align:left;margin-bottom:0.75rem;">';
+                    successHTML += '<div style="font-weight:bold;color:#065f46;">✅ หัวหน้างานลงความเห็นเรียบร้อยแล้ว — พิมพ์ได้แล้ว!</div></div>';
+                    successHTML += '<button onclick="printFormWithSignature(\'' + reqId + '\')" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;width:100%;">🖨️ พิมพ์คำร้อง (พร้อมลายเซ็น)</button>';
+                    successHTML += '</div>';
+                }
+
+                successHTML += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#6366f1,#4f46e5);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
                 successHTML += '</div></div>';
 
-                // แทรก success panel หลังฟอร์ม
-                var mainContent = document.querySelector('#mainContainer') || document.body;
                 document.getElementById('requestForm').style.display = 'none';
-                // ซ่อนปุ่มเดิมด้วย
                 var btnRow = document.querySelector('.submit-btn')?.parentElement;
                 if (btnRow) btnRow.style.display = 'none';
                 var panel = document.createElement('div');
                 panel.innerHTML = successHTML;
                 document.getElementById('requestForm').parentElement.appendChild(panel);
-                // Scroll to top
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             } else {
@@ -578,8 +669,281 @@
     initPage();
 </script>
 <script>
+    /* ═══════════════════════════════════════════
+       Admin: Pending Requests + Review Workflow
+    ═══════════════════════════════════════════ */
+    var _reviewingRequestId = null;
+    var _sigCtx = null, _sigDrawing = false, _sigHistory = [], _sigLastPoint = null;
+
+    function initAdminFeatures() {
+        var _cu = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (_cu.role !== 'admin' && _cu.role !== 'head') return;
+        // แสดง date section และ review panel
+        var ds = document.getElementById('admin-date-section');
+        if (ds) ds.style.display = '';
+        var rp = document.getElementById('admin-review-panel');
+        if (rp) rp.style.display = '';
+        // ตั้งค่า default date = วันนี้
+        var df = document.getElementById('admin-form-date');
+        if (df && !df.value) { var t = new Date(); df.value = t.toISOString().slice(0,10); }
+        // ซ่อนปุ่ม preview (admin ใช้ submit แล้วพิมพ์ได้เลย)
+        var pb = document.getElementById('preview-print-btn');
+        if (pb) pb.style.display = 'none';
+        loadPendingResidenceRequests();
+    }
+
+    async function loadPendingResidenceRequests() {
+        var list = document.getElementById('pending-requests-list');
+        if (!list) return;
+        list.innerHTML = '<div style="color:#92400e;text-align:center;padding:0.5rem;">กำลังโหลด...</div>';
+        try {
+            var res = await callBackend('getRequests', { type: 'residence' });
+            var rows = (res && res.data) || [];
+            // แสดงเฉพาะที่ยังไม่มีการลงความเห็น (ยังไม่มี head_signature)
+            var pending = rows.filter(function(r) { return !r.head_signature; });
+            if (pending.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#6b7280;padding:1rem;">ไม่มีคำร้องรอดำเนินการในขณะนี้ ✓</div>';
+                return;
+            }
+            var thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+            list.innerHTML = pending.map(function(r) {
+                var d = r.details || {};
+                var fullname = (d.prefix||'') + (d.firstname||'') + ' ' + (d.lastname||'');
+                var dt = '-';
+                if (r.submitted_at) { var dd = new Date(r.submitted_at); dt = dd.getDate() + ' ' + thaiMonths[dd.getMonth()] + ' ' + (dd.getFullYear()+543); }
+                var rJson = JSON.stringify(r).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+                return '<div class="pending-req-item">'
+                    + '<div class="pending-req-info"><b>' + fullname + '</b><small>' + r.id + ' · ยื่นเมื่อ ' + dt + '</small></div>'
+                    + '<button class="review-btn" onclick="openReviewModal(JSON.parse(this.dataset.req))" data-req="' + rJson + '">✍️ ลงความเห็น</button>'
+                    + '</div>';
+            }).join('');
+        } catch(e) {
+            list.innerHTML = '<div style="color:#ef4444;text-align:center;padding:0.5rem;">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่</div>';
+        }
+    }
+
+    function openReviewModal(req) {
+        _reviewingRequestId = req.id;
+        var d = req.details || {};
+        var fullname = (d.prefix||'') + (d.firstname||'') + ' ' + (d.lastname||'');
+        var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+        var dt = '-';
+        if (req.submitted_at) { var dd = new Date(req.submitted_at); dt = dd.getDate() + ' ' + thaiMonths[dd.getMonth()] + ' ' + (dd.getFullYear()+543); }
+
+        document.getElementById('review-request-details').innerHTML =
+            '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:1rem;margin-bottom:1rem;">'
+            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;">'
+            + '<div><b>ผู้ยื่น:</b> ' + fullname + '</div>'
+            + '<div><b>รหัส:</b> ' + req.id + '</div>'
+            + '<div><b>ตำแหน่ง:</b> ' + (d.position||'-') + '</div>'
+            + '<div><b>กลุ่มสาระ:</b> ' + (d.subject_group||'-') + '</div>'
+            + '<div><b>ประเภทการพัก:</b> ' + (d.stay_type==='family'?'พร้อมครอบครัว':'คนเดียว') + '</div>'
+            + '<div><b>ยื่นเมื่อ:</b> ' + dt + '</div>'
+            + '</div>'
+            + '<div style="margin-top:0.4rem;"><b>เหตุผล:</b> ' + (d.reason||'-').replace(',','  |  ') + '</div>'
+            + '</div>';
+
+        document.getElementById('head-comment-input').value = req.head_comment || '';
+        var modal = document.getElementById('review-modal');
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        // รีเซ็ต canvas
+        _sigHistory = [];
+        var canvas = document.getElementById('sig-canvas');
+        if (canvas) {
+            if (!_sigCtx) initSigCanvas();
+            _sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+            // กรณีมีลายเซ็นเดิม โหลดให้ดู
+            if (req.head_signature) {
+                var img = new Image();
+                img.onload = function() { _sigCtx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+                img.src = req.head_signature;
+                _sigHistory.push(req.head_signature);
+            }
+        }
+    }
+
+    function closeReviewModal() {
+        document.getElementById('review-modal').style.display = 'none';
+        document.body.style.overflow = '';
+        _reviewingRequestId = null;
+    }
+
+    function initSigCanvas() {
+        var canvas = document.getElementById('sig-canvas');
+        if (!canvas || _sigCtx) return;
+        _sigCtx = canvas.getContext('2d');
+        _sigCtx.strokeStyle = '#1e3a8a';
+        _sigCtx.lineWidth = 2.5;
+        _sigCtx.lineCap = 'round';
+        _sigCtx.lineJoin = 'round';
+
+        function getPos(e) {
+            var r = canvas.getBoundingClientRect();
+            var scaleX = canvas.width / r.width, scaleY = canvas.height / r.height;
+            var src = e.touches ? e.touches[0] : e;
+            return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+        }
+        canvas.addEventListener('pointerdown', function(e) {
+            e.preventDefault();
+            _sigDrawing = true;
+            var p = getPos(e);
+            _sigCtx.beginPath();
+            _sigCtx.moveTo(p.x, p.y);
+            _sigLastPoint = p;
+        });
+        canvas.addEventListener('pointermove', function(e) {
+            e.preventDefault();
+            if (!_sigDrawing) return;
+            var p = getPos(e);
+            _sigCtx.lineTo(p.x, p.y);
+            _sigCtx.stroke();
+            _sigLastPoint = p;
+        });
+        canvas.addEventListener('pointerup', function(e) {
+            e.preventDefault();
+            if (_sigDrawing) { _sigHistory.push(canvas.toDataURL('image/png')); }
+            _sigDrawing = false;
+        });
+        canvas.addEventListener('pointerleave', function() { _sigDrawing = false; });
+    }
+
+    function clearSigCanvas() {
+        var canvas = document.getElementById('sig-canvas');
+        if (!_sigCtx) return;
+        _sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+        _sigHistory = [];
+    }
+
+    function undoSigCanvas() {
+        _sigHistory.pop();
+        var canvas = document.getElementById('sig-canvas');
+        if (!_sigCtx) return;
+        _sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+        if (_sigHistory.length > 0) {
+            var img = new Image();
+            img.onload = function() { _sigCtx.drawImage(img, 0, 0); };
+            img.src = _sigHistory[_sigHistory.length - 1];
+        }
+    }
+
+    function insertQuickComment(text) {
+        var ta = document.getElementById('head-comment-input');
+        if (ta) { ta.value = text; ta.focus(); }
+    }
+
+    async function saveHeadReview() {
+        if (!_reviewingRequestId) return;
+        var comment = (document.getElementById('head-comment-input').value || '').trim();
+        if (!comment) { ppkAlert('กรุณาพิมพ์ความเห็นก่อนบันทึก', 'error'); return; }
+        if (_sigHistory.length === 0) { ppkAlert('กรุณาวาดลายเซ็นบนพื้นที่ลายเซ็น', 'error'); return; }
+        var canvas = document.getElementById('sig-canvas');
+        var signatureDataUrl = canvas.toDataURL('image/png');
+        var btn = document.getElementById('save-review-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'กำลังบันทึก...'; }
+        try {
+            var res = await callBackend('headReviewRequest', {
+                requestId: _reviewingRequestId,
+                head_comment: comment,
+                head_signature: signatureDataUrl,
+                new_status: 'head_reviewed'
+            });
+            if (res && res.success) {
+                ppkAlert('บันทึกความเห็นและลายเซ็นเรียบร้อยแล้ว ✓', 'success');
+                closeReviewModal();
+                loadPendingResidenceRequests();
+            } else {
+                ppkAlert('บันทึกไม่สำเร็จ: ' + (res ? res.error : 'ไม่ทราบสาเหตุ'), 'error');
+            }
+        } catch(e) {
+            ppkAlert('เกิดข้อผิดพลาด: ' + (e.message || 'กรุณาลองใหม่'), 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกความเห็นและลายเซ็น'; }
+        }
+    }
+
+    /* ═══════════════════════════════════════════
+       Check Print Status + Print With Signature
+    ═══════════════════════════════════════════ */
+    async function checkPrintStatus(reqId) {
+        var btn = document.getElementById('check-status-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...'; }
+        try {
+            var res = await callBackend('getRequestById', { id: reqId });
+            var req = res && res.data;
+            if (req && req.head_signature) {
+                // หัวหน้าลงความเห็นแล้ว
+                var area = document.getElementById('print-ready-area');
+                if (area) area.style.display = '';
+                if (btn) btn.style.display = 'none';
+                ppkAlert('หัวหน้างานลงความเห็นเรียบร้อยแล้ว — กดพิมพ์ได้เลย ✓', 'success');
+            } else {
+                if (btn) { btn.disabled = false; btn.textContent = '🔄 ตรวจสอบสถานะ (ยังไม่ลง)'; }
+                ppkAlert('ยังรอหัวหน้างานลงความเห็นอยู่ กรุณาลองใหม่ภายหลัง', 'info');
+            }
+        } catch(e) {
+            if (btn) { btn.disabled = false; btn.textContent = '🔄 ตรวจสอบสถานะ'; }
+            ppkAlert('ตรวจสอบไม่สำเร็จ กรุณาลองใหม่', 'error');
+        }
+    }
+
+    async function printFormWithSignature(reqId) {
+        // โหลดข้อมูลจาก DB แล้วพิมพ์พร้อมลายเซ็น
+        try {
+            var res = await callBackend('getRequestById', { id: reqId });
+            var req = res && res.data;
+            if (!req) { ppkAlert('ไม่พบข้อมูลคำร้อง', 'error'); return; }
+            if (!req.head_signature) { ppkAlert('หัวหน้างานยังไม่ได้ลงความเห็น กรุณารอก่อน', 'error'); return; }
+            // เรียก printForm พร้อม override ข้อมูลหัวหน้า
+            window._headReviewOverride = { head_comment: req.head_comment, head_signature: req.head_signature, head_reviewed_at: req.head_reviewed_at, head_reviewer_name: req.head_reviewer_name };
+            // กรอก DOM จาก details ก่อน (ถ้าฟอร์มว่าง)
+            var d = req.details || {};
+            if (!document.querySelector('input[name="firstname"]').value && d.firstname) {
+                _fillFormFromDetails(d);
+            }
+            printForm();
+        } catch(e) {
+            ppkAlert('โหลดข้อมูลไม่สำเร็จ: ' + (e.message||''), 'error');
+        }
+    }
+
+    function _fillFormFromDetails(d) {
+        var setVal = function(sel, val) { var el = document.querySelector(sel); if (el && val) el.value = val; };
+        setVal('select[name="prefix"]', d.prefix);
+        setVal('input[name="firstname"]', d.firstname);
+        setVal('input[name="lastname"]', d.lastname);
+        setVal('textarea[name="address"]', d.address);
+        setVal('input[name="phone"]', d.phone);
+        setVal('input[name="email"]', d.email);
+        setVal('select[name="position"]', d.position);
+        setVal('select[name="subject_group"]', d.subject_group);
+        setVal('textarea[name="additional_info"]', d.additional_info);
+        // stay_type
+        if (d.stay_type) {
+            var rb = document.querySelector('input[name="stay_type"][value="' + d.stay_type + '"]');
+            if (rb) { rb.checked = true; toggleResidentFields(); }
+        }
+        // reasons
+        if (d.reason) d.reason.split(',').forEach(function(rv) {
+            var cb = document.querySelector('input[name="reason"][value="' + rv.trim() + '"]');
+            if (cb) cb.checked = true;
+        });
+        if (d.other_reason) setVal('input[name="other_reason"]', d.other_reason);
+        // documents
+        if (d.documents_checked) d.documents_checked.forEach(function(dv) {
+            var cb = document.querySelector('input[name="documents"][value="' + dv + '"]');
+            if (cb) cb.checked = true;
+        });
+    }
+
+    // เรียก initAdminFeatures หลัง initPage เสร็จ
+    setTimeout(function() { initAdminFeatures(); }, 600);
+</script>
+<script>
     function printForm() {
-        const prefix = document.querySelector('select[name="prefix"]').value;
+        // ดึง head review data (อาจมาจาก DB override หรือ parameter)
+        var _hr = window._headReviewOverride || null;
+        var prefix = document.querySelector('select[name="prefix"]').value;
         const firstname = document.querySelector('input[name="firstname"]').value;
         const lastname  = document.querySelector('input[name="lastname"]').value;
         const fullname  = firstname + ' ' + lastname;
@@ -610,7 +974,11 @@
 
         const today = new Date();
         const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-        const dateStr = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
+        // ใช้วันที่จาก admin backdated field หรือวันนี้
+        var _adminDateEl = document.getElementById('admin-form-date');
+        var _printDate = today;
+        if (_adminDateEl && _adminDateEl.value) { var _d = new Date(_adminDateEl.value + 'T00:00:00'); if (!isNaN(_d)) _printDate = _d; }
+        const dateStr = _printDate.getDate() + ' ' + thaiMonths[_printDate.getMonth()] + ' ' + (_printDate.getFullYear() + 543);
 
         const printWindow = window.open('', '_blank');
         printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มคำร้องขอเข้าพักอาศัยในบ้านพักครู</title>');
@@ -660,10 +1028,37 @@
         var _sys = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
         var _headName = _sys.headOfPromotion || ''; var _viceName = _sys.viceDirector || ''; var _dirName = _sys.director || '';
         printWindow.document.write('<div class="approval-boxes">');
-        printWindow.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>ตำแหน่ง<span class="dotted-line-short"></span><br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+
+        // ── approval box 1: หัวหน้างาน (embed comment + sig ถ้ามี) ──
+        var _hrReviewedDate = '';
+        if (_hr && _hr.head_reviewed_at) {
+            var _hrd = new Date(_hr.head_reviewed_at);
+            var _thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+            _hrReviewedDate = _hrd.getDate() + ' ' + _thM[_hrd.getMonth()] + ' ' + (_hrd.getFullYear()+543);
+        }
+        printWindow.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div><div class="approval-content">');
+        if (_hr && _hr.head_signature) {
+            // มีลายเซ็นแล้ว → แสดงความเห็นและลายเซ็น
+            printWindow.document.write('<div style="margin-bottom:0.2cm;">' + (_hr.head_comment || '') + '</div>');
+            printWindow.document.write('<div style="text-align:right;margin-top:0.25cm;">');
+            printWindow.document.write('<img src="' + _hr.head_signature + '" style="max-width:5cm;max-height:2cm;display:inline-block;margin-bottom:0.1cm;" alt="ลายเซ็น"><br>');
+            printWindow.document.write('(' + (_hr.head_reviewer_name || _headName || '<span class="dotted-line-short"></span>') + ')<br>');
+            printWindow.document.write('ตำแหน่ง หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู<br>');
+            printWindow.document.write('วันที่ ' + _hrReviewedDate + '</div>');
+        } else {
+            // ยังไม่มีลายเซ็น → กล่องเปล่าสำหรับเซ็น
+            printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
+            printWindow.document.write('<div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
+            printWindow.document.write('<div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div>');
+            printWindow.document.write('<div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>ตำแหน่ง หัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู<br>วันที่<span class="dotted-line-date"></span></div>');
+        }
+        printWindow.document.write('</div></div>');
+
         printWindow.document.write('<div class="approval-box"><div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div><div class="approval-content"><div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_viceName || '<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
         printWindow.document.write('<div class="approval-box"><div class="approval-header">คำสั่งผู้อำนวยการ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
         printWindow.document.write('</div>');
+        // รีเซ็ต override หลังพิมพ์
+        window._headReviewOverride = null;
 
         const files = (typeof _attachedFiles !== 'undefined' && _attachedFiles.length > 0)
             ? _attachedFiles

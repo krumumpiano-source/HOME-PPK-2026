@@ -440,7 +440,7 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser',
-    'reactivateResident','getMovedOutUsers','forceDeactivateUser'];
+    'reactivateResident','getMovedOutUsers','forceDeactivateUser','headReviewRequest'];
 
 // ── Storage bucket helper: auto-create if not exists ──
 var _bucketReady = {};
@@ -1206,6 +1206,7 @@ async function _routeAction(action, data) {
             if (data.type)    q.type    = 'eq.' + data.type;
             if (data.status)  q.status  = 'eq.' + data.status;
             if (data.user_id) q.user_id = 'eq.' + data.user_id;
+            if (data.id)      q.id      = 'eq.' + data.id;
             if (data.year) {
                 // แปลงปี พ.ศ. → ค.ศ. ก่อนกรอง submitted_at
                 var adYear = parseInt(data.year);
@@ -1214,6 +1215,36 @@ async function _routeAction(action, data) {
             }
             var rows = await sbGet('requests', q);
             return { success: true, data: rows };
+        }
+
+        case 'getRequestById': {
+            if (!data.id) return { success: false, error: 'ไม่ระบุ id' };
+            var rows = await sbGet('requests', { id: 'eq.' + data.id, limit: '1' });
+            return { success: true, data: rows && rows[0] ? rows[0] : null };
+        }
+
+        case 'headReviewRequest': {
+            var hrSess = await _getSessionRole();
+            if (!hrSess || (hrSess.role !== 'admin' && hrSess.role !== 'head')) {
+                return { success: false, error: 'ไม่มีสิทธิ์ดำเนินการ' };
+            }
+            if (!data.requestId) return { success: false, error: 'ไม่ระบุ requestId' };
+            var hrNow = new Date().toISOString();
+            var hrUser = await sbGet('users', { id: 'eq.' + hrSess.userId, select: 'id,email', limit: '1' });
+            var hrName = data.reviewer_name || (hrUser && hrUser[0] ? (hrUser[0].display_name || hrUser[0].email || '') : '');
+            await sbPatch('requests', { id: 'eq.' + data.requestId }, {
+                head_comment:       data.head_comment || '',
+                head_signature:     data.head_signature || null,
+                head_reviewed_at:   hrNow,
+                head_reviewer_name: hrName,
+                review_note:        data.head_comment || '',
+                reviewed_by:        hrSess.userId,
+                reviewed_at:        hrNow,
+                status:             data.new_status || 'head_reviewed',
+                updated_at:         hrNow
+            });
+            _logActivity('head_review_request', hrSess.userId, 'ลงความเห็นคำร้อง ' + data.requestId, { requestId: data.requestId });
+            return { success: true };
         }
         case 'getQueue': {
             var rows = await sbGet('queue', { status: 'eq.waiting', order: 'position.asc' });
