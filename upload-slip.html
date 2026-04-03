@@ -263,6 +263,13 @@
             return yearBE + month;
         }
 
+        function getPrevPeriodKey(key) {
+            const year = parseInt(key.substring(0, 4));
+            const month = parseInt(key.substring(4, 6));
+            if (month === 1) return String(year - 1) + '12';
+            return String(year) + String(month - 1).padStart(2, '0');
+        }
+
         // แปลง key 256902 → 2569-02
         function toApiPeriod(key){
             if (!key || key.length < 6) return key;
@@ -339,7 +346,42 @@
                     }
                 } catch (e) { console.error('getBillSummaryAll error:', e); }
 
-            // ถ้า Backend ไม่มีข้อมูล → บล็อกการส่งสลิป
+            // ถ้า Backend ไม่มีข้อมูล → ลอง fallback เดือนก่อน (วันที่ 1-15 ต้นเดือน)
+            if (totalAmount === 0) {
+                const now = new Date();
+                const isEarlyMonth = now.getDate() <= 15;
+                // fallback เฉพาะเมื่อ periodKey เป็นเดือนปัจจุบัน (ไม่ใช่จาก URL/cache)
+                const isCurrentMonth = periodKey === getCurrentPeriodKey();
+                if (isEarlyMonth && isCurrentMonth) {
+                    const prevKey = getPrevPeriodKey(periodKey);
+                    try {
+                        const prevPeriod = toApiPeriod(prevKey);
+                        const prevResult = await cachedCall('getBillSummaryAll', { period: prevPeriod }, 300000);
+                        if (prevResult && prevResult.success && prevResult.data) {
+                            const prevRow = prevResult.data.find(r => String(r.house_number) === String(unitNumber));
+                            if (prevRow) {
+                                totalAmount = (parseFloat(prevRow.water_amount) || 0) + (parseFloat(prevRow.electric_amount) || 0) + (parseFloat(prevRow.common_fee) || 0);
+                                residentName = prevRow.resident_name || '';
+                                if (totalAmount > 0) {
+                                    // ใช้ period ของเดือนก่อนแทน
+                                    Object.defineProperty(window, '_activePeriodKey', { value: prevKey, writable: true, configurable: true });
+                                    window._activePeriodKey = prevKey;
+                                    document.getElementById('display-period').textContent = formatPeriod(prevKey)
+                                        + ' <span style="background:#fef3c7;color:#92400e;font-size:0.78rem;padding:0.15rem 0.4rem;border-radius:6px;font-weight:600;">⬅ เดือนก่อน</span>';
+                                    window.billingInfo = {
+                                        unitNumber: unitNumber,
+                                        periodKey: prevKey,
+                                        period: prevPeriod,
+                                        notifiedAmount: totalAmount,
+                                        residentName: residentName
+                                    };
+                                }
+                            }
+                        }
+                    } catch(e) { console.warn('fallback prev period error', e); }
+                }
+            }
+
             if (totalAmount === 0) {
                 document.getElementById('display-amount').innerHTML = '<span style="color:#dc2626;font-weight:600;">⚠️ ยังไม่มีข้อมูลบิลเดือนนี้</span><br><span style="font-size:0.85rem;color:#666;">กรุณารอแจ้งยอดก่อนจึงจะส่งสลิปได้</span>';
                 document.getElementById('paid-amount').value = '';
@@ -361,13 +403,16 @@
             document.getElementById('display-amount').textContent = formatMoney(totalAmount) + ' บาท';
             document.getElementById('paid-amount').value = totalAmount;
 
-            window.billingInfo = {
-                unitNumber: unitNumber,
-                periodKey: periodKey,
-                period: toApiPeriod(periodKey),
-                notifiedAmount: totalAmount,
-                residentName: residentName
-            };
+            // ถ้า fallback เซ็ต billingInfo ไปแล้ว (prevKey) ไม่ overwrite
+            if (!window.billingInfo || window.billingInfo.notifiedAmount !== totalAmount) {
+                window.billingInfo = {
+                    unitNumber: unitNumber,
+                    periodKey: periodKey,
+                    period: toApiPeriod(periodKey),
+                    notifiedAmount: totalAmount,
+                    residentName: residentName
+                };
+            }
         }
 
 
