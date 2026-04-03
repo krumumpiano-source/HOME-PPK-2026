@@ -1673,15 +1673,6 @@
                         <div style="font-weight:700;color:#dc2626;margin-bottom:0.3rem;">❌ ไม่อนุมัติ</div>
                         ${item.reviewNote ? '<div style="font-size:0.875rem;color:#991b1b;">เหตุผล: ' + _e(item.reviewNote) + '</div>' : ''}
                     </div>` : ''}
-                    ${['pending','reviewing','waiting'].includes(item.status) ? `
-                    <div style="margin-top:1.5rem;padding:1rem;background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;">
-                        <div style="font-weight:700;color:#1d4ed8;margin-bottom:0.75rem;">📋 ดำเนินการคำร้อง</div>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            <button type="button" class="btn btn-success" onclick="closeModal('detailModal');openApproveHouseModal('${_e(item.id)}')" style="font-size:0.875rem;">✅ อนุมัติเข้าพัก</button>
-                            <button type="button" class="btn" onclick="closeModal('detailModal');openStatusModal('residence','${_e(item.id)}')" style="font-size:0.875rem;background:#fef3c7;color:#92400e;border-color:#fcd34d;">📝 เปลี่ยนสถานะ</button>
-                            <button type="button" class="btn" onclick="closeModal('detailModal');addToQueue('${_e(item.id)}');renderAll();" style="font-size:0.875rem;background:#f0fdf4;color:#166534;border-color:#86efac;">➕ เพิ่มเข้าคิว</button>
-                        </div>
-                    </div>` : ''}
                 `;
             } else if (type === 'repair') {
                 var costHTML = '';
@@ -1750,13 +1741,6 @@
                         <div class="detail-label">รายการประมาณการค่าใช้จ่าย</div>
                         <div class="detail-value">${costHTML}</div>
                     </div>` : ''}
-                    ${['pending','reviewing'].includes(item.status) ? `
-                    <div style="margin-top:1.5rem;padding:1rem;background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;">
-                        <div style="font-weight:700;color:#1d4ed8;margin-bottom:0.75rem;">📋 ดำเนินการคำร้อง</div>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            <button type="button" class="btn btn-success" onclick="closeModal('detailModal');openStatusModal('repair','${_e(item.id)}')" style="font-size:0.875rem;">📝 เปลี่ยนสถานะ / อนุมัติ</button>
-                        </div>
-                    </div>` : ''}
                 `;
             } else if (type === 'transfer') {
                 var tTypeText = { 'flat_to_house': 'ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว', 'house_to_flat': 'ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต', 'change_unit': 'เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน' };
@@ -1817,13 +1801,6 @@
                     <div style="margin-top:1.25rem;padding:1rem;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;">
                         <div style="font-weight:700;color:#15803d;margin-bottom:0.3rem;">✅ อนุมัติแล้ว</div>
                         ${item.reviewNote ? '<div style="font-size:0.875rem;color:#166534;">หมายเหตุ: ' + _e(item.reviewNote) + '</div>' : ''}
-                    </div>` : ''}
-                    ${['pending','reviewing'].includes(item.status) ? `
-                    <div style="margin-top:1.5rem;padding:1rem;background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;">
-                        <div style="font-weight:700;color:#1d4ed8;margin-bottom:0.75rem;">📋 ดำเนินการคำร้อง</div>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            <button type="button" class="btn btn-success" onclick="closeModal('detailModal');openStatusModal('transfer','${_e(item.id)}')" style="font-size:0.875rem;">📝 เปลี่ยนสถานะ / อนุมัติ</button>
-                        </div>
                     </div>` : ''}
                 `;
             } else if (type === 'return') {
@@ -1899,11 +1876,7 @@
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
                         <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${_e(item.additionalInfo)}</div>
                     </div>` : ''}
-                    ${(item.status === 'pending' || item.status === 'reviewing') ? `
-                    <div style="margin-top:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
-                        <button type="button" class="btn btn-success" onclick="approveReturnRequest('${item.id}')" style="flex:1;min-width:140px;">✅ อนุมัติคำร้อง</button>
-                        <button type="button" class="btn btn-danger" onclick="rejectReturnRequest('${item.id}')" style="background:#ef4444;color:#fff;border-color:#ef4444;flex:1;min-width:140px;">❌ ไม่อนุมัติ</button>
-                    </div>` : ''}
+
                     ${item.status === 'approved' ? `
                     <div style="margin-top:1.5rem;background:${_retReady ? '#f0fdf4' : '#fefce8'};border:2px solid ${_retReady ? '#86efac' : '#fde047'};border-radius:12px;padding:1rem;">
                         <div style="font-weight:700;color:${_retReady ? '#15803d' : '#78350f'};margin-bottom:0.5rem;">
@@ -1944,8 +1917,8 @@
                 content += `</div></div>`;
             }
 
-            // Review note
-            if (item.reviewNote) {
+            // Review note (แสดงเฉพาะเมื่อไม่อยู่ในสถานะ pending — ถ้า pending จะไปแสดงใน review panel แทน)
+            if (item.reviewNote && !['pending','reviewing','waiting'].includes(item.status)) {
                 content += `
                     <div class="detail-item" style="margin-top:1.5rem;">
                         <div class="detail-label">💬 หมายเหตุจากเจ้าหน้าที่</div>
@@ -1954,12 +1927,87 @@
                 `;
             }
 
+            // ── Inline Review Panel (admin/head เท่านั้น + สถานะ pending/reviewing/waiting) ──
+            var _cuReview = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            var _isReviewer = _cuReview && (_cuReview.role === 'admin' || _cuReview.role === 'head');
+            if (_isReviewer && ['pending','reviewing','waiting'].includes(item.status)) {
+                var _reviewerNamePrefill = _cuReview ? ((_cuReview.prefix||'') + (_cuReview.firstname||'') + ' ' + (_cuReview.lastname||'')).trim() : '';
+                content += `
+                <div style="margin-top:1.5rem;padding:1.25rem;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:2px solid #3b82f6;border-radius:14px;">
+                    <div style="font-weight:700;color:#1d4ed8;margin-bottom:1rem;font-size:1.05rem;display:flex;align-items:center;gap:0.4rem;">
+                        <span style="font-size:1.3rem;">📋</span> ลงความเห็นและอนุมัติ
+                    </div>
+                    ${type === 'residence' ? '<div style="margin-bottom:0.75rem;" id="detailHouseGroup"><label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">บ้านพักที่จัดให้ <span style="color:#ef4444;">*</span></label><select id="detailHouseSelect" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;"><option value="">⏳ กำลังโหลดบ้านว่าง...</option></select></div>' : ''}
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ความเห็น / หมายเหตุ</label>
+                        <textarea id="detailReviewComment" rows="3" placeholder="ลงความเห็น..." style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;resize:vertical;box-sizing:border-box;">${_e(item.reviewNote || '')}</textarea>
+                    </div>
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ชื่อผู้อนุมัติ <span style="color:#ef4444;">*</span></label>
+                        <input type="text" id="detailReviewerName" value="${_e(_reviewerNamePrefill)}" placeholder="ชื่อ-นามสกุลผู้อนุมัติ" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ลายเซ็นดิจิทัล</label>
+                        <div style="border:2px solid #d1d5db;border-radius:10px;background:#fff;padding:0.25rem;touch-action:none;">
+                            <canvas id="detailSignatureCanvas" width="460" height="130"
+                                style="display:block;width:100%;height:130px;cursor:crosshair;border-radius:8px;background:#fff;"
+                                ontouchstart="_sigStart(event,'detailSignatureCanvas')"
+                                ontouchmove="_sigMove(event,'detailSignatureCanvas')"
+                                ontouchend="_sigEnd(event)"
+                                onmousedown="_sigStart(event,'detailSignatureCanvas')"
+                                onmousemove="_sigMove(event,'detailSignatureCanvas')"
+                                onmouseup="_sigEnd(event)"
+                                onmouseleave="_sigEnd(event)"
+                            ></canvas>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.4rem;">
+                            <span style="font-size:0.8rem;color:#9ca3af;">วาดลายเซ็นด้านบน — รองรับ Mouse และ iPad/Apple Pencil</span>
+                            <button type="button" onclick="_sigClear('detailSignatureCanvas')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:0.2rem 0.7rem;font:inherit;font-size:0.82rem;cursor:pointer;color:#6b7280;">🗑️ ลบ</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
+                        <button type="button" class="btn btn-success" onclick="submitDetailReview('approved')" style="flex:1;min-width:140px;font-size:0.95rem;padding:0.65rem 1rem;">✅ อนุมัติ</button>
+                        <button type="button" class="btn" onclick="submitDetailReview('rejected')" style="flex:1;min-width:140px;font-size:0.95rem;padding:0.65rem 1rem;background:#fef2f2;color:#dc2626;border-color:#fca5a5;">❌ ไม่อนุมัติ</button>
+                    </div>
+                    ${type === 'residence' ? '<div style="margin-top:0.5rem;"><button type="button" class="btn" onclick="closeModal(\'detailModal\');addToQueue(\'' + _e(item.id) + '\');renderAll();" style="width:100%;font-size:0.875rem;background:#f0fdf4;color:#166534;border-color:#86efac;">➕ เพิ่มเข้าคิว (ยังไม่อนุมัติ)</button></div>' : ''}
+                </div>`;
+            }
+
             document.getElementById('modalBody').innerHTML = content;
             // เก็บข้อมูล item ปัจจุบันสำหรับปุ่มลบ
             window._currentDetailId = id;
             window._currentDetailType = type;
             document.getElementById('deleteRequestBtn').style.display = 'inline-flex';
             openModal('detailModal');
+
+            // ── โหลดบ้านว่าง (เฉพาะ residence) หลังจาก modal เปิดแล้ว ──
+            if (_isReviewer && type === 'residence' && ['pending','reviewing','waiting'].includes(item.status)) {
+                (async function() {
+                    try {
+                        var hResult = await callBackendGet('getHousing', {});
+                        var allH = (hResult && hResult.success) ? hResult.data : [];
+                        var avail = allH.filter(function(h) { return h.status === 'available'; });
+                        var sel = document.getElementById('detailHouseSelect');
+                        if (!sel) return;
+                        if (avail.length === 0) {
+                            sel.innerHTML = '<option value="">❌ ไม่มีบ้านว่าง</option>';
+                            return;
+                        }
+                        sel.innerHTML = '<option value="">— เลือกบ้าน/ห้อง —</option>';
+                        avail.forEach(function(h) {
+                            var opt = document.createElement('option');
+                            opt.value = h.house_number || h.number || '';
+                            var pfx = h.type === 'flat' ? 'แฟลต' : 'บ้าน';
+                            var raw = h.house_number || h.number || '';
+                            opt.textContent = pfx + (raw.startsWith(pfx) ? raw.substring(pfx.length) : raw);
+                            sel.appendChild(opt);
+                        });
+                    } catch(e) {
+                        var sel2 = document.getElementById('detailHouseSelect');
+                        if (sel2) sel2.innerHTML = '<option value="">❌ โหลดไม่สำเร็จ</option>';
+                    }
+                })();
+            }
         }
 
         function printResidenceApproval(id) {
@@ -2123,6 +2171,78 @@
                 renderAll();
                 ppkAlert('✅ บันทึกคำร้องเรียบร้อยแล้ว (ID: ' + result.requestId + ')', 'success');
             } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+        }
+
+        // ========== Inline Detail Review — ลงความเห็น + ลายเซ็น + อนุมัติ/ปฏิเสธ ==========
+
+        async function submitDetailReview(action) {
+            var type = window._currentDetailType;
+            var id = window._currentDetailId;
+            if (!type || !id) return;
+
+            var comment = document.getElementById('detailReviewComment').value.trim();
+            var reviewerName = document.getElementById('detailReviewerName').value.trim();
+            if (!reviewerName) { ppkAlert('กรุณาระบุชื่อผู้อนุมัติ', 'error'); return; }
+
+            // ดึงลายเซ็นจาก canvas
+            var signatureData = null;
+            var sigCanvas = document.getElementById('detailSignatureCanvas');
+            if (sigCanvas) {
+                var ctx = sigCanvas.getContext('2d');
+                var px = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+                var blank = true;
+                for (var pi = 3; pi < px.length; pi += 4) { if (px[pi] > 0) { blank = false; break; } }
+                if (!blank) signatureData = sigCanvas.toDataURL('image/png');
+            }
+
+            // ── Residence + Approve → ใช้ approveResidence (ต้องเลือกบ้าน) ──
+            if (type === 'residence' && action === 'approved') {
+                var houseNumber = document.getElementById('detailHouseSelect').value;
+                if (!houseNumber) { ppkAlert('กรุณาเลือกบ้าน/ห้องก่อนอนุมัติ', 'error'); return; }
+                if (!await ppkConfirm('ยืนยันอนุมัติเข้าพักบ้านเลขที่ ' + houseNumber + '?')) return;
+
+                try {
+                    var result = await callBackend('approveResidence', {
+                        requestId: id, houseNumber: houseNumber,
+                        reviewerName: reviewerName, signature: signatureData || '',
+                        note: comment
+                    });
+                    if (!result || !result.success) {
+                        ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'), 'error');
+                        return;
+                    }
+                    _clearRequestsCache();
+                    closeModal('detailModal');
+                    await loadAllRequests();
+                    renderAll();
+                    ppkAlert('✅ อนุมัติเรียบร้อยแล้ว — บ้านเลขที่ ' + houseNumber, 'success');
+                } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+                return;
+            }
+
+            // ── ประเภทอื่น หรือ Reject → ใช้ reviewRequest ──
+            var confirmMsg = action === 'approved'
+                ? 'ยืนยันอนุมัติคำร้องนี้?'
+                : 'ยืนยันปฏิเสธคำร้องนี้?';
+            if (!await ppkConfirm(confirmMsg, action === 'rejected' ? { type: 'danger', okText: 'ปฏิเสธ' } : {})) return;
+
+            try {
+                var result2 = await callBackend('reviewRequest', {
+                    requestId: id, type: type, status: action, note: comment,
+                    signature: signatureData, reviewerName: reviewerName
+                });
+                if (!result2 || result2.success === false) {
+                    ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result2 && result2.error ? result2.error : 'กรุณาลองใหม่'), 'error');
+                    return;
+                }
+                _clearRequestsCache();
+                closeModal('detailModal');
+                await loadAllRequests();
+                renderAll();
+                var msg = action === 'approved' ? '✅ อนุมัติคำร้องเรียบร้อยแล้ว' : '❌ ปฏิเสธคำร้องเรียบร้อยแล้ว';
+                if (result2.warning) msg += '\n⚠️ ' + result2.warning;
+                ppkAlert(msg, action === 'approved' ? 'success' : 'info');
+            } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message, 'error'); }
         }
 
         // ========== Return Request — 2-step approval ==========
@@ -2718,7 +2838,7 @@
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
     <script src="supabase/supabase.min.js?v=20260319A"></script>
-    <script src="ppk-api.js?v=20260403C"></script>
+    <script src="ppk-api.js?v=20260403D"></script>
     <script src="ppk-app.js?v=20260323E"></script>
     <script src="ppk-utils.js?v=20260323E"></script>
     <script src="ppk-nav.js?v=20260323E"></script>
