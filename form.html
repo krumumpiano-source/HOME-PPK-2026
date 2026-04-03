@@ -441,7 +441,10 @@
                     html += '📋 หัวหน้างานลงความเห็นเรียบร้อยแล้ว — กรุณา<b>พิมพ์คำร้อง</b>เพื่อนำเสนอลำดับต่อไป</div>';
                 }
                 html += '<dl class="req-dl">';
-                if (req.head_reviewer_name) html += '<dt>ผู้ลงความเห็น</dt><dd>' + _esc(req.head_reviewer_name) + '</dd>';
+                if (req.head_reviewer_name) {
+                    var _posText = req.head_reviewer_position ? ' (' + _esc(req.head_reviewer_position) + ')' : '';
+                    html += '<dt>ผู้ลงความเห็น</dt><dd>' + _esc(req.head_reviewer_name) + _posText + '</dd>';
+                }
                 if (req.head_reviewed_at || req.reviewed_at) html += '<dt>วันที่ลงความเห็น</dt><dd>' + _fmtDate(req.head_reviewed_at || req.reviewed_at) + '</dd>';
                 if (req.head_comment) html += '<dt>ความเห็น</dt><dd style="white-space:pre-wrap;background:var(--c-surface-2);padding:0.5rem 0.6rem;border-radius:var(--radius-sm);border-left:3px solid ' + s.color + ';">' + _esc(req.head_comment) + '</dd>';
                 if (req.review_note && req.review_note !== req.head_comment) html += '<dt>หมายเหตุ</dt><dd style="white-space:pre-wrap;">' + _esc(req.review_note) + '</dd>';
@@ -675,6 +678,7 @@
                 // ── ดึงข้อมูลความเห็นหัวหน้างานจาก DB (ถ้ามี) ──
                 var _hComment = _escHtml(req.head_comment || req.review_note || '');
                 var _hName = _escHtml(req.head_reviewer_name || '');
+                var _hPosition = _escHtml(req.head_reviewer_position || '');
                 var _hSig = req.head_signature || '';
                 var _hDate = '';
                 if (req.head_reviewed_at || req.reviewed_at) {
@@ -695,7 +699,7 @@
                     pw.document.write('<div style="text-align:right;margin-top:0.3cm;">');
                     if (_hSig) pw.document.write('<div style="text-align:center;margin-bottom:0.1cm;"><img src="' + _hSig + '" style="max-height:60px;"></div>');
                     else pw.document.write('ลงชื่อ<span class="dotted-line-sig"></span><br>');
-                    pw.document.write('(' + (_hName || hn || '<span class="dotted-line-short"></span>') + ')<br>วันที่ ' + (_hDate || '<span class="dotted-line-date"></span>') + '</div>');
+                    pw.document.write('(' + (_hName || hn || '<span class="dotted-line-short"></span>') + ')' + (_hPosition ? '<br>' + _hPosition : '') + '<br>วันที่ ' + (_hDate || '<span class="dotted-line-date"></span>') + '</div>');
                 } else {
                     pw.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (hn||'<span class="dotted-line-short"></span>') + ')<br>วันที่<span class="dotted-line-date"></span></div>');
                 }

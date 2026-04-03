@@ -1238,6 +1238,7 @@ async function _routeAction(action, data) {
                 head_signature:     data.head_signature || null,
                 head_reviewed_at:   hrNow,
                 head_reviewer_name: hrName,
+                head_reviewer_position: data.head_reviewer_position || null,
                 review_note:        data.head_comment || '',
                 reviewed_by:        hrSess.userId,
                 reviewed_at:        hrNow,
@@ -2344,6 +2345,7 @@ async function _routeAction(action, data) {
             // เพิ่มลายเซ็น + ชื่อผู้อนุมัติ (ถ้ามี)
             if (data.signature) { _rrUpdateBody.head_signature = data.signature; _rrUpdateBody.head_reviewed_at = new Date().toISOString(); }
             if (data.reviewerName) _rrUpdateBody.head_reviewer_name = data.reviewerName;
+            if (data.reviewerPosition) _rrUpdateBody.head_reviewer_position = data.reviewerPosition;
             if (data.note) _rrUpdateBody.head_comment = data.note;
             var _rrPatchResult = await sbPatch('requests', { id: 'eq.' + reqIdToReview }, _rrUpdateBody);
             if (!_rrPatchResult || (Array.isArray(_rrPatchResult) && _rrPatchResult.length === 0)) {
@@ -2603,6 +2605,7 @@ async function _routeAction(action, data) {
                 reviewed_by: arReviewerId || '', reviewed_at: new Date().toISOString(),
                 review_note: data.note || '', updated_at: new Date().toISOString(),
                 head_reviewer_name: data.reviewerName || '',
+                head_reviewer_position: data.reviewerPosition || null,
                 head_signature:     data.signature || null,
                 head_reviewed_at:   new Date().toISOString()
             });

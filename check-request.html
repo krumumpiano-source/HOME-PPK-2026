@@ -1942,9 +1942,15 @@
                         <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ความเห็น / หมายเหตุ</label>
                         <textarea id="detailReviewComment" rows="3" placeholder="ลงความเห็น..." style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;resize:vertical;box-sizing:border-box;">${_e(item.reviewNote || '')}</textarea>
                     </div>
-                    <div style="margin-bottom:0.75rem;">
-                        <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ชื่อผู้ลงความเห็น <span style="color:#ef4444;">*</span></label>
-                        <input type="text" id="detailReviewerName" value="${_e(_reviewerNamePrefill)}" placeholder="ชื่อ-นามสกุลผู้ลงความเห็น" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
+                    <div style="display:flex;gap:0.6rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:180px;">
+                            <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ชื่อผู้ลงความเห็น <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="detailReviewerName" value="${_e(_reviewerNamePrefill)}" placeholder="ชื่อ-นามสกุล" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;min-width:180px;">
+                            <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ตำแหน่ง <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="detailReviewerPosition" value="" placeholder="เช่น หัวหน้างานส่งเสริมฯ" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
+                        </div>
                     </div>
                     <div style="margin-bottom:0.75rem;">
                         <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ลายเซ็นดิจิทัล</label>
@@ -2154,7 +2160,9 @@
 
             var comment = document.getElementById('detailReviewComment').value.trim();
             var reviewerName = document.getElementById('detailReviewerName').value.trim();
+            var reviewerPosition = document.getElementById('detailReviewerPosition').value.trim();
             if (!reviewerName) { ppkAlert('กรุณาระบุชื่อผู้ลงความเห็น', 'error'); return; }
+            if (!reviewerPosition) { ppkAlert('กรุณาระบุตำแหน่งผู้ลงความเห็น', 'error'); return; }
 
             // ดึงลายเซ็นจาก canvas
             var signatureData = null;
@@ -2174,7 +2182,7 @@
                 try {
                     var result = await callBackend('reviewRequest', {
                         requestId: id, type: type, status: 'reviewing', note: comment,
-                        signature: signatureData, reviewerName: reviewerName
+                        signature: signatureData, reviewerName: reviewerName, reviewerPosition: reviewerPosition
                     });
                     if (!result || result.success === false) {
                         ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
@@ -2195,7 +2203,7 @@
                 try {
                     var result = await callBackend('reviewRequest', {
                         requestId: id, type: type, status: 'waiting', note: comment,
-                        signature: signatureData, reviewerName: reviewerName
+                        signature: signatureData, reviewerName: reviewerName, reviewerPosition: reviewerPosition
                     });
                     if (!result || result.success === false) {
                         ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
@@ -2219,7 +2227,7 @@
             try {
                 var result2 = await callBackend('reviewRequest', {
                     requestId: id, type: type, status: action, note: comment,
-                    signature: signatureData, reviewerName: reviewerName
+                    signature: signatureData, reviewerName: reviewerName, reviewerPosition: reviewerPosition
                 });
                 if (!result2 || result2.success === false) {
                     ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result2 && result2.error ? result2.error : 'กรุณาลองใหม่'), 'error');
