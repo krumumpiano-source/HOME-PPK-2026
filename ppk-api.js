@@ -438,7 +438,7 @@ async function callBackendGet(action, params) {
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
     'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
     'saveHousingFormat','setupAdmin',
-    'getAdminTeam','getUsersList','getAllPermissions','uploadRegulationPdf','deleteRegulationPdf',
+    'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser'];
 
 // ── Storage bucket helper: auto-create if not exists ──
@@ -809,6 +809,15 @@ async function _routeAction(action, data) {
         case 'getPendingRegistrations': {
             var rows = await sbGet('pending_registrations', { status: 'eq.pending', order: 'submitted_at.desc' });
             return { success: true, data: rows };
+        }
+        case 'getFloatingUsers': {
+            var allUsers = await sbGet('users', { is_active: 'eq.true', select: 'id,email,prefix,firstname,lastname,position,phone,created_at' });
+            allUsers = allUsers || [];
+            var activeRes = await sbGet('residents', { is_active: 'eq.true', select: 'user_id' });
+            var resUserIds = {};
+            (activeRes || []).forEach(function(r) { if (r.user_id) resUserIds[r.user_id] = true; });
+            var floating = allUsers.filter(function(u) { return !resUserIds[u.id]; });
+            return { success: true, data: floating };
         }
         case 'approveRegistration': {
             var regId = data.regId || data.id;
