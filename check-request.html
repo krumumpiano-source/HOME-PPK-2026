@@ -2578,8 +2578,7 @@
                 closeModal('approveHouseModal');
                 await loadAllRequests();
                 renderAll();
-                ppkAlert('✅ อนุมัติเรียบร้อยแล้ว — บ้านเลขที่ ' + houseNumber + (signatureData ? '' : '
-ℹ️ ไม่มีลายเซ็น — สามารถดูรายละเอียดแล้วเพิ่มภายหลังได้'), 'success');
+                ppkAlert('✅ อนุมัติเรียบร้อยแล้ว — บ้านเลขที่ ' + houseNumber + (signatureData ? '' : '\nℹ️ ไม่มีลายเซ็น — สามารถดูรายละเอียดแล้วเพิ่มภายหลังได้'), 'success');
             } catch (e) {
                 console.error('อนุมัติไม่สำเร็จ:', e);
                 ppkAlert('❌ อนุมัติไม่สำเร็จ: ' + (e.message || 'กรุณาลองใหม่'));
