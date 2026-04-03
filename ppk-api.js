@@ -436,7 +436,7 @@ async function callBackendGet(action, params) {
 ══════════════════════════════════════════ */
 // Actions ที่ต้องเป็น admin/head เท่านั้น (ห้ามมอบหมาย)
 var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addResident','updateResident','removeResident',
-    'approveRegistration','rejectRegistration','approveResidence','updatePermissions','deleteAnnouncement',
+    'approveRegistration','rejectRegistration','approveResidence','approveReturn','updatePermissions','deleteAnnouncement',
     'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser'];
@@ -2096,6 +2096,74 @@ async function _routeAction(action, data) {
             return { success: true, data: row };
         }
 
+        /* ── Approve Return: อนุมัติคืนบ้านพัก (ย้ายออก) ── */
+        case 'approveReturn': {
+            if (!data.requestId) return { success: false, error: 'ไม่ระบุ ID คำร้อง' };
+            var _arSess2 = await _getSessionRole();
+            var _arReviewerId2 = _arSess2 ? _arSess2.userId : null;
+            if (!_arReviewerId2) return { success: false, error: 'กรุณาเข้าสู่ระบบก่อน' };
+
+            // 1. ดึง request + validate
+            var _arReqRows2 = await sbGet('requests', { id: 'eq.' + data.requestId, select: 'user_id,status', limit: '1' });
+            if (!_arReqRows2 || !_arReqRows2[0]) return { success: false, error: 'ไม่พบคำร้อง' };
+            var _arReq2 = _arReqRows2[0];
+            if (_arReq2.status === 'approved') return { success: false, error: 'คำร้องนี้ถูกดำเนินการแล้ว' };
+
+            var _arUserId2 = _arReq2.user_id;
+            if (!_arUserId2) return { success: false, error: 'คำร้องไม่มี user_id' };
+
+            // 2. ดึง resident ที่ active
+            var _arResRows2 = await sbGet('residents', { user_id: 'eq.' + _arUserId2, is_active: 'eq.true', limit: '1' });
+            if (!_arResRows2 || !_arResRows2[0]) return { success: false, error: 'ไม่พบผู้พักอาศัยที่ active' };
+            var _arRes2 = _arResRows2[0];
+            var _arHouseNumber2 = _arRes2.house_number;
+            var _arHouseId2 = _arRes2.house_id;
+            var _arToday2 = new Date().toISOString().split('T')[0];
+
+            // 3. ตรวจยอดค้าง
+            var _arOutRows2 = [];
+            try { _arOutRows2 = await sbGet('outstanding', { house_number: 'eq.' + _arHouseNumber2, status: 'neq.paid' }) || []; } catch(e) {}
+            var _arHasOut2 = _arOutRows2.length > 0;
+
+            // 4. mark outstanding ว่าย้ายออกแล้ว
+            if (_arHouseNumber2) {
+                try {
+                    await sbPatch('outstanding', { house_number: 'eq.' + _arHouseNumber2, status: 'neq.paid' },
+                        { moved_out_at: new Date().toISOString() });
+                } catch(e) {}
+            }
+
+            // 5. deactivate resident + บันทึก end_date
+            await sbPatch('residents', { id: 'eq.' + _arRes2.id }, {
+                is_active: false, end_date: _arToday2, updated_at: new Date().toISOString()
+            });
+
+            // 6. ลบ coresidents
+            try { await sbDelete('coresidents', { resident_id: 'eq.' + _arRes2.id }); } catch(e) {}
+
+            // 7. บ้าน → available
+            if (_arHouseId2) {
+                try { await sbPatch('housing', { id: 'eq.' + _arHouseId2 }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+
+            // 8. จัดการ user: ถ้ามียอดค้าง → คงไว้ให้ login ได้, ถ้าไม่มี → deactivate
+            if (!_arHasOut2) {
+                await sbPatch('users', { id: 'eq.' + _arUserId2 }, { is_active: false, updated_at: new Date().toISOString() });
+                try { await sbDelete('sessions', { user_id: 'eq.' + _arUserId2 }); } catch(e) {}
+            }
+
+            // 9. approve request
+            await sbPatch('requests', { id: 'eq.' + data.requestId }, {
+                status: 'approved', reviewed_by: _arReviewerId2,
+                reviewed_at: new Date().toISOString(),
+                review_note: data.note || '', updated_at: new Date().toISOString()
+            });
+
+            invalidateResidentCache();
+            _logActivity('approve_return', _arReviewerId2, 'อนุมัติคืนบ้าน ' + _arHouseNumber2, { requestId: data.requestId, houseNumber: _arHouseNumber2, hasOutstanding: _arHasOut2 });
+            return { success: true, hasOutstanding: _arHasOut2 };
+        }
+
         /* ── Request review ───────────────────────── */
         case 'reviewRequest': {
             var reqIdToReview = data.id || data.requestId;
@@ -2170,8 +2238,61 @@ async function _routeAction(action, data) {
                     }
                 } catch (e) { console.warn('Auto-delete attachments failed:', e); }
             }
+            // ── Phase C: auto-execute transfer เมื่ออนุมัติ ──
+            var _rrWarning = null;
+            if (data.type === 'transfer' && data.status === 'approved') {
+                try {
+                    var _trReqR = await sbGet('requests', { id: 'eq.' + reqIdToReview, select: 'user_id,details', limit: '1' });
+                    var _trReqD = _trReqR && _trReqR[0];
+                    if (_trReqD) {
+                        var _trDet = _trReqD.details || {};
+                        var _trCurHouse = _trDet.current_house || '';
+                        var _trTgtHouse = _trDet.target_house || '';
+                        var _trUID = _trReqD.user_id;
+                        if (_trCurHouse && _trTgtHouse && _trUID) {
+                            var _trTgtRows = await sbGet('housing', { house_number: 'eq.' + _trTgtHouse, limit: '1' });
+                            var _trTgt = _trTgtRows && _trTgtRows[0];
+                            if (!_trTgt || _trTgt.status !== 'available') {
+                                _rrWarning = 'อนุมัติคำร้องแล้ว แต่บ้านปลายทาง (' + _trTgtHouse + ') ยังไม่ว่าง กรุณาย้ายบ้านด้วยตนเอง';
+                            } else {
+                                var _trResR = await sbGet('residents', { user_id: 'eq.' + _trUID, is_active: 'eq.true', limit: '1' });
+                                var _trRes = _trResR && _trResR[0];
+                                if (_trRes) {
+                                    var _trOldHId = _trRes.house_id;
+                                    // ย้าย resident → บ้านใหม่
+                                    await sbPatch('residents', { id: 'eq.' + _trRes.id }, {
+                                        house_id: _trTgt.id, house_number: _trTgtHouse,
+                                        move_in_date: new Date().toISOString().split('T')[0],
+                                        updated_at: new Date().toISOString()
+                                    });
+                                    // sync coresidents
+                                    try {
+                                        var _trCorR = await sbGet('coresidents', { resident_id: 'eq.' + _trRes.id });
+                                        for (var _tci2 = 0; _trCorR && _tci2 < _trCorR.length; _tci2++) {
+                                            await sbPatch('coresidents', { id: 'eq.' + _trCorR[_tci2].id }, { house_id: _trTgt.id });
+                                        }
+                                    } catch(e) {}
+                                    // บ้านเก่า → available
+                                    if (_trOldHId) {
+                                        try { await sbPatch('housing', { id: 'eq.' + _trOldHId }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+                                    }
+                                    // บ้านใหม่ → occupied
+                                    await sbPatch('housing', { id: 'eq.' + _trTgt.id }, { status: 'occupied', updated_at: new Date().toISOString() });
+                                    // mark outstanding บ้านเก่าว่าย้ายออก
+                                    try {
+                                        await sbPatch('outstanding', { house_number: 'eq.' + _trCurHouse, status: 'neq.paid' },
+                                            { moved_out_at: new Date().toISOString() });
+                                    } catch(e) {}
+                                    invalidateResidentCache();
+                                }
+                            }
+                        }
+                    }
+                } catch(te) { console.warn('Transfer auto-execute error:', te); }
+            }
+
             _logActivity('review_request', reqReviewerId, (data.status || '') + ' คำร้อง', { requestId: reqIdToReview, status: data.status });
-            return { success: true };
+            return { success: true, warning: _rrWarning };
         }
         case 'updateQueue': {
             var ids = data.orderedIds || [];
@@ -2234,7 +2355,22 @@ async function _routeAction(action, data) {
 
             var arResidentId = null;
             if (arExistRes) {
-                // กรณี B: มี resident อยู่แล้ว → อัปเดต house assignment
+                // กรณี B: มี resident อยู่แล้ว → cleanup บ้านเก่าก่อน แล้วอัปเดต house assignment
+                var _arOldHId = arExistRes.house_id;
+                var _arOldHNum = arExistRes.house_number;
+                if (_arOldHId && _arOldHId !== arHouseId) {
+                    // ลบ coresidents บ้านเก่า
+                    try { await sbDelete('coresidents', { resident_id: 'eq.' + arExistRes.id }); } catch(e) {}
+                    // บ้านเก่า → available
+                    try { await sbPatch('housing', { id: 'eq.' + _arOldHId }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+                    // mark outstanding บ้านเก่าว่าย้ายออกแล้ว
+                    if (_arOldHNum) {
+                        try {
+                            await sbPatch('outstanding', { house_number: 'eq.' + _arOldHNum, status: 'neq.paid' },
+                                { moved_out_at: new Date().toISOString() });
+                        } catch(e) {}
+                    }
+                }
                 await sbPatch('residents', { id: 'eq.' + arExistRes.id }, {
                     house_id: arHouseId, house_number: arHouseNum,
                     move_in_date: arToday, start_date: arToday,
@@ -2502,17 +2638,27 @@ async function _routeAction(action, data) {
                     { residents: _bakRm, coresidents: _bakCorRm });
             } catch(e) {}
 
-            // 1. soft-delete resident
-            await sbPatch('residents', { id: 'eq.' + rid }, { is_active: false, updated_at: new Date().toISOString() });
+            // 1. soft-delete resident + บันทึก end_date
+            var _rmToday = new Date().toISOString().split('T')[0];
+            await sbPatch('residents', { id: 'eq.' + rid }, { is_active: false, end_date: _rmToday, updated_at: new Date().toISOString() });
 
-            // 2. soft-delete user ที่เชื่อมอยู่
+            // 2. ตรวจยอดค้างก่อน deactivate user
+            //    ถ้ามียอดค้าง → user ยังล็อกอินได้ (เพื่อดูยอดและชำระเงิน)
+            //    ถ้าไม่มียอดค้าง → deactivate + ลบ sessions ทันที
             var _rmUserId = _rmRes ? _rmRes.user_id : null;
             if (!_rmUserId && _rmRes && _rmRes.email) {
                 var _rmByEmail = await sbGet('users', { email: 'eq.' + _rmRes.email.toLowerCase(), select: 'id', limit: '1' });
                 if (_rmByEmail && _rmByEmail[0]) _rmUserId = _rmByEmail[0].id;
             }
             if (_rmUserId) {
-                await sbPatch('users', { id: 'eq.' + _rmUserId }, { is_active: false, updated_at: new Date().toISOString() });
+                var _rmOutRows = [];
+                try { _rmOutRows = await sbGet('outstanding', { house_number: 'eq.' + _rmHouseNumber, status: 'neq.paid' }) || []; } catch(e) {}
+                if (_rmOutRows.length === 0) {
+                    // ไม่มียอดค้าง → deactivate + ลบ sessions
+                    await sbPatch('users', { id: 'eq.' + _rmUserId }, { is_active: false, updated_at: new Date().toISOString() });
+                    try { await sbDelete('sessions', { user_id: 'eq.' + _rmUserId }); } catch(e) {}
+                }
+                // ถ้ามียอดค้าง → user ยังล็อกอินได้ ไม่ต้อง deactivate
             }
 
             // 3. ลบ coresidents ของผู้พักนี้ (backup เก็บไว้ข้างบนแล้ว)

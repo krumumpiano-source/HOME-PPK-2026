@@ -939,13 +939,23 @@
             
             // ส่งไป Backend
             try {
-                    await callBackend('reviewRequest', {
-                        requestId: id,
-                        type: type,
-                        status: newStatus,
-                        note: note
-                    });
+                    var _ursResult;
+                    if (type === 'return' && newStatus === 'approved') {
+                        // Phase B: อนุมัติคืนบ้าน → เรียก approveReturn ซึ่ง cleanup บ้านอัตโนมัติ
+                        _ursResult = await callBackend('approveReturn', { requestId: id, note: note });
+                    } else {
+                        _ursResult = await callBackend('reviewRequest', {
+                            requestId: id,
+                            type: type,
+                            status: newStatus,
+                            note: note
+                        });
+                    }
                     _clearRequestsCache();
+                    // Phase I: แสดง warning ถ้ามี (เช่น บ้านปลายทางไม่ว่าง)
+                    if (_ursResult && _ursResult.warning && typeof ppkToast === 'function') {
+                        ppkToast(_ursResult.warning, 'warning');
+                    }
                 } catch (e) {
                     console.error('อัปเดตสถานะไม่สำเร็จ:', e);
                 }
