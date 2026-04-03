@@ -1319,7 +1319,8 @@ async function _routeAction(action, data) {
             var tsA = Date.now();
             var pathA = houseNum + '/' + dateStr + '/' + (reqIdA ? reqIdA + '_' : '') + tsA + '_' + safeOrigName;
             var blobA = new Blob([bytesA], { type: mimeA });
-            var upResA = await window._sb.storage.from(bucketA).upload(pathA, blobA, { contentType: mimeA, upsert: false });
+            try { await _ensureBucket(bucketA); } catch(e) {}
+            var upResA = await window._sb.storage.from(bucketA).upload(pathA, blobA, { contentType: mimeA, upsert: true });
             if (upResA.error) {
                 return { success: false, error: 'อัปโหลดไม่สำเร็จ: ' + (upResA.error.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ') };
             }

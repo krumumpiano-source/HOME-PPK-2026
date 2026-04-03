@@ -620,9 +620,9 @@
         printWindow.document.write('</style>');
         printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script></head><body>');
 
-        printWindow.document.write('<div class="memo-title">บันทึกข้อความ</div>');
-        printWindow.document.write('<table class="memo-table"><tr><td colspan="2"><b>ส่วนราชการ</b>&emsp;งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&emsp;โรงเรียนพะเยาพิทยาคม</td></tr><tr><td style="width:60%;"><b>ที่</b>&emsp;พย./พก.&nbsp;<span class="dotted-line-short"></span>/<span class="dotted-line-short"></span></td><td><b>วันที่</b>&emsp;' + dateStr + '</td></tr><tr><td colspan="2"><b>เรื่อง</b>&emsp;ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม</td></tr></table>');
-        printWindow.document.write('<hr class="memo-divider">');
+        printWindow.document.write('<div style="text-align:center;border-bottom:3px double #000;padding-bottom:0.5cm;margin-bottom:0.4cm;"><div style="font-size:22pt;font-weight:bold;margin-bottom:0.15cm;line-height:1.4;">คำร้องขอเข้าพักอาศัยในบ้านพักครู</div><div style="font-size:16pt;font-weight:bold;">โรงเรียนพะเยาพิทยาคม&emsp;สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาพะเยา</div></div>');
+        printWindow.document.write('<table style="width:100%;border:none;border-collapse:collapse;font-size:15pt;margin-bottom:0.25cm;"><tr><td style="border:none;padding:0.08cm 0;width:55%;"><b>ที่</b>&ensp;พย./พก.<span style="display:inline-block;width:2.2cm;border-bottom:1px solid #000;margin:0 0.15cm;"></span>/<span style="display:inline-block;width:2.2cm;border-bottom:1px solid #000;margin-left:0.15cm;"></span></td><td style="border:none;padding:0.08cm 0;text-align:right;"><b>วันที่</b>&ensp;' + dateStr + '</td></tr></table>');
+        printWindow.document.write('<div style="font-size:15pt;margin-bottom:0.25cm;"><b>เรื่อง</b>&emsp;ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม</div>');
         printWindow.document.write('<div class="salutation"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
         printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' มีความประสงค์ขอเข้าพักอาศัยในบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยมีรายละเอียดดังต่อไปนี้</p>');
 
@@ -665,8 +665,9 @@
         printWindow.document.write('<div class="approval-box"><div class="approval-header">คำสั่งผู้อำนวยการ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
         printWindow.document.write('</div>');
 
-        const fileInput = document.getElementById('file-input');
-        const files = fileInput.files;
+        const files = (typeof _attachedFiles !== 'undefined' && _attachedFiles.length > 0)
+            ? _attachedFiles
+            : (document.getElementById('file-input').files || []);
         if (files.length > 0) {
             printWindow.document.write('<div style="page-break-before:always;"></div>');
             printWindow.document.write('<div class="header" style="margin-top:1cm;"><div class="header-title">เอกสารแนบประกอบคำร้อง</div></div>');
