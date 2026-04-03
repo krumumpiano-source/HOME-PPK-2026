@@ -2186,6 +2186,28 @@ async function _routeAction(action, data) {
                         }
                     } catch(e) { console.warn('reviewSlip: auto-mark outstanding paid error', e); }
                 }
+
+                // ─── Auto-deactivate ผู้ย้ายออกแล้วหากยอดค้างครบทุกงวด ───
+                try {
+                    // โหลดยอดค้างที่ยังไม่จ่ายสำหรับบ้านนี้ทั้งหมด
+                    var _rsAllOut = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, status: 'neq.paid' }) || [];
+                    // กรอง JS เอาเฉพาะที่มี moved_out_at (= ยอดเก่าของผู้ย้ายออก)
+                    var _rsMovedOutRemaining = _rsAllOut.filter(function(o) { return !!o.moved_out_at; });
+                    if (_rsMovedOutRemaining.length === 0) {
+                        // หาผู้พักที่ is_active=false (ถูก deactivate ไปแล้วจาก executeReturn) สำหรับบ้านนี้
+                        var _rsMORRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.false', select: 'user_id,end_date', order: 'end_date.desc', limit: '5' }) || [];
+                        var _rsMOR = _rsMORRows.find(function(r) { return r.end_date && r.user_id; });
+                        if (_rsMOR && _rsMOR.user_id) {
+                            // deactivate user ถ้ายังอยู่ในระบบ (is_active=true)
+                            var _rsMORUser = await sbGet('users', { id: 'eq.' + _rsMOR.user_id, is_active: 'eq.true', limit: '1' }) || [];
+                            if (_rsMORUser && _rsMORUser[0]) {
+                                await sbPatch('users', { id: 'eq.' + _rsMOR.user_id }, { is_active: false, updated_at: new Date().toISOString() });
+                                try { await sbDelete('sessions', { user_id: 'eq.' + _rsMOR.user_id }); } catch(e2) {}
+                                _logActivity('auto_deactivate_moved_out', reviewedBy, 'auto-deactivate ผู้ย้ายออก เพราะชำระครบแล้ว บ้าน=' + data.houseNumber, { userId: _rsMOR.user_id, houseNumber: data.houseNumber });
+                            }
+                        }
+                    }
+                } catch(e) { console.warn('reviewSlip: auto-deactivate moved-out user error', e); }
             }
             _logActivity('review_slip', reviewedBy, (data.status === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ') + 'สลิป ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { slipId: data.id, status: data.status, house_number: data.houseNumber, period: data.period });
             return { success: true };
