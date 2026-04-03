@@ -2614,6 +2614,8 @@
                 await loadAllRequests();
                 initQueueExpirySelector();
                 renderAll();
+                // ── Auto-execute overdue approved return requests ──
+                setTimeout(function() { autoExecuteOverdueReturns(); }, 1500);
             } catch(e) {
                 console.error('loadAllRequests error', e);
                 var errMsg = '<div style="text-align:center;padding:2rem;color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า<br><small>' + (e.message||'') + '</small></div>';
@@ -2629,6 +2631,45 @@
             localStorage.removeItem('currentUser');
             localStorage.removeItem('sessionToken');
             window.location.replace('login.html');
+        }
+
+        // ── อัตโนมัติ: ดำเนินการย้ายออกเมื่อถึงวันที่กำหนดแล้ว ──
+        async function autoExecuteOverdueReturns() {
+            var today = new Date(); today.setHours(0,0,0,0);
+            var pending = (getData('return') || []).filter(function(item) {
+                if (item.status !== 'approved') return false;
+                var d = item.returnDate ? new Date(item.returnDate) : null;
+                return d && d <= today;
+            });
+            if (pending.length === 0) return;
+
+            var names = pending.map(function(i) { return 'บ้าน' + (i.houseNumber||i.id); }).join(', ');
+            var confirmed = await ppkConfirm(
+                '🏠 พบคำร้องขอคืนบ้านพักที่ถึงกำหนดแล้ว ' + pending.length + ' รายการ\n\n' + names + '\n\nดำเนินการย้ายออกอัตโนมัติทันทีเลยไหม?',
+                { okText: 'ดำเนินการทั้งหมด', cancelText: 'ดำเนินการเองภายหลัง' }
+            );
+            if (!confirmed) return;
+
+            var doneCount = 0, errList = [];
+            for (var i = 0; i < pending.length; i++) {
+                var item = pending[i];
+                try {
+                    var result = await callBackend('approveReturn', { requestId: item.id, returnDate: item.returnDate, note: 'auto-executed on due date' });
+                    if (result && result.success) {
+                        doneCount++;
+                    } else {
+                        errList.push('บ้าน' + (item.houseNumber||item.id) + ': ' + (result && result.error || 'ไม่สำเร็จ'));
+                    }
+                } catch(e) {
+                    errList.push('บ้าน' + (item.houseNumber||item.id) + ': ' + e.message);
+                }
+            }
+            _clearRequestsCache();
+            await loadAllRequests();
+            renderAll();
+            var msg = '✅ ดำเนินการย้ายออกสำเร็จ ' + doneCount + ' รายการ';
+            if (errList.length > 0) msg += '\n\n⚠️ ล้มเหลว:\n' + errList.join('\n');
+            ppkAlert(msg, doneCount > 0 ? 'success' : 'error');
         }
         </script>
     <script src="supabase/config.js?v=20260319A"></script>
