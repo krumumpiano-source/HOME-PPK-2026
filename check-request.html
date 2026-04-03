@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -940,17 +940,14 @@
             // ส่งไป Backend
             try {
                     var _ursResult;
-                    if (type === 'return' && newStatus === 'approved') {
-                        // Phase B: อนุมัติคืนบ้าน → เรียก approveReturn ซึ่ง cleanup บ้านอัตโนมัติ
-                        _ursResult = await callBackend('approveReturn', { requestId: id, note: note });
-                    } else {
-                        _ursResult = await callBackend('reviewRequest', {
-                            requestId: id,
-                            type: type,
-                            status: newStatus,
-                            note: note
-                        });
-                    }
+                    // return + approved → แค่อัปเดต status (ไม่ cleanup ทันที)
+                    // การ cleanup จริง (deactivate resident/บ้าน) ทำโดย executeReturn() เมื่อถึงวันที่กำหนด
+                    _ursResult = await callBackend('reviewRequest', {
+                        requestId: id,
+                        type: type,
+                        status: newStatus,
+                        note: note
+                    });
                     _clearRequestsCache();
                     // Phase I: แสดง warning ถ้ามี (เช่น บ้านปลายทางไม่ว่าง)
                     if (_ursResult && _ursResult.warning && typeof ppkToast === 'function') {
@@ -1655,11 +1652,18 @@
                     </div>` : ''}
                 `;
             } else if (type === 'return') {
+                // ตรวจสอบว่าถึงวันคืนบ้านแล้วหรือยัง
+                var _retDateObj = item.returnDate ? new Date(item.returnDate) : null;
+                var _retToday = new Date(); _retToday.setHours(0,0,0,0);
+                var _retReady = _retDateObj && _retDateObj <= _retToday;
+                var _retResidents = item.residents || [];
+                if (typeof _retResidents === 'string') { try { _retResidents = JSON.parse(_retResidents); } catch(e) { _retResidents = []; } }
+
                 content = `
                     <div class="detail-grid">
                         <div class="detail-item">
                             <div class="detail-label">รหัสคำร้อง</div>
-                            <div class="detail-value">${item.id}</div>
+                            <div class="detail-value" style="font-family:monospace;">${item.id}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">วันที่ยื่น</div>
@@ -1667,23 +1671,28 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ชื่อ-นามสกุล</div>
-                            <div class="detail-value">${_e(item.prefix)}${_e(item.fullname)}</div>
+                            <div class="detail-value" style="font-weight:700;">${_e(item.prefix)}${_e(item.fullname)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">ตำแหน่ง</div>
                             <div class="detail-value">${_e(item.position) || '-'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">เบอร์โทรศัพท์</div>
-                            <div class="detail-value">${_e(item.phone)}</div>
+                            <div class="detail-label">กลุ่มสาระ/องค์กร</div>
+                            <div class="detail-value">${_e(item.subjectGroup) || '-'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">กลุ่มสาระ</div>
-                            <div class="detail-value">${_e(item.subjectGroup)}</div>
+                            <div class="detail-label">เบอร์โทรศัพท์</div>
+                            <div class="detail-value">${_e(item.phone) || '-'}</div>
                         </div>
+                        ${item.email ? `
+                        <div class="detail-item">
+                            <div class="detail-label">อีเมล</div>
+                            <div class="detail-value">${_e(item.email)}</div>
+                        </div>` : ''}
                         <div class="detail-item">
                             <div class="detail-label">หมายเลขบ้านพัก</div>
-                            <div class="detail-value">${_e(item.houseNumber)}</div>
+                            <div class="detail-value" style="font-size:1.1rem;font-weight:700;color:#7c3aed;">บ้าน${_e(item.houseNumber)}</div>
                         </div>
                         ${item.moveInDate ? `
                         <div class="detail-item">
@@ -1691,22 +1700,42 @@
                             <div class="detail-value">${formatDate(item.moveInDate)}</div>
                         </div>` : ''}
                         <div class="detail-item">
-                            <div class="detail-label">วันที่ต้องการคืน</div>
-                            <div class="detail-value">${formatDate(item.returnDate)}</div>
+                            <div class="detail-label">📅 วันที่กำหนดคืนบ้าน</div>
+                            <div class="detail-value" style="font-size:1.05rem;font-weight:700;color:#dc2626;">${formatDate(item.returnDate)}${_retReady ? ' <span style="background:#dcfce7;color:#166534;font-size:0.78rem;padding:0.15rem 0.5rem;border-radius:8px;font-weight:600;">✅ ถึงวันแล้ว</span>' : ' <span style="background:#fef3c7;color:#92400e;font-size:0.78rem;padding:0.15rem 0.5rem;border-radius:8px;font-weight:600;">⏳ ยังไม่ถึงวัน</span>'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">สถานะ</div>
+                            <div class="detail-label">สถานะคำร้อง</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
                         </div>
                     </div>
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">เหตุผลในการขอคืน</div>
-                        <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + _e(item.otherReason) : ''}</div>
+                        <div class="detail-value" style="white-space:pre-wrap;background:#fef2f2;padding:0.75rem;border-radius:8px;border-left:3px solid #f87171;">${getReasonText(item.reasons)}${item.otherReason ? '<br>ระบุเพิ่มเติม: ' + _e(item.otherReason) : ''}</div>
                     </div>
+                    ${_retResidents.length > 0 ? `
+                    <div class="detail-item" style="margin-top:1rem;">
+                        <div class="detail-label">ผู้อยู่ร่วม (${_retResidents.length} คน)</div>
+                        <div style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.4rem;">
+                            ${_retResidents.map(r => '<div style="padding:0.4rem 0.7rem;background:#f8fafc;border-radius:6px;font-size:0.9rem;">' + (typeof r === 'string' ? _e(r) : (_e(r.prefix||'') + _e(r.name||r.fullname||'') + (r.relation ? ' <span style="color:#6b7280;font-size:0.82rem;">(' + _e(r.relation) + ')</span>' : ''))) + '</div>').join('')}
+                        </div>
+                    </div>` : ''}
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
                         <div class="detail-value" style="white-space:pre-wrap;background:#f8fafc;padding:0.75rem;border-radius:8px;">${_e(item.additionalInfo)}</div>
+                    </div>` : ''}
+                    ${(item.status === 'pending' || item.status === 'reviewing') ? `
+                    <div style="margin-top:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-success" onclick="approveReturnRequest('${item.id}')" style="flex:1;min-width:140px;">✅ อนุมัติคำร้อง</button>
+                        <button type="button" class="btn btn-danger" onclick="rejectReturnRequest('${item.id}')" style="background:#ef4444;color:#fff;border-color:#ef4444;flex:1;min-width:140px;">❌ ไม่อนุมัติ</button>
+                    </div>` : ''}
+                    ${item.status === 'approved' ? `
+                    <div style="margin-top:1.5rem;background:${_retReady ? '#f0fdf4' : '#fefce8'};border:2px solid ${_retReady ? '#86efac' : '#fde047'};border-radius:12px;padding:1rem;">
+                        <div style="font-weight:700;color:${_retReady ? '#15803d' : '#78350f'};margin-bottom:0.5rem;">
+                            ${_retReady ? '✅ ถึงวันคืนบ้านแล้ว — พร้อมดำเนินการ' : '⏳ ยังไม่ถึงวัน — กำหนดคืน ' + formatDate(item.returnDate)}
+                        </div>
+                        <div style="font-size:0.88rem;color:#6b7280;margin-bottom:${_retReady ? '0.75rem' : '0'};">เมื่อดำเนินการ: ระบบจะ deactivate ผู้พักอาศัย + ปลดล็อกบ้านพักโดยอัตโนมัติ</div>
+                        ${_retReady ? `<button type="button" class="btn btn-success" onclick="executeReturn('${item.id}', '${item.returnDate}', '${_e(item.houseNumber)}')" style="width:100%;">🏠 ดำเนินการย้ายออก (ยืนยัน)</button>` : ''}
                     </div>` : ''}
                 `;
             }
@@ -1756,6 +1785,51 @@
             window._currentDetailType = type;
             document.getElementById('deleteRequestBtn').style.display = 'inline-flex';
             openModal('detailModal');
+        }
+
+        // ========== Return Request — 2-step approval ==========
+
+        async function approveReturnRequest(id) {
+            if (!await ppkConfirm('✅ อนุมัติคำร้องขอคืนบ้านพักนี้?\n\nระบบจะบันทึกการอนุมัติ และรอให้แอดมินดำเนินการย้ายออกเมื่อถึงวันที่กำหนด', { okText: 'อนุมัติ', cancelText: 'ยกเลิก' })) return;
+            try {
+                await callBackend('reviewRequest', { requestId: id, type: 'return', status: 'approved', note: '' });
+                _clearRequestsCache();
+                closeModal('detailModal');
+                await loadAllRequests();
+                renderAll();
+                ppkAlert('✅ อนุมัติคำร้องเรียบร้อยแล้ว — รอดำเนินการย้ายออกเมื่อถึงวันที่กำหนด', 'success');
+            } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+        }
+
+        async function rejectReturnRequest(id) {
+            if (!await ppkConfirm('❌ ปฏิเสธคำร้องขอคืนบ้านพักนี้?', { type: 'danger', okText: 'ปฏิเสธ', cancelText: 'ยกเลิก' })) return;
+            try {
+                await callBackend('reviewRequest', { requestId: id, type: 'return', status: 'rejected', note: '' });
+                _clearRequestsCache();
+                closeModal('detailModal');
+                await loadAllRequests();
+                renderAll();
+                ppkAlert('บันทึกเรียบร้อยแล้ว', 'success');
+            } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+        }
+
+        async function executeReturn(id, returnDate, houseNumber) {
+            var dateLabel = returnDate ? new Date(returnDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-';
+            if (!await ppkConfirm('🏠 ยืนยันการดำเนินการย้ายออก\n\nบ้านพัก: ' + (houseNumber || '') + '\nวันที่มีผล: ' + dateLabel + '\n\nระบบจะ:\n• deactivate ผู้พักอาศัยและผู้อยู่ร่วมทั้งหมด\n• เปลี่ยนสถานะบ้านพักเป็น "ว่าง"\n\n⚠️ ไม่สามารถย้อนกลับได้', { type: 'danger', okText: 'ดำเนินการ', cancelText: 'ยกเลิก' })) return;
+            try {
+                var result = await callBackend('approveReturn', { requestId: id, returnDate: returnDate, note: '' });
+                if (!result || !result.success) {
+                    ppkAlert('ดำเนินการไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'), 'error');
+                    return;
+                }
+                _clearRequestsCache();
+                closeModal('detailModal');
+                await loadAllRequests();
+                renderAll();
+                var msg = '✅ ดำเนินการย้ายออกเรียบร้อยแล้ว';
+                if (result.hasOutstanding) msg += '\n⚠️ บ้านนี้มียอดค้างชำระ — ผู้พักอาศัยยังเข้าระบบได้จนกว่าจะชำระครบ';
+                ppkAlert(msg, 'success');
+            } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
         }
 
         function _clearRequestsCache() {

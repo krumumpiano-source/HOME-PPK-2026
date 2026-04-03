@@ -2224,7 +2224,20 @@ async function _routeAction(action, data) {
             var _arRes2 = _arResRows2[0];
             var _arHouseNumber2 = _arRes2.house_number;
             var _arHouseId2 = _arRes2.house_id;
-            var _arToday2 = new Date().toISOString().split('T')[0];
+
+            // ใช้ returnDate จาก param หรือ details ของคำร้อง (ไม่ใช่ today)
+            var _arEndDate2 = null;
+            if (data.returnDate) {
+                _arEndDate2 = data.returnDate.split('T')[0];
+            } else {
+                // ดึงจาก details ของ request
+                var _arFullReq2 = await sbGet('requests', { id: 'eq.' + data.requestId, select: 'details', limit: '1' }).catch(function() { return []; });
+                if (_arFullReq2 && _arFullReq2[0] && _arFullReq2[0].details) {
+                    var _arDet2 = typeof _arFullReq2[0].details === 'string' ? JSON.parse(_arFullReq2[0].details) : _arFullReq2[0].details;
+                    _arEndDate2 = (_arDet2.returnDate || _arDet2.return_date || '').split('T')[0] || null;
+                }
+            }
+            if (!_arEndDate2) _arEndDate2 = new Date().toISOString().split('T')[0]; // fallback
 
             // 3. ตรวจยอดค้าง
             var _arOutRows2 = [];
@@ -2239,9 +2252,9 @@ async function _routeAction(action, data) {
                 } catch(e) {}
             }
 
-            // 5. deactivate resident + บันทึก end_date
+            // 5. deactivate resident + บันทึก end_date ตามวันที่กำหนดคืนบ้าน
             await sbPatch('residents', { id: 'eq.' + _arRes2.id }, {
-                is_active: false, end_date: _arToday2, updated_at: new Date().toISOString()
+                is_active: false, end_date: _arEndDate2, updated_at: new Date().toISOString()
             });
 
             // 6. ลบ coresidents
