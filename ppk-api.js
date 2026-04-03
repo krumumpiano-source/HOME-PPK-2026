@@ -2335,11 +2335,15 @@ async function _routeAction(action, data) {
                 var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
                 if (lsUser && lsUser.id) reqReviewerId = lsUser.id;
             }
-            await sbPatch('requests', { id: 'eq.' + reqIdToReview }, {
+            var _rrPatchResult = await sbPatch('requests', { id: 'eq.' + reqIdToReview }, {
                 status: data.status, reviewed_by: data.reviewedBy || reqReviewerId || '',
                 reviewed_at: new Date().toISOString(), review_note: data.note || '',
                 updated_at: new Date().toISOString()
             });
+            if (!_rrPatchResult || (Array.isArray(_rrPatchResult) && _rrPatchResult.length === 0)) {
+                console.warn('[reviewRequest] sbPatch returned empty — ID:', reqIdToReview, 'status:', data.status);
+                return { success: false, error: 'ไม่พบคำร้อง ID: ' + reqIdToReview + ' ในฐานข้อมูล หรือไม่สามารถอัปเดตได้ (0 rows)' };
+            }
 
             // ── Queue management: insert/remove from queue table ──
             if (data.status === 'waiting') {
