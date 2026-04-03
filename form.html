@@ -248,7 +248,7 @@
         var _typeColors = { residence: 'var(--c-primary-bg)', repair: 'var(--c-warning-bg)', transfer: 'var(--c-success-bg)', return: 'var(--c-danger-bg)' };
         var _statusMap = {
             pending:   { label: 'รอดำเนินการ',         color: 'var(--c-warning)', icon: '⏳' },
-            reviewing: { label: 'อยู่ระหว่างพิจารณา', color: 'var(--c-cyan)',    icon: '🔍' },
+            reviewing: { label: 'ลงความเห็นแล้ว รอพิมพ์',  color: '#f59e0b',          icon: '📝' },
             waiting:   { label: 'อยู่ในคิวรอบ้านพัก', color: '#8b5cf6',          icon: '🔢' },
             approved:  { label: 'อนุมัติแล้ว',         color: 'var(--c-success)', icon: '✅' },
             completed: { label: 'เสร็จสิ้น',           color: 'var(--c-success)', icon: '🎉' },
@@ -278,7 +278,7 @@
             if (type === 'residence') {
                 steps = [
                     { key: 'submitted', label: 'ยื่นคำร้อง', icon: '📝' },
-                    { key: 'reviewing', label: 'พิจารณา',   icon: '🔍' },
+                    { key: 'reviewing', label: 'ลงความเห็น', icon: '📋' },
                     { key: 'waiting',   label: 'คิวรอบ้าน', icon: '🔢' },
                     { key: 'approved',  label: 'อนุมัติ',    icon: '✅' }
                 ];
@@ -432,16 +432,22 @@
             }
 
             // ── ผลการพิจารณา (ถ้ามี) ──
-            if (req.reviewed_at || req.review_note || req.head_reviewer_name || req.head_reviewed_at) {
-                html += '<div class="req-section">' + (st === 'rejected' ? '❌' : '✅') + ' ผลการพิจารณา</div>';
+            if (req.reviewed_at || req.review_note || req.head_reviewer_name || req.head_reviewed_at || req.head_comment) {
+                var _revIcon = st === 'rejected' ? '❌' : st === 'reviewing' ? '📝' : '✅';
+                var _revTitle = st === 'reviewing' ? 'ความเห็นหัวหน้างาน' : 'ผลการพิจารณา';
+                html += '<div class="req-section">' + _revIcon + ' ' + _revTitle + '</div>';
+                if (st === 'reviewing') {
+                    html += '<div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius-md);padding:0.6rem 0.75rem;margin-bottom:0.6rem;font-size:0.88rem;color:#92400e;">';
+                    html += '📋 หัวหน้างานลงความเห็นเรียบร้อยแล้ว — กรุณา<b>พิมพ์คำร้อง</b>เพื่อนำเสนอลำดับต่อไป</div>';
+                }
                 html += '<dl class="req-dl">';
-                if (req.head_reviewer_name) html += '<dt>ผู้อนุมัติ/ลงความเห็น</dt><dd>' + _esc(req.head_reviewer_name) + '</dd>';
-                if (req.reviewed_at) html += '<dt>วันที่พิจารณา</dt><dd>' + _fmtDate(req.reviewed_at) + '</dd>';
-                if (req.review_note) html += '<dt>ความเห็น</dt><dd style="white-space:pre-wrap;background:var(--c-surface-2);padding:0.5rem 0.6rem;border-radius:var(--radius-sm);border-left:3px solid ' + s.color + ';">' + _esc(req.review_note) + '</dd>';
-                if (req.head_comment && req.head_comment !== req.review_note) html += '<dt>ความเห็นหัวหน้างาน</dt><dd style="white-space:pre-wrap;">' + _esc(req.head_comment) + '</dd>';
+                if (req.head_reviewer_name) html += '<dt>ผู้ลงความเห็น</dt><dd>' + _esc(req.head_reviewer_name) + '</dd>';
+                if (req.head_reviewed_at || req.reviewed_at) html += '<dt>วันที่ลงความเห็น</dt><dd>' + _fmtDate(req.head_reviewed_at || req.reviewed_at) + '</dd>';
+                if (req.head_comment) html += '<dt>ความเห็น</dt><dd style="white-space:pre-wrap;background:var(--c-surface-2);padding:0.5rem 0.6rem;border-radius:var(--radius-sm);border-left:3px solid ' + s.color + ';">' + _esc(req.head_comment) + '</dd>';
+                if (req.review_note && req.review_note !== req.head_comment) html += '<dt>หมายเหตุ</dt><dd style="white-space:pre-wrap;">' + _esc(req.review_note) + '</dd>';
                 html += '</dl>';
                 if (req.head_signature) {
-                    html += '<div style="margin-top:0.4rem;"><div style="font-size:0.82rem;color:var(--c-text-3);margin-bottom:0.25rem;">ลายเซ็นผู้อนุมัติ:</div>';
+                    html += '<div style="margin-top:0.4rem;"><div style="font-size:0.82rem;color:var(--c-text-3);margin-bottom:0.25rem;">ลายเซ็นผู้ลงความเห็น:</div>';
                     html += '<img src="' + _esc(req.head_signature) + '" class="req-sig-img" alt="ลายเซ็น"></div>';
                 }
             }
@@ -666,9 +672,37 @@
                 pw.document.write('<div class="section"><div class="section-title">ส่วนที่ 5: ข้อตกลง</div><p class="indent small-text" style="text-align:justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย</p></div>');
                 pw.document.write('<div style="display:flex;justify-content:space-between;margin-top:0.3cm;" class="small-text"><div style="width:45%;text-align:center;"><div style="margin-top:0.5cm;">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div><div style="width:45%;text-align:center;"><div style="margin-top:0.5cm;">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
                 var hn = _sys2.headOfPromotion||''; var vn = _sys2.viceDirector||''; var dn = _sys2.director||'';
+                // ── ดึงข้อมูลความเห็นหัวหน้างานจาก DB (ถ้ามี) ──
+                var _hComment = _escHtml(req.head_comment || req.review_note || '');
+                var _hName = _escHtml(req.head_reviewer_name || '');
+                var _hSig = req.head_signature || '';
+                var _hDate = '';
+                if (req.head_reviewed_at || req.reviewed_at) {
+                    var _hd = new Date(req.head_reviewed_at || req.reviewed_at);
+                    _hDate = _hd.getDate() + ' ' + thaiMonths[_hd.getMonth()] + ' ' + (_hd.getFullYear()+543);
+                }
+                var _hasHeadReview = !!(_hComment || _hSig || _hName);
+                // ── ช่องอนุมัติ: ติ๊กตามสถานะจริง ──
+                var _isApproved = (req.status === 'approved' || req.status === 'completed');
+                var _isRejected = (req.status === 'rejected');
                 pw.document.write('<div style="margin-top:0.5cm;">');
-                pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริมฯ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (hn||'<span class="dotted-line-short"></span>') + ')<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+                // Box 1: หัวหน้างาน — fill ด้วยข้อมูลจริงจาก DB
+                pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นหัวหน้างานส่งเสริมฯ</div><div class="approval-content">');
+                if (_hasHeadReview) {
+                    pw.document.write('<div><span class="checkbox">' + (_isRejected ? '' : '&#10003;') + '</span> อนุมัติ &nbsp;&nbsp; <span class="checkbox">' + (_isRejected ? '&#10003;' : '') + '</span> ไม่อนุมัติ</div>');
+                    if (_hComment) pw.document.write('<div style="margin-top:0.2cm;">ความเห็น: ' + _hComment + '</div>');
+                    else pw.document.write('<div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
+                    pw.document.write('<div style="text-align:right;margin-top:0.3cm;">');
+                    if (_hSig) pw.document.write('<div style="text-align:center;margin-bottom:0.1cm;"><img src="' + _hSig + '" style="max-height:60px;"></div>');
+                    else pw.document.write('ลงชื่อ<span class="dotted-line-sig"></span><br>');
+                    pw.document.write('(' + (_hName || hn || '<span class="dotted-line-short"></span>') + ')<br>วันที่ ' + (_hDate || '<span class="dotted-line-date"></span>') + '</div>');
+                } else {
+                    pw.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (hn||'<span class="dotted-line-short"></span>') + ')<br>วันที่<span class="dotted-line-date"></span></div>');
+                }
+                pw.document.write('</div></div>');
+                // Box 2: รอง ผอ. — ยังว่าง (ลงนามด้วยตัวจริง)
                 pw.document.write('<div class="approval-box"><div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div><div class="approval-content"><div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (vn||'<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
+                // Box 3: ผอ. — ยังว่าง (ลงนามด้วยตัวจริง)
                 pw.document.write('<div class="approval-box"><div class="approval-header">คำสั่งผู้อำนวยการ</div><div class="approval-content"><div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div><div style="margin-top:0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div><div><span class="dotted-line-full"></span></div><div style="text-align:right;margin-top:0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (dn||'<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div></div></div>');
                 pw.document.write('</div>');
                 // เอกสารแนบ (ถ้ามี)

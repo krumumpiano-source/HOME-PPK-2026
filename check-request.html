@@ -1935,16 +1935,16 @@
                 content += `
                 <div style="margin-top:1.5rem;padding:1.25rem;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:2px solid #3b82f6;border-radius:14px;">
                     <div style="font-weight:700;color:#1d4ed8;margin-bottom:1rem;font-size:1.05rem;display:flex;align-items:center;gap:0.4rem;">
-                        <span style="font-size:1.3rem;">📋</span> ลงความเห็นและอนุมัติ
+                        <span style="font-size:1.3rem;">📋</span> ลงความเห็น / พิจารณาคำร้อง
                     </div>
-                    ${type === 'residence' ? '<div style="margin-bottom:0.75rem;" id="detailHouseGroup"><label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">บ้านพักที่จัดให้ <span style="color:#ef4444;">*</span></label><select id="detailHouseSelect" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;"><option value="">⏳ กำลังโหลดบ้านว่าง...</option></select></div>' : ''}
+                    ${type === 'residence' ? '<div style="margin-bottom:0.75rem;" id="detailHouseGroup"><label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">บ้านพักที่จัดให้ <span style="color:#9ca3af;">(ระบุเมื่ออนุมัติ)</span></label><select id="detailHouseSelect" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;"><option value="">⏳ กำลังโหลดบ้านว่าง...</option></select></div>' : ''}
                     <div style="margin-bottom:0.75rem;">
                         <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ความเห็น / หมายเหตุ</label>
                         <textarea id="detailReviewComment" rows="3" placeholder="ลงความเห็น..." style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;resize:vertical;box-sizing:border-box;">${_e(item.reviewNote || '')}</textarea>
                     </div>
                     <div style="margin-bottom:0.75rem;">
-                        <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ชื่อผู้อนุมัติ <span style="color:#ef4444;">*</span></label>
-                        <input type="text" id="detailReviewerName" value="${_e(_reviewerNamePrefill)}" placeholder="ชื่อ-นามสกุลผู้อนุมัติ" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
+                        <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ชื่อผู้ลงความเห็น <span style="color:#ef4444;">*</span></label>
+                        <input type="text" id="detailReviewerName" value="${_e(_reviewerNamePrefill)}" placeholder="ชื่อ-นามสกุลผู้ลงความเห็น" style="width:100%;padding:0.6rem 0.8rem;border:1.5px solid #d1d5db;border-radius:8px;font:inherit;box-sizing:border-box;">
                     </div>
                     <div style="margin-bottom:0.75rem;">
                         <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem;">ลายเซ็นดิจิทัล</label>
@@ -1965,9 +1965,10 @@
                             <button type="button" onclick="_sigClear('detailSignatureCanvas')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:0.2rem 0.7rem;font:inherit;font-size:0.82rem;cursor:pointer;color:#6b7280;">🗑️ ลบ</button>
                         </div>
                     </div>
-                    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
-                        <button type="button" class="btn btn-success" onclick="submitDetailReview('approved')" style="flex:1;min-width:140px;font-size:0.95rem;padding:0.65rem 1rem;">✅ อนุมัติ</button>
-                        <button type="button" class="btn" onclick="submitDetailReview('rejected')" style="flex:1;min-width:140px;font-size:0.95rem;padding:0.65rem 1rem;background:#fef2f2;color:#dc2626;border-color:#fca5a5;">❌ ไม่อนุมัติ</button>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;">
+                        <button type="button" class="btn" onclick="submitDetailReview('reviewing')" style="flex:1;min-width:120px;font-size:0.95rem;padding:0.65rem 1rem;background:#eff6ff;color:#1d4ed8;border-color:#93c5fd;">📝 ลงความเห็น</button>
+                        ${type === 'residence' ? '<button type="button" class="btn btn-success" onclick="submitDetailReview(\'approved\')" style="flex:1;min-width:120px;font-size:0.95rem;padding:0.65rem 1rem;">✅ อนุมัติเข้าพัก</button>' : '<button type="button" class="btn btn-success" onclick="submitDetailReview(\'approved\')" style="flex:1;min-width:120px;font-size:0.95rem;padding:0.65rem 1rem;">✅ อนุมัติ</button>'}
+                        <button type="button" class="btn" onclick="submitDetailReview('rejected')" style="flex:1;min-width:120px;font-size:0.95rem;padding:0.65rem 1rem;background:#fef2f2;color:#dc2626;border-color:#fca5a5;">❌ ไม่อนุมัติ</button>
                     </div>
                     ${type === 'residence' ? '<div style="margin-top:0.5rem;"><button type="button" class="btn" onclick="closeModal(\'detailModal\');addToQueue(\'' + _e(item.id) + '\');renderAll();" style="width:100%;font-size:0.875rem;background:#f0fdf4;color:#166534;border-color:#86efac;">➕ เพิ่มเข้าคิว (ยังไม่อนุมัติ)</button></div>' : ''}
                 </div>`;
@@ -2183,7 +2184,7 @@
 
             var comment = document.getElementById('detailReviewComment').value.trim();
             var reviewerName = document.getElementById('detailReviewerName').value.trim();
-            if (!reviewerName) { ppkAlert('กรุณาระบุชื่อผู้อนุมัติ', 'error'); return; }
+            if (!reviewerName) { ppkAlert('กรุณาระบุชื่อผู้ลงความเห็น', 'error'); return; }
 
             // ดึงลายเซ็นจาก canvas
             var signatureData = null;
@@ -2194,6 +2195,28 @@
                 var blank = true;
                 for (var pi = 3; pi < px.length; pi += 4) { if (px[pi] > 0) { blank = false; break; } }
                 if (!blank) signatureData = sigCanvas.toDataURL('image/png');
+            }
+
+            // ── ลงความเห็น (reviewing) — บันทึกความเห็น+ลายเซ็น แต่ยังไม่เปลี่ยนสถานะเป็น approved ──
+            if (action === 'reviewing') {
+                if (!comment && !signatureData) { ppkAlert('กรุณาลงความเห็นหรือลายเซ็นอย่างน้อย 1 อย่าง', 'error'); return; }
+                if (!await ppkConfirm('ยืนยันบันทึกความเห็น?\n\nผู้ยื่นคำร้องจะเห็นความเห็นและลายเซ็นของท่าน\nและสามารถพิมพ์คำร้องพร้อมความเห็นได้')) return;
+                try {
+                    var result = await callBackend('reviewRequest', {
+                        requestId: id, type: type, status: 'reviewing', note: comment,
+                        signature: signatureData, reviewerName: reviewerName
+                    });
+                    if (!result || result.success === false) {
+                        ppkAlert('❌ บันทึกไม่สำเร็จ: ' + (result && result.error ? result.error : 'กรุณาลองใหม่'), 'error');
+                        return;
+                    }
+                    _clearRequestsCache();
+                    closeModal('detailModal');
+                    await loadAllRequests();
+                    renderAll();
+                    ppkAlert('✅ บันทึกความเห็นเรียบร้อยแล้ว — ผู้ยื่นคำร้องสามารถพิมพ์ใบคำร้องพร้อมความเห็นได้แล้ว', 'success');
+                } catch(e) { ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+                return;
             }
 
             // ── Residence + Approve → ใช้ approveResidence (ต้องเลือกบ้าน) ──
