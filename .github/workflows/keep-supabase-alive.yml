@@ -1,0 +1,27 @@
+﻿name: Keep Supabase Alive
+
+on:
+  schedule:
+    # ทุก 3 วัน เวลา 08:00 น. (UTC+7 = 01:00 UTC)
+    - cron: '0 1 */3 * *'
+  workflow_dispatch:  # กดรันมือได้จาก GitHub Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://mwigdgxrfpcmfjuztmip.supabase.co/rest/v1/settings?select=key&limit=1" \
+            -H "apikey: sb_publishable_DInAJWyKXTwcxC79jNiS9A_PDxjKWHL" \
+            -H "Authorization: Bearer sb_publishable_DInAJWyKXTwcxC79jNiS9A_PDxjKWHL")
+          echo "Supabase response status: $STATUS"
+          if [ "$STATUS" = "555" ]; then
+            echo "::error::Supabase project is PAUSED (HTTP 555) — กรุณา restore ที่ supabase.com/dashboard"
+            exit 1
+          elif [ "$STATUS" = "200" ] || [ "$STATUS" = "406" ]; then
+            echo "✅ Supabase project active (HTTP $STATUS)"
+          else
+            echo "⚠️ Unexpected status: $STATUS"
+          fi
