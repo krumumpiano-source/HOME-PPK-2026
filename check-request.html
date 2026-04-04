@@ -1071,46 +1071,46 @@
         }
 
         // โหลดข้อมูลจาก Backend
-        // ========== Priority Score Calculation (ระเบียบข้อ ๓.๕) ==========
+        // ========== Priority Score Calculation (ระเบียบข้อ ๓.๕) — คะแนนเต็ม 100 ==========
 
-        // P3 — ตาราง distance จังหวัด (กลุ่ม → คะแนน)
-        // กลุ่ม near (≤150 กม.) = 30, กลุ่ม mid (150-400 กม.) = 40, กลุ่ม far (>400 กม.) = 50
+        // P3 — ตาราง distance จังหวัด (กลุ่ม → คะแนน /18)
+        // กลุ่ม near (≤150 กม.) = 11, กลุ่ม mid (150-400 กม.) = 14, กลุ่ม far (>400 กม.) = 18
         var _PROVINCE_DISTANCE = {
             // near ≤150 กม.
-            'เชียงราย':30,'ลำปาง':30,'แพร่':30,'น่าน':30,'ลำพูน':30,
+            'เชียงราย':11,'ลำปาง':11,'แพร่':11,'น่าน':11,'ลำพูน':11,
             // mid 150-400 กม.
-            'เชียงใหม่':40,'อุตรดิตถ์':40,'พิษณุโลก':40,'แม่ฮ่องสอน':40,
-            'สุโขทัย':40,'ตาก':40,'เพชรบูรณ์':40,'พิจิตร':40,'กำแพงเพชร':40,
-            'เลย':40,'หนองคาย':40,'หนองบัวลำภู':40,'อุดรธานี':40,'นครสวรรค์':40
-            // ที่เหลือทั้งหมด = far (50) → default
+            'เชียงใหม่':14,'อุตรดิตถ์':14,'พิษณุโลก':14,'แม่ฮ่องสอน':14,
+            'สุโขทัย':14,'ตาก':14,'เพชรบูรณ์':14,'พิจิตร':14,'กำแพงเพชร':14,
+            'เลย':14,'หนองคาย':14,'หนองบัวลำภู':14,'อุดรธานี':14,'นครสวรรค์':14
+            // ที่เหลือทั้งหมด = far (18) → default
         };
 
-        // P3 — ตาราง distance อำเภอในจังหวัดพะเยา
+        // P3 — ตาราง distance อำเภอในจังหวัดพะเยา (/18)
         var _PHAYAO_AMPHURE_SCORE = {
             'เมืองพะเยา':0,
-            'ภูกามยาว':10, 'แม่ใจ':10, 'ดอกคำใต้':10,
-            'จุน':20,
-            'ปง':30, 'เชียงคำ':30, 'ภูซาง':30, 'เชียงม่วน':30
+            'ภูกามยาว':4, 'แม่ใจ':4, 'ดอกคำใต้':4,
+            'จุน':7,
+            'ปง':11, 'เชียงคำ':11, 'ภูซาง':11, 'เชียงม่วน':11
         };
 
         function calcPriorityScore(item) {
             var score = 0;
             var labels = [];
 
-            // P1 (สูงสุด 70 คะแนน) — แยกตามประเภทบุคลากร
+            // P1 (สูงสุด 25 คะแนน) — แยกตามประเภทบุคลากร
             var st = item.staffType || '';
-            var p1Map = {'ข้าราชการครู':70,'พนักงานราชการ':50,'ลูกจ้างประจำ':40,'ครูอัตราจ้าง':20};
+            var p1Map = {'ข้าราชการครู':25,'พนักงานราชการ':18,'ลูกจ้างประจำ':14,'ครูอัตราจ้าง':7};
             if (p1Map[st] !== undefined) {
                 score += p1Map[st]; labels.push('P1(' + p1Map[st] + ')');
             }
 
-            // P2 (60 คะแนน) — ไม่มีที่พักเป็นของตนเอง
+            // P2 (21 คะแนน) — ไม่มีที่พักเป็นของตนเอง
             var decl = item.declarations || [];
             if (decl.indexOf('no_own_housing') >= 0) {
-                score += 60; labels.push('P2');
+                score += 21; labels.push('P2');
             }
 
-            // P3 (สูงสุด 50 คะแนน) — ภูมิลำเนาอยู่ห่างไกล (แบบระดับระยะทาง)
+            // P3 (สูงสุด 18 คะแนน) — ภูมิลำเนาอยู่ห่างไกล (แบบระดับระยะทาง)
             var prov = item.hometownProvince || '';
             var p3Score = 0;
             if (prov) {
@@ -1124,37 +1124,37 @@
                     }
                 } else {
                     // จังหวัดอื่น
-                    p3Score = _PROVINCE_DISTANCE[prov] !== undefined ? _PROVINCE_DISTANCE[prov] : 50;
+                    p3Score = _PROVINCE_DISTANCE[prov] !== undefined ? _PROVINCE_DISTANCE[prov] : 18;
                 }
             }
             if (p3Score > 0) { score += p3Score; labels.push('P3(' + p3Score + ')'); }
 
-            // P4 (40 คะแนน) — มีภาระครอบครัว (เลือก family_responsibility หรือ stayType=family)
+            // P4 (14 คะแนน) — มีภาระครอบครัว (เลือก family_responsibility หรือ stayType=family)
             var reasons = item.reasons || [];
             if (reasons.indexOf('family_responsibility') >= 0 || item.stayType === 'family') {
-                score += 40; labels.push('P4');
+                score += 14; labels.push('P4');
             }
 
-            // P5 (30 คะแนน) — ไม่เคยได้รับสิทธิ์บ้านพักมาก่อน
+            // P5 (11 คะแนน) — ไม่เคยได้รับสิทธิ์บ้านพักมาก่อน
             var hp = item.hadPreviousHousing || 'no';
             if (hp === 'no') {
-                score += 30; labels.push('P5');
+                score += 11; labels.push('P5');
             }
 
-            // P6 (20 คะแนน) — ปฏิบัติหน้าที่ ณ รร.พะเยาพิทยาคม (สมมติทุกคนที่ส่งคำร้อง = ใช่)
-            score += 20; labels.push('P6');
+            // P6 (7 คะแนน) — ปฏิบัติหน้าที่ ณ รร.พะเยาพิทยาคม (สมมติทุกคนที่ส่งคำร้อง = ใช่)
+            score += 7; labels.push('P6');
 
-            // P7 (10 คะแนน) — ยินดีปฏิบัติตามระเบียบ
+            // P7 (4 คะแนน) — ยินดีปฏิบัติตามระเบียบ
             if (decl.indexOf('follow_regulations') >= 0) {
-                score += 10; labels.push('P7');
+                score += 4; labels.push('P7');
             }
 
             // Tiebreaker: appointmentDate (เก่ากว่า = สูงกว่า) → submitDate (เร็วกว่า = สูงกว่า)
             var tieAppointment = item.appointmentDate ? new Date(item.appointmentDate).getTime() : Infinity;
             var tieSubmit = item.submitDate ? new Date(item.submitDate).getTime() : Infinity;
 
-            // Level label (ปรับตาม max ที่เป็นไปได้ = 280)
-            var level = score >= 230 ? 'สูงมาก' : score >= 180 ? 'สูง' : score >= 130 ? 'ปานกลาง' : 'ต่ำ';
+            // Level label (เต็ม 100)
+            var level = score >= 80 ? 'สูงมาก' : score >= 60 ? 'สูง' : score >= 40 ? 'ปานกลาง' : 'ต่ำ';
 
             return { score: score, labels: labels, level: level, tieAppointment: tieAppointment, tieSubmit: tieSubmit };
         }
