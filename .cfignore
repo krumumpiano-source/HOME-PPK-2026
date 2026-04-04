@@ -1,0 +1,8 @@
+﻿supabase.exe
+supabase_cli.tar.gz
+node_modules/
+test-results/
+playwright-report/
+backup-before-*/
+.venv/
+.git/

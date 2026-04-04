@@ -137,11 +137,11 @@
             </div>
         </div>
 
-        <!-- กล่องข้อมูลระเบียบ (พับ/กางได้) -->
-        <details style="margin-bottom:1.5rem;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1.5px solid #93c5fd;border-radius:14px;overflow:hidden;">
+        <!-- กล่องข้อมูลระเบียบ (เปิดค้าง) -->
+        <details open style="margin-bottom:1.5rem;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1.5px solid #93c5fd;border-radius:14px;overflow:hidden;">
             <summary style="padding:1rem 1.25rem;cursor:pointer;font-weight:700;font-size:1.05rem;color:#1e40af;list-style:none;display:flex;align-items:center;gap:0.5rem;user-select:none;">
-                <span style="transition:transform 0.2s;display:inline-block;" class="reg-arrow">▶</span>
-                📖 ระเบียบและเกณฑ์การจัดลำดับคิวบ้านพักครู (คลิกเพื่ออ่าน)
+                <span style="transition:transform 0.2s;display:inline-block;transform:rotate(90deg);" class="reg-arrow">▶</span>
+                📖 ระเบียบและเกณฑ์การจัดลำดับคิวบ้านพักครู (คลิกเพื่อย่อ/ขยาย)
             </summary>
             <div style="padding:0 1.25rem 1.25rem;font-size:0.92rem;line-height:1.7;color:#1e293b;">
                 <p style="margin:0 0 0.75rem;color:#92400e;font-weight:600;">📌 กรุณาอ่านก่อนกรอกแบบฟอร์ม เพื่อตรวจสอบคุณสมบัติและเข้าใจเกณฑ์การจัดลำดับคิว</p>
@@ -156,26 +156,53 @@
                 <p style="margin:0 0 0.75rem;color:#dc2626;font-size:0.85rem;">⚠️ หากพบว่าข้อมูลเป็นเท็จ อาจถูกเพิกถอนสิทธิ์การพักอาศัย (ข้อ ๓.๒)</p>
 
                 <h4 style="margin:0.75rem 0 0.5rem;color:#1e40af;font-size:0.95rem;">📊 เกณฑ์การให้คะแนนจัดลำดับคิว (ข้อ ๓.๕)</h4>
-                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.75rem;">
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:0.75rem;">
                     <thead>
                         <tr style="background:#dbeafe;">
-                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.6rem;text-align:center;width:55px;">เกณฑ์</th>
-                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.6rem;text-align:left;">รายละเอียด</th>
-                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.6rem;text-align:center;width:65px;">คะแนน</th>
+                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.5rem;text-align:center;width:50px;">เกณฑ์</th>
+                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.5rem;text-align:left;">รายละเอียด</th>
+                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.5rem;text-align:center;width:60px;">คะแนน</th>
+                            <th style="border:1px solid #93c5fd;padding:0.4rem 0.5rem;text-align:left;min-width:140px;">วิธีพิจารณา</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P1</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">เป็นข้าราชการ / ลูกจ้างประจำ / พนักงานราชการ</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">70</td></tr>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P2</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">ไม่มีที่พักอาศัยเป็นของตนเอง</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">60</td></tr>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P3</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">ภูมิลำเนาอยู่ห่างไกล (ต่างจังหวัด ≠ พะเยา)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">50</td></tr>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P4</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">มีภาระครอบครัว (บุตรเล็ก / ผู้สูงอายุ / ผู้ป่วย / พักพร้อมครอบครัว)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">40</td></tr>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P5</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">ไม่เคยได้รับสิทธิ์บ้านพักของทางราชการมาก่อน</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">30</td></tr>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P6</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">ปฏิบัติหน้าที่ ณ โรงเรียนพะเยาพิทยาคม</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">20</td></tr>
-                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;color:#1e40af;">P7</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;">ยินดีปฏิบัติตามระเบียบบ้านพักครู</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:600;">10</td></tr>
-                        <tr style="background:#f0fdf4;"><td colspan="2" style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:right;font-weight:700;">คะแนนเต็ม</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.6rem;text-align:center;font-weight:700;color:#15803d;">280</td></tr>
+                        <tr style="background:#f8fafc;"><td rowspan="4" style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;vertical-align:middle;">P1</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ข้าราชการครู</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">70</td><td rowspan="4" style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;vertical-align:middle;">ตรวจจากประเภทบุคลากรที่เลือกในฟอร์ม</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">พนักงานราชการ</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">50</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ลูกจ้างประจำ</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">40</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ครูอัตราจ้าง</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">20</td></tr>
+                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;">P2</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ไม่มีที่พักอาศัยเป็นของตนเอง</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">60</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;">ยืนยันในส่วนที่ 5</td></tr>
+                        <tr style="background:#f8fafc;"><td rowspan="4" style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;vertical-align:middle;">P3</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">จังหวัดไกล >400 กม. (กรุงเทพฯ, อีสาน, ใต้, ตะวันออก ฯลฯ)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">50</td><td rowspan="4" style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;vertical-align:middle;">คำนวณจากจังหวัด+อำเภอภูมิลำเนา โดยยึดระยะทางไปยัง รร.พะเยาพิทยาคม</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">จังหวัดกลาง 150-400 กม. (เชียงใหม่, อุตรดิตถ์, พิษณุโลก ฯลฯ)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">40</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">จังหวัดใกล้ ≤150 กม. (เชียงราย, ลำปาง, แพร่, น่าน) / อ.ไกลในพะเยา</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">20-30</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">อ.เมืองพะเยา / อ.ใกล้เคียง (ภูกามยาว, แม่ใจ, ดอกคำใต้)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">0-10</td></tr>
+                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;">P4</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">มีภาระครอบครัว (บุตรเล็ก / ผู้สูงอายุ / ผู้ป่วย / พักพร้อมครอบครัว)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">40</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;">เลือกเหตุผลข้อ "มีภาระครอบครัว" หรือ พักพร้อมครอบครัว</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;">P5</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ไม่เคยได้รับสิทธิ์บ้านพักของทางราชการมาก่อน</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">30</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;">ตอบคำถามในส่วนที่ 3</td></tr>
+                        <tr><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;">P6</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ปฏิบัติหน้าที่ ณ โรงเรียนพะเยาพิทยาคม</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">20</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;">ให้อัตโนมัติทุกคน</td></tr>
+                        <tr style="background:#f8fafc;"><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;color:#1e40af;">P7</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;">ยินดีปฏิบัติตามระเบียบบ้านพักครู</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:600;">10</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;font-size:0.82rem;color:#6b7280;">ยืนยันในส่วนที่ 5</td></tr>
+                        <tr style="background:#f0fdf4;"><td colspan="2" style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:right;font-weight:700;">คะแนนเต็ม (กรณีข้าราชการครู + จังหวัดไกล)</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;text-align:center;font-weight:700;color:#15803d;">280</td><td style="border:1px solid #bfdbfe;padding:0.35rem 0.5rem;"></td></tr>
                     </tbody>
                 </table>
-                <p style="margin:0 0 0.5rem;font-size:0.85rem;color:#6b7280;">💡 กรณีคะแนนเท่ากัน พิจารณาจาก: <b>วันบรรจุ/แต่งตั้ง</b> (เก่ากว่า = อันดับสูงกว่า) → <b>วันที่ยื่นคำร้อง</b> (เร็วกว่า = อันดับสูงกว่า)</p>
+                </div>
+
+                <!-- Tiebreaker -->
+                <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.75rem;">
+                    <div style="font-weight:700;color:#92400e;margin-bottom:0.3rem;">⚖️ กรณีคะแนนเท่ากัน (Tiebreaker)</div>
+                    <div style="font-size:0.88rem;color:#78350f;">
+                        <b>ลำดับที่ 1:</b> พิจารณาจาก <b>วันบรรจุ/แต่งตั้ง</b> — ผู้ที่ได้รับการบรรจุก่อน จะได้ลำดับสูงกว่า<br>
+                        <b>ลำดับที่ 2:</b> พิจารณาจาก <b>วันที่ยื่นคำร้อง</b> — ผู้ที่ยื่นก่อน จะได้ลำดับสูงกว่า
+                    </div>
+                </div>
+
+                <!-- หมายเหตุ -->
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.75rem;">
+                    <div style="font-weight:700;color:#991b1b;margin-bottom:0.3rem;">📝 หมายเหตุสำคัญ</div>
+                    <ul style="margin:0;padding-left:1.2rem;font-size:0.88rem;color:#7f1d1d;">
+                        <li>ระบบคำนวณคะแนน <b>อัตโนมัติ</b> จากข้อมูลที่กรอกในฟอร์ม กรุณากรอกให้ถูกต้องครบถ้วน</li>
+                        <li>คะแนนส่วน P3 คำนวณจากจังหวัดภูมิลำเนา (หากเลือกพะเยา จะคำนวณระดับอำเภอเพิ่ม)</li>
+                        <li>ประเภทบุคลากรแต่ละประเภทจะได้คะแนน P1 ต่างกัน ตรวจสอบให้ตรงกับความเป็นจริง</li>
+                    </ul>
+                </div>
 
                 <h4 style="margin:0.75rem 0 0.5rem;color:#1e40af;font-size:0.95rem;">📋 ขั้นตอนหลังยื่นคำร้อง</h4>
                 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;font-size:0.88rem;">
@@ -283,10 +310,17 @@
                 </div>
                 <div class="form-group">
                     <label>จังหวัดภูมิลำเนาเดิม</label>
-                    <select name="hometown_province" id="hometown_province">
+                    <select name="hometown_province" id="hometown_province" onchange="onProvinceChange()">
                         <option value="">-- เลือกจังหวัด --</option>
                     </select>
                     <div style="font-size:0.82rem;color:#6b7280;margin-top:0.3rem;">ใช้ประกอบเกณฑ์ "อยู่ห่างไกลจากภูมิลำเนาเดิม" (ข้อ ๓.๕)</div>
+                </div>
+                <div class="form-group" id="amphure-group" style="display:none;">
+                    <label>อำเภอภูมิลำเนา (เฉพาะจังหวัดพะเยา)</label>
+                    <select name="hometown_amphure" id="hometown_amphure">
+                        <option value="">-- เลือกอำเภอ --</option>
+                    </select>
+                    <div style="font-size:0.82rem;color:#6b7280;margin-top:0.3rem;">ใช้คำนวณระยะทางระดับอำเภอสำหรับเกณฑ์ P3</div>
                 </div>
             </div>
 
@@ -626,6 +660,7 @@
                 appointment_date: document.querySelector('input[name="appointment_date"]').value || '',
                 staff_type: document.querySelector('select[name="staff_type"]').value || '',
                 hometown_province: document.querySelector('select[name="hometown_province"]').value || '',
+                hometown_amphure: document.querySelector('select[name="hometown_amphure"]').value || '',
                 had_previous_housing: (document.querySelector('input[name="had_previous_housing"]:checked') || {}).value || 'no',
                 declarations: Array.from(document.querySelectorAll('input[name="declaration"]:checked')).map(function(cb) { return cb.value; }),
                 stay_type: stayType,
@@ -823,6 +858,15 @@
         setVal('input[name="appointment_date"]', d.appointment_date);
         setVal('select[name="staff_type"]', d.staff_type);
         setVal('select[name="hometown_province"]', d.hometown_province);
+        // ถ้าเลือกพะเยา → trigger แสดงอำเภอ แล้วเซ็ตค่า
+        if (d.hometown_province === 'พะเยา') {
+            onProvinceChange().then(function() {
+                if (d.hometown_amphure) {
+                    var ampSel = document.querySelector('select[name="hometown_amphure"]');
+                    if (ampSel) ampSel.value = d.hometown_amphure;
+                }
+            });
+        }
         if (d.had_previous_housing) {
             var hpRb = document.querySelector('input[name="had_previous_housing"][value="' + d.had_previous_housing + '"]');
             if (hpRb) hpRb.checked = true;
@@ -868,6 +912,36 @@
             });
         }).catch(function(e) { console.warn('โหลดจังหวัดไม่สำเร็จ', e); });
     })();
+
+    // แสดง/ซ่อน dropdown อำเภอ เมื่อเลือกจังหวัดพะเยา
+    async function onProvinceChange() {
+        var provSel = document.getElementById('hometown_province');
+        var ampGroup = document.getElementById('amphure-group');
+        var ampSel = document.getElementById('hometown_amphure');
+        if (!provSel || !ampGroup || !ampSel) return;
+
+        if (provSel.value === 'พะเยา') {
+            ampGroup.style.display = '';
+            // โหลดอำเภอถ้ายังไม่มี option
+            if (ampSel.options.length <= 1) {
+                try {
+                    var res = await fetch('data/amphure.json');
+                    var amphures = await res.json();
+                    var phayaoAmphures = amphures.filter(function(a) { return String(a.province_id) === '44'; });
+                    phayaoAmphures.sort(function(a,b) { return a.name_th.localeCompare(b.name_th, 'th'); });
+                    phayaoAmphures.forEach(function(a) {
+                        var opt = document.createElement('option');
+                        opt.value = a.name_th.replace(/^อ\.\s*/, '');
+                        opt.textContent = a.name_th;
+                        ampSel.appendChild(opt);
+                    });
+                } catch(e) { console.warn('โหลดอำเภอไม่สำเร็จ', e); }
+            }
+        } else {
+            ampGroup.style.display = 'none';
+            ampSel.value = '';
+        }
+    }
 </script>
 <script>
     function printForm() {
@@ -884,6 +958,7 @@
         const appointmentDate = document.querySelector('input[name="appointment_date"]').value || '';
         const staffType = document.querySelector('select[name="staff_type"]').value || '';
         const hometownProvince = document.querySelector('select[name="hometown_province"]').value || '';
+        const hometownAmphure = document.querySelector('select[name="hometown_amphure"]').value || '';
         const hadPreviousHousing = (document.querySelector('input[name="had_previous_housing"]:checked') || {}).value || 'no';
         const stayTypeChecked = document.querySelector('input[name="stay_type"]:checked');
         const stayType = stayTypeChecked?.value === 'alone' ? 'พักอาศัยคนเดียว' : 'พักอาศัยพร้อมครอบครัว';
@@ -935,7 +1010,7 @@
         printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div>');
         if (staffType) printWindow.document.write('<div>ประเภทบุคลากร: ' + staffType + '</div>');
         if (appointmentDate) { var _ad = new Date(appointmentDate + 'T00:00:00'); printWindow.document.write('<div>วันบรรจุ/แต่งตั้ง: ' + _ad.getDate() + ' ' + thaiMonths[_ad.getMonth()] + ' ' + (_ad.getFullYear()+543) + '</div>'); }
-        if (hometownProvince) printWindow.document.write('<div>จังหวัดภูมิลำเนาเดิม: ' + hometownProvince + '</div>');
+        if (hometownProvince) printWindow.document.write('<div>จังหวัดภูมิลำเนาเดิม: ' + hometownProvince + (hometownAmphure ? ' อ.' + hometownAmphure : '') + '</div>');
         printWindow.document.write('</div></div>');
 
         printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิกที่จะพักอาศัย</div><div class="indent small-text">');

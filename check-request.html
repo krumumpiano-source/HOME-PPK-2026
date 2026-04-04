@@ -1050,6 +1050,7 @@
             row.appointmentDate    = row.appointmentDate    || row.appointment_date    || '';
             row.staffType          = row.staffType          || row.staff_type          || '';
             row.hometownProvince   = row.hometownProvince   || row.hometown_province   || '';
+            row.hometownAmphure    = row.hometownAmphure    || row.hometown_amphure    || '';
             row.hadPreviousHousing = row.hadPreviousHousing || row.had_previous_housing|| '';
             row.declarations       = row.declarations       || [];
             row.formDate           = row.formDate           || row.form_date           || '';
@@ -1070,14 +1071,36 @@
 
         // โหลดข้อมูลจาก Backend
         // ========== Priority Score Calculation (ระเบียบข้อ ๓.๕) ==========
+
+        // P3 — ตาราง distance จังหวัด (กลุ่ม → คะแนน)
+        // กลุ่ม near (≤150 กม.) = 30, กลุ่ม mid (150-400 กม.) = 40, กลุ่ม far (>400 กม.) = 50
+        var _PROVINCE_DISTANCE = {
+            // near ≤150 กม.
+            'เชียงราย':30,'ลำปาง':30,'แพร่':30,'น่าน':30,'ลำพูน':30,
+            // mid 150-400 กม.
+            'เชียงใหม่':40,'อุตรดิตถ์':40,'พิษณุโลก':40,'แม่ฮ่องสอน':40,
+            'สุโขทัย':40,'ตาก':40,'เพชรบูรณ์':40,'พิจิตร':40,'กำแพงเพชร':40,
+            'เลย':40,'หนองคาย':40,'หนองบัวลำภู':40,'อุดรธานี':40,'นครสวรรค์':40
+            // ที่เหลือทั้งหมด = far (50) → default
+        };
+
+        // P3 — ตาราง distance อำเภอในจังหวัดพะเยา
+        var _PHAYAO_AMPHURE_SCORE = {
+            'เมืองพะเยา':0,
+            'ภูกามยาว':10, 'แม่ใจ':10, 'ดอกคำใต้':10,
+            'จุน':20,
+            'ปง':30, 'เชียงคำ':30, 'ภูซาง':30, 'เชียงม่วน':30
+        };
+
         function calcPriorityScore(item) {
             var score = 0;
             var labels = [];
 
-            // P1 (70 คะแนน) — ข้าราชการ/ลูกจ้างประจำ/พนักงานราชการ
+            // P1 (สูงสุด 70 คะแนน) — แยกตามประเภทบุคลากร
             var st = item.staffType || '';
-            if (st === 'ข้าราชการครู' || st === 'ลูกจ้างประจำ' || st === 'พนักงานราชการ') {
-                score += 70; labels.push('P1');
+            var p1Map = {'ข้าราชการครู':70,'พนักงานราชการ':50,'ลูกจ้างประจำ':40,'ครูอัตราจ้าง':20};
+            if (p1Map[st] !== undefined) {
+                score += p1Map[st]; labels.push('P1(' + p1Map[st] + ')');
             }
 
             // P2 (60 คะแนน) — ไม่มีที่พักเป็นของตนเอง
@@ -1086,11 +1109,24 @@
                 score += 60; labels.push('P2');
             }
 
-            // P3 (50 คะแนน) — ภูมิลำเนาอยู่ห่างไกล (ต่างจังหวัด ≠ พะเยา)
+            // P3 (สูงสุด 50 คะแนน) — ภูมิลำเนาอยู่ห่างไกล (แบบระดับระยะทาง)
             var prov = item.hometownProvince || '';
-            if (prov && prov !== 'พะเยา') {
-                score += 50; labels.push('P3');
+            var p3Score = 0;
+            if (prov) {
+                if (prov === 'พะเยา') {
+                    // ดูอำเภอในพะเยา
+                    var amp = item.hometownAmphure || '';
+                    if (amp && _PHAYAO_AMPHURE_SCORE[amp] !== undefined) {
+                        p3Score = _PHAYAO_AMPHURE_SCORE[amp];
+                    } else {
+                        p3Score = 0; // ไม่ระบุอำเภอ หรือ อ.เมืองพะเยา
+                    }
+                } else {
+                    // จังหวัดอื่น
+                    p3Score = _PROVINCE_DISTANCE[prov] !== undefined ? _PROVINCE_DISTANCE[prov] : 50;
+                }
             }
+            if (p3Score > 0) { score += p3Score; labels.push('P3(' + p3Score + ')'); }
 
             // P4 (40 คะแนน) — มีภาระครอบครัว (เลือก family_responsibility หรือ stayType=family)
             var reasons = item.reasons || [];
@@ -1116,8 +1152,8 @@
             var tieAppointment = item.appointmentDate ? new Date(item.appointmentDate).getTime() : Infinity;
             var tieSubmit = item.submitDate ? new Date(item.submitDate).getTime() : Infinity;
 
-            // Level label
-            var level = score >= 250 ? 'สูงมาก' : score >= 200 ? 'สูง' : score >= 150 ? 'ปานกลาง' : 'ต่ำ';
+            // Level label (ปรับตาม max ที่เป็นไปได้ = 280)
+            var level = score >= 230 ? 'สูงมาก' : score >= 180 ? 'สูง' : score >= 130 ? 'ปานกลาง' : 'ต่ำ';
 
             return { score: score, labels: labels, level: level, tieAppointment: tieAppointment, tieSubmit: tieSubmit };
         }
