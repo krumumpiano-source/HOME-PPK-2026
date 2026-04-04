@@ -2071,6 +2071,27 @@ async function _routeAction(action, data) {
 
             if (sessRole === 'admin' || sessRole === 'head') {
                 var adminPeriod = (now2.getFullYear() + 543) + '-' + String(now2.getMonth() + 1).padStart(2, '0');
+                // ── Global self-healing: แก้ outstanding ที่ค้างทั้งระบบ ──
+                try {
+                    var _ghUnpaid = await sbGet('outstanding', { status: 'neq.paid', moved_out_at: 'is.null', select: 'id,house_number,period', limit: '500' }).catch(function() { return []; });
+                    if (_ghUnpaid && _ghUnpaid.length > 0) {
+                        var _ghResults = await Promise.all([
+                            sbGet('slip_submissions', { status: 'eq.approved', select: 'house_number,period', limit: '1000' }).catch(function() { return []; }),
+                            sbGet('payment_history', { select: 'house_number,period', limit: '1000' }).catch(function() { return []; })
+                        ]);
+                        var _ghPaidMap = {};
+                        (_ghResults[0] || []).forEach(function(s) { if (s.house_number && s.period) _ghPaidMap[s.house_number + '_' + s.period] = true; });
+                        (_ghResults[1] || []).forEach(function(ph) { if (ph.house_number && ph.period) _ghPaidMap[ph.house_number + '_' + ph.period] = true; });
+                        var _ghNow = new Date().toISOString();
+                        for (var _ghi = 0; _ghi < _ghUnpaid.length; _ghi++) {
+                            var _ghKey = _ghUnpaid[_ghi].house_number + '_' + _ghUnpaid[_ghi].period;
+                            if (_ghPaidMap[_ghKey]) {
+                                sbPatch('outstanding', { id: 'eq.' + _ghUnpaid[_ghi].id }, { status: 'paid', updated_at: _ghNow }).catch(function() {});
+                            }
+                        }
+                    }
+                } catch(e) { console.warn('[getDashboardData] global heal error:', e); }
+
                 var adminQueries = [
                     sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
                     sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
