@@ -536,6 +536,15 @@
                     return;
                 }
                 allRequests.sort(function(a, b) { return (b.submitted_at || '').localeCompare(a.submitted_at || ''); });
+                // ซ่อนคำร้องที่ยกเลิกแล้ว
+                allRequests = allRequests.filter(function(r) { return r.status !== 'cancelled'; });
+                if (allRequests.length === 0) {
+                    var noReqMsg2 = hasHouse
+                        ? 'ยังไม่มีคำร้องในปีนี้ กรุณาเลือกประเภทคำร้องด้านล่าง'
+                        : 'ยังไม่มีคำร้องขอเข้าพักในปีนี้ กรุณากรอกแบบฟอร์มด้านล่าง';
+                    content.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">📄</div><div class="ppk-empty-text">' + noReqMsg2 + '</div></div>';
+                    return;
+                }
                 var DISPLAY_LIMIT = 10;
                 var showAll = allRequests.length <= DISPLAY_LIMIT;
                 var displayRequests = showAll ? allRequests : allRequests.slice(0, DISPLAY_LIMIT);
