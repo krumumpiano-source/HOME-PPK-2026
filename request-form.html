@@ -205,6 +205,28 @@
                         <option value="ไม่ระบุ">ไม่ระบุ (เจ้าหน้าที่/ลูกจ้าง)</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>วันบรรจุ/แต่งตั้ง ณ โรงเรียนพะเยาพิทยาคม</label>
+                    <input type="date" name="appointment_date">
+                    <div style="font-size:0.82rem;color:#6b7280;margin-top:0.3rem;">ใช้คำนวณลำดับอาวุโส (ข้อ ๓.๕ ระเบียบ)</div>
+                </div>
+                <div class="form-group">
+                    <label>ประเภทบุคลากร</label>
+                    <select name="staff_type">
+                        <option value="">-- เลือกประเภท --</option>
+                        <option value="ข้าราชการครู">ข้าราชการครู</option>
+                        <option value="ลูกจ้างประจำ">ลูกจ้างประจำ</option>
+                        <option value="พนักงานราชการ">พนักงานราชการ</option>
+                        <option value="ครูอัตราจ้าง">ครูอัตราจ้าง</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>จังหวัดภูมิลำเนาเดิม</label>
+                    <select name="hometown_province" id="hometown_province">
+                        <option value="">-- เลือกจังหวัด --</option>
+                    </select>
+                    <div style="font-size:0.82rem;color:#6b7280;margin-top:0.3rem;">ใช้ประกอบเกณฑ์ "อยู่ห่างไกลจากภูมิลำเนาเดิม" (ข้อ ๓.๕)</div>
+                </div>
             </div>
 
             <!-- ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิกที่จะพักอาศัย -->
@@ -245,6 +267,13 @@
                     <label><input type="checkbox" name="reason" value="other"> อื่น ๆ (โปรดระบุ)</label>
                     <input type="text" name="other_reason" placeholder="โปรดระบุ" style="margin-left: 1.5rem; width: calc(100% - 1.5rem); padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;">
                 </div>
+                <div class="form-group" style="margin-top:1rem;">
+                    <label>เคยได้รับสิทธิ์พักอาศัยในบ้านพักของทางราชการมาก่อนหรือไม่?</label>
+                    <div class="checkbox-group">
+                        <label><input type="radio" name="had_previous_housing" value="no" checked> ไม่เคย</label>
+                        <label><input type="radio" name="had_previous_housing" value="yes"> เคย (ข้อ ๓.๓ ผู้ที่เคยได้รับสิทธิ์จะได้คะแนนลดลง)</label>
+                    </div>
+                </div>
             </div>
 
             <!-- ส่วนที่ 4: เอกสารประกอบคำร้อง -->
@@ -258,9 +287,21 @@
                 </div>
             </div>
 
+            <!-- ส่วนที่ 4.5: การรับรองคุณสมบัติตามระเบียบ (ข้อ ๓.๒) -->
+            <div class="form-section">
+                <h3>ส่วนที่ 5: การรับรองคุณสมบัติตามระเบียบ</h3>
+                <p style="color:#92400e;font-size:0.9rem;margin-bottom:0.75rem;">กรุณาอ่านและทำเครื่องหมายยืนยันทุกข้อก่อนส่งคำร้อง (ตามระเบียบข้อ ๓.๒)</p>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="declaration" value="no_own_housing"> ข้าพเจ้าไม่มีที่อยู่อาศัยเป็นของตนเองในเขตอำเภอเมืองพะเยา หรือพื้นที่ใกล้เคียง</label>
+                    <label><input type="checkbox" name="declaration" value="not_renting_out"> ข้าพเจ้าไม่ได้ให้เช่าที่พักอาศัยส่วนตัวที่มีอยู่ในพื้นที่</label>
+                    <label><input type="checkbox" name="declaration" value="follow_regulations"> ข้าพเจ้ายินดีปฏิบัติตามระเบียบบ้านพักครูของโรงเรียนทุกประการ</label>
+                    <label><input type="checkbox" name="declaration" value="accept_revocation"> ข้าพเจ้ารับทราบว่าหากข้อมูลเป็นเท็จ อาจถูกเพิกถอนสิทธิ์การพักอาศัย</label>
+                </div>
+            </div>
+
             <!-- ส่วนที่ 5: ข้อตกลง -->
             <div class="form-section">
-                <h3>ส่วนที่ 5: ข้อตกลง</h3>
+                <h3>ส่วนที่ 6: ข้อตกลง</h3>
                 <p>ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p>
                 <div class="checkbox-group">
                     <label><input type="checkbox" name="agreement" required> ข้าพเจ้ายอมรับข้อตกลงข้างต้น</label>
@@ -486,6 +527,14 @@
                 ppkAlert('กรุณาเลือกเอกสารประกอบคำร้องที่จะแนบมาอย่างน้อย 1 รายการ', 'error');
                 return;
             }
+            // ตรวจสอบการรับรองคุณสมบัติ (ข้อ ๓.๒)
+            var declChecked = document.querySelectorAll('input[name="declaration"]:checked');
+            var declTotal = document.querySelectorAll('input[name="declaration"]');
+            if (declChecked.length < declTotal.length) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณายืนยันการรับรองคุณสมบัติทุกข้อ (ส่วนที่ 5)', 'error');
+                return;
+            }
             const reasons = [];
             document.querySelectorAll('input[name="reason"]:checked').forEach(cb => reasons.push(cb.value));
             const documents = [];
@@ -513,6 +562,11 @@
                 email: document.querySelector('input[name="email"]').value,
                 position: document.querySelector('select[name="position"]').value,
                 subject_group: document.querySelector('select[name="subject_group"]').value,
+                appointment_date: document.querySelector('input[name="appointment_date"]').value || '',
+                staff_type: document.querySelector('select[name="staff_type"]').value || '',
+                hometown_province: document.querySelector('select[name="hometown_province"]').value || '',
+                had_previous_housing: (document.querySelector('input[name="had_previous_housing"]:checked') || {}).value || 'no',
+                declarations: Array.from(document.querySelectorAll('input[name="declaration"]:checked')).map(function(cb) { return cb.value; }),
                 stay_type: stayType,
                 total_residents: document.querySelector('input[name="total_residents"]').value,
                 residents: residents,
@@ -704,6 +758,20 @@
         setVal('select[name="position"]', d.position);
         setVal('select[name="subject_group"]', d.subject_group);
         setVal('textarea[name="additional_info"]', d.additional_info);
+        // new regulation fields
+        setVal('input[name="appointment_date"]', d.appointment_date);
+        setVal('select[name="staff_type"]', d.staff_type);
+        setVal('select[name="hometown_province"]', d.hometown_province);
+        if (d.had_previous_housing) {
+            var hpRb = document.querySelector('input[name="had_previous_housing"][value="' + d.had_previous_housing + '"]');
+            if (hpRb) hpRb.checked = true;
+        }
+        if (d.declarations && d.declarations.length) {
+            d.declarations.forEach(function(dv) {
+                var cb = document.querySelector('input[name="declaration"][value="' + dv + '"]');
+                if (cb) cb.checked = true;
+            });
+        }
         // stay_type
         if (d.stay_type) {
             var rb = document.querySelector('input[name="stay_type"][value="' + d.stay_type + '"]');
@@ -724,6 +792,21 @@
 
     // เรียก initAdminFeatures หลัง initPage เสร็จ
     setTimeout(function() { initAdminFeatures(); }, 600);
+
+    // โหลดจังหวัดลง dropdown
+    (function loadProvinces() {
+        fetch('data/province.json').then(function(r) { return r.json(); }).then(function(provinces) {
+            var sel = document.getElementById('hometown_province');
+            if (!sel) return;
+            provinces.sort(function(a,b) { return a.name_th.localeCompare(b.name_th, 'th'); });
+            provinces.forEach(function(p) {
+                var opt = document.createElement('option');
+                opt.value = p.name_th;
+                opt.textContent = p.name_th;
+                sel.appendChild(opt);
+            });
+        }).catch(function(e) { console.warn('โหลดจังหวัดไม่สำเร็จ', e); });
+    })();
 </script>
 <script>
     function printForm() {
@@ -737,6 +820,10 @@
         const phone = document.querySelector('input[name="phone"]').value;
         const email = document.querySelector('input[name="email"]').value;
         const subjectGroup = document.querySelector('select[name="subject_group"]').value;
+        const appointmentDate = document.querySelector('input[name="appointment_date"]').value || '';
+        const staffType = document.querySelector('select[name="staff_type"]').value || '';
+        const hometownProvince = document.querySelector('select[name="hometown_province"]').value || '';
+        const hadPreviousHousing = (document.querySelector('input[name="had_previous_housing"]:checked') || {}).value || 'no';
         const stayTypeChecked = document.querySelector('input[name="stay_type"]:checked');
         const stayType = stayTypeChecked?.value === 'alone' ? 'พักอาศัยคนเดียว' : 'พักอาศัยพร้อมครอบครัว';
         const totalResidents = document.querySelector('input[name="total_residents"]').value;
@@ -784,7 +871,11 @@
         printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
         printWindow.document.write('<div>ที่อยู่ตามบัตรประชาชน: ' + address + '</div>');
         printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + ' &nbsp;&nbsp; อีเมล: ' + email + '</div>');
-        printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div></div></div>');
+        printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div>');
+        if (staffType) printWindow.document.write('<div>ประเภทบุคลากร: ' + staffType + '</div>');
+        if (appointmentDate) { var _ad = new Date(appointmentDate + 'T00:00:00'); printWindow.document.write('<div>วันบรรจุ/แต่งตั้ง: ' + _ad.getDate() + ' ' + thaiMonths[_ad.getMonth()] + ' ' + (_ad.getFullYear()+543) + '</div>'); }
+        if (hometownProvince) printWindow.document.write('<div>จังหวัดภูมิลำเนาเดิม: ' + hometownProvince + '</div>');
+        printWindow.document.write('</div></div>');
 
         printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 2: ข้อมูลการเข้าพักและสมาชิกที่จะพักอาศัย</div><div class="indent small-text">');
         printWindow.document.write('<div>ลักษณะการเข้าพัก: <span class="checkbox">' + (stayTypeChecked?.value === 'alone' ? '&#10003;' : '') + '</span> พักอาศัยคนเดียว &nbsp;&nbsp; <span class="checkbox">' + (stayTypeChecked?.value === 'family' ? '&#10003;' : '') + '</span> พักอาศัยพร้อมครอบครัว</div>');
@@ -798,13 +889,19 @@
 
         printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 3: เหตุผลในการขอเข้าพัก</div><div class="indent small-text">');
         reasons.forEach(r => { printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + r + '</div>'); });
+        printWindow.document.write('<div style="margin-top:0.2cm;">เคยได้รับสิทธิ์พักในบ้านพักราชการมาก่อน: <b>' + (hadPreviousHousing === 'yes' ? 'เคย' : 'ไม่เคย') + '</b></div>');
         printWindow.document.write('</div></div>');
 
         printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 4: เอกสารประกอบคำร้อง</div><div class="indent small-text">');
         documents.forEach(d => { printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + d + '</div>'); });
         printWindow.document.write('</div></div>');
 
-        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 5: ข้อตกลง</div><p class="indent small-text" style="text-align:justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p></div>');
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 5: การรับรองคุณสมบัติตามระเบียบ</div><div class="indent small-text">');
+        var declLabels = { 'no_own_housing': 'ไม่มีที่อยู่อาศัยเป็นของตนเองในเขตอำเภอเมืองพะเยา', 'not_renting_out': 'ไม่ได้ให้เช่าที่พักอาศัยส่วนตัว', 'follow_regulations': 'ยินดีปฏิบัติตามระเบียบบ้านพักครูทุกประการ', 'accept_revocation': 'รับทราบเรื่องการเพิกถอนสิทธิ์หากข้อมูลเป็นเท็จ' };
+        document.querySelectorAll('input[name="declaration"]:checked').forEach(function(cb) { printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + (declLabels[cb.value] || cb.value) + '</div>'); });
+        printWindow.document.write('</div></div>');
+
+        printWindow.document.write('<div class="section"><div class="section-title">ส่วนที่ 6: ข้อตกลง</div><p class="indent small-text" style="text-align:justify;">ข้าพเจ้าขอรับรองว่า ข้อมูลและเอกสารที่ใช้ประกอบการขอเข้าพักนี้เป็นความจริงทุกประการ หากพบว่าเป็นข้อมูลเท็จ ข้าพเจ้ายินยอมให้พิจารณาเพิกถอนสิทธิ์การพักอาศัย และยอมรับการพิจารณาของงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม โดยไม่มีข้อโต้แย้ง</p></div>');
 
         printWindow.document.write('<div class="signature-section small-text">');
         printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้ยื่นคำร้อง<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');

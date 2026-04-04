@@ -479,6 +479,9 @@
                 <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
                     ลากเพื่อเรียงลำดับคิว และจัดการสถานะคำร้อง
                 </p>
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                    <button class="btn btn-primary btn-sm" onclick="autoSortQueue()" title="เรียงลำดับคิวตามคะแนนระเบียบข้อ ๓.๕ อัตโนมัติ">📊 เรียงตามระเบียบ</button>
+                </div>
                 
                 <!-- Queue Expiry Settings -->
                 <div class="queue-settings" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem;padding:1rem;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
@@ -1043,6 +1046,13 @@
             row.headSignature    = row.headSignature    || row.head_signature    || null;
             row.headReviewerName = row.headReviewerName || row.head_reviewer_name|| '';
             row.headReviewedAt   = row.headReviewedAt   || row.head_reviewed_at  || '';
+            // regulation fields
+            row.appointmentDate    = row.appointmentDate    || row.appointment_date    || '';
+            row.staffType          = row.staffType          || row.staff_type          || '';
+            row.hometownProvince   = row.hometownProvince   || row.hometown_province   || '';
+            row.hadPreviousHousing = row.hadPreviousHousing || row.had_previous_housing|| '';
+            row.declarations       = row.declarations       || [];
+            row.formDate           = row.formDate           || row.form_date           || '';
             // reason: string → reasons: array
             if (!row.reasons && row.reason) {
                 row.reasons = row.reason.split(',').map(function(r) { return r.trim(); }).filter(Boolean);
@@ -1059,6 +1069,59 @@
         }
 
         // โหลดข้อมูลจาก Backend
+        // ========== Priority Score Calculation (ระเบียบข้อ ๓.๕) ==========
+        function calcPriorityScore(item) {
+            var score = 0;
+            var labels = [];
+
+            // P1 (70 คะแนน) — ข้าราชการ/ลูกจ้างประจำ/พนักงานราชการ
+            var st = item.staffType || '';
+            if (st === 'ข้าราชการครู' || st === 'ลูกจ้างประจำ' || st === 'พนักงานราชการ') {
+                score += 70; labels.push('P1');
+            }
+
+            // P2 (60 คะแนน) — ไม่มีที่พักเป็นของตนเอง
+            var decl = item.declarations || [];
+            if (decl.indexOf('no_own_housing') >= 0) {
+                score += 60; labels.push('P2');
+            }
+
+            // P3 (50 คะแนน) — ภูมิลำเนาอยู่ห่างไกล (ต่างจังหวัด ≠ พะเยา)
+            var prov = item.hometownProvince || '';
+            if (prov && prov !== 'พะเยา') {
+                score += 50; labels.push('P3');
+            }
+
+            // P4 (40 คะแนน) — มีภาระครอบครัว (เลือก family_responsibility หรือ stayType=family)
+            var reasons = item.reasons || [];
+            if (reasons.indexOf('family_responsibility') >= 0 || item.stayType === 'family') {
+                score += 40; labels.push('P4');
+            }
+
+            // P5 (30 คะแนน) — ไม่เคยได้รับสิทธิ์บ้านพักมาก่อน
+            var hp = item.hadPreviousHousing || 'no';
+            if (hp === 'no') {
+                score += 30; labels.push('P5');
+            }
+
+            // P6 (20 คะแนน) — ปฏิบัติหน้าที่ ณ รร.พะเยาพิทยาคม (สมมติทุกคนที่ส่งคำร้อง = ใช่)
+            score += 20; labels.push('P6');
+
+            // P7 (10 คะแนน) — ยินดีปฏิบัติตามระเบียบ
+            if (decl.indexOf('follow_regulations') >= 0) {
+                score += 10; labels.push('P7');
+            }
+
+            // Tiebreaker: appointmentDate (เก่ากว่า = สูงกว่า) → submitDate (เร็วกว่า = สูงกว่า)
+            var tieAppointment = item.appointmentDate ? new Date(item.appointmentDate).getTime() : Infinity;
+            var tieSubmit = item.submitDate ? new Date(item.submitDate).getTime() : Infinity;
+
+            // Level label
+            var level = score >= 250 ? 'สูงมาก' : score >= 200 ? 'สูง' : score >= 150 ? 'ปานกลาง' : 'ต่ำ';
+
+            return { score: score, labels: labels, level: level, tieAppointment: tieAppointment, tieSubmit: tieSubmit };
+        }
+
         async function loadAllRequests() {
             try {
                     const [resResult, repResult, trfResult, retResult, queueResult] = await Promise.all([
@@ -1158,6 +1221,27 @@
             
             // ส่งลำดับใหม่ไป Backend
             callBackend('updateQueue', { orderedIds: orderedIds }).then(function() { _clearRequestsCache(); }).catch(function(e) { console.error('อัปเดตคิวไม่สำเร็จ:', e); if (typeof ppkToast === 'function') ppkToast('ไม่สามารถบันทึกลำดับคิวได้ กรุณาลองใหม่', 'error'); });
+        }
+
+        // เรียงคิวอัตโนมัติตามคะแนนระเบียบ (ข้อ ๓.๕)
+        async function autoSortQueue() {
+            var queueItems = getQueueItems();
+            if (queueItems.length < 2) { ppkToast('คิวมีไม่ถึง 2 คน ไม่จำเป็นต้องเรียง', 'info'); return; }
+            if (!await ppkConfirm('ต้องการเรียงลำดับคิวตามคะแนนเกณฑ์ระเบียบ (ข้อ ๓.๕) อัตโนมัติหรือไม่?\n\nลำดับเดิมจะถูกแทนที่ด้วยลำดับใหม่ตามคะแนน')) return;
+            // คำนวณคะแนนและเรียง
+            var scored = queueItems.map(function(item) {
+                var pri = calcPriorityScore(item);
+                return { id: item.id, score: pri.score, tieAppointment: pri.tieAppointment, tieSubmit: pri.tieSubmit };
+            });
+            scored.sort(function(a, b) {
+                if (b.score !== a.score) return b.score - a.score; // คะแนนมาก → อันดับต้น
+                if (a.tieAppointment !== b.tieAppointment) return a.tieAppointment - b.tieAppointment; // บรรจุเก่ากว่า → อันดับต้น
+                return a.tieSubmit - b.tieSubmit; // ส่งก่อน → อันดับต้น
+            });
+            var newOrder = scored.map(function(s) { return s.id; });
+            updateQueueOrder(newOrder);
+            renderQueue();
+            ppkToast('เรียงลำดับคิวตามระเบียบเรียบร้อย (' + queueItems.length + ' คน)', 'success');
         }
 
         function addToQueue(id) {
@@ -1327,12 +1411,15 @@
             const isExpired = globalExpiryDate ? new Date(globalExpiryDate) < new Date() : false;
             
             container.innerHTML = queueItems.map((item, index) => {
+                var pri = calcPriorityScore(item);
+                var priColor = pri.score >= 250 ? '#15803d' : pri.score >= 200 ? '#1d4ed8' : pri.score >= 150 ? '#b45309' : '#6b7280';
+                var priBadge = '<span style="display:inline-block;background:' + priColor + ';color:#fff;font-size:0.7rem;padding:0.15rem 0.5rem;border-radius:99px;margin-left:0.5rem;font-weight:600;" title="' + pri.labels.join('+') + '">' + pri.score + ' คะแนน</span>';
                 return `
                 <div class="queue-item" draggable="true" data-id="${item.id}">
                     <span class="drag-handle" title="ลากเพื่อเรียงลำดับ">⋮⋮</span>
                     <div class="queue-number">${index + 1}</div>
                     <div class="queue-info">
-                        <div class="queue-name">${_e(item.prefix)}${_e(item.fullname)}</div>
+                        <div class="queue-name">${_e(item.prefix)}${_e(item.fullname)}${priBadge}</div>
                         <div class="queue-detail">
                             📞 ${_e(item.phone)} | 📧 ${_e(item.email) || '-'}<br>
                             📅 ยื่นเมื่อ: ${formatDate(item.submitDate)}
@@ -1711,6 +1798,25 @@
                             <div class="detail-label">สถานะ</div>
                             <div class="detail-value">${getStatusBadge(item.status)}</div>
                         </div>
+                        ${item.appointmentDate ? `
+                        <div class="detail-item">
+                            <div class="detail-label">วันบรรจุ/แต่งตั้ง</div>
+                            <div class="detail-value">${formatDate(item.appointmentDate)}</div>
+                        </div>` : ''}
+                        ${item.staffType ? `
+                        <div class="detail-item">
+                            <div class="detail-label">ประเภทบุคลากร</div>
+                            <div class="detail-value">${_e(item.staffType)}</div>
+                        </div>` : ''}
+                        ${item.hometownProvince ? `
+                        <div class="detail-item">
+                            <div class="detail-label">จังหวัดภูมิลำเนาเดิม</div>
+                            <div class="detail-value">${_e(item.hometownProvince)}</div>
+                        </div>` : ''}
+                        <div class="detail-item">
+                            <div class="detail-label">เคยได้รับสิทธิ์บ้านพักมาก่อน</div>
+                            <div class="detail-value">${item.hadPreviousHousing === 'yes' ? 'เคย' : 'ไม่เคย'}</div>
+                        </div>
                         ${item.queuePosition ? `
                         <div class="detail-item">
                             <div class="detail-label">ลำดับคิว</div>
@@ -1738,6 +1844,16 @@
                         <div class="detail-label">เหตุผลในการขอเข้าพัก</div>
                         <div class="detail-value">${getReasonText(item.reasons)}${item.otherReason ? '<br>อื่นๆ: ' + _e(item.otherReason) : ''}</div>
                     </div>
+                    ${(function() {
+                        var _dLabels = { 'no_own_housing': 'ไม่มีที่อยู่อาศัยเป็นของตนเอง', 'not_renting_out': 'ไม่ได้ให้เช่าที่พักส่วนตัว', 'follow_regulations': 'ยินดีปฏิบัติตามระเบียบ', 'accept_revocation': 'รับทราบเรื่องเพิกถอนสิทธิ์' };
+                        var _ds = item.declarations || [];
+                        if (_ds.length === 0) return '';
+                        return '<div class="detail-item" style="margin-top:1rem;"><div class="detail-label">การรับรองคุณสมบัติ (ข้อ ๓.๒)</div><div class="detail-value"><ul style="margin:0.5rem 0;padding-left:1.5rem;">' + _ds.map(function(dv) { return '<li>✅ ' + (_dLabels[dv] || dv) + '</li>'; }).join('') + '</ul></div></div>';
+                    })()}
+                    ${(function() {
+                        var _pri = calcPriorityScore(item);
+                        return '<div style="margin-top:1rem;padding:0.75rem 1rem;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #93c5fd;border-radius:10px;"><div style="font-weight:700;color:#1e40af;margin-bottom:0.3rem;">📊 คะแนนระเบียบ (ข้อ ๓.๕): <span style="font-size:1.2rem;">' + _pri.score + '</span> คะแนน — ระดับ: ' + _pri.level + '</div><div style="font-size:0.85rem;color:#374151;">เกณฑ์ที่ผ่าน: ' + (_pri.labels.length > 0 ? _pri.labels.join(', ') : '-') + '</div></div>';
+                    })()}
                     ${item.additionalInfo ? `
                     <div class="detail-item" style="margin-top:1rem;">
                         <div class="detail-label">ข้อมูลเพิ่มเติม</div>
@@ -2812,14 +2928,52 @@
                 }
 
                 select.innerHTML = '<option value="">— เลือกบ้าน/ห้อง —</option>';
-                available.forEach(h => {
-                    const _pfxC = h.type === 'flat' ? 'แฟลต' : 'บ้าน', _rawC = h.house_number || h.number || '';
-                    const label = _pfxC + (_rawC.startsWith(_pfxC) ? _rawC.substring(_pfxC.length) : _rawC);
-                    const opt = document.createElement('option');
-                    opt.value = h.house_number || h.number || '';
-                    opt.textContent = label;
-                    select.appendChild(opt);
-                });
+                // แสดง hint ประเภทบ้านตามระเบียบ
+                var _hintType = '';
+                if (item.stayType === 'family' || (parseInt(item.totalResidents) || 1) > 2) {
+                    _hintType = 'บ้านพัก (เหมาะกับครอบครัว)';
+                } else {
+                    _hintType = 'ห้องแฟลต (เหมาะกับพักคนเดียว)';
+                }
+                var hintDiv = document.getElementById('approveHouseHint');
+                if (!hintDiv) {
+                    hintDiv = document.createElement('div');
+                    hintDiv.id = 'approveHouseHint';
+                    hintDiv.style.cssText = 'font-size:0.85rem;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.75rem;';
+                    select.parentNode.insertBefore(hintDiv, select);
+                }
+                hintDiv.style.background = '#eff6ff';
+                hintDiv.style.color = '#1e40af';
+                hintDiv.style.border = '1px solid #93c5fd';
+                hintDiv.innerHTML = '💡 <b>แนะนำ:</b> ' + _hintType + ' (ลักษณะเข้าพัก: ' + getStayTypeText(item.stayType) + ', ' + (item.totalResidents || 1) + ' คน)';
+
+                // แยก group: แฟลต vs บ้าน
+                var flats = available.filter(function(h) { return h.type === 'flat'; });
+                var houses = available.filter(function(h) { return h.type !== 'flat'; });
+                if (houses.length > 0) {
+                    var grpH = document.createElement('optgroup');
+                    grpH.label = '🏠 บ้านพัก (' + houses.length + ' หลัง)';
+                    houses.forEach(function(h) {
+                        var _rawC = h.house_number || h.number || '';
+                        var opt = document.createElement('option');
+                        opt.value = _rawC;
+                        opt.textContent = 'บ้าน' + (_rawC.startsWith('บ้าน') ? _rawC.substring(4) : _rawC);
+                        grpH.appendChild(opt);
+                    });
+                    select.appendChild(grpH);
+                }
+                if (flats.length > 0) {
+                    var grpF = document.createElement('optgroup');
+                    grpF.label = '🏢 ห้องแฟลต (' + flats.length + ' ห้อง)';
+                    flats.forEach(function(h) {
+                        var _rawC = h.house_number || h.number || '';
+                        var opt = document.createElement('option');
+                        opt.value = _rawC;
+                        opt.textContent = 'แฟลต' + (_rawC.startsWith('แฟลต') ? _rawC.substring(5) : _rawC);
+                        grpF.appendChild(opt);
+                    });
+                    select.appendChild(grpF);
+                }
 
                 // ตรวจจับชื่อซ้ำ
                 if (item.firstname && item.lastname) {
