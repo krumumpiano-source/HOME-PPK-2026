@@ -1741,6 +1741,18 @@
                         <div class="detail-label">รายการประมาณการค่าใช้จ่าย</div>
                         <div class="detail-value">${costHTML}</div>
                     </div>` : ''}
+                    ${item.status === 'approved' ? `
+                    <div style="margin-top:1.25rem;padding:1rem;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;">
+                        <div style="font-weight:700;color:#15803d;margin-bottom:0.5rem;">✅ อนุมัติแล้ว${item.headReviewerName ? ' — ผู้อนุมัติ: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.headReviewedAt ? '<div style="font-size:0.875rem;color:#166534;margin-bottom:0.5rem;">วันที่อนุมัติ: ' + formatDate(item.headReviewedAt) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #d1fae5;border-radius:6px;background:#fff;padding:0.25rem;margin-bottom:0.5rem;">' : ''}
+                    </div>` : ''}
+                    ${item.status === 'rejected' ? `
+                    <div style="margin-top:1.25rem;padding:1rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;">
+                        <div style="font-weight:700;color:#dc2626;margin-bottom:0.3rem;">❌ ไม่อนุมัติ${item.headReviewerName ? ' — ผู้พิจารณา: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.reviewNote ? '<div style="font-size:0.875rem;color:#991b1b;">เหตุผล: ' + _e(item.reviewNote) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #fca5a5;border-radius:6px;background:#fff;padding:0.25rem;margin-top:0.5rem;">' : ''}
+                    </div>` : ''}
                 `;
             } else if (type === 'transfer') {
                 var tTypeText = { 'flat_to_house': 'ย้ายจากอาคารพักรวม (แฟลต) ไปบ้านพักแบบเดี่ยว', 'house_to_flat': 'ย้ายจากบ้านพักแบบเดี่ยวไปอาศัยในแฟลต', 'change_unit': 'เปลี่ยนยูนิตหรือห้องพักภายในแฟลตเดียวกัน' };
@@ -1799,8 +1811,16 @@
                     </div>` : ''}
                     ${item.status === 'approved' ? `
                     <div style="margin-top:1.25rem;padding:1rem;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;">
-                        <div style="font-weight:700;color:#15803d;margin-bottom:0.3rem;">✅ อนุมัติแล้ว</div>
+                        <div style="font-weight:700;color:#15803d;margin-bottom:0.5rem;">✅ อนุมัติแล้ว${item.headReviewerName ? ' — ผู้อนุมัติ: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.headReviewedAt ? '<div style="font-size:0.875rem;color:#166534;margin-bottom:0.5rem;">วันที่อนุมัติ: ' + formatDate(item.headReviewedAt) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #d1fae5;border-radius:6px;background:#fff;padding:0.25rem;margin-bottom:0.5rem;">' : ''}
                         ${item.reviewNote ? '<div style="font-size:0.875rem;color:#166534;">หมายเหตุ: ' + _e(item.reviewNote) + '</div>' : ''}
+                    </div>` : ''}
+                    ${item.status === 'rejected' ? `
+                    <div style="margin-top:1.25rem;padding:1rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;">
+                        <div style="font-weight:700;color:#dc2626;margin-bottom:0.3rem;">❌ ไม่อนุมัติ${item.headReviewerName ? ' — ผู้พิจารณา: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.reviewNote ? '<div style="font-size:0.875rem;color:#991b1b;">เหตุผล: ' + _e(item.reviewNote) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #fca5a5;border-radius:6px;background:#fff;padding:0.25rem;margin-top:0.5rem;">' : ''}
                     </div>` : ''}
                 `;
             } else if (type === 'return') {
@@ -1878,12 +1898,24 @@
                     </div>` : ''}
 
                     ${item.status === 'approved' ? `
-                    <div style="margin-top:1.5rem;background:${_retReady ? '#f0fdf4' : '#fefce8'};border:2px solid ${_retReady ? '#86efac' : '#fde047'};border-radius:12px;padding:1rem;">
+                    <div style="margin-top:1.25rem;padding:1rem;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;">
+                        <div style="font-weight:700;color:#15803d;margin-bottom:0.5rem;">✅ อนุมัติแล้ว${item.headReviewerName ? ' — ผู้อนุมัติ: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.headReviewedAt ? '<div style="font-size:0.875rem;color:#166534;margin-bottom:0.5rem;">วันที่อนุมัติ: ' + formatDate(item.headReviewedAt) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #d1fae5;border-radius:6px;background:#fff;padding:0.25rem;margin-bottom:0.5rem;">' : ''}
+                        ${item.reviewNote ? '<div style="font-size:0.875rem;color:#166534;">หมายเหตุ: ' + _e(item.reviewNote) + '</div>' : ''}
+                    </div>
+                    <div style="margin-top:0.75rem;background:${_retReady ? '#f0fdf4' : '#fefce8'};border:2px solid ${_retReady ? '#86efac' : '#fde047'};border-radius:12px;padding:1rem;">
                         <div style="font-weight:700;color:${_retReady ? '#15803d' : '#78350f'};margin-bottom:0.5rem;">
                             ${_retReady ? '✅ ถึงวันคืนบ้านแล้ว — พร้อมดำเนินการ' : '⏳ ยังไม่ถึงวัน — กำหนดคืน ' + formatDate(item.returnDate)}
                         </div>
                         <div style="font-size:0.88rem;color:#6b7280;margin-bottom:${_retReady ? '0.75rem' : '0'};">เมื่อดำเนินการ: ระบบจะ deactivate ผู้พักอาศัย + ปลดล็อกบ้านพักโดยอัตโนมัติ</div>
                         ${_retReady ? `<button type="button" class="btn btn-success" onclick="executeReturn('${item.id}', '${item.returnDate}', '${_e(item.houseNumber)}')" style="width:100%;">🏠 ดำเนินการย้ายออก (ยืนยัน)</button>` : ''}
+                    </div>` : ''}
+                    ${item.status === 'rejected' ? `
+                    <div style="margin-top:1.25rem;padding:1rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;">
+                        <div style="font-weight:700;color:#dc2626;margin-bottom:0.3rem;">❌ ไม่อนุมัติ${item.headReviewerName ? ' — ผู้พิจารณา: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.reviewNote ? '<div style="font-size:0.875rem;color:#991b1b;">เหตุผล: ' + _e(item.reviewNote) + '</div>' : ''}
+                        ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #fca5a5;border-radius:6px;background:#fff;padding:0.25rem;margin-top:0.5rem;">' : ''}
                     </div>` : ''}
                 `;
             }
