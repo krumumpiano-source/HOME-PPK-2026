@@ -2160,6 +2160,7 @@
                         '<td style="max-width:140px;color:var(--muted);font-size:0.82rem;">' + (h.note || '-') + '</td>' +
                         '<td class="ht-actions">' +
                             '<button onclick="openHouseDetails(\'' + safeDn + '\')" title="ดูผู้พัก">👁️</button>' +
+                            '<button onclick="showHouseHistory(\'' + safeDn + '\')" title="ประวัติรายบ้าน">📜</button>' +
                             '<button onclick="editHousing(\'' + safeId + '\')" title="แก้ไข">✏️</button>' +
                             '<button class="act-del" onclick="deleteHousing(\'' + safeId + '\')" title="ลบ">🗑️</button>' +
                         '</td></tr>';
@@ -2431,6 +2432,34 @@
                     renderManageHousingCards();
                 }
                 ppkAlert('❌ ลบไม่สำเร็จ: ไม่สามารถเชื่อมต่อระบบได้');
+            }
+        }
+
+        /* ── Phase F: ประวัติผู้พักอาศัยรายบ้าน ─── */
+        async function showHouseHistory(houseNumber) {
+            try {
+                var result = await callBackend('getHouseHistory', { houseNumber: houseNumber });
+                if (!result || !result.success) { ppkAlert('❌ ' + ((result && result.error) || 'โหลดไม่สำเร็จ')); return; }
+                var rows = result.data || [];
+                var thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+                function fmtDate(d) {
+                    if (!d) return '-';
+                    try { var dt = new Date(d); return dt.getDate() + ' ' + thMonths[dt.getMonth()] + ' ' + (dt.getFullYear() + 543); } catch(e) { return d; }
+                }
+                var body = '';
+                if (rows.length === 0) {
+                    body = '<div style="text-align:center;color:var(--muted);padding:1rem;">ไม่พบประวัติผู้พักอาศัย</div>';
+                } else {
+                    body = '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr style="background:var(--bg);"><th style="padding:0.4rem;border:1px solid var(--border);text-align:left;">ชื่อ-สกุล</th><th style="padding:0.4rem;border:1px solid var(--border);">สถานะ</th><th style="padding:0.4rem;border:1px solid var(--border);">เข้าอยู่</th><th style="padding:0.4rem;border:1px solid var(--border);">ย้ายออก</th></tr></thead><tbody>';
+                    rows.forEach(function(r) {
+                        var statusBadge = r.isActive ? '<span style="color:#16a34a;font-weight:600;">🟢 อยู่ปัจจุบัน</span>' : '<span style="color:#9ca3af;">⚪ ย้ายออกแล้ว</span>';
+                        body += '<tr><td style="padding:0.4rem;border:1px solid var(--border);">' + (r.fullName||'-') + '</td><td style="padding:0.4rem;border:1px solid var(--border);text-align:center;">' + statusBadge + '</td><td style="padding:0.4rem;border:1px solid var(--border);text-align:center;">' + fmtDate(r.startDate) + '</td><td style="padding:0.4rem;border:1px solid var(--border);text-align:center;">' + fmtDate(r.endDate) + '</td></tr>';
+                    });
+                    body += '</tbody></table>';
+                }
+                ppkAlert('<div style="text-align:left;"><div style="font-weight:700;font-size:1rem;margin-bottom:0.75rem;">📜 ประวัติผู้พักอาศัย — บ้านเลขที่ ' + houseNumber + '</div>' + body + '</div>');
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
@@ -4844,7 +4873,10 @@
                 var rowsHtml = (u.outstandingRows || []).map(function(r) {
                     var parts = (r.period || '').split('-');
                     var mName = thMonths[parseInt(parts[1] || 1) - 1] || r.period;
-                    return '<div style="font-size:0.82rem;color:var(--muted);">เดือน ' + mName + ' ' + (parts[0] || '') + ': ' + (r.amount||0).toLocaleString('th-TH') + ' บาท</div>';
+                    return '<div style="font-size:0.82rem;color:var(--muted);display:flex;align-items:center;gap:0.3rem;justify-content:flex-end;">' +
+                        '<span>เดือน ' + mName + ' ' + (parts[0] || '') + ': ' + (r.amount||0).toLocaleString('th-TH') + ' บาท</span>' +
+                        '<button class="btn" onclick="markOutstandingPaidAction(' + idx + ',\'' + r.id + '\')" title="บันทึกชำระแล้ว" style="font-size:0.7rem;padding:0.15rem 0.4rem;background:#16a34a;color:#fff;border:none;border-radius:5px;cursor:pointer;">✅</button>' +
+                        '</div>';
                 }).join('');
                 var canDeactivate = !u.userIsActive;
                 html += '<div style="border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:0.75rem;background:var(--card);">' +
@@ -4863,6 +4895,7 @@
                         (!canDeactivate
                             ? '<button class="btn btn-danger" onclick="forceDeactivateUserAction(' + idx + ')" style="font-size:0.82rem;padding:0.3rem 0.7rem;">🗑️ ปิดบัญชีถาวร</button>'
                             : '<span style="font-size:0.82rem;color:var(--muted);">บัญชีปิดแล้ว</span>') +
+                        '<button class="btn" onclick="reactivateMovedOutAction(' + idx + ')" style="font-size:0.82rem;padding:0.3rem 0.7rem;background:#f59e0b;color:#fff;">↩️ ยกเลิกการย้ายออก</button>' +
                     '</div>' +
                     '</div>';
             });
@@ -4881,6 +4914,44 @@
                 var result = await callBackend('forceDeactivateUser', { userId: u.userId, residentId: u.residentId });
                 if (result && result.success) {
                     if (typeof ppkToast === 'function') ppkToast('ปิดบัญชีเรียบร้อยแล้ว', 'success');
+                    await loadMovedOutUsers();
+                } else {
+                    ppkAlert('❌ ' + ((result && result.error) || 'ไม่สำเร็จ'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        /* ── Phase F: บันทึกชำระยอดค้างผู้ย้ายออก ─── */
+        async function markOutstandingPaidAction(idx, outstandingId) {
+            var u = _movedOutUsers[idx];
+            if (!u) return;
+            var ok = await ppkConfirm('ยืนยันว่าได้รับชำระเงินรายการนี้แล้ว?\n\nรายการจะถูกเปลี่ยนสถานะเป็น "ชำระแล้ว"', { type: 'warning', okText: 'ยืนยันชำระแล้ว', cancelText: 'ยกเลิก' });
+            if (!ok) return;
+            try {
+                var result = await callBackend('markMovedOutOutstandingPaid', { outstandingId: outstandingId });
+                if (result && result.success) {
+                    if (typeof ppkToast === 'function') ppkToast('บันทึกชำระแล้วเรียบร้อย', 'success');
+                    await loadMovedOutUsers();
+                } else {
+                    ppkAlert('❌ ' + ((result && result.error) || 'ไม่สำเร็จ'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        /* ── Phase F/H: ยกเลิกการย้ายออก (จาก tab ผู้ย้ายออก) ─── */
+        async function reactivateMovedOutAction(idx) {
+            var u = _movedOutUsers[idx];
+            if (!u || !u.residentId) return;
+            var ok = await ppkConfirm('ยกเลิกการย้ายออกของ ' + (u.fullName||'') + '?\n\nผู้พักอาศัยจะกลับมา active และบ้านพักจะกลับเป็น "occupied"\n\n⚠️ ใช้ได้เฉพาะเมื่อบ้านพักยังว่างอยู่', { type: 'warning', okText: 'ยืนยัน', cancelText: 'ยกเลิก' });
+            if (!ok) return;
+            try {
+                var result = await callBackend('reactivateResident', { residentId: String(u.residentId) });
+                if (result && result.success) {
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกการย้ายออกสำเร็จแล้ว', 'success');
                     await loadMovedOutUsers();
                 } else {
                     ppkAlert('❌ ' + ((result && result.error) || 'ไม่สำเร็จ'));

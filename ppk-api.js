@@ -875,6 +875,32 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── Phase F: บันทึกชำระยอดค้างผู้ย้ายออก ─── */
+        case 'markMovedOutOutstandingPaid': {
+            if (!data.outstandingId) return { success: false, error: 'ไม่ระบุ outstandingId' };
+            var _mopSess = await _getSessionRole();
+            if (!_mopSess || !_mopSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var _mopRow = (await sbGet('outstanding', { id: 'eq.' + data.outstandingId, select: 'id,status,moved_out_at', limit: '1' }).catch(function() { return []; }))[0];
+            if (!_mopRow) return { success: false, error: 'ไม่พบรายการ' };
+            if (_mopRow.status === 'paid') return { success: false, error: 'รายการนี้ชำระแล้ว' };
+            if (!_mopRow.moved_out_at) return { success: false, error: 'รายการนี้ไม่ใช่ยอดค้างผู้ย้ายออก' };
+            await sbPatch('outstanding', { id: 'eq.' + data.outstandingId }, { status: 'paid', paid_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+            _logActivity('mark_moved_out_paid', _mopSess.userId, 'บันทึกชำระยอดค้างผู้ย้ายออก outstandingId=' + data.outstandingId, { outstandingId: data.outstandingId });
+            return { success: true };
+        }
+
+        /* ── Phase F: ประวัติผู้พักอาศัยรายบ้าน ─── */
+        case 'getHouseHistory': {
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุ houseNumber' };
+            var _ghhSess = await _getSessionRole();
+            if (!_ghhSess || !_ghhSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var _ghhRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, order: 'created_at.desc', select: 'id,user_id,prefix,firstname,lastname,email,is_active,start_date,end_date,created_at' }).catch(function() { return []; });
+            var _ghhResult = (_ghhRows || []).map(function(r) {
+                return { residentId: r.id, fullName: ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(), email: r.email || '', isActive: r.is_active, startDate: r.start_date || r.created_at, endDate: r.end_date };
+            });
+            return { success: true, data: _ghhResult };
+        }
+
         case 'approveRegistration': {
             var regId = data.regId || data.id;
             if (!regId) return { success: false, error: 'ไม่ระบุ regId' };

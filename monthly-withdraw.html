@@ -469,6 +469,12 @@
             <button class="btn" onclick="saveData()" style="margin-right:1rem;">💾 บันทึกข้อมูล</button>
             <button class="btn print-btn" onclick="printMemo()">🖨️ พิมพ์รายงาน</button>
         </div>
+
+        <!-- ส่วนยอดค้างผู้ย้ายออก -->
+        <div class="section" id="movedOutSection" style="display:none;">
+            <div class="section-title">🚶 ยอดค้างชำระผู้ย้ายออก</div>
+            <div id="movedOutContent" style="padding:0.5rem 0;"></div>
+        </div>
         
         <div class="footer-note">
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
@@ -604,6 +610,33 @@
             
             renderAdditionalItems();
             calculateTotal();
+            loadMovedOutSummary();
+        }
+
+        // โหลดข้อมูลยอดค้างผู้ย้ายออก
+        async function loadMovedOutSummary() {
+            try {
+                var result = await callBackendGet('getMovedOutUsers');
+                var section = document.getElementById('movedOutSection');
+                var content = document.getElementById('movedOutContent');
+                if (!result || !result.success || !result.data || result.data.length === 0) {
+                    if (section) section.style.display = 'none';
+                    return;
+                }
+                var users = result.data;
+                var grandTotal = users.reduce(function(s, u) { return s + (u.totalOutstanding || 0); }, 0);
+                var html = '<div style="margin-bottom:0.5rem;font-size:0.92rem;">พบ <strong>' + users.length + '</strong> คน รวมยอดค้าง <strong style="color:#dc2626;">' + grandTotal.toLocaleString('th-TH') + '</strong> บาท</div>';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><thead><tr style="background:#fef2f2;"><th style="padding:0.4rem;border:1px solid #fecaca;text-align:left;">ชื่อ-สกุล</th><th style="padding:0.4rem;border:1px solid #fecaca;">บ้านเลขที่</th><th style="padding:0.4rem;border:1px solid #fecaca;text-align:right;">ยอดค้าง (บาท)</th><th style="padding:0.4rem;border:1px solid #fecaca;">บัญชี</th></tr></thead><tbody>';
+                users.forEach(function(u) {
+                    html += '<tr><td style="padding:0.35rem;border:1px solid #fecaca;">' + (u.fullName||'-') + '</td><td style="padding:0.35rem;border:1px solid #fecaca;text-align:center;">' + (u.houseNumber||'') + '</td><td style="padding:0.35rem;border:1px solid #fecaca;text-align:right;font-weight:600;color:#dc2626;">' + (u.totalOutstanding||0).toLocaleString('th-TH') + '</td><td style="padding:0.35rem;border:1px solid #fecaca;text-align:center;">' + (u.userIsActive ? '🟢' : '🔴') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                html += '<div style="font-size:0.78rem;color:#9ca3af;margin-top:0.5rem;">จัดการรายละเอียดได้ที่เมนู ตั้งค่า → ผู้ย้ายออก</div>';
+                if (content) content.innerHTML = html;
+                if (section) section.style.display = '';
+            } catch(e) {
+                console.error('โหลดข้อมูลผู้ย้ายออกไม่สำเร็จ:', e);
+            }
         }
 
         // loadFromLocalStorage ถูกลบแล้ว — ใช้ Backend แทน
