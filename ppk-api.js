@@ -777,6 +777,14 @@ async function _routeAction(action, data) {
             merged.sort(_naturalCmp);
             return { success: true, data: merged };
         }
+        case 'getInactiveResidents': {
+            var inRows = await sbGet('residents', {
+                is_active: 'eq.false',
+                select: 'house_number,prefix,firstname,lastname,end_date',
+                order: 'end_date.desc'
+            });
+            return { success: true, data: inRows || [] };
+        }
         case 'getUserProfile': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,resident_id' });
             var sessObj = sess && sess[0] ? sess[0] : null;

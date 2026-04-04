@@ -567,6 +567,14 @@
             return [];
         }
 
+        async function getInactiveResidentsData() {
+            try {
+                const result = await callBackend('getInactiveResidents', {});
+                if (result && result.success && result.data) return result.data;
+            } catch (e) { console.error('getInactiveResidents error:', e); }
+            return [];
+        }
+
         async function getHousingListData() {
             try {
                 const result = await cachedCall('getHousingList', {}, 600000);
@@ -676,10 +684,44 @@
         async function renderResidentsTable() {
             const tbody = document.getElementById('electricTableBody');
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr>';
-            const [residents, housingList, savedAmounts, prevMeterData] = await Promise.all([
-                getResidentsData(), getHousingListData(), getSavedElectricData(), getPreviousElectricMeterData()
+            const [residents, housingList, savedAmounts, prevMeterData, inactiveResidents] = await Promise.all([
+                getResidentsData(), getHousingListData(), getSavedElectricData(), getPreviousElectricMeterData(), getInactiveResidentsData()
             ]);
             tbody.innerHTML = '';
+
+            // คำนวณ period ที่เลือก (ค.ศ.) สำหรับเปรียบเทียบ start_date
+            const selMonth = parseInt(document.getElementById('bill_month').value) || 1;
+            const selYear = parseInt(document.getElementById('bill_year').value) || 2026;
+            const adYear = selYear > 2500 ? selYear - 543 : selYear;
+            const periodYM = adYear + '-' + String(selMonth).padStart(2, '0');
+
+            // สร้าง map start_date ผู้พักปัจจุบัน
+            const resStartMap = {};
+            (residents || []).forEach(r => {
+                if (r.house_number) resStartMap[r.house_number] = r.start_date || r.move_in_date || '';
+            });
+            // สร้าง map ผู้พักเก่า (inactive) — เก็บคนที่ end_date ล่าสุดต่อบ้าน
+            const oldResMap = {};
+            (inactiveResidents || []).forEach(r => {
+                if (!r.house_number) return;
+                const oName = ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim();
+                if (!oldResMap[r.house_number] || (r.end_date && (!oldResMap[r.house_number].end_date || r.end_date > oldResMap[r.house_number].end_date))) {
+                    oldResMap[r.house_number] = { name: oName, end_date: r.end_date || '' };
+                }
+            });
+
+            // Helper: ดึงชื่อผู้พักตาม period (ถ้าผู้พักปัจจุบัน start_date > period → ใช้ชื่อผู้พักเก่า)
+            function getResidentName(houseNum, activeResident) {
+                let name = activeResident ? ((activeResident.prefix||'')+(activeResident.firstname||'')+' '+(activeResident.lastname||'')).trim() : '';
+                if (name && resStartMap[houseNum]) {
+                    const startYM = (resStartMap[houseNum] || '').substring(0, 7);
+                    if (startYM > periodYM && oldResMap[houseNum]) {
+                        name = oldResMap[houseNum].name;
+                    }
+                }
+                if (!name && oldResMap[houseNum]) name = oldResMap[houseNum].name;
+                return name || '-';
+            }
 
             // Group active residents by house_number
             const activeResidents = residents.filter(r => r.house_number && r.house_number !== '' && String(r.status) !== 'inactive');
@@ -701,7 +743,7 @@
                 const resArr = resByHouse[raw] || [];
                 if (h.status === 'occupied' || resArr.length > 0) {
                     const r = resArr[0];
-                    const name = r ? ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim() : '-';
+                    const name = getResidentName(raw, r);
                     billRows.push({ houseNum: raw, residentName: name });
                     added.add(raw);
                 }
@@ -710,7 +752,7 @@
             // 2) จาก residents: บ้านที่ยังไม่มีใน housing list
             activeResidents.forEach(r => {
                 if (!added.has(r.house_number)) {
-                    const name = ((r.prefix||'')+(r.firstname||'')+' '+(r.lastname||'')).trim();
+                    const name = getResidentName(r.house_number, r);
                     billRows.push({ houseNum: r.house_number, residentName: name });
                     added.add(r.house_number);
                 }
