@@ -1277,9 +1277,55 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'saveNotification': {
-            var _nBody = { house_id: data.houseId, house_number: data.houseNumber, period: data.period, water_amount: data.waterAmount, electric_amount: data.electricAmount, common_fee: data.commonFee, garbage_fee: data.garbageFee, total_amount: data.totalAmount, due_date: data.dueDate, message: data.message, sent_by: data.sentBy };
+            // Pre-lookup housing + resident สำหรับ outstanding upsert
+            var _snHouseId = data.houseId || null;
+            var _snResUserId = null;
+            try {
+                if (data.houseNumber && !_snHouseId) {
+                    var _snH = await sbGet('housing', { house_number: 'eq.' + data.houseNumber, select: 'id', limit: '1' });
+                    if (_snH && _snH[0]) _snHouseId = _snH[0].id;
+                }
+                if (data.houseNumber) {
+                    var _snR = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.true', select: 'user_id', limit: '1' });
+                    if (_snR && _snR[0]) _snResUserId = _snR[0].user_id;
+                }
+            } catch(e) {}
+            var _nBody = { house_id: _snHouseId, house_number: data.houseNumber, period: data.period, water_amount: data.waterAmount, electric_amount: data.electricAmount, common_fee: data.commonFee, garbage_fee: data.garbageFee, total_amount: data.totalAmount, due_date: data.dueDate, message: data.message, sent_by: data.sentBy };
             if (data.sentAt) _nBody.sent_at = data.sentAt;
             var row = await sbPost('notifications', _nBody);
+            // Upsert outstanding — สร้าง/อัปเดตยอดค้างอัตโนมัติ
+            try {
+                if (_snHouseId && data.houseNumber && data.period) {
+                    var _snParts = (data.period || '').split('-');
+                    var _snYear = parseInt(_snParts[0]) || 0;
+                    var _snMonth = parseInt(_snParts[1]) || 0;
+                    if (_snYear > 0 && _snMonth > 0) {
+                        var _snExist = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, period: 'eq.' + data.period, limit: '1' });
+                        var _snOutData = {
+                            water_amount: data.waterAmount || 0, electric_amount: data.electricAmount || 0,
+                            common_fee: data.commonFee || 0, garbage_fee: data.garbageFee || 0,
+                            total_amount: data.totalAmount || 0,
+                            due_date: data.dueDate || null, status: 'unpaid',
+                            updated_at: new Date().toISOString()
+                        };
+                        if (_snResUserId) _snOutData.user_id = _snResUserId;
+                        if (_snExist && _snExist.length > 0) {
+                            if (_snExist[0].status !== 'paid') {
+                                try { await sbPatch('outstanding', { id: 'eq.' + _snExist[0].id }, _snOutData); } catch(oe) {
+                                    delete _snOutData.user_id;
+                                    try { await sbPatch('outstanding', { id: 'eq.' + _snExist[0].id }, _snOutData); } catch(oe2) {}
+                                }
+                            }
+                        } else {
+                            var _snNewOut = Object.assign({ house_id: _snHouseId, house_number: data.houseNumber, period: data.period, year: _snYear, month: _snMonth }, _snOutData);
+                            try { await sbPost('outstanding', _snNewOut); } catch(oe) {
+                                delete _snNewOut.user_id;
+                                try { await sbPost('outstanding', _snNewOut); } catch(oe2) { console.warn('[saveNotification] outstanding insert failed:', oe2); }
+                            }
+                        }
+                    }
+                }
+            } catch(e) { console.warn('[saveNotification] outstanding upsert failed:', e); }
             return { success: true, data: row };
         }
         case 'deleteNotifications': {
@@ -2112,12 +2158,18 @@ async function _routeAction(action, data) {
                         sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; })
                     ]);
                 }
-                // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี payment_history แล้วหรือยัง → auto-mark paid
+                // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี payment_history หรือ slip approved แล้วหรือยัง → auto-mark paid
                 if (outRows && outRows.length > 0 && houseNumber) {
                     try {
-                        var phRows = await sbGet('payment_history', { house_number: 'eq.' + houseNumber, order: 'period.desc', limit: '50' }).catch(function() { return []; });
+                        var shResults = await Promise.all([
+                            sbGet('payment_history', { house_number: 'eq.' + houseNumber, order: 'period.desc', limit: '50' }).catch(function() { return []; }),
+                            sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, status: 'eq.approved', order: 'submitted_at.desc', limit: '50' }).catch(function() { return []; })
+                        ]);
+                        var phRows = shResults[0] || [];
+                        var approvedSlips = shResults[1] || [];
                         var paidPeriods = {};
-                        (phRows || []).forEach(function(ph) { if (ph.period) paidPeriods[ph.period] = true; });
+                        phRows.forEach(function(ph) { if (ph.period) paidPeriods[ph.period] = true; });
+                        approvedSlips.forEach(function(sl) { if (sl.period) paidPeriods[sl.period] = true; });
                         var healedOutRows = [];
                         for (var hi = 0; hi < outRows.length; hi++) {
                             if (paidPeriods[outRows[hi].period]) {
@@ -4018,6 +4070,21 @@ async function _routeAction(action, data) {
                 sbGet('payment_proxies',  { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', limit: '1' }).catch(function() { return []; })
             ]);
             var ahvResRows = ahvResults[0], ahvOutRows = ahvResults[1], ahvSlipRows = ahvResults[2], ahvProxyRows = ahvResults[3];
+            // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี slip approved หรือ payment_history แล้วหรือยัง → auto-mark paid
+            if (ahvOutRows && ahvOutRows.length > 0) {
+                try {
+                    var ahvPhRows = await sbGet('payment_history', { house_number: 'eq.' + ahvHouse, order: 'period.desc', limit: '50' }).catch(function() { return []; });
+                    var ahvPaidPeriods = {};
+                    (ahvPhRows || []).forEach(function(ph) { if (ph.period) ahvPaidPeriods[ph.period] = true; });
+                    (ahvSlipRows || []).forEach(function(sl) { if (sl.status === 'approved' && sl.period) ahvPaidPeriods[sl.period] = true; });
+                    for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvHi++) {
+                        if (ahvOutRows[ahvHi].status !== 'paid' && ahvPaidPeriods[ahvOutRows[ahvHi].period]) {
+                            ahvOutRows[ahvHi].status = 'paid';
+                            sbPatch('outstanding', { id: 'eq.' + ahvOutRows[ahvHi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
+                        }
+                    }
+                } catch(e) {}
+            }
             // ชื่อผู้พัก
             var ahvRes = ahvResRows && ahvResRows[0];
             var ahvResName = ahvRes ? ((ahvRes.prefix||'') + (ahvRes.firstname||'') + ' ' + (ahvRes.lastname||'')).trim() : '';
@@ -4039,7 +4106,7 @@ async function _routeAction(action, data) {
                 else if (ahvCurSlip.status === 'rejected') { ahvSlipStatus = 'rejected'; ahvReviewNote = ahvCurSlip.review_note || ''; }
                 else ahvSlipStatus = 'reviewing';
             }
-            var ahvTotalOs = (ahvOutRows || []).reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
+            var ahvTotalOs = (ahvOutRows || []).filter(function(r) { return r.status !== 'paid'; }).reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
             // ประวัติรายเดือน (join outstanding + slip ล่าสุดของแต่ละงวด)
             var ahvHistory = (ahvOutRows || []).map(function(o) {
                 var s = (ahvSlipRows || []).find(function(sl) { return sl.period === o.period; });
