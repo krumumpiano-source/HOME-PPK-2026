@@ -1013,12 +1013,11 @@
         // โหลดข้อมูลจาก Backend
         async function loadAllRequests() {
             try {
-                    const currentYear = new Date().getFullYear() + 543;
                     const [resResult, repResult, trfResult, retResult, queueResult] = await Promise.all([
-                        cachedCall('getRequests', { type: 'residence', year: String(currentYear) }, 120000),
-                        cachedCall('getRequests', { type: 'repair', year: String(currentYear) }, 120000),
-                        cachedCall('getRequests', { type: 'transfer', year: String(currentYear) }, 120000),
-                        cachedCall('getRequests', { type: 'return', year: String(currentYear) }, 120000),
+                        cachedCall('getRequests', { type: 'residence' }, 120000),
+                        cachedCall('getRequests', { type: 'repair' }, 120000),
+                        cachedCall('getRequests', { type: 'transfer' }, 120000),
+                        cachedCall('getRequests', { type: 'return' }, 120000),
                         cachedCall('getQueue', {}, 300000)
                     ]);
 
