@@ -420,6 +420,7 @@
         <div class="page-header">
             <button class="back-btn" onclick="navigate('?page=team-management')">← ย้อนกลับ</button>
             <h1 class="page-title">📋 ตรวจคำร้อง/ลำดับคิวพักอาศัย</h1>
+            <button class="btn btn-sm" onclick="refreshData()" title="รีเฟรชข้อมูล" style="margin-left:auto;">🔄 รีเฟรช</button>
         </div>
 
         <!-- Stats -->
@@ -518,6 +519,7 @@
                             <option value="approved">อนุมัติแล้ว</option>
                             <option value="rejected">ไม่อนุมัติ</option>
                             <option value="expired">หมดอายุ</option>
+                            <option value="cancelled">ยกเลิก</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -555,6 +557,7 @@
                         <button class="btn btn-sm" onclick="changePage('residence', 1)" id="residenceNextBtn">ถัดไป ▶</button>
                     </div>
                 </div>
+                <div style="text-align:right;margin-top:0.5rem;"><button class="btn btn-sm" onclick="exportCSV('residence')">📥 ส่งออก CSV</button></div>
             </div>
         </div>
 
@@ -571,6 +574,7 @@
                             <option value="reviewing">กำลังตรวจสอบ</option>
                             <option value="approved">อนุมัติแล้ว</option>
                             <option value="completed">ดำเนินการเสร็จ</option>
+                            <option value="cancelled">ยกเลิก</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -604,6 +608,20 @@
                         <tbody id="repairTableBody"></tbody>
                     </table>
                 </div>
+                <!-- Pagination Controls -->
+                <div class="pagination-controls" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div style="font-size:0.9rem;color:var(--muted);">
+                        <span id="repairPaginationInfo">แสดง 0-0 จาก 0 รายการ</span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn btn-sm" onclick="changePage('repair', -1)" id="repairPrevBtn">◀ ก่อนหน้า</button>
+                        <select id="repairPage" onchange="renderRepairRequests()" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font:inherit;">
+                            <option value="1">หน้า 1</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="changePage('repair', 1)" id="repairNextBtn">ถัดไป ▶</button>
+                    </div>
+                </div>
+                <div style="text-align:right;margin-top:0.5rem;"><button class="btn btn-sm" onclick="exportCSV('repair')">📥 ส่งออก CSV</button></div>
             </div>
         </div>
 
@@ -620,6 +638,7 @@
                             <option value="reviewing">กำลังตรวจสอบ</option>
                             <option value="approved">อนุมัติแล้ว</option>
                             <option value="rejected">ไม่อนุมัติ</option>
+                            <option value="cancelled">ยกเลิก</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -644,6 +663,20 @@
                         <tbody id="transferTableBody"></tbody>
                     </table>
                 </div>
+                <!-- Pagination Controls -->
+                <div class="pagination-controls" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div style="font-size:0.9rem;color:var(--muted);">
+                        <span id="transferPaginationInfo">แสดง 0-0 จาก 0 รายการ</span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn btn-sm" onclick="changePage('transfer', -1)" id="transferPrevBtn">◀ ก่อนหน้า</button>
+                        <select id="transferPage" onchange="renderTransferRequests()" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font:inherit;">
+                            <option value="1">หน้า 1</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="changePage('transfer', 1)" id="transferNextBtn">ถัดไป ▶</button>
+                    </div>
+                </div>
+                <div style="text-align:right;margin-top:0.5rem;"><button class="btn btn-sm" onclick="exportCSV('transfer')">📥 ส่งออก CSV</button></div>
             </div>
         </div>
 
@@ -661,6 +694,7 @@
                             <option value="approved">อนุมัติแล้ว</option>
                             <option value="rejected">ไม่อนุมัติ</option>
                             <option value="completed">ดำเนินการเสร็จ</option>
+                            <option value="cancelled">ยกเลิก</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -685,6 +719,20 @@
                         <tbody id="returnTableBody"></tbody>
                     </table>
                 </div>
+                <!-- Pagination Controls -->
+                <div class="pagination-controls" style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div style="font-size:0.9rem;color:var(--muted);">
+                        <span id="returnPaginationInfo">แสดง 0-0 จาก 0 รายการ</span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn btn-sm" onclick="changePage('return', -1)" id="returnPrevBtn">◀ ก่อนหน้า</button>
+                        <select id="returnPage" onchange="renderReturnRequests()" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font:inherit;">
+                            <option value="1">หน้า 1</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="changePage('return', 1)" id="returnNextBtn">ถัดไป ▶</button>
+                    </div>
+                </div>
+                <div style="text-align:right;margin-top:0.5rem;"><button class="btn btn-sm" onclick="exportCSV('return')">📥 ส่งออก CSV</button></div>
             </div>
         </div>
     </div>
@@ -1116,6 +1164,11 @@
             const data = getData('residence');
             const item = data.find(r => r.id === id);
             if (item) {
+                // ต้องมีลายเซ็นหัวหน้างานก่อนจัดคิว
+                if (!item.headSignature) {
+                    if (typeof ppkAlert === 'function') ppkAlert('ต้องลงความเห็นพร้อมลายเซ็นหัวหน้างานก่อนจึงจะจัดคิวได้\n\nกดปุ่ม 📋 เพื่อเปิดรายละเอียดและลงความเห็น', 'error');
+                    return;
+                }
                 const queueItems = getQueueItems();
                 item.status = 'waiting';
                 item.queuePosition = queueItems.length + 1;
@@ -1252,10 +1305,10 @@
             document.getElementById('statQueue').textContent = residence.filter(d => d.status === 'waiting').length;
 
             // Update badges
-            document.getElementById('badgeResidence').textContent = residence.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
-            document.getElementById('badgeRepair').textContent = repair.filter(d => d.status !== 'completed' && d.status !== 'cancelled').length;
-            document.getElementById('badgeTransfer').textContent = transfer.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled').length;
-            document.getElementById('badgeReturn').textContent = returnData.filter(d => d.status !== 'completed' && d.status !== 'cancelled').length;
+            document.getElementById('badgeResidence').textContent = residence.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled' && d.status !== 'expired').length;
+            document.getElementById('badgeRepair').textContent = repair.filter(d => d.status !== 'completed' && d.status !== 'cancelled' && d.status !== 'rejected').length;
+            document.getElementById('badgeTransfer').textContent = transfer.filter(d => d.status !== 'approved' && d.status !== 'rejected' && d.status !== 'cancelled' && d.status !== 'completed').length;
+            document.getElementById('badgeReturn').textContent = returnData.filter(d => d.status !== 'completed' && d.status !== 'cancelled' && d.status !== 'approved' && d.status !== 'rejected').length;
         }
 
         function renderQueue() {
@@ -1400,8 +1453,10 @@
                         <div style="display:flex;gap:0.3rem;justify-content:center;align-items:center;">
                             <button class="btn btn-sm btn-info" onclick="showDetail('residence', '${item.id}')">📋</button>
                             <button class="btn btn-sm" onclick="openStatusModal('residence', '${item.id}')">📝</button>
-                            ${item.status === 'pending' || item.status === 'reviewing' ? 
+                            ${(item.status === 'pending' || item.status === 'reviewing') && item.headSignature ? 
                                 `<button class="btn btn-sm btn-success" onclick="addToQueue('${item.id}'); renderAll();">➕ คิว</button>` : ''}
+                            ${(item.status === 'pending' || item.status === 'reviewing') && !item.headSignature ?
+                                `<button class="btn btn-sm" disabled title="ต้องลงความเห็น+ลายเซ็นก่อนจัดคิว" style="opacity:0.5;cursor:not-allowed;">➕ คิว</button>` : ''}
                             <button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;border-color:#fecaca;" onclick="deleteRequestDirect('residence','${item.id}')" title="ลบคำร้อง">🗑️</button>
                         </div>
                     </td>
@@ -1431,14 +1486,22 @@
 
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
-            if (data.length === 0) {
+            const itemsPerPage = 50;
+            const currentPage = parseInt(document.getElementById('repairPage')?.value || '1');
+            const totalItems = data.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+
+            if (paginatedData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                updatePaginationInfo('repair', 0, 0, 0);
                 return;
             }
 
-            tbody.innerHTML = data.map((item, index) => `
+            tbody.innerHTML = paginatedData.map((item, index) => `
                 <tr>
-                    <td>${index + 1}</td>
+                    <td>${startIndex + index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
                     <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
                     <td>${_e(item.houseNumber)}</td>
@@ -1454,6 +1517,7 @@
                     </td>
                 </tr>
             `).join('');
+            updatePaginationInfo('repair', currentPage, totalPages, totalItems);
         }
 
         function renderTransferRequests() {
@@ -1473,14 +1537,22 @@
 
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
-            if (data.length === 0) {
+            const itemsPerPage = 50;
+            const currentPage = parseInt(document.getElementById('transferPage')?.value || '1');
+            const totalItems = data.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+
+            if (paginatedData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                updatePaginationInfo('transfer', 0, 0, 0);
                 return;
             }
 
-            tbody.innerHTML = data.map((item, index) => `
+            tbody.innerHTML = paginatedData.map((item, index) => `
                 <tr>
-                    <td>${index + 1}</td>
+                    <td>${startIndex + index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
                     <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
                     <td>${_e(item.currentHouse)}</td>
@@ -1496,6 +1568,7 @@
                     </td>
                 </tr>
             `).join('');
+            updatePaginationInfo('transfer', currentPage, totalPages, totalItems);
         }
 
         function renderReturnRequests() {
@@ -1515,18 +1588,37 @@
 
             data.sort((a, b) => new Date(b.submitDate) - new Date(a.submitDate));
 
-            if (data.length === 0) {
+            const itemsPerPage = 50;
+            const currentPage = parseInt(document.getElementById('returnPage')?.value || '1');
+            const totalItems = data.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedData = data.slice(startIndex, startIndex + itemsPerPage);
+
+            if (paginatedData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                updatePaginationInfo('return', 0, 0, 0);
                 return;
             }
 
-            tbody.innerHTML = data.map((item, index) => `
-                <tr>
-                    <td>${index + 1}</td>
+            var _today = new Date(); _today.setHours(0,0,0,0);
+            var _7daysLater = new Date(_today); _7daysLater.setDate(_7daysLater.getDate() + 7);
+
+            tbody.innerHTML = paginatedData.map((item, index) => {
+                var retD = item.returnDate ? new Date(item.returnDate + (item.returnDate.length === 10 ? 'T00:00:00' : '')) : null;
+                var rowStyle = '';
+                var dateStyle = '';
+                if (retD && item.status === 'approved') {
+                    if (retD <= _today) { rowStyle = 'background:#fef2f2;'; dateStyle = 'color:#dc2626;font-weight:700;'; }
+                    else if (retD <= _7daysLater) { rowStyle = 'background:#fffbeb;'; dateStyle = 'color:#d97706;font-weight:700;'; }
+                }
+                return `
+                <tr style="${rowStyle}">
+                    <td>${startIndex + index + 1}</td>
                     <td>${formatDate(item.submitDate)}</td>
                     <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
                     <td>${_e(item.houseNumber)}</td>
-                    <td>${formatDate(item.returnDate)}</td>
+                    <td style="${dateStyle}">${formatDate(item.returnDate)}${retD && retD <= _today && item.status === 'approved' ? ' <span style="font-size:0.75rem;">⚠️ เกินกำหนด</span>' : ''}${retD && retD > _today && retD <= _7daysLater && item.status === 'approved' ? ' <span style="font-size:0.75rem;">⏳ ใกล้ถึง</span>' : ''}</td>
                     <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${_e(item.returnReason)}">${_e(item.returnReason)}</td>
                     <td>${getStatusBadge(item.status)}</td>
                     <td>
@@ -1537,7 +1629,9 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+            updatePaginationInfo('return', currentPage, totalPages, totalItems);
         }
 
         function renderAll() {
@@ -2010,6 +2104,18 @@
                 </div>`;
             }
 
+            // ปุ่มพิมพ์ใบคำร้องพร้อมความเห็น — แสดงเมื่อมีลายเซ็นหัวหน้างานแล้ว
+            if (item.headSignature) {
+                content += `
+                <div style="margin-top:1.25rem;padding:1rem;background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div style="font-weight:700;color:#1d4ed8;">🖨️ เอกสารพร้อมส่งให้ผู้ยื่นคำร้อง</div>
+                        <div style="font-size:0.85rem;color:#6b7280;">ใบคำร้องพร้อมความเห็นและลายเซ็นหัวหน้างาน</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="printReviewedRequest('${type}', '${item.id}')" style="white-space:nowrap;">🖨️ พิมพ์ / ส่งให้ผู้ยื่น</button>
+                </div>`;
+            }
+
             document.getElementById('modalBody').innerHTML = content;
             // เก็บข้อมูล item ปัจจุบันสำหรับปุ่มลบ
             window._currentDetailId = id;
@@ -2230,6 +2336,8 @@
 
             // ── Residence + อนุมัติลงคิว → status=waiting ──
             if (type === 'residence' && action === 'waiting') {
+                if (!signatureData) { ppkAlert('กรุณาลงลายเซ็นก่อนจึงจะอนุมัติลงคิวได้', 'error'); return; }
+                if (!comment) { ppkAlert('กรุณาลงความเห็นก่อนอนุมัติลงคิว', 'error'); return; }
                 if (!await ppkConfirm('ยืนยันอนุมัติและลงคิวรอจัดบ้านพัก?\n\nผู้ยื่นคำร้องจะเห็นว่าได้รับการอนุมัติแล้ว\nและอยู่ในคิวรอจัดบ้านพัก')) return;
                 try {
                     var result = await callBackend('reviewRequest', {
@@ -2250,6 +2358,12 @@
             }
 
             // ── ประเภทอื่น หรือ Reject → ใช้ reviewRequest ──
+            if ((action === 'approved' || action === 'rejected') && !signatureData) {
+                ppkAlert('กรุณาลงลายเซ็นก่อนจึงจะอนุมัติ/ปฏิเสธได้', 'error'); return;
+            }
+            if ((action === 'approved' || action === 'rejected') && !comment) {
+                ppkAlert('กรุณาลงความเห็นก่อนอนุมัติ/ปฏิเสธ', 'error'); return;
+            }
             var confirmMsg = action === 'approved'
                 ? 'ยืนยันอนุมัติคำร้องนี้?'
                 : 'ยืนยันปฏิเสธคำร้องนี้?';
@@ -2560,6 +2674,9 @@
             if (newPage >= 1 && newPage <= totalOptions) {
                 pageSelect.value = newPage;
                 if (type === 'residence') renderResidenceRequests();
+                else if (type === 'repair') renderRepairRequests();
+                else if (type === 'transfer') renderTransferRequests();
+                else if (type === 'return') renderReturnRequests();
             }
         }
 
@@ -2582,6 +2699,7 @@
                     <option value="approved">อนุมัติเข้าพัก</option>
                     <option value="rejected">ไม่อนุมัติ</option>
                     <option value="expired">หมดอายุ</option>
+                    <option value="cancelled">ยกเลิก</option>
                 `;
             } else if (type === 'repair') {
                 options = `
@@ -2589,6 +2707,7 @@
                     <option value="reviewing">กำลังตรวจสอบ</option>
                     <option value="approved">อนุมัติ</option>
                     <option value="completed">ดำเนินการเสร็จ</option>
+                    <option value="cancelled">ยกเลิก</option>
                 `;
             } else {
                 options = `
@@ -2597,6 +2716,7 @@
                     <option value="approved">อนุมัติ</option>
                     <option value="rejected">ไม่อนุมัติ</option>
                     <option value="completed">ดำเนินการเสร็จ</option>
+                    <option value="cancelled">ยกเลิก</option>
                 `;
             }
             
@@ -2793,6 +2913,132 @@
         window._ppkNavPage = 'check-request';
         if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'check-request'); }
 
+        // ========== Refresh Data ==========
+        async function refreshData() {
+            _clearRequestsCache();
+            dataLoaded = false;
+            if (typeof ppkToast === 'function') ppkToast('กำลังรีเฟรชข้อมูล...', 'info');
+            await loadAllRequests();
+            initQueueExpirySelector();
+            renderAll();
+            if (typeof ppkToast === 'function') ppkToast('รีเฟรชข้อมูลเรียบร้อย', 'success');
+        }
+
+        // ========== Export CSV ==========
+        function exportCSV(type) {
+            var data = getData(type);
+            if (!data || data.length === 0) { ppkAlert('ไม่มีข้อมูลสำหรับส่งออก'); return; }
+            var headers = [], rows = [];
+            if (type === 'residence') {
+                headers = ['ลำดับ','วันที่ยื่น','คำนำหน้า','ชื่อ-นามสกุล','กลุ่มสาระ','ลักษณะเข้าพัก','สถานะ','ลำดับคิว'];
+                rows = data.map(function(d,i) { return [i+1,d.submitDate||'',d.prefix||'',d.fullname||'',d.subjectGroup||'',d.stayType==='alone'?'พักคนเดียว':'พักกับครอบครัว',d.status||'',d.queuePosition||'']; });
+            } else if (type === 'repair') {
+                headers = ['ลำดับ','วันที่แจ้ง','ชื่อผู้แจ้ง','หมายเลขบ้าน','ประเภทงาน','ความเร่งด่วน','สถานะ'];
+                rows = data.map(function(d,i) { return [i+1,d.submitDate||'',d.fullname||'',d.houseNumber||'',(d.workTypes||[]).join('/'),d.urgency||'',d.status||'']; });
+            } else if (type === 'transfer') {
+                headers = ['ลำดับ','วันที่ยื่น','ชื่อ-นามสกุล','บ้านปัจจุบัน','ขอย้ายไป','เหตุผล','สถานะ'];
+                rows = data.map(function(d,i) { return [i+1,d.submitDate||'',d.fullname||'',d.currentHouse||'',d.requestedHouse||'',d.transferReason||'',d.status||'']; });
+            } else if (type === 'return') {
+                headers = ['ลำดับ','วันที่ยื่น','ชื่อ-นามสกุล','หมายเลขบ้าน','วันที่คืน','เหตุผล','สถานะ'];
+                rows = data.map(function(d,i) { return [i+1,d.submitDate||'',d.fullname||'',d.houseNumber||'',d.returnDate||'',d.returnReason||'',d.status||'']; });
+            }
+            var csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'requests_' + type + '_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // ========== Print Reviewed Request (พิมพ์ใบคำร้องพร้อมความเห็นหัวหน้างาน) ==========
+        function printReviewedRequest(type, id) {
+            var list = getData(type) || [];
+            var item = list.find(function(d) { return d.id === id; });
+            if (!item) return;
+            var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+            var submitDate = item.submitted_at ? new Date(item.submitted_at) : (item.submitDate ? new Date(item.submitDate) : new Date());
+            var submitDateStr = submitDate.getDate() + ' ' + thaiMonths[submitDate.getMonth()] + ' ' + (submitDate.getFullYear() + 543);
+
+            var typeTitles = { residence: 'คำร้องขอเข้าพักอาศัยในบ้านพักครู', repair: 'คำร้องแจ้งซ่อมแซมบ้านพัก', transfer: 'คำร้องขอย้ายบ้านพัก', return: 'คำร้องขอคืนบ้านพัก' };
+            var title = typeTitles[type] || 'คำร้อง';
+
+            var detailRows = '';
+            detailRows += '<tr><td class="lbl">รหัสคำร้อง</td><td>' + _e(item.id) + '</td></tr>';
+            detailRows += '<tr><td class="lbl">วันที่ยื่น</td><td>' + submitDateStr + '</td></tr>';
+            detailRows += '<tr><td class="lbl">ชื่อ-นามสกุล</td><td>' + _e((item.prefix||'') + (item.fullname||'')) + '</td></tr>';
+            detailRows += '<tr><td class="lbl">ตำแหน่ง</td><td>' + _e(item.position||'-') + '</td></tr>';
+            detailRows += '<tr><td class="lbl">กลุ่มสาระ/หน่วยงาน</td><td>' + _e(item.subjectGroup||'-') + '</td></tr>';
+            detailRows += '<tr><td class="lbl">เบอร์โทรศัพท์</td><td>' + _e(item.phone||'-') + '</td></tr>';
+
+            if (type === 'residence') {
+                detailRows += '<tr><td class="lbl">ลักษณะเข้าพัก</td><td>' + (item.stayType==='alone'?'พักคนเดียว':'พักกับครอบครัว') + '</td></tr>';
+                detailRows += '<tr><td class="lbl">จำนวนผู้เข้าพัก</td><td>' + _e(item.totalResidents||'-') + ' คน</td></tr>';
+                detailRows += '<tr><td class="lbl">เหตุผล</td><td>' + _e(getReasonText(item.reasons||[])) + (item.otherReason ? ' / ' + _e(item.otherReason) : '') + '</td></tr>';
+            } else if (type === 'repair') {
+                detailRows += '<tr><td class="lbl">หมายเลขบ้านพัก</td><td>' + _e(item.houseNumber||'-') + '</td></tr>';
+                detailRows += '<tr><td class="lbl">ประเภทงาน</td><td>' + _e(getWorkTypeText(item.workTypes||[])) + '</td></tr>';
+                detailRows += '<tr><td class="lbl">ความเร่งด่วน</td><td>' + _e(getUrgencyText(item.urgency||'')) + '</td></tr>';
+                detailRows += '<tr><td class="lbl">รายละเอียดปัญหา</td><td>' + _e(item.problemDetail||'-') + '</td></tr>';
+            } else if (type === 'transfer') {
+                detailRows += '<tr><td class="lbl">บ้านพักปัจจุบัน</td><td>' + _e(item.currentHouse||'-') + '</td></tr>';
+                detailRows += '<tr><td class="lbl">ขอย้ายไปยัง</td><td>' + _e(item.requestedHouse||'-') + '</td></tr>';
+                detailRows += '<tr><td class="lbl">เหตุผล</td><td>' + _e(getReasonText(item.reasons||[])) + (item.otherReason ? ' / ' + _e(item.otherReason) : '') + '</td></tr>';
+            } else if (type === 'return') {
+                detailRows += '<tr><td class="lbl">หมายเลขบ้านพัก</td><td>' + _e(item.houseNumber||'-') + '</td></tr>';
+                detailRows += '<tr><td class="lbl">วันที่กำหนดคืน</td><td>' + (item.returnDate ? new Date(item.returnDate).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) : '-') + '</td></tr>';
+                detailRows += '<tr><td class="lbl">เหตุผล</td><td>' + _e(getReasonText(item.reasons||[])) + (item.otherReason ? ' / ' + _e(item.otherReason) : '') + '</td></tr>';
+            }
+            if (item.additionalInfo) detailRows += '<tr><td class="lbl">ข้อมูลเพิ่มเติม</td><td>' + _e(item.additionalInfo) + '</td></tr>';
+            detailRows += '<tr><td class="lbl">สถานะ</td><td style="font-weight:700;">' + _e(item.status==='waiting'?'อนุมัติ — รอจัดบ้านพัก':item.status==='approved'?'อนุมัติแล้ว':item.status==='reviewing'?'ลงความเห็นแล้ว':item.status) + '</td></tr>';
+
+            var sigHtml = item.headSignature
+                ? '<img src="' + item.headSignature + '" style="max-height:80px;display:block;margin:0 auto;">'
+                : '<div style="height:60px;"></div>';
+            var reviewSection = '';
+            if (item.reviewNote || item.headSignature) {
+                var reviewDate = item.headReviewedAt ? new Date(item.headReviewedAt) : new Date();
+                var reviewDateStr = reviewDate.getDate() + ' ' + thaiMonths[reviewDate.getMonth()] + ' ' + (reviewDate.getFullYear() + 543);
+                reviewSection = '<hr>' +
+                    '<h2 style="text-align:center;font-size:14pt;margin-bottom:0.3cm;">ความเห็นหัวหน้างาน</h2>' +
+                    '<table><tr><td class="lbl">วันที่ลงความเห็น</td><td>' + reviewDateStr + '</td></tr>' +
+                    '<tr><td class="lbl">ความเห็น</td><td>' + _e(item.reviewNote||'-') + '</td></tr></table>' +
+                    '<div class="sig-box">' + sigHtml +
+                    '<div class="sig-name">(' + _e(item.headReviewerName||'....................................') + ')</div>' +
+                    '<div class="sig-role">ผู้ลงความเห็น</div></div>';
+            }
+
+            var w = window.open('', '_blank', 'width=794,height=1123');
+            if (!w) { alert('กรุณาอนุญาต popup ในเบราว์เซอร์'); return; }
+            w.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' +
+                '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">' +
+                '<title>' + _e(title) + '</title>' +
+                '<style>' +
+                'body{font-family:"Sarabun",sans-serif;font-size:14pt;margin:2cm;color:#000;line-height:1.7}' +
+                'h1{text-align:center;font-size:16pt;margin-bottom:0.3cm}' +
+                'h2{margin-bottom:0.3cm}' +
+                '.school{text-align:center;font-size:14pt;font-weight:700}' +
+                '.sub{text-align:center;font-size:11pt;margin-bottom:0.6cm}' +
+                'table{width:100%;border-collapse:collapse;margin:0.4cm 0}' +
+                'td{padding:0.2cm 0.3cm;vertical-align:top}' +
+                '.lbl{width:42%;font-weight:600}' +
+                '.sig-box{text-align:center;margin-top:1.5cm}' +
+                '.sig-name{margin-top:0.2cm;font-weight:600}' +
+                '.sig-role{font-size:11pt;color:#555}' +
+                'hr{border:none;border-top:1px solid #999;margin:0.5cm 0}' +
+                '@media print{button{display:none!important}}' +
+                '</style></head><body>' +
+                '<div class="school">โรงเรียนพะเยาพิทยาคม</div>' +
+                '<div class="sub">อำเภอเมือง จังหวัดพะเยา</div>' +
+                '<h1>' + _e(title) + '</h1><hr>' +
+                '<table>' + detailRows + '</table>' +
+                reviewSection +
+                '<div style="text-align:center;margin-top:1.2cm;">' +
+                '<button onclick="window.print()" style="font-size:13pt;padding:0.4cm 1.2cm;cursor:pointer;">🖨️ พิมพ์เอกสาร</button>' +
+                '</div></body></html>');
+            w.document.close();
+        }
+
         // ========== Initialize ==========
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -2808,6 +3054,8 @@
                 renderAll();
                 // ── Auto-execute overdue approved return requests ──
                 setTimeout(function() { autoExecuteOverdueReturns(); }, 1500);
+                // ── ตรวจซ้ำทุก 30 นาที ──
+                setInterval(function() { autoExecuteOverdueReturns(); }, 30 * 60 * 1000);
             } catch(e) {
                 console.error('loadAllRequests error', e);
                 var errMsg = '<div style="text-align:center;padding:2rem;color:#ef4444;">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า<br><small>' + (e.message||'') + '</small></div>';
