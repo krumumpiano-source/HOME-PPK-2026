@@ -1013,6 +1013,54 @@ async function _routeAction(action, data) {
             _logActivity('submit_water_bill', data.recordedBy, 'บันทึกค่าน้ำ ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { house_number: data.houseNumber, period: data.period });
             return { success: true, data: row };
         }
+
+        // ═══ Report Approvals ═══
+        case 'getReportApprovals': {
+            var q = { order: 'submitted_at.desc' };
+            if (data.status) q.status = 'eq.' + data.status;
+            if (data.reportType) q.report_type = 'eq.' + data.reportType;
+            if (data.period) q.period = 'eq.' + data.period;
+            var rows = await sbGet('report_approvals', q);
+            return { success: true, data: rows || [] };
+        }
+        case 'getReportApprovalById': {
+            if (!data.id) return { success: false, error: 'ไม่ระบุ id' };
+            var rows = await sbGet('report_approvals', { id: 'eq.' + data.id });
+            if (!rows || !rows.length) return { success: false, error: 'ไม่พบรายงาน' };
+            return { success: true, data: rows[0] };
+        }
+        case 'signReportApproval': {
+            if (!data.id) return { success: false, error: 'ไม่ระบุ id' };
+            var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var patch = {
+                status: data.status || 'approved',
+                reviewed_by: user.id || null,
+                reviewed_at: new Date().toISOString(),
+                reviewer_note: data.reviewerNote || null,
+                updated_at: new Date().toISOString()
+            };
+            if (data.sigRecorder) patch.sig_recorder = data.sigRecorder;
+            if (data.sigChecker) patch.sig_checker = data.sigChecker;
+            if (data.sigHead) patch.sig_head = data.sigHead;
+            await sbPatch('report_approvals', { id: 'eq.' + data.id }, patch);
+            _logActivity('sign_report_approval', user.id || null, (data.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ') + 'รายงาน', { reportId: data.id, status: data.status });
+            return { success: true };
+        }
+        case 'submitReportForApproval': {
+            if (!data.reportType || !data.period || !data.reportHtml) return { success: false, error: 'ข้อมูลไม่ครบ' };
+            var user = {}; try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
+            var row = await sbPost('report_approvals', {
+                report_type: data.reportType,
+                period: data.period,
+                year: data.year || null,
+                submitted_by: user.id || null,
+                report_html: data.reportHtml,
+                status: 'pending'
+            });
+            _logActivity('submit_report', user.id || null, 'ส่งรายงานเพื่ออนุมัติ ' + data.reportType + ' งวด ' + data.period, { reportType: data.reportType, period: data.period });
+            return { success: true, data: row };
+        }
+
         case 'getElectricBills': {
             var q = { order: 'recorded_at.desc' };
             if (data.period) q.period = 'eq.' + data.period;
