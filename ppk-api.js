@@ -1198,20 +1198,32 @@ async function _routeAction(action, data) {
             if (data.status) q.status = 'eq.' + data.status;
             if (data.period) q.period = 'eq.' + data.period;
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
-            var [rows, resRows, proxyRows2] = await Promise.all([
+            var [rows, resRows, proxyRows2, inactiveRes2] = await Promise.all([
                 sbGet('slip_submissions', q).catch(function() { return []; }),
-                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id' }).catch(function() { return []; }),
-                sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; })
+                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id,start_date,move_in_date' }).catch(function() { return []; }),
+                sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; }),
+                sbGet('residents', { is_active: 'eq.false', select: 'house_number,prefix,firstname,lastname,end_date', order: 'end_date.desc' }).catch(function() { return []; })
             ]);
             var resMap = {};
             var resEmailMap2 = {};
             var resUserEmail2 = {};
+            var resStartMap2 = {};
             (resRows || []).forEach(function(r) {
                 resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
                 if (!resEmailMap2[r.house_number] && r.email && r.resident_type !== 'cohabitant') {
                     resEmailMap2[r.house_number] = r.email;
                 }
                 if (r.user_id && r.email) resUserEmail2[r.user_id] = r.email;
+                if (r.house_number) resStartMap2[r.house_number] = r.start_date || r.move_in_date || '';
+            });
+            // สร้าง map ผู้พักเก่า (inactive)
+            var oldResMap2 = {};
+            (inactiveRes2 || []).forEach(function(r) {
+                if (!r.house_number) return;
+                var oName = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                if (!oldResMap2[r.house_number] || (r.end_date && (!oldResMap2[r.house_number].end_date || r.end_date > oldResMap2[r.house_number].end_date))) {
+                    oldResMap2[r.house_number] = { name: oName, end_date: r.end_date || '' };
+                }
             });
             var proxyEmailMap2 = {};
             // ดึง email จาก users table สำหรับ proxy ที่ residents อาจไม่มี email
@@ -1228,9 +1240,24 @@ async function _routeAction(action, data) {
                 }
             });
             (rows || []).forEach(function(s) {
-                s.resident_name = resMap[s.house_number] || '';
-                s.email = resEmailMap2[s.house_number] || '';
-                s.proxy_email = proxyEmailMap2[s.house_number] || '';
+                var hn = s.house_number || '';
+                var slipName = resMap[hn] || '';
+                // ตรวจว่าผู้พักปัจจุบันอยู่ในช่วงบิลนี้หรือยัง
+                if (slipName && s.period && resStartMap2[hn]) {
+                    var _sParts = (s.period || '').split('-');
+                    var _sAdY = parseInt(_sParts[0]) || 2026;
+                    if (_sAdY > 2500) _sAdY -= 543;
+                    var _sMo = parseInt(_sParts[1]) || 1;
+                    var _slipPeriodYM = _sAdY + '-' + String(_sMo).padStart(2, '0');
+                    var _sStartYM = (resStartMap2[hn] || '').substring(0, 7);
+                    if (_sStartYM > _slipPeriodYM && oldResMap2[hn]) {
+                        slipName = oldResMap2[hn].name;
+                    }
+                }
+                if (!slipName && oldResMap2[hn]) slipName = oldResMap2[hn].name;
+                s.resident_name = slipName;
+                s.email = resEmailMap2[hn] || '';
+                s.proxy_email = proxyEmailMap2[hn] || '';
             });
             return { success: true, data: rows };
         }
@@ -1758,16 +1785,37 @@ async function _routeAction(action, data) {
         case 'getBillSummaryAll': {
             var period = data.period || '';
             // ดึงข้อมูลจาก water_bills, electric_bills, residents, settings, notifications, exemptions, housing, proxies
-            var [wRows, eRows, resRows, settRows, notifRows, exemptRows, housingRows, proxyRows] = await Promise.all([
+            var [wRows, eRows, resRows, settRows, notifRows, exemptRows, housingRows, proxyRows, inactiveResRows] = await Promise.all([
                 sbGet('water_bills',    { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
                 sbGet('electric_bills', { period: 'eq.' + period, order: 'house_number.asc' }).catch(function() { return []; }),
-                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id' }).catch(function() { return []; }),
+                sbGet('residents',      { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id,start_date,move_in_date' }).catch(function() { return []; }),
                 sbGet('settings',       { select: 'key,value' }).catch(function() { return []; }),
                 sbGet('notifications',  { period: 'eq.' + period, select: 'house_number,common_fee,due_date,sent_at', limit: '200' }).catch(function() { return []; }),
                 sbGet('exemptions',     { type: 'eq.common_fee', select: 'house_number,house_id' }).catch(function() { return []; }),
                 sbGet('housing',        { select: 'id,house_number,type' }).catch(function() { return []; }),
-                sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; })
+                sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; }),
+                sbGet('residents',      { is_active: 'eq.false', select: 'house_number,prefix,firstname,lastname,end_date', order: 'end_date.desc' }).catch(function() { return []; })
             ]);
+            // แปลง period (พ.ศ.) → ปี-เดือน ค.ศ. สำหรับเปรียบเทียบ start_date
+            var _pParts = period.split('-');
+            var _pAdYear = parseInt(_pParts[0]) || 2026;
+            if (_pAdYear > 2500) _pAdYear -= 543;
+            var _pMonth = parseInt(_pParts[1]) || 1;
+            var _periodYM = _pAdYear + '-' + String(_pMonth).padStart(2, '0');
+            // สร้าง map ของ start_date ผู้พักปัจจุบัน (สำหรับตรวจว่าอยู่ในช่วงบิลหรือยัง)
+            var resStartMap = {};
+            (resRows || []).forEach(function(r) {
+                if (r.house_number) resStartMap[r.house_number] = r.start_date || r.move_in_date || '';
+            });
+            // สร้าง map ผู้พักเก่า (inactive) — เก็บคนที่ end_date ล่าสุดต่อบ้าน
+            var oldResMap = {};
+            (inactiveResRows || []).forEach(function(r) {
+                if (!r.house_number) return;
+                var oName = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                if (!oldResMap[r.house_number] || (r.end_date && (!oldResMap[r.house_number].end_date || r.end_date > oldResMap[r.house_number].end_date))) {
+                    oldResMap[r.house_number] = { name: oName, end_date: r.end_date || '' };
+                }
+            });
             // ดึงค่าส่วนกลางจาก settings — แยกบ้าน/แฟลต
             var settMap = {};
             (settRows || []).forEach(function(s) { settMap[s.key] = s.value; });
@@ -1885,7 +1933,19 @@ async function _routeAction(action, data) {
                 });
             }
             var result = Object.values(summaryMap).map(function(s) {
-                s.resident_name = resMap[s.house_number] || '';
+                var hn = s.house_number;
+                var currentName = resMap[hn] || '';
+                var startDate = resStartMap[hn] || '';
+                // ถ้าผู้พักปัจจุบันเข้ามาหลังช่วงบิลนี้ → ใช้ชื่อผู้พักเก่า
+                if (currentName && startDate) {
+                    var _startYM = startDate.substring(0, 7); // "2026-04"
+                    if (_startYM > _periodYM && oldResMap[hn]) {
+                        currentName = oldResMap[hn].name;
+                    }
+                }
+                // ถ้าไม่มีคนปัจจุบัน → ลองใช้ผู้พักเก่า
+                if (!currentName && oldResMap[hn]) currentName = oldResMap[hn].name;
+                s.resident_name = currentName;
                 s.email         = resEmailMap[s.house_number] || '';
                 s.proxy_email   = proxyEmailMap[s.house_number] || '';
                 s.exempt_common = exemptSet[s.house_number] ? true : false;
@@ -2517,9 +2577,9 @@ async function _routeAction(action, data) {
                                     }
                                     // บ้านใหม่ → occupied
                                     await sbPatch('housing', { id: 'eq.' + _trTgt.id }, { status: 'occupied', updated_at: new Date().toISOString() });
-                                    // mark outstanding บ้านเก่าว่าย้ายออก
+                                    // mark outstanding บ้านเก่าทั้งหมดว่าย้ายออก (ทั้ง paid + unpaid)
                                     try {
-                                        await sbPatch('outstanding', { house_number: 'eq.' + _trCurHouse, status: 'neq.paid' },
+                                        await sbPatch('outstanding', { house_number: 'eq.' + _trCurHouse, moved_out_at: 'is.null' },
                                             { moved_out_at: new Date().toISOString() });
                                     } catch(e) {}
                                     invalidateResidentCache();
@@ -2602,10 +2662,10 @@ async function _routeAction(action, data) {
                     try { await sbDelete('coresidents', { resident_id: 'eq.' + arExistRes.id }); } catch(e) {}
                     // บ้านเก่า → available
                     try { await sbPatch('housing', { id: 'eq.' + _arOldHId }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
-                    // mark outstanding บ้านเก่าว่าย้ายออกแล้ว
+                    // mark outstanding บ้านเก่าทั้งหมดว่าย้ายออกแล้ว (ทั้ง paid + unpaid)
                     if (_arOldHNum) {
                         try {
-                            await sbPatch('outstanding', { house_number: 'eq.' + _arOldHNum, status: 'neq.paid' },
+                            await sbPatch('outstanding', { house_number: 'eq.' + _arOldHNum, moved_out_at: 'is.null' },
                                 { moved_out_at: new Date().toISOString() });
                         } catch(e) {}
                     }
@@ -2970,11 +3030,11 @@ async function _routeAction(action, data) {
                 }
             } catch(e) {}
 
-            // 5. mark outstanding ค้างชำระว่าเป็นของคนที่ย้ายออกไปแล้ว
-            //    คนใหม่จะไม่เห็น rows เหล่านี้ใน dashboard
+            // 5. mark outstanding ทั้งหมดของบ้านนี้ว่าเป็นของคนที่ย้ายออกไปแล้ว
+            //    คนใหม่จะไม่เห็น rows เหล่านี้ใน dashboard (ทั้ง paid + unpaid)
             if (_rmHouseNumber) {
                 try {
-                    await sbPatch('outstanding', { house_number: 'eq.' + _rmHouseNumber, status: 'neq.paid' },
+                    await sbPatch('outstanding', { house_number: 'eq.' + _rmHouseNumber, moved_out_at: 'is.null' },
                         { moved_out_at: new Date().toISOString() });
                 } catch(e) {}
             }
