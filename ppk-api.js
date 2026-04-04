@@ -1256,6 +1256,7 @@ async function _routeAction(action, data) {
             var q = { order: 'submitted_at.desc' };
             if (data.type)    q.type    = 'eq.' + data.type;
             if (data.status)  q.status  = 'eq.' + data.status;
+            else              q.status  = 'neq.cancelled'; // ซ่อนคำร้องที่ยกเลิกแล้ว (ยกเว้น caller ระบุ status เอง)
             if (data.user_id) q.user_id = 'eq.' + data.user_id;
             if (data.id)      q.id      = 'eq.' + data.id;
             if (data.year) {
@@ -1959,7 +1960,7 @@ async function _routeAction(action, data) {
                 var adminQueries = [
                     sbGet('pending_registrations', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
                     sbGet('slip_submissions', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
-                    sbGet('requests', { status: 'eq.pending', select: 'id', limit: '100' }).catch(function() { return []; }),
+                    sbGet('requests', { status: 'in.(pending,reviewing,waiting)', select: 'id', limit: '100' }).catch(function() { return []; }),
                     sbGet('outstanding', { period: 'eq.' + adminPeriod, select: 'status', limit: '1000' }).catch(function() { return []; })
                 ];
                 if (sessHouseNumber) {
