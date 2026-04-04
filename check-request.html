@@ -539,6 +539,7 @@
                                 <th>ชื่อ-นามสกุล</th>
                                 <th>กลุ่มสาระ</th>
                                 <th>ลักษณะเข้าพัก</th>
+                                <th>คะแนน</th>
                                 <th>สถานะ</th>
                                 <th>วันหมดอายุ</th>
                                 <th style="width:150px;">จัดการ</th>
@@ -1551,7 +1552,7 @@
             const globalExpiryDate = getQueueExpiryDate();
 
             if (paginatedData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">ไม่พบข้อมูลคำร้อง</td></tr>';
                 updatePaginationInfo('residence', 0, 0, 0);
                 return;
             }
@@ -1563,6 +1564,8 @@
                 } else if (item.status === 'expired' && item.expiredDate) {
                     expiryDisplay = `<span style="color:var(--danger);">หมดอายุ ${formatDate(item.expiredDate)}</span>`;
                 }
+                var _ps = calcPriorityScore(item);
+                var _psColor = _ps.level === 'สูงมาก' ? '#059669' : _ps.level === 'สูง' ? '#2563eb' : _ps.level === 'ปานกลาง' ? '#d97706' : '#6b7280';
                 return `
                 <tr>
                     <td>${startIndex + index + 1}</td>
@@ -1570,6 +1573,7 @@
                     <td style="text-align:left;">${_e(item.prefix)}${_e(item.fullname)}</td>
                     <td>${_e(item.subjectGroup)}</td>
                     <td>${getStayTypeText(item.stayType)}</td>
+                    <td style="font-weight:700;color:${_psColor};" title="${_ps.labels.join(', ')} — ${_ps.level}">${_ps.score}<div style='font-size:0.75rem;font-weight:400;color:#6b7280;'>${_ps.level}</div></td>
                     <td>${getStatusBadge(item.status)}</td>
                     <td>${expiryDisplay}</td>
                     <td>
