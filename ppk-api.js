@@ -1414,11 +1414,26 @@ async function _routeAction(action, data) {
         case 'submitRequest': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number' });
             var s = sess && sess[0];
-            // สร้าง ID ตาม prefix ของ type
+            // สร้าง ID: PREFIX-YYYYMMDD-NNN (ประเภท-วันที่-ลำดับ)
             var prefixMap = { residence: 'REQ', transfer: 'TRF', return: 'RTN', repair: 'RPR' };
             var reqPrefix = prefixMap[data.type] || 'REQ';
-            var _uid = 'xxxxxxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16); }).toUpperCase();
-            var reqId = reqPrefix + '-' + _uid + '-' + Date.now().toString(36).toUpperCase();
+            // ใช้วันที่จาก submitted_at (ถ้า admin ระบุย้อนหลัง) หรือวันนี้
+            var _reqDate = data.submitted_at ? new Date(data.submitted_at) : new Date();
+            var _reqY = _reqDate.getFullYear();
+            var _reqM = String(_reqDate.getMonth() + 1).padStart(2, '0');
+            var _reqD = String(_reqDate.getDate()).padStart(2, '0');
+            var _reqDateStr = _reqY + _reqM + _reqD;
+            // หาลำดับถัดไป: นับคำร้องประเภทเดียวกันที่ ID ขึ้นต้นด้วย PREFIX-YYYYMMDD-
+            var _seqPrefix = reqPrefix + '-' + _reqDateStr + '-';
+            var _existingReqs = await sbGet('requests', { id: 'like.' + _seqPrefix + '%', type: 'eq.' + (data.type || 'general'), select: 'id', order: 'id.desc', limit: '1' });
+            var _nextSeq = 1;
+            if (_existingReqs && _existingReqs.length > 0) {
+                var _lastId = _existingReqs[0].id;
+                var _lastSeqStr = _lastId.split('-').pop();
+                var _lastSeq = parseInt(_lastSeqStr, 10);
+                if (!isNaN(_lastSeq)) _nextSeq = _lastSeq + 1;
+            }
+            var reqId = _seqPrefix + String(_nextSeq).padStart(3, '0');
             // แยก type ออกจาก data แล้วเก็บที่เหลือใน details (jsonb)
             var detailsCopy = {};
             Object.keys(data).forEach(function(k) { if (k !== 'type') detailsCopy[k] = data[k]; });
