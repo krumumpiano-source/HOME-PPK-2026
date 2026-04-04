@@ -1264,6 +1264,8 @@
                 if      (slip.status === 'approved') { stTxt = '\u2705 อนุมัติ';  stCls = 'badge-approved'; }
                 else if (slip.status === 'rejected') { stTxt = '\u274C ปฏิเสธ';   stCls = 'badge-rejected'; }
                 else                                 { stTxt = '\u23F3 รอตรวจ';   stCls = 'badge-pending';  }
+            } else if (key < '2569-03') {
+                stTxt = '\u2714 นอกระบบ'; stCls = 'badge-approved';
             }
 
             /* On-time check */
@@ -1290,7 +1292,7 @@
                 '<td><strong>'+(bill.total ? bill.total.toLocaleString() : (slip ? slip.amount.toLocaleString() : '-'))+'</strong></td>'+
                 '<td>'+(slip && slip.amount ? slip.amount.toLocaleString() : '-')+'</td>'+
                 '<td>'+(slip ? _fmtDate(slip.submittedAt) : '-')+'</td>'+
-                '<td>'+(slip ? '<span class="badge '+stCls+'">'+stTxt+'</span>' : '-')+'</td>'+
+                '<td>'+(slip ? '<span class="badge '+stCls+'">'+stTxt+'</span>' : (stTxt ? '<span class="badge '+stCls+'">'+stTxt+'</span>' : '-'))+'</td>'+
                 '<td><span class="badge '+tmCls+'">'+tmTxt+'</span></td>';
             tb.appendChild(tr);
         });

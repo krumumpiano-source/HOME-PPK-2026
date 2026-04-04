@@ -480,8 +480,8 @@ function renderDashboard(d) {
     if (recentHist.length > 0) {
         recentHtml = '<div class="view-card"><div class="view-card-title">\ud83d\udcca 3 \u0e40\u0e14\u0e37\u0e2d\u0e19\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14</div><table class="view-table"><thead><tr><th>\u0e07\u0e27\u0e14</th><th style="text-align:right">\u0e22\u0e2d\u0e14 (\u0e1a\u0e32\u0e17)</th><th>\u0e19\u0e49\u0e33</th><th>\u0e44\u0e1f</th><th>\u0e2a\u0e16\u0e32\u0e19\u0e30</th></tr></thead><tbody>';
         recentHist.forEach(function(h) {
-            var sc = h.slip_status === 'success' ? 's-paid' : h.slip_status === 'reviewing' ? 's-reviewing' : h.slip_status === 'rejected' ? 's-rejected' : 's-none';
-            var sl = h.slip_status === 'success' ? '\u2705 \u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e49\u0e27' : h.slip_status === 'reviewing' ? '\ud83d\udd0d \u0e23\u0e2d\u0e15\u0e23\u0e27\u0e08' : h.slip_status === 'rejected' ? '\u274c \u0e44\u0e21\u0e48\u0e1c\u0e48\u0e32\u0e19' : '\u2014';
+            var sc = h.slip_status === 'success' ? 's-paid' : h.slip_status === 'reviewing' ? 's-reviewing' : h.slip_status === 'rejected' ? 's-rejected' : h.slip_status === 'pre-system' ? 's-paid' : 's-none';
+            var sl = h.slip_status === 'success' ? '\u2705 \u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e49\u0e27' : h.slip_status === 'reviewing' ? '\ud83d\udd0d \u0e23\u0e2d\u0e15\u0e23\u0e27\u0e08' : h.slip_status === 'rejected' ? '\u274c \u0e44\u0e21\u0e48\u0e1c\u0e48\u0e32\u0e19' : h.slip_status === 'pre-system' ? '\u2714 \u0e19\u0e2d\u0e01\u0e23\u0e30\u0e1a\u0e1a' : '\u2014';
             recentHtml += '<tr><td>' + fmtPeriod(h.period) + '</td><td style="text-align:right;font-weight:700;">' + fmtMoney(h.amount) + '</td><td style="text-align:right;font-size:0.78rem;">' + fmtMoney(h.water_amount) + '</td><td style="text-align:right;font-size:0.78rem;">' + fmtMoney(h.electric_amount) + '</td><td class="' + sc + '">' + sl + '</td></tr>';
         });
         recentHtml += '</tbody></table></div>';

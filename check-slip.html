@@ -408,11 +408,15 @@
 
     function toBuddhistYear(adYear){ return Number(adYear) + 543; }
 
+    const _SYSTEM_LIVE_PERIOD = '2569-03'; // งวดแรกที่ใช้ระบบจริง (ส่งสลิปผ่านระบบ)
+
     function getSelectedPeriod(){
       const month = document.getElementById('bill_month').value;
       const year = document.getElementById('bill_year').value;
       const idx = Math.max(0, Math.min(11, Number(month) - 1));
-      return { month, year, monthName: THAI_MONTHS[idx], key: year + month };
+      const period = year + '-' + month;
+      const isPreSystem = period < _SYSTEM_LIVE_PERIOD;
+      return { month, year, monthName: THAI_MONTHS[idx], key: year + month, period, isPreSystem };
     }
 
     function formatMoney(v){
@@ -684,7 +688,12 @@
       if(unit.noResident) return 'no-resident';
       if(unit.slipStatus === 'rejected') return 'rejected';
       if(unit.approval && unit.approval.status === 'approved') return 'approved';
-      if(unit.paidAmount === null) return 'unpaid';
+      if(unit.paidAmount === null) {
+        // งวดก่อนระบบ live → ถือว่าชำระนอกระบบแล้ว
+        const { isPreSystem } = getSelectedPeriod();
+        if(isPreSystem) return 'pre-system';
+        return 'unpaid';
+      }
       // สลิปค้างตรวจ: แยกตาม match/mismatch
       if(Math.abs((unit.paidAmount||0) - (unit.notifiedAmount||0)) < 0.01) return 'pending-match';
       return 'pending-mismatch';
@@ -697,6 +706,7 @@
         'rejected':    '<span class="status-badge status-rejected">✗ ถูกปฏิเสธ</span>',
         'unpaid':      '<span class="status-badge status-unpaid">○ ยังไม่ชำระ</span>',
         'approved':    '<span class="status-badge status-approved">✓ อนุมัติแล้ว</span>',
+        'pre-system':  '<span class="status-badge status-approved" style="background:#e0e7ff;color:#4338ca;">✓ ชำระแล้ว (นอกระบบ)</span>',
         'no-resident': '<span class="status-badge status-unpaid">- ไม่มีผู้พัก</span>'
       };
       return badges[status] || '';
@@ -725,7 +735,7 @@
         const status = getStatus(unit);
 
         // นับสถานะ
-        if(status === 'approved') countMatch++;
+        if(status === 'approved' || status === 'pre-system') countMatch++;
         else if(status === 'pending-mismatch' || status === 'rejected') countMismatch++;
         else if(status === 'pending-match') countPending++;
         else if(status === 'unpaid') countUnpaid++;
@@ -754,6 +764,8 @@
             '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
             '<button class="btn btn-sm btn-success"' + _sentDisabled + _sentStyle + ' onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="' + _sentTitle + '">' + _sentLabel + '</button>' +
           '</div>';
+        } else if(status === 'pre-system'){
+          actionsHtml = '<span style="color:#4338ca;font-size:.82rem;">✓ ข้อมูลย้อนหลัง</span>';
         } else if(status === 'unpaid'){
           actionsHtml = '<div class="action-btns">' +
             '<button class="btn btn-sm btn-primary" onclick="showManualPayment(\'' + type + '\',' + index + ')" title="บันทึกการชำระด้วยตนเอง">💵 บันทึก</button>' +

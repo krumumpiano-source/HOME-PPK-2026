@@ -2069,6 +2069,9 @@ async function _routeAction(action, data) {
                 return !a.expires_at || new Date(a.expires_at) > now2;
             });
 
+            // งวดก่อน 2569-03 = ข้อมูลเก่าที่ชำระนอกระบบแล้ว → auto-mark paid ทันที
+            var _SYSTEM_LIVE_PERIOD = '2569-03';
+
             if (sessRole === 'admin' || sessRole === 'head') {
                 var adminPeriod = (now2.getFullYear() + 543) + '-' + String(now2.getMonth() + 1).padStart(2, '0');
                 // ── Global self-healing: แก้ outstanding ที่ค้างทั้งระบบ ──
@@ -2084,9 +2087,11 @@ async function _routeAction(action, data) {
                         (_ghResults[1] || []).forEach(function(ph) { if (ph.house_number && ph.period) _ghPaidMap[ph.house_number + '_' + ph.period] = true; });
                         var _ghNow = new Date().toISOString();
                         for (var _ghi = 0; _ghi < _ghUnpaid.length; _ghi++) {
-                            var _ghKey = _ghUnpaid[_ghi].house_number + '_' + _ghUnpaid[_ghi].period;
-                            if (_ghPaidMap[_ghKey]) {
-                                sbPatch('outstanding', { id: 'eq.' + _ghUnpaid[_ghi].id }, { status: 'paid', updated_at: _ghNow }).catch(function() {});
+                            var _ghItem = _ghUnpaid[_ghi];
+                            var _ghKey = _ghItem.house_number + '_' + _ghItem.period;
+                            // mark paid ถ้า: (1) มีหลักฐาน slip/payment_history หรือ (2) เป็นงวดก่อนระบบ live
+                            if (_ghPaidMap[_ghKey] || (_ghItem.period && _ghItem.period < _SYSTEM_LIVE_PERIOD)) {
+                                sbPatch('outstanding', { id: 'eq.' + _ghItem.id }, { status: 'paid', updated_at: _ghNow }).catch(function() {});
                             }
                         }
                     }
@@ -2193,8 +2198,8 @@ async function _routeAction(action, data) {
                         approvedSlips.forEach(function(sl) { if (sl.period) paidPeriods[sl.period] = true; });
                         var healedOutRows = [];
                         for (var hi = 0; hi < outRows.length; hi++) {
-                            if (paidPeriods[outRows[hi].period]) {
-                                // ชำระแล้วแต่ outstanding ยังไม่ถูก mark → แก้ไขเงียบๆ
+                            if (paidPeriods[outRows[hi].period] || (outRows[hi].period && outRows[hi].period < _SYSTEM_LIVE_PERIOD)) {
+                                // ชำระแล้วหรืองวดก่อนระบบ live → แก้ไขเงียบๆ
                                 sbPatch('outstanding', { id: 'eq.' + outRows[hi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
                             } else {
                                 healedOutRows.push(outRows[hi]);
@@ -4091,7 +4096,8 @@ async function _routeAction(action, data) {
                 sbGet('payment_proxies',  { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', limit: '1' }).catch(function() { return []; })
             ]);
             var ahvResRows = ahvResults[0], ahvOutRows = ahvResults[1], ahvSlipRows = ahvResults[2], ahvProxyRows = ahvResults[3];
-            // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี slip approved หรือ payment_history แล้วหรือยัง → auto-mark paid
+            // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี slip approved หรือ payment_history หรือเป็นงวดก่อนระบบ live → auto-mark paid
+            var _ahvSysLive = '2569-03';
             if (ahvOutRows && ahvOutRows.length > 0) {
                 try {
                     var ahvPhRows = await sbGet('payment_history', { house_number: 'eq.' + ahvHouse, order: 'period.desc', limit: '50' }).catch(function() { return []; });
@@ -4099,7 +4105,7 @@ async function _routeAction(action, data) {
                     (ahvPhRows || []).forEach(function(ph) { if (ph.period) ahvPaidPeriods[ph.period] = true; });
                     (ahvSlipRows || []).forEach(function(sl) { if (sl.status === 'approved' && sl.period) ahvPaidPeriods[sl.period] = true; });
                     for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvHi++) {
-                        if (ahvOutRows[ahvHi].status !== 'paid' && ahvPaidPeriods[ahvOutRows[ahvHi].period]) {
+                        if (ahvOutRows[ahvHi].status !== 'paid' && (ahvPaidPeriods[ahvOutRows[ahvHi].period] || (ahvOutRows[ahvHi].period && ahvOutRows[ahvHi].period < _ahvSysLive))) {
                             ahvOutRows[ahvHi].status = 'paid';
                             sbPatch('outstanding', { id: 'eq.' + ahvOutRows[ahvHi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
                         }
@@ -4137,6 +4143,8 @@ async function _routeAction(action, data) {
                     else if (s.status === 'rejected') ss = 'rejected';
                     else ss = 'reviewing';
                 }
+                if (ss === 'none' && o.period && o.period < _ahvSysLive) ss = 'pre-system';
+                else if (ss === 'none' && o.status === 'paid') ss = 'success';
                 return {
                     period:           o.period,
                     amount:           parseFloat(o.total_amount) || 0,
