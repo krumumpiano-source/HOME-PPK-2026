@@ -1,0 +1,776 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>รายงานบริหาร | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260415A">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        :root {
+            --bg: #f8fafc; --surface: #ffffff; --border: #e5e7eb;
+            --text: #0f172a; --muted: #64748b;
+            --primary: #2563eb; --primary-dark: #1d4ed8;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --info: #06b6d4; --purple: #8b5cf6;
+            --shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+        * { box-sizing: border-box; }
+        body { margin:0; min-height:100vh; font-family:'Kanit',sans-serif; background:var(--bg); color:var(--text); }
+
+        .main-container { min-height:100vh; padding:2rem; }
+        @media (max-width:600px) { .main-container { padding:1rem; } }
+
+        /* Header */
+        .page-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+        .back-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1rem; border-radius:10px; border:1px solid var(--border); background:var(--surface); font:inherit; font-weight:600; cursor:pointer; }
+        .back-btn:hover { background:#f1f5f9; }
+        .page-title { margin:0; font-size:1.6rem; font-weight:700; color:var(--primary); }
+
+        /* Filter Bar */
+        .filter-bar { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1.5rem; box-shadow:var(--shadow); display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; }
+        .filter-group { display:flex; flex-direction:column; gap:.3rem; }
+        .filter-group label { font-size:.85rem; font-weight:600; color:var(--muted); }
+        .filter-group select, .filter-group input { padding:.5rem .75rem; border:1px solid var(--border); border-radius:8px; font:inherit; font-size:.9rem; }
+        .filter-actions { display:flex; gap:.5rem; flex-wrap:wrap; margin-left:auto; }
+
+        /* Buttons */
+        .btn { padding:.55rem 1rem; border-radius:8px; border:1px solid var(--border); background:var(--surface); font:inherit; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:.4rem; transition:all .2s; white-space:nowrap; }
+        .btn:hover { background:#f1f5f9; }
+        .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .btn-primary:hover { background:var(--primary-dark); }
+        .btn-success { background:var(--success); color:#fff; border-color:var(--success); }
+        .btn-success:hover { background:#059669; }
+
+        /* Section Cards */
+        .report-section { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:var(--shadow); }
+        .section-title { margin:0 0 1rem; font-size:1.15rem; font-weight:700; display:flex; align-items:center; gap:.5rem; }
+
+        /* Stat Cards */
+        .stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.25rem; }
+        .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem; display:flex; align-items:center; gap:.75rem; }
+        .stat-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+        .stat-icon.blue { background:#dbeafe; }
+        .stat-icon.green { background:#d1fae5; }
+        .stat-icon.yellow { background:#fef3c7; }
+        .stat-icon.red { background:#fee2e2; }
+        .stat-icon.purple { background:#ede9fe; }
+        .stat-icon.cyan { background:#cffafe; }
+        .stat-value { font-size:1.4rem; font-weight:700; }
+        .stat-label { font-size:.8rem; color:var(--muted); }
+        .stat-pct { font-size:.8rem; color:var(--success); font-weight:600; }
+
+        /* Chart containers */
+        .chart-wrap { position:relative; width:100%; max-width:600px; margin:0 auto; }
+        .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1rem; }
+        @media (max-width:768px) { .chart-row { grid-template-columns:1fr; } }
+
+        /* Tables */
+        .table-container { overflow-x:auto; margin-top:1rem; }
+        table { width:100%; border-collapse:collapse; font-size:.88rem; }
+        thead th { background:#e2e8f0; border:1px solid var(--border); padding:.6rem .5rem; text-align:center; white-space:nowrap; font-weight:600; }
+        tbody td { border:1px solid var(--border); padding:.5rem; text-align:center; }
+        tbody tr:hover { background:#f8fafc; }
+        .text-right { text-align:right !important; }
+        .text-left { text-align:left !important; }
+        .font-bold { font-weight:700; }
+
+        /* Print styles */
+        @media print {
+            body { background:#fff !important; }
+            .no-print, #ppkNav, .nav-topbar, .nav-sidebar, .nav-backdrop, .filter-actions, .back-btn { display:none !important; }
+            .main-container { padding:0 !important; }
+            .report-section { box-shadow:none !important; border:1px solid #ccc !important; page-break-inside:avoid; }
+            .print-header { display:block !important; text-align:center; margin-bottom:1.5rem; }
+            .print-header h2 { margin:0; font-size:1.1rem; }
+            .print-header h3 { margin:.3rem 0; font-size:1rem; font-weight:400; }
+            .print-header .print-date { font-size:.85rem; color:#666; margin-top:.5rem; }
+        }
+        .print-header { display:none; }
+
+        /* Loading */
+        .loading-overlay { display:flex; align-items:center; justify-content:center; padding:3rem; color:var(--muted); font-size:1rem; }
+    </style>
+</head>
+<body>
+    <div id="ppkNav"></div>
+
+    <div class="main-container" id="mainContainer">
+        <!-- Print Header (visible only when printing) -->
+        <div class="print-header" id="printHeader">
+            <h2 id="printOrgName">งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</h2>
+            <h3 id="printSchoolName">โรงเรียนพะเยาพิทยาคม</h3>
+            <div class="print-date" id="printDate"></div>
+        </div>
+
+        <div class="page-header no-print">
+            <button class="back-btn" onclick="navigate('?page=dashboard')">← ย้อนกลับ</button>
+            <h1 class="page-title">📊 รายงานเสนอผู้บริหาร</h1>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar no-print">
+            <div class="filter-group">
+                <label>ช่วงเวลา</label>
+                <select id="filterMode" onchange="onFilterModeChange()">
+                    <option value="month">รายเดือน</option>
+                    <option value="year">รายปี</option>
+                    <option value="custom">กำหนดเอง</option>
+                </select>
+            </div>
+            <div class="filter-group" id="monthGroup">
+                <label>เดือน-ปี</label>
+                <select id="filterMonth"></select>
+            </div>
+            <div class="filter-group" id="yearGroup" style="display:none;">
+                <label>ปี (พ.ศ.)</label>
+                <select id="filterYear"></select>
+            </div>
+            <div class="filter-group" id="customFromGroup" style="display:none;">
+                <label>ตั้งแต่</label>
+                <select id="filterFrom"></select>
+            </div>
+            <div class="filter-group" id="customToGroup" style="display:none;">
+                <label>ถึง</label>
+                <select id="filterTo"></select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" onclick="loadReport()">🔄 โหลดข้อมูล</button>
+                <button class="btn" onclick="window.print()">🖨 พิมพ์</button>
+                <button class="btn" onclick="exportCSV()">⬇ CSV</button>
+                <button class="btn btn-success" onclick="exportDocx()">📄 Word</button>
+            </div>
+        </div>
+
+        <!-- Report content -->
+        <div id="reportContent">
+            <div class="loading-overlay" id="loadingMsg">กรุณากด "โหลดข้อมูล" เพื่อสร้างรายงาน</div>
+        </div>
+    </div>
+
+    <div class="no-print" style="text-align:center; margin-top:1.2rem; font-size:.95rem; color:#888;">
+        ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+        งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+    </div>
+
+    <script>
+    // ========== Escape Helper ==========
+    function _e(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ========== State ==========
+    var _reportData = null;   // cached data from API
+    var _charts = {};         // Chart.js instances
+    var _settings = {};       // org settings
+
+    // ========== Period Helpers ==========
+    function _beYear(y) { return parseInt(y) + 543; }
+    function _thMonth(m) { return ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][parseInt(m)] || m; }
+    function _thMonthFull(m) { return ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][parseInt(m)] || m; }
+    function _periodLabel(p) {
+        if (!p) return '-';
+        var parts = p.split('-');
+        return _thMonth(parts[1]) + ' ' + parts[0];
+    }
+    function _fmtNum(n) { return (n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function _fmtInt(n) { return (n || 0).toLocaleString('th-TH'); }
+
+    // ========== Init period selectors ==========
+    function initFilters() {
+        var now = new Date();
+        var currentBE = now.getFullYear() + 543;
+        var currentMonth = now.getMonth() + 1;
+        var months = [];
+        // Generate last 24 months
+        for (var i = 0; i < 24; i++) {
+            var m = currentMonth - i;
+            var y = currentBE;
+            while (m <= 0) { m += 12; y--; }
+            var period = y + '-' + String(m).padStart(2, '0');
+            months.push({ value: period, label: _thMonth(m) + ' ' + y });
+        }
+        var monthSel = document.getElementById('filterMonth');
+        var fromSel = document.getElementById('filterFrom');
+        var toSel = document.getElementById('filterTo');
+        months.forEach(function(m) {
+            monthSel.innerHTML += '<option value="' + m.value + '">' + m.label + '</option>';
+            fromSel.innerHTML += '<option value="' + m.value + '">' + m.label + '</option>';
+            toSel.innerHTML += '<option value="' + m.value + '">' + m.label + '</option>';
+        });
+        // Default from = 6 months ago
+        if (fromSel.options.length > 5) fromSel.selectedIndex = 5;
+
+        var yearSel = document.getElementById('filterYear');
+        for (var yi = 0; yi < 5; yi++) {
+            var yr = currentBE - yi;
+            yearSel.innerHTML += '<option value="' + yr + '">' + yr + '</option>';
+        }
+    }
+
+    function onFilterModeChange() {
+        var mode = document.getElementById('filterMode').value;
+        document.getElementById('monthGroup').style.display = mode === 'month' ? '' : 'none';
+        document.getElementById('yearGroup').style.display = mode === 'year' ? '' : 'none';
+        document.getElementById('customFromGroup').style.display = mode === 'custom' ? '' : 'none';
+        document.getElementById('customToGroup').style.display = mode === 'custom' ? '' : 'none';
+    }
+
+    function getSelectedPeriods() {
+        var mode = document.getElementById('filterMode').value;
+        if (mode === 'month') {
+            var p = document.getElementById('filterMonth').value;
+            return { mode: 'month', periods: [p], label: _periodLabel(p) };
+        } else if (mode === 'year') {
+            var yr = document.getElementById('filterYear').value;
+            var periods = [];
+            for (var m = 1; m <= 12; m++) periods.push(yr + '-' + String(m).padStart(2, '0'));
+            return { mode: 'year', periods: periods, label: 'ปี ' + yr };
+        } else {
+            var from = document.getElementById('filterFrom').value;
+            var to = document.getElementById('filterTo').value;
+            if (from > to) { var tmp = from; from = to; to = tmp; }
+            var periods = [];
+            var parts = from.split('-');
+            var cy = parseInt(parts[0]), cm = parseInt(parts[1]);
+            var toParts = to.split('-');
+            var ey = parseInt(toParts[0]), em = parseInt(toParts[1]);
+            while (cy < ey || (cy === ey && cm <= em)) {
+                periods.push(cy + '-' + String(cm).padStart(2, '0'));
+                cm++;
+                if (cm > 12) { cm = 1; cy++; }
+            }
+            return { mode: 'custom', periods: periods, label: _periodLabel(from) + ' - ' + _periodLabel(to) };
+        }
+    }
+
+    // ========== Load Report Data ==========
+    async function loadReport() {
+        var sel = getSelectedPeriods();
+        document.getElementById('reportContent').innerHTML = '<div class="loading-overlay">⏳ กำลังโหลดข้อมูล...</div>';
+
+        try {
+            var result = await callBackend('adminReport', { periods: sel.periods });
+            if (!result || !result.success) throw new Error(result ? result.error : 'โหลดข้อมูลไม่สำเร็จ');
+            _reportData = result.data;
+            _reportData._sel = sel;
+
+            // Load org settings for print header
+            try {
+                var settingsRes = await callBackend('getSettings');
+                if (settingsRes && settingsRes.success) _settings = settingsRes.data || {};
+            } catch(e) {}
+
+            var orgName = _settings.org_name || 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู';
+            var schoolName = _settings.school_name || 'โรงเรียนพะเยาพิทยาคม';
+            document.getElementById('printOrgName').textContent = orgName;
+            document.getElementById('printSchoolName').textContent = schoolName;
+            document.getElementById('printDate').textContent = 'รายงาน: ' + sel.label + ' | พิมพ์เมื่อ: ' + new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
+
+            renderReport();
+        } catch (e) {
+            document.getElementById('reportContent').innerHTML = '<div class="loading-overlay" style="color:var(--danger);">❌ ' + _e(e.message) + '</div>';
+        }
+    }
+
+    // ========== Render all sections ==========
+    function renderReport() {
+        var d = _reportData;
+        var sel = d._sel;
+        var html = '';
+
+        // Section 1: Housing Overview
+        html += renderHousingSection(d.housing);
+
+        // Section 2: Finance
+        html += renderFinanceSection(d.finance, sel);
+
+        // Section 3: Utilities
+        html += renderUtilitiesSection(d.finance, sel);
+
+        // Section 4: Requests
+        html += renderRequestsSection(d.requests);
+
+        // Section 5: Slips / Payments
+        html += renderSlipsSection(d.slips, sel);
+
+        document.getElementById('reportContent').innerHTML = html;
+
+        // Render charts after DOM is ready
+        setTimeout(function() { renderCharts(d, sel); }, 100);
+    }
+
+    // ========== Section 1: Housing Overview ==========
+    function renderHousingSection(h) {
+        if (!h) h = {};
+        var occupancyPct = h.total > 0 ? Math.round(h.occupied / h.total * 100) : 0;
+        return '<div class="report-section" id="sec-housing">' +
+            '<h2 class="section-title">🏠 ภาพรวมบ้านพักครู</h2>' +
+            '<div class="stat-row">' +
+                _statCard('🏘', 'blue', h.total, 'บ้านทั้งหมด') +
+                _statCard('👨‍👩‍👧‍👦', 'green', h.occupied, 'มีผู้อยู่อาศัย') +
+                _statCard('🔑', 'yellow', h.available, 'ว่าง') +
+                _statCard('🔧', 'red', h.maintenance, 'ซ่อมบำรุง') +
+            '</div>' +
+            '<div class="stat-row">' +
+                _statCard('📈', 'purple', occupancyPct + '%', 'อัตราครอง') +
+                _statCard('📥', 'cyan', h.movedIn || 0, 'ย้ายเข้า (ช่วงนี้)') +
+                _statCard('📤', 'red', h.movedOut || 0, 'ย้ายออก (ช่วงนี้)') +
+            '</div>' +
+            '<div class="chart-wrap" style="max-width:350px;"><canvas id="chartHousing"></canvas></div>' +
+        '</div>';
+    }
+
+    // ========== Section 2: Finance ==========
+    function renderFinanceSection(fin, sel) {
+        if (!fin) fin = {};
+        var summary = fin.summary || {};
+        var collectionPct = summary.totalBilled > 0 ? Math.round(summary.totalPaid / summary.totalBilled * 100) : 0;
+        var html = '<div class="report-section" id="sec-finance">' +
+            '<h2 class="section-title">💰 รายงานการเงิน</h2>' +
+            '<div class="stat-row">' +
+                _statCard('💵', 'blue', _fmtNum(summary.totalBilled), 'ยอดเรียกเก็บ') +
+                _statCard('✅', 'green', _fmtNum(summary.totalPaid), 'ชำระแล้ว') +
+                _statCard('⏳', 'yellow', _fmtNum(summary.totalUnpaid), 'ค้างชำระ') +
+                _statCard('🎁', 'purple', _fmtNum(summary.totalWaived), 'ยกเว้น') +
+                _statCard('📊', 'cyan', collectionPct + '%', 'อัตราเก็บเงิน') +
+            '</div>';
+
+        // Table by period
+        var byPeriod = fin.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>เรียกเก็บ</th><th>ชำระแล้ว</th><th>ค้างชำระ</th><th>ยกเว้น</th><th>อัตรา %</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                var pct = r.billed > 0 ? Math.round(r.paid / r.billed * 100) : 0;
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.billed) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.paid) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.unpaid) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.waived) + '</td>' +
+                    '<td>' + pct + '%</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        // Chart placeholder
+        if (byPeriod.length > 1) {
+            html += '<div class="chart-wrap" style="max-width:700px; margin-top:1rem;"><canvas id="chartFinance"></canvas></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 3: Utilities ==========
+    function renderUtilitiesSection(fin, sel) {
+        if (!fin) fin = {};
+        var summary = fin.summary || {};
+        var html = '<div class="report-section" id="sec-utilities">' +
+            '<h2 class="section-title">💧⚡ ค่าน้ำ-ค่าไฟ-ค่าส่วนกลาง</h2>' +
+            '<div class="stat-row">' +
+                _statCard('💧', 'blue', _fmtNum(summary.totalWater), 'ค่าน้ำรวม') +
+                _statCard('⚡', 'yellow', _fmtNum(summary.totalElectric), 'ค่าไฟรวม') +
+                _statCard('🏢', 'purple', _fmtNum(summary.totalCommon), 'ค่าส่วนกลาง') +
+                _statCard('🗑', 'red', _fmtNum(summary.totalGarbage), 'ค่าขยะ') +
+            '</div>';
+
+        var byPeriod = fin.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>ค่าน้ำ</th><th>ค่าไฟ</th><th>ค่าส่วนกลาง</th><th>ค่าขยะ</th><th>รวม</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.water) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.electric) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.common) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.garbage) + '</td>' +
+                    '<td class="text-right font-bold">' + _fmtNum(r.billed) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        if (byPeriod.length > 1) {
+            html += '<div class="chart-wrap" style="max-width:700px; margin-top:1rem;"><canvas id="chartUtilities"></canvas></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 4: Requests ==========
+    function renderRequestsSection(req) {
+        if (!req) req = {};
+        var types = [
+            { key: 'residence', icon: '🏠', label: 'ขอเข้าอยู่อาศัย' },
+            { key: 'transfer', icon: '🔄', label: 'ย้ายบ้าน' },
+            { key: 'return', icon: '📦', label: 'คืนบ้าน' },
+            { key: 'repair', icon: '🔧', label: 'ซ่อมแซม' }
+        ];
+        var html = '<div class="report-section" id="sec-requests">' +
+            '<h2 class="section-title">📋 คำร้องทั้งหมด</h2>' +
+            '<div class="stat-row">';
+        var colors = ['blue','purple','yellow','red'];
+        types.forEach(function(t, i) {
+            var total = (req[t.key] && req[t.key].total) || 0;
+            html += _statCard(t.icon, colors[i], total, t.label);
+        });
+        html += '</div>';
+
+        // Detailed table
+        html += '<div class="table-container"><table>' +
+            '<thead><tr><th>ประเภท</th><th>รอดำเนินการ</th><th>อนุมัติ</th><th>ไม่อนุมัติ</th><th>ยกเลิก</th><th>รวม</th></tr></thead><tbody>';
+        types.forEach(function(t) {
+            var r = req[t.key] || {};
+            html += '<tr><td class="text-left">' + t.icon + ' ' + t.label + '</td>' +
+                '<td>' + _fmtInt(r.pending || 0) + '</td>' +
+                '<td>' + _fmtInt(r.approved || 0) + '</td>' +
+                '<td>' + _fmtInt(r.rejected || 0) + '</td>' +
+                '<td>' + _fmtInt(r.cancelled || 0) + '</td>' +
+                '<td class="font-bold">' + _fmtInt(r.total || 0) + '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+
+    // ========== Section 5: Slips / Payments ==========
+    function renderSlipsSection(slips, sel) {
+        if (!slips) slips = {};
+        var summary = slips.summary || {};
+        var passPct = summary.total > 0 ? Math.round(summary.approved / summary.total * 100) : 0;
+        var html = '<div class="report-section" id="sec-slips">' +
+            '<h2 class="section-title">🧾 การชำระเงิน / สลิป</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📝', 'blue', _fmtInt(summary.total), 'สลิปทั้งหมด') +
+                _statCard('✅', 'green', _fmtInt(summary.approved), 'อนุมัติ') +
+                _statCard('❌', 'red', _fmtInt(summary.rejected), 'ปฏิเสธ') +
+                _statCard('⏳', 'yellow', _fmtInt(summary.pending), 'รอตรวจ') +
+                _statCard('📊', 'cyan', passPct + '%', 'อัตราผ่าน') +
+            '</div>';
+
+        var byPeriod = slips.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>สลิปส่ง</th><th>อนุมัติ</th><th>ปฏิเสธ</th><th>รอตรวจ</th><th>อัตราผ่าน %</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                var pct = r.total > 0 ? Math.round(r.approved / r.total * 100) : 0;
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td>' + _fmtInt(r.total) + '</td>' +
+                    '<td>' + _fmtInt(r.approved) + '</td>' +
+                    '<td>' + _fmtInt(r.rejected) + '</td>' +
+                    '<td>' + _fmtInt(r.pending) + '</td>' +
+                    '<td>' + pct + '%</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        if (byPeriod.length > 1) {
+            html += '<div class="chart-wrap" style="max-width:700px; margin-top:1rem;"><canvas id="chartSlips"></canvas></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Stat Card Helper ==========
+    function _statCard(icon, color, value, label) {
+        return '<div class="stat-card">' +
+            '<div class="stat-icon ' + color + '">' + icon + '</div>' +
+            '<div><div class="stat-value">' + value + '</div><div class="stat-label">' + label + '</div></div>' +
+        '</div>';
+    }
+
+    // ========== Chart Rendering ==========
+    function renderCharts(d, sel) {
+        // Destroy existing charts
+        Object.keys(_charts).forEach(function(k) { if (_charts[k]) _charts[k].destroy(); });
+        _charts = {};
+
+        // 1) Housing Doughnut
+        var hCanvas = document.getElementById('chartHousing');
+        if (hCanvas && d.housing) {
+            _charts.housing = new Chart(hCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['มีผู้อยู่', 'ว่าง', 'ซ่อมบำรุง'],
+                    datasets: [{ data: [d.housing.occupied, d.housing.available, d.housing.maintenance], backgroundColor: ['#10b981','#f59e0b','#ef4444'] }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        var finPeriods = d.finance && d.finance.byPeriod ? d.finance.byPeriod : [];
+        if (finPeriods.length > 1) {
+            // 2) Finance Bar Chart
+            var fCanvas = document.getElementById('chartFinance');
+            if (fCanvas) {
+                _charts.finance = new Chart(fCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: finPeriods.map(function(r) { return _periodLabel(r.period); }),
+                        datasets: [
+                            { label: 'เรียกเก็บ', data: finPeriods.map(function(r) { return r.billed; }), backgroundColor: '#60a5fa' },
+                            { label: 'ชำระแล้ว', data: finPeriods.map(function(r) { return r.paid; }), backgroundColor: '#34d399' }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+
+            // 3) Utilities Stacked Bar
+            var uCanvas = document.getElementById('chartUtilities');
+            if (uCanvas) {
+                _charts.utilities = new Chart(uCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: finPeriods.map(function(r) { return _periodLabel(r.period); }),
+                        datasets: [
+                            { label: 'ค่าน้ำ', data: finPeriods.map(function(r) { return r.water; }), backgroundColor: '#38bdf8' },
+                            { label: 'ค่าไฟ', data: finPeriods.map(function(r) { return r.electric; }), backgroundColor: '#fbbf24' },
+                            { label: 'ส่วนกลาง', data: finPeriods.map(function(r) { return r.common; }), backgroundColor: '#a78bfa' },
+                            { label: 'ค่าขยะ', data: finPeriods.map(function(r) { return r.garbage; }), backgroundColor: '#f87171' }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+                });
+            }
+        }
+
+        // 4) Slips Line Chart
+        var slipPeriods = d.slips && d.slips.byPeriod ? d.slips.byPeriod : [];
+        if (slipPeriods.length > 1) {
+            var sCanvas = document.getElementById('chartSlips');
+            if (sCanvas) {
+                _charts.slips = new Chart(sCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: slipPeriods.map(function(r) { return _periodLabel(r.period); }),
+                        datasets: [
+                            { label: 'สลิปส่ง', data: slipPeriods.map(function(r) { return r.total; }), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.1)', fill: true, tension: .3 },
+                            { label: 'อนุมัติ', data: slipPeriods.map(function(r) { return r.approved; }), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.1)', fill: true, tension: .3 }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+        }
+    }
+
+    // ========== Export CSV ==========
+    function exportCSV() {
+        if (!_reportData) { alert('กรุณาโหลดข้อมูลก่อน'); return; }
+        var d = _reportData;
+        var sel = d._sel;
+        var rows = [];
+        var BOM = '\uFEFF';
+
+        rows.push(['รายงานเสนอผู้บริหาร - ' + sel.label]);
+        rows.push([]);
+
+        // Housing
+        rows.push(['=== ภาพรวมบ้านพัก ===']);
+        rows.push(['บ้านทั้งหมด', d.housing.total]);
+        rows.push(['มีผู้อยู่', d.housing.occupied]);
+        rows.push(['ว่าง', d.housing.available]);
+        rows.push(['ซ่อมบำรุง', d.housing.maintenance]);
+        rows.push([]);
+
+        // Finance
+        rows.push(['=== รายงานการเงิน ===']);
+        rows.push(['งวด','เรียกเก็บ','ชำระแล้ว','ค้างชำระ','ยกเว้น']);
+        (d.finance.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.billed, r.paid, r.unpaid, r.waived]);
+        });
+        rows.push([]);
+
+        // Utilities
+        rows.push(['=== ค่าน้ำ-ค่าไฟ-ค่าส่วนกลาง ===']);
+        rows.push(['งวด','ค่าน้ำ','ค่าไฟ','ค่าส่วนกลาง','ค่าขยะ','รวม']);
+        (d.finance.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.water, r.electric, r.common, r.garbage, r.billed]);
+        });
+        rows.push([]);
+
+        // Requests
+        rows.push(['=== คำร้อง ===']);
+        rows.push(['ประเภท','รอดำเนินการ','อนุมัติ','ไม่อนุมัติ','ยกเลิก','รวม']);
+        ['residence','transfer','return','repair'].forEach(function(t) {
+            var r = d.requests[t] || {};
+            rows.push([t, r.pending||0, r.approved||0, r.rejected||0, r.cancelled||0, r.total||0]);
+        });
+        rows.push([]);
+
+        // Slips
+        rows.push(['=== สลิป/การชำระเงิน ===']);
+        rows.push(['งวด','สลิปส่ง','อนุมัติ','ปฏิเสธ','รอตรวจ']);
+        (d.slips.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.total, r.approved, r.rejected, r.pending]);
+        });
+
+        var csvContent = BOM + rows.map(function(r) {
+            return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\r\n');
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'รายงานบริหาร-' + sel.label.replace(/\s/g, '_') + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    // ========== Export Word (.docx) ==========
+    function exportDocx() {
+        if (!_reportData) { alert('กรุณาโหลดข้อมูลก่อน'); return; }
+        var d = _reportData;
+        var sel = d._sel;
+        var orgName = _settings.org_name || 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู';
+        var schoolName = _settings.school_name || 'โรงเรียนพะเยาพิทยาคม';
+
+        // Collect chart images
+        var chartImages = {};
+        Object.keys(_charts).forEach(function(k) {
+            try { chartImages[k] = _charts[k].toBase64Image(); } catch(e) {}
+        });
+
+        var html = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+            '<style>' +
+            'body{font-family:"TH Sarabun New","Kanit",sans-serif;font-size:14pt;margin:2cm;}' +
+            'h1{font-size:18pt;text-align:center;margin:0;}' +
+            'h2{font-size:16pt;text-align:center;margin:4pt 0 12pt;}' +
+            'h3{font-size:15pt;margin:16pt 0 8pt;border-bottom:1pt solid #333;padding-bottom:4pt;}' +
+            'table{width:100%;border-collapse:collapse;font-size:13pt;margin:8pt 0;}' +
+            'th,td{border:1pt solid #999;padding:4pt 6pt;text-align:center;}' +
+            'th{background:#e2e8f0;font-weight:bold;}' +
+            '.text-right{text-align:right;}' +
+            '.text-left{text-align:left;}' +
+            '.summary{margin:8pt 0;line-height:1.8;}' +
+            '.chart-img{max-width:100%;margin:8pt auto;display:block;}' +
+            '.date-line{text-align:center;font-size:12pt;color:#666;margin:8pt 0 20pt;}' +
+            '</style></head><body>';
+
+        html += '<h1>' + _e(orgName) + '</h1>';
+        html += '<h2>' + _e(schoolName) + '</h2>';
+        html += '<div class="date-line">รายงาน: ' + _e(sel.label) + ' | วันที่พิมพ์: ' + new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' }) + '</div>';
+
+        // Section 1: Housing
+        html += '<h3>🏠 ภาพรวมบ้านพักครู</h3>';
+        var h = d.housing || {};
+        var occPct = h.total > 0 ? Math.round(h.occupied / h.total * 100) : 0;
+        html += '<div class="summary">' +
+            'บ้านทั้งหมด: <b>' + (h.total||0) + '</b> หลัง | ' +
+            'มีผู้อยู่: <b>' + (h.occupied||0) + '</b> | ' +
+            'ว่าง: <b>' + (h.available||0) + '</b> | ' +
+            'ซ่อมบำรุง: <b>' + (h.maintenance||0) + '</b><br>' +
+            'อัตราการครอง: <b>' + occPct + '%</b> | ' +
+            'ย้ายเข้า: <b>' + (h.movedIn||0) + '</b> | ย้ายออก: <b>' + (h.movedOut||0) + '</b>' +
+            '</div>';
+        if (chartImages.housing) html += '<img class="chart-img" src="' + chartImages.housing + '" style="max-width:300px;">';
+
+        // Section 2: Finance
+        html += '<h3>💰 รายงานการเงิน</h3>';
+        var fs = d.finance.summary || {};
+        var collPct = fs.totalBilled > 0 ? Math.round(fs.totalPaid / fs.totalBilled * 100) : 0;
+        html += '<div class="summary">' +
+            'ยอดเรียกเก็บรวม: <b>' + _fmtNum(fs.totalBilled) + '</b> บาท | ' +
+            'ชำระแล้ว: <b>' + _fmtNum(fs.totalPaid) + '</b> บาท | ' +
+            'ค้างชำระ: <b>' + _fmtNum(fs.totalUnpaid) + '</b> บาท | ' +
+            'ยกเว้น: <b>' + _fmtNum(fs.totalWaived) + '</b> บาท<br>' +
+            'อัตราเก็บเงิน: <b>' + collPct + '%</b>' +
+            '</div>';
+        if ((d.finance.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>เรียกเก็บ</th><th>ชำระแล้ว</th><th>ค้างชำระ</th><th>ยกเว้น</th><th>อัตรา %</th></tr>';
+            d.finance.byPeriod.forEach(function(r) {
+                var pct = r.billed > 0 ? Math.round(r.paid / r.billed * 100) : 0;
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td class="text-right">' + _fmtNum(r.billed) + '</td><td class="text-right">' + _fmtNum(r.paid) + '</td><td class="text-right">' + _fmtNum(r.unpaid) + '</td><td class="text-right">' + _fmtNum(r.waived) + '</td><td>' + pct + '%</td></tr>';
+            });
+            html += '</table>';
+        }
+        if (chartImages.finance) html += '<img class="chart-img" src="' + chartImages.finance + '">';
+
+        // Section 3: Utilities
+        html += '<h3>💧⚡ ค่าน้ำ-ค่าไฟ-ค่าส่วนกลาง</h3>';
+        html += '<div class="summary">' +
+            'ค่าน้ำรวม: <b>' + _fmtNum(fs.totalWater) + '</b> | ค่าไฟ: <b>' + _fmtNum(fs.totalElectric) + '</b> | ส่วนกลาง: <b>' + _fmtNum(fs.totalCommon) + '</b> | ขยะ: <b>' + _fmtNum(fs.totalGarbage) + '</b>' +
+            '</div>';
+        if ((d.finance.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>ค่าน้ำ</th><th>ค่าไฟ</th><th>ส่วนกลาง</th><th>ขยะ</th><th>รวม</th></tr>';
+            d.finance.byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td class="text-right">' + _fmtNum(r.water) + '</td><td class="text-right">' + _fmtNum(r.electric) + '</td><td class="text-right">' + _fmtNum(r.common) + '</td><td class="text-right">' + _fmtNum(r.garbage) + '</td><td class="text-right">' + _fmtNum(r.billed) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+        if (chartImages.utilities) html += '<img class="chart-img" src="' + chartImages.utilities + '">';
+
+        // Section 4: Requests
+        html += '<h3>📋 คำร้องทั้งหมด</h3>';
+        html += '<table><tr><th>ประเภท</th><th>รอดำเนินการ</th><th>อนุมัติ</th><th>ไม่อนุมัติ</th><th>ยกเลิก</th><th>รวม</th></tr>';
+        [['residence','ขอเข้าอยู่อาศัย'],['transfer','ย้ายบ้าน'],['return','คืนบ้าน'],['repair','ซ่อมแซม']].forEach(function(t) {
+            var r = d.requests[t[0]] || {};
+            html += '<tr><td class="text-left">' + t[1] + '</td><td>' + (r.pending||0) + '</td><td>' + (r.approved||0) + '</td><td>' + (r.rejected||0) + '</td><td>' + (r.cancelled||0) + '</td><td><b>' + (r.total||0) + '</b></td></tr>';
+        });
+        html += '</table>';
+
+        // Section 5: Slips
+        html += '<h3>🧾 การชำระเงิน / สลิป</h3>';
+        var ss = d.slips.summary || {};
+        var spct = ss.total > 0 ? Math.round(ss.approved / ss.total * 100) : 0;
+        html += '<div class="summary">สลิปทั้งหมด: <b>' + (ss.total||0) + '</b> | อนุมัติ: <b>' + (ss.approved||0) + '</b> | ปฏิเสธ: <b>' + (ss.rejected||0) + '</b> | รอตรวจ: <b>' + (ss.pending||0) + '</b> | อัตราผ่าน: <b>' + spct + '%</b></div>';
+        if ((d.slips.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>สลิปส่ง</th><th>อนุมัติ</th><th>ปฏิเสธ</th><th>รอตรวจ</th><th>อัตราผ่าน %</th></tr>';
+            d.slips.byPeriod.forEach(function(r) {
+                var pct = r.total > 0 ? Math.round(r.approved / r.total * 100) : 0;
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td>' + r.total + '</td><td>' + r.approved + '</td><td>' + r.rejected + '</td><td>' + r.pending + '</td><td>' + pct + '%</td></tr>';
+            });
+            html += '</table>';
+        }
+        if (chartImages.slips) html += '<img class="chart-img" src="' + chartImages.slips + '">';
+
+        html += '</body></html>';
+
+        // Convert to Word-compatible blob
+        var blob = new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'รายงานบริหาร-' + sel.label.replace(/\s/g, '_') + '.doc';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    // ========== Nav & Auth ==========
+    window._ppkNavPage = 'admin-report';
+    if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'admin-report'); }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        requireAuth();
+        var user = getCurrentUser();
+        if (user.role !== 'admin' && user.role !== 'head') {
+            document.getElementById('reportContent').innerHTML = '<div class="loading-overlay" style="color:var(--danger);">❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้</div>';
+            return;
+        }
+        initFilters();
+    });
+
+    async function doLogout() {
+        try { await callBackend('logout'); } catch(e) {}
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('currentUser');
+        window.location.href = 'login.html';
+    }
+    </script>
+    <script src="supabase/config.js?v=20260415A"></script>
+    <script src="supabase/supabase.min.js?v=20260415A"></script>
+    <script src="ppk-api.js?v=20260415A"></script>
+    <script src="ppk-app.js?v=20260415A"></script>
+    <script src="ppk-utils.js?v=20260415A"></script>
+    <script src="ppk-nav.js?v=20260415A"></script>
+    <script src="ppk-pwa.js?v=20260415A"></script>
+</body>
+</html>

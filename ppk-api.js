@@ -4545,6 +4545,122 @@ async function _routeAction(action, data) {
             }};
         }
 
+        /* ── Admin Executive Report ──────────────────────────── */
+        case 'adminReport': {
+            var arSess = await _getSessionRole();
+            if (!arSess || (arSess.role !== 'admin' && arSess.role !== 'head')) {
+                return { success: false, error: '\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e44\u0e21\u0e48\u0e40\u0e1e\u0e35\u0e22\u0e07\u0e1e\u0e2d' };
+            }
+            var arPeriods = data.periods || [];
+            if (!arPeriods.length) return { success: false, error: '\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e23\u0e30\u0e1a\u0e38\u0e07\u0e27\u0e14' };
+
+            // ── Parallel fetch all data ──
+            var [arHousing, arResidents, arOutstanding, arRequests, arSlips] = await Promise.all([
+                sbGet('housing', { select: 'id,house_number,status' }).catch(function() { return []; }),
+                sbGet('residents', { select: 'id,house_number,move_in_date,departed_at,is_active' }).catch(function() { return []; }),
+                sbGet('outstanding', { select: 'id,house_number,period,water_amount,electric_amount,common_fee,garbage_fee,total_amount,status,moved_out_at' }).catch(function() { return []; }),
+                sbGet('requests', { select: 'id,type,status,submitted_at' }).catch(function() { return []; }),
+                sbGet('slip_submissions', { select: 'id,house_number,period,amount,status,submitted_at' }).catch(function() { return []; })
+            ]);
+
+            // ── 1. Housing overview ──
+            var arHTotal = (arHousing || []).length;
+            var arHOccupied = (arHousing || []).filter(function(h) { return h.status === 'occupied'; }).length;
+            var arHAvailable = (arHousing || []).filter(function(h) { return h.status === 'available'; }).length;
+            var arHMaint = (arHousing || []).filter(function(h) { return h.status === 'maintenance'; }).length;
+
+            // Moved in/out in selected periods
+            var arPeriodSet = {};
+            arPeriods.forEach(function(p) { arPeriodSet[p] = true; });
+            function _arDateToPeriod(d) {
+                if (!d) return '';
+                var dt = new Date(d);
+                return (dt.getFullYear() + 543) + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+            }
+            var arMovedIn = 0, arMovedOut = 0;
+            (arResidents || []).forEach(function(r) {
+                var mip = _arDateToPeriod(r.move_in_date);
+                if (mip && arPeriodSet[mip]) arMovedIn++;
+                var mop = _arDateToPeriod(r.departed_at);
+                if (mop && arPeriodSet[mop]) arMovedOut++;
+            });
+
+            // ── 2. Finance by period ──
+            var arFinMap = {};
+            arPeriods.forEach(function(p) {
+                arFinMap[p] = { period: p, billed: 0, paid: 0, unpaid: 0, waived: 0, water: 0, electric: 0, common: 0, garbage: 0 };
+            });
+            var arTotalBilled = 0, arTotalPaid = 0, arTotalUnpaid = 0, arTotalWaived = 0;
+            var arTotalWater = 0, arTotalElectric = 0, arTotalCommon = 0, arTotalGarbage = 0;
+            (arOutstanding || []).forEach(function(o) {
+                if (!arPeriodSet[o.period]) return;
+                var bucket = arFinMap[o.period];
+                if (!bucket) return;
+                var amt = parseFloat(o.total_amount) || 0;
+                var w = parseFloat(o.water_amount) || 0;
+                var e = parseFloat(o.electric_amount) || 0;
+                var c = parseFloat(o.common_fee) || 0;
+                var g = parseFloat(o.garbage_fee) || 0;
+                bucket.billed += amt;
+                bucket.water += w; bucket.electric += e; bucket.common += c; bucket.garbage += g;
+                arTotalBilled += amt; arTotalWater += w; arTotalElectric += e; arTotalCommon += c; arTotalGarbage += g;
+                if (o.status === 'paid') { bucket.paid += amt; arTotalPaid += amt; }
+                else if (o.status === 'waived') { bucket.waived += amt; arTotalWaived += amt; }
+                else { bucket.unpaid += amt; arTotalUnpaid += amt; }
+            });
+            var arFinByPeriod = arPeriods.map(function(p) { return arFinMap[p]; }).filter(function(r) { return r.billed > 0 || r.paid > 0; });
+
+            // ── 3. Requests ──
+            var arReqMap = { residence: {}, transfer: {}, return: {}, repair: {} };
+            function _arInitReq() { return { pending: 0, approved: 0, rejected: 0, cancelled: 0, total: 0 }; }
+            ['residence','transfer','return','repair'].forEach(function(t) { arReqMap[t] = _arInitReq(); });
+            (arRequests || []).forEach(function(r) {
+                // Filter by period if submitted_at falls in selected periods
+                var rp = _arDateToPeriod(r.submitted_at);
+                if (arPeriods.length > 0 && !arPeriodSet[rp]) return;
+                var bucket = arReqMap[r.type];
+                if (!bucket) return;
+                bucket.total++;
+                if (r.status === 'pending' || r.status === 'reviewing' || r.status === 'waiting') bucket.pending++;
+                else if (r.status === 'approved' || r.status === 'completed') bucket.approved++;
+                else if (r.status === 'rejected') bucket.rejected++;
+                else if (r.status === 'cancelled') bucket.cancelled++;
+            });
+
+            // ── 4. Slips ──
+            var arSlipMap = {};
+            arPeriods.forEach(function(p) {
+                arSlipMap[p] = { period: p, total: 0, approved: 0, rejected: 0, pending: 0 };
+            });
+            var arSlipTotal = 0, arSlipApproved = 0, arSlipRejected = 0, arSlipPending = 0;
+            (arSlips || []).forEach(function(s) {
+                if (!arPeriodSet[s.period]) return;
+                var bucket = arSlipMap[s.period];
+                if (!bucket) return;
+                bucket.total++; arSlipTotal++;
+                if (s.status === 'approved') { bucket.approved++; arSlipApproved++; }
+                else if (s.status === 'rejected') { bucket.rejected++; arSlipRejected++; }
+                else { bucket.pending++; arSlipPending++; }
+            });
+            var arSlipByPeriod = arPeriods.map(function(p) { return arSlipMap[p]; }).filter(function(r) { return r.total > 0; });
+
+            return {
+                success: true,
+                data: {
+                    housing: { total: arHTotal, occupied: arHOccupied, available: arHAvailable, maintenance: arHMaint, movedIn: arMovedIn, movedOut: arMovedOut },
+                    finance: {
+                        summary: { totalBilled: arTotalBilled, totalPaid: arTotalPaid, totalUnpaid: arTotalUnpaid, totalWaived: arTotalWaived, totalWater: arTotalWater, totalElectric: arTotalElectric, totalCommon: arTotalCommon, totalGarbage: arTotalGarbage },
+                        byPeriod: arFinByPeriod
+                    },
+                    requests: arReqMap,
+                    slips: {
+                        summary: { total: arSlipTotal, approved: arSlipApproved, rejected: arSlipRejected, pending: arSlipPending },
+                        byPeriod: arSlipByPeriod
+                    }
+                }
+            };
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
