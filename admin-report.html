@@ -148,6 +148,7 @@
                 <button class="btn" onclick="window.print()">🖨 พิมพ์</button>
                 <button class="btn" onclick="exportCSV()">⬇ CSV</button>
                 <button class="btn btn-success" onclick="exportDocx()">📄 Word</button>
+                <button class="btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed;" onclick="generateNarrative()">📝 สร้างรายงานอัตโนมัติ</button>
             </div>
         </div>
 
@@ -301,6 +302,30 @@
         // Section 5: Slips / Payments
         html += renderSlipsSection(d.slips, sel);
 
+        // Section 6: Accounting (Income / Expense)
+        html += renderAccountingSection(d.accounting, sel);
+
+        // Section 7: Monthly Withdrawals
+        html += renderWithdrawalsSection(d.withdrawals, sel);
+
+        // Section 8: Payment History
+        html += renderPaymentsSection(d.payments, sel);
+
+        // Section 9: Water Bills Detail
+        html += renderWaterBillsSection(d.waterBills, sel);
+
+        // Section 10: Electric Bills Detail
+        html += renderElectricBillsSection(d.electricBills, sel);
+
+        // Section 11: Notifications
+        html += renderNotificationsSection(d.notifications, sel);
+
+        // Section 12: Exemptions
+        html += renderExemptionsSection(d.exemptions);
+
+        // Section 13: Queue / Waitlist
+        html += renderQueueSection(d.queue);
+
         document.getElementById('reportContent').innerHTML = html;
 
         // Render charts after DOM is ready
@@ -321,7 +346,10 @@
             '</div>' +
             '<div class="stat-row">' +
                 _statCard('📈', 'purple', occupancyPct + '%', 'อัตราครอง') +
-                _statCard('📥', 'cyan', h.movedIn || 0, 'ย้ายเข้า (ช่วงนี้)') +
+                _statCard('🏠', 'blue', h.houseCount || 0, 'บ้านเดี่ยว') +
+                _statCard('🏢', 'cyan', h.flatCount || 0, 'แฟลต') +
+                _statCard('👤', 'green', h.activeResidents || 0, 'ผู้พักปัจจุบัน') +
+                _statCard('📥', 'yellow', h.movedIn || 0, 'ย้ายเข้า (ช่วงนี้)') +
                 _statCard('📤', 'red', h.movedOut || 0, 'ย้ายออก (ช่วงนี้)') +
             '</div>' +
             '<div class="chart-wrap" style="max-width:350px;"><canvas id="chartHousing"></canvas></div>' +
@@ -479,6 +507,474 @@
         return html;
     }
 
+
+    // ========== Section 6: Accounting (Income / Expense) ==========
+    function renderAccountingSection(acct, sel) {
+        if (!acct) acct = {};
+        var summary = acct.summary || {};
+        var html = '<div class="report-section" id="sec-accounting">' +
+            '<h2 class="section-title">📒 บัญชีรายรับ-รายจ่าย</h2>' +
+            '<div class="stat-row">' +
+                _statCard('💚', 'green', _fmtNum(summary.totalIncome), 'รายรับรวม') +
+                _statCard('💸', 'red', _fmtNum(summary.totalExpense), 'รายจ่ายรวม') +
+                _statCard('💰', summary.balance >= 0 ? 'blue' : 'red', _fmtNum(summary.balance), 'คงเหลือ') +
+            '</div>';
+
+        var byPeriod = acct.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>รายรับ</th><th>จำนวนรายการ</th><th>รายจ่าย</th><th>จำนวนรายการ</th><th>คงเหลือ</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                var bal = r.income - r.expense;
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td class="text-right" style="color:#10b981">' + _fmtNum(r.income) + '</td>' +
+                    '<td>' + _fmtInt(r.incomeCount) + '</td>' +
+                    '<td class="text-right" style="color:#ef4444">' + _fmtNum(r.expense) + '</td>' +
+                    '<td>' + _fmtInt(r.expenseCount) + '</td>' +
+                    '<td class="text-right font-bold" style="color:' + (bal >= 0 ? '#10b981' : '#ef4444') + '">' + _fmtNum(bal) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        if (byPeriod.length > 1) {
+            html += '<div class="chart-wrap" style="max-width:700px; margin-top:1rem;"><canvas id="chartAccounting"></canvas></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 7: Monthly Withdrawals ==========
+    function renderWithdrawalsSection(wd, sel) {
+        if (!wd) wd = {};
+        var html = '<div class="report-section" id="sec-withdrawals">' +
+            '<h2 class="section-title">🏦 เบิกจ่ายรายเดือน</h2>' +
+            '<div class="stat-row">' +
+                _statCard('💵', 'blue', _fmtNum(wd.total), 'เบิกจ่ายรวม') +
+                _statCard('📅', 'purple', _fmtInt((wd.byPeriod || []).length), 'จำนวนงวด') +
+            '</div>';
+
+        var byPeriod = wd.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>ค่าขยะ</th><th>รายการเพิ่มเติม</th><th>ค่าดำเนินการ</th><th>เบิกจ่ายรวม</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                var addItems = (r.additionalItems || []).map(function(a) { return a.name + ': ' + _fmtNum(a.amount); }).join(', ');
+                var opCost = 0;
+                if (r.operatingCosts) {
+                    Object.keys(r.operatingCosts).forEach(function(k) { opCost += parseFloat(r.operatingCosts[k]) || 0; });
+                }
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.garbageFee || 0) + '</td>' +
+                    '<td class="text-left" style="font-size:.82rem;">' + (addItems || '-') + '</td>' +
+                    '<td class="text-right">' + _fmtNum(opCost) + '</td>' +
+                    '<td class="text-right font-bold">' + _fmtNum(r.totalWithdraw || 0) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 8: Payment History ==========
+    function renderPaymentsSection(pay, sel) {
+        if (!pay) pay = {};
+        var summary = pay.summary || {};
+        var transferPct = summary.total > 0 ? Math.round(summary.transfer / summary.total * 100) : 0;
+        var html = '<div class="report-section" id="sec-payments">' +
+            '<h2 class="section-title">💳 ประวัติการชำระเงิน</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📝', 'blue', _fmtInt(summary.total), 'รายการทั้งหมด') +
+                _statCard('💵', 'green', _fmtNum(summary.totalAmount), 'ยอดรวม') +
+                _statCard('📱', 'purple', _fmtInt(summary.transfer), 'โอน/QR') +
+                _statCard('💴', 'yellow', _fmtInt(summary.cash), 'เงินสด') +
+                _statCard('📊', 'cyan', transferPct + '%', 'สัดส่วนโอน') +
+            '</div>';
+
+        var byPeriod = pay.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>รายการ</th><th>ยอดรวม</th><th>โอน</th><th>เงินสด</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td>' + _fmtInt(r.count) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalAmount) + '</td>' +
+                    '<td>' + _fmtInt(r.transfer) + '</td>' +
+                    '<td>' + _fmtInt(r.cash) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 9: Water Bills ==========
+    function renderWaterBillsSection(wb, sel) {
+        if (!wb) wb = {};
+        var summary = wb.summary || {};
+        var avgUnits = summary.totalBills > 0 ? (summary.totalUnits / summary.totalBills).toFixed(1) : '0.0';
+        var html = '<div class="report-section" id="sec-water">' +
+            '<h2 class="section-title">💧 รายละเอียดค่าน้ำประปา</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📋', 'blue', _fmtInt(summary.totalBills), 'บิลทั้งหมด') +
+                _statCard('💧', 'cyan', _fmtNum(summary.totalUnits) + ' หน่วย', 'หน่วยรวม') +
+                _statCard('💵', 'green', _fmtNum(summary.totalAmount), 'ยอดรวม (บาท)') +
+                _statCard('📊', 'purple', avgUnits, 'เฉลี่ย หน่วย/บ้าน') +
+            '</div>';
+
+        var byPeriod = wb.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>จำนวนบิล</th><th>หน่วยรวม</th><th>ยอดเงิน</th><th>เฉลี่ย/บ้าน</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                var avg = r.count > 0 ? (r.totalUnits / r.count).toFixed(1) : '0.0';
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td>' + _fmtInt(r.count) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalUnits) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalAmount) + '</td>' +
+                    '<td>' + avg + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 10: Electric Bills ==========
+    function renderElectricBillsSection(eb, sel) {
+        if (!eb) eb = {};
+        var summary = eb.summary || {};
+        var variance = (summary.totalPEA || 0) - (summary.totalAmount || 0);
+        var html = '<div class="report-section" id="sec-electric">' +
+            '<h2 class="section-title">⚡ รายละเอียดค่าไฟฟ้า</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📋', 'blue', _fmtInt(summary.totalBills), 'บิลทั้งหมด') +
+                _statCard('⚡', 'yellow', _fmtNum(summary.totalUnits) + ' หน่วย', 'หน่วยรวม') +
+                _statCard('💵', 'green', _fmtNum(summary.totalAmount), 'เก็บจากผู้พัก') +
+                _statCard('🏭', 'purple', _fmtNum(summary.totalPEA), 'ยอด PEA') +
+                _statCard(variance >= 0 ? '📈' : '📉', variance >= 0 ? 'green' : 'red', _fmtNum(Math.abs(variance)), variance >= 0 ? 'ส่วนต่าง (เกิน)' : 'ส่วนต่าง (ขาด)') +
+            '</div>';
+
+        var byPeriod = eb.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>จำนวนบิล</th><th>หน่วยรวม</th><th>เก็บผู้พัก</th><th>ยอด PEA</th><th>ส่วนต่าง</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                var diff = (r.totalPEA || 0) - (r.totalAmount || 0);
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td>' + _fmtInt(r.count) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalUnits) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalAmount) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalPEA) + '</td>' +
+                    '<td class="text-right" style="color:' + (diff >= 0 ? '#10b981' : '#ef4444') + '">' + _fmtNum(diff) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        // Electric lost breakdown
+        var lostData = eb.lostData || [];
+        if (lostData.length > 0) {
+            html += '<h3 style="margin:1rem 0 .5rem; font-size:1rem; font-weight:600;">⚡ ค่าสูญเสียไฟฟ้า</h3>';
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>ยอด PEA รวม</th><th>สูญเสีย(บ้าน)</th><th>สูญเสีย(แฟลต)</th><th>สูญเสียรวม</th></tr></thead><tbody>';
+            lostData.forEach(function(l) {
+                html += '<tr><td>' + _periodLabel(l.period) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(l.pea_total || 0) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(l.lost_house || 0) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(l.lost_flat || 0) + '</td>' +
+                    '<td class="text-right font-bold">' + _fmtNum(l.lost_total || ((l.lost_house||0) + (l.lost_flat||0))) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 11: Notifications ==========
+    function renderNotificationsSection(notif, sel) {
+        if (!notif) notif = {};
+        var summary = notif.summary || {};
+        var html = '<div class="report-section" id="sec-notifications">' +
+            '<h2 class="section-title">📨 การแจ้งเตือนค่าใช้จ่าย</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📤', 'blue', _fmtInt(summary.total), 'แจ้งเตือนทั้งหมด') +
+                _statCard('💰', 'green', _fmtNum(summary.totalAmount), 'ยอดแจ้งเตือนรวม') +
+            '</div>';
+
+        var byPeriod = notif.byPeriod || [];
+        if (byPeriod.length > 0) {
+            html += '<div class="table-container"><table>' +
+                '<thead><tr><th>งวด</th><th>จำนวนแจ้งเตือน</th><th>ยอดรวม (บาท)</th></tr></thead><tbody>';
+            byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td>' +
+                    '<td>' + _fmtInt(r.count) + '</td>' +
+                    '<td class="text-right">' + _fmtNum(r.totalAmount) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // ========== Section 12: Exemptions ==========
+    function renderExemptionsSection(exemp) {
+        if (!exemp) exemp = {};
+        var byType = exemp.byType || {};
+        var html = '<div class="report-section" id="sec-exemptions">' +
+            '<h2 class="section-title">🎁 การยกเว้นค่าใช้จ่าย</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📋', 'blue', _fmtInt(exemp.total), 'รายการยกเว้นทั้งหมด') +
+                _statCard('💧', 'cyan', _fmtInt(byType.water || 0), 'ยกเว้นค่าน้ำ') +
+                _statCard('⚡', 'yellow', _fmtInt(byType.electric || 0), 'ยกเว้นค่าไฟ') +
+                _statCard('🏢', 'purple', _fmtInt(byType.common_fee || 0), 'ยกเว้นส่วนกลาง') +
+                _statCard('🗑', 'red', _fmtInt(byType.garbage || 0), 'ยกเว้นค่าขยะ') +
+            '</div>' +
+        '</div>';
+        return html;
+    }
+
+    // ========== Section 13: Queue / Waitlist ==========
+    function renderQueueSection(queue) {
+        if (!queue) queue = {};
+        var html = '<div class="report-section" id="sec-queue">' +
+            '<h2 class="section-title">📋 คิวรอเข้าพักอาศัย</h2>' +
+            '<div class="stat-row">' +
+                _statCard('📋', 'blue', _fmtInt(queue.total), 'คิวทั้งหมด') +
+                _statCard('⏳', 'yellow', _fmtInt(queue.waiting), 'รอคิว') +
+                _statCard('✅', 'green', _fmtInt(queue.assigned), 'ได้รับมอบหมาย') +
+                _statCard('⏰', 'red', _fmtInt(queue.expired), 'หมดอายุ') +
+            '</div>' +
+        '</div>';
+        return html;
+    }
+
+    // ========== Auto-Generate Executive Narrative ==========
+    function generateNarrative() {
+        if (!_reportData) { alert('กรุณาโหลดข้อมูลก่อน'); return; }
+        var d = _reportData;
+        var sel = d._sel;
+        var h = d.housing || {};
+        var fin = d.finance || {};
+        var fs = fin.summary || {};
+        var acct = d.accounting || {};
+        var as = acct.summary || {};
+        var wd = d.withdrawals || {};
+        var pay = d.payments || {};
+        var ps = pay.summary || {};
+        var wb = d.waterBills || {};
+        var wbs = wb.summary || {};
+        var eb = d.electricBills || {};
+        var ebs = eb.summary || {};
+        var notif = d.notifications || {};
+        var ns = notif.summary || {};
+        var exemp = d.exemptions || {};
+        var queue = d.queue || {};
+        var req = d.requests || {};
+        var slips = d.slips || {};
+        var ss = slips.summary || {};
+        var orgName = _settings.org_name || 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู';
+        var schoolName = _settings.school_name || 'โรงเรียนพะเยาพิทยาคม';
+
+        var collPct = fs.totalBilled > 0 ? Math.round(fs.totalPaid / fs.totalBilled * 100) : 0;
+        var occPct = h.total > 0 ? Math.round(h.occupied / h.total * 100) : 0;
+        var slipPassPct = ss.total > 0 ? Math.round(ss.approved / ss.total * 100) : 0;
+        var transferPct = ps.total > 0 ? Math.round(ps.transfer / ps.total * 100) : 0;
+        var peaVariance = (ebs.totalPEA || 0) - (ebs.totalAmount || 0);
+        var avgWaterUnit = wbs.totalBills > 0 ? (wbs.totalUnits / wbs.totalBills).toFixed(1) : '0.0';
+
+        // Build detailed narrative
+        var n = '';
+        n += '📊 รายงานสรุปผลการดำเนินงาน ' + orgName + '\n';
+        n += schoolName + '\n';
+        n += 'ช่วงเวลา: ' + sel.label + '\n';
+        n += 'วันที่จัดทำรายงาน: ' + new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' }) + '\n';
+        n += '═'.repeat(60) + '\n\n';
+
+        // 1. Housing
+        n += '1. ภาพรวมบ้านพักครู\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   ปัจจุบันมีบ้านพักครูทั้งหมด ' + h.total + ' หลัง ';
+        n += 'แบ่งเป็นบ้านเดี่ยว ' + (h.houseCount || 0) + ' หลัง แฟลต ' + (h.flatCount || 0) + ' หน่วย\n';
+        n += '   มีผู้อยู่อาศัย ' + h.occupied + ' หลัง คิดเป็น ' + occPct + '% ';
+        n += 'ว่าง ' + h.available + ' หลัง อยู่ระหว่างซ่อมบำรุง ' + h.maintenance + ' หลัง\n';
+        n += '   มีผู้พักอาศัยปัจจุบัน ' + (h.activeResidents || 0) + ' คน\n';
+        n += '   ในช่วงนี้มีผู้ย้ายเข้า ' + (h.movedIn || 0) + ' ราย ย้ายออก ' + (h.movedOut || 0) + ' ราย\n';
+        if (occPct >= 90) n += '   ❗ อัตราการครองสูงมาก (' + occPct + '%) ควรเตรียมแผนรองรับผู้รอคิว\n';
+        else if (occPct < 50) n += '   ⚠ อัตราการครองต่ำ (' + occPct + '%) ควรพิจารณาประชาสัมพันธ์ให้ครูเข้าพัก\n';
+        n += '\n';
+
+        // 2. Finance
+        n += '2. รายงานการเงิน (ยอดเรียกเก็บ)\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   ยอดเรียกเก็บรวม: ' + _fmtNum(fs.totalBilled) + ' บาท\n';
+        n += '   ชำระแล้ว: ' + _fmtNum(fs.totalPaid) + ' บาท (' + collPct + '%)\n';
+        n += '   ค้างชำระ: ' + _fmtNum(fs.totalUnpaid) + ' บาท\n';
+        n += '   ยกเว้น: ' + _fmtNum(fs.totalWaived) + ' บาท\n';
+        if (collPct >= 90) n += '   ✅ อัตราการจัดเก็บอยู่ในเกณฑ์ดีเยี่ยม (' + collPct + '%)\n';
+        else if (collPct >= 70) n += '   ⚠ อัตราการจัดเก็บพอใช้ (' + collPct + '%) ควรเร่งติดตามหนี้ค้าง\n';
+        else n += '   ❗ อัตราการจัดเก็บต่ำ (' + collPct + '%) ต้องเร่งดำเนินการติดตามหนี้โดยด่วน\n';
+        n += '\n';
+
+        // 3. Utilities
+        n += '3. ค่าสาธารณูปโภค\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   ค่าน้ำรวม: ' + _fmtNum(fs.totalWater) + ' บาท\n';
+        n += '   ค่าไฟรวม: ' + _fmtNum(fs.totalElectric) + ' บาท\n';
+        n += '   ค่าส่วนกลาง: ' + _fmtNum(fs.totalCommon) + ' บาท\n';
+        n += '   ค่าขยะ: ' + _fmtNum(fs.totalGarbage) + ' บาท\n';
+        n += '   รวมค่าสาธารณูปโภค: ' + _fmtNum(fs.totalBilled) + ' บาท\n';
+        n += '\n';
+
+        // 4. Water Detail
+        n += '4. รายละเอียดค่าน้ำประปา\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   บิลทั้งหมด: ' + _fmtInt(wbs.totalBills) + ' รายการ\n';
+        n += '   หน่วยน้ำใช้รวม: ' + _fmtNum(wbs.totalUnits) + ' หน่วย\n';
+        n += '   ยอดค่าน้ำ: ' + _fmtNum(wbs.totalAmount) + ' บาท\n';
+        n += '   เฉลี่ยต่อบ้าน: ' + avgWaterUnit + ' หน่วย/เดือน\n';
+        n += '\n';
+
+        // 5. Electric Detail
+        n += '5. รายละเอียดค่าไฟฟ้า\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   บิลทั้งหมด: ' + _fmtInt(ebs.totalBills) + ' รายการ\n';
+        n += '   หน่วยไฟใช้รวม: ' + _fmtNum(ebs.totalUnits) + ' หน่วย\n';
+        n += '   เก็บจากผู้พัก: ' + _fmtNum(ebs.totalAmount) + ' บาท\n';
+        n += '   ยอด PEA: ' + _fmtNum(ebs.totalPEA) + ' บาท\n';
+        n += '   ส่วนต่างยอด PEA กับยอดเก็บ: ' + _fmtNum(Math.abs(peaVariance)) + ' บาท (' + (peaVariance >= 0 ? 'เก็บน้อยกว่า PEA' : 'เก็บมากกว่า PEA') + ')\n';
+        var lostData = (d.electricBills || {}).lostData || [];
+        if (lostData.length > 0) {
+            n += '   ค่าสูญเสียไฟฟ้า:\n';
+            lostData.forEach(function(l) {
+                n += '     - ' + _periodLabel(l.period) + ': บ้าน ' + _fmtNum(l.lost_house || 0) + ' แฟลต ' + _fmtNum(l.lost_flat || 0) + ' รวม ' + _fmtNum(l.lost_total || ((l.lost_house||0)+(l.lost_flat||0))) + ' บาท\n';
+            });
+        }
+        if (peaVariance > 500) n += '   ⚠ ส่วนต่างค่าไฟสูง ควรตรวจสอบมิเตอร์และอัตราค่าไฟ\n';
+        n += '\n';
+
+        // 6. Accounting
+        n += '6. บัญชีรายรับ-รายจ่าย\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   รายรับรวม: ' + _fmtNum(as.totalIncome) + ' บาท\n';
+        n += '   รายจ่ายรวม: ' + _fmtNum(as.totalExpense) + ' บาท\n';
+        n += '   คงเหลือ: ' + _fmtNum(as.balance) + ' บาท\n';
+        if (as.balance < 0) n += '   ❗ รายจ่ายมากกว่ารายรับ ควรทบทวนการใช้จ่าย\n';
+        else if (as.balance > 0) n += '   ✅ มีเงินคงเหลือ ' + _fmtNum(as.balance) + ' บาท\n';
+        n += '\n';
+
+        // 7. Withdrawals
+        n += '7. เบิกจ่ายรายเดือน\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   ยอดเบิกจ่ายรวม: ' + _fmtNum(wd.total) + ' บาท (' + (wd.byPeriod || []).length + ' งวด)\n';
+        (wd.byPeriod || []).forEach(function(w) {
+            n += '     - ' + _periodLabel(w.period) + ': ' + _fmtNum(w.totalWithdraw || 0) + ' บาท';
+            if (w.garbageFee) n += ' (ค่าขยะ ' + _fmtNum(w.garbageFee) + ')';
+            n += '\n';
+        });
+        n += '\n';
+
+        // 8. Payment History
+        n += '8. ประวัติการชำระเงิน\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   รายการชำระทั้งหมด: ' + _fmtInt(ps.total) + ' รายการ\n';
+        n += '   ยอดชำระรวม: ' + _fmtNum(ps.totalAmount) + ' บาท\n';
+        n += '   ชำระผ่านโอน/QR: ' + _fmtInt(ps.transfer) + ' รายการ (' + transferPct + '%)\n';
+        n += '   ชำระเงินสด: ' + _fmtInt(ps.cash) + ' รายการ (' + (100 - transferPct) + '%)\n';
+        if (transferPct >= 80) n += '   ✅ ผู้พักส่วนใหญ่ชำระผ่านระบบออนไลน์ แสดงถึงการยอมรับเทคโนโลยี\n';
+        n += '\n';
+
+        // 9. Slips
+        n += '9. การส่งสลิปชำระเงิน\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   สลิปทั้งหมด: ' + _fmtInt(ss.total) + ' ใบ\n';
+        n += '   อนุมัติ: ' + _fmtInt(ss.approved) + ' (' + slipPassPct + '%)\n';
+        n += '   ปฏิเสธ: ' + _fmtInt(ss.rejected) + '\n';
+        n += '   รอตรวจ: ' + _fmtInt(ss.pending) + '\n';
+        if (ss.pending > 10) n += '   ⚠ มีสลิปรอตรวจจำนวนมาก (' + ss.pending + ') ควรเร่งตรวจสอบ\n';
+        n += '\n';
+
+        // 10. Requests
+        n += '10. คำร้องต่างๆ\n';
+        n += '─'.repeat(40) + '\n';
+        var reqTypes = [['residence','ขอเข้าอยู่อาศัย'],['transfer','ย้ายบ้าน'],['return','คืนบ้าน'],['repair','ซ่อมแซม']];
+        var totalReq = 0, totalPending = 0;
+        reqTypes.forEach(function(t) {
+            var r = req[t[0]] || {};
+            n += '   ' + t[1] + ': รวม ' + _fmtInt(r.total || 0) + ' (รอ ' + _fmtInt(r.pending || 0) + ' / อนุมัติ ' + _fmtInt(r.approved || 0) + ' / ไม่อนุมัติ ' + _fmtInt(r.rejected || 0) + ')\n';
+            totalReq += (r.total || 0);
+            totalPending += (r.pending || 0);
+        });
+        n += '   รวมคำร้องทั้งหมด: ' + _fmtInt(totalReq) + ' เรื่อง\n';
+        if (totalPending > 0) n += '   ⚠ มีคำร้องรอดำเนินการ ' + totalPending + ' เรื่อง\n';
+        n += '\n';
+
+        // 11. Notifications
+        n += '11. การแจ้งเตือนค่าใช้จ่าย\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   แจ้งเตือนทั้งหมด: ' + _fmtInt(ns.total) + ' ครั้ง\n';
+        n += '   ยอดแจ้งเตือนรวม: ' + _fmtNum(ns.totalAmount) + ' บาท\n';
+        n += '\n';
+
+        // 12. Exemptions
+        n += '12. การยกเว้นค่าใช้จ่าย\n';
+        n += '─'.repeat(40) + '\n';
+        var et = exemp.byType || {};
+        n += '   รายการยกเว้นทั้งหมด: ' + _fmtInt(exemp.total) + ' รายการ\n';
+        n += '   ยกเว้นค่าน้ำ: ' + _fmtInt(et.water || 0) + ' | ค่าไฟ: ' + _fmtInt(et.electric || 0) + ' | ส่วนกลาง: ' + _fmtInt(et.common_fee || 0) + ' | ขยะ: ' + _fmtInt(et.garbage || 0) + '\n';
+        n += '\n';
+
+        // 13. Queue
+        n += '13. คิวรอเข้าพักอาศัย\n';
+        n += '─'.repeat(40) + '\n';
+        n += '   คิวทั้งหมด: ' + _fmtInt(queue.total) + ' ราย\n';
+        n += '   รอคิว: ' + _fmtInt(queue.waiting) + ' | ได้รับมอบหมาย: ' + _fmtInt(queue.assigned) + ' | หมดอายุ: ' + _fmtInt(queue.expired) + '\n';
+        if (queue.waiting > 5) n += '   ❗ มีผู้รอคิวจำนวนมาก (' + queue.waiting + ' ราย) ควรเร่งจัดสรรบ้านพัก\n';
+        n += '\n';
+
+        // Summary & Recommendations
+        n += '═'.repeat(60) + '\n';
+        n += '📌 สรุปและข้อเสนอแนะ\n';
+        n += '═'.repeat(60) + '\n';
+        n += '1. อัตราการครองบ้านพัก ' + occPct + '% ';
+        if (occPct >= 80) n += '— สูง แสดงถึงการใช้ประโยชน์อาคารสถานที่อย่างเต็มที่\n';
+        else n += '— ควรส่งเสริมให้ครูเข้าพักเพิ่มขึ้น\n';
+        n += '2. อัตราการจัดเก็บค่าใช้จ่าย ' + collPct + '% ';
+        if (collPct >= 90) n += '— ดีเยี่ยม\n';
+        else if (collPct >= 70) n += '— พอใช้ ควรติดตามหนี้ค้าง\n';
+        else n += '— ต้องปรับปรุง\n';
+        if (fs.totalUnpaid > 0) n += '3. ยอดค้างชำระ ' + _fmtNum(fs.totalUnpaid) + ' บาท ควรออกหนังสือทวงถามตามระเบียบ\n';
+        if (totalPending > 0) n += '4. คำร้องรอดำเนินการ ' + totalPending + ' เรื่อง ควรเร่งพิจารณา\n';
+        if (queue.waiting > 0) n += '5. มีผู้รอคิว ' + queue.waiting + ' ราย ควรวางแผนจัดสรรบ้านพัก\n';
+        if (peaVariance > 500) n += '6. ส่วนต่างค่าไฟ PEA สูง ' + _fmtNum(peaVariance) + ' บาท ควรตรวจสอบอัตราค่าไฟและมิเตอร์\n';
+        n += '\n';
+        n += '─'.repeat(60) + '\n';
+        n += 'จัดทำโดยระบบ HOME PPK 2026 | ' + new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }) + '\n';
+
+        // Show in a modal or download as Word
+        _narrativeText = n;
+
+        // Export as Word immediately
+        var wordHtml = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+            '<style>' +
+            'body{font-family:"TH Sarabun New","Kanit",sans-serif;font-size:16pt;margin:2cm;line-height:1.6;}' +
+            'pre{font-family:"TH Sarabun New","Kanit",sans-serif;font-size:14pt;white-space:pre-wrap;word-wrap:break-word;}' +
+            '</style></head><body>' +
+            '<pre>' + _e(n) + '</pre>' +
+            '</body></html>';
+        var blob = new Blob(['\ufeff' + wordHtml], { type: 'application/msword;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'รายงานเสนอผู้บริหาร-' + sel.label.replace(/\s/g, '_') + '.doc';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    var _narrativeText = '';
+
     // ========== Stat Card Helper ==========
     function _statCard(icon, color, value, label) {
         return '<div class="stat-card">' +
@@ -561,6 +1057,25 @@
                 });
             }
         }
+
+        // 5) Accounting Bar Chart (Income vs Expense)
+        var acctPeriods = d.accounting && d.accounting.byPeriod ? d.accounting.byPeriod : [];
+        if (acctPeriods.length > 1) {
+            var aCanvas = document.getElementById('chartAccounting');
+            if (aCanvas) {
+                _charts.accounting = new Chart(aCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: acctPeriods.map(function(r) { return _periodLabel(r.period); }),
+                        datasets: [
+                            { label: 'รายรับ', data: acctPeriods.map(function(r) { return r.income; }), backgroundColor: '#34d399' },
+                            { label: 'รายจ่าย', data: acctPeriods.map(function(r) { return r.expense; }), backgroundColor: '#f87171' }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+        }
     }
 
     // ========== Export CSV ==========
@@ -613,6 +1128,72 @@
         (d.slips.byPeriod || []).forEach(function(r) {
             rows.push([r.period, r.total, r.approved, r.rejected, r.pending]);
         });
+        rows.push([]);
+
+        // Accounting
+        rows.push(['=== บัญชีรายรับ-รายจ่าย ===']);
+        rows.push(['งวด','รายรับ','จำนวนรายการ(รับ)','รายจ่าย','จำนวนรายการ(จ่าย)','คงเหลือ']);
+        (d.accounting.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.income, r.incomeCount, r.expense, r.expenseCount, r.income - r.expense]);
+        });
+        rows.push([]);
+
+        // Withdrawals
+        rows.push(['=== เบิกจ่ายรายเดือน ===']);
+        rows.push(['งวด','ค่าขยะ','เบิกจ่ายรวม']);
+        (d.withdrawals.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.garbageFee || 0, r.totalWithdraw || 0]);
+        });
+        rows.push([]);
+
+        // Payment History
+        rows.push(['=== ประวัติการชำระเงิน ===']);
+        rows.push(['งวด','รายการ','ยอดรวม','โอน','เงินสด']);
+        (d.payments.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.count, r.totalAmount, r.transfer, r.cash]);
+        });
+        rows.push([]);
+
+        // Water Bills
+        rows.push(['=== ค่าน้ำประปา ===']);
+        rows.push(['งวด','จำนวนบิล','หน่วยรวม','ยอดเงิน']);
+        (d.waterBills.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.count, r.totalUnits, r.totalAmount]);
+        });
+        rows.push([]);
+
+        // Electric Bills
+        rows.push(['=== ค่าไฟฟ้า ===']);
+        rows.push(['งวด','จำนวนบิล','หน่วยรวม','เก็บผู้พัก','ยอด PEA','ส่วนต่าง']);
+        (d.electricBills.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.count, r.totalUnits, r.totalAmount, r.totalPEA, (r.totalPEA||0)-(r.totalAmount||0)]);
+        });
+        rows.push([]);
+
+        // Notifications
+        rows.push(['=== แจ้งเตือนค่าใช้จ่าย ===']);
+        rows.push(['งวด','จำนวน','ยอดรวม']);
+        (d.notifications.byPeriod || []).forEach(function(r) {
+            rows.push([r.period, r.count, r.totalAmount]);
+        });
+        rows.push([]);
+
+        // Exemptions
+        rows.push(['=== การยกเว้น ===']);
+        rows.push(['ประเภท','จำนวน']);
+        var exTypes = d.exemptions.byType || {};
+        rows.push(['ค่าน้ำ', exTypes.water || 0]);
+        rows.push(['ค่าไฟ', exTypes.electric || 0]);
+        rows.push(['ส่วนกลาง', exTypes.common_fee || 0]);
+        rows.push(['ค่าขยะ', exTypes.garbage || 0]);
+        rows.push([]);
+
+        // Queue
+        rows.push(['=== คิวรอเข้าพัก ===']);
+        rows.push(['สถานะ','จำนวน']);
+        rows.push(['รอคิว', d.queue.waiting || 0]);
+        rows.push(['ได้รับมอบหมาย', d.queue.assigned || 0]);
+        rows.push(['หมดอายุ', d.queue.expired || 0]);
 
         var csvContent = BOM + rows.map(function(r) {
             return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
@@ -665,11 +1246,12 @@
         var h = d.housing || {};
         var occPct = h.total > 0 ? Math.round(h.occupied / h.total * 100) : 0;
         html += '<div class="summary">' +
-            'บ้านทั้งหมด: <b>' + (h.total||0) + '</b> หลัง | ' +
+            'บ้านทั้งหมด: <b>' + (h.total||0) + '</b> หลัง (บ้านเดี่ยว ' + (h.houseCount||0) + ' / แฟลต ' + (h.flatCount||0) + ') | ' +
             'มีผู้อยู่: <b>' + (h.occupied||0) + '</b> | ' +
             'ว่าง: <b>' + (h.available||0) + '</b> | ' +
             'ซ่อมบำรุง: <b>' + (h.maintenance||0) + '</b><br>' +
             'อัตราการครอง: <b>' + occPct + '%</b> | ' +
+            'ผู้พักปัจจุบัน: <b>' + (h.activeResidents||0) + '</b> คน | ' +
             'ย้ายเข้า: <b>' + (h.movedIn||0) + '</b> | ย้ายออก: <b>' + (h.movedOut||0) + '</b>' +
             '</div>';
         if (chartImages.housing) html += '<img class="chart-img" src="' + chartImages.housing + '" style="max-width:300px;">';
@@ -732,6 +1314,110 @@
             html += '</table>';
         }
         if (chartImages.slips) html += '<img class="chart-img" src="' + chartImages.slips + '">';
+
+        // Section 6: Accounting
+        html += '<h3>📒 บัญชีรายรับ-รายจ่าย</h3>';
+        var acctS = d.accounting ? d.accounting.summary || {} : {};
+        html += '<div class="summary">' +
+            'รายรับรวม: <b>' + _fmtNum(acctS.totalIncome) + '</b> บาท | ' +
+            'รายจ่ายรวม: <b>' + _fmtNum(acctS.totalExpense) + '</b> บาท | ' +
+            'คงเหลือ: <b style="color:' + (acctS.balance >= 0 ? '#10b981' : '#ef4444') + '">' + _fmtNum(acctS.balance) + '</b> บาท' +
+            '</div>';
+        if ((d.accounting.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>รายรับ</th><th>รายจ่าย</th><th>คงเหลือ</th></tr>';
+            d.accounting.byPeriod.forEach(function(r) {
+                var bal = r.income - r.expense;
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td class="text-right">' + _fmtNum(r.income) + '</td><td class="text-right">' + _fmtNum(r.expense) + '</td><td class="text-right" style="color:' + (bal >= 0 ? '#10b981' : '#ef4444') + '">' + _fmtNum(bal) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+        if (chartImages.accounting) html += '<img class="chart-img" src="' + chartImages.accounting + '">';
+
+        // Section 7: Withdrawals
+        html += '<h3>🏦 เบิกจ่ายรายเดือน</h3>';
+        html += '<div class="summary">ยอดเบิกจ่ายรวม: <b>' + _fmtNum(d.withdrawals.total) + '</b> บาท</div>';
+        if ((d.withdrawals.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>ค่าขยะ</th><th>เบิกจ่ายรวม</th></tr>';
+            d.withdrawals.byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td class="text-right">' + _fmtNum(r.garbageFee || 0) + '</td><td class="text-right">' + _fmtNum(r.totalWithdraw || 0) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+
+        // Section 8: Payment History
+        html += '<h3>💳 ประวัติการชำระเงิน</h3>';
+        var payS = d.payments ? d.payments.summary || {} : {};
+        var tPct = payS.total > 0 ? Math.round(payS.transfer / payS.total * 100) : 0;
+        html += '<div class="summary">' +
+            'รายการชำระทั้งหมด: <b>' + (payS.total || 0) + '</b> | ' +
+            'ยอดรวม: <b>' + _fmtNum(payS.totalAmount) + '</b> บาท | ' +
+            'โอน/QR: <b>' + (payS.transfer || 0) + '</b> (' + tPct + '%) | ' +
+            'เงินสด: <b>' + (payS.cash || 0) + '</b> (' + (100 - tPct) + '%)' +
+            '</div>';
+        if ((d.payments.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>รายการ</th><th>ยอดรวม</th><th>โอน</th><th>เงินสด</th></tr>';
+            d.payments.byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td>' + r.count + '</td><td class="text-right">' + _fmtNum(r.totalAmount) + '</td><td>' + r.transfer + '</td><td>' + r.cash + '</td></tr>';
+            });
+            html += '</table>';
+        }
+
+        // Section 9: Water Bills
+        html += '<h3>💧 รายละเอียดค่าน้ำประปา</h3>';
+        var wbS = d.waterBills ? d.waterBills.summary || {} : {};
+        html += '<div class="summary">' +
+            'บิลทั้งหมด: <b>' + (wbS.totalBills || 0) + '</b> | ' +
+            'หน่วยรวม: <b>' + _fmtNum(wbS.totalUnits) + '</b> | ' +
+            'ยอดเงิน: <b>' + _fmtNum(wbS.totalAmount) + '</b> บาท' +
+            '</div>';
+        if ((d.waterBills.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>จำนวนบิล</th><th>หน่วยรวม</th><th>ยอดเงิน</th></tr>';
+            d.waterBills.byPeriod.forEach(function(r) {
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td>' + r.count + '</td><td class="text-right">' + _fmtNum(r.totalUnits) + '</td><td class="text-right">' + _fmtNum(r.totalAmount) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+
+        // Section 10: Electric Bills
+        html += '<h3>⚡ รายละเอียดค่าไฟฟ้า</h3>';
+        var ebS = d.electricBills ? d.electricBills.summary || {} : {};
+        var ebVar = (ebS.totalPEA || 0) - (ebS.totalAmount || 0);
+        html += '<div class="summary">' +
+            'บิลทั้งหมด: <b>' + (ebS.totalBills || 0) + '</b> | ' +
+            'เก็บผู้พัก: <b>' + _fmtNum(ebS.totalAmount) + '</b> | ' +
+            'ยอด PEA: <b>' + _fmtNum(ebS.totalPEA) + '</b> | ' +
+            'ส่วนต่าง: <b style="color:' + (ebVar >= 0 ? '#ef4444' : '#10b981') + '">' + _fmtNum(Math.abs(ebVar)) + '</b> บาท' +
+            '</div>';
+        if ((d.electricBills.byPeriod || []).length > 0) {
+            html += '<table><tr><th>งวด</th><th>จำนวนบิล</th><th>หน่วยรวม</th><th>เก็บผู้พัก</th><th>ยอด PEA</th><th>ส่วนต่าง</th></tr>';
+            d.electricBills.byPeriod.forEach(function(r) {
+                var diff = (r.totalPEA||0) - (r.totalAmount||0);
+                html += '<tr><td>' + _periodLabel(r.period) + '</td><td>' + r.count + '</td><td class="text-right">' + _fmtNum(r.totalUnits) + '</td><td class="text-right">' + _fmtNum(r.totalAmount) + '</td><td class="text-right">' + _fmtNum(r.totalPEA) + '</td><td class="text-right" style="color:' + (diff >= 0 ? '#ef4444' : '#10b981') + '">' + _fmtNum(diff) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+        if ((d.electricBills.lostData || []).length > 0) {
+            html += '<p><b>ค่าสูญเสียไฟฟ้า:</b></p><table><tr><th>งวด</th><th>ยอด PEA รวม</th><th>สูญเสีย(บ้าน)</th><th>สูญเสีย(แฟลต)</th><th>รวม</th></tr>';
+            d.electricBills.lostData.forEach(function(l) {
+                html += '<tr><td>' + _periodLabel(l.period) + '</td><td class="text-right">' + _fmtNum(l.pea_total||0) + '</td><td class="text-right">' + _fmtNum(l.lost_house||0) + '</td><td class="text-right">' + _fmtNum(l.lost_flat||0) + '</td><td class="text-right">' + _fmtNum(l.lost_total||((l.lost_house||0)+(l.lost_flat||0))) + '</td></tr>';
+            });
+            html += '</table>';
+        }
+
+        // Section 11: Notifications
+        html += '<h3>📨 การแจ้งเตือนค่าใช้จ่าย</h3>';
+        var nfS = d.notifications ? d.notifications.summary || {} : {};
+        html += '<div class="summary">แจ้งเตือนทั้งหมด: <b>' + (nfS.total || 0) + '</b> ครั้ง | ยอดรวม: <b>' + _fmtNum(nfS.totalAmount) + '</b> บาท</div>';
+
+        // Section 12: Exemptions
+        html += '<h3>🎁 การยกเว้นค่าใช้จ่าย</h3>';
+        var exT = d.exemptions ? d.exemptions.byType || {} : {};
+        html += '<div class="summary">รายการยกเว้น: <b>' + (d.exemptions.total || 0) + '</b> | ค่าน้ำ: ' + (exT.water||0) + ' | ค่าไฟ: ' + (exT.electric||0) + ' | ส่วนกลาง: ' + (exT.common_fee||0) + ' | ขยะ: ' + (exT.garbage||0) + '</div>';
+
+        // Section 13: Queue
+        html += '<h3>📋 คิวรอเข้าพัก</h3>';
+        var q = d.queue || {};
+        html += '<div class="summary">คิวทั้งหมด: <b>' + (q.total || 0) + '</b> | รอคิว: <b>' + (q.waiting || 0) + '</b> | ได้รับมอบหมาย: <b>' + (q.assigned || 0) + '</b> | หมดอายุ: <b>' + (q.expired || 0) + '</b></div>';
 
         html += '</body></html>';
 
