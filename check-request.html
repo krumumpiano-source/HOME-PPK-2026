@@ -397,6 +397,9 @@
         .stat-icon.queue { background: #e0e7ff; }
         .stat-value { font-size: 1.5rem; font-weight: 700; }
         .stat-label { font-size: 0.85rem; color: var(--muted); }
+        .stat-card { cursor: pointer; transition: all 0.2s; }
+        .stat-card:hover { box-shadow: 0 4px 16px rgba(37,99,235,0.15); transform: translateY(-2px); }
+        .stat-card.active-filter { border: 2px solid var(--primary); box-shadow: 0 4px 16px rgba(37,99,235,0.2); background: #f0f4ff; }
 
         /* Hide content */
         .tab-content { display: none; }
@@ -425,28 +428,28 @@
 
         <!-- Stats -->
         <div class="stats-row">
-            <div class="stat-card">
+            <div class="stat-card" onclick="filterByStatCard('pending')" title="คลิกเพื่อกรองรายการสถานะ รอดำเนินการ">
                 <div class="stat-icon pending">📥</div>
                 <div>
                     <div class="stat-value" id="statPending">0</div>
                     <div class="stat-label">รอดำเนินการ</div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="filterByStatCard('reviewing')" title="คลิกเพื่อกรองรายการสถานะ กำลังตรวจสอบ">
                 <div class="stat-icon reviewing">🔍</div>
                 <div>
                     <div class="stat-value" id="statReviewing">0</div>
                     <div class="stat-label">กำลังตรวจสอบ</div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="filterByStatCard('approved')" title="คลิกเพื่อกรองรายการสถานะ อนุมัติแล้ว">
                 <div class="stat-icon approved">✅</div>
                 <div>
                     <div class="stat-value" id="statApproved">0</div>
                     <div class="stat-label">อนุมัติแล้ว</div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="filterByStatCard('waiting')" title="คลิกเพื่อกรองรายการสถานะ ในคิวรอเข้าพัก">
                 <div class="stat-icon queue">👥</div>
                 <div>
                     <div class="stat-value" id="statQueue">0</div>
@@ -1328,6 +1331,64 @@
         }
 
         // ========== UI Functions ==========
+        // Track active stat filter
+        let activeStatFilter = null;
+
+        function filterByStatCard(status) {
+            // Toggle: คลิกซ้ำ = ยกเลิกกรอง
+            if (activeStatFilter === status) {
+                activeStatFilter = null;
+                document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+                // Reset all filters
+                ['filterResidenceStatus','filterRepairStatus','filterTransferStatus','filterReturnStatus'].forEach(id => {
+                    var el = document.getElementById(id); if (el) el.value = '';
+                });
+                renderAll();
+                return;
+            }
+            activeStatFilter = status;
+            // Highlight active card
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+            event.currentTarget.classList.add('active-filter');
+
+            // "waiting" = เฉพาะคิวรอเข้าพัก (อยู่แท็บขอเข้าพัก)
+            if (status === 'waiting') {
+                switchTab('residence');
+                document.getElementById('filterResidenceStatus').value = 'waiting';
+                renderResidenceRequests();
+                // Scroll to queue section
+                var queueEl = document.getElementById('queueContainer');
+                if (queueEl) queueEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            }
+
+            // Map approved stat card → approved + completed
+            var filterVal = status;
+            if (status === 'approved') filterVal = 'approved';
+
+            // Set all tab filters
+            ['filterResidenceStatus','filterRepairStatus','filterTransferStatus','filterReturnStatus'].forEach(id => {
+                var el = document.getElementById(id);
+                if (!el) return;
+                // Check if option exists in this select
+                var hasOption = Array.from(el.options).some(o => o.value === filterVal);
+                el.value = hasOption ? filterVal : '';
+            });
+
+            // Find first tab that has matching data and switch to it
+            var tabOrder = ['residence','repair','transfer','return'];
+            var typeMap = { residence: 'residence', repair: 'repair', transfer: 'transfer', 'return': 'return' };
+            var matchStatuses = status === 'approved' ? ['approved','completed'] : [status];
+            var bestTab = null;
+            for (var i = 0; i < tabOrder.length; i++) {
+                var tabData = getData(tabOrder[i]);
+                var count = tabData.filter(d => matchStatuses.includes(d.status)).length;
+                if (count > 0 && !bestTab) bestTab = tabOrder[i];
+            }
+            if (bestTab) switchTab(bestTab);
+            renderAll();
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tabId);
