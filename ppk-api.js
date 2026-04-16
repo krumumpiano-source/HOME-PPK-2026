@@ -9,6 +9,27 @@
  */
 
 // ── รอ Supabase SDK + Config โหลดเสร็จ แล้ว init client ──────────────
+var _sbCfgUrl = '';
+var _sbCfgAnon = '';
+var _currentSessionToken = '';
+
+function _createSbClient(token) {
+  var opts = { auth: { persistSession: false } };
+  if (token) {
+    opts.global = { headers: { 'x-session-token': token } };
+  }
+  return window.supabase.createClient(_sbCfgUrl, _sbCfgAnon, opts);
+}
+
+function _updateSupabaseToken(token) {
+  token = token || '';
+  if (token === _currentSessionToken && window._sb) return;
+  _currentSessionToken = token;
+  if (_sbCfgUrl && _sbCfgAnon) {
+    window._sb = _createSbClient(token);
+  }
+}
+
 (function initSbClient() {
   function tryInit(tries) {
     tries = tries || 0;
@@ -18,10 +39,12 @@
       window._PPK_CONFIG
     ) {
       var cfg = window._PPK_CONFIG;
-      // ใช้ anon key — RLS policies เปิดให้ anon เข้าถึงได้ (no-auth mode)
-      window._sb = window.supabase.createClient(cfg.url, cfg.anon, {
-        auth: { persistSession: false }
-      });
+      _sbCfgUrl = cfg.url;
+      _sbCfgAnon = cfg.anon;
+      // อ่าน session token จาก localStorage (ถ้ามี) เพื่อส่งไปกับทุก request
+      var existingToken = localStorage.getItem('sessionToken') || '';
+      _currentSessionToken = existingToken;
+      window._sb = _createSbClient(existingToken);
       // Backward compat
       window.SUPABASE_URL      = cfg.url;
       window.SUPABASE_ANON_KEY = cfg.anon;
@@ -310,6 +333,7 @@ async function ppkLogout() {
     localStorage.removeItem('sessionToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('_sessionCheckTs');
+    _updateSupabaseToken('');
     window.location.href = 'login.html';
 }
 
@@ -378,6 +402,8 @@ async function checkSession(autoRedirect) {
     } catch(e) {}
     // ตรวจ token กับ sessions table
     var tk = getSessionToken();
+    // ยืนยันว่า Supabase client ส่ง session token ไปด้วย
+    if (tk && tk !== 'guest-admin-session') _updateSupabaseToken(tk);
     if (tk && tk !== 'guest-admin-session') {
         try {
             var sessRows = await sbGet('sessions', { token: 'eq.' + tk, select: 'user_id,role,resident_id,house_number,expires_at', limit: '1' });
@@ -581,6 +607,8 @@ async function _routeAction(action, data) {
                     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
                 });
             } catch(e) { console.warn('สร้าง session ไม่สำเร็จ:', e); }
+            // อัพเดท Supabase client ให้ส่ง session token ไปกับทุก request
+            _updateSupabaseToken(token);
             _logActivity('login', u.id, u.firstname + ' ' + u.lastname + ' เข้าสู่ระบบ', { role: u.role, house_number: resident ? resident.house_number : '' });
             return { success: true, user: userObj, token: token };
         }
@@ -672,6 +700,7 @@ async function _routeAction(action, data) {
             try {
                 await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString() });
             } catch(e) {}
+            _updateSupabaseToken(token2);
             _logActivity('set_first_password', userId, (u2.firstname || '') + ' ' + (u2.lastname || '') + ' ตั้งรหัสผ่านครั้งแรก', { email: u2.email });
             var userObj2 = { id: u2.id, email: u2.email, prefix: u2.prefix || '', firstname: u2.firstname || '', lastname: u2.lastname || '', role: u2.role || 'resident', is_active: true, position: u2.position || '', houseNumber: resident2 ? (resident2.house_number || '') : '', residentId: resident2 ? resident2.id : null };
             return { success: true, user: userObj2, token: token2 };
