@@ -1471,6 +1471,7 @@ async function _routeAction(action, data) {
                 additionalItems: data.additionalItems || [],
                 operatingCosts: data.operatingCosts || {},
                 totalWithdraw: data.totalWithdraw || 0,
+                deferredItems: data.deferredItems || {},
                 savedAt: new Date().toISOString()
             });
             await sbUpsert('settings', { key: swKey, value: swVal }, 'key');

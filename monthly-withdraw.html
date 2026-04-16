@@ -616,9 +616,16 @@
             try {
                 // ดึง withdraw data เดิมแล้วเพิ่ม deferredItems
                 var existing = await callBackend('getMonthlyWithdraw', { period: period });
-                var data = (existing && existing.data) || {};
-                data.deferredItems = _deferredItems;
-                await callBackend('saveMonthlyWithdraw', { period: period, data: data });
+                var saved = (existing && existing.data) || {};
+                // เก็บข้อมูลเดิมไว้ เพิ่มแค่ deferredItems
+                await callBackend('saveWithdraw', {
+                    period: period,
+                    garbageFee: saved.garbageFee || 0,
+                    additionalItems: saved.additionalItems || [],
+                    operatingCosts: saved.operatingCosts || {},
+                    totalWithdraw: saved.totalWithdraw || 0,
+                    deferredItems: _deferredItems
+                });
             } catch(e) {
                 console.error('บันทึก deferred ไม่สำเร็จ:', e);
             }
@@ -1114,7 +1121,8 @@
                         travelElectric: travelElectric,
                         travelGarbage: travelGarbage
                     },
-                    totalWithdraw: roundedTotal
+                    totalWithdraw: roundedTotal,
+                    deferredItems: _deferredItems
                 });
                 if (result && result.success) {
                     localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
