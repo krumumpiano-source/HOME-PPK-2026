@@ -1534,6 +1534,58 @@ async function _routeAction(action, data) {
             try { await _autoSyncAccounting(_advPeriod); } catch(e) {}
             return { success: true };
         }
+        case 'getPendingCarryOver': {
+            // ดึงยอดค้างจากเดือนก่อน: deferred items + สำรองจ่ายค้างคืน
+            var curPeriod = data.period || '';
+            var result = { deferredItems: [], pendingAdvances: [] };
+
+            // 1. หา deferred items จาก settings (monthly_withdraw_YYYY-MM) ทุกเดือนก่อน period นี้
+            var allSettings = await sbGet('settings', { key: 'like.monthly_withdraw_%' });
+            (allSettings || []).forEach(function(row) {
+                var p = row.key.replace('monthly_withdraw_', '');
+                if (p >= curPeriod) return; // ข้ามเดือนปัจจุบันหรืออนาคต
+                try {
+                    var val = JSON.parse(row.value || '{}');
+                    var di = val.deferredItems || {};
+                    var labels = { water: 'ค่าน้ำ', electric: 'ค่าไฟ' };
+                    Object.keys(di).forEach(function(key) {
+                        if (di[key] && di[key].reason) {
+                            result.deferredItems.push({
+                                period: p,
+                                itemKey: key,
+                                label: labels[key] || key,
+                                reason: di[key].reason,
+                                until: di[key].until || null
+                            });
+                        }
+                    });
+                } catch(e) {}
+            });
+
+            // 2. สำรองจ่ายค้างคืน (status=pending หรือ partial) ทุกเดือนก่อน period นี้
+            var pendAdv = await sbGet('advance_payments', {
+                period: 'lt.' + curPeriod,
+                status: 'neq.reimbursed',
+                order: 'period.asc,created_at.asc'
+            });
+            (pendAdv || []).forEach(function(a) {
+                if (a.source_type === 'bank_transfer') return;
+                var remaining = (parseFloat(a.amount) || 0) - (parseFloat(a.reimbursed_amount) || 0);
+                if (remaining > 0) {
+                    result.pendingAdvances.push({
+                        id: a.id,
+                        period: a.period,
+                        person_name: a.person_name,
+                        amount: parseFloat(a.amount) || 0,
+                        reimbursed_amount: parseFloat(a.reimbursed_amount) || 0,
+                        remaining: remaining,
+                        purpose: a.purpose || ''
+                    });
+                }
+            });
+
+            return { success: true, data: result };
+        }
         case 'getCashOnHand': {
             var period = data.period || '';
             // รายรับทั้งหมด ถึงเดือนนี้

@@ -464,6 +464,19 @@
             </div>
         </div>
 
+        <!-- ═══ ยอดค้างจากเดือนก่อน ═══ -->
+        <div class="section" id="carryOverSection" style="display:none;">
+            <div class="section-title">📌 ยอดค้างจากเดือนก่อน</div>
+            <div style="margin-bottom:0.5rem;padding:0.6rem;border-radius:8px;background:#fef3c7;border:1px solid #fde68a;font-size:0.88rem;">
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" id="includeCarryOver" checked onchange="calculateTotal()">
+                    <span><strong>รวมยอดค้างเข้ายอดเบิกเดือนนี้</strong> (ถ้าไม่ติ๊ก = เบิกเฉพาะเดือนนี้ แล้วค่อยเบิกค้างทีหลัง)</span>
+                </label>
+            </div>
+            <div id="carryOverContent"></div>
+            <div id="carryOverTotal" style="margin-top:0.5rem;padding:0.6rem;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-weight:600;font-size:0.95rem;"></div>
+        </div>
+
         <!-- ═══ ส่วนแหล่งเงิน / สำรองจ่าย ═══ -->
         <div class="section" id="advanceSection">
             <div class="section-title">💰 แหล่งเงินจ่ายประจำเดือน</div>
@@ -573,6 +586,71 @@
         let additionalItems = [];
         let _loadToken = 0; // ป้องกัน race condition เมื่อเปลี่ยนเดือนเร็วๆ
         let _deferredItems = {}; // { water: {reason, until}, electric: {...} }
+
+        let additionalItems = [];
+        let _loadToken = 0; // ป้องกัน race condition เมื่อเปลี่ยนเดือนเร็วๆ
+        let _deferredItems = {}; // { water: {reason, until}, electric: {...} }
+        let _carryOverTotal = 0; // ยอดค้างจากเดือนก่อน
+        let _carryOverData = null; // { deferredItems: [], pendingAdvances: [] }
+
+        // ═══ ระบบยอดค้างจากเดือนก่อน ═══
+        async function loadCarryOver() {
+            var { period } = getPeriod();
+            _carryOverTotal = 0;
+            _carryOverData = null;
+            var section = document.getElementById('carryOverSection');
+            var content = document.getElementById('carryOverContent');
+            var totalDiv = document.getElementById('carryOverTotal');
+            try {
+                var res = await callBackend('getPendingCarryOver', { period: period });
+                if (!res || !res.success || !res.data) { section.style.display = 'none'; return; }
+                var d = res.data;
+                _carryOverData = d;
+                var hasDef = d.deferredItems && d.deferredItems.length > 0;
+                var hasAdv = d.pendingAdvances && d.pendingAdvances.length > 0;
+                if (!hasDef && !hasAdv) { section.style.display = 'none'; return; }
+
+                var html = '';
+                var total = 0;
+
+                // Deferred items
+                if (hasDef) {
+                    html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">⏳ รายการเลื่อนชำระ</div>';
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.8rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">รายการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เหตุผล</th></tr></thead><tbody>';
+                    d.deferredItems.forEach(function(item) {
+                        var pm = item.period.split('-');
+                        var mName = THAI_MONTHS[parseInt(pm[1]) - 1] + ' ' + pm[0];
+                        html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.label + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.reason + (item.until ? ' (ภายใน ' + item.until + ')' : '') + '</td></tr>';
+                    });
+                    html += '</tbody></table>';
+                    html += '<div style="font-size:0.82rem;color:#92400e;margin-bottom:0.5rem;">💡 ยอดค่าน้ำ/ค่าไฟค้าง ให้กรอกจำนวนเงินในช่อง "เพิ่มค่าใช้จ่ายอื่นๆ" ด้านบน เช่น "ค่าน้ำค้าง มี.ค." เพื่อรวมเข้ายอดเบิก</div>';
+                }
+
+                // Pending advances (สำรองค้างคืน)
+                if (hasAdv) {
+                    html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">🤝 สำรองจ่ายค้างคืน</div>';
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">ชื่อ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">สำรอง</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">คืนแล้ว</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">ค้างคืน</th></tr></thead><tbody>';
+                    d.pendingAdvances.forEach(function(a) {
+                        var pm = a.period.split('-');
+                        var mName = THAI_MONTHS[parseInt(pm[1]) - 1] + ' ' + pm[0];
+                        total += a.remaining;
+                        html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + a.person_name + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(a.amount) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(a.reimbursed_amount) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(a.remaining) + '</td></tr>';
+                    });
+                    html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="4" style="padding:0.4rem;border:1px solid #fde68a;">รวมค้างคืน</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(total) + '</td></tr>';
+                    html += '</tbody></table>';
+                }
+
+                _carryOverTotal = total;
+                content.innerHTML = html;
+                totalDiv.textContent = 'ยอดค้างคืนสำรองจ่าย: ' + formatMoney(total) + ' บาท' + (total > 0 ? ' (จะรวมในยอดเบิก)' : '');
+                totalDiv.style.display = total > 0 ? '' : 'none';
+                section.style.display = '';
+                calculateTotal();
+            } catch(e) {
+                console.error('loadCarryOver error:', e);
+                section.style.display = 'none';
+            }
+        }
 
         // ═══ ระบบเลื่อนชำระ ═══
         async function openDeferModal(itemKey, itemLabel) {
@@ -758,6 +836,7 @@
             calculateTotal();
             loadMovedOutSummary();
             loadAdvanceData();
+            loadCarryOver();
         }
 
         // โหลดข้อมูลยอดค้างผู้ย้ายออก
@@ -869,9 +948,14 @@
             // ยอดค่าใช้จ่ายจริง (อาจมีทศนิยม)
             const rawTotal = waterTotal + electricTotal + garbageFee + additionalTotal + travelWithdraw + travelElectric + travelGarbage;
             
+            // รวมยอดค้างจากเดือนก่อน (ถ้าติ๊ก)
+            var includeCarry = document.getElementById('includeCarryOver');
+            var carryAmt = (includeCarry && includeCarry.checked) ? (_carryOverTotal || 0) : 0;
+            var totalWithCarry = rawTotal + carryAmt;
+
             // ปัดขึ้นเป็นจำนวนเต็ม (ธนาคารถอนได้เฉพาะจำนวนเต็ม)
-            const roundedTotal = Math.ceil(rawTotal);
-            const roundingFee = roundedTotal - rawTotal;
+            const roundedTotal = Math.ceil(totalWithCarry);
+            const roundingFee = roundedTotal - totalWithCarry;
             
             document.getElementById('roundingFee').textContent = formatMoney(roundingFee);
             document.getElementById('travelWithdrawDisplay').textContent = formatMoney(travelWithdraw);
@@ -1193,6 +1277,15 @@
             addRow('ค่าเดินทางถอนเงิน', travelWithdraw);
             addRow('ค่าเดินทางชำระค่าไฟ', travelElectric);
             addRow('ค่าเดินทางชำระค่าขยะ', travelGarbage);
+            // ยอดค้างจากเดือนก่อน (ถ้ารวม)
+            var includeCarry = document.getElementById('includeCarryOver');
+            if (includeCarry && includeCarry.checked && _carryOverData && _carryOverData.pendingAdvances) {
+                _carryOverData.pendingAdvances.forEach(function(a) {
+                    var pm = a.period.split('-');
+                    var mName = THAI_MONTHS[parseInt(pm[1]) - 1];
+                    addRow('คืนเงินสำรองจ่าย ' + a.person_name + ' (' + mName + ')', a.remaining);
+                });
+            }
 
             const printDate = new Date();
             const printDateStr = printDate.getDate() + ' ' + THAI_MONTHS[printDate.getMonth()] + ' ' + (printDate.getFullYear() + 543);
