@@ -612,14 +612,18 @@
                 // Deferred items
                 if (hasDef) {
                     html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">⏳ รายการเลื่อนชำระ</div>';
-                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.8rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">รายการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เหตุผล</th></tr></thead><tbody>';
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.8rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">รายการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">จำนวนเงิน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เหตุผล</th></tr></thead><tbody>';
+                    var deferTotal = 0;
                     d.deferredItems.forEach(function(item) {
                         var pm = item.period.split('-');
                         var mName = THAI_MONTHS[parseInt(pm[1]) - 1] + ' ' + pm[0];
-                        html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.label + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.reason + (item.until ? ' (ภายใน ' + item.until + ')' : '') + '</td></tr>';
+                        var amt = parseFloat(item.amount) || 0;
+                        deferTotal += amt;
+                        html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.label + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(amt) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;font-size:0.82rem;">' + item.reason + (item.until ? ' (ภายใน ' + item.until + ')' : '') + '</td></tr>';
                     });
+                    html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="2" style="padding:0.4rem;border:1px solid #fde68a;">รวมยอดเลื่อนชำระ</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(deferTotal) + '</td><td></td></tr>';
                     html += '</tbody></table>';
-                    html += '<div style="font-size:0.82rem;color:#92400e;margin-bottom:0.5rem;">💡 ยอดค่าน้ำ/ค่าไฟค้าง ให้กรอกจำนวนเงินในช่อง "เพิ่มค่าใช้จ่ายอื่นๆ" ด้านบน เช่น "ค่าน้ำค้าง มี.ค." เพื่อรวมเข้ายอดเบิก</div>';
+                    total += deferTotal;
                 }
 
                 // Pending advances (สำรองค้างคืน)
@@ -638,7 +642,7 @@
 
                 _carryOverTotal = total;
                 content.innerHTML = html;
-                totalDiv.textContent = 'ยอดค้างคืนสำรองจ่าย: ' + formatMoney(total) + ' บาท' + (total > 0 ? ' (จะรวมในยอดเบิก)' : '');
+                totalDiv.textContent = 'รวมยอดค้างจากเดือนก่อน: ' + formatMoney(total) + ' บาท' + (total > 0 ? ' (จะรวมในยอดเบิก)' : '');
                 totalDiv.style.display = total > 0 ? '' : 'none';
                 section.style.display = '';
                 calculateTotal();
@@ -1273,8 +1277,17 @@
             addRow('ค่าเดินทางถอนเงิน', travelWithdraw);
             addRow('ค่าเดินทางชำระค่าไฟ', travelElectric);
             addRow('ค่าเดินทางชำระค่าขยะ', travelGarbage);
-            // ยอดค้างจากเดือนก่อน (ถ้ารวม)
+            // ยอดค้างจากเดือนก่อน
             var includeCarry = document.getElementById('includeCarryOver');
+            // deferred items (ค่าน้ำ/ค่าไฟค้าง)
+            if (includeCarry && includeCarry.checked && _carryOverData && _carryOverData.deferredItems) {
+                _carryOverData.deferredItems.forEach(function(item) {
+                    var pm = item.period.split('-');
+                    var mName = THAI_MONTHS[parseInt(pm[1]) - 1];
+                    addRow(item.label + 'ค้าง ' + mName, parseFloat(item.amount) || 0);
+                });
+            }
+            // ยอดค้างจากเดือนก่อน: สำรองค้างคืน
             if (includeCarry && includeCarry.checked && _carryOverData && _carryOverData.pendingAdvances) {
                 _carryOverData.pendingAdvances.forEach(function(a) {
                     var pm = a.period.split('-');

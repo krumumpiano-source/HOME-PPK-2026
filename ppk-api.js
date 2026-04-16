@@ -1535,32 +1535,58 @@ async function _routeAction(action, data) {
             return { success: true };
         }
         case 'getPendingCarryOver': {
-            // ดึงยอดค้างจากเดือนก่อน: deferred items + สำรองจ่ายค้างคืน
+            // ดึงยอดค้างจากเดือนก่อน: deferred items (พร้อมยอดเงิน) + สำรองจ่ายค้างคืน
             var curPeriod = data.period || '';
             var result = { deferredItems: [], pendingAdvances: [] };
 
             // 1. หา deferred items จาก settings (monthly_withdraw_YYYY-MM) ทุกเดือนก่อน period นี้
             var allSettings = await sbGet('settings', { key: 'like.monthly_withdraw_%' });
+            var deferredPeriods = []; // เก็บ period+itemKey ที่ต้องดึงยอดเงิน
             (allSettings || []).forEach(function(row) {
                 var p = row.key.replace('monthly_withdraw_', '');
-                if (p >= curPeriod) return; // ข้ามเดือนปัจจุบันหรืออนาคต
+                if (p >= curPeriod) return;
                 try {
                     var val = JSON.parse(row.value || '{}');
                     var di = val.deferredItems || {};
                     var labels = { water: 'ค่าน้ำ', electric: 'ค่าไฟ' };
                     Object.keys(di).forEach(function(key) {
                         if (di[key] && di[key].reason) {
+                            deferredPeriods.push({ period: p, itemKey: key });
                             result.deferredItems.push({
                                 period: p,
                                 itemKey: key,
                                 label: labels[key] || key,
                                 reason: di[key].reason,
-                                until: di[key].until || null
+                                until: di[key].until || null,
+                                amount: 0 // จะเติมทีหลัง
                             });
                         }
                     });
                 } catch(e) {}
             });
+
+            // 1b. ดึงยอดเงินจริงของ deferred items
+            for (var di = 0; di < result.deferredItems.length; di++) {
+                var defItem = result.deferredItems[di];
+                try {
+                    if (defItem.itemKey === 'water') {
+                        var wRows = await sbGet('water_bills', { period: 'eq.' + defItem.period });
+                        defItem.amount = (wRows || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+                    } else if (defItem.itemKey === 'electric') {
+                        var eTotal = 0;
+                        var eRows = await sbGet('electric_bills', { period: 'eq.' + defItem.period });
+                        eTotal = (eRows || []).reduce(function(s, r) { return s + (parseFloat(r.bill_amount) || parseFloat(r.amount) || 0); }, 0);
+                        try {
+                            var _peaRows = await sbGet('settings', { key: 'eq.electric_lost_' + defItem.period });
+                            if (_peaRows && _peaRows[0] && _peaRows[0].value) {
+                                var _peaData = JSON.parse(_peaRows[0].value);
+                                if (_peaData && parseFloat(_peaData.pea_total) > 0) eTotal = parseFloat(_peaData.pea_total);
+                            }
+                        } catch(e2) {}
+                        defItem.amount = eTotal;
+                    }
+                } catch(e) { defItem.amount = 0; }
+            }
 
             // 2. สำรองจ่ายค้างคืน (status=pending หรือ partial) ทุกเดือนก่อน period นี้
             var pendAdv = await sbGet('advance_payments', {
