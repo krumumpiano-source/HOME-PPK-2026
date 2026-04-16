@@ -586,10 +586,6 @@
         let additionalItems = [];
         let _loadToken = 0; // ป้องกัน race condition เมื่อเปลี่ยนเดือนเร็วๆ
         let _deferredItems = {}; // { water: {reason, until}, electric: {...} }
-
-        let additionalItems = [];
-        let _loadToken = 0; // ป้องกัน race condition เมื่อเปลี่ยนเดือนเร็วๆ
-        let _deferredItems = {}; // { water: {reason, until}, electric: {...} }
         let _carryOverTotal = 0; // ยอดค้างจากเดือนก่อน
         let _carryOverData = null; // { deferredItems: [], pendingAdvances: [] }
 
