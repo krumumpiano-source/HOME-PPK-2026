@@ -379,12 +379,12 @@
                     </tr>
                 </thead>
                 <tbody id="summaryBody">
-                    <tr>
-                        <td>💧 ค่าน้ำรวม</td>
+                    <tr id="rowWater">
+                        <td>💧 ค่าน้ำรวม <button class="no-print" onclick="openDeferModal('water','ค่าน้ำ')" style="margin-left:0.5rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:0.15rem 0.5rem;font-size:0.75rem;cursor:pointer;" title="เลื่อนชำระค่าน้ำ">⏳ เลื่อนชำระ</button><span id="deferBadgeWater" style="display:none;margin-left:0.5rem;background:#fef3c7;color:#92400e;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.75rem;"></span></td>
                         <td class="amount" id="waterTotal">0.00</td>
                     </tr>
-                    <tr>
-                        <td>⚡ ค่าไฟรวม (ที่การไฟฟ้าเรียกเก็บ)</td>
+                    <tr id="rowElectric">
+                        <td>⚡ ค่าไฟรวม (ที่การไฟฟ้าเรียกเก็บ) <button class="no-print" onclick="openDeferModal('electric','ค่าไฟ')" style="margin-left:0.5rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:0.15rem 0.5rem;font-size:0.75rem;cursor:pointer;" title="เลื่อนชำระค่าไฟ">⏳ เลื่อนชำระ</button><span id="deferBadgeElectric" style="display:none;margin-left:0.5rem;background:#fef3c7;color:#92400e;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.75rem;"></span></td>
                         <td class="amount" id="electricTotal">0.00</td>
                     </tr>
                     <tr>
@@ -572,6 +572,62 @@
         
         let additionalItems = [];
         let _loadToken = 0; // ป้องกัน race condition เมื่อเปลี่ยนเดือนเร็วๆ
+        let _deferredItems = {}; // { water: {reason, until}, electric: {...} }
+
+        // ═══ ระบบเลื่อนชำระ ═══
+        async function openDeferModal(itemKey, itemLabel) {
+            var existing = _deferredItems[itemKey] || {};
+            var reason = prompt('เหตุผลที่เลื่อนชำระ' + itemLabel + ':\n(เช่น ธนาคารปิด, ถอนเงินไม่ทัน)', existing.reason || '');
+            if (reason === null) return;
+            if (!reason.trim()) {
+                // ล้างการเลื่อนชำระ
+                if (existing.reason && confirm('ต้องการยกเลิกการเลื่อนชำระ' + itemLabel + '?')) {
+                    delete _deferredItems[itemKey];
+                    await saveDeferredData();
+                    renderDeferredBadges();
+                    await ppkAlert('ยกเลิกเลื่อนชำระ' + itemLabel + 'แล้ว', { type: 'success' });
+                }
+                return;
+            }
+            var untilStr = prompt('คาดว่าจะจ่ายภายในวันที่ (เช่น 2569-04-20):', existing.until || '');
+            _deferredItems[itemKey] = { reason: reason.trim(), until: untilStr ? untilStr.trim() : null };
+            await saveDeferredData();
+            renderDeferredBadges();
+            await ppkAlert('บันทึกเลื่อนชำระ' + itemLabel + 'แล้ว ✅', { type: 'success' });
+        }
+
+        function renderDeferredBadges() {
+            ['water', 'electric'].forEach(function(key) {
+                var badge = document.getElementById('deferBadge' + key.charAt(0).toUpperCase() + key.slice(1));
+                if (!badge) return;
+                var d = _deferredItems[key];
+                if (d && d.reason) {
+                    badge.style.display = 'inline';
+                    badge.textContent = '⏳ เลื่อน: ' + d.reason + (d.until ? ' (ภายใน ' + d.until + ')' : '');
+                } else {
+                    badge.style.display = 'none';
+                    badge.textContent = '';
+                }
+            });
+        }
+
+        async function saveDeferredData() {
+            var { period } = getPeriod();
+            try {
+                // ดึง withdraw data เดิมแล้วเพิ่ม deferredItems
+                var existing = await callBackend('getMonthlyWithdraw', { period: period });
+                var data = (existing && existing.data) || {};
+                data.deferredItems = _deferredItems;
+                await callBackend('saveMonthlyWithdraw', { period: period, data: data });
+            } catch(e) {
+                console.error('บันทึก deferred ไม่สำเร็จ:', e);
+            }
+        }
+
+        function loadDeferredFromData(savedData) {
+            _deferredItems = (savedData && savedData.deferredItems) || {};
+            renderDeferredBadges();
+        }
         
         // เริ่มต้นเมื่อโหลดหน้า
         window.onload = async function() {
@@ -678,6 +734,8 @@
                             if (oc.travelElectric > 0) document.getElementById('travelElectric').value = oc.travelElectric;
                             if (oc.travelGarbage > 0) document.getElementById('travelGarbage').value = oc.travelGarbage;
                         }
+                        // โหลดข้อมูลเลื่อนชำระ
+                        loadDeferredFromData(saved);
                     }
                 } catch (e) {
                     if (token !== _loadToken) return;
@@ -1173,6 +1231,20 @@
             '<tbody>' + tableRows + '</tbody>' +
             '<tfoot><tr class="total-row"><td colspan="2" style="text-align:center;">รวมยอดเบิกทั้งสิ้น</td><td style="text-align:right;">' + formatMoney(grandTotal) + '</td></tr></tfoot>' +
             '</table>';
+
+            // เพิ่มส่วนเลื่อนชำระ (ถ้ามี)
+            var deferKeys = Object.keys(_deferredItems);
+            if (deferKeys.length > 0) {
+                html += '<div style="margin:12px 0 6px 0;font-weight:bold;font-size:15pt;">⏳ รายการเลื่อนชำระ:</div>';
+                html += '<table><thead><tr><th style="width:10%;">ลำดับ</th><th>รายการ</th><th style="width:35%;">เหตุผล</th><th style="width:20%;">คาดว่าจ่ายภายใน</th></tr></thead><tbody>';
+                var labels = { water: 'ค่าน้ำ', electric: 'ค่าไฟ' };
+                for (var di = 0; di < deferKeys.length; di++) {
+                    var dk = deferKeys[di];
+                    var dd = _deferredItems[dk];
+                    html += '<tr><td style="text-align:center;">' + (di+1) + '</td><td>' + (labels[dk]||dk) + '</td><td>' + (dd.reason||'-') + '</td><td style="text-align:center;">' + (dd.until||'-') + '</td></tr>';
+                }
+                html += '</tbody></table>';
+            }
 
             // เพิ่มส่วนแหล่งเงิน ถ้ามีสำรองจ่าย
             var fundSource = document.querySelector('input[name="fundSource"]:checked');
