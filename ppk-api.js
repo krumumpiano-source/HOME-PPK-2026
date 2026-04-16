@@ -1478,6 +1478,87 @@ async function _routeAction(action, data) {
             try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
             return { success: true };
         }
+
+        /* ── สำรองจ่าย / ทดรองจ่าย ─────────────────────── */
+        case 'saveAdvancePayment': {
+            var row = await sbPost('advance_payments', {
+                period: data.period,
+                person_name: data.person_name,
+                amount: parseFloat(data.amount) || 0,
+                purpose: data.purpose || '',
+                source_type: data.source_type || 'committee_advance',
+                status: 'pending',
+                reimbursed_amount: 0,
+                recorded_by: data.recorded_by || null
+            });
+            try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync advance error', e); }
+            return { success: true, data: row };
+        }
+        case 'getAdvancePayments': {
+            var q = { order: 'created_at.desc' };
+            if (data.period) q.period = 'eq.' + data.period;
+            if (data.status) q.status = 'eq.' + data.status;
+            var rows = await sbGet('advance_payments', q);
+            return { success: true, data: rows || [] };
+        }
+        case 'reimburseAdvance': {
+            // ดึงข้อมูลเดิมก่อน
+            var existing = await sbGet('advance_payments', { id: 'eq.' + data.id });
+            if (!existing || !existing[0]) return { success: false, error: 'ไม่พบรายการสำรองจ่าย' };
+            var adv = existing[0];
+            var addAmt = parseFloat(data.reimbursed_amount) || 0;
+            var newReimbursed = (parseFloat(adv.reimbursed_amount) || 0) + addAmt;
+            var advTotal = parseFloat(adv.amount) || 0;
+            var newStatus = newReimbursed >= advTotal ? 'reimbursed' : (newReimbursed > 0 ? 'partial' : 'pending');
+            await sbPatch('advance_payments', { id: 'eq.' + data.id }, {
+                reimbursed_amount: Math.min(newReimbursed, advTotal),
+                reimbursed_at: new Date().toISOString(),
+                reimbursed_note: data.reimbursed_note || '',
+                approved_by: data.approved_by || null,
+                approved_at: data.approved_by ? new Date().toISOString() : null,
+                status: newStatus,
+                updated_at: new Date().toISOString()
+            });
+            try { await _autoSyncAccounting(adv.period); } catch(e) { console.warn('autoSync reimburse error', e); }
+            return { success: true, status: newStatus };
+        }
+        case 'deleteAdvancePayment': {
+            var existing2 = await sbGet('advance_payments', { id: 'eq.' + data.id });
+            if (!existing2 || !existing2[0]) return { success: false, error: 'ไม่พบรายการ' };
+            if (existing2[0].status !== 'pending') return { success: false, error: 'ลบได้เฉพาะรายการที่ยังไม่คืนเงิน' };
+            var _advPeriod = existing2[0].period;
+            await sbDelete('advance_payments', { id: 'eq.' + data.id });
+            try { await _autoSyncAccounting(_advPeriod); } catch(e) {}
+            return { success: true };
+        }
+        case 'getCashOnHand': {
+            var period = data.period || '';
+            // รายรับทั้งหมด ถึงเดือนนี้
+            var [incAll, expAll, advAll] = await Promise.all([
+                sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.income', select: 'amount' }).catch(function() { return []; }),
+                sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.expense', select: 'amount' }).catch(function() { return []; }),
+                sbGet('advance_payments', { period: 'lte.' + period, select: 'amount,reimbursed_amount,status' }).catch(function() { return []; })
+            ]);
+            var totalIncome = (incAll || []).reduce(function(s,r) { return s + (parseFloat(r.amount) || 0); }, 0);
+            var totalExpense = (expAll || []).reduce(function(s,r) { return s + (parseFloat(r.amount) || 0); }, 0);
+            var totalAdvanced = 0, totalReimbursed = 0;
+            (advAll || []).forEach(function(a) {
+                totalAdvanced += parseFloat(a.amount) || 0;
+                totalReimbursed += parseFloat(a.reimbursed_amount) || 0;
+            });
+            var pendingReimburse = totalAdvanced - totalReimbursed;
+            var cashOnHand = totalIncome - totalExpense;
+            return { success: true, data: { totalIncome: totalIncome, totalExpense: totalExpense, cashOnHand: cashOnHand, totalAdvanced: totalAdvanced, totalReimbursed: totalReimbursed, pendingReimburse: pendingReimburse } };
+        }
+        case 'setDeferredReason': {
+            await sbPatch('outstanding', { id: 'eq.' + data.outstanding_id }, {
+                deferred_reason: data.deferred_reason || null,
+                deferred_until: data.deferred_until || null,
+                updated_at: new Date().toISOString()
+            });
+            return { success: true };
+        }
+
         case 'getSettings': {
             var rows = await sbGet('settings', {});
             var obj = {};
@@ -4960,6 +5041,21 @@ async function _autoSyncAccounting(period) {
     if (ocTravelWithdraw > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าเดินทางถอนเงิน', amount: ocTravelWithdraw, recorded_at: ts });
     if (ocTravelElectric > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าเดินทางชำระค่าไฟ', amount: ocTravelElectric, recorded_at: ts });
     if (ocTravelGarbage > 0) _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'ค่าเดินทางชำระค่าขยะ', amount: ocTravelGarbage, recorded_at: ts });
+    // ── 6. สำรองจ่าย / ทดรองจ่าย (advance_payments) ──
+    try {
+        var advRows = await sbGet('advance_payments', { period: 'eq.' + period });
+        (advRows || []).forEach(function(adv) {
+            var advAmt = parseFloat(adv.amount) || 0;
+            var advReimb = parseFloat(adv.reimbursed_amount) || 0;
+            var srcLabel = adv.source_type === 'remaining_cash' ? 'เงินสดคงเหลือ' : 'สำรองจ่าย';
+            if (advAmt > 0) {
+                _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: srcLabel + 'จาก ' + (adv.person_name || '-') + (adv.purpose ? ' (' + adv.purpose + ')' : ''), amount: advAmt, recorded_at: ts });
+            }
+            if (advReimb > 0) {
+                _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'คืนเงิน' + srcLabel + ' ' + (adv.person_name || '-'), amount: advReimb, recorded_at: ts });
+            }
+        });
+    } catch(e) { console.warn('autoSync advance_payments error', e); }
     if (_autoEntries.length > 0) await sbPost('accounting_entries', _autoEntries);
 }
 

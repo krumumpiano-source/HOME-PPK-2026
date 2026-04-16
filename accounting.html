@@ -686,6 +686,19 @@
             </div>
         </div>
         
+        <!-- ═══ สรุปเงินสำรองจ่าย ═══ -->
+        <div class="section no-print" id="advanceSummarySection" style="display:none;">
+            <div class="section-title" style="display:flex;align-items:center;gap:0.5rem;">
+                🤝 สรุปเงินสำรองจ่าย / ทดรองจ่าย
+                <select id="advFilter" onchange="loadAdvanceSummary()" style="margin-left:auto;padding:0.3rem;border-radius:6px;border:1px solid var(--border);font-size:0.85rem;">
+                    <option value="all">ทั้งหมด</option>
+                    <option value="pending">ค้างคืน</option>
+                    <option value="reimbursed">คืนครบแล้ว</option>
+                </select>
+            </div>
+            <div id="advanceSummaryContent" style="padding:0.5rem 0;"></div>
+        </div>
+
         <div class="footer-note">
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -808,6 +821,7 @@
                         }));
                         carryForwardAmount = result.carryForward || 0;
                         renderAll();
+                        loadAdvanceSummary();
                         return;
                     }
                 } catch (e) {
@@ -1361,6 +1375,64 @@
             localStorage.removeItem('sessionToken');
             localStorage.removeItem('currentUser');
             window.location.replace('login.html');
+        }
+
+        // ═══ สรุปเงินสำรองจ่าย ═══
+        async function loadAdvanceSummary() {
+            var section = document.getElementById('advanceSummarySection');
+            var content = document.getElementById('advanceSummaryContent');
+            if (!section || !content) return;
+            var filterVal = (document.getElementById('advFilter') || {}).value || 'all';
+            try {
+                var q = {};
+                if (filterVal !== 'all') q.status = filterVal;
+                var result = await callBackend('getAdvancePayments', q);
+                var rows = (result && result.data) || [];
+                if (rows.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+                section.style.display = '';
+                var totalAdv = 0, totalReimb = 0;
+                var html = '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr style="background:#fef3c7;">' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;">เดือน</th>' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">ชื่อ</th>' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;">ประเภท</th>' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">สำรอง</th>' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">คืนแล้ว</th>' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">ค้างคืน</th>' +
+                    '<th style="padding:0.4rem;border:1px solid #fde68a;">สถานะ</th>' +
+                    '</tr></thead><tbody>';
+                rows.forEach(function(r) {
+                    var amt = parseFloat(r.amount) || 0;
+                    var reimb = parseFloat(r.reimbursed_amount) || 0;
+                    var pending = amt - reimb;
+                    totalAdv += amt;
+                    totalReimb += reimb;
+                    var statusIcon = r.status === 'reimbursed' ? '<span style="color:#10b981;">🟢 คืนครบ</span>' :
+                                     r.status === 'partial' ? '<span style="color:#f59e0b;">🟡 บางส่วน</span>' :
+                                     '<span style="color:#ef4444;">🔴 ค้างคืน</span>';
+                    var srcLabel = r.source_type === 'remaining_cash' ? '💵 เงินสดเหลือ' : '🤝 กรรมการ';
+                    html += '<tr>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;">' + (r.period || '') + '</td>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;">' + (r.person_name || '-') + (r.purpose ? '<br><small style="color:#999;">' + r.purpose + '</small>' : '') + '</td>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;font-size:0.82rem;">' + srcLabel + '</td>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(amt) + '</td>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(reimb) + '</td>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:' + (pending > 0 ? '#dc2626' : '#10b981') + ';">' + formatMoney(pending) + '</td>' +
+                        '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;">' + statusIcon + '</td></tr>';
+                });
+                html += '</tbody><tfoot><tr style="background:#fffbeb;font-weight:600;">' +
+                    '<td colspan="3" style="padding:0.4rem;border:1px solid #fde68a;">รวมทั้งหมด</td>' +
+                    '<td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(totalAdv) + '</td>' +
+                    '<td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(totalReimb) + '</td>' +
+                    '<td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(totalAdv - totalReimb) + '</td>' +
+                    '<td></td></tr></tfoot></table>';
+                content.innerHTML = html;
+            } catch(e) {
+                console.error('loadAdvanceSummary error:', e);
+                section.style.display = 'none';
+            }
         }
         </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>

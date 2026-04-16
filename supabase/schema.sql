@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- HOME PPK 2026 — Supabase Schema
 -- แทนที่ Google Sheets ด้วย PostgreSQL บน Supabase
 -- รัน script นี้ใน Supabase SQL Editor ครั้งเดียว
@@ -334,6 +334,24 @@ create table if not exists public.exemptions (
   created_at    timestamptz default now()
 );
 
+create table if not exists public.advance_payments (
+  id                text primary key default ('ADV' || upper(substr(gen_random_uuid()::text, 1, 8))),
+  period            text not null,
+  person_name       text not null,
+  amount            numeric(10,2) not null,
+  purpose           text,
+  source_type       text not null default 'committee_advance',  -- committee_advance | remaining_cash | other
+  status            text not null default 'pending',  -- pending | reimbursed | partial
+  reimbursed_amount numeric(10,2) default 0,
+  reimbursed_at     timestamptz,
+  reimbursed_note   text,
+  approved_by       text,
+  approved_at       timestamptz,
+  recorded_by       text,
+  created_at        timestamptz default now(),
+  updated_at        timestamptz default now()
+);
+
 -- ============================================================
 -- SETTINGS & MISC
 -- ============================================================
@@ -379,6 +397,8 @@ create index if not exists idx_slip_submissions_status on public.slip_submission
 create index if not exists idx_requests_type_status on public.requests(type, status);
 create index if not exists idx_logs_created_at on public.logs(created_at desc);
 create index if not exists idx_accounting_period on public.accounting_entries(period, type);
+create index if not exists idx_advance_payments_period on public.advance_payments(period);
+create index if not exists idx_advance_payments_status on public.advance_payments(status);
 
 -- ============================================================
 -- DEFAULT SETTINGS

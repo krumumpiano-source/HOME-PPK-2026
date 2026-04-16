@@ -297,6 +297,11 @@
                         <div class="ppk-stat-value" id="statOutstandingRooms">—</div>
                         <div class="ppk-stat-label">ห้องค้างชำระ</div>
                     </div>
+                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="เงินสำรองจ่ายที่ยังคืนไม่ครบ">
+                        <div class="ppk-stat-icon">🤝</div>
+                        <div class="ppk-stat-value" id="statPendingAdvance">—</div>
+                        <div class="ppk-stat-label">สำรองค้างคืน</div>
+                    </div>
                 </div>
             </div>
 
@@ -909,6 +914,19 @@
                     outEl.className = 'ppk-stat-value ' + (out > 0 ? 'danger' : 'ok');
                 }
             }
+            // Pending advance reimbursements
+            try {
+                var advRes = await callBackend('getAdvancePayments', { status: 'pending' });
+                var partRes = await callBackend('getAdvancePayments', { status: 'partial' });
+                var advList = (advRes.data || []).concat(partRes.data || []);
+                var pendingTotal = 0;
+                advList.forEach(function(a) { pendingTotal += (a.amount - (a.reimbursed_amount || 0)); });
+                var advEl = document.getElementById('statPendingAdvance');
+                if (advEl) {
+                    advEl.textContent = pendingTotal > 0 ? pendingTotal.toLocaleString() + '฿' : '0';
+                    advEl.className = 'ppk-stat-value ' + (pendingTotal > 0 ? 'warning' : 'ok');
+                }
+            } catch(e) { console.warn('advance stat:', e); }
         }
 
         async function loadDashboard() {

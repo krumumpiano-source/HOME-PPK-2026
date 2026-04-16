@@ -28,6 +28,7 @@ ALTER TABLE public.queue                 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.accounting_entries    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monthly_withdraw      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.exemptions            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.advance_payments      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs                  ENABLE ROW LEVEL SECURITY;
@@ -58,7 +59,7 @@ BEGIN
             'water_bills','electric_bills','water_rates',
             'outstanding','slip_submissions','payment_history',
             'notifications','requests','queue',
-            'accounting_entries','monthly_withdraw','exemptions',
+            'accounting_entries','monthly_withdraw','exemptions','advance_payments',
             'settings','announcements','logs','password_resets',
             'payment_proxies','data_backups'
         ])
@@ -142,6 +143,9 @@ CREATE POLICY "anon_all_withdraw" ON public.monthly_withdraw FOR ALL TO anon USI
 
 -- ── exemptions ──
 CREATE POLICY "anon_all_exemptions" ON public.exemptions FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- ── advance_payments ──
+CREATE POLICY "anon_all_advance_payments" ON public.advance_payments FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- ── settings (ซ่อน API keys จาก anon read) ──
 CREATE POLICY "anon_read_settings" ON public.settings FOR SELECT TO anon

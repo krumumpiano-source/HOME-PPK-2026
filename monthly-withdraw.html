@@ -463,10 +463,91 @@
                 • ค่าเดินทาง: ค่าดำเนินการเดินทางของคณะกรรมการ (กรอกจำนวนเงินได้)
             </div>
         </div>
+
+        <!-- ═══ ส่วนแหล่งเงิน / สำรองจ่าย ═══ -->
+        <div class="section" id="advanceSection">
+            <div class="section-title">💰 แหล่งเงินจ่ายประจำเดือน</div>
+            
+            <!-- เลือกแหล่งเงิน -->
+            <div style="margin-bottom:1rem;padding:0.8rem;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;">
+                <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;cursor:pointer;">
+                    <input type="radio" name="fundSource" value="bank" checked onchange="toggleAdvanceForm()">
+                    <span>🏦 ถอนจากธนาคาร (ปกติ)</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;cursor:pointer;">
+                    <input type="radio" name="fundSource" value="advance" onchange="toggleAdvanceForm()">
+                    <span>🤝 สำรองจ่ายจากกรรมการ</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="radio" name="fundSource" value="mixed" onchange="toggleAdvanceForm()">
+                    <span>🔀 ผสม (ถอน + สำรอง + เงินสดคงเหลือ)</span>
+                </label>
+            </div>
+
+            <!-- ฟอร์มบันทึกสำรองจ่าย -->
+            <div id="advanceForm" style="display:none;">
+                <h4 style="margin:0.5rem 0;color:#78350f;">📝 บันทึกผู้สำรองจ่าย</h4>
+                <div id="advanceItemsContainer"></div>
+                <button class="add-item-btn" onclick="addAdvanceItem()" style="margin-top:0.5rem;">
+                    ➕ เพิ่มผู้สำรองจ่าย
+                </button>
+
+                <!-- เงินสดคงเหลือจากการถอนครั้งก่อน -->
+                <div id="remainingCashForm" style="margin-top:1rem;padding:0.8rem;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                        <input type="checkbox" id="useRemainingCash" onchange="toggleRemainingCash()">
+                        <span style="font-weight:600;">💵 ใช้เงินสดคงเหลือจากการถอนครั้งก่อน</span>
+                    </label>
+                    <div id="remainingCashInputs" style="display:none;margin-top:0.5rem;">
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                            <input type="number" id="remainingCashAmount" placeholder="จำนวนเงิน" min="0" step="100"
+                                   style="width:120px;padding:0.4rem;border-radius:6px;border:1px solid #86efac;">
+                            <input type="text" id="remainingCashNote" placeholder="ที่มา เช่น เหลือจากถอน 15,000 เปลี่ยนมิเตอร์"
+                                   style="flex:1;min-width:200px;padding:0.4rem;border-radius:6px;border:1px solid #86efac;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ตารางสำรองจ่ายที่บันทึกแล้ว -->
+            <div id="advanceSavedList" style="display:none;margin-top:1rem;">
+                <h4 style="margin:0.5rem 0;color:#78350f;">📋 รายการสำรองจ่ายที่บันทึกแล้ว</h4>
+                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                    <thead>
+                        <tr style="background:#fef3c7;">
+                            <th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">ชื่อ</th>
+                            <th style="padding:0.4rem;border:1px solid #fde68a;">ประเภท</th>
+                            <th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">สำรอง</th>
+                            <th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">คืนแล้ว</th>
+                            <th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">ค้างคืน</th>
+                            <th style="padding:0.4rem;border:1px solid #fde68a;">สถานะ</th>
+                            <th style="padding:0.4rem;border:1px solid #fde68a;" class="no-print">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="advanceSavedBody"></tbody>
+                    <tfoot>
+                        <tr style="background:#fffbeb;font-weight:600;">
+                            <td style="padding:0.4rem;border:1px solid #fde68a;" colspan="2">รวม</td>
+                            <td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;" id="advTotalAdvanced">0.00</td>
+                            <td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;" id="advTotalReimbursed">0.00</td>
+                            <td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;" id="advTotalPending">0.00</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- เงินสดคงเหลือ -->
+            <div id="cashOnHandCard" style="display:none;margin-top:1rem;padding:1rem;border-radius:12px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;">
+                <div style="font-weight:600;font-size:1.05rem;margin-bottom:0.5rem;">💰 สถานะเงินสดคงเหลือ</div>
+                <div id="cashOnHandContent" style="font-size:0.9rem;line-height:1.7;"></div>
+            </div>
+        </div>
         
         <!-- ปุ่มดำเนินการ -->
         <div class="section no-print" style="text-align:center;">
             <button class="btn" onclick="saveData()" style="margin-right:1rem;">💾 บันทึกข้อมูล</button>
+            <button class="btn" onclick="saveAdvanceItems()" id="btnSaveAdvance" style="margin-right:1rem;background:#d97706;display:none;">🤝 บันทึกสำรองจ่าย</button>
             <button class="btn print-btn" onclick="printMemo()">🖨️ พิมพ์รายงาน</button>
         </div>
 
@@ -611,6 +692,7 @@
             renderAdditionalItems();
             calculateTotal();
             loadMovedOutSummary();
+            loadAdvanceData();
         }
 
         // โหลดข้อมูลยอดค้างผู้ย้ายออก
@@ -732,6 +814,213 @@
             document.getElementById('travelGarbageDisplay').textContent = formatMoney(travelGarbage);
             document.getElementById('grandTotal').textContent = formatMoney(roundedTotal);
         }
+
+        // ═══ ระบบสำรองจ่าย / ทดรองจ่าย ═══
+        let advanceItems = []; // รายการ unsaved ที่กำลังกรอก
+
+        function toggleAdvanceForm() {
+            var src = document.querySelector('input[name="fundSource"]:checked').value;
+            var form = document.getElementById('advanceForm');
+            var advBtn = document.getElementById('btnSaveAdvance');
+            var showAdv = (src === 'advance' || src === 'mixed');
+            form.style.display = showAdv ? '' : 'none';
+            if (advBtn) advBtn.style.display = showAdv ? '' : 'none';
+        }
+
+        function toggleRemainingCash() {
+            var chk = document.getElementById('useRemainingCash').checked;
+            document.getElementById('remainingCashInputs').style.display = chk ? '' : 'none';
+        }
+
+        function addAdvanceItem() {
+            advanceItems.push({ person_name: '', amount: 0, purpose: '' });
+            renderAdvanceItems();
+        }
+
+        function removeAdvanceItem(index) {
+            advanceItems.splice(index, 1);
+            renderAdvanceItems();
+        }
+
+        function renderAdvanceItems() {
+            var container = document.getElementById('advanceItemsContainer');
+            container.innerHTML = '';
+            advanceItems.forEach(function(item, i) {
+                var div = document.createElement('div');
+                div.style.cssText = 'display:flex;gap:0.4rem;margin-bottom:0.4rem;flex-wrap:wrap;align-items:center;';
+                div.innerHTML =
+                    '<input type="text" placeholder="ชื่อกรรมการ" value="' + (item.person_name || '') + '" ' +
+                    'onchange="advanceItems[' + i + '].person_name=this.value" style="width:140px;padding:0.4rem;border-radius:6px;border:1px solid #fde68a;">' +
+                    '<input type="number" placeholder="จำนวนเงิน" value="' + (item.amount || '') + '" min="0" step="100" ' +
+                    'onchange="advanceItems[' + i + '].amount=parseFloat(this.value)||0" style="width:110px;padding:0.4rem;border-radius:6px;border:1px solid #fde68a;">' +
+                    '<input type="text" placeholder="วัตถุประสงค์ เช่น จ่ายค่าไฟ" value="' + (item.purpose || '') + '" ' +
+                    'onchange="advanceItems[' + i + '].purpose=this.value" style="flex:1;min-width:150px;padding:0.4rem;border-radius:6px;border:1px solid #fde68a;">' +
+                    '<button onclick="removeAdvanceItem(' + i + ')" style="background:#dc2626;color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:0.9rem;">×</button>';
+                container.appendChild(div);
+            });
+        }
+
+        async function saveAdvanceItems() {
+            var period = getPeriod().period;
+            var saved = 0;
+            // บันทึก committee advance items
+            for (var i = 0; i < advanceItems.length; i++) {
+                var it = advanceItems[i];
+                if (it.person_name && it.amount > 0) {
+                    await callBackend('saveAdvancePayment', {
+                        period: period,
+                        person_name: it.person_name,
+                        amount: it.amount,
+                        purpose: it.purpose || '',
+                        source_type: 'committee_advance'
+                    });
+                    saved++;
+                }
+            }
+            // บันทึก remaining cash ถ้าเลือก
+            var useRC = document.getElementById('useRemainingCash').checked;
+            if (useRC) {
+                var rcAmt = parseFloat(document.getElementById('remainingCashAmount').value) || 0;
+                var rcNote = document.getElementById('remainingCashNote').value || '';
+                if (rcAmt > 0) {
+                    await callBackend('saveAdvancePayment', {
+                        period: period,
+                        person_name: rcNote || 'เงินสดคงเหลือ',
+                        amount: rcAmt,
+                        purpose: rcNote,
+                        source_type: 'remaining_cash'
+                    });
+                    saved++;
+                }
+            }
+            if (saved > 0) {
+                advanceItems = [];
+                renderAdvanceItems();
+                document.getElementById('useRemainingCash').checked = false;
+                document.getElementById('remainingCashInputs').style.display = 'none';
+                document.getElementById('remainingCashAmount').value = '';
+                document.getElementById('remainingCashNote').value = '';
+                await loadAdvanceData();
+                await ppkAlert('บันทึกสำรองจ่าย ' + saved + ' รายการสำเร็จ ✅', { type: 'success', title: 'บันทึกสำเร็จ' });
+            } else {
+                await ppkAlert('กรุณากรอกชื่อและจำนวนเงินอย่างน้อย 1 รายการ', { type: 'warning', title: 'ไม่มีรายการ' });
+            }
+        }
+
+        async function loadAdvanceData() {
+            var period = getPeriod().period;
+            try {
+                var [advResult, cohResult] = await Promise.all([
+                    callBackend('getAdvancePayments', { period: period }),
+                    callBackend('getCashOnHand', { period: period })
+                ]);
+                renderAdvanceSavedList(advResult && advResult.data || []);
+                renderCashOnHand(cohResult && cohResult.data || {});
+            } catch(e) {
+                console.error('loadAdvanceData error:', e);
+            }
+        }
+
+        function renderAdvanceSavedList(rows) {
+            var tbody = document.getElementById('advanceSavedBody');
+            var section = document.getElementById('advanceSavedList');
+            if (!rows || rows.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = '';
+            var totalAdv = 0, totalReimb = 0;
+            tbody.innerHTML = '';
+            rows.forEach(function(r) {
+                var amt = parseFloat(r.amount) || 0;
+                var reimb = parseFloat(r.reimbursed_amount) || 0;
+                var pending = amt - reimb;
+                totalAdv += amt;
+                totalReimb += reimb;
+                var statusIcon = r.status === 'reimbursed' ? '<span style="color:#10b981;">🟢 คืนครบ</span>' :
+                                 r.status === 'partial' ? '<span style="color:#f59e0b;">🟡 คืนบางส่วน</span>' :
+                                 '<span style="color:#ef4444;">🔴 ค้างคืน</span>';
+                var srcLabel = r.source_type === 'remaining_cash' ? '💵 เงินสดเหลือ' : '🤝 กรรมการ';
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;">' + (r.person_name || '-') + (r.purpose ? '<br><small style="color:#999;">' + r.purpose + '</small>' : '') + '</td>' +
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;font-size:0.82rem;">' + srcLabel + '</td>' +
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(amt) + '</td>' +
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(reimb) + '</td>' +
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:' + (pending > 0 ? '#dc2626' : '#10b981') + ';">' + formatMoney(pending) + '</td>' +
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;">' + statusIcon + '</td>' +
+                    '<td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;" class="no-print">' +
+                    (r.status !== 'reimbursed' ? '<button onclick="openReimburseModal(\'' + r.id + '\',' + amt + ',' + reimb + ',\'' + (r.person_name||'').replace(/'/g,"\\'") + '\')" style="background:#059669;color:#fff;border:none;border-radius:6px;padding:0.25rem 0.6rem;font-size:0.8rem;cursor:pointer;">คืนเงิน</button> ' : '') +
+                    (r.status === 'pending' ? '<button onclick="deleteAdvance(\'' + r.id + '\')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:0.25rem 0.5rem;font-size:0.8rem;cursor:pointer;">ลบ</button>' : '') +
+                    '</td>';
+                tbody.appendChild(tr);
+            });
+            document.getElementById('advTotalAdvanced').textContent = formatMoney(totalAdv);
+            document.getElementById('advTotalReimbursed').textContent = formatMoney(totalReimb);
+            document.getElementById('advTotalPending').textContent = formatMoney(totalAdv - totalReimb);
+        }
+
+        function renderCashOnHand(data) {
+            var card = document.getElementById('cashOnHandCard');
+            var content = document.getElementById('cashOnHandContent');
+            if (!data || !data.totalIncome) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = '';
+            var html = '<div style="display:grid;grid-template-columns:1fr auto;gap:0.2rem 1rem;">';
+            html += '<span>รายรับสะสม:</span><span style="text-align:right;font-weight:600;color:#059669;">+' + formatMoney(data.totalIncome) + '</span>';
+            html += '<span>รายจ่ายสะสม:</span><span style="text-align:right;font-weight:600;color:#dc2626;">-' + formatMoney(data.totalExpense) + '</span>';
+            html += '<span style="border-top:1px solid #86efac;padding-top:0.3rem;">เงินสดคงเหลือ:</span><span style="text-align:right;font-weight:700;font-size:1.1rem;color:#065f46;border-top:1px solid #86efac;padding-top:0.3rem;">' + formatMoney(data.cashOnHand) + ' บาท</span>';
+            if (data.pendingReimburse > 0) {
+                html += '<span style="color:#dc2626;">⚠️ ค้างคืนกรรมการ:</span><span style="text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(data.pendingReimburse) + ' บาท</span>';
+            }
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        async function openReimburseModal(id, totalAmt, alreadyReimbursed, personName) {
+            var remaining = totalAmt - alreadyReimbursed;
+            var amtStr = prompt('คืนเงินให้ ' + personName + '\nค้างคืน: ' + formatMoney(remaining) + ' บาท\n\nกรอกจำนวนที่คืน:', remaining);
+            if (amtStr === null) return;
+            var amt = parseFloat(amtStr) || 0;
+            if (amt <= 0 || amt > remaining) {
+                await ppkAlert('จำนวนไม่ถูกต้อง (1 - ' + formatMoney(remaining) + ')', { type: 'warning' });
+                return;
+            }
+            var note = prompt('หมายเหตุ (ไม่บังคับ):', '') || '';
+            try {
+                var result = await callBackend('reimburseAdvance', {
+                    id: id,
+                    reimbursed_amount: amt,
+                    reimbursed_note: note,
+                    approved_by: (window._currentUser && window._currentUser.id) || null
+                });
+                if (result && result.success) {
+                    await ppkAlert('คืนเงินสำเร็จ ✅', { type: 'success', title: 'สำเร็จ' });
+                    await loadAdvanceData();
+                } else {
+                    await ppkAlert('เกิดข้อผิดพลาด: ' + ((result && result.error) || ''), { type: 'error' });
+                }
+            } catch(e) {
+                await ppkAlert('คืนเงินไม่สำเร็จ: ' + e.message, { type: 'error' });
+            }
+        }
+
+        async function deleteAdvance(id) {
+            if (!confirm('ต้องการลบรายการสำรองจ่ายนี้?')) return;
+            try {
+                var result = await callBackend('deleteAdvancePayment', { id: id });
+                if (result && result.success) {
+                    await ppkAlert('ลบรายการสำเร็จ', { type: 'success' });
+                    await loadAdvanceData();
+                } else {
+                    await ppkAlert('ลบไม่สำเร็จ: ' + ((result && result.error) || ''), { type: 'error' });
+                }
+            } catch(e) {
+                await ppkAlert('ลบไม่สำเร็จ: ' + e.message, { type: 'error' });
+            }
+        }
         
         // บันทึกข้อมูล
         async function saveData() {
@@ -771,6 +1060,13 @@
                 });
                 if (result && result.success) {
                     localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
+                    // บันทึกสำรองจ่าย (ถ้ามี)
+                    var hasAdvanceItems = advanceItems.some(function(it) { return it.person_name && it.amount > 0; });
+                    var hasRemainingCash = document.getElementById('useRemainingCash').checked && (parseFloat(document.getElementById('remainingCashAmount').value) || 0) > 0;
+                    if (hasAdvanceItems || hasRemainingCash) {
+                        await saveAdvanceItems();
+                    }
+                    await loadAdvanceData();
                     await ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว! ✅', { type: 'success', title: 'บันทึกสำเร็จ' });
                 } else {
                     await ppkAlert('เกิดข้อผิดพลาด: ' + ((result && (result.message || result.error)) || 'ไม่ทราบสาเหตุ'), { type: 'error', title: 'บันทึกไม่สำเร็จ' });
@@ -876,7 +1172,26 @@
             '<table><thead><tr><th style="width:10%;">ลำดับ</th><th>รายการ</th><th style="width:25%;">จำนวนเงิน (บาท)</th></tr></thead>' +
             '<tbody>' + tableRows + '</tbody>' +
             '<tfoot><tr class="total-row"><td colspan="2" style="text-align:center;">รวมยอดเบิกทั้งสิ้น</td><td style="text-align:right;">' + formatMoney(grandTotal) + '</td></tr></tfoot>' +
-            '</table>' +
+            '</table>';
+
+            // เพิ่มส่วนแหล่งเงิน ถ้ามีสำรองจ่าย
+            var fundSource = document.querySelector('input[name="fundSource"]:checked');
+            var fundVal = fundSource ? fundSource.value : 'bank';
+            var advSavedBody = document.getElementById('advanceSavedBody');
+            if (fundVal !== 'bank' && advSavedBody && advSavedBody.rows.length > 0) {
+                html += '<div style="margin:12px 0 0 0;font-weight:bold;font-size:15pt;">แหล่งเงินที่ใช้จ่าย:</div>';
+                html += '<table><thead><tr><th style="width:10%;">ลำดับ</th><th>ผู้สำรองจ่าย / แหล่งเงิน</th><th style="width:25%;">จำนวนเงิน (บาท)</th></tr></thead><tbody>';
+                var advRows = document.querySelectorAll('#advanceSavedBody tr');
+                for (var ari = 0; ari < advRows.length; ari++) {
+                    var cells = advRows[ari].querySelectorAll('td');
+                    if (cells.length >= 3) {
+                        html += '<tr><td style="text-align:center;">' + (ari+1) + '</td><td>' + (cells[0].textContent || '').trim() + '</td><td style="text-align:right;">' + (cells[2].textContent || '').trim() + '</td></tr>';
+                    }
+                }
+                html += '</tbody></table>';
+            }
+
+            html +=
             '<div style="margin:12px 0 0 0;text-indent:2.5cm;">จึงเรียนมาเพื่อโปรดพิจารณาอนุมัติ</div>' +
             '<div class="signature-section">' +
             '<div class="signature-box"><div class="signature-line">ลงชื่อ.....................................<br>(..............................................)<br>ผู้จัดทำ / เหรัญญิก</div></div>' +
