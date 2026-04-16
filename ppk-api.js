@@ -1482,14 +1482,16 @@ async function _routeAction(action, data) {
 
         /* ── สำรองจ่าย / ทดรองจ่าย ─────────────────────── */
         case 'saveAdvancePayment': {
+            var apStatus = (data.source_type === 'bank_transfer') ? 'reimbursed' : 'pending';
+            var apReimbAmt = (data.source_type === 'bank_transfer') ? (parseFloat(data.amount) || 0) : 0;
             var row = await sbPost('advance_payments', {
                 period: data.period,
                 person_name: data.person_name,
                 amount: parseFloat(data.amount) || 0,
                 purpose: data.purpose || '',
                 source_type: data.source_type || 'committee_advance',
-                status: 'pending',
-                reimbursed_amount: 0,
+                status: apStatus,
+                reimbursed_amount: apReimbAmt,
                 recorded_by: data.recorded_by || null
             });
             try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync advance error', e); }
@@ -1538,12 +1540,13 @@ async function _routeAction(action, data) {
             var [incAll, expAll, advAll] = await Promise.all([
                 sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.income', select: 'amount' }).catch(function() { return []; }),
                 sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.expense', select: 'amount' }).catch(function() { return []; }),
-                sbGet('advance_payments', { period: 'lte.' + period, select: 'amount,reimbursed_amount,status' }).catch(function() { return []; })
+                sbGet('advance_payments', { period: 'lte.' + period, select: 'amount,reimbursed_amount,status,source_type' }).catch(function() { return []; })
             ]);
             var totalIncome = (incAll || []).reduce(function(s,r) { return s + (parseFloat(r.amount) || 0); }, 0);
             var totalExpense = (expAll || []).reduce(function(s,r) { return s + (parseFloat(r.amount) || 0); }, 0);
             var totalAdvanced = 0, totalReimbursed = 0;
             (advAll || []).forEach(function(a) {
+                if (a.source_type === 'bank_transfer') return; // ไม่นับเงินจากบัญชีฝากจ่าย
                 totalAdvanced += parseFloat(a.amount) || 0;
                 totalReimbursed += parseFloat(a.reimbursed_amount) || 0;
             });
@@ -5048,11 +5051,12 @@ async function _autoSyncAccounting(period) {
         (advRows || []).forEach(function(adv) {
             var advAmt = parseFloat(adv.amount) || 0;
             var advReimb = parseFloat(adv.reimbursed_amount) || 0;
-            var srcLabel = adv.source_type === 'remaining_cash' ? 'เงินสดคงเหลือ' : 'สำรองจ่าย';
+            var srcLabel = adv.source_type === 'bank_transfer' ? 'เงินจากบัญชีฝากจ่าย' : 'สำรองจ่าย';
             if (advAmt > 0) {
-                _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: srcLabel + 'จาก ' + (adv.person_name || '-') + (adv.purpose ? ' (' + adv.purpose + ')' : ''), amount: advAmt, recorded_at: ts });
+                _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'income', category: 'auto', description: srcLabel + (adv.source_type !== 'bank_transfer' ? 'จาก ' : '') + (adv.person_name || '-') + (adv.purpose ? ' (' + adv.purpose + ')' : ''), amount: advAmt, recorded_at: ts });
             }
-            if (advReimb > 0) {
+            // เงินจากบัญชีฝากจ่ายไม่ต้องคืน — สร้าง entry คืนเฉพาะกรรมการสำรอง
+            if (advReimb > 0 && adv.source_type !== 'bank_transfer') {
                 _autoEntries.push({ period: period, year: pYear, month: pMonth, type: 'expense', category: 'auto', description: 'คืนเงิน' + srcLabel + ' ' + (adv.person_name || '-'), amount: advReimb, recorded_at: ts });
             }
         });

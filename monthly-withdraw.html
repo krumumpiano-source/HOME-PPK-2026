@@ -480,7 +480,7 @@
                 </label>
                 <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
                     <input type="radio" name="fundSource" value="mixed" onchange="toggleAdvanceForm()">
-                    <span>🔀 ผสม (ถอน + สำรอง + เงินสดคงเหลือ)</span>
+                    <span>🔀 ผสม (ถอน + สำรอง + เงินจากบัญชีฝากจ่าย)</span>
                 </label>
             </div>
 
@@ -492,17 +492,17 @@
                     ➕ เพิ่มผู้สำรองจ่าย
                 </button>
 
-                <!-- เงินสดคงเหลือจากการถอนครั้งก่อน -->
+                <!-- เงินจากบัญชีธนาคารฝากจ่าย -->
                 <div id="remainingCashForm" style="margin-top:1rem;padding:0.8rem;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;">
                     <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
                         <input type="checkbox" id="useRemainingCash" onchange="toggleRemainingCash()">
-                        <span style="font-weight:600;">💵 ใช้เงินสดคงเหลือจากการถอนครั้งก่อน</span>
+                        <span style="font-weight:600;">🏦 ใช้เงินจากบัญชีธนาคาร (บัญชีรับเงินฝากจ่าย)</span>
                     </label>
                     <div id="remainingCashInputs" style="display:none;margin-top:0.5rem;">
                         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
                             <input type="number" id="remainingCashAmount" placeholder="จำนวนเงิน" min="0" step="100"
                                    style="width:120px;padding:0.4rem;border-radius:6px;border:1px solid #86efac;">
-                            <input type="text" id="remainingCashNote" placeholder="ที่มา เช่น เหลือจากถอน 15,000 เปลี่ยนมิเตอร์"
+                            <input type="text" id="remainingCashNote" placeholder="หมายเหตุ เช่น โอนจากบัญชีฝากจ่ายแทนการถอนกองกลาง"
                                    style="flex:1;min-width:200px;padding:0.4rem;border-radius:6px;border:1px solid #86efac;">
                         </div>
                     </div>
@@ -950,10 +950,10 @@
                 if (rcAmt > 0) {
                     await callBackend('saveAdvancePayment', {
                         period: period,
-                        person_name: rcNote || 'เงินสดคงเหลือ',
+                        person_name: rcNote || 'เงินจากบัญชีฝากจ่าย',
                         amount: rcAmt,
                         purpose: rcNote,
-                        source_type: 'remaining_cash'
+                        source_type: 'bank_transfer'
                     });
                     saved++;
                 }
@@ -1002,10 +1002,11 @@
                 var pending = amt - reimb;
                 totalAdv += amt;
                 totalReimb += reimb;
-                var statusIcon = r.status === 'reimbursed' ? '<span style="color:#10b981;">🟢 คืนครบ</span>' :
+                var statusIcon = r.source_type === 'bank_transfer' ? '<span style="color:#3b82f6;">🏦 ไม่ต้องคืน</span>' :
+                                 r.status === 'reimbursed' ? '<span style="color:#10b981;">🟢 คืนครบ</span>' :
                                  r.status === 'partial' ? '<span style="color:#f59e0b;">🟡 คืนบางส่วน</span>' :
                                  '<span style="color:#ef4444;">🔴 ค้างคืน</span>';
-                var srcLabel = r.source_type === 'remaining_cash' ? '💵 เงินสดเหลือ' : '🤝 กรรมการ';
+                var srcLabel = r.source_type === 'bank_transfer' ? '🏦 บัญชีฝากจ่าย' : '🤝 กรรมการ';
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td style="padding:0.35rem;border:1px solid #fde68a;">' + (r.person_name || '-') + (r.purpose ? '<br><small style="color:#999;">' + r.purpose + '</small>' : '') + '</td>' +
