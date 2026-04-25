@@ -288,10 +288,16 @@ CREATE POLICY "exemptions_delete" ON public.exemptions FOR DELETE TO anon USING 
 -- pw_reset_* / must_change_pw_* เปิดให้ anon: forgot password + first login flow
 CREATE POLICY "settings_select" ON public.settings FOR SELECT TO anon USING (key NOT LIKE 'resend_api%');
 CREATE POLICY "settings_insert" ON public.settings FOR INSERT TO anon
-    WITH CHECK (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%');
+    WITH CHECK (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%'
+        OR (key LIKE 'electric_lost_%' AND public.has_permission(ARRAY['electric']))
+        OR (key LIKE 'monthly_withdraw_%' AND public.has_permission(ARRAY['withdraw'])));
 CREATE POLICY "settings_update" ON public.settings FOR UPDATE TO anon
-    USING (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%')
-    WITH CHECK (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%');
+    USING (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%'
+        OR (key LIKE 'electric_lost_%' AND public.has_permission(ARRAY['electric']))
+        OR (key LIKE 'monthly_withdraw_%' AND public.has_permission(ARRAY['withdraw'])))
+    WITH CHECK (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%'
+        OR (key LIKE 'electric_lost_%' AND public.has_permission(ARRAY['electric']))
+        OR (key LIKE 'monthly_withdraw_%' AND public.has_permission(ARRAY['withdraw'])));
 CREATE POLICY "settings_delete" ON public.settings FOR DELETE TO anon
     USING (public.is_admin_session() OR key LIKE 'pw_reset_%' OR key LIKE 'must_change_pw_%');
 

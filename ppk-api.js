@@ -1201,7 +1201,7 @@ async function _routeAction(action, data) {
                         rounding_surplus: data.rounding_surplus || 0,
                         electric_diff: data.electric_diff || 0
                     });
-                    await sbUpsert('settings', { key: 'electric_lost_' + data.period, value: lostData }, 'key');
+                    try { await sbUpsert('settings', { key: 'electric_lost_' + data.period, value: lostData }, 'key'); } catch(e) { console.warn('settings upsert (electric_lost):', e); }
                 }
                 // Auto-sync บัญชี
                 try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
@@ -1474,7 +1474,7 @@ async function _routeAction(action, data) {
                 deferredItems: data.deferredItems || {},
                 savedAt: new Date().toISOString()
             });
-            await sbUpsert('settings', { key: swKey, value: swVal }, 'key');
+            try { await sbUpsert('settings', { key: swKey, value: swVal }, 'key'); } catch(e) { console.warn('settings upsert (monthly_withdraw):', e); }
             // sync ค่าใช้จ่ายไปยังบัญชีกองกลางอัตโนมัติ
             try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
             return { success: true };
