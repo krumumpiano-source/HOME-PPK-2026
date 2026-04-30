@@ -482,8 +482,18 @@
     <script src="ppk-pwa.js?v=20260416C"></script>
     <script>
     // Load approvals after auth check
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(loadApprovals, 500);
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            var user = await checkSession(true);
+            if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+                if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+                window.location.replace('dashboard.html');
+                return;
+            }
+            loadApprovals();
+        } catch(e) {
+            console.error('check-report init error', e);
+        }
     });
     </script>
 </body>
