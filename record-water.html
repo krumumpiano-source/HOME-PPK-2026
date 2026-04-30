@@ -722,7 +722,7 @@
                     '<td>' + _eRw(item.houseNum) + '</td>' +
                     '<td>' + _eRw(item.residentName) + '</td>' +
                     '<td><input type="number" class="prev-meter" value="' + prevMeter + '" ' + prevAttrs + '></td>' +
-                    '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" onchange="calculateRow(this)"></td>' +
+                    '<td><input type="number" class="curr-meter" value="' + currMeter + '" placeholder="กรอกเลขมิเตอร์" oninput="calculateRow(this)" onchange="calculateRow(this)"></td>' +
                     '<td class="td-override" style="text-align:center"><input type="number" class="units-override" value="' + unitsOverride + '" min="0" placeholder="-" title="กรอกเฉพาะกรณีเปลี่ยนมิเตอร์กลางเดือน (หน่วยมิเตอรเดิม + หน่วยมิเตอรใหม่)" onchange="calculateRow(this)" style="width:70px;border-color:#f59e0b;background:#fffbeb;"></td>' +
                     '<td class="usage-value" style="text-align:right">0</td>' +
                     '<td class="amount-value" style="text-align:right">0</td>';
@@ -843,6 +843,7 @@
             const rate = document.getElementById('water_rate').value;
             
             if (!rate || parseFloat(rate) <= 0) {
+                _isSaving = false;
                 ppkAlert('⚠️ กรุณาตั้งค่าอัตราค่าน้ำก่อนบันทึก');
                 return;
             }
@@ -898,6 +899,7 @@
                     console.error('Save error:', e);
                     await ppkAlert('บันทึกลงฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต\n(' + (e.message || e) + ')', { type: 'error', title: 'เชื่อมต่อล้มเหลว' });
                     _isSaving = false;
+                    return;
                 }
 
             // Fallback: บันทึกลง localStorage
