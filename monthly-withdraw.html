@@ -437,8 +437,16 @@
                     </tr>
                 </tbody>
                 <tfoot>
+                    <tr id="currentMonthSubtotalRow" style="display:none;background:#eff6ff;">
+                        <td style="font-weight:600;color:#1e40af;">📅 ยอดเดือนปัจจุบัน</td>
+                        <td class="amount" id="currentMonthSubtotal" style="color:#1e40af;">0.00</td>
+                    </tr>
+                    <tr id="carryOverSubtotalRow" style="display:none;background:#fef3c7;">
+                        <td style="font-weight:600;color:#92400e;">📌 ยอดค้างจากเดือนก่อน</td>
+                        <td class="amount" id="carryOverSubtotal" style="color:#92400e;">+0.00</td>
+                    </tr>
                     <tr class="total-row">
-                        <td>💵 ยอดเบิกจากธนาคาร (จำนวนเต็ม)</td>
+                        <td id="grandTotalLabel">💵 ยอดเบิกจากธนาคาร (จำนวนเต็ม)</td>
                         <td class="amount" id="grandTotal" style="color:#fff;">0</td>
                     </tr>
                 </tfoot>
@@ -467,10 +475,15 @@
         <!-- ═══ ยอดค้างจากเดือนก่อน ═══ -->
         <div class="section" id="carryOverSection" style="display:none;">
             <div class="section-title">📌 ยอดค้างจากเดือนก่อน</div>
+            <div style="margin-bottom:0.6rem;padding:0.7rem 0.8rem;border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe;font-size:0.85rem;color:#1e3a8a;line-height:1.6;">
+                <strong>📖 ยอดค้าง คืออะไร?</strong> มี 2 ประเภทรวมกัน:<br>
+                • <strong>⏳ รายการเลื่อนชำระ</strong> = ค่าน้ำ/ค่าไฟเดือนก่อนที่ยังไม่ได้เบิกออกจากธนาคาร<br>
+                • <strong>🤝 สำรองจ่ายค้างคืน</strong> = เงินที่กรรมการสำรองจ่ายไปก่อน ยังไม่ได้รับเงินคืน
+            </div>
             <div style="margin-bottom:0.5rem;padding:0.6rem;border-radius:8px;background:#fef3c7;border:1px solid #fde68a;font-size:0.88rem;">
-                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                    <input type="checkbox" id="includeCarryOver" checked onchange="calculateTotal()">
-                    <span><strong>รวมยอดค้างเข้ายอดเบิกเดือนนี้</strong> (ถ้าไม่ติ๊ก = เบิกเฉพาะเดือนนี้ แล้วค่อยเบิกค้างทีหลัง)</span>
+                <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" id="includeCarryOver" checked onchange="calculateTotal()" style="margin-top:0.2rem;">
+                    <span><strong>✅ รวมยอดค้างเข้ายอดเบิกเดือนนี้</strong><br><span style="font-size:0.82rem;color:#92400e;">ถ้าไม่ติ๊ก = เบิกเฉพาะเดือนนี้ก่อน แล้วค่อยเบิกยอดค้างทีหลัง (กดปุ่ม 🖨️ พิมพ์เบิกเฉพาะยอดค้าง)</span></span>
                 </label>
             </div>
             <div id="carryOverContent"></div>
@@ -965,6 +978,26 @@
             document.getElementById('travelElectricDisplay').textContent = formatMoney(travelElectric);
             document.getElementById('travelGarbageDisplay').textContent = formatMoney(travelGarbage);
             document.getElementById('grandTotal').textContent = formatMoney(roundedTotal);
+
+            // แสดง breakdown: ยอดเดือนปัจจุบัน vs ยอดค้าง (เมื่อมียอดค้างที่ติ๊กรวม)
+            var curRow = document.getElementById('currentMonthSubtotalRow');
+            var carryRow = document.getElementById('carryOverSubtotalRow');
+            var grandLabel = document.getElementById('grandTotalLabel');
+            if (carryAmt > 0) {
+                if (curRow) {
+                    curRow.style.display = '';
+                    document.getElementById('currentMonthSubtotal').textContent = formatMoney(rawTotal);
+                }
+                if (carryRow) {
+                    carryRow.style.display = '';
+                    document.getElementById('carryOverSubtotal').textContent = '+' + formatMoney(carryAmt);
+                }
+                if (grandLabel) grandLabel.textContent = '💵 รวมยอดเบิกทั้งหมด (จำนวนเต็ม)';
+            } else {
+                if (curRow) curRow.style.display = 'none';
+                if (carryRow) carryRow.style.display = 'none';
+                if (grandLabel) grandLabel.textContent = '💵 ยอดเบิกจากธนาคาร (จำนวนเต็ม)';
+            }
         }
 
         // ═══ ระบบสำรองจ่าย / ทดรองจ่าย ═══
@@ -1122,11 +1155,11 @@
             }
             card.style.display = '';
             var html = '<div style="display:grid;grid-template-columns:1fr auto;gap:0.2rem 1rem;">';
-            html += '<span>รายรับสะสม:</span><span style="text-align:right;font-weight:600;color:#059669;">+' + formatMoney(data.totalIncome) + '</span>';
-            html += '<span>รายจ่ายสะสม:</span><span style="text-align:right;font-weight:600;color:#dc2626;">-' + formatMoney(data.totalExpense) + '</span>';
-            html += '<span style="border-top:1px solid #86efac;padding-top:0.3rem;">เงินสดคงเหลือ:</span><span style="text-align:right;font-weight:700;font-size:1.1rem;color:#065f46;border-top:1px solid #86efac;padding-top:0.3rem;">' + formatMoney(data.cashOnHand) + ' บาท</span>';
+            html += '<span title="เงินที่เก็บได้จากผู้เช่าทั้งหมด (ค่าน้ำ+ค่าไฟ)">รายรับสะสม:</span><span style="text-align:right;font-weight:600;color:#059669;">+' + formatMoney(data.totalIncome) + '</span>';
+            html += '<span title="เงินที่จ่ายออกไปแล้วทั้งหมด (ค่าไฟการไฟฟ้า+ค่าขยะ+อื่นๆ)">รายจ่ายสะสม:</span><span style="text-align:right;font-weight:600;color:#dc2626;">-' + formatMoney(data.totalExpense) + '</span>';
+            html += '<span style="border-top:1px solid #86efac;padding-top:0.3rem;" title="รายรับ − รายจ่าย = เงินที่ระบบคำนวณว่ามีอยู่จริง">💰 เงินสดคงเหลือ:</span><span style="text-align:right;font-weight:700;font-size:1.1rem;color:#065f46;border-top:1px solid #86efac;padding-top:0.3rem;">' + formatMoney(data.cashOnHand) + ' บาท</span>';
             if (data.pendingReimburse > 0) {
-                html += '<span style="color:#dc2626;">⚠️ ค้างคืนกรรมการ:</span><span style="text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(data.pendingReimburse) + ' บาท</span>';
+                html += '<span style="color:#dc2626;" title="จากเงินสดคงเหลือข้างบน มีส่วนนี้ที่ต้องคืนกรรมการที่สำรองจ่าย — กดปุ่ม คืนเงิน ในตารางสำรองจ่ายด้านบน">⚠️ ค้างคืนกรรมการ <span style="font-size:0.8rem;opacity:0.7;">(ℹ️ hover เพื่อดูคำอธิบาย)</span>:</span><span style="text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(data.pendingReimburse) + ' บาท</span>';
             }
             html += '</div>';
             content.innerHTML = html;
