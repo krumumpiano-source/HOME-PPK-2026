@@ -316,10 +316,9 @@
                             <div class="hero-label">💳 ยอดชำระเดือนนี้</div>
                             <div class="hero-amount" id="currentMonthAmount">—</div>
                             <div id="heroBillBreakdown" class="hero-breakdown" style="display:none;">
-                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val" id="hbWater">—</span></div>
-                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val" id="hbElectric">—</span></div>
+                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ<span id="hbWaterDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbWater">—</span></div>
+                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ<span id="hbElectricDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbElectric">—</span></div>
                                 <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val" id="hbCommon">—</span></div>
-                                <div class="hb-item" id="hbMeterDateRow" style="display:none;"><span style="width:8px;flex-shrink:0;"></span><span class="hb-label" style="opacity:0.75;">📅 จดมิเตอร์เมื่อ</span><span class="hb-val" id="hbMeterDate" style="font-weight:500;">—</span></div>
                             </div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
@@ -528,16 +527,23 @@
                     document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' บาท';
                     document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' บาท';
                     document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' บาท';
-                    // วันที่จดมิเตอร์ — ใช้วันที่น้ำหรือไฟ (อย่างใดก็ได้)
-                    var _mDate = data.waterReadDate || data.electricReadDate || null;
-                    var _mDateRow = document.getElementById('hbMeterDateRow');
-                    if (_mDate && _mDateRow) {
-                        var _md = new Date(_mDate + 'T00:00:00');
-                        var _mdStr = _md.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-                        document.getElementById('hbMeterDate').textContent = _mdStr;
-                        _mDateRow.style.display = '';
-                    } else if (_mDateRow) {
-                        _mDateRow.style.display = 'none';
+                    // วันที่จดมิเตอร์ — แสดงในวงเล็บต่อท้ายค่าน้ำและค่าไฟ
+                    function _fmtReadDate(d) {
+                        if (!d) return null;
+                        var _dt = new Date(d + 'T00:00:00');
+                        return _dt.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+                    }
+                    var _wdEl = document.getElementById('hbWaterDate');
+                    var _edEl = document.getElementById('hbElectricDate');
+                    if (_wdEl) {
+                        var _wds = _fmtReadDate(data.waterReadDate);
+                        if (_wds) { _wdEl.textContent = ' (จดมิเตอร์เมื่อ ' + _wds + ')'; _wdEl.style.display = ''; }
+                        else { _wdEl.style.display = 'none'; }
+                    }
+                    if (_edEl) {
+                        var _eds = _fmtReadDate(data.electricReadDate);
+                        if (_eds) { _edEl.textContent = ' (จดมิเตอร์เมื่อ ' + _eds + ')'; _edEl.style.display = ''; }
+                        else { _edEl.style.display = 'none'; }
                     }
                 } else {
                     bdEl.style.display = 'none';
