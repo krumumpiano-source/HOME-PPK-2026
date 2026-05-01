@@ -584,13 +584,17 @@
                     const result = await callBackend('getWaterBills', { period });
                     if (result && result.success && result.data && result.data.length > 0) {
                         const map = {};
+                        // ORDER BY recorded_at DESC → record แรกต่อบ้านคือล่าสุด
+                        // ใช้ if(!map[key]) เพื่อป้องกัน record เก่า (ซ้ำจากบัค RLS delete) เขียนทับค่าใหม่
                         result.data.forEach(r => {
-                            map[r.house_number || r.house] = {
-                                prevMeter: parseInt(r.prev_meter || r.prevMeter) || 0,
-                                currMeter: parseInt(r.curr_meter || r.currMeter) || 0,
-                                unitsOverride: r.units_override != null ? parseFloat(r.units_override) : null,
-
-                            };
+                            const key = r.house_number || r.house;
+                            if (!map[key]) {
+                                map[key] = {
+                                    prevMeter: parseInt(r.prev_meter || r.prevMeter) || 0,
+                                    currMeter: parseInt(r.curr_meter || r.currMeter) || 0,
+                                    unitsOverride: r.units_override != null ? parseFloat(r.units_override) : null,
+                                };
+                            }
                         });
                         return map;
                     }
@@ -888,6 +892,7 @@
                         _invalidateBillCache('getWaterBills', waterData.period);
                         await ppkAlert('บันทึกข้อมูลค่าน้ำเรียบร้อยแล้ว!', { type: 'success', title: 'บันทึกสำเร็จ' });
                         _isSaving = false;
+                        renderResidentsTable(); // โหลดข้อมูลจาก DB ใหม่เพื่อยืนยันการบันทึก
                         return;
                     } else {
                         await ppkAlert('บันทึกไม่สำเร็จ: ' + (result ? result.error : 'ไม่ทราบสาเหตุ'), { type: 'error', title: 'เกิดข้อผิดพลาด' });
