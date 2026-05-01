@@ -2351,7 +2351,25 @@ async function _routeAction(action, data) {
                     var adminOutRows = adminResults[4] || [];
                     var adminSlipRows = adminResults[5] || [];
                     var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
+                    // Fix: แจ้งยอดช้าข้ามเดือน — ถ้าไม่มียอดเดือนนี้ ให้ดูงวดล่าสุดที่มี (≤1 เดือน)
+                    var _adminDisplayPeriod = adminPeriod;
+                    if (!adminCurrentOut && adminOutRows.length > 0) {
+                        var _aLast = adminOutRows[0];
+                        if (_aLast && _aLast.period) {
+                            var _aNY = now2.getFullYear() + 543, _aNM = now2.getMonth() + 1;
+                            var _aLP = _aLast.period.split('-');
+                            var _aMD = (_aNY * 12 + _aNM) - (parseInt(_aLP[0]) * 12 + parseInt(_aLP[1]));
+                            if (_aMD >= 0 && _aMD <= 1) { adminCurrentOut = _aLast; _adminDisplayPeriod = _aLast.period; }
+                        }
+                    }
                     var adminLatestSlip = adminSlipRows[0];
+                    // Re-fetch slips ถ้า period เปลี่ยนไปจาก adminPeriod
+                    if (_adminDisplayPeriod !== adminPeriod) {
+                        try {
+                            var _aNewSlips = await sbGet('slip_submissions', { house_number: 'eq.' + sessHouseNumber, period: 'eq.' + _adminDisplayPeriod, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
+                            adminLatestSlip = _aNewSlips && _aNewSlips[0];
+                        } catch(e) {}
+                    }
                     var adminSlipStatus = 'none';
                     var adminReviewNote = '';
                     if (adminLatestSlip) {
@@ -2361,12 +2379,12 @@ async function _routeAction(action, data) {
                     }
                     residentData = {
                         houseNumber: sessHouseNumber,
-                        period: adminPeriod,
+                        period: _adminDisplayPeriod,
                         currentAmount: adminCurrentOut ? parseFloat(adminCurrentOut.total_amount) || 0 : 0,
                         waterAmount: adminCurrentOut ? parseFloat(adminCurrentOut.water_amount) || 0 : 0,
                         electricAmount: adminCurrentOut ? parseFloat(adminCurrentOut.electric_amount) || 0 : 0,
                         commonFee: adminCurrentOut ? parseFloat(adminCurrentOut.common_fee) || 0 : 0,
-                        totalOutstanding: adminOutRows.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0),
+                        totalOutstanding: adminOutRows.reduce(function(s, r) { return s + (r.period !== _adminDisplayPeriod ? (parseFloat(r.total_amount) || 0) : 0); }, 0),
                         slipStatus: adminSlipStatus,
                         reviewNote: adminReviewNote,
                         slipId: adminLatestSlip ? adminLatestSlip.id : null,
@@ -2449,6 +2467,27 @@ async function _routeAction(action, data) {
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
+                // Fix: แจ้งยอดช้าข้ามเดือน (เช่น แจ้งยอดเมษาในวันที่ 1 พฤษภา)
+                // ถ้าไม่มียอดเดือนนี้ แต่งวดล่าสุดใน outRows คือเดือนก่อน (≤1 เดือน)
+                // → แสดงเป็น current แทนที่จะขึ้น "ยังไม่มียอดแจ้ง" + แบนเนอร์ค้างสะสม
+                if (!currentOut && outRows && outRows.length > 0) {
+                    var _latestOut = outRows[0]; // outRows เรียง period.desc → งวดล่าสุดก่อน
+                    if (_latestOut && _latestOut.period) {
+                        var _nYear = now2.getFullYear() + 543;
+                        var _nMonth = now2.getMonth() + 1;
+                        var _lp = _latestOut.period.split('-');
+                        var _lYear = parseInt(_lp[0]), _lMonth = parseInt(_lp[1]);
+                        var _mDiff = (_nYear * 12 + _nMonth) - (_lYear * 12 + _lMonth);
+                        if (_mDiff >= 0 && _mDiff <= 1) {
+                            currentOut = _latestOut;
+                            period = _latestOut.period;
+                            // ดึง slips ใหม่สำหรับ period จริง (ไม่ใช่เดือนปัจจุบัน)
+                            try {
+                                slipRows = await sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
+                            } catch(e) { slipRows = []; }
+                        }
+                    }
+                }
                 // Fallback: ถ้าไม่เจอใน outstanding ให้ดึงจาก notifications
                 var notifRow = null;
                 if (!currentOut && houseNumber) {
@@ -2467,8 +2506,10 @@ async function _routeAction(action, data) {
                     else if (latestSlip.status === 'rejected') { slipStatus = 'rejected'; reviewNote = latestSlip.review_note || ''; }
                     else slipStatus = 'reviewing';
                 }
+                // ยอดค้างสะสม = ยอดค้างทั้งหมด ยกเว้นงวดที่แสดงเป็น currentAmount แล้ว
+                // (เพื่อป้องกันยอดเดียวขึ้นซ้ำทั้ง hero card และแบนเนอร์ค้างสะสม)
                 var totalOutstanding = (outRows || []).reduce(function(s, r) {
-                    return s + (parseFloat(r.total_amount) || 0);
+                    return s + (r.period !== period ? (parseFloat(r.total_amount) || 0) : 0);
                 }, 0);
                 // ดึง proxy assignments ของ user นี้
                 var userProxyAssignments = [];
