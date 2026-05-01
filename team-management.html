@@ -1293,7 +1293,7 @@
         if (!confirmed) return;
 
         try {
-            var result = await callBackend('forceDeactivate', { userId: userId, waiveOutstanding: waive });
+            var result = await callBackend('forceDeactivateUser', { userId: userId, waiveOutstanding: waive });
             closeForceDeactivateModal();
             if (result && result.success) {
                 ppkAlert('✅ ปิดบัญชีเรียบร้อย');

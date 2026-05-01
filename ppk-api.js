@@ -466,7 +466,7 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser',
-    'reactivateResident','getMovedOutUsers','forceDeactivateUser','headReviewRequest'];
+    'reactivateResident','getMovedOutUsers','forceDeactivateUser','adminInitiatedReturn','headReviewRequest'];
 
 // ── Storage bucket helper: verify bucket exists ──
 var _bucketReady = {};
@@ -892,16 +892,90 @@ async function _routeAction(action, data) {
             var _fduSess = await _getSessionRole();
             if (!_fduSess || (_fduSess.role !== 'admin' && _fduSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _fduUserId = data.userId;
+            var _fduHouseNumber = '';
             if (!_fduUserId && data.residentId) {
                 var _fduResR = await sbGet('residents', { id: 'eq.' + data.residentId, select: 'user_id,house_number', limit: '1' }).catch(function() { return []; });
-                if (_fduResR && _fduResR[0]) { _fduUserId = _fduResR[0].user_id; }
+                if (_fduResR && _fduResR[0]) { _fduUserId = _fduResR[0].user_id; _fduHouseNumber = _fduResR[0].house_number || ''; }
+            }
+            // ถ้าต้องการยกหนี้ด้วย (waiveOutstanding)
+            if (data.waiveOutstanding && _fduHouseNumber) {
+                try {
+                    await sbPatch('outstanding', { house_number: 'eq.' + _fduHouseNumber, status: 'neq.paid' }, { status: 'waived', updated_at: new Date().toISOString() });
+                } catch(e) { console.warn('forceDeactivateUser waive outstanding:', e); }
+            } else if (data.waiveOutstanding && _fduUserId) {
+                // fallback ค้นหาจาก user_id
+                try {
+                    var _fduResAll = await sbGet('residents', { user_id: 'eq.' + _fduUserId, select: 'house_number', limit: '5' }).catch(function() { return []; });
+                    for (var _fi = 0; _fi < (_fduResAll || []).length; _fi++) {
+                        if (_fduResAll[_fi].house_number) {
+                            await sbPatch('outstanding', { house_number: 'eq.' + _fduResAll[_fi].house_number, status: 'neq.paid' }, { status: 'waived', updated_at: new Date().toISOString() }).catch(function() {});
+                        }
+                    }
+                } catch(e) {}
             }
             if (_fduUserId) {
                 await sbPatch('users', { id: 'eq.' + _fduUserId }, { is_active: false, updated_at: new Date().toISOString() });
                 try { await sbDelete('sessions', { user_id: 'eq.' + _fduUserId }); } catch(e) {}
             }
-            _logActivity('force_deactivate_user', _fduSess.userId, 'ปิดบัญชีถาวร userId=' + _fduUserId, { userId: _fduUserId });
+            _logActivity('force_deactivate_user', _fduSess.userId, 'ปิดบัญชีถาวร userId=' + _fduUserId + (data.waiveOutstanding ? ' (ยกหนี้ด้วย)' : ''), { userId: _fduUserId, waiveOutstanding: !!data.waiveOutstanding });
             return { success: true };
+        }
+
+        /* ── Admin: บังคับคืนบ้าน (ไม่ต้องมีคำร้องล่วงหน้า) ─── */
+        case 'adminInitiatedReturn': {
+            if (!data.residentId) return { success: false, error: 'ไม่ระบุ residentId' };
+            var _airSess = await _getSessionRole();
+            if (!_airSess || (_airSess.role !== 'admin' && _airSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            // ดึงข้อมูล resident
+            var _airResRows = await sbGet('residents', { id: 'eq.' + data.residentId, is_active: 'eq.true', limit: '1' }).catch(function() { return []; });
+            if (!_airResRows || !_airResRows[0]) return { success: false, error: 'ไม่พบผู้พักอาศัยที่ active' };
+            var _airRes = _airResRows[0];
+            var _airUserId = data.userId || _airRes.user_id;
+            var _airHouseNumber = _airRes.house_number;
+            var _airHouseId = _airRes.house_id;
+            var _airEndDate = new Date().toISOString().split('T')[0];
+
+            // ตรวจยอดค้าง
+            var _airOutRows = [];
+            try { _airOutRows = await sbGet('outstanding', { house_number: 'eq.' + _airHouseNumber, status: 'neq.paid' }) || []; } catch(e) {}
+            var _airHasOut = _airOutRows.length > 0;
+
+            // สร้าง request เก็บ log
+            var _airReqId = 'RTN' + Date.now().toString(36).toUpperCase();
+            try {
+                await sbPost('requests', {
+                    id: _airReqId, type: 'return', user_id: _airUserId,
+                    status: 'approved', initiated_by: 'admin',
+                    details: JSON.stringify({ reason: data.reason || 'forced', note: data.note || '', returnDate: _airEndDate }),
+                    reviewed_by: _airSess.userId, reviewed_at: new Date().toISOString(),
+                    review_note: (data.note || '') + ' [บังคับคืนโดยแอดมิน]'
+                });
+            } catch(e) { console.warn('adminInitiatedReturn: create request failed', e); }
+
+            // mark outstanding ว่าย้ายออกแล้ว
+            if (_airHouseNumber) {
+                try { await sbPatch('outstanding', { house_number: 'eq.' + _airHouseNumber, status: 'neq.paid' }, { moved_out_at: new Date().toISOString() }); } catch(e) {}
+            }
+            // deactivate resident
+            await sbPatch('residents', { id: 'eq.' + _airRes.id }, { is_active: false, end_date: _airEndDate, departure_reason: data.reason || 'forced', departed_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+            // ลบ coresidents
+            try { await sbDelete('coresidents', { resident_id: 'eq.' + _airRes.id }); } catch(e) {}
+            // บ้าน → available
+            if (_airHouseId) {
+                try { await sbPatch('housing', { id: 'eq.' + _airHouseId }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+            // จัดการ user: ถ้ามียอดค้าง → คงไว้ให้ login ได้ (departing), ถ้าไม่มี → deactivate
+            if (_airUserId) {
+                if (_airHasOut) {
+                    try { await sbPatch('users', { id: 'eq.' + _airUserId }, { status: 'departing', updated_at: new Date().toISOString() }); } catch(e) {}
+                } else {
+                    await sbPatch('users', { id: 'eq.' + _airUserId }, { is_active: false, updated_at: new Date().toISOString() });
+                    try { await sbDelete('sessions', { user_id: 'eq.' + _airUserId }); } catch(e) {}
+                }
+            }
+            invalidateResidentCache();
+            _logActivity('admin_initiated_return', _airSess.userId, 'บังคับคืนบ้าน ' + _airHouseNumber + ' เหตุผล: ' + (data.reason || ''), { residentId: data.residentId, houseNumber: _airHouseNumber, reason: data.reason });
+            return { success: true, hasOutstanding: _airHasOut };
         }
 
         /* ── Phase F: บันทึกชำระยอดค้างผู้ย้ายออก ─── */
