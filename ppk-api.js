@@ -2584,6 +2584,19 @@ async function _routeAction(action, data) {
                         var _eRow = _meterRes[1] && _meterRes[1][0];
                         _wReadDate = _wRow ? (_wRow.reading_date || (_wRow.recorded_at ? _wRow.recorded_at.slice(0, 10) : null)) : null;
                         _eReadDate = _eRow ? (_eRow.reading_date || (_eRow.recorded_at ? _eRow.recorded_at.slice(0, 10) : null)) : null;
+                        // Fallback: ถ้าไม่มีข้อมูลจาก water/electric_bills ให้ใช้ notifications.sent_at
+                        if (!_wReadDate && !_eReadDate) {
+                            var _notifSrc = currentOut || notifRow;
+                            if (!_notifSrc && houseNumber) {
+                                try {
+                                    var _nfRows = await sbGet('notifications', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'sent_at.desc', limit: '1' }).catch(function() { return []; });
+                                    _notifSrc = _nfRows && _nfRows[0];
+                                } catch(e) {}
+                            }
+                            if (_notifSrc && _notifSrc.sent_at) {
+                                _wReadDate = _notifSrc.sent_at.slice(0, 10);
+                            }
+                        }
                     } catch(e) {}
                 }
                 var billSrc = currentOut || notifRow;
