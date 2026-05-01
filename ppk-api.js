@@ -2377,6 +2377,18 @@ async function _routeAction(action, data) {
                         else if (adminLatestSlip.status === 'rejected') { adminSlipStatus = 'rejected'; adminReviewNote = adminLatestSlip.review_note || ''; }
                         else adminSlipStatus = 'reviewing';
                     }
+                    // ดึงวันที่จดมิเตอร์สำหรับ admin ที่มีบ้านพัก
+                    var _awReadDate = null, _aeReadDate = null;
+                    try {
+                        var _aMeterRes = await Promise.all([
+                            sbGet('water_bills', { house_number: 'eq.' + sessHouseNumber, period: 'eq.' + _adminDisplayPeriod, select: 'reading_date,recorded_at', order: 'recorded_at.desc', limit: '1' }).catch(function() { return []; }),
+                            sbGet('electric_bills', { house_number: 'eq.' + sessHouseNumber, period: 'eq.' + _adminDisplayPeriod, select: 'reading_date,recorded_at', order: 'recorded_at.desc', limit: '1' }).catch(function() { return []; })
+                        ]);
+                        var _awRow = _aMeterRes[0] && _aMeterRes[0][0];
+                        var _aeRow = _aMeterRes[1] && _aMeterRes[1][0];
+                        _awReadDate = _awRow ? (_awRow.reading_date || (_awRow.recorded_at ? _awRow.recorded_at.slice(0, 10) : null)) : null;
+                        _aeReadDate = _aeRow ? (_aeRow.reading_date || (_aeRow.recorded_at ? _aeRow.recorded_at.slice(0, 10) : null)) : null;
+                    } catch(e) {}
                     residentData = {
                         houseNumber: sessHouseNumber,
                         period: _adminDisplayPeriod,
@@ -2388,7 +2400,9 @@ async function _routeAction(action, data) {
                         slipStatus: adminSlipStatus,
                         reviewNote: adminReviewNote,
                         slipId: adminLatestSlip ? adminLatestSlip.id : null,
-                        dueDate: adminCurrentOut ? adminCurrentOut.due_date : null
+                        dueDate: adminCurrentOut ? adminCurrentOut.due_date : null,
+                        waterReadDate: _awReadDate,
+                        electricReadDate: _aeReadDate
                     };
                 }
                 return { success: true, role: 'admin', announcements: announcements, data: {
@@ -2558,6 +2572,20 @@ async function _routeAction(action, data) {
                         }
                     }
                 } catch(e) { /* proxy assignments non-critical */ }
+                // ดึงวันที่จดมิเตอร์ (non-critical)
+                var _wReadDate = null, _eReadDate = null;
+                if (houseNumber) {
+                    try {
+                        var _meterRes = await Promise.all([
+                            sbGet('water_bills', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, select: 'reading_date,recorded_at', order: 'recorded_at.desc', limit: '1' }).catch(function() { return []; }),
+                            sbGet('electric_bills', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, select: 'reading_date,recorded_at', order: 'recorded_at.desc', limit: '1' }).catch(function() { return []; })
+                        ]);
+                        var _wRow = _meterRes[0] && _meterRes[0][0];
+                        var _eRow = _meterRes[1] && _meterRes[1][0];
+                        _wReadDate = _wRow ? (_wRow.reading_date || (_wRow.recorded_at ? _wRow.recorded_at.slice(0, 10) : null)) : null;
+                        _eReadDate = _eRow ? (_eRow.reading_date || (_eRow.recorded_at ? _eRow.recorded_at.slice(0, 10) : null)) : null;
+                    } catch(e) {}
+                }
                 var billSrc = currentOut || notifRow;
                 return { success: true, role: 'user', announcements: announcements, proxyAssignments: userProxyAssignments, data: {
                     houseNumber: houseNumber,
@@ -2570,7 +2598,9 @@ async function _routeAction(action, data) {
                     slipStatus: slipStatus,
                     reviewNote: reviewNote,
                     slipId: latestSlip ? latestSlip.id : null,
-                    dueDate: dueDate
+                    dueDate: dueDate,
+                    waterReadDate: _wReadDate,
+                    electricReadDate: _eReadDate
                 }};
             }
         }

@@ -319,6 +319,7 @@
                                 <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val" id="hbWater">—</span></div>
                                 <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val" id="hbElectric">—</span></div>
                                 <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val" id="hbCommon">—</span></div>
+                                <div class="hb-item" id="hbMeterDateRow" style="display:none;"><span style="width:8px;flex-shrink:0;"></span><span class="hb-label" style="opacity:0.75;">📅 จดมิเตอร์เมื่อ</span><span class="hb-val" id="hbMeterDate" style="font-weight:500;">—</span></div>
                             </div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
@@ -527,6 +528,17 @@
                     document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' บาท';
                     document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' บาท';
                     document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' บาท';
+                    // วันที่จดมิเตอร์ — ใช้วันที่น้ำหรือไฟ (อย่างใดก็ได้)
+                    var _mDate = data.waterReadDate || data.electricReadDate || null;
+                    var _mDateRow = document.getElementById('hbMeterDateRow');
+                    if (_mDate && _mDateRow) {
+                        var _md = new Date(_mDate + 'T00:00:00');
+                        var _mdStr = _md.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+                        document.getElementById('hbMeterDate').textContent = _mdStr;
+                        _mDateRow.style.display = '';
+                    } else if (_mDateRow) {
+                        _mDateRow.style.display = 'none';
+                    }
                 } else {
                     bdEl.style.display = 'none';
                 }
