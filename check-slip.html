@@ -465,6 +465,7 @@
               slipId: slip ? slip.id : null,
               slipStatus: slip ? (slip.status || 'pending') : null,
               reviewNote: slip ? (slip.review_note || '') : '',
+              receiptSentAt: slip ? (slip.receipt_sent_at || null) : null,
               approval: slip && (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
               proxyNote: slip ? (slip.account_name || '') : '',
               qrAmount: slip ? (parseFloat(slip.qr_amount) || null) : null,
@@ -509,6 +510,7 @@
                 slipId: slip.id || null,
                 slipStatus: slip.status || 'pending',
                 reviewNote: slip.review_note || '',
+                receiptSentAt: slip.receipt_sent_at || null,
                 approval: (slip.status === 'approved' || slip.status === 'match') ? { status: 'approved', approvedAt: slip.reviewed_at } : null,
                 proxyNote: slip.account_name || '',
                 noResident: false
@@ -815,7 +817,7 @@
       let _sentSet = new Set();
       try { _sentSet = new Set(JSON.parse(localStorage.getItem(_sentKey) || '[]')); } catch(e) {}
       [...housesData, ...flatsData].forEach(function(u) {
-        if (_sentSet.has(u.unitNumber)) u.receiptEmailSent = true;
+        if (_sentSet.has(u.unitNumber) || u.receiptSentAt) u.receiptEmailSent = true;
       });
       renderTable('houses');
       renderTable('flats');
@@ -1097,7 +1099,11 @@
               const _autoEmailOk = _autoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_autoEmail) && _autoEmail.length <= 320;
               if (_autoEmailOk) {
                 const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
-                await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+                const _emailRes = await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+                if (_emailRes && _emailRes.success) {
+                  // บันทึกสถานะส่งใบเสร็จลง DB (sync ทุก device)
+                  try { await callBackend('markReceiptSent', { id: unit.slipId }); unit.receiptSentAt = new Date().toISOString(); } catch(e) {}
+                }
               }
             } catch(e) {}
             ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
@@ -1192,8 +1198,15 @@
         const ok = await sendReceiptEmail(type, index);
         if (ok) {
           const list = type === 'houses' ? housesData : flatsData;
-          if (list[index]) list[index].receiptEmailSent = true;
-          // persist to localStorage
+          if (list[index]) {
+            list[index].receiptEmailSent = true;
+            list[index].receiptSentAt = new Date().toISOString();
+          }
+          // บันทึกลง DB (sync ทุก device)
+          if (list[index] && list[index].slipId) {
+            try { await callBackend('markReceiptSent', { id: list[index].slipId }); } catch(e) {}
+          }
+          // persist to localStorage (fallback)
           const { key } = getSelectedPeriod();
           const _sentKey = 'receiptSent_' + key;
           let _sentArr = [];
@@ -1344,8 +1357,15 @@
         const _rok = await sendReceiptEmail(type, _rIdx);
         if (_rok) {
           sent++;
-          if (list[_rIdx]) list[_rIdx].receiptEmailSent = true;
-          // persist to localStorage
+          if (list[_rIdx]) {
+            list[_rIdx].receiptEmailSent = true;
+            list[_rIdx].receiptSentAt = new Date().toISOString();
+          }
+          // บันทึกลง DB (sync ทุก device)
+          if (list[_rIdx] && list[_rIdx].slipId) {
+            try { await callBackend('markReceiptSent', { id: list[_rIdx].slipId }); } catch(e) {}
+          }
+          // persist to localStorage (fallback)
           const { key: _rKey } = getSelectedPeriod();
           const _rSentKey = 'receiptSent_' + _rKey;
           let _rSentArr = [];

@@ -493,7 +493,7 @@ async function _ensureBucket(name) {
 // Actions ที่สามารถมอบหมายให้ผู้ใช้ที่มี permission ได้
 var _PERM_ACTION_MAP = {
     submitWaterBill: 'water,water_reader', submitElectricBill: 'electric',
-    reviewSlip: 'slip', reviewRequest: 'request', checkDuplicateResident: 'request',
+    reviewSlip: 'slip', markReceiptSent: 'slip', reviewRequest: 'request', checkDuplicateResident: 'request',
     sendNotification: 'notify',
     saveWithdraw: 'withdraw', saveAccounting: 'accounting'
 };
@@ -2822,6 +2822,14 @@ async function _routeAction(action, data) {
                 } catch(e) { console.warn('reviewSlip: auto-deactivate moved-out user error', e); }
             }
             _logActivity('review_slip', reviewedBy, (data.status === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ') + 'สลิป ' + (data.houseNumber || '') + ' งวด ' + (data.period || ''), { slipId: data.id, status: data.status, house_number: data.houseNumber, period: data.period });
+            return { success: true };
+        }
+
+        case 'markReceiptSent': {
+            if (!data.id) return { success: false, error: 'ไม่ระบุ ID' };
+            await sbPatch('slip_submissions', { id: 'eq.' + data.id }, {
+                receipt_sent_at: new Date().toISOString()
+            });
             return { success: true };
         }
 
