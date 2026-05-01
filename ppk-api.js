@@ -862,7 +862,7 @@ async function _routeAction(action, data) {
         /* ── Phase F: ผู้ย้ายออกที่มียอดค้าง ────── */
         case 'getMovedOutUsers': {
             var _gmuSess = await _getSessionRole();
-            if (!_gmuSess || !_gmuSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            if (!_gmuSess || (_gmuSess.role !== 'admin' && _gmuSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _gmuResRows = await sbGet('residents', { is_active: 'eq.false', order: 'end_date.desc', select: 'id,user_id,prefix,firstname,lastname,email,house_number,end_date' }).catch(function() { return []; });
             var _gmuResult = [];
             for (var _gi = 0; _gi < (_gmuResRows || []).length; _gi++) {
@@ -890,7 +890,7 @@ async function _routeAction(action, data) {
         case 'forceDeactivateUser': {
             if (!data.userId && !data.residentId) return { success: false, error: 'ไม่ระบุ userId/residentId' };
             var _fduSess = await _getSessionRole();
-            if (!_fduSess || !_fduSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            if (!_fduSess || (_fduSess.role !== 'admin' && _fduSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _fduUserId = data.userId;
             if (!_fduUserId && data.residentId) {
                 var _fduResR = await sbGet('residents', { id: 'eq.' + data.residentId, select: 'user_id,house_number', limit: '1' }).catch(function() { return []; });
@@ -908,7 +908,7 @@ async function _routeAction(action, data) {
         case 'markMovedOutOutstandingPaid': {
             if (!data.outstandingId) return { success: false, error: 'ไม่ระบุ outstandingId' };
             var _mopSess = await _getSessionRole();
-            if (!_mopSess || !_mopSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            if (!_mopSess || (_mopSess.role !== 'admin' && _mopSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _mopRow = (await sbGet('outstanding', { id: 'eq.' + data.outstandingId, select: 'id,status,moved_out_at', limit: '1' }).catch(function() { return []; }))[0];
             if (!_mopRow) return { success: false, error: 'ไม่พบรายการ' };
             if (_mopRow.status === 'paid') return { success: false, error: 'รายการนี้ชำระแล้ว' };
@@ -922,7 +922,7 @@ async function _routeAction(action, data) {
         case 'getHouseHistory': {
             if (!data.houseNumber) return { success: false, error: 'ไม่ระบุ houseNumber' };
             var _ghhSess = await _getSessionRole();
-            if (!_ghhSess || !_ghhSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            if (!_ghhSess || (_ghhSess.role !== 'admin' && _ghhSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _ghhRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, order: 'created_at.desc', select: 'id,user_id,prefix,firstname,lastname,email,is_active,start_date,end_date,created_at' }).catch(function() { return []; });
             var _ghhResult = (_ghhRows || []).map(function(r) {
                 return { residentId: r.id, fullName: ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(), email: r.email || '', isActive: r.is_active, startDate: r.start_date || r.created_at, endDate: r.end_date };
@@ -3339,7 +3339,7 @@ async function _routeAction(action, data) {
         case 'reactivateResident': {
             if (!data.residentId) return { success: false, error: 'ไม่ระบุ residentId' };
             var _raSess = await _getSessionRole();
-            if (!_raSess || !_raSess.isAdmin) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            if (!_raSess || (_raSess.role !== 'admin' && _raSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
 
             // ดึง resident ที่ inactive
             var _raResRows = await sbGet('residents', { id: 'eq.' + data.residentId, is_active: 'eq.false', limit: '1' }).catch(function() { return []; });
