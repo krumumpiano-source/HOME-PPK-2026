@@ -436,12 +436,14 @@
         else if (range === 'last12') { labelSuffix = ' (12 เดือนล่าสุด)'; }
         document.getElementById('statTotalLabel').textContent = 'ยอดแจ้งชำระรวม' + labelSuffix;
 
-        /* Outstanding balance */
+        /* Outstanding balance — นับเฉพาะเดือนที่แอดมินแจ้งยอดแล้ว (notifiedAt มีค่า) */
+        var owedBilled = 0;
+        billData.forEach(function(r) { if (r.notifiedAt) owedBilled += r.total; });
         var approvedTotal = 0;
         slipData.forEach(function(s) {
             if (s.status === 'approved') approvedTotal += s.amount;
         });
-        var owed = t - approvedTotal;
+        var owed = owedBilled - approvedTotal;
         var owedCard = document.getElementById('statOwedCard');
         if (owed <= 0) {
             document.getElementById('statOwed').textContent = 'ชำระครบ';
