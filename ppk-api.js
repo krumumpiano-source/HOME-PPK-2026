@@ -3999,8 +3999,8 @@ async function _routeAction(action, data) {
                 } else if (userPerms['admin']) {
                     try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'admin', updated_at: new Date().toISOString() }); } catch(e) {}
                 } else {
-                    // ไม่ได้เป็น head/admin → revert role เป็น user
-                    try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'user', updated_at: new Date().toISOString() }); } catch(e) {}
+                    // ไม่ได้เป็น head/admin → revert role เป็น resident
+                    try { await sbPatch('users', { id: 'eq.' + uid }, { role: 'resident', updated_at: new Date().toISOString() }); } catch(e) {}
                 }
             }
             _logActivity('update_permissions', null, 'อัปเดตสิทธิ์ผู้ใช้ ' + userIds.length + ' คน', { userIds: userIds });
