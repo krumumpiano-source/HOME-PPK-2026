@@ -1217,6 +1217,16 @@ async function _routeAction(action, data) {
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             if (data.status)      q.status        = 'eq.' + data.status;
             var rows = await sbGet('outstanding', q);
+            // ถ้าดึงข้อมูลของบ้านใดบ้านหนึ่ง → กรองเฉพาะ period ที่แอดมินแจ้งยอดแล้ว
+            // ป้องกันแสดงยอดแก่ผู้พักอาศัยก่อนที่แอดมินจะกด "บันทึกข้อมูลแจ้งยอดลงระบบ"
+            if (data.houseNumber && rows && rows.length > 0) {
+                try {
+                    var _goNotifs = await sbGet('notifications', { house_number: 'eq.' + data.houseNumber, select: 'period', limit: '100' }).catch(function() { return []; });
+                    var _goPublished = {};
+                    (_goNotifs || []).forEach(function(n) { if (n.period) _goPublished[n.period] = true; });
+                    rows = rows.filter(function(r) { return _goPublished[r.period]; });
+                } catch(e) {}
+            }
             return { success: true, data: rows };
         }
         case 'getPaymentHistory': {
@@ -1386,6 +1396,8 @@ async function _routeAction(action, data) {
         case 'deleteNotifications': {
             if (!data.period) return { success: false, error: 'ไม่ระบุ period' };
             try { await sbDelete('notifications', { period: 'eq.' + data.period }); } catch(e) {}
+            // ลบ outstanding ที่ยังไม่ชำระของ period นี้ด้วย เพื่อไม่ให้แสดงยอดแก่ผู้พักอาศัยหลังจากล้างการแจ้งยอด
+            try { await sbDelete('outstanding', { period: 'eq.' + data.period, status: 'in.(unpaid,partial)' }); } catch(e) {}
             return { success: true };
         }
         case 'getRequests': {
@@ -2424,6 +2436,16 @@ async function _routeAction(action, data) {
                             }
                         }
                         outRows = healedOutRows;
+                    } catch(e) {}
+                }
+                // ── กรองเฉพาะ outstanding ที่แอดมินแจ้งยอดแล้ว (มี notifications ตรงกัน) ──
+                // ป้องกันแสดงยอดแก่ผู้พักอาศัยก่อนที่แอดมินจะกด "บันทึกข้อมูลแจ้งยอดลงระบบ"
+                if (outRows && outRows.length > 0 && houseNumber) {
+                    try {
+                        var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period', limit: '100' }).catch(function() { return []; });
+                        var _gddPublished = {};
+                        (_gddNotifs || []).forEach(function(n) { if (n.period) _gddPublished[n.period] = true; });
+                        outRows = outRows.filter(function(o) { return _gddPublished[o.period]; });
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
