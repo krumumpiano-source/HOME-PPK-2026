@@ -62,13 +62,86 @@ export default defineConfig({
       },
     },
 
-    /* === E2E Tests (Browser UI) === */
+    /* === E2E Tests — Desktop Chrome (baseline) === */
     {
       name: 'e2e',
       testDir: './tests/e2e',
       dependencies: ['auth-setup'],
       use: {
         ...devices['Desktop Chrome'],
+        storageState: '.auth/admin.json',
+      },
+    },
+
+    /* === E2E Tests — Desktop Edge (1366×768 — Windows school laptop) === */
+    {
+      name: 'e2e-desktop-edge',
+      testDir: './tests/e2e',
+      dependencies: ['auth-setup'],
+      use: {
+        ...devices['Desktop Edge'],
+        viewport: { width: 1366, height: 768 },
+        storageState: '.auth/admin.json',
+      },
+    },
+
+    /* === E2E Tests — Desktop Firefox === */
+    {
+      name: 'e2e-desktop-firefox',
+      testDir: './tests/e2e',
+      dependencies: ['auth-setup'],
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: '.auth/admin.json',
+      },
+    },
+
+    /* === E2E Tests — Mobile Android (Pixel 5, 393×851) === */
+    {
+      name: 'e2e-mobile-android',
+      testDir: './tests/e2e',
+      dependencies: ['auth-setup'],
+      use: {
+        ...devices['Pixel 5'],
+        storageState: '.auth/admin.json',
+      },
+    },
+
+    /* === E2E Tests — Mobile Samsung Galaxy A (360×780, พบมากในไทย) === */
+    {
+      name: 'e2e-mobile-samsung',
+      testDir: './tests/e2e',
+      dependencies: ['auth-setup'],
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 360, height: 780 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+        userAgent:
+          'Mozilla/5.0 (Linux; Android 13; SM-A536B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+        storageState: '.auth/admin.json',
+      },
+    },
+
+    /* === E2E Tests — Mobile iOS / iPhone 12 (WebKit) === */
+    {
+      name: 'e2e-mobile-ios',
+      testDir: './tests/e2e',
+      dependencies: ['auth-setup'],
+      use: {
+        ...devices['iPhone 12'],
+        storageState: '.auth/admin.json',
+      },
+    },
+
+    /* === E2E Tests — Tablet iPad (810×1080, WebKit) === */
+    {
+      name: 'e2e-tablet-ipad',
+      testDir: './tests/e2e',
+      dependencies: ['auth-setup'],
+      use: {
+        ...devices['iPad (gen 7)'],
         storageState: '.auth/admin.json',
       },
     },

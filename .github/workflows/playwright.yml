@@ -1,0 +1,128 @@
+﻿name: Playwright UI/UX Tests (Cross-Device)
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - e2e                   # Desktop Chrome (baseline)
+          - e2e-desktop-edge      # Microsoft Edge 1366×768
+          - e2e-desktop-firefox   # Firefox
+          - e2e-mobile-android    # Pixel 5 (Android)
+          - e2e-mobile-samsung    # Samsung Galaxy A (360px)
+          - e2e-mobile-ios        # iPhone 12 (WebKit)
+          - e2e-tablet-ipad       # iPad gen 7 (WebKit)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Create .env.test from secrets
+        run: |
+          cat <<EOF > .env.test
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          TEST_ADMIN_EMAIL=${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD=${{ secrets.TEST_ADMIN_PASSWORD }}
+          TEST_USER_EMAIL=${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}
+          EOF
+
+      - name: Run auth setup
+        run: npx playwright test --project=auth-setup
+        env:
+          CI: 'true'
+
+      - name: Run Playwright tests — ${{ matrix.project }}
+        run: npx playwright test --project=${{ matrix.project }}
+        env:
+          CI: 'true'
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test results (traces/screenshots/videos)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-${{ matrix.project }}
+          path: test-results/
+          retention-days: 7
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers (Chromium only)
+        run: npx playwright install chromium --with-deps
+
+      - name: Create .env.test from secrets
+        run: |
+          cat <<EOF > .env.test
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          TEST_ADMIN_EMAIL=${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD=${{ secrets.TEST_ADMIN_PASSWORD }}
+          TEST_USER_EMAIL=${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}
+          EOF
+
+      - name: Run auth setup
+        run: npx playwright test --project=auth-setup
+        env:
+          CI: 'true'
+
+      - name: Run Integration tests
+        run: npx playwright test --project=integration
+        env:
+          CI: 'true'
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-integration
+          path: playwright-report/
+          retention-days: 14

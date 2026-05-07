@@ -20,6 +20,7 @@
     "xtend": "^4.0.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.59.1",
     "http-server": "^14.1.1"
   },
@@ -28,6 +29,16 @@
     "test:integration": "npx playwright test --project=integration",
     "test:e2e": "npx playwright test --project=e2e",
     "test:auth-setup": "npx playwright test --project=auth-setup",
+    "test:edge": "npx playwright test --project=e2e-desktop-edge",
+    "test:firefox": "npx playwright test --project=e2e-desktop-firefox",
+    "test:android": "npx playwright test --project=e2e-mobile-android",
+    "test:samsung": "npx playwright test --project=e2e-mobile-samsung",
+    "test:ios": "npx playwright test --project=e2e-mobile-ios",
+    "test:ipad": "npx playwright test --project=e2e-tablet-ipad",
+    "test:devices": "npx playwright test --project=e2e-mobile-android --project=e2e-mobile-ios --project=e2e-tablet-ipad",
+    "test:responsive": "npx playwright test tests/e2e/responsive.spec.ts",
+    "test:pwa": "npx playwright test tests/e2e/pwa.spec.ts --project=e2e",
+    "test:a11y": "npx playwright test tests/e2e/accessibility.spec.ts --project=e2e",
     "test:report": "npx playwright show-report",
     "test:ui": "npx playwright test --ui"
   },
