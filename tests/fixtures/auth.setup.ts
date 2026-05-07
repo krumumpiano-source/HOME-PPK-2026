@@ -20,15 +20,9 @@ setup('authenticate as admin', async ({ page }) => {
   // กดปุ่ม login
   await page.click('#loginBtn');
 
-  // รอ redirect ไป dashboard หรือรอ sessionToken ถูก set
-  await page.waitForFunction(
-    () => !!localStorage.getItem('sessionToken'),
-    null,
-    { timeout: 30_000 }
-  );
-
-  // รอ navigation หลัง login redirect เสร็จ (ป้องกัน execution context destroyed)
-  await page.waitForLoadState('load');
+  // รอ redirect ไปถึง dashboard.html (waitForURL รอ navigation ให้เสร็จสมบูรณ์ก่อน)
+  // ไม่ใช้ waitForFunction เพราะ execution context ถูกทำลายระหว่าง navigation
+  await page.waitForURL('**/dashboard.html', { timeout: 30_000 });
   await page.waitForLoadState('networkidle');
 
   // Save storage state (localStorage + cookies)
@@ -51,11 +45,8 @@ setup('authenticate as user', async ({ page }) => {
   await page.fill('#password', TEST_USER.password);
   await page.click('#loginBtn');
 
-  await page.waitForFunction(
-    () => !!localStorage.getItem('sessionToken'),
-    null,
-    { timeout: 30_000 }
-  );
+  await page.waitForURL('**/dashboard.html', { timeout: 30_000 });
+  await page.waitForLoadState('networkidle');
 
   await page.context().storageState({ path: USER_AUTH_FILE });
 });

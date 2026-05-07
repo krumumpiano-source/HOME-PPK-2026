@@ -60,12 +60,21 @@ test.describe('Cross-Device — User Flow (ผู้พักอาศัย)', 
     await page.goto('/dashboard.html');
     await waitReady(page);
 
+    // ปิด PWA install overlay และ overlay อื่นๆ ที่อาจบัง pointer events
+    await page.evaluate(() => {
+      const overlay = document.getElementById('ppkInstallOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        overlay.style.pointerEvents = 'none';
+      }
+    });
+
     // คลิก CTA หลักหรือ nav link ไป upload-slip
     const ctaBtn = page.locator(
       '#payBtn, #uploadSlipBtn, a[href*="upload-slip"]'
     );
     if ((await ctaBtn.count()) > 0) {
-      await ctaBtn.first().click();
+      await ctaBtn.first().click({ timeout: 10000 });
       await waitReady(page, 2000);
       await expect(page).toHaveURL(/upload-slip\.html/);
     } else {
