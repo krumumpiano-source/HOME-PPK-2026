@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Admin Settings Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin-settings.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(3000);
   });
 
@@ -16,7 +16,7 @@ test.describe('Admin Settings Page', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await page.goto('/admin-settings.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const critical = errors.filter(

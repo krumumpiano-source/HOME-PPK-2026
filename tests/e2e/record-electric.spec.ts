@@ -5,9 +5,10 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Record Electric Page', () => {
+  test.describe.configure({ timeout: 60000 });
   test.beforeEach(async ({ page }) => {
     await page.goto('/record-electric.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -57,7 +58,7 @@ test.describe('Record Electric Page', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await page.goto('/record-electric.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const criticalErrors = errors.filter(

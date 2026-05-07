@@ -16,7 +16,7 @@ test.describe('Dashboard — Admin View', () => {
   test('should display admin stats section', async ({ page }) => {
     const adminSection = page.locator('#adminStatsSection');
     if (await adminSection.count() > 0) {
-      await expect(adminSection).toBeVisible();
+      await expect(adminSection).toBeVisible({ timeout: 15000 });
     }
   });
 

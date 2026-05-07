@@ -13,7 +13,7 @@ import { TEST_ADMIN } from '../fixtures/test-data';
 
 /** รอ page โหลดเสร็จ (networkidle + extra 1.5s สำหรับ JS async) */
 async function waitReady(page: Page, extra = 1500): Promise<void> {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('load');
   await page.waitForTimeout(extra);
 }
 

@@ -9,7 +9,7 @@ test.describe('Register Page', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/register.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
   });
 
   test('should display registration form with all fields', async ({ page }) => {

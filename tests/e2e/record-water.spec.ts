@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Record Water Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/record-water.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -64,7 +64,7 @@ test.describe('Record Water Page', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await page.goto('/record-water.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     // กรอง error ที่เกี่ยวกับ permission (ปกติสำหรับ user ที่ไม่มีสิทธิ์)

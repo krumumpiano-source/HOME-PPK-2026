@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Form Hub Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -33,7 +33,7 @@ test.describe('Form Hub Page', () => {
 test.describe('Request Form — Residence', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/request-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -60,7 +60,7 @@ test.describe('Request Form — Residence', () => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto('/request-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
     expect(errors.length).toBe(0);
   });
@@ -69,7 +69,7 @@ test.describe('Request Form — Residence', () => {
 test.describe('Transfer Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/transfer-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -84,7 +84,7 @@ test.describe('Transfer Form', () => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto('/transfer-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
     expect(errors.length).toBe(0);
   });
@@ -93,7 +93,7 @@ test.describe('Transfer Form', () => {
 test.describe('Return Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/return-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -108,7 +108,7 @@ test.describe('Return Form', () => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto('/return-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
     expect(errors.length).toBe(0);
   });
@@ -117,7 +117,7 @@ test.describe('Return Form', () => {
 test.describe('Repair Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/repair-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 
@@ -132,7 +132,7 @@ test.describe('Repair Form', () => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto('/repair-form.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
     expect(errors.length).toBe(0);
   });

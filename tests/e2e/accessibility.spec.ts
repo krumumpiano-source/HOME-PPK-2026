@@ -59,7 +59,7 @@ test.describe('Accessibility — Login Page', () => {
 
   test('login.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/login.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const { violations } = await checkA11y(page);
     expect(violations, `login.html violations:\n${formatViolations(violations)}`).toHaveLength(0);
@@ -99,7 +99,7 @@ test.describe('Accessibility — Login Page', () => {
 test.describe('Accessibility — Dashboard Page', () => {
   test('dashboard.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(3000);
 
     const { violations } = await checkA11y(page);
@@ -110,7 +110,7 @@ test.describe('Accessibility — Dashboard Page', () => {
 
   test('dashboard.html — page มี <main> หรือ main role', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const main = page.locator('main, [role="main"]');
@@ -122,7 +122,7 @@ test.describe('Accessibility — Dashboard Page', () => {
 
   test('dashboard.html — ปุ่ม CTA มี accessible name', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const buttons = page.locator('button, a[role="button"]');
@@ -151,7 +151,7 @@ test.describe('Accessibility — Dashboard Page', () => {
 test.describe('Accessibility — Settings Page', () => {
   test('settings.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/settings.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const { violations } = await checkA11y(page, [
@@ -166,7 +166,7 @@ test.describe('Accessibility — Settings Page', () => {
 
   test('settings.html — form inputs มี labels', async ({ page }) => {
     await page.goto('/settings.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const inputs = page.locator('input[type="text"], input[type="email"], input[type="tel"]');
@@ -198,7 +198,7 @@ test.describe('Accessibility — Settings Page', () => {
 test.describe('Accessibility — Upload Slip Page', () => {
   test('upload-slip.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/upload-slip.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const { violations } = await checkA11y(page);
@@ -214,7 +214,7 @@ test.describe('Accessibility — Upload Slip Page', () => {
 test.describe('Accessibility — Check Slip Page', () => {
   test('check-slip.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/check-slip.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const { violations } = await checkA11y(page);
@@ -230,7 +230,7 @@ test.describe('Accessibility — Check Slip Page', () => {
 test.describe('Accessibility — Navigation', () => {
   test('sidebar nav items — ไม่มี button ที่มีแค่ emoji (ไม่มี text)', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const navButtons = page.locator('nav button, nav a, .sidebar button, .sidebar a, #ppk-sidebar button, #ppk-sidebar a');
@@ -265,7 +265,7 @@ test.describe('Accessibility — Navigation', () => {
     page,
   }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     // ตรวจ skip link หรือ main landmark
@@ -288,7 +288,7 @@ test.describe('Accessibility — Keyboard Navigation', () => {
 
   test('login.html — Tab ผ่าน form fields ได้', async ({ page }) => {
     await page.goto('/login.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Tab จาก body → email → password → submit
     await page.keyboard.press('Tab');
@@ -303,7 +303,7 @@ test.describe('Accessibility — Keyboard Navigation', () => {
 
   test('login.html — Enter บน submit button ส่ง form ได้', async ({ page }) => {
     await page.goto('/login.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const btn = page.locator('#loginBtn, button[type="submit"]').first();
     if ((await btn.count()) > 0) {

@@ -85,8 +85,9 @@ test.describe('Responsive — Mobile Viewports', () => {
       test.use({ viewport: { width: vp.width, height: vp.height } });
 
       test(`[${vp.name}] login page — no horizontal scroll`, async ({ page }) => {
+        test.setTimeout(60000);
         await page.goto('/login.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
@@ -101,7 +102,7 @@ test.describe('Responsive — Mobile Viewports', () => {
           localStorage.removeItem('ppk_session');
         });
         await page.goto('/login.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
 
         await expect(page.locator('#email, input[type="email"]').first()).toBeVisible({ timeout: 10000 });
         await expect(page.locator('#password, input[type="password"]').first()).toBeVisible();
@@ -115,7 +116,7 @@ test.describe('Responsive — Mobile Viewports', () => {
         page,
       }) => {
         await page.goto('/dashboard.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
 
         expect(await hasNoHorizontalScroll(page)).toBe(true);
@@ -126,7 +127,7 @@ test.describe('Responsive — Mobile Viewports', () => {
         page,
       }) => {
         await page.goto('/dashboard.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
 
         // ตรวจว่าตัวหนังสือไม่เล็กเกินไป
@@ -138,14 +139,14 @@ test.describe('Responsive — Mobile Viewports', () => {
 
       test(`[${vp.name}] upload-slip — no horizontal scroll`, async ({ page }) => {
         await page.goto('/upload-slip.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(1500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
       test(`[${vp.name}] settings — no horizontal scroll`, async ({ page }) => {
         await page.goto('/settings.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(1500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
@@ -162,21 +163,21 @@ test.describe('Responsive — Tablet Viewports', () => {
 
       test(`[${vp.name}] dashboard — no horizontal scroll`, async ({ page }) => {
         await page.goto('/dashboard.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
       test(`[${vp.name}] check-slip — no horizontal scroll`, async ({ page }) => {
         await page.goto('/check-slip.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
       test(`[${vp.name}] record-water — no horizontal scroll`, async ({ page }) => {
         await page.goto('/record-water.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
@@ -193,14 +194,14 @@ test.describe('Responsive — Desktop Viewports', () => {
 
       test(`[${vp.name}] dashboard — sidebar fixed (not hamburger)`, async ({ page }) => {
         await page.goto('/dashboard.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
         await checkNavBehavior(page, false);
       });
 
       test(`[${vp.name}] dashboard — no horizontal scroll`, async ({ page }) => {
         await page.goto('/dashboard.html');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(2000);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });

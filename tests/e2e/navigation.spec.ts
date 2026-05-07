@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Navigation — Authenticated', () => {
   test('should display sidebar navigation', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     // Sidebar should be rendered by ppk-nav.js
@@ -19,7 +19,7 @@ test.describe('Navigation — Authenticated', () => {
 
   test('should have links to main pages', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const expectedLinks = [
@@ -39,7 +39,7 @@ test.describe('Navigation — Authenticated', () => {
 
   test('admin should see admin menu items', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     const adminLinks = [
@@ -89,14 +89,14 @@ test.describe('Navigation — Auth Guard', () => {
 
   test('login page should be accessible without auth', async ({ page }) => {
     await page.goto('/login.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     await expect(page.locator('#loginForm')).toBeVisible();
   });
 
   test('register page should be accessible without auth', async ({ page }) => {
     await page.goto('/register.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     await expect(page.locator('#registerForm')).toBeVisible();
   });
@@ -107,7 +107,7 @@ test.describe('Navigation — User role restrictions', () => {
 
   test('user should see limited menu items', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     // User ไม่ควรเห็น admin-only links (หรือเห็นแต่ disabled)

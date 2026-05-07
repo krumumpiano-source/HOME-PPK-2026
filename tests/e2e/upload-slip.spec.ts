@@ -12,7 +12,7 @@ test.describe('Upload Slip Page', () => {
       localStorage.setItem('ppk_install_dismiss_time', '9999999999999');
     });
     await page.goto('/upload-slip.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
   });
 

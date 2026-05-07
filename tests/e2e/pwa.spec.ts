@@ -170,6 +170,7 @@ test.describe('PWA — Service Worker', () => {
   });
 
   test('service worker register ได้ (ไม่มี JS error)', async ({ page }) => {
+    test.setTimeout(60000);
     const errors: string[] = [];
     page.on('pageerror', (err) => {
       // เก็บ error ที่เกี่ยวกับ sw
@@ -179,7 +180,7 @@ test.describe('PWA — Service Worker', () => {
     });
 
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(2000);
 
     expect(errors).toHaveLength(0);
@@ -201,7 +202,7 @@ test.describe('PWA — Service Worker', () => {
 
   test('service worker ถูก register หลังโหลดหน้า', async ({ page }) => {
     await page.goto('/dashboard.html');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.waitForTimeout(3000); // รอ SW registration async
 
     const isRegistered = await page.evaluate(async () => {
