@@ -2125,6 +2125,14 @@
                         ${item.headReviewedAt ? '<div style="font-size:0.875rem;color:#166534;margin-bottom:0.5rem;">วันที่อนุมัติ: ' + formatDate(item.headReviewedAt) + '</div>' : ''}
                         ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #d1fae5;border-radius:6px;background:#fff;padding:0.25rem;margin-bottom:0.5rem;">' : ''}
                         ${item.reviewNote ? '<div style="font-size:0.875rem;color:#166534;">หมายเหตุ: ' + _e(item.reviewNote) + '</div>' : ''}
+                    </div>
+                    <div style="margin-top:0.75rem;background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;padding:1rem;">
+                        <div style="font-weight:700;color:#1d4ed8;margin-bottom:0.5rem;">🏠 ดำเนินการย้ายบ้านพัก</div>
+                        <div style="font-size:0.88rem;color:#1e40af;margin-bottom:0.75rem;">ระบุบ้านปลายทาง (ต้องว่าง) แล้วกดดำเนินการ — ระบบจะย้ายผู้พักอาศัยและปลดล็อกบ้านเดิมโดยอัตโนมัติ</div>
+                        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                            <input type="text" id="trExecTarget_${item.id}" placeholder="เลขที่บ้านปลายทาง" value="${_e(item.requestedHouse || '')}" style="flex:1;min-width:140px;padding:0.5rem 0.75rem;border:1px solid #93c5fd;border-radius:8px;font-size:0.95rem;font-family:inherit;">
+                            <button type="button" onclick="executeTransferRequest('${item.id}', document.getElementById('trExecTarget_${item.id}').value)" style="background:linear-gradient(to right,#2563eb,#1d4ed8);color:white;border:none;border-radius:8px;padding:0.5rem 1rem;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">🚚 ดำเนินการย้าย</button>
+                        </div>
                     </div>` : ''}
                     ${item.status === 'rejected' ? `
                     <div style="margin-top:1.25rem;padding:1rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;">
@@ -2664,6 +2672,28 @@
                 var msg = '✅ ดำเนินการย้ายออกเรียบร้อยแล้ว';
                 if (result.hasOutstanding) msg += '\n⚠️ บ้านนี้มียอดค้างชำระ — ผู้พักอาศัยยังเข้าระบบได้จนกว่าจะชำระครบ';
                 ppkAlert(msg, 'success');
+            } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
+        }
+
+        async function executeTransferRequest(id, targetHouse) {
+            if (!targetHouse || !targetHouse.trim()) { ppkAlert('กรุณาระบุเลขที่บ้านปลายทาง', 'error'); return; }
+            var tgt = targetHouse.trim();
+            if (!await ppkConfirm('🚚 ยืนยันดำเนินการย้ายบ้านพัก\n\nบ้านปลายทาง: ' + tgt + '\n\nระบบจะ:\n• ย้ายผู้พักอาศัยและผู้อยู่ร่วมไปบ้านใหม่\n• เปลี่ยนสถานะบ้านเก่าเป็น "ว่าง"\n• เปลี่ยนสถานะบ้านใหม่เป็น "มีผู้พัก"\n\n⚠️ บ้านปลายทางต้องว่างเท่านั้น', { okText: 'ดำเนินการ', cancelText: 'ยกเลิก' })) return;
+            try {
+                var result = await callBackend('executeTransfer', { requestId: id, targetHouse: tgt });
+                if (!result || !result.success) {
+                    ppkAlert('❌ ดำเนินการไม่สำเร็จ: ' + (result?.error || 'ไม่ทราบสาเหตุ'), 'error');
+                    return;
+                }
+                _clearRequestsCache();
+                closeModal('detailModal');
+                await loadAllRequests();
+                renderAll();
+                if (result.alreadyExecuted) {
+                    ppkAlert('ℹ️ ' + (result.message || 'ย้ายแล้ว'), 'info');
+                } else {
+                    ppkAlert('✅ ย้ายบ้านพักเรียบร้อย — ' + (result.from||'') + ' → ' + (result.to||''), 'success');
+                }
             } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message, 'error'); }
         }
 
