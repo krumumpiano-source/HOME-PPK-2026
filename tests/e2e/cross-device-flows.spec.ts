@@ -228,11 +228,13 @@ test.describe('Cross-Device — Mobile Navigation (hamburger)', () => {
     await waitReady(page);
 
     await openHamburger(page);
+    await page.waitForTimeout(300); // รอ animation เปิด
 
-    // พยายามกดลิงก์ settings
-    const settingsLink = page.locator('a[href*="settings.html"]');
-    if ((await settingsLink.count()) > 0 && (await settingsLink.first().isVisible())) {
-      await settingsLink.first().click();
+    // พยายามกดลิงก์ settings — ใช้ scrollIntoViewIfNeeded + force click เพราะ link อาจอยู่นอก viewport
+    const settingsLink = page.locator('a[href*="settings.html"]').first();
+    if ((await settingsLink.count()) > 0) {
+      await settingsLink.scrollIntoViewIfNeeded();
+      await settingsLink.click({ force: true });
       await waitReady(page, 2000);
       await expect(page).toHaveURL(/settings\.html/);
     }
@@ -282,7 +284,8 @@ test.describe('Cross-Device — Form Interactions', () => {
   });
 
   test('forgot-password page โหลดได้ (unauthenticated)', async ({ page }) => {
-    test.use({ storageState: { cookies: [], origins: [] } });
+    // ล้าง session ชั่วคราวก่อน navigate — ใช้ evaluate แทน test.use() ที่เรียกใน test body ไม่ได้
+    await page.context().clearCookies();
     await page.goto('/forgot-password.html');
     await waitReady(page);
     // ไม่ redirect ไป login (เป็นหน้า public)

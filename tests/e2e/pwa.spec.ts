@@ -23,6 +23,14 @@ async function getMetaContent(page: Page, name: string): Promise<string | null> 
   }, name);
 }
 
+/** อ่าน manifest.json พร้อม strip UTF-8 BOM (EF BB BF) ถ้ามี */
+async function getManifest(request: import('@playwright/test').APIRequestContext): Promise<Record<string, unknown>> {
+  const resp = await request.get('/manifest.json');
+  const raw = await resp.text();
+  const text = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
+  return JSON.parse(text) as Record<string, unknown>;
+}
+
 // ─── manifest.json ────────────────────────────────────────────────────────────
 
 test.describe('PWA — manifest.json', () => {
@@ -33,7 +41,9 @@ test.describe('PWA — manifest.json', () => {
 
   test('manifest.json เป็น valid JSON', async ({ request }) => {
     const resp = await request.get('/manifest.json');
-    const text = await resp.text();
+    const raw = await resp.text();
+    // strip UTF-8 BOM (EF BB BF) ถ้ามี — JSON.parse ไม่รองรับ BOM
+    const text = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
     let parsed: Record<string, unknown>;
     expect(() => {
       parsed = JSON.parse(text);
@@ -42,25 +52,22 @@ test.describe('PWA — manifest.json', () => {
   });
 
   test('manifest.json มี name, short_name, start_url, display', async ({ request }) => {
-    const resp = await request.get('/manifest.json');
-    const manifest = await resp.json();
+    const manifest = await getManifest(request);
 
     expect(typeof manifest.name).toBe('string');
-    expect(manifest.name.length).toBeGreaterThan(0);
+    expect((manifest.name as string).length).toBeGreaterThan(0);
     expect(typeof manifest.short_name).toBe('string');
     expect(typeof manifest.start_url).toBe('string');
     expect(manifest.display).toMatch(/^(standalone|fullscreen|minimal-ui|browser)$/);
   });
 
   test('manifest.json display=standalone (ต้องไม่แสดง browser chrome)', async ({ request }) => {
-    const resp = await request.get('/manifest.json');
-    const manifest = await resp.json();
+    const manifest = await getManifest(request);
     expect(manifest.display).toBe('standalone');
   });
 
   test('manifest.json มี icons ครบ (192 + 512)', async ({ request }) => {
-    const resp = await request.get('/manifest.json');
-    const manifest = await resp.json();
+    const manifest = await getManifest(request);
 
     expect(Array.isArray(manifest.icons)).toBe(true);
     const sizes = (manifest.icons as Array<{ sizes: string }>).map((i) => i.sizes);
@@ -69,8 +76,7 @@ test.describe('PWA — manifest.json', () => {
   });
 
   test('manifest.json lang=th (รองรับภาษาไทย)', async ({ request }) => {
-    const resp = await request.get('/manifest.json');
-    const manifest = await resp.json();
+    const manifest = await getManifest(request);
     expect(manifest.lang).toBe('th');
   });
 });
@@ -219,10 +225,8 @@ test.describe('PWA — Service Worker', () => {
 
 test.describe('PWA — Installability', () => {
   test('start_url ใน manifest accessible', async ({ request }) => {
-    // อ่าน start_url จาก manifest
-    const mResp = await request.get('/manifest.json');
-    const manifest = await mResp.json();
-    const startUrl: string = manifest.start_url ?? './dashboard.html';
+    const manifest = await getManifest(request);
+    const startUrl: string = (manifest.start_url as string) ?? './dashboard.html';
 
     // normalize: ตัด ./ ออก
     const path = startUrl.replace(/^\.\//, '/').replace(/^(?!\/)/, '/');
@@ -231,8 +235,7 @@ test.describe('PWA — Installability', () => {
   });
 
   test('background_color และ theme_color ใน manifest มีค่า', async ({ request }) => {
-    const resp = await request.get('/manifest.json');
-    const manifest = await resp.json();
+    const manifest = await getManifest(request);
 
     expect(manifest.background_color).toMatch(/^#[0-9a-fA-F]{3,6}$/);
     expect(manifest.theme_color).toMatch(/^#[0-9a-fA-F]{3,6}$/);

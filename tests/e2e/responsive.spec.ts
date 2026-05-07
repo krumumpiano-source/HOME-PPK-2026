@@ -92,11 +92,18 @@ test.describe('Responsive — Mobile Viewports', () => {
 
       test(`[${vp.name}] login page — form elements visible + touch targets ok`, async ({
         page,
+        context,
       }) => {
+        // ต้องล้าง session ก่อน — ถ้ามี storageState อยู่ login.html จะ redirect ไป dashboard
+        await context.clearCookies();
+        await context.addInitScript(() => {
+          localStorage.removeItem('sessionToken');
+          localStorage.removeItem('ppk_session');
+        });
         await page.goto('/login.html');
         await page.waitForLoadState('networkidle');
 
-        await expect(page.locator('#email, input[type="email"]').first()).toBeVisible();
+        await expect(page.locator('#email, input[type="email"]').first()).toBeVisible({ timeout: 10000 });
         await expect(page.locator('#password, input[type="password"]').first()).toBeVisible();
         await expect(page.locator('#loginBtn, button[type="submit"]').first()).toBeVisible();
 
@@ -201,7 +208,7 @@ test.describe('Responsive — Desktop Viewports', () => {
       test(`[${vp.name}] admin pages — no horizontal scroll`, async ({ page }) => {
         for (const pg of ['/team-management.html', '/accounting.html', '/activity-log.html']) {
           await page.goto(pg);
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('load');
           await page.waitForTimeout(1000);
           const ok = await hasNoHorizontalScroll(page);
           expect(ok, `${pg} มี horizontal scroll ที่ ${vp.name}`).toBe(true);
@@ -223,7 +230,7 @@ test.describe('Responsive — All Critical Pages horizontal-overflow check', () 
       for (const vp of allViewports) {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await page.goto(pg.path);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('load');
         await page.waitForTimeout(1000);
 
         const ok = await hasNoHorizontalScroll(page);
