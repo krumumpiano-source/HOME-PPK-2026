@@ -967,10 +967,11 @@ async function _routeAction(action, data) {
             var _airHouseId = _airRes.house_id;
             var _airEndDate = new Date().toISOString().split('T')[0];
 
-            // ตรวจยอดค้าง
+            // ตรวจยอดค้าง (เพื่อ log เท่านั้น — ทุก outstanding จะถูก waive อัตโนมัติ)
             var _airOutRows = [];
-            try { _airOutRows = await sbGet('outstanding', { house_number: 'eq.' + _airHouseNumber, status: 'neq.paid' }) || []; } catch(e) {}
-            var _airHasOut = _airOutRows.length > 0;
+            try { _airOutRows = await sbGet('outstanding', { house_number: 'eq.' + _airHouseNumber, status: 'not.in.(paid,waived)' }) || []; } catch(e) {}
+            // _airHasOut = false เสมอ เพราะ waive ให้หมด → user ถูก deactivate ทันที ไม่ค้าง departing
+            var _airHasOut = false;
 
             // สร้าง request เก็บ log
             var _airReqId = 'RTN' + Date.now().toString(36).toUpperCase();
@@ -984,9 +985,9 @@ async function _routeAction(action, data) {
                 });
             } catch(e) { console.warn('adminInitiatedReturn: create request failed', e); }
 
-            // mark outstanding ว่าย้ายออกแล้ว
+            // outstanding ที่ยังค้างอยู่ → waived (กองกลางรับผิดชอบ) ไม่ใช่หนี้ส่วนตัวของผู้ย้ายออก
             if (_airHouseNumber) {
-                try { await sbPatch('outstanding', { house_number: 'eq.' + _airHouseNumber, status: 'neq.paid' }, { moved_out_at: new Date().toISOString() }); } catch(e) {}
+                try { await sbPatch('outstanding', { house_number: 'eq.' + _airHouseNumber, status: 'not.in.(paid,waived)' }, { status: 'waived', updated_at: new Date().toISOString() }); } catch(e) {}
             }
             // deactivate resident
             await sbPatch('residents', { id: 'eq.' + _airRes.id }, { is_active: false, end_date: _airEndDate, departure_reason: data.reason || 'forced', departed_at: new Date().toISOString(), updated_at: new Date().toISOString() });
