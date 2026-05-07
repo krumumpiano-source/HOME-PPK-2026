@@ -880,13 +880,13 @@ async function _routeAction(action, data) {
             var _dfRes = await sbGet('residents', { user_id: 'eq.' + data.userId, is_active: 'eq.true', select: 'id', limit: '1' }).catch(function() { return []; });
             if (_dfRes && _dfRes[0]) return { success: false, error: 'ผู้ใช้นี้มีบ้านพักอยู่แล้ว ไม่สามารถลบได้' };
             // ยกเลิกคำขอที่รอดำเนินการ
-            await sbUpdate('requests', { status: 'cancelled', reviewed_note: 'ยกเลิกอัตโนมัติ — แอดมินลบบัญชีผู้ใช้ลอย' }, { user_id: 'eq.' + data.userId, status: 'eq.pending' }).catch(function() {});
+            await sbPatch('requests', { user_id: 'eq.' + data.userId, status: 'eq.pending' }, { status: 'cancelled', reviewed_note: 'ยกเลิกอัตโนมัติ — แอดมินลบบัญชีผู้ใช้ลอย' }).catch(function() {});
             // ยกเลิก queue
-            await sbUpdate('queue', { status: 'cancelled' }, { user_id: 'eq.' + data.userId, status: 'eq.waiting' }).catch(function() {});
+            await sbPatch('queue', { user_id: 'eq.' + data.userId, status: 'eq.waiting' }, { status: 'cancelled' }).catch(function() {});
             // ลบ sessions
             await sbDelete('sessions', { user_id: 'eq.' + data.userId }).catch(function() {});
             // deactivate user
-            await sbUpdate('users', { is_active: false, status: 'inactive' }, { id: 'eq.' + data.userId });
+            await sbPatch('users', { id: 'eq.' + data.userId }, { is_active: false, status: 'inactive' });
             _logActivity('delete_floating_user', _dfSess.userId, 'ลบบัญชีผู้ใช้ลอย userId=' + data.userId, { targetUserId: data.userId });
             return { success: true };
         }
