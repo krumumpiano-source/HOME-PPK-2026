@@ -11,7 +11,7 @@ test.describe('Login Page', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/login.html');
-    await page.waitForLoadState('load');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should display login form with all elements', async ({ page }) => {

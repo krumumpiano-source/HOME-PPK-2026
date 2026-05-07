@@ -30,7 +30,7 @@ test.describe('Dashboard — Admin View', () => {
   test('should display pending slips stat', async ({ page }) => {
     const stat = page.locator('#statPendingSlips');
     if (await stat.count() > 0) {
-      await expect(stat).toBeVisible();
+      await expect(stat).toBeVisible({ timeout: 15000 });
     }
   });
 

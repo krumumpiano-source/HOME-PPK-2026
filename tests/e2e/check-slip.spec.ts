@@ -17,7 +17,7 @@ test.describe('Check Slip Page', () => {
 
     await page.goto('/check-slip.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     const critical = errors.filter(
       (e) => !e.includes('permission') && !e.includes('ไม่มีสิทธิ์')

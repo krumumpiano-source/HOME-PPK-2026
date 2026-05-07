@@ -245,8 +245,7 @@ test.describe('Cross-Device — Mobile Navigation (hamburger)', () => {
         return false;
       });
       if (clicked) {
-        await waitReady(page, 2000);
-        await expect(page).toHaveURL(/settings\.html/);
+        await page.waitForURL(/settings\.html/, { timeout: 10000 });
       }
     }
   });

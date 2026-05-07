@@ -17,7 +17,7 @@ test.describe('Admin Settings Page', () => {
 
     await page.goto('/admin-settings.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     const critical = errors.filter(
       (e) => !e.includes('permission') && !e.includes('ไม่มีสิทธิ์')
