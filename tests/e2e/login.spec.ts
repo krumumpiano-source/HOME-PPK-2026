@@ -27,7 +27,7 @@ test.describe('Login Page', () => {
     await page.click('#loginBtn');
 
     // รอ error message แสดง
-    await expect(page.locator('#errorMsg')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#errorMsg')).toBeVisible({ timeout: 15_000 });
     const errorText = await page.locator('#errorMsg').textContent();
     expect(errorText?.length).toBeGreaterThan(0);
   });

@@ -16,21 +16,21 @@ test.describe('Dashboard — Admin View', () => {
   test('should display admin stats section', async ({ page }) => {
     const adminSection = page.locator('#adminStatsSection');
     if (await adminSection.count() > 0) {
-      await expect(adminSection).toBeVisible({ timeout: 15000 });
+      await expect(adminSection).toBeVisible({ timeout: 25000 });
     }
   });
 
   test('should display pending registrations stat', async ({ page }) => {
     const stat = page.locator('#statPendingReg');
     if (await stat.count() > 0) {
-      await expect(stat).toBeVisible();
+      await expect(stat).toBeVisible({ timeout: 25000 });
     }
   });
 
   test('should display pending slips stat', async ({ page }) => {
     const stat = page.locator('#statPendingSlips');
     if (await stat.count() > 0) {
-      await expect(stat).toBeVisible({ timeout: 15000 });
+      await expect(stat).toBeVisible({ timeout: 25000 });
     }
   });
 

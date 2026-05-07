@@ -61,7 +61,7 @@ test.describe('Request Form — Residence', () => {
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto('/request-form.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
     expect(errors.length).toBe(0);
   });
 });

@@ -59,7 +59,7 @@ test.describe('Record Electric Page', () => {
 
     await page.goto('/record-electric.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     const criticalErrors = errors.filter(
       (e) => !e.includes('permission') && !e.includes('ไม่มีสิทธิ์')

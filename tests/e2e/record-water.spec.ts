@@ -65,7 +65,7 @@ test.describe('Record Water Page', () => {
 
     await page.goto('/record-water.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     // กรอง error ที่เกี่ยวกับ permission (ปกติสำหรับ user ที่ไม่มีสิทธิ์)
     const criticalErrors = errors.filter(
