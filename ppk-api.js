@@ -462,7 +462,7 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser',
     'reactivateResident','getMovedOutUsers','forceDeactivateUser','adminInitiatedReturn','headReviewRequest',
-    'executeTransfer'];
+    'executeTransfer','waiveAllOutstanding'];
 
 // ── Storage bucket helper: verify bucket exists ──
 var _bucketReady = {};
@@ -1008,6 +1008,22 @@ async function _routeAction(action, data) {
             invalidateResidentCache();
             _logActivity('admin_initiated_return', _airSess.userId, 'บังคับคืนบ้าน ' + _airHouseNumber + ' เหตุผล: ' + (data.reason || ''), { residentId: data.residentId, houseNumber: _airHouseNumber, reason: data.reason });
             return { success: true, hasOutstanding: _airHasOut };
+        }
+
+        /* ── ยกหนี้ทั้งหมด (กองกลางรับผิดชอบ) ─── */
+        case 'waiveAllOutstanding': {
+            if (!data.residentId && !data.houseNumber) return { success: false, error: 'ไม่ระบุ residentId หรือ houseNumber' };
+            var _waoSess = await _getSessionRole();
+            if (!_waoSess || (_waoSess.role !== 'admin' && _waoSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var _waoHouseNum = data.houseNumber;
+            if (!_waoHouseNum && data.residentId) {
+                var _waoRes = (await sbGet('residents', { id: 'eq.' + data.residentId, select: 'house_number', limit: '1' }).catch(function() { return []; }))[0];
+                if (_waoRes) _waoHouseNum = _waoRes.house_number;
+            }
+            if (!_waoHouseNum) return { success: false, error: 'ไม่พบบ้านของผู้พักอาศัยนี้' };
+            await sbPatch('outstanding', { house_number: 'eq.' + _waoHouseNum, status: 'neq.paid' }, { status: 'waived', updated_at: new Date().toISOString() });
+            _logActivity('waive_all_outstanding', _waoSess.userId, 'ยกหนี้ทั้งหมด (กองกลาง) houseNumber=' + _waoHouseNum, { houseNumber: _waoHouseNum, residentId: data.residentId });
+            return { success: true };
         }
 
         /* ── Phase F: บันทึกชำระยอดค้างผู้ย้ายออก ─── */

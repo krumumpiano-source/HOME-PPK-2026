@@ -5001,6 +5001,7 @@
                         (!canDeactivate
                             ? '<button class="btn btn-danger" onclick="forceDeactivateUserAction(' + idx + ')" style="font-size:0.82rem;padding:0.3rem 0.7rem;">🗑️ ปิดบัญชีถาวร</button>'
                             : '<span style="font-size:0.82rem;color:var(--muted);">บัญชีปิดแล้ว</span>') +
+                        '<button class="btn" onclick="waiveAllOutstandingAction(' + idx + ')" style="font-size:0.82rem;padding:0.3rem 0.7rem;background:#6366f1;color:#fff;">🏛️ กองกลางรับผิดชอบ</button>' +
                         '<button class="btn" onclick="reactivateMovedOutAction(' + idx + ')" style="font-size:0.82rem;padding:0.3rem 0.7rem;background:#f59e0b;color:#fff;">↩️ ยกเลิกการย้ายออก</button>' +
                     '</div>' +
                     '</div>';
@@ -5039,6 +5040,30 @@
                 var result = await callBackend('markMovedOutOutstandingPaid', { outstandingId: outstandingId });
                 if (result && result.success) {
                     if (typeof ppkToast === 'function') ppkToast('บันทึกชำระแล้วเรียบร้อย', 'success');
+                    await loadMovedOutUsers();
+                } else {
+                    ppkAlert('❌ ' + ((result && result.error) || 'ไม่สำเร็จ'));
+                }
+            } catch(e) {
+                ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        /* ── ยกหนี้ทั้งหมด (กองกลางรับผิดชอบ) ─── */
+        async function waiveAllOutstandingAction(idx) {
+            var u = _movedOutUsers[idx];
+            if (!u) return;
+            var ok = await ppkConfirm(
+                'ยืนยันให้กองกลางรับผิดชอบยอดค้างทั้งหมดของ ' + (u.fullName || '') + '?\n\n' +
+                '💰 ยอดค้าง ' + (u.totalOutstanding||0).toLocaleString('th-TH') + ' บาท จะถูกตัดออก\n' +
+                '(ใช้สำหรับกรณีที่บ้านว่าง ค่าไฟ/ค่าน้ำเป็นความรับผิดชอบของกองกลาง ไม่ใช่ผู้พักอาศัย)',
+                { type: 'warning', okText: 'ยืนยัน — กองกลางรับผิดชอบ', cancelText: 'ยกเลิก' }
+            );
+            if (!ok) return;
+            try {
+                var result = await callBackend('waiveAllOutstanding', { residentId: u.residentId, houseNumber: u.houseNumber });
+                if (result && result.success) {
+                    if (typeof ppkToast === 'function') ppkToast('ยกหนี้เรียบร้อยแล้ว — กองกลางรับผิดชอบ', 'success');
                     await loadMovedOutUsers();
                 } else {
                     ppkAlert('❌ ' + ((result && result.error) || 'ไม่สำเร็จ'));
@@ -5757,7 +5782,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260507C"></script>
+    <script src="ppk-api.js?v=20260507D"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
