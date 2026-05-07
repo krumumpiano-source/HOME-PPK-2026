@@ -174,6 +174,7 @@
     var type = opts.type || _detectType(message);
     var icon = opts.icon || ICONS[type] || 'ℹ️';
     var title = opts.title || TITLES[type] || 'แจ้งเตือน';
+    var msgContent = opts.html ? message : _escape(message);
 
     var overlay = document.createElement('div');
     overlay.id = 'ppk-overlay';
@@ -181,7 +182,7 @@
       '<div id="ppk-box">' +
         '<div id="ppk-icon-wrap" class="ppk-type-' + type + '">' + icon + '</div>' +
         '<div id="ppk-title">' + _escape(title) + '</div>' +
-        '<div id="ppk-msg">' + _escape(message) + '</div>' +
+        '<div id="ppk-msg">' + msgContent + '</div>' +
         '<div id="ppk-btns">' +
           (showCancel
             ? '<button class="ppk-btn ppk-btn-cancel" id="ppk-cancel">' + (opts.cancelText || 'ยกเลิก') + '</button>'

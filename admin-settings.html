@@ -2457,7 +2457,7 @@
                     });
                     body += '</tbody></table>';
                 }
-                ppkAlert('<div style="text-align:left;"><div style="font-weight:700;font-size:1rem;margin-bottom:0.75rem;">📜 ประวัติผู้พักอาศัย — บ้านเลขที่ ' + houseNumber + '</div>' + body + '</div>');
+                ppkAlert('<div style="text-align:left;"><div style="font-weight:700;font-size:1rem;margin-bottom:0.75rem;">📜 ประวัติผู้พักอาศัย — บ้านเลขที่ ' + houseNumber + '</div>' + body + '</div>', { html: true });
             } catch(e) {
                 ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
