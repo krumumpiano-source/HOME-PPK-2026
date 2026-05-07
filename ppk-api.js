@@ -1010,9 +1010,13 @@ async function _routeAction(action, data) {
             var reg = (await sbGet('pending_registrations', { id: 'eq.' + regId }))[0];
             if (!reg) return { success: false, error: 'ไม่พบคำขอ' };
             // ตรวจสอบว่า email มีอยู่ใน users หรือไม่
-            var existingUsers = await sbGet('users', { email: 'eq.' + reg.email, select: 'id,is_active', limit: '1' });
+            var existingUsers = await sbGet('users', { email: 'eq.' + reg.email, select: 'id,is_active,role', limit: '1' });
             var uid;
             if (existingUsers && existingUsers.length > 0) {
+                // ห้าม overwrite บัญชี admin/head — ป้องกันการผูก resident ซ้อนกับบัญชีผู้ดูแลระบบ
+                if (existingUsers[0].role === 'admin' || existingUsers[0].role === 'head') {
+                    return { success: false, error: 'อีเมล ' + reg.email + ' เป็นบัญชีผู้ดูแลระบบ ไม่สามารถอนุมัติซ้อนได้ กรุณาตรวจสอบ' };
+                }
                 // ใช้ user เดิม — อัปเดตข้อมูลให้ตรงกับคำขอใหม่
                 uid = existingUsers[0].id;
                 await sbPatch('users', { id: 'eq.' + uid }, {
@@ -1034,6 +1038,11 @@ async function _routeAction(action, data) {
             // สร้าง resident ถ้ามี house_number
             var residentId = null;
             if (data.house_number) {
+                // ตรวจสอบว่าบ้าน/ห้องนี้มีผู้พักอาศัย active อยู่แล้วหรือไม่
+                var _occCheck = await sbGet('residents', { house_number: 'eq.' + data.house_number, is_active: 'eq.true', select: 'id', limit: '1' }).catch(function() { return []; });
+                if (_occCheck && _occCheck.length > 0) {
+                    return { success: false, error: 'บ้าน/ห้อง "' + data.house_number + '" มีผู้พักอาศัย active อยู่แล้ว กรุณาตรวจสอบก่อนอนุมัติ' };
+                }
                 var hRows = await sbGet('housing', { house_number: 'eq.' + data.house_number, select: 'id', limit: '1' });
                 var houseId = hRows && hRows[0] ? hRows[0].id : null;
                 if (houseId) {
@@ -3431,7 +3440,7 @@ async function _routeAction(action, data) {
             var _raUserId = _raRes.user_id;
 
             // ตรวจว่าบ้านยัง available (ถ้าถูกจัดให้คนอื่นแล้ว ห้าม reactivate)
-            var _raHousingRows = await sbGet('housing', { number: 'eq.' + _raHouseNum, select: 'id,status', limit: '1' }).catch(function() { return []; });
+            var _raHousingRows = await sbGet('housing', { house_number: 'eq.' + _raHouseNum, select: 'id,status', limit: '1' }).catch(function() { return []; });
             var _raHousing = _raHousingRows && _raHousingRows[0];
             if (!_raHousing) return { success: false, error: 'ไม่พบข้อมูลบ้านพัก ' + _raHouseNum };
             if (_raHousing.status !== 'available') return { success: false, error: 'บ้านพัก ' + _raHouseNum + ' ถูกจัดให้ผู้อื่นแล้ว ไม่สามารถยกเลิกการย้ายออกได้' };

@@ -484,7 +484,7 @@
 
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260501A"></script>
+    <script src="ppk-api.js?v=20260507A"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
@@ -606,6 +606,14 @@
         submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
 
         try {
+            // ตรวจสอบ session ก่อน — ผู้ใช้ที่ยังไม่ login จะส่งคำร้องไม่ได้
+            var _sessionTk = localStorage.getItem('sessionToken');
+            if (!_sessionTk) {
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเข้าสู่ระบบก่อนส่งคำร้อง\nระบบจะพาท่านไปหน้าเข้าสู่ระบบ...', 'error');
+                setTimeout(function() { window.location.href = 'login.html'; }, 2000);
+                return;
+            }
             // ตรวจสอบความครบถ้วนของข้อมูล
             if (!document.querySelector('input[name="stay_type"]:checked')) {
                 submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
@@ -686,9 +694,10 @@
                 for (let fi = 0; fi < _filesToUpload.length; fi++) {
                     try {
                         var f = _filesToUpload[fi];
-                        var b64 = await new Promise(function(resolve) {
+                        var b64 = await new Promise(function(resolve, reject) {
                             var reader = new FileReader();
                             reader.onload = function(ev) { resolve(ev.target.result); };
+                            reader.onerror = function() { reject(new Error('อ่านไฟล์ไม่สำเร็จ กรุณาลองใหม่')); };
                             reader.readAsDataURL(f);
                         });
                         var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: _uploadHouseNumber });

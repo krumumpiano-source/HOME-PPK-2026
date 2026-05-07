@@ -719,7 +719,13 @@
                         name = oldResMap[houseNum].name;
                     }
                 }
-                if (!name && oldResMap[houseNum]) name = oldResMap[houseNum].name;
+                if (!name && oldResMap[houseNum]) {
+                    // แสดงชื่อผู้เก่าเฉพาะเมื่อ period นั้น ≤ วันที่ผู้เก่าย้ายออก (ไม่แสดงคนที่เสียชีวิต/ถูกลบไปแล้วในรอบปัจจุบัน)
+                    const oldEndYM = (oldResMap[houseNum].end_date || '').substring(0, 7);
+                    if (!oldEndYM || periodYM <= oldEndYM) {
+                        name = oldResMap[houseNum].name;
+                    }
+                }
                 return name || '-';
             }
 
@@ -1352,7 +1358,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260501A"></script>
+    <script src="ppk-api.js?v=20260507A"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
