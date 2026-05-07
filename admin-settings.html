@@ -2078,16 +2078,19 @@
             var pillsEl = document.getElementById('housingFilterPills');
             if (!tableEl) return;
 
-            // Compute status based on actual residents + respect manual status
+            // Compute status: respect admin-set status (available/maintenance) first;
+            // if status is 'occupied' or unset, derive from active residents
             data.forEach(function(h) {
                 var dn = formatHousingNumber(h, formatSettings);
                 var rawNum = h.number || h.house_number || '';
-                var hasRes = residents.some(function(r) { return r.house_number === dn || (rawNum && r.house_number === rawNum); });
-                // ถ้า admin ตั้งสถานะ available/maintenance ไว้ชัดเจน → เคารพการตั้งของ admin เสมอ
-                // ถ้าไม่ได้ตั้งชัด และมี resident → occupied
-                if (h.status === 'available' || h.status === 'maintenance') h._realStatus = h.status;
-                else if (hasRes) h._realStatus = 'occupied';
-                else h._realStatus = h.status || 'available';
+                if (h.status === 'available' || h.status === 'maintenance') {
+                    h._realStatus = h.status;
+                } else {
+                    var hasRes = residents.some(function(r) {
+                        return (r.house_number === dn || (rawNum && r.house_number === rawNum)) && r.is_active !== false;
+                    });
+                    h._realStatus = hasRes ? 'occupied' : (h.status || 'available');
+                }
             });
 
             var totalHouses = data.filter(function(h) { return h.type === 'house'; }).length;

@@ -998,8 +998,14 @@ async function _routeAction(action, data) {
             var _ghhSess = await _getSessionRole();
             if (!_ghhSess || (_ghhSess.role !== 'admin' && _ghhSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _ghhRows = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, order: 'created_at.desc', select: 'id,user_id,prefix,firstname,lastname,email,is_active,start_date,end_date,created_at' }).catch(function() { return []; });
+            // ตรวจสอบสถานะบ้านจาก housing table เพื่อ cross-check
+            var _ghhHousing = await sbGet('housing', { or: 'number.eq.' + data.houseNumber + ',house_number.eq.' + data.houseNumber, select: 'status', limit: '1' }).catch(function() { return []; });
+            var _ghhHouseStatus = (_ghhHousing && _ghhHousing[0] && _ghhHousing[0].status) || null;
             var _ghhResult = (_ghhRows || []).map(function(r) {
-                return { residentId: r.id, fullName: ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(), email: r.email || '', isActive: r.is_active, startDate: r.start_date || r.created_at, endDate: r.end_date };
+                // ถ้า housing.status = available → บ้านว่างแน่นอน ไม่มีใครอยู่ปัจจุบัน
+                var activeByDb = r.is_active && !r.end_date;
+                var isActive = activeByDb && _ghhHouseStatus !== 'available';
+                return { residentId: r.id, fullName: ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(), email: r.email || '', isActive: isActive, startDate: r.start_date || r.created_at, endDate: r.end_date };
             });
             return { success: true, data: _ghhResult };
         }
