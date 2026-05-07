@@ -620,13 +620,13 @@
                 if (!hasDef && !hasAdv) { section.style.display = 'none'; return; }
 
                 var html = '';
-                var total = 0;
+                var deferTotal = 0;
+                var advTotal = 0;
 
                 // Deferred items
                 if (hasDef) {
-                    html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">⏳ รายการเลื่อนชำระ</div>';
+                    html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">⏳ รายการเลื่อนชำระ <span style="font-size:0.8rem;font-weight:400;">(ค่าน้ำ/ค่าไฟที่ยังไม่ได้เบิก — นำมารวมเบิกเดือนนี้)</span></div>';
                     html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.8rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">รายการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">จำนวนเงิน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เหตุผล</th></tr></thead><tbody>';
-                    var deferTotal = 0;
                     d.deferredItems.forEach(function(item) {
                         var pm = item.period.split('-');
                         var mName = THAI_MONTHS[parseInt(pm[1]) - 1] + ' ' + pm[0];
@@ -636,29 +636,36 @@
                     });
                     html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="2" style="padding:0.4rem;border:1px solid #fde68a;">รวมยอดเลื่อนชำระ</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(deferTotal) + '</td><td></td></tr>';
                     html += '</tbody></table>';
-                    total += deferTotal;
                 }
 
                 // Pending advances (สำรองค้างคืน)
                 if (hasAdv) {
-                    html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">🤝 สำรองจ่ายค้างคืน</div>';
-                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">ชื่อ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">สำรอง</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">คืนแล้ว</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">ค้างคืน</th></tr></thead><tbody>';
+                    html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">🤝 สำรองจ่ายค้างคืน <span style="font-size:0.8rem;font-weight:400;">(เงินที่กรรมการออกไปก่อน — ต้องคืนกรรมการคนนั้น)</span></div>';
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">ชื่อกรรมการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">สำรองไป</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">คืนแล้ว</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">ค้างคืน</th></tr></thead><tbody>';
                     d.pendingAdvances.forEach(function(a) {
                         var pm = a.period.split('-');
                         var mName = THAI_MONTHS[parseInt(pm[1]) - 1] + ' ' + pm[0];
-                        total += a.remaining;
+                        advTotal += a.remaining;
                         html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + a.person_name + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(a.amount) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;">' + formatMoney(a.reimbursed_amount) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(a.remaining) + '</td></tr>';
                     });
-                    html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="4" style="padding:0.4rem;border:1px solid #fde68a;">รวมค้างคืน</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(total) + '</td></tr>';
+                    html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="4" style="padding:0.4rem;border:1px solid #fde68a;">รวมค้างคืนกรรมการ</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(advTotal) + '</td></tr>';
                     html += '</tbody></table>';
                 }
 
+                var total = deferTotal + advTotal;
                 _carryOverTotal = total;
                 content.innerHTML = html;
-                totalDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">' +
-                    '<span>รวมยอดค้างจากเดือนก่อน: <strong>' + formatMoney(total) + ' บาท</strong></span>' +
-                    (total > 0 ? '<button class="no-print" onclick="printCarryOverMemo()" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:0.4rem 1rem;font-size:0.85rem;cursor:pointer;">🖨️ พิมพ์เบิกเฉพาะยอดค้าง</button>' : '') +
-                    '</div>';
+
+                var summaryHtml = '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">';
+                summaryHtml += '<div style="line-height:1.8;">';
+                if (hasDef) summaryHtml += '<div style="font-size:0.88rem;">⏳ ยอดค่าน้ำ/ค่าไฟค้างเบิก: <strong style="color:#dc2626;">' + formatMoney(deferTotal) + ' บาท</strong></div>';
+                if (hasAdv) summaryHtml += '<div style="font-size:0.88rem;">🤝 ยอดสำรองจ่ายค้างคืนกรรมการ: <strong style="color:#dc2626;">' + formatMoney(advTotal) + ' บาท</strong></div>';
+                if (hasDef && hasAdv) summaryHtml += '<div style="margin-top:0.2rem;padding-top:0.3rem;border-top:1px solid #fde68a;">รวมยอดค้างทั้งหมดจากเดือนก่อน: <strong>' + formatMoney(total) + ' บาท</strong></div>';
+                else summaryHtml += '<div>รวมยอดค้างจากเดือนก่อน: <strong>' + formatMoney(total) + ' บาท</strong></div>';
+                summaryHtml += '</div>';
+                summaryHtml += (total > 0 ? '<button class="no-print" onclick="printCarryOverMemo()" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:0.4rem 1rem;font-size:0.85rem;cursor:pointer;flex-shrink:0;">🖨️ พิมพ์เบิกเฉพาะยอดค้าง</button>' : '');
+                summaryHtml += '</div>';
+                totalDiv.innerHTML = summaryHtml;
                 totalDiv.style.display = total > 0 ? '' : 'none';
                 section.style.display = '';
                 calculateTotal();
