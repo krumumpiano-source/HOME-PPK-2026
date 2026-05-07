@@ -2083,9 +2083,10 @@
                 var dn = formatHousingNumber(h, formatSettings);
                 var rawNum = h.number || h.house_number || '';
                 var hasRes = residents.some(function(r) { return r.house_number === dn || (rawNum && r.house_number === rawNum); });
-                // ถ้ามี resident จริง → occupied เสมอ
-                // ถ้าไม่มี resident → ใช้สถานะที่ admin ตั้งไว้ (occupied/maintenance/available)
-                if (hasRes) h._realStatus = 'occupied';
+                // ถ้า admin ตั้งสถานะ available/maintenance ไว้ชัดเจน → เคารพการตั้งของ admin เสมอ
+                // ถ้าไม่ได้ตั้งชัด และมี resident → occupied
+                if (h.status === 'available' || h.status === 'maintenance') h._realStatus = h.status;
+                else if (hasRes) h._realStatus = 'occupied';
                 else h._realStatus = h.status || 'available';
             });
 
