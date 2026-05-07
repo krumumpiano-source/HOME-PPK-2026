@@ -1267,13 +1267,6 @@
                         </table>
                     </div>
 
-                    <!-- Modal: รายละเอียดผู้ใช้ลอย -->
-                    <div id="floatingDetailModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:99999; align-items:flex-start; justify-content:center; padding:2rem 1rem; overflow-y:auto;">
-                        <div id="floatingDetailBox" style="background:#fff; border-radius:14px; max-width:520px; width:100%; padding:1.5rem; box-shadow:0 12px 40px rgba(0,0,0,0.3); position:relative; margin:auto;">
-                            <button onclick="closeFloatingDetailModal()" style="position:absolute; top:0.8rem; right:0.9rem; background:none; border:none; font-size:1.4rem; cursor:pointer; color:#64748b; line-height:1;">&times;</button>
-                            <div id="floatingDetailContent"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -4844,11 +4837,25 @@
             }).join('');
         }
 
+        function _getOrCreateFloatingModal() {
+            var existing = document.getElementById('floatingDetailModal');
+            if (existing) return existing;
+            var overlay = document.createElement('div');
+            overlay.id = 'floatingDetailModal';
+            overlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:999999;overflow-y:auto;';
+            overlay.innerHTML =
+                '<div id="floatingDetailBox" style="background:#ffffff;border-radius:14px;max-width:520px;width:90%;margin:3rem auto;padding:1.5rem;box-shadow:0 16px 48px rgba(0,0,0,0.35);position:relative;">' +
+                    '<button onclick="closeFloatingDetailModal()" style="position:absolute;top:0.8rem;right:0.9rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#64748b;line-height:1;z-index:1;">&times;</button>' +
+                    '<div id="floatingDetailContent"></div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
         async function viewFloatingUserDetail(userId) {
-            // แสดงข้อมูลทันทีจาก array ที่โหลดแล้ว — ไม่ต้องรอ API
             var u = _floatingUsers.find(function(x) { return x.id === userId; });
             if (!u) { ppkAlert('ข้อผิดพลาด', 'ไม่พบข้อมูลผู้ใช้'); return; }
-            var modal = document.getElementById('floatingDetailModal');
+            var modal = _getOrCreateFloatingModal();
             var content = document.getElementById('floatingDetailContent');
             var roleTh = { admin: '🔴 แอดมิน', head: '🟠 หัวหน้า', user: '🟢 ผู้ใช้งาน' };
             var statusTh = { active: '✅ ปกติ', departing: '🚶 กำลังย้ายออก', inactive: '⛔ ปิดแล้ว' };
@@ -4857,13 +4864,13 @@
             var safeName = ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim().replace(/['"]/g, '');
             content.innerHTML =
                 '<div style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;">🪂 ' + (u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'') + '</div>' +
-                '<table style="width:100%;font-size:0.88rem;border-collapse:collapse;margin-bottom:1rem;">' +
-                    '<tr style="background:#f8fafc;"><td style="padding:0.4rem 0.6rem;color:#64748b;width:110px;">อีเมล</td><td style="padding:0.4rem 0.6rem;">' + (u.email||'-') + '</td></tr>' +
-                    '<tr><td style="padding:0.4rem 0.6rem;color:#64748b;">เบอร์โทร</td><td style="padding:0.4rem 0.6rem;">' + (u.phone||'-') + '</td></tr>' +
-                    '<tr style="background:#f8fafc;"><td style="padding:0.4rem 0.6rem;color:#64748b;">ตำแหน่ง</td><td style="padding:0.4rem 0.6rem;">' + (u.position||'-') + '</td></tr>' +
-                    '<tr><td style="padding:0.4rem 0.6rem;color:#64748b;">สิทธิ์</td><td style="padding:0.4rem 0.6rem;">' + (roleTh[u.role]||u.role||'-') + '</td></tr>' +
-                    '<tr style="background:#f8fafc;"><td style="padding:0.4rem 0.6rem;color:#64748b;">สถานะ</td><td style="padding:0.4rem 0.6rem;">' + (statusTh[u.status]||u.status||'-') + '</td></tr>' +
-                    '<tr><td style="padding:0.4rem 0.6rem;color:#64748b;">วันที่สมัคร</td><td style="padding:0.4rem 0.6rem;">' + createdDate + '</td></tr>' +
+                '<table style="width:100%;font-size:0.88rem;border-collapse:collapse;margin-bottom:1rem;background:#fff;">' +
+                    '<tr style="background:#f1f5f9;"><td style="padding:0.4rem 0.6rem;color:#64748b;width:110px;">อีเมล</td><td style="padding:0.4rem 0.6rem;">' + (u.email||'-') + '</td></tr>' +
+                    '<tr style="background:#fff;"><td style="padding:0.4rem 0.6rem;color:#64748b;">เบอร์โทร</td><td style="padding:0.4rem 0.6rem;">' + (u.phone||'-') + '</td></tr>' +
+                    '<tr style="background:#f1f5f9;"><td style="padding:0.4rem 0.6rem;color:#64748b;">ตำแหน่ง</td><td style="padding:0.4rem 0.6rem;">' + (u.position||'-') + '</td></tr>' +
+                    '<tr style="background:#fff;"><td style="padding:0.4rem 0.6rem;color:#64748b;">สิทธิ์</td><td style="padding:0.4rem 0.6rem;">' + (roleTh[u.role]||u.role||'-') + '</td></tr>' +
+                    '<tr style="background:#f1f5f9;"><td style="padding:0.4rem 0.6rem;color:#64748b;">สถานะ</td><td style="padding:0.4rem 0.6rem;">' + (statusTh[u.status]||u.status||'-') + '</td></tr>' +
+                    '<tr style="background:#fff;"><td style="padding:0.4rem 0.6rem;color:#64748b;">วันที่สมัคร</td><td style="padding:0.4rem 0.6rem;">' + createdDate + '</td></tr>' +
                 '</table>' +
                 '<div style="font-weight:600;margin-bottom:0.5rem;font-size:0.9rem;">📋 ประวัติคำขอ</div>' +
                 '<div id="floatingReqSection" style="color:#64748b;font-size:0.85rem;padding:0.4rem 0;">⏳ กำลังโหลด...</div>' +
@@ -4871,8 +4878,9 @@
                     '<button class="btn btn-danger" onclick="closeFloatingDetailModal();deleteFloatingUserAction(\'' + safeId + '\',\'' + safeName + '\')" style="font-size:0.88rem;">🗑️ ลบผู้ใช้นี้</button>' +
                     '<button class="btn" onclick="closeFloatingDetailModal()" style="font-size:0.88rem;">ปิด</button>' +
                 '</div>';
-            modal.style.display = 'flex';
-            // โหลด requests แบบ background — ไม่ block UI
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            // โหลด requests แบบ background
             callBackend('getFloatingUserDetail', { userId: userId }).then(function(result) {
                 var reqSection = document.getElementById('floatingReqSection');
                 if (!reqSection) return;
@@ -4897,7 +4905,9 @@
         }
 
         function closeFloatingDetailModal() {
-            document.getElementById('floatingDetailModal').style.display = 'none';
+            var modal = document.getElementById('floatingDetailModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
         }
 
         async function deleteFloatingUserAction(userId, name) {
