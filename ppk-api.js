@@ -374,7 +374,7 @@ async function ppkRegister(data) {
 /* ══════════════════════════════════════════
    SESSION CHECK — ตรวจ session token กับ DB ก่อน fallback guest
 ══════════════════════════════════════════ */
-// ตรวจสอบ role จาก session ใน DB (ไม่พึ่ง localStorage)
+// ตรวจสอบ role จาก session ใน DB เท่านั้น (ไม่ fallback localStorage เพื่อความปลอดภัย)
 async function _getSessionRole() {
     var tk = getSessionToken();
     if (!tk || tk === 'guest-admin-session') return null;
@@ -382,11 +382,6 @@ async function _getSessionRole() {
         var s = await sbGet('sessions', { token: 'eq.' + tk, select: 'user_id,role,expires_at', limit: '1' });
         var sess = s && s[0];
         if (sess && new Date(sess.expires_at) > new Date()) return { userId: sess.user_id, role: sess.role };
-    } catch(e) {}
-    // Fallback: ใช้ currentUser จาก localStorage (กรณี session ใน DB หมดอายุหรือ query ล้มเหลว)
-    try {
-        var stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
-        if (stored && stored.id && stored.role) return { userId: stored.id, role: stored.role };
     } catch(e) {}
     return null;
 }
@@ -466,7 +461,8 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'saveHousingFormat','setupAdmin',
     'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser',
-    'reactivateResident','getMovedOutUsers','forceDeactivateUser','adminInitiatedReturn','headReviewRequest'];
+    'reactivateResident','getMovedOutUsers','forceDeactivateUser','adminInitiatedReturn','headReviewRequest',
+    'executeTransfer'];
 
 // ── Storage bucket helper: verify bucket exists ──
 var _bucketReady = {};
@@ -850,13 +846,49 @@ async function _routeAction(action, data) {
             return { success: true, data: rows };
         }
         case 'getFloatingUsers': {
-            var allUsers = await sbGet('users', { is_active: 'eq.true', select: 'id,email,prefix,firstname,lastname,position,phone,created_at' });
+            var allUsers = await sbGet('users', { is_active: 'eq.true', select: 'id,email,prefix,firstname,lastname,position,phone,created_at,role,status' });
             allUsers = allUsers || [];
             var activeRes = await sbGet('residents', { is_active: 'eq.true', select: 'user_id' });
             var resUserIds = {};
             (activeRes || []).forEach(function(r) { if (r.user_id) resUserIds[r.user_id] = true; });
             var floating = allUsers.filter(function(u) { return !resUserIds[u.id]; });
             return { success: true, data: floating };
+        }
+
+        case 'getFloatingUserDetail': {
+            if (!data.userId) return { success: false, error: 'ไม่ระบุ userId' };
+            var _gfdSess = await _getSessionRole();
+            if (!_gfdSess || (_gfdSess.role !== 'admin' && _gfdSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var _gfdUser = await sbGet('users', { id: 'eq.' + data.userId, select: 'id,email,prefix,firstname,lastname,position,phone,role,status,is_active,created_at,pdpa_consent', limit: '1' }).catch(function() { return []; });
+            if (!_gfdUser || !_gfdUser[0]) return { success: false, error: 'ไม่พบผู้ใช้' };
+            var _gfdReqs = await sbGet('requests', { user_id: 'eq.' + data.userId, order: 'created_at.desc', select: 'id,type,status,created_at', limit: '10' }).catch(function() { return []; });
+            var _gfdQueue = await sbGet('queue', { user_id: 'eq.' + data.userId, status: 'eq.waiting', select: 'id,position,expires_at', order: 'created_at.desc', limit: '1' }).catch(function() { return []; });
+            var _gfdPendReg = await sbGet('pending_registrations', { email: 'eq.' + _gfdUser[0].email, select: 'id,status,submitted_at', order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
+            return { success: true, data: {
+                user: _gfdUser[0],
+                requests: _gfdReqs || [],
+                queue: (_gfdQueue && _gfdQueue[0]) ? _gfdQueue[0] : null,
+                pendingReg: (_gfdPendReg && _gfdPendReg[0]) ? _gfdPendReg[0] : null
+            }};
+        }
+
+        case 'deleteFloatingUser': {
+            if (!data.userId) return { success: false, error: 'ไม่ระบุ userId' };
+            var _dfSess = await _getSessionRole();
+            if (!_dfSess || (_dfSess.role !== 'admin' && _dfSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            // ตรวจว่าไม่มี active resident ก่อนลบ
+            var _dfRes = await sbGet('residents', { user_id: 'eq.' + data.userId, is_active: 'eq.true', select: 'id', limit: '1' }).catch(function() { return []; });
+            if (_dfRes && _dfRes[0]) return { success: false, error: 'ผู้ใช้นี้มีบ้านพักอยู่แล้ว ไม่สามารถลบได้' };
+            // ยกเลิกคำขอที่รอดำเนินการ
+            await sbUpdate('requests', { status: 'cancelled', reviewed_note: 'ยกเลิกอัตโนมัติ — แอดมินลบบัญชีผู้ใช้ลอย' }, { user_id: 'eq.' + data.userId, status: 'eq.pending' }).catch(function() {});
+            // ยกเลิก queue
+            await sbUpdate('queue', { status: 'cancelled' }, { user_id: 'eq.' + data.userId, status: 'eq.waiting' }).catch(function() {});
+            // ลบ sessions
+            await sbDelete('sessions', { user_id: 'eq.' + data.userId }).catch(function() {});
+            // deactivate user
+            await sbUpdate('users', { is_active: false, status: 'inactive' }, { id: 'eq.' + data.userId });
+            _logActivity('delete_floating_user', _dfSess.userId, 'ลบบัญชีผู้ใช้ลอย userId=' + data.userId, { targetUserId: data.userId });
+            return { success: true };
         }
 
         /* ── Phase F: ผู้ย้ายออกที่มียอดค้าง ────── */
@@ -1815,6 +1847,15 @@ async function _routeAction(action, data) {
         case 'submitRequest': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number' });
             var s = sess && sess[0];
+            // ── Duplicate prevention: ป้องกัน user ส่งคำร้องประเภทเดียวซ้ำขณะยังรอดำเนินการ ──
+            if (s && s.user_id && ['return', 'transfer', 'residence'].indexOf(data.type) !== -1) {
+                var _typeLabel = { residence: 'สมัครอยู่อาศัย', transfer: 'ขอย้ายบ้านพัก', 'return': 'ขอคืนบ้านพัก' };
+                var _dupReqs = [];
+                try { _dupReqs = await sbGet('requests', { user_id: 'eq.' + s.user_id, type: 'eq.' + data.type, status: 'in.(pending,reviewing,waiting)', select: 'id', limit: '1' }) || []; } catch(e) {}
+                if (_dupReqs.length > 0) {
+                    return { success: false, error: 'คุณมีคำร้อง' + (_typeLabel[data.type] || data.type) + 'รอดำเนินการอยู่แล้ว (รหัส ' + _dupReqs[0].id + ') กรุณารอผลหรือติดต่อผู้ดูแลระบบ' };
+                }
+            }
             // สร้าง ID: PREFIX-YYYYMMDD-NNN (ประเภท-วันที่-ลำดับ)
             var prefixMap = { residence: 'REQ', transfer: 'TRF', return: 'RTN', repair: 'RPR' };
             var reqPrefix = prefixMap[data.type] || 'REQ';
@@ -2911,9 +2952,12 @@ async function _routeAction(action, data) {
                 } catch(e) {}
             }
 
-            // 5. deactivate resident + บันทึก end_date ตามวันที่กำหนดคืนบ้าน
+            // 5. deactivate resident + บันทึก end_date / departed_at / departure_reason
             await sbPatch('residents', { id: 'eq.' + _arRes2.id }, {
-                is_active: false, end_date: _arEndDate2, updated_at: new Date().toISOString()
+                is_active: false, end_date: _arEndDate2,
+                departed_at: new Date().toISOString(),
+                departure_reason: data.reason || 'return',
+                updated_at: new Date().toISOString()
             });
 
             // 6. ลบ coresidents
@@ -2942,8 +2986,10 @@ async function _routeAction(action, data) {
                 }
             } catch(e) {}
 
-            // 8. จัดการ user: ถ้ามียอดค้าง → คงไว้ให้ login ได้, ถ้าไม่มี → deactivate
-            if (!_arHasOut2) {
+            // 8. จัดการ user: ถ้ามียอดค้าง → mark status=departing (ยัง login ได้), ถ้าไม่มี → deactivate
+            if (_arHasOut2) {
+                try { await sbPatch('users', { id: 'eq.' + _arUserId2 }, { status: 'departing', updated_at: new Date().toISOString() }); } catch(e) {}
+            } else {
                 await sbPatch('users', { id: 'eq.' + _arUserId2 }, { is_active: false, updated_at: new Date().toISOString() });
                 try { await sbDelete('sessions', { user_id: 'eq.' + _arUserId2 }); } catch(e) {}
             }
@@ -2958,6 +3004,91 @@ async function _routeAction(action, data) {
             invalidateResidentCache();
             _logActivity('approve_return', _arReviewerId2, 'อนุมัติคืนบ้าน ' + _arHouseNumber2, { requestId: data.requestId, houseNumber: _arHouseNumber2, hasOutstanding: _arHasOut2 });
             return { success: true, hasOutstanding: _arHasOut2 };
+        }
+
+        /* ── ดำเนินการย้ายบ้าน (execute transfer หลังอนุมัติแล้ว) ── */
+        case 'executeTransfer': {
+            if (!data.requestId) return { success: false, error: 'ไม่ระบุ requestId' };
+            var _etSess = await _getSessionRole();
+            if (!_etSess || (_etSess.role !== 'admin' && _etSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+
+            // 1. ดึง request
+            var _etReqR = await sbGet('requests', { id: 'eq.' + data.requestId, select: 'user_id,status,details', limit: '1' }).catch(function() { return []; });
+            var _etReq = _etReqR && _etReqR[0];
+            if (!_etReq) return { success: false, error: 'ไม่พบคำร้อง' };
+            if (_etReq.status !== 'approved') return { success: false, error: 'คำร้องยังไม่ได้รับการอนุมัติ (สถานะ: ' + _etReq.status + ')' };
+
+            var _etDet = _etReq.details || {};
+            var _etCurHouse = _etDet.current_house || '';
+            var _etTgtHouse = data.targetHouse || _etDet.target_house || '';
+            var _etUID = _etReq.user_id;
+
+            if (!_etUID) return { success: false, error: 'คำร้องไม่มีข้อมูลผู้ใช้' };
+            if (!_etTgtHouse) return { success: false, error: 'ไม่ระบุบ้านปลายทาง (target_house)' };
+
+            // 2. ดึง resident ปัจจุบัน
+            var _etResR = await sbGet('residents', { user_id: 'eq.' + _etUID, is_active: 'eq.true', limit: '1' }).catch(function() { return []; });
+            var _etRes = _etResR && _etResR[0];
+            if (!_etRes) return { success: false, error: 'ไม่พบผู้พักอาศัยที่ active สำหรับผู้ใช้นี้' };
+
+            // 3. ตรวจว่า execute แล้วหรือยัง (ถ้าผู้พักย้ายไปบ้านใหม่แล้ว)
+            if (_etRes.house_number === _etTgtHouse) {
+                return { success: true, alreadyExecuted: true, message: 'ดำเนินการย้ายแล้ว — ผู้พักอาศัยอยู่ที่บ้าน ' + _etTgtHouse + ' แล้ว' };
+            }
+
+            // 4. ตรวจบ้านปลายทาง
+            var _etTgtRows = await sbGet('housing', { house_number: 'eq.' + _etTgtHouse, limit: '1' }).catch(function() { return []; });
+            var _etTgt = _etTgtRows && _etTgtRows[0];
+            if (!_etTgt) return { success: false, error: 'ไม่พบบ้านพักเลขที่ ' + _etTgtHouse };
+            if (_etTgt.status !== 'available') return { success: false, error: 'บ้านปลายทาง ' + _etTgtHouse + ' ยังไม่ว่าง (สถานะ: ' + _etTgt.status + ')' };
+
+            var _etOldHId = _etRes.house_id;
+            var _etActualCurHouse = _etRes.house_number;
+
+            // 5. ย้าย resident → บ้านใหม่
+            await sbPatch('residents', { id: 'eq.' + _etRes.id }, {
+                house_id: _etTgt.id, house_number: _etTgtHouse,
+                move_in_date: new Date().toISOString().split('T')[0],
+                updated_at: new Date().toISOString()
+            });
+            // 6. sync coresidents
+            try {
+                var _etCorR = await sbGet('coresidents', { resident_id: 'eq.' + _etRes.id }).catch(function() { return []; });
+                for (var _eci = 0; _etCorR && _eci < _etCorR.length; _eci++) {
+                    await sbPatch('coresidents', { id: 'eq.' + _etCorR[_eci].id }, { house_id: _etTgt.id });
+                }
+            } catch(e) {}
+            // 7. บ้านเก่า → available
+            if (_etOldHId) {
+                try { await sbPatch('housing', { id: 'eq.' + _etOldHId }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+            // 8. บ้านใหม่ → occupied
+            await sbPatch('housing', { id: 'eq.' + _etTgt.id }, { status: 'occupied', updated_at: new Date().toISOString() });
+            // 9. mark outstanding บ้านเก่าว่าย้ายออก
+            if (_etActualCurHouse) {
+                try { await sbPatch('outstanding', { house_number: 'eq.' + _etActualCurHouse, moved_out_at: 'is.null' }, { moved_out_at: new Date().toISOString() }); } catch(e) {}
+            }
+            // 10. notify email คนแรกในคิว
+            try {
+                var _etQRows = await sbGet('queue', { status: 'eq.waiting', order: 'position.asc', limit: '1' }).catch(function() { return []; });
+                if (_etQRows && _etQRows[0] && _etQRows[0].user_id) {
+                    var _etQUserR = await sbGet('users', { id: 'eq.' + _etQRows[0].user_id, select: 'email,firstname,prefix', limit: '1' }).catch(function() { return []; });
+                    if (_etQUserR && _etQUserR[0] && _etQUserR[0].email) {
+                        var _etQU = _etQUserR[0];
+                        var _etQName = ((_etQU.prefix||'') + (_etQU.firstname||'')).trim() || 'ท่าน';
+                        await _callEdge('send-email', {
+                            to: _etQU.email,
+                            subject: 'บ้านพักว่างแล้ว — บ้านพักครู พะเยาพิทยาคม',
+                            html: '<p>เรียน ' + _etQName + '</p><p>บ้านพัก <strong>เลขที่ ' + (_etActualCurHouse||'') + '</strong> ว่างแล้ว กรุณาติดต่อเจ้าหน้าที่เพื่อดำเนินการต่อไป</p><p>ขอบคุณ<br>ระบบบ้านพักครู พะเยาพิทยาคม</p>',
+                            text: 'บ้านพัก ' + (_etActualCurHouse||'') + ' ว่างแล้ว กรุณาติดต่อเจ้าหน้าที่'
+                        }).catch(function() {});
+                    }
+                }
+            } catch(e) {}
+
+            invalidateResidentCache();
+            _logActivity('execute_transfer', _etSess.userId, 'ย้ายบ้านพัก ' + _etActualCurHouse + ' → ' + _etTgtHouse, { requestId: data.requestId, from: _etActualCurHouse, to: _etTgtHouse });
+            return { success: true, from: _etActualCurHouse, to: _etTgtHouse };
         }
 
         /* ── Request review ───────────────────────── */
@@ -3090,6 +3221,23 @@ async function _routeAction(action, data) {
                                             { moved_out_at: new Date().toISOString() });
                                     } catch(e) {}
                                     invalidateResidentCache();
+                                    // notify email คนแรกในคิวเมื่อบ้านเก่าว่าง
+                                    try {
+                                        var _trQRows = await sbGet('queue', { status: 'eq.waiting', order: 'position.asc', limit: '1' }).catch(function() { return []; });
+                                        if (_trQRows && _trQRows[0] && _trQRows[0].user_id) {
+                                            var _trQUserR = await sbGet('users', { id: 'eq.' + _trQRows[0].user_id, select: 'email,firstname,prefix', limit: '1' }).catch(function() { return []; });
+                                            if (_trQUserR && _trQUserR[0] && _trQUserR[0].email) {
+                                                var _trQU = _trQUserR[0];
+                                                var _trQName = ((_trQU.prefix||'') + (_trQU.firstname||'')).trim() || 'ท่าน';
+                                                await _callEdge('send-email', {
+                                                    to: _trQU.email,
+                                                    subject: 'บ้านพักว่างแล้ว — บ้านพักครู พะเยาพิทยาคม',
+                                                    html: '<p>เรียน ' + _trQName + '</p><p>บ้านพัก <strong>เลขที่ ' + (_trCurHouse||'') + '</strong> ว่างแล้ว กรุณาติดต่อเจ้าหน้าที่เพื่อดำเนินการต่อไป</p><p>ขอบคุณ<br>ระบบบ้านพักครู พะเยาพิทยาคม</p>',
+                                                    text: 'บ้านพัก ' + (_trCurHouse||'') + ' ว่างแล้ว กรุณาติดต่อเจ้าหน้าที่'
+                                                }).catch(function() {});
+                                            }
+                                        }
+                                    } catch(e) {}
                                 }
                             }
                         }
