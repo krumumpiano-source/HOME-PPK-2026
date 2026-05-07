@@ -81,8 +81,7 @@ test.describe('Cross-Device — User Flow (ผู้พักอาศัย)', 
         return false;
       });
       if (!clicked) await page.goto('/upload-slip.html');
-      await waitReady(page, 2000);
-      await expect(page).toHaveURL(/upload-slip\.html/);
+      await page.waitForURL(/upload-slip\.html/, { timeout: 10000 });
     } else {
       // fallback: navigate โดยตรง
       await page.goto('/upload-slip.html');
