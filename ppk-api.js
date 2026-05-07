@@ -861,7 +861,7 @@ async function _routeAction(action, data) {
             if (!_gfdSess || (_gfdSess.role !== 'admin' && _gfdSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var _gfdUser = await sbGet('users', { id: 'eq.' + data.userId, select: 'id,email,prefix,firstname,lastname,position,phone,role,status,is_active,created_at,pdpa_consent', limit: '1' }).catch(function() { return []; });
             if (!_gfdUser || !_gfdUser[0]) return { success: false, error: 'ไม่พบผู้ใช้' };
-            var _gfdReqs = await sbGet('requests', { user_id: 'eq.' + data.userId, order: 'created_at.desc', select: 'id,type,status,created_at', limit: '10' }).catch(function() { return []; });
+            var _gfdReqs = await sbGet('requests', { user_id: 'eq.' + data.userId, order: 'submitted_at.desc', select: 'id,type,status,submitted_at', limit: '10' }).catch(function() { return []; });
             var _gfdQueue = await sbGet('queue', { user_id: 'eq.' + data.userId, status: 'eq.waiting', select: 'id,position,expires_at', order: 'created_at.desc', limit: '1' }).catch(function() { return []; });
             var _gfdPendReg = await sbGet('pending_registrations', { email: 'eq.' + _gfdUser[0].email, select: 'id,status,submitted_at', order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
             return { success: true, data: {

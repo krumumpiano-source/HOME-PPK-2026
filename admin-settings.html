@@ -4891,7 +4891,7 @@
                 var reqStatusTh = { pending: '⏳ รอ', approved: '✅ อนุมัติ', rejected: '❌ ปฏิเสธ', cancelled: '🚫 ยกเลิก' };
                 var reqHtml = reqs.length === 0 ? '<span style="color:#94a3b8;">ไม่มีประวัติคำขอ</span>' :
                     reqs.map(function(r) {
-                        var rDate = r.created_at ? new Date(r.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+                        var rDate = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
                         return '<div style="display:flex;justify-content:space-between;font-size:0.83rem;padding:0.3rem 0;border-bottom:1px solid #e5e7eb;">' +
                             '<span>' + (reqTypeTh[r.type]||r.type) + ' <span style="color:#94a3b8;font-size:0.78rem;">' + rDate + '</span></span>' +
                             '<span>' + (reqStatusTh[r.status]||r.status) + '</span></div>';
@@ -5757,7 +5757,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260507B"></script>
+    <script src="ppk-api.js?v=20260507C"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
