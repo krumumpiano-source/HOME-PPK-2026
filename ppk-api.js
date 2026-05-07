@@ -900,7 +900,7 @@ async function _routeAction(action, data) {
             for (var _gi = 0; _gi < (_gmuResRows || []).length; _gi++) {
                 var _gr = _gmuResRows[_gi];
                 if (!_gr.house_number) continue;
-                var _gmuOut = await sbGet('outstanding', { house_number: 'eq.' + _gr.house_number, moved_out_at: 'not.is.null', status: 'neq.paid' }).catch(function() { return []; });
+                var _gmuOut = await sbGet('outstanding', { house_number: 'eq.' + _gr.house_number, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' }).catch(function() { return []; });
                 if (!_gmuOut || _gmuOut.length === 0) continue;
                 var _gmuTotal = _gmuOut.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
                 var _gmuUserActive = false;
