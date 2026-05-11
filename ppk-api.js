@@ -3807,7 +3807,7 @@ async function _routeAction(action, data) {
                 ]);
                 var totalPrevInc = (allPrevInc || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
                 var totalPrevExp = (allPrevExp || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-                carryForward = totalPrevInc - totalPrevExp;
+                carryForward = Math.round((totalPrevInc - totalPrevExp) * 100) / 100;
             } catch(e) { carryForward = 0; }
             return { success: true, incomeItems: (incRows || []).map(mapRow), expenseItems: (expRows || []).map(mapRow), carryForward: carryForward };
         }
@@ -3841,7 +3841,7 @@ async function _routeAction(action, data) {
                 ]);
                 var totalPrevInc2 = (allPrevInc2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
                 var totalPrevExp2 = (allPrevExp2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-                carryForward2 = totalPrevInc2 - totalPrevExp2;
+                carryForward2 = Math.round((totalPrevInc2 - totalPrevExp2) * 100) / 100;
             } catch(e) { carryForward2 = 0; }
             // sort auto expense items ตามลำดับที่กำหนด
             var _expSortOrder = { 'ส่วนต่างค่าไฟ (ติดลบ)': 1, 'ค่า Lost ไฟฟ้า (บ้านพัก)': 2, 'ค่า Lost ไฟฟ้า (แฟลต)': 3, 'ค่าขยะ': 4 };
@@ -3948,41 +3948,55 @@ async function _routeAction(action, data) {
             var period = data.period || '';
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id', limit: '1' });
             var recordedBy = sess && sess[0] ? sess[0].user_id : '';
-            // สำรองข้อมูลเดิมก่อนลบ (auto-backup)
-            try { var _bakA = await sbGet('accounting_entries', { period: 'eq.' + period }); await _autoBackup('saveAccounting', 'บันทึกบัญชีงวด ' + period, 'accounting_entries', 'period', period, recordedBy, _bakA); } catch(e) {}
+            // สำรองข้อมูลเดิมก่อนลบ (auto-backup) และเก็บไว้เพื่อ rollback
+            var _bakA = [];
+            try { _bakA = await sbGet('accounting_entries', { period: 'eq.' + period }); await _autoBackup('saveAccounting', 'บันทึกบัญชีงวด ' + period, 'accounting_entries', 'period', period, recordedBy, _bakA); } catch(e) {}
             // ลบทุก entry ของ period นี้แล้ว insert ใหม่ทั้งหมด
             await sbDelete('accounting_entries', { period: 'eq.' + period });
             // หา year / month จาก period (YYYY-MM)
             var pParts = period.split('-');
             var pYear  = parseInt(pParts[0]) || new Date().getFullYear();
             var pMonth = parseInt(pParts[1]) || (new Date().getMonth() + 1);
-            // บันทึกรายรับ — category = 'auto' หรือ note text
+            // รวม income + expense เป็น array เดียวเพื่อ batch insert ครั้งเดียว
+            var _allEntries = [];
             for (var i = 0; i < (data.incomeItems || []).length; i++) {
                 var it = data.incomeItems[i];
-                await sbPost('accounting_entries', {
-                    period: period, year: pYear, month: pMonth,
+                _allEntries.push({ period: period, year: pYear, month: pMonth,
                     type: 'income',
                     category: it.source === 'auto' ? 'auto' : (it.note || 'manual'),
                     description: it.name || it.description || '',
                     amount: it.amount || 0,
                     receipt_url: it.receiptUrl || null,
                     recorded_by: recordedBy,
-                    recorded_at: it.date || new Date().toISOString()
-                });
+                    recorded_at: it.date || new Date().toISOString() });
             }
-            // บันทึกรายจ่าย — category = 'auto' หรือ note text
             for (var j = 0; j < (data.expenseItems || []).length; j++) {
                 var et = data.expenseItems[j];
-                await sbPost('accounting_entries', {
-                    period: period, year: pYear, month: pMonth,
+                _allEntries.push({ period: period, year: pYear, month: pMonth,
                     type: 'expense',
                     category: et.source === 'auto' ? 'auto' : (et.note || 'manual'),
                     description: et.name || et.description || '',
                     amount: et.amount || 0,
                     receipt_url: et.receiptUrl || null,
                     recorded_by: recordedBy,
-                    recorded_at: et.date || new Date().toISOString()
-                });
+                    recorded_at: et.date || new Date().toISOString() });
+            }
+            try {
+                if (_allEntries.length > 0) await sbPost('accounting_entries', _allEntries);
+            } catch(e) {
+                // ── Rollback: คืนข้อมูลเดิม ──
+                try {
+                    if (_bakA && _bakA.length > 0) {
+                        var _restoreEntries = _bakA.map(function(r) {
+                            return { period: r.period, year: r.year, month: r.month,
+                                type: r.type, category: r.category, description: r.description,
+                                amount: r.amount, receipt_url: r.receipt_url,
+                                recorded_by: r.recorded_by, recorded_at: r.recorded_at };
+                        });
+                        await sbPost('accounting_entries', _restoreEntries);
+                    }
+                } catch(re) { console.error('Rollback failed:', re); }
+                return { success: false, error: 'บันทึกไม่สำเร็จ กรุณาลองใหม่: ' + (e.message || 'ข้อผิดพลาด') };
             }
             return { success: true };
         }

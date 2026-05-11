@@ -898,7 +898,7 @@
                         <td>${hasImage}</td>
                         <td>${String(item.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '-'}</td>
                         <td class="no-print">
-                            <button class="action-btn delete" onclick="deleteIncome(${index})" title="ลบ">🗑️</button>
+                            ${item.auto ? '<span style="font-size:0.75rem;color:#94a3b8;">อัตโนมัติ</span>' : '<button class="action-btn delete" onclick="deleteIncome(' + index + ')" title="ลบ">🗑️</button>'}
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -924,7 +924,7 @@
                         <td>${hasImage}</td>
                         <td>${String(item.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '-'}</td>
                         <td class="no-print">
-                            <button class="action-btn delete" onclick="deleteExpense(${index})" title="ลบ">🗑️</button>
+                            ${item.auto ? '<span style="font-size:0.75rem;color:#94a3b8;">อัตโนมัติ</span>' : '<button class="action-btn delete" onclick="deleteExpense(' + index + ')" title="ลบ">🗑️</button>'}
                         </td>
                     `;
                     tbody.appendChild(tr);
