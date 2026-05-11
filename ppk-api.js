@@ -4372,6 +4372,29 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── getBankBalance — ดึงยอดเงินธนาคารที่บันทึกไว้ ─── */
+        case 'getBankBalance': {
+            var bbPeriod = data.period || '';
+            if (!bbPeriod) return { success: false, error: 'ไม่ระบุ period' };
+            var bbKey = 'bank_balance_' + bbPeriod;
+            var bbRows = await sbGet('settings', { key: 'eq.' + bbKey, select: 'value', limit: '1' });
+            if (bbRows && bbRows[0]) {
+                return { success: true, value: parseFloat(bbRows[0].value) || 0 };
+            }
+            return { success: true, value: null };
+        }
+
+        /* ── saveBankBalance — บันทึกยอดเงินธนาคาร ─── */
+        case 'saveBankBalance': {
+            var sbPeriod = data.period || '';
+            var sbValue = data.value;
+            if (!sbPeriod) return { success: false, error: 'ไม่ระบุ period' };
+            if (sbValue === undefined || sbValue === null) return { success: false, error: 'ไม่ระบุ value' };
+            var sbKey = 'bank_balance_' + sbPeriod;
+            await sbUpsert('settings', { key: sbKey, value: String(sbValue) }, 'key');
+            return { success: true };
+        }
+
         /* ── exportFullBackup — ดึงข้อมูลทั้งระบบเพื่อสำรอง ─── */
         case 'exportFullBackup': {
             // สิทธิ์ตรวจแล้วจาก _STRICT_ADMIN_ACTIONS (admin/head)

@@ -656,6 +656,30 @@
             </div>
         </div>
         
+        <!-- 🏦 กระทบยอดธนาคาร -->
+        <div class="section no-print" id="bankReconcileSection">
+            <div class="section-title">🏦 กระทบยอดธนาคาร</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+                <div class="form-group">
+                    <label style="font-weight:600;display:block;margin-bottom:0.4rem;">ยอดเงินในธนาคารจริง (บาท)</label>
+                    <input type="number" id="bankBalanceInput" min="0" step="0.01" placeholder="0.00"
+                        oninput="updateBankReconcile()" style="font-size:1.1rem;font-weight:700;width:100%;padding:0.5rem 0.75rem;border:1.5px solid #d1d5db;border-radius:8px;box-sizing:border-box;">
+                    <button class="btn btn-primary" onclick="saveBankBalance()" style="margin-top:0.6rem;width:100%;">💾 บันทึกยอดธนาคาร</button>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div class="balance-card" style="text-align:center;">
+                        <div class="balance-card-label">ยอดในระบบ (carryOver)</div>
+                        <div class="balance-card-value" id="reconcileSystemBal" style="color:#2563eb;">-</div>
+                    </div>
+                    <div class="balance-card" id="reconcileVarianceCard" style="text-align:center;">
+                        <div class="balance-card-label">ส่วนต่าง</div>
+                        <div class="balance-card-value" id="reconcileVariance" style="color:#6b7280;">-</div>
+                    </div>
+                </div>
+            </div>
+            <div id="reconcileStatus" style="margin-top:0.6rem;font-size:0.9rem;min-height:1.4em;"></div>
+        </div>
+
         <!-- ปุ่มดำเนินการ -->
         <div class="section no-print" style="text-align:center; display:flex; gap:0.6rem; justify-content:center; flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="saveData()">💾 บันทึกข้อมูล</button>
@@ -822,6 +846,7 @@
                         carryForwardAmount = result.carryForward || 0;
                         renderAll();
                         loadAdvanceSummary();
+                        loadBankBalance();
                         return;
                     }
                 } catch (e) {
@@ -833,6 +858,7 @@
             expenseItems = [];
             carryForwardAmount = 0;
             renderAll();
+            loadBankBalance();
         }
         
         // loadCarryForward — ดึงจาก Backend ผ่าน loadMonthData() แล้ว (result.carryForward)
@@ -843,6 +869,7 @@
         function renderAll() {
             renderAccountingTable();
             updateSummary();
+            updateBankReconcile();
         }
 
         // ค้นหา/กรองแถวในตารางรายรับ-รายจ่าย
@@ -1370,6 +1397,67 @@
             w.document.close();
         }
     
+        // ═══ กระทบยอดธนาคาร ═══
+        function updateBankReconcile() {
+            var bankBal = parseFloat(document.getElementById('bankBalanceInput').value);
+            var totalIncome = incomeItems.reduce(function(s, i) { return s + (parseFloat(i.amount) || 0); }, 0);
+            var totalExpense = expenseItems.reduce(function(s, e) { return s + (parseFloat(e.amount) || 0); }, 0);
+            var systemBal = Math.round((carryForwardAmount + totalIncome - totalExpense) * 100) / 100;
+            var sysEl = document.getElementById('reconcileSystemBal');
+            var varEl = document.getElementById('reconcileVariance');
+            var cardEl = document.getElementById('reconcileVarianceCard');
+            var statusEl = document.getElementById('reconcileStatus');
+            if (!sysEl) return;
+            sysEl.textContent = formatMoney(systemBal);
+            if (isNaN(bankBal) || bankBal === 0) {
+                varEl.textContent = '-';
+                varEl.style.color = '#6b7280';
+                cardEl.style.borderLeft = '';
+                statusEl.innerHTML = '';
+                return;
+            }
+            var variance = Math.round((bankBal - systemBal) * 100) / 100;
+            varEl.textContent = (variance >= 0 ? '+' : '') + formatMoney(variance);
+            if (Math.abs(variance) < 0.01) {
+                varEl.style.color = '#10b981';
+                cardEl.style.borderLeft = '4px solid #10b981';
+                statusEl.innerHTML = '<span style="color:#10b981;font-weight:600;">✅ ยอดตรงกัน — ยอดธนาคารตรงกับระบบ</span>';
+            } else if (variance > 0) {
+                varEl.style.color = '#f59e0b';
+                cardEl.style.borderLeft = '4px solid #f59e0b';
+                statusEl.innerHTML = '<span style="color:#f59e0b;font-weight:600;">⚠️ ธนาคารสูงกว่าระบบ ' + formatMoney(Math.abs(variance)) + ' บาท — มีรายรับที่ยังไม่บันทึก</span>';
+            } else {
+                varEl.style.color = '#ef4444';
+                cardEl.style.borderLeft = '4px solid #ef4444';
+                statusEl.innerHTML = '<span style="color:#ef4444;font-weight:600;">⚠️ ธนาคารต่ำกว่าระบบ ' + formatMoney(Math.abs(variance)) + ' บาท — มีรายจ่ายที่ยังไม่บันทึก</span>';
+            }
+        }
+        async function saveBankBalance() {
+            var bankBal = parseFloat(document.getElementById('bankBalanceInput').value);
+            if (isNaN(bankBal) || bankBal < 0) { ppkAlert('กรุณาระบุยอดเงินที่ถูกต้อง'); return; }
+            var p = getSelectedPeriod();
+            var period = p.year + '-' + String(p.month).padStart(2, '0');
+            try {
+                var result = await callBackend('saveBankBalance', { period: period, value: bankBal });
+                if (result && result.success) { ppkToast('บันทึกยอดธนาคารเรียบร้อย', 'success'); }
+                else { ppkAlert('บันทึกไม่สำเร็จ: ' + (result && result.error || 'ไม่ทราบสาเหตุ')); }
+            } catch(e) { ppkAlert('เกิดข้อผิดพลาด: ' + e.message); }
+        }
+        async function loadBankBalance() {
+            var p = getSelectedPeriod();
+            var period = p.year + '-' + String(p.month).padStart(2, '0');
+            try {
+                var result = await callBackend('getBankBalance', { period: period });
+                var inp = document.getElementById('bankBalanceInput');
+                if (result && result.value !== null && result.value !== undefined && inp) {
+                    inp.value = result.value;
+                } else if (inp) {
+                    inp.value = '';
+                }
+            } catch(e) { console.warn('loadBankBalance:', e); }
+            updateBankReconcile();
+        }
+
         async function doLogout() {
             if (typeof ppkLogout === 'function') { ppkLogout(); return; }
             localStorage.removeItem('sessionToken');
