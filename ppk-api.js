@@ -1950,10 +1950,6 @@ async function _routeAction(action, data) {
         case 'submitRequest': {
             var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number,resident_id' });
             var s = sess && sess[0];
-            // ── บล็อค coresident จากคำร้องออก/ย้าย — ต้องติดต่อแอดมิน ──
-            if (s && s.resident_id && String(s.resident_id).startsWith('COR') && ['return', 'transfer'].indexOf(data.type) !== -1) {
-                return { success: false, error: 'ผู้พักอาศัยร่วมไม่สามารถยื่นคำร้องคืนบ้าน/ย้ายบ้านได้โดยตรง กรุณาติดต่อผู้ดูแลระบบเพื่อดำเนินการแทน' };
-            }
             // ── Duplicate prevention: ป้องกัน user ส่งคำร้องประเภทเดียวซ้ำขณะยังรอดำเนินการ ──
             if (s && s.user_id && ['return', 'transfer', 'residence'].indexOf(data.type) !== -1) {
                 var _typeLabel = { residence: 'สมัครอยู่อาศัย', transfer: 'ขอย้ายบ้านพัก', 'return': 'ขอคืนบ้านพัก' };
