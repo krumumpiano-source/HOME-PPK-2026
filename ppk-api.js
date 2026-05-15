@@ -1137,21 +1137,32 @@ async function _routeAction(action, data) {
                         return { success: false, error: 'ไม่พบผู้พักอาศัยหลักใน "' + data.house_number + '" กรุณาตรวจสอบ' };
                     }
                     if (!houseId) return { success: false, error: 'ไม่พบข้อมูลบ้าน/ห้อง "' + data.house_number + '"' };
-                    // ตรวจว่ามี coresident record เดิมที่แอดมินใส่ไว้ (email ตรงกัน ยังไม่มี user_id) หรือไม่ — ถ้ามี ให้ patch แทนสร้างใหม่
+                    // ตรวจว่ามี coresident record เดิมที่แอดมินใส่ไว้โดยยังไม่มี user_id หรือไม่
+                    // ลำดับ match: 1) email ตรง  2) ชื่อ+นามสกุลตรง (กรณีแอดมินใส่ก่อนมีช่อง email)
                     var _existCor = null;
                     try {
-                        var _existCorR = await sbGet('coresidents', { resident_id: 'eq.' + _mainRes[0].id, email: 'eq.' + (reg.email || '').trim().toLowerCase(), limit: '1' });
-                        if (_existCorR && _existCorR[0]) _existCor = _existCorR[0];
+                        var _regEmail = (reg.email || '').trim().toLowerCase();
+                        // 1) match by email
+                        if (_regEmail) {
+                            var _existCorR = await sbGet('coresidents', { resident_id: 'eq.' + _mainRes[0].id, email: 'eq.' + _regEmail, user_id: 'is.null', limit: '1' });
+                            if (_existCorR && _existCorR[0]) _existCor = _existCorR[0];
+                        }
+                        // 2) fallback: match by firstname+lastname (ยังไม่มี user_id เท่านั้น)
+                        if (!_existCor && reg.firstname && reg.lastname) {
+                            var _existCorN = await sbGet('coresidents', { resident_id: 'eq.' + _mainRes[0].id, firstname: 'eq.' + reg.firstname.trim(), lastname: 'eq.' + reg.lastname.trim(), user_id: 'is.null', limit: '1' });
+                            if (_existCorN && _existCorN[0]) _existCor = _existCorN[0];
+                        }
                     } catch(e) {}
                     var newCor;
                     if (_existCor) {
-                        // อัพเดท record เดิมที่แอดมินเพิ่มไว้ด้วยมือ — link user_id และอัพเดทชื่อ/โทรศัพท์
+                        // อัพเดท record เดิมที่แอดมินเพิ่มไว้ด้วยมือ — link user_id และอัพเดทชื่อ/โทรศัพท์/email
                         newCor = await sbPatch('coresidents', { id: 'eq.' + _existCor.id }, {
                             user_id: uid,
                             prefix: reg.prefix || _existCor.prefix || '',
                             firstname: reg.firstname || _existCor.firstname || '',
                             lastname: reg.lastname || _existCor.lastname || '',
                             relation: data.relation || _existCor.relation || 'ผู้พักร่วม',
+                            email: reg.email || _existCor.email || '',
                             phone: reg.phone || _existCor.phone || ''
                         });
                         newCor = newCor ? newCor : _existCor;
