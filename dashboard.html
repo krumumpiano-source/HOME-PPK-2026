@@ -489,6 +489,26 @@
             var reviewNote = data.reviewNote || '';
             var slipId = data.slipId || null;
 
+            // ── กรณีบัญชียังมีอยู่แต่ไม่มีบ้านผูก (เช่น ผู้พักร่วมที่ผู้พักหลักออกไปแล้ว) ──
+            if (!houseNumber) {
+                var user2 = {};
+                try { user2 = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e2) {}
+                document.getElementById('heroGreeting').textContent = 'สวัสดี' + (user2.firstname ? ', ' + user2.firstname : '');
+                document.getElementById('heroHouse').textContent = '🏠 —';
+                var amtEl2 = document.getElementById('currentMonthAmount');
+                if (amtEl2) { amtEl2.textContent = '—'; amtEl2.className = 'hero-amount zero'; }
+                var bdEl2 = document.getElementById('heroBillBreakdown');
+                if (bdEl2) bdEl2.innerHTML = '<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:1rem;margin-top:0.5rem;text-align:left;">'
+                    + '<div style="font-weight:bold;color:#92400E;margin-bottom:0.3rem;">⚠️ บัญชีของท่านไม่ได้ผูกกับบ้านพักใดๆ</div>'
+                    + '<div style="font-size:0.88rem;color:#78350F;">อาจเกิดจากผู้พักอาศัยหลักของท่านย้ายออกหรือคืนบ้านพักแล้ว<br>'
+                    + 'กรุณาติดต่อผู้ดูแลระบบเพื่อปรับสถานะหรือกำหนดบ้านพักใหม่ให้ท่าน</div></div>';
+                var ctaEl2 = document.getElementById('heroCTA');
+                if (ctaEl2) { ctaEl2.innerHTML = '📞 ติดต่อผู้ดูแลระบบ'; ctaEl2.className = 'hero-cta reviewing'; ctaEl2.onclick = null; }
+                document.getElementById('outstandingSection').style.display = 'none';
+                _ctaData = { periodKey: '', amount: 0, outstanding: 0, houseNumber: '', slipStatus: 'none', slipId: null };
+                return;
+            }
+
             var parts = period.split('-');
             var monthIdx = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
             var yearBE = parts[0] ? parts[0] : String(new Date().getFullYear() + 543);

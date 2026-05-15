@@ -1917,8 +1917,12 @@ async function _routeAction(action, data) {
         }
 
         case 'submitRequest': {
-            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number' });
+            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id,house_number,resident_id' });
             var s = sess && sess[0];
+            // ── บล็อค coresident จากคำร้องออก/ย้าย — ต้องติดต่อแอดมิน ──
+            if (s && s.resident_id && String(s.resident_id).startsWith('COR') && ['return', 'transfer'].indexOf(data.type) !== -1) {
+                return { success: false, error: 'ผู้พักอาศัยร่วมไม่สามารถยื่นคำร้องคืนบ้าน/ย้ายบ้านได้โดยตรง กรุณาติดต่อผู้ดูแลระบบเพื่อดำเนินการแทน' };
+            }
             // ── Duplicate prevention: ป้องกัน user ส่งคำร้องประเภทเดียวซ้ำขณะยังรอดำเนินการ ──
             if (s && s.user_id && ['return', 'transfer', 'residence'].indexOf(data.type) !== -1) {
                 var _typeLabel = { residence: 'สมัครอยู่อาศัย', transfer: 'ขอย้ายบ้านพัก', 'return': 'ขอคืนบ้านพัก' };
@@ -3043,16 +3047,62 @@ async function _routeAction(action, data) {
                 updated_at: new Date().toISOString()
             });
 
-            // 6. ลบ coresidents
+            // 6. ตรวจสอบ coresidents — ถ้ามีที่มี user_id ให้ promote เป็น resident หลักคนแรก
+            var _arCors = [];
+            try { _arCors = await sbGet('coresidents', { resident_id: 'eq.' + _arRes2.id }) || []; } catch(e) {}
+            var _arPromoteCor = (_arCors).find(function(c) { return c.user_id; }) || null;
+            var _arPromotedResidentId = null;
+            if (_arPromoteCor) {
+                // สร้าง resident record ใหม่สำหรับผู้พักร่วมที่ถูก promote
+                var _arNewFullName = ((_arPromoteCor.prefix||'') + (_arPromoteCor.firstname||'') + ' ' + (_arPromoteCor.lastname||'')).trim();
+                var _arNewRes = await sbPost('residents', {
+                    user_id:      _arPromoteCor.user_id,
+                    house_id:     _arHouseId2,
+                    house_number: _arHouseNumber2,
+                    prefix:       _arPromoteCor.prefix    || '',
+                    firstname:    _arPromoteCor.firstname  || '',
+                    lastname:     _arPromoteCor.lastname   || '',
+                    email:        _arPromoteCor.email      || '',
+                    phone:        _arPromoteCor.phone      || '',
+                    is_active:    true,
+                    start_date:   new Date().toISOString().split('T')[0]
+                }).catch(function() { return null; });
+                _arPromotedResidentId = _arNewRes ? _arNewRes.id : null;
+                // อัพเดท session ของผู้พักร่วมที่ถูก promote
+                try { await sbPatch('sessions', { user_id: 'eq.' + _arPromoteCor.user_id }, { resident_id: _arPromotedResidentId || _arPromoteCor.id, house_number: _arHouseNumber2 }); } catch(e) {}
+                // อัพเดทชื่อในบันทึกค่าน้ำ ค่าไฟ แจ้งยอด สลิป ประวัติ ที่ยังไม่ได้ปิด
+                if (_arNewFullName) {
+                    var _arNamePatch = { resident_name: _arNewFullName };
+                    var _arUidPatch  = { resident_name: _arNewFullName, resident_user_id: _arPromoteCor.user_id };
+                    await Promise.all([
+                        sbPatch('water_bills',    { house_number: 'eq.' + _arHouseNumber2 }, _arNamePatch).catch(function(){}),
+                        sbPatch('electric_bills', { house_number: 'eq.' + _arHouseNumber2 }, _arNamePatch).catch(function(){}),
+                        sbPatch('outstanding',    { house_number: 'eq.' + _arHouseNumber2, moved_out_at: 'is.null' }, _arUidPatch).catch(function(){}),
+                        sbPatch('notifications',  { house_number: 'eq.' + _arHouseNumber2 }, _arNamePatch).catch(function(){}),
+                        sbPatch('payment_history',{ house_number: 'eq.' + _arHouseNumber2 }, _arNamePatch).catch(function(){}),
+                        sbPatch('slip_submissions',{ house_number: 'eq.' + _arHouseNumber2, status: 'in.(pending,reviewing)' }, { resident_id: _arPromotedResidentId || _arPromoteCor.id }).catch(function(){})
+                    ]);
+                }
+            }
+            // ลบ coresidents ทั้งหมด (ทั้งที่ promote แล้วและที่เหลือ)
             try { await sbDelete('coresidents', { resident_id: 'eq.' + _arRes2.id }); } catch(e) {}
-
-            // 7. บ้าน → available
-            if (_arHouseId2) {
-                try { await sbPatch('housing', { id: 'eq.' + _arHouseId2 }, { status: 'available', updated_at: new Date().toISOString() }); } catch(e) {}
+            // deactivate user account ของ coresidents ที่ไม่ได้ promote
+            for (var _ci2 = 0; _ci2 < _arCors.length; _ci2++) {
+                var _c2 = _arCors[_ci2];
+                if (_c2.user_id && (!_arPromoteCor || _c2.user_id !== _arPromoteCor.user_id)) {
+                    try { await sbPatch('users', { id: 'eq.' + _c2.user_id }, { is_active: false, updated_at: new Date().toISOString() }); } catch(e) {}
+                    try { await sbDelete('sessions', { user_id: 'eq.' + _c2.user_id }); } catch(e) {}
+                }
             }
 
-            // Phase G: แจ้งเตือนอีเมลคนแรกในคิวเมื่อบ้านว่าง
-            try {
+            // 7. บ้าน → occupied ถ้ามีการ promote, available ถ้าไม่มี
+            if (_arHouseId2) {
+                var _arHouseNewStatus = _arPromoteCor ? 'occupied' : 'available';
+                try { await sbPatch('housing', { id: 'eq.' + _arHouseId2 }, { status: _arHouseNewStatus, updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+
+            // Phase G: แจ้งเตือนอีเมลคนแรกในคิวเมื่อบ้านว่าง (เฉพาะกรณีไม่มีการ promote coresident)
+            if (!_arPromoteCor) try {
                 var _arQRows = await sbGet('queue', { status: 'eq.waiting', order: 'position.asc', limit: '1' }).catch(function() { return []; });
                 if (_arQRows && _arQRows[0] && _arQRows[0].user_id) {
                     var _arQUserR = await sbGet('users', { id: 'eq.' + _arQRows[0].user_id, select: 'email,firstname,prefix', limit: '1' }).catch(function() { return []; });
@@ -3085,8 +3135,9 @@ async function _routeAction(action, data) {
             });
 
             invalidateResidentCache();
-            _logActivity('approve_return', _arReviewerId2, 'อนุมัติคืนบ้าน ' + _arHouseNumber2, { requestId: data.requestId, houseNumber: _arHouseNumber2, hasOutstanding: _arHasOut2 });
-            return { success: true, hasOutstanding: _arHasOut2 };
+            var _arLogNote = _arPromoteCor ? ' (promote ' + ((_arPromoteCor.prefix||'')+(_arPromoteCor.firstname||'')+' '+(_arPromoteCor.lastname||'')).trim() + ' เป็นผู้พักหลัก)' : '';
+            _logActivity('approve_return', _arReviewerId2, 'อนุมัติคืนบ้าน ' + _arHouseNumber2 + _arLogNote, { requestId: data.requestId, houseNumber: _arHouseNumber2, hasOutstanding: _arHasOut2, promoted: _arPromoteCor ? _arPromoteCor.user_id : null });
+            return { success: true, hasOutstanding: _arHasOut2, promotedResident: _arPromoteCor ? { userId: _arPromoteCor.user_id, name: ((_arPromoteCor.prefix||'')+(_arPromoteCor.firstname||'')+' '+(_arPromoteCor.lastname||'')).trim() } : null };
         }
 
         /* ── ดำเนินการย้ายบ้าน (execute transfer หลังอนุมัติแล้ว) ── */
