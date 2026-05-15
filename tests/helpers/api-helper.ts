@@ -19,7 +19,7 @@ export async function waitForApiReady(page: Page): Promise<void> {
  */
 export async function loadApiPage(page: Page): Promise<void> {
   await page.goto('/index.html');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('load');
   await waitForApiReady(page);
 }
 
