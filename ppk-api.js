@@ -1137,17 +1137,37 @@ async function _routeAction(action, data) {
                         return { success: false, error: 'ไม่พบผู้พักอาศัยหลักใน "' + data.house_number + '" กรุณาตรวจสอบ' };
                     }
                     if (!houseId) return { success: false, error: 'ไม่พบข้อมูลบ้าน/ห้อง "' + data.house_number + '"' };
-                    var newCor = await sbPost('coresidents', {
-                        resident_id: _mainRes[0].id,
-                        house_id: houseId,
-                        user_id: uid,
-                        prefix: reg.prefix || '',
-                        firstname: reg.firstname || '',
-                        lastname: reg.lastname || '',
-                        relation: data.relation || 'ผู้พักร่วม',
-                        email: reg.email || '',
-                        phone: reg.phone || ''
-                    });
+                    // ตรวจว่ามี coresident record เดิมที่แอดมินใส่ไว้ (email ตรงกัน ยังไม่มี user_id) หรือไม่ — ถ้ามี ให้ patch แทนสร้างใหม่
+                    var _existCor = null;
+                    try {
+                        var _existCorR = await sbGet('coresidents', { resident_id: 'eq.' + _mainRes[0].id, email: 'eq.' + (reg.email || '').trim().toLowerCase(), limit: '1' });
+                        if (_existCorR && _existCorR[0]) _existCor = _existCorR[0];
+                    } catch(e) {}
+                    var newCor;
+                    if (_existCor) {
+                        // อัพเดท record เดิมที่แอดมินเพิ่มไว้ด้วยมือ — link user_id และอัพเดทชื่อ/โทรศัพท์
+                        newCor = await sbPatch('coresidents', { id: 'eq.' + _existCor.id }, {
+                            user_id: uid,
+                            prefix: reg.prefix || _existCor.prefix || '',
+                            firstname: reg.firstname || _existCor.firstname || '',
+                            lastname: reg.lastname || _existCor.lastname || '',
+                            relation: data.relation || _existCor.relation || 'ผู้พักร่วม',
+                            phone: reg.phone || _existCor.phone || ''
+                        });
+                        newCor = newCor ? newCor : _existCor;
+                    } else {
+                        newCor = await sbPost('coresidents', {
+                            resident_id: _mainRes[0].id,
+                            house_id: houseId,
+                            user_id: uid,
+                            prefix: reg.prefix || '',
+                            firstname: reg.firstname || '',
+                            lastname: reg.lastname || '',
+                            relation: data.relation || 'ผู้พักร่วม',
+                            email: reg.email || '',
+                            phone: reg.phone || ''
+                        });
+                    }
                     residentId = newCor ? newCor.id : null;
                 } else {
                     // ตรวจสอบว่าบ้าน/ห้องนี้มีผู้พักอาศัย active อยู่แล้วหรือไม่
