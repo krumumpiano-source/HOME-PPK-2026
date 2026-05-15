@@ -1688,7 +1688,7 @@
                             <label style="margin:0;">👨‍👩‍👧 ผู้อาศัยร่วม</label>
                             <button type="button" class="btn btn-info" style="font-size:0.8rem; padding:0.3rem 0.75rem;" onclick="addCohabitantRow('residentCohabitantList')">➕ เพิ่มผู้อาศัยร่วม</button>
                         </div>
-                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — วันเกิด — <strong>บุคลากร PPK</strong> (ติ๊กถ้าเป็นบุคลากรโรงเรียน)</div>
+                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — <strong>บุคลากร PPK</strong> | อีเมล (สำคัญ: ใส่ถ้ามี เพื่อให้ระบบเชื่อมบัญชีอัตโนมัติ) — วันเกิด</div>
                         <div id="residentCohabitantList" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
                 </div>
@@ -1802,7 +1802,7 @@
                             <label style="margin:0;">👨‍👩‍👧 ผู้อาศัยร่วม</label>
                             <button type="button" class="btn btn-info" style="font-size:0.8rem; padding:0.3rem 0.75rem;" onclick="addCohabitantRow('editResidentCohabitantList')">➕ เพิ่มผู้อาศัยร่วม</button>
                         </div>
-                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — วันเกิด — <strong>บุคลากร PPK</strong> (ติ๊กถ้าเป็นบุคลากรโรงเรียน)</div>
+                        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.4rem;">คำนำหน้า — ชื่อ — นามสกุล — ความสัมพันธ์ — <strong>บุคลากร PPK</strong> | อีเมล (สำคัญ: ใส่ถ้ามี เพื่อให้ระบบเชื่อมบัญชีอัตโนมัติ) — วันเกิด</div>
                         <div id="editResidentCohabitantList" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
                 </div>
@@ -2820,6 +2820,7 @@
                 const relation = (row.querySelector('.c-relationship')?.value || '').trim();
                 const birthdate = (row.querySelector('.c-birthdate')?.value || '').trim();
                 const is_ppk_staff = row.querySelector('.c-is-staff')?.checked === true;
+                const email = (row.querySelector('.c-email')?.value || row.dataset.email || '').trim().toLowerCase();
                 if (firstname) result.push({
                     id: row.dataset.coId || '',
                     prefix, firstname, lastname,
@@ -2827,7 +2828,7 @@
                     birthdate,
                     is_ppk_staff,
                     phone: row.dataset.phone || '',
-                    email: row.dataset.email || '',
+                    email,
                     position: row.dataset.position || '',
                     subject_group: row.dataset.subjectGroup || '',
                     added_at: row.dataset.addedAt || ''
