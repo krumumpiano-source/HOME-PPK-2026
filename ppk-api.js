@@ -2181,7 +2181,7 @@ async function _routeAction(action, data) {
             };
             if (data.email) _userPatch.email = data.email.trim().toLowerCase();
             await sbPatch('users', { id: 'eq.' + profileUserId }, _userPatch);
-            // อัปเดต residents ด้วย (ถ้ามี)
+            // อัปเดต residents/coresidents ด้วย (ถ้ามี)
             if (!profileResId) {
                 var _prUser = await sbGet('users', { id: 'eq.' + profileUserId, select: 'email', limit: '1' });
                 var _prEmail = _prUser && _prUser[0] ? _prUser[0].email : null;
@@ -2189,19 +2189,30 @@ async function _routeAction(action, data) {
                 if (resFb) profileResId = resFb.id;
             }
             if (profileResId) {
-                var _resPatch = {
-                    prefix: data.prefix || '', firstname: data.firstname || '',
-                    lastname: data.lastname || '', phone: data.phone || '',
-                    position: data.position || '', subject_group: data.subject_group || '',
-                    address_no: data.address_no || '', address_village: data.address_village || '',
-                    address_road: data.address_road || '', subdistrict: data.subdistrict || '',
-                    district: data.district || '', province: data.province || '',
-                    zipcode: data.zipcode || '', profile_photo: data.profilePhoto || data.profile_photo || '',
-                    updated_at: new Date().toISOString()
-                };
-                if (data.email) _resPatch.email = data.email.trim().toLowerCase();
-                if (data.move_in_date) _resPatch.move_in_date = data.move_in_date;
-                await sbPatch('residents', { id: 'eq.' + profileResId }, _resPatch);
+                if (String(profileResId).startsWith('COR')) {
+                    // coresident — sync ชื่อ/โทรศัพท์กลับ coresidents table
+                    try {
+                        await sbPatch('coresidents', { id: 'eq.' + profileResId }, {
+                            prefix: data.prefix || '', firstname: data.firstname || '',
+                            lastname: data.lastname || '', phone: data.phone || '',
+                            ...(data.email ? { email: data.email.trim().toLowerCase() } : {})
+                        });
+                    } catch(e) {}
+                } else {
+                    var _resPatch = {
+                        prefix: data.prefix || '', firstname: data.firstname || '',
+                        lastname: data.lastname || '', phone: data.phone || '',
+                        position: data.position || '', subject_group: data.subject_group || '',
+                        address_no: data.address_no || '', address_village: data.address_village || '',
+                        address_road: data.address_road || '', subdistrict: data.subdistrict || '',
+                        district: data.district || '', province: data.province || '',
+                        zipcode: data.zipcode || '', profile_photo: data.profilePhoto || data.profile_photo || '',
+                        updated_at: new Date().toISOString()
+                    };
+                    if (data.email) _resPatch.email = data.email.trim().toLowerCase();
+                    if (data.move_in_date) _resPatch.move_in_date = data.move_in_date;
+                    await sbPatch('residents', { id: 'eq.' + profileResId }, _resPatch);
+                }
             }
             return { success: true };
         }
