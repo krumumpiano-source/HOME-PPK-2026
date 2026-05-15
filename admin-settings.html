@@ -1451,6 +1451,20 @@
                                 <option value="employee">ลูกจ้าง</option>
                             </select>
                         </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
+                            <input type="checkbox" id="approveRegAsCoresident" style="width:18px;height:18px;cursor:pointer;">
+                            <label for="approveRegAsCoresident" style="margin:0;cursor:pointer;font-weight:500;">เพิ่มเป็นผู้พักอาศัยร่วม (ห้องมีผู้พักอยู่แล้ว)</label>
+                        </div>
+                        <div class="form-group" id="approveRegRelationGroup" style="display:none;">
+                            <label>ความสัมพันธ์กับผู้พักหลัก</label>
+                            <select id="approveRegRelation">
+                                <option value="ผู้พักร่วม">ผู้พักร่วม</option>
+                                <option value="คู่สมรส">คู่สมรส</option>
+                                <option value="บุตร">บุตร</option>
+                                <option value="บิดา/มารดา">บิดา/มารดา</option>
+                                <option value="ญาติ">ญาติ</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button class="btn" onclick="closeModal('approveReg')">ยกเลิก</button>
@@ -5166,6 +5180,16 @@
                 <strong>ตำแหน่ง:</strong> ${reg.position || '-'}
             `;
 
+            // Reset coresident UI
+            const cbCoresident = document.getElementById('approveRegAsCoresident');
+            cbCoresident.checked = false;
+            document.getElementById('approveRegRelationGroup').style.display = 'none';
+
+            // Toggle relation group on checkbox change
+            cbCoresident.onchange = function() {
+                document.getElementById('approveRegRelationGroup').style.display = this.checked ? '' : 'none';
+            };
+
             // Populate housing dropdown
             const houseSelect = document.getElementById('approveRegHouse');
             const housing = getHousingData();
@@ -5197,6 +5221,16 @@
                 houseSelect.innerHTML += '<option value="" disabled>⚠️ ยังไม่มีข้อมูลบ้าน/แฟลต — กรุณาสร้างในแท็บ "จัดการบ้านพัก" ก่อน</option>';
             }
 
+            // Auto-check coresident เมื่อเลือกห้องที่มีคนอยู่แล้ว
+            houseSelect.onchange = function() {
+                const val = this.value;
+                if (!val) { cbCoresident.checked = false; document.getElementById('approveRegRelationGroup').style.display = 'none'; return; }
+                const selOpt = this.options[this.selectedIndex];
+                const occupied = selOpt && selOpt.textContent.includes('[มีผู้พัก]');
+                cbCoresident.checked = occupied;
+                document.getElementById('approveRegRelationGroup').style.display = occupied ? '' : 'none';
+            };
+
             openModal('approveReg');
         }
 
@@ -5217,6 +5251,8 @@
             const regId = document.getElementById('approveRegId').value;
             const houseNumber = document.getElementById('approveRegHouse').value.trim();
             const residentType = document.getElementById('approveRegType').value;
+            const asCoresident = document.getElementById('approveRegAsCoresident').checked;
+            const relation = document.getElementById('approveRegRelation').value;
 
             try {
                 var currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
@@ -5224,6 +5260,8 @@
                     regId: regId,
                     house_number: houseNumber,
                     resident_type: residentType,
+                    as_coresident: asCoresident,
+                    relation: relation,
                     reviewedBy: (currentUser && currentUser.id) ? currentUser.id : null
                 });
 

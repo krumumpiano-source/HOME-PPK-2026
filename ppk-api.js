@@ -1124,33 +1124,54 @@ async function _routeAction(action, data) {
                     is_active: true
                 });
             }
-            // สร้าง resident ถ้ามี house_number
+            // สร้าง resident หรือ coresident ถ้ามี house_number
             var residentId = null;
             if (data.house_number) {
-                // ตรวจสอบว่าบ้าน/ห้องนี้มีผู้พักอาศัย active อยู่แล้วหรือไม่
-                var _occCheck = await sbGet('residents', { house_number: 'eq.' + data.house_number, is_active: 'eq.true', select: 'id', limit: '1' }).catch(function() { return []; });
-                if (_occCheck && _occCheck.length > 0) {
-                    return { success: false, error: 'บ้าน/ห้อง "' + data.house_number + '" มีผู้พักอาศัย active อยู่แล้ว กรุณาตรวจสอบก่อนอนุมัติ' };
-                }
                 var hRows = await sbGet('housing', { house_number: 'eq.' + data.house_number, select: 'id', limit: '1' });
                 var houseId = hRows && hRows[0] ? hRows[0].id : null;
-                if (houseId) {
-                    var newRes = await sbPost('residents', {
-                        user_id: uid, house_id: houseId,
-                        house_number: data.house_number || '',
-                        prefix: reg.prefix || '', firstname: reg.firstname || '',
-                        lastname: reg.lastname || '', position: reg.position || '',
-                        email: reg.email || '', phone: reg.phone || '',
-                        resident_type: data.resident_type || '',
-                        address_no: reg.address_no || '', address_village: reg.address_village || '',
-                        address_road: reg.address_road || '', subdistrict: reg.subdistrict || '',
-                        district: reg.district || '', province: reg.province || '',
-                        zipcode: reg.zipcode || '',
-                        is_active: true
+
+                if (data.as_coresident) {
+                    // เพิ่มเป็นผู้พักอาศัยร่วม — ค้นหา resident หลักของห้องนี้
+                    var _mainRes = await sbGet('residents', { house_number: 'eq.' + data.house_number, is_active: 'eq.true', select: 'id', limit: '1' }).catch(function() { return []; });
+                    if (!_mainRes || _mainRes.length === 0) {
+                        return { success: false, error: 'ไม่พบผู้พักอาศัยหลักใน "' + data.house_number + '" กรุณาตรวจสอบ' };
+                    }
+                    if (!houseId) return { success: false, error: 'ไม่พบข้อมูลบ้าน/ห้อง "' + data.house_number + '"' };
+                    var newCor = await sbPost('coresidents', {
+                        resident_id: _mainRes[0].id,
+                        house_id: houseId,
+                        user_id: uid,
+                        prefix: reg.prefix || '',
+                        firstname: reg.firstname || '',
+                        lastname: reg.lastname || '',
+                        relation: data.relation || 'ผู้พักร่วม',
+                        email: reg.email || '',
+                        phone: reg.phone || ''
                     });
-                    residentId = newRes ? newRes.id : null;
-                    // อัปเดต session house_number ถ้ามี
-                    await sbPatch('housing', { id: 'eq.' + houseId }, { status: 'occupied', updated_at: new Date().toISOString() });
+                    residentId = newCor ? newCor.id : null;
+                } else {
+                    // ตรวจสอบว่าบ้าน/ห้องนี้มีผู้พักอาศัย active อยู่แล้วหรือไม่
+                    var _occCheck = await sbGet('residents', { house_number: 'eq.' + data.house_number, is_active: 'eq.true', select: 'id', limit: '1' }).catch(function() { return []; });
+                    if (_occCheck && _occCheck.length > 0) {
+                        return { success: false, error: 'บ้าน/ห้อง "' + data.house_number + '" มีผู้พักอาศัย active อยู่แล้ว กรุณาตรวจสอบก่อนอนุมัติ หรือเลือก "เพิ่มเป็นผู้พักอาศัยร่วม"' };
+                    }
+                    if (houseId) {
+                        var newRes = await sbPost('residents', {
+                            user_id: uid, house_id: houseId,
+                            house_number: data.house_number || '',
+                            prefix: reg.prefix || '', firstname: reg.firstname || '',
+                            lastname: reg.lastname || '', position: reg.position || '',
+                            email: reg.email || '', phone: reg.phone || '',
+                            resident_type: data.resident_type || '',
+                            address_no: reg.address_no || '', address_village: reg.address_village || '',
+                            address_road: reg.address_road || '', subdistrict: reg.subdistrict || '',
+                            district: reg.district || '', province: reg.province || '',
+                            zipcode: reg.zipcode || '',
+                            is_active: true
+                        });
+                        residentId = newRes ? newRes.id : null;
+                        await sbPatch('housing', { id: 'eq.' + houseId }, { status: 'occupied', updated_at: new Date().toISOString() });
+                    }
                 }
             }
             // อัปเดต session ของ user ถ้า login อยู่แล้ว
