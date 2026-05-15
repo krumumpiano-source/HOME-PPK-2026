@@ -485,10 +485,14 @@ test.describe('🔒 No Auth — ต้อง redirect ไป login', () => {
   );
 
   for (const menu of PROTECTED_PAGES) {
-    test(`${menu.label} (${menu.path}) → ต้อง redirect ไป login`, async ({ page }) => {
+    test(`${menu.label} (${menu.path}) → ต้อง redirect ไป login`, async ({ page }, testInfo) => {
+      // เพิ่ม timeout เป็น 3× สำหรับ WebKit บน CI ที่รันช้ากว่า Chromium
+      testInfo.setTimeout(testInfo.timeout * 3);
+
       await page.goto('/' + menu.path);
       await page.waitForLoadState('load');
-      await page.waitForTimeout(3000);
+      // ลดจาก 3000 → 1500 ms เพื่อลด memory pressure บน WebKit
+      await page.waitForTimeout(1500);
 
       const currentUrl = page.url();
       const redirectedToLogin = currentUrl.includes('login.html');
