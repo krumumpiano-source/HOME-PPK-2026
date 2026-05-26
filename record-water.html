@@ -583,6 +583,12 @@
             try {
                     const result = await callBackend('getWaterBills', { period });
                     if (result && result.success && result.data && result.data.length > 0) {
+                        // โหลด reading_date จาก DB — ให้ตรงกับที่แสดงบน Dashboard
+                        var dbReadingDate = result.data[0].reading_date;
+                        if (dbReadingDate) {
+                            document.getElementById('reading_date').value = dbReadingDate;
+                            localStorage.setItem(_waterReadingKey(), dbReadingDate);
+                        }
                         const map = {};
                         // ORDER BY recorded_at DESC → record แรกต่อบ้านคือล่าสุด
                         // ใช้ if(!map[key]) เพื่อป้องกัน record เก่า (ซ้ำจากบัค RLS delete) เขียนทับค่าใหม่
