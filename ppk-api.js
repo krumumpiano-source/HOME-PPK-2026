@@ -2716,12 +2716,13 @@ async function _routeAction(action, data) {
                 }
                 // ── กรองเฉพาะ outstanding ที่แอดมินแจ้งยอดแล้ว (มี notifications ตรงกัน) ──
                 // ป้องกันแสดงยอดแก่ผู้พักอาศัยก่อนที่แอดมินจะกด "บันทึกข้อมูลแจ้งยอดลงระบบ"
+                // ยกเว้น: งวดปัจจุบัน — รองรับผู้พักใหม่ที่เพิ่งเข้าอยู่หลัง batch notification ส่งไปแล้ว
                 if (outRows && outRows.length > 0 && houseNumber) {
                     try {
                         var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period', limit: '100' }).catch(function() { return []; });
                         var _gddPublished = {};
                         (_gddNotifs || []).forEach(function(n) { if (n.period) _gddPublished[n.period] = true; });
-                        outRows = outRows.filter(function(o) { return _gddPublished[o.period]; });
+                        outRows = outRows.filter(function(o) { return _gddPublished[o.period] || o.period === period; });
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
