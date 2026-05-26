@@ -904,6 +904,23 @@ async function _routeAction(action, data) {
                 var _gmuOut = await sbGet('outstanding', { house_number: 'eq.' + _gr.house_number, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' }).catch(function() { return []; });
                 if (!_gmuOut || _gmuOut.length === 0) continue;
                 var _gmuTotal = _gmuOut.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
+
+                // ── ตรวจสลิปอนุมัติหลังวันย้ายออก (แก้ period mismatch ── ผู้ย้ายออกส่งสลิปถูก period ไม่ตรง) ──
+                var _gmuEndDate = _gr.end_date || '0001-01-01';
+                var _gmuPostSlips = await sbGet('slip_submissions', { resident_id: 'eq.' + _gr.id, status: 'eq.approved', select: 'amount,submitted_at' }).catch(function() { return []; });
+                var _gmuPaidViaSlips = (_gmuPostSlips || []).filter(function(s) { return (s.submitted_at || '').slice(0, 10) >= _gmuEndDate; }).reduce(function(acc, s) { return acc + (parseFloat(s.amount) || 0); }, 0);
+
+                // ถ้าชำระครบแล้ว → auto-reconcile outstanding แล้วข้ามออกจากรายการ
+                if (_gmuPaidViaSlips > 0 && _gmuPaidViaSlips >= _gmuTotal - 0.01) {
+                    try {
+                        for (var _gri = 0; _gri < _gmuOut.length; _gri++) {
+                            await sbPatch('outstanding', { id: 'eq.' + _gmuOut[_gri].id }, { status: 'paid', updated_at: new Date().toISOString() });
+                        }
+                    } catch(e) { console.warn('getMovedOutUsers: auto-reconcile outstanding error', e); }
+                    continue;
+                }
+                var _gmuNetTotal = Math.max(0, _gmuTotal - _gmuPaidViaSlips);
+
                 var _gmuUserActive = false;
                 if (_gr.user_id) {
                     var _gmuUR = await sbGet('users', { id: 'eq.' + _gr.user_id, select: 'is_active', limit: '1' }).catch(function() { return []; });
@@ -913,7 +930,7 @@ async function _routeAction(action, data) {
                     residentId: _gr.id, userId: _gr.user_id,
                     fullName: ((_gr.prefix||'') + (_gr.firstname||'') + ' ' + (_gr.lastname||'')).trim(),
                     email: _gr.email || '', houseNumber: _gr.house_number, endDate: _gr.end_date,
-                    totalOutstanding: _gmuTotal, userIsActive: _gmuUserActive,
+                    totalOutstanding: _gmuNetTotal, userIsActive: _gmuUserActive,
                     outstandingRows: _gmuOut.map(function(o) { return { id: o.id, period: o.period, amount: parseFloat(o.total_amount) || 0 }; })
                 });
             }
@@ -3029,6 +3046,23 @@ async function _routeAction(action, data) {
                         }
                     } catch(e) { console.warn('reviewSlip: auto-mark outstanding paid error', e); }
                 }
+
+                // ─── สลิปผู้ย้ายออก: mark ALL moved_out outstanding เป็น paid ข้าม period mismatch ───
+                try {
+                    var _rsSlipR = await sbGet('slip_submissions', { id: 'eq.' + data.id, select: 'resident_id', limit: '1' });
+                    var _rsResId = _rsSlipR && _rsSlipR[0] ? _rsSlipR[0].resident_id : null;
+                    if (_rsResId) {
+                        var _rsResInfo = await sbGet('residents', { id: 'eq.' + _rsResId, select: 'is_active', limit: '1' });
+                        if (_rsResInfo && _rsResInfo[0] && _rsResInfo[0].is_active === false) {
+                            var _rsMOPending = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' });
+                            if (_rsMOPending && _rsMOPending.length > 0) {
+                                for (var _moi = 0; _moi < _rsMOPending.length; _moi++) {
+                                    await sbPatch('outstanding', { id: 'eq.' + _rsMOPending[_moi].id }, { status: 'paid', updated_at: new Date().toISOString() });
+                                }
+                            }
+                        }
+                    }
+                } catch(e) { console.warn('reviewSlip: moved-out outstanding reconcile error', e); }
 
                 // ─── Auto-deactivate ผู้ย้ายออกแล้วหากยอดค้างครบทุกงวด ───
                 try {
