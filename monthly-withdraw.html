@@ -563,11 +563,7 @@
                 </table>
             </div>
 
-            <!-- เงินสดคงเหลือ -->
-            <div id="cashOnHandCard" style="display:none;margin-top:1rem;padding:1rem;border-radius:12px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;">
-                <div style="font-weight:600;font-size:1.05rem;margin-bottom:0.5rem;">💰 สถานะเงินสดคงเหลือ</div>
-                <div id="cashOnHandContent" style="font-size:0.9rem;line-height:1.7;"></div>
-            </div>
+
         </div>
         
         <!-- ปุ่มดำเนินการ -->
@@ -1123,12 +1119,8 @@
         async function loadAdvanceData() {
             var period = getPeriod().period;
             try {
-                var [advResult, cohResult] = await Promise.all([
-                    callBackend('getAdvancePayments', { period: period }),
-                    callBackend('getCashOnHand', { period: period })
-                ]);
+                var advResult = await callBackend('getAdvancePayments', { period: period });
                 renderAdvanceSavedList(advResult && advResult.data || []);
-                renderCashOnHand(cohResult && cohResult.data || {});
             } catch(e) {
                 console.error('loadAdvanceData error:', e);
             }
@@ -1172,25 +1164,6 @@
             document.getElementById('advTotalAdvanced').textContent = formatMoney(totalAdv);
             document.getElementById('advTotalReimbursed').textContent = formatMoney(totalReimb);
             document.getElementById('advTotalPending').textContent = formatMoney(totalAdv - totalReimb);
-        }
-
-        function renderCashOnHand(data) {
-            var card = document.getElementById('cashOnHandCard');
-            var content = document.getElementById('cashOnHandContent');
-            if (!data || !data.totalIncome) {
-                card.style.display = 'none';
-                return;
-            }
-            card.style.display = '';
-            var html = '<div style="display:grid;grid-template-columns:1fr auto;gap:0.2rem 1rem;">';
-            html += '<span title="เงินที่เก็บได้จากผู้เช่าทั้งหมด (ค่าน้ำ+ค่าไฟ)">รายรับสะสม:</span><span style="text-align:right;font-weight:600;color:#059669;">+' + formatMoney(data.totalIncome) + '</span>';
-            html += '<span title="เงินที่จ่ายออกไปแล้วทั้งหมด (ค่าไฟการไฟฟ้า+ค่าขยะ+อื่นๆ)">รายจ่ายสะสม:</span><span style="text-align:right;font-weight:600;color:#dc2626;">-' + formatMoney(data.totalExpense) + '</span>';
-            html += '<span style="border-top:1px solid #86efac;padding-top:0.3rem;" title="รายรับ − รายจ่าย = เงินที่ระบบคำนวณว่ามีอยู่จริง">💰 เงินสดคงเหลือ:</span><span style="text-align:right;font-weight:700;font-size:1.1rem;color:#065f46;border-top:1px solid #86efac;padding-top:0.3rem;">' + formatMoney(data.cashOnHand) + ' บาท</span>';
-            if (data.pendingReimburse > 0) {
-                html += '<span style="color:#dc2626;" title="จากเงินสดคงเหลือข้างบน มีส่วนนี้ที่ต้องคืนกรรมการที่สำรองจ่าย — กดปุ่ม คืนเงิน ในตารางสำรองจ่ายด้านบน">⚠️ ค้างคืนกรรมการ <span style="font-size:0.8rem;opacity:0.7;">(ℹ️ hover เพื่อดูคำอธิบาย)</span>:</span><span style="text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(data.pendingReimburse) + ' บาท</span>';
-            }
-            html += '</div>';
-            content.innerHTML = html;
         }
 
         async function openReimburseModal(id, totalAmt, alreadyReimbursed, personName) {
