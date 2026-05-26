@@ -132,6 +132,8 @@ export default defineConfig({
       use: {
         ...devices['iPhone 12'],
         storageState: '.auth/admin.json',
+        // ปิด video สำหรับ WebKit บน Linux CI — ป้องกัน browser.newContext crash
+        video: 'off',
       },
     },
 
@@ -143,6 +145,8 @@ export default defineConfig({
       use: {
         ...devices['iPad (gen 7)'],
         storageState: '.auth/admin.json',
+        // ปิด video สำหรับ WebKit บน Linux CI — ป้องกัน browser.newContext crash
+        video: 'off',
       },
     },
   ],
