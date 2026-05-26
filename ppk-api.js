@@ -3080,6 +3080,10 @@ async function _routeAction(action, data) {
             var _arPromoteCor = (_arCors).find(function(c) { return c.user_id; }) || null;
             var _arPromotedResidentId = null;
             if (_arPromoteCor) {
+                // ล้าง moved_out_at period ปัจจุบัน เพื่อให้ผู้พักร่วมที่ถูก promote เห็นยอดแจ้ง
+                var _arProNow = new Date();
+                var _arProPeriod = (_arProNow.getFullYear() + 543) + '-' + String(_arProNow.getMonth() + 1).padStart(2, '0');
+                try { await sbPatch('outstanding', { house_number: 'eq.' + _arHouseNumber2, period: 'eq.' + _arProPeriod, moved_out_at: 'not.is.null' }, { moved_out_at: null, updated_at: new Date().toISOString() }); } catch(e) {}
                 // สร้าง resident record ใหม่สำหรับผู้พักร่วมที่ถูก promote
                 var _arNewFullName = ((_arPromoteCor.prefix||'') + (_arPromoteCor.firstname||'') + ' ' + (_arPromoteCor.lastname||'')).trim();
                 var _arNewRes = await sbPost('residents', {
@@ -3229,6 +3233,10 @@ async function _routeAction(action, data) {
             if (_etActualCurHouse) {
                 try { await sbPatch('outstanding', { house_number: 'eq.' + _etActualCurHouse, moved_out_at: 'is.null' }, { moved_out_at: new Date().toISOString() }); } catch(e) {}
             }
+            // 9b. ล้าง moved_out_at period ปัจจุบันในบ้านปลายทาง (เผื่อแจ้งยอดไว้ก่อนผู้เดิมย้ายออก)
+            var _etNow = new Date();
+            var _etCurrPeriod = (_etNow.getFullYear() + 543) + '-' + String(_etNow.getMonth() + 1).padStart(2, '0');
+            try { await sbPatch('outstanding', { house_number: 'eq.' + _etTgtHouse, period: 'eq.' + _etCurrPeriod, moved_out_at: 'not.is.null' }, { moved_out_at: null, updated_at: new Date().toISOString() }); } catch(e) {}
             // 10. notify email คนแรกในคิว
             try {
                 var _etQRows = await sbGet('queue', { status: 'eq.waiting', order: 'position.asc', limit: '1' }).catch(function() { return []; });
@@ -3381,6 +3389,10 @@ async function _routeAction(action, data) {
                                         await sbPatch('outstanding', { house_number: 'eq.' + _trCurHouse, moved_out_at: 'is.null' },
                                             { moved_out_at: new Date().toISOString() });
                                     } catch(e) {}
+                                    // ล้าง moved_out_at period ปัจจุบันในบ้านปลายทาง (เผื่อแจ้งยอดไว้ก่อนผู้เดิมย้ายออก)
+                                    var _trNow = new Date();
+                                    var _trCurrPeriod = (_trNow.getFullYear() + 543) + '-' + String(_trNow.getMonth() + 1).padStart(2, '0');
+                                    try { await sbPatch('outstanding', { house_number: 'eq.' + _trTgtHouse, period: 'eq.' + _trCurrPeriod, moved_out_at: 'not.is.null' }, { moved_out_at: null, updated_at: new Date().toISOString() }); } catch(e) {}
                                     invalidateResidentCache();
                                     // notify email คนแรกในคิวเมื่อบ้านเก่าว่าง
                                     try {
