@@ -15,10 +15,15 @@ export async function waitForApiReady(page: Page): Promise<void> {
 }
 
 /**
- * ไปที่ index.html แล้วรอ API พร้อม (ใช้สำหรับ integration tests)
+ * ไปที่ register.html — stable page ที่โหลด ppk-api.js ครบ
+ * ไม่มี auto-redirect, checkSession, หรือ background API calls
+ * เหมาะสำหรับ integration tests ที่ต้องเรียก callBackend โดยตรง
+ *
+ * หมายเหตุ: ห้ามใช้ dashboard.html เพราะ loadDashboard() → checkSession(true)
+ * จะ redirect หลัง 1500ms ทำให้ pending fetch ถูก abort → "Failed to fetch"
  */
 export async function loadApiPage(page: Page): Promise<void> {
-  await page.goto('/index.html');
+  await page.goto('/register.html');
   await page.waitForLoadState('load');
   await waitForApiReady(page);
 }
