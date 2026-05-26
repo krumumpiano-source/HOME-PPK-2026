@@ -556,6 +556,9 @@
                 await _loadTesseract();
                 var ocrResult = await Tesseract.recognize(file, 'tha+eng', { tessedit_char_whitelist: '0123456789,.฿ ' });
                 var text = (ocrResult.data.text || '').replace(/\s+/g, ' ').trim();
+                // แก้ไข: OCR อาจอ่าน comma เป็น space เช่น "3,350.00" → "3 350.00"
+                // ต้องรวมกลับก่อน pattern match
+                text = text.replace(/(\d{1,3}) (\d{3}\.\d{2})/g, '$1$2');
                 var patterns = [/฿\s*([\d,]+(?:\.\d{1,2})?)/, /([\d,]+(?:\.\d{1,2})?)\s*บาท/, /([\d,]+\.\d{2})/];
                 for (var _pi = 0; _pi < patterns.length; _pi++) {
                     var _pm = text.match(patterns[_pi]);
