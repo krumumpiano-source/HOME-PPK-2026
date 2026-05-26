@@ -638,12 +638,6 @@
                             document.getElementById('lost_house').value = lostData.lost_house || '';
                             document.getElementById('lost_flat').value = lostData.lost_flat || '';
                         }
-                        // โหลด reading_date จาก DB — ให้ตรงกับที่แสดงบน Dashboard
-                        var dbReadingDate = result.data[0].reading_date;
-                        if (dbReadingDate) {
-                            document.getElementById('reading_date').value = dbReadingDate;
-                            localStorage.setItem(_elecReadingKey(), dbReadingDate);
-                        }
                         const amountMap = {};
                         result.data.forEach(r => {
                             const key = r.house_number || r.house;
