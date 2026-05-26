@@ -491,7 +491,8 @@ var _PERM_ACTION_MAP = {
     submitWaterBill: 'water,water_reader', submitElectricBill: 'electric',
     reviewSlip: 'slip', markReceiptSent: 'slip', reviewRequest: 'request', checkDuplicateResident: 'request',
     sendNotification: 'notify',
-    saveWithdraw: 'withdraw', saveAccounting: 'accounting'
+    saveWithdraw: 'withdraw', saveAccounting: 'accounting',
+    clearDeferredCarryOver: 'withdraw'
 };
 
 async function _routeAction(action, data) {
@@ -1713,7 +1714,41 @@ async function _routeAction(action, data) {
             try { await sbUpsert('settings', { key: swKey, value: swVal }, 'key'); } catch(e) { console.warn('settings upsert (monthly_withdraw):', e); }
             // sync ค่าใช้จ่ายไปยังบัญชีกองกลางอัตโนมัติ
             try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
+            // ล้าง deferredItems flag ของเดือนก่อนที่ถูกรวมเบิกแล้ว
+            if (data.resolvedCarryOver && data.resolvedCarryOver.length > 0) {
+                for (var _rci = 0; _rci < data.resolvedCarryOver.length; _rci++) {
+                    var _rcItem = data.resolvedCarryOver[_rci];
+                    if (!_rcItem.period || !_rcItem.itemKey) continue;
+                    try {
+                        var _rcKey = 'monthly_withdraw_' + _rcItem.period;
+                        var _rcRows = await sbGet('settings', { key: 'eq.' + _rcKey });
+                        if (_rcRows && _rcRows[0] && _rcRows[0].value) {
+                            var _rcVal = JSON.parse(_rcRows[0].value);
+                            if (_rcVal.deferredItems && _rcVal.deferredItems[_rcItem.itemKey]) {
+                                delete _rcVal.deferredItems[_rcItem.itemKey];
+                                await sbUpsert('settings', { key: _rcKey, value: JSON.stringify(_rcVal) }, 'key');
+                            }
+                        }
+                    } catch(e) { console.warn('clearResolvedCarryOver error period=' + _rcItem.period, e); }
+                }
+            }
             return { success: true };
+        }
+
+        /* ── ล้าง deferredItems flag ทีละตัว ─────────────────── */
+        case 'clearDeferredCarryOver': {
+            if (!data.period || !data.itemKey) return { success: false, error: 'ไม่ระบุ period หรือ itemKey' };
+            var _cdcKey = 'monthly_withdraw_' + data.period;
+            var _cdcRows = await sbGet('settings', { key: 'eq.' + _cdcKey });
+            if (!_cdcRows || !_cdcRows[0]) return { success: false, error: 'ไม่พบข้อมูลเดือน ' + data.period };
+            try {
+                var _cdcVal = JSON.parse(_cdcRows[0].value || '{}');
+                if (!_cdcVal.deferredItems || !_cdcVal.deferredItems[data.itemKey]) return { success: false, error: 'ไม่พบรายการที่ต้องการล้าง' };
+                delete _cdcVal.deferredItems[data.itemKey];
+                await sbUpsert('settings', { key: _cdcKey, value: JSON.stringify(_cdcVal) }, 'key');
+                _logActivity('clear_deferred_carry_over', null, 'ล้าง carry-over ' + data.itemKey + ' งวด ' + data.period, { period: data.period, itemKey: data.itemKey });
+                return { success: true };
+            } catch(e) { return { success: false, error: 'parse error: ' + e.message }; }
         }
 
         /* ── สำรองจ่าย / ทดรองจ่าย ─────────────────────── */

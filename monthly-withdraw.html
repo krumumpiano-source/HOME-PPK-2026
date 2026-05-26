@@ -626,16 +626,19 @@
                 // Deferred items
                 if (hasDef) {
                     html += '<div style="margin-bottom:0.5rem;font-weight:600;color:#92400e;">⏳ รายการเลื่อนชำระ <span style="font-size:0.8rem;font-weight:400;">(ค่าน้ำ/ค่าไฟที่ยังไม่ได้เบิก — นำมารวมเบิกเดือนนี้)</span></div>';
-                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.8rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">รายการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">จำนวนเงิน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เหตุผล</th></tr></thead><tbody>';
+                    html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:0.8rem;"><thead><tr style="background:#fef3c7;"><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เดือน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">รายการ</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:right;">จำนวนเงิน</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:left;">เหตุผล</th><th style="padding:0.4rem;border:1px solid #fde68a;text-align:center;">จัดการ</th></tr></thead><tbody>';
                     d.deferredItems.forEach(function(item) {
                         var pm = item.period.split('-');
                         var mName = THAI_MONTHS[parseInt(pm[1]) - 1] + ' ' + pm[0];
                         var amt = parseFloat(item.amount) || 0;
                         deferTotal += amt;
-                        html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.label + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(amt) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;font-size:0.82rem;">' + item.reason + (item.until ? ' (ภายใน ' + item.until + ')' : '') + '</td></tr>';
+                        var escapedPeriod = item.period.replace(/'/g, "\\'");
+                        var escapedKey = item.itemKey.replace(/'/g, "\\'");
+                        var escapedLabel = item.label.replace(/'/g, "\\'");
+                        html += '<tr><td style="padding:0.35rem;border:1px solid #fde68a;">' + mName + '</td><td style="padding:0.35rem;border:1px solid #fde68a;">' + item.label + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:right;font-weight:600;color:#dc2626;">' + formatMoney(amt) + '</td><td style="padding:0.35rem;border:1px solid #fde68a;font-size:0.82rem;">' + item.reason + (item.until ? ' (ภายใน ' + item.until + ')' : '') + '</td><td style="padding:0.35rem;border:1px solid #fde68a;text-align:center;"><button onclick="clearCarryOverItem(\'' + escapedPeriod + '\',\'' + escapedKey + '\',\'' + escapedLabel + '\', ' + amt + ')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:0.2rem 0.6rem;font-size:0.8rem;cursor:pointer;" title="บันทึกว่าได้รับเงินและชำระแล้ว">✅ ชำระแล้ว</button></td></tr>';
                     });
-                    html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="2" style="padding:0.4rem;border:1px solid #fde68a;">รวมยอดเลื่อนชำระ</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(deferTotal) + '</td><td></td></tr>';
-                    html += '</tbody></table>';
+                    html += '<tr style="background:#fef3c7;font-weight:600;"><td colspan="2" style="padding:0.4rem;border:1px solid #fde68a;">รวมยอดเลื่อนชำระ</td><td style="padding:0.4rem;border:1px solid #fde68a;text-align:right;color:#dc2626;">' + formatMoney(deferTotal) + '</td><td></td><td></td></tr>';
+                    html += '</tbody></table>'
                 }
 
                 // Pending advances (สำรองค้างคืน)
@@ -695,6 +698,24 @@
             await saveDeferredData();
             renderDeferredBadges();
             await ppkAlert('บันทึกเลื่อนชำระ' + itemLabel + 'แล้ว ✅', { type: 'success' });
+        }
+
+        // ล้าง carry-over flag ทีละตัว (กรณีชำระแล้วแต่ไม่ได้เบิกรวมในเดือนนี้)
+        async function clearCarryOverItem(period, itemKey, itemLabel, amount) {
+            var pm = period.split('-');
+            var mName = (typeof THAI_MONTHS !== 'undefined' ? THAI_MONTHS[parseInt(pm[1]) - 1] : pm[1]) + ' ' + pm[0];
+            var confirmMsg = 'ยืนยันบันทึกว่า "' + itemLabel + '" งวด ' + mName + '\nยอด ' + (parseFloat(amount)||0).toLocaleString('th-TH', {minimumFractionDigits:2}) + ' บาท\n\nได้รับเงินและชำระเรียบร้อยแล้ว?\n\n⚠️ เมื่อยืนยันแล้วรายการนี้จะหายออกจากยอดค้าง';
+            if (!confirm(confirmMsg)) return;
+            try {
+                var res = await callBackend('clearDeferredCarryOver', { period: period, itemKey: itemKey });
+                if (res && res.success) {
+                    await loadCarryOver();
+                } else {
+                    alert('ล้างไม่สำเร็จ: ' + ((res && res.error) || 'ไม่ทราบสาเหตุ'));
+                }
+            } catch(e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
         }
 
         function renderDeferredBadges() {
@@ -880,7 +901,7 @@
                     html += '<tr><td style="padding:0.35rem;border:1px solid #fecaca;">' + (u.fullName||'-') + '</td><td style="padding:0.35rem;border:1px solid #fecaca;text-align:center;">' + (u.houseNumber||'') + '</td><td style="padding:0.35rem;border:1px solid #fecaca;text-align:right;font-weight:600;color:#dc2626;">' + (u.totalOutstanding||0).toLocaleString('th-TH') + '</td><td style="padding:0.35rem;border:1px solid #fecaca;text-align:center;">' + (u.userIsActive ? '🟢' : '🔴') + '</td></tr>';
                 });
                 html += '</tbody></table>';
-                html += '<div style="font-size:0.78rem;color:#9ca3af;margin-top:0.5rem;">จัดการรายละเอียดได้ที่เมนู ตั้งค่า → ผู้ย้ายออก</div>';
+                html += '<div style="margin-top:0.6rem;"><a href="admin-settings.html" style="display:inline-block;background:#dc2626;color:#fff;padding:0.35rem 1rem;border-radius:8px;font-size:0.85rem;text-decoration:none;cursor:pointer;">🔗 ไปจัดการยอดค้างผู้ย้ายออก →</a><span style="font-size:0.75rem;color:#9ca3af;margin-left:0.7rem;">กดปุ่ม ✅ ต่อ record ที่ชำระแล้ว</span></div>';
                 if (content) content.innerHTML = html;
                 if (section) section.style.display = '';
             } catch(e) {
@@ -1239,6 +1260,16 @@
                 // กรองเฉพาะ item ที่กรอกครบแล้ว (ตัดตัวว่างออก)
                 const validItems = additionalItems.filter(item => item.name && item.amount > 0);
 
+                // รวบรวม resolvedCarryOver: ถ้า includeCarryOver checked → ถือว่าทุก deferred item ถูกชำระแล้ว
+                var _includeCarryOverEl = document.getElementById('includeCarryOver');
+                var _includeCarryOverChecked = _includeCarryOverEl && _includeCarryOverEl.checked;
+                var resolvedCarryOver = [];
+                if (_includeCarryOverChecked && _carryOverData && _carryOverData.deferredItems) {
+                    _carryOverData.deferredItems.forEach(function(item) {
+                        resolvedCarryOver.push({ period: item.period, itemKey: item.itemKey });
+                    });
+                }
+
                 const result = await callBackend('saveWithdraw', {
                     period: period,
                     garbageFee: garbageFee,
@@ -1250,7 +1281,8 @@
                         travelGarbage: travelGarbage
                     },
                     totalWithdraw: roundedTotal,
-                    deferredItems: _deferredItems
+                    deferredItems: _deferredItems,
+                    resolvedCarryOver: resolvedCarryOver
                 });
                 if (result && result.success) {
                     localStorage.removeItem('apicache_getMonthlyWithdraw_' + JSON.stringify({ period: period }));
@@ -1261,6 +1293,7 @@
                         await saveAdvanceItems();
                     }
                     await loadAdvanceData();
+                    await loadCarryOver(); // refresh carry-over หลังบันทึก (flag ที่ resolve แล้วจะหายออก)
                     await ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว! ✅', { type: 'success', title: 'บันทึกสำเร็จ' });
                 } else {
                     await ppkAlert('เกิดข้อผิดพลาด: ' + ((result && (result.message || result.error)) || 'ไม่ทราบสาเหตุ'), { type: 'error', title: 'บันทึกไม่สำเร็จ' });
