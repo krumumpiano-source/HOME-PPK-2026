@@ -491,8 +491,7 @@ var _PERM_ACTION_MAP = {
     submitWaterBill: 'water,water_reader', submitElectricBill: 'electric',
     reviewSlip: 'slip', markReceiptSent: 'slip', reviewRequest: 'request', checkDuplicateResident: 'request',
     sendNotification: 'notify',
-    saveWithdraw: 'withdraw', saveAccounting: 'accounting',
-    clearDeferredCarryOver: 'withdraw'
+    saveWithdraw: 'withdraw', saveAccounting: 'accounting'
 };
 
 async function _routeAction(action, data) {
@@ -904,23 +903,6 @@ async function _routeAction(action, data) {
                 var _gmuOut = await sbGet('outstanding', { house_number: 'eq.' + _gr.house_number, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' }).catch(function() { return []; });
                 if (!_gmuOut || _gmuOut.length === 0) continue;
                 var _gmuTotal = _gmuOut.reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
-
-                // ── ตรวจสลิปอนุมัติหลังวันย้ายออก (แก้ period mismatch ── ผู้ย้ายออกส่งสลิปถูก period ไม่ตรง) ──
-                var _gmuEndDate = _gr.end_date || '0001-01-01';
-                var _gmuPostSlips = await sbGet('slip_submissions', { resident_id: 'eq.' + _gr.id, status: 'eq.approved', select: 'amount,submitted_at' }).catch(function() { return []; });
-                var _gmuPaidViaSlips = (_gmuPostSlips || []).filter(function(s) { return (s.submitted_at || '').slice(0, 10) >= _gmuEndDate; }).reduce(function(acc, s) { return acc + (parseFloat(s.amount) || 0); }, 0);
-
-                // ถ้าชำระครบแล้ว → auto-reconcile outstanding แล้วข้ามออกจากรายการ
-                if (_gmuPaidViaSlips > 0 && _gmuPaidViaSlips >= _gmuTotal - 0.01) {
-                    try {
-                        for (var _gri = 0; _gri < _gmuOut.length; _gri++) {
-                            await sbPatch('outstanding', { id: 'eq.' + _gmuOut[_gri].id }, { status: 'paid', updated_at: new Date().toISOString() });
-                        }
-                    } catch(e) { console.warn('getMovedOutUsers: auto-reconcile outstanding error', e); }
-                    continue;
-                }
-                var _gmuNetTotal = Math.max(0, _gmuTotal - _gmuPaidViaSlips);
-
                 var _gmuUserActive = false;
                 if (_gr.user_id) {
                     var _gmuUR = await sbGet('users', { id: 'eq.' + _gr.user_id, select: 'is_active', limit: '1' }).catch(function() { return []; });
@@ -930,7 +912,7 @@ async function _routeAction(action, data) {
                     residentId: _gr.id, userId: _gr.user_id,
                     fullName: ((_gr.prefix||'') + (_gr.firstname||'') + ' ' + (_gr.lastname||'')).trim(),
                     email: _gr.email || '', houseNumber: _gr.house_number, endDate: _gr.end_date,
-                    totalOutstanding: _gmuNetTotal, userIsActive: _gmuUserActive,
+                    totalOutstanding: _gmuTotal, userIsActive: _gmuUserActive,
                     outstandingRows: _gmuOut.map(function(o) { return { id: o.id, period: o.period, amount: parseFloat(o.total_amount) || 0 }; })
                 });
             }
@@ -1070,31 +1052,6 @@ async function _routeAction(action, data) {
                 }
             }
             return { success: true };
-        }
-
-        /* ── บันทึกชำระยอดค้างทั้งหมด สำหรับผู้ย้ายออกที่บัญชีปิดแล้ว ─── */
-        case 'markAllMovedOutOutstandingPaid': {
-            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุ houseNumber' };
-            var _mamopSess = await _getSessionRole();
-            if (!_mamopSess || (_mamopSess.role !== 'admin' && _mamopSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
-            // ตรวจว่าบัญชีปิดแล้วจริง (is_active=false)
-            var _mamopUserCheck = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.false', select: 'user_id', order: 'end_date.desc', limit: '1' }).catch(function() { return []; });
-            if (!_mamopUserCheck || !_mamopUserCheck[0]) return { success: false, error: 'ไม่พบผู้ย้ายออกสำหรับบ้านนี้' };
-            var _mamopUid = _mamopUserCheck[0].user_id;
-            // mark outstanding ทั้งหมดของบ้านนี้ที่มี moved_out_at เป็น paid
-            var _mamopRows = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' }).catch(function() { return []; });
-            if (!_mamopRows || _mamopRows.length === 0) return { success: false, error: 'ไม่พบยอดค้างค้างชำระ' };
-            var _mamopNow = new Date().toISOString();
-            for (var _mi = 0; _mi < _mamopRows.length; _mi++) {
-                await sbPatch('outstanding', { id: 'eq.' + _mamopRows[_mi].id }, { status: 'paid', paid_at: _mamopNow, updated_at: _mamopNow }).catch(function() {});
-            }
-            // deactivate user ถ้ายังมีสิทธิ์ login (สถานะ departing)
-            if (_mamopUid) {
-                await sbPatch('users', { id: 'eq.' + _mamopUid }, { is_active: false, status: 'inactive', updated_at: _mamopNow }).catch(function() {});
-                await sbDelete('sessions', { user_id: 'eq.' + _mamopUid }).catch(function() {});
-            }
-            _logActivity('mark_all_moved_out_paid', _mamopSess.userId, 'บันทึกชำระยอดค้างทั้งหมด บ้าน=' + data.houseNumber + ' จำนวน=' + _mamopRows.length + ' รายการ', { houseNumber: data.houseNumber, count: _mamopRows.length });
-            return { success: true, count: _mamopRows.length };
         }
 
         /* ── ลบข้อมูลผู้ย้ายออกทั้งหมด (เสมือนไม่เคยมีตัวตน) ─── */
@@ -1756,41 +1713,7 @@ async function _routeAction(action, data) {
             try { await sbUpsert('settings', { key: swKey, value: swVal }, 'key'); } catch(e) { console.warn('settings upsert (monthly_withdraw):', e); }
             // sync ค่าใช้จ่ายไปยังบัญชีกองกลางอัตโนมัติ
             try { await _autoSyncAccounting(data.period); } catch(e) { console.warn('autoSync error', e); }
-            // ล้าง deferredItems flag ของเดือนก่อนที่ถูกรวมเบิกแล้ว
-            if (data.resolvedCarryOver && data.resolvedCarryOver.length > 0) {
-                for (var _rci = 0; _rci < data.resolvedCarryOver.length; _rci++) {
-                    var _rcItem = data.resolvedCarryOver[_rci];
-                    if (!_rcItem.period || !_rcItem.itemKey) continue;
-                    try {
-                        var _rcKey = 'monthly_withdraw_' + _rcItem.period;
-                        var _rcRows = await sbGet('settings', { key: 'eq.' + _rcKey });
-                        if (_rcRows && _rcRows[0] && _rcRows[0].value) {
-                            var _rcVal = JSON.parse(_rcRows[0].value);
-                            if (_rcVal.deferredItems && _rcVal.deferredItems[_rcItem.itemKey]) {
-                                delete _rcVal.deferredItems[_rcItem.itemKey];
-                                await sbUpsert('settings', { key: _rcKey, value: JSON.stringify(_rcVal) }, 'key');
-                            }
-                        }
-                    } catch(e) { console.warn('clearResolvedCarryOver error period=' + _rcItem.period, e); }
-                }
-            }
             return { success: true };
-        }
-
-        /* ── ล้าง deferredItems flag ทีละตัว ─────────────────── */
-        case 'clearDeferredCarryOver': {
-            if (!data.period || !data.itemKey) return { success: false, error: 'ไม่ระบุ period หรือ itemKey' };
-            var _cdcKey = 'monthly_withdraw_' + data.period;
-            var _cdcRows = await sbGet('settings', { key: 'eq.' + _cdcKey });
-            if (!_cdcRows || !_cdcRows[0]) return { success: false, error: 'ไม่พบข้อมูลเดือน ' + data.period };
-            try {
-                var _cdcVal = JSON.parse(_cdcRows[0].value || '{}');
-                if (!_cdcVal.deferredItems || !_cdcVal.deferredItems[data.itemKey]) return { success: false, error: 'ไม่พบรายการที่ต้องการล้าง' };
-                delete _cdcVal.deferredItems[data.itemKey];
-                await sbUpsert('settings', { key: _cdcKey, value: JSON.stringify(_cdcVal) }, 'key');
-                _logActivity('clear_deferred_carry_over', null, 'ล้าง carry-over ' + data.itemKey + ' งวด ' + data.period, { period: data.period, itemKey: data.itemKey });
-                return { success: true };
-            } catch(e) { return { success: false, error: 'parse error: ' + e.message }; }
         }
 
         /* ── สำรองจ่าย / ทดรองจ่าย ─────────────────────── */
@@ -2793,13 +2716,12 @@ async function _routeAction(action, data) {
                 }
                 // ── กรองเฉพาะ outstanding ที่แอดมินแจ้งยอดแล้ว (มี notifications ตรงกัน) ──
                 // ป้องกันแสดงยอดแก่ผู้พักอาศัยก่อนที่แอดมินจะกด "บันทึกข้อมูลแจ้งยอดลงระบบ"
-                // ยกเว้น: งวดปัจจุบัน — รองรับผู้พักใหม่ที่เพิ่งเข้าอยู่หลัง batch notification ส่งไปแล้ว
                 if (outRows && outRows.length > 0 && houseNumber) {
                     try {
                         var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period', limit: '100' }).catch(function() { return []; });
                         var _gddPublished = {};
                         (_gddNotifs || []).forEach(function(n) { if (n.period) _gddPublished[n.period] = true; });
-                        outRows = outRows.filter(function(o) { return _gddPublished[o.period] || o.period === period; });
+                        outRows = outRows.filter(function(o) { return _gddPublished[o.period]; });
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
@@ -3046,23 +2968,6 @@ async function _routeAction(action, data) {
                         }
                     } catch(e) { console.warn('reviewSlip: auto-mark outstanding paid error', e); }
                 }
-
-                // ─── สลิปผู้ย้ายออก: mark ALL moved_out outstanding เป็น paid ข้าม period mismatch ───
-                try {
-                    var _rsSlipR = await sbGet('slip_submissions', { id: 'eq.' + data.id, select: 'resident_id', limit: '1' });
-                    var _rsResId = _rsSlipR && _rsSlipR[0] ? _rsSlipR[0].resident_id : null;
-                    if (_rsResId) {
-                        var _rsResInfo = await sbGet('residents', { id: 'eq.' + _rsResId, select: 'is_active', limit: '1' });
-                        if (_rsResInfo && _rsResInfo[0] && _rsResInfo[0].is_active === false) {
-                            var _rsMOPending = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' });
-                            if (_rsMOPending && _rsMOPending.length > 0) {
-                                for (var _moi = 0; _moi < _rsMOPending.length; _moi++) {
-                                    await sbPatch('outstanding', { id: 'eq.' + _rsMOPending[_moi].id }, { status: 'paid', updated_at: new Date().toISOString() });
-                                }
-                            }
-                        }
-                    }
-                } catch(e) { console.warn('reviewSlip: moved-out outstanding reconcile error', e); }
 
                 // ─── Auto-deactivate ผู้ย้ายออกแล้วหากยอดค้างครบทุกงวด ───
                 try {
@@ -3666,6 +3571,17 @@ async function _routeAction(action, data) {
                     });
                 } catch(ue) { console.warn('อัปเดต users.subject_group ไม่สำเร็จ:', ue); }
             }
+
+            // 10. ล้าง moved_out_at สำหรับ period ปัจจุบัน เพื่อให้ผู้พักใหม่เห็นยอดแจ้ง
+            //     (กรณีที่แจ้งยอดไว้แล้วก่อนผู้เดิมย้ายออก ทำให้ outstanding ถูก mark moved_out_at ไป)
+            var _arNow = new Date();
+            var _arCurrPeriod = (_arNow.getFullYear() + 543) + '-' + String(_arNow.getMonth() + 1).padStart(2, '0');
+            try {
+                await sbPatch('outstanding',
+                    { house_number: 'eq.' + arHouseNum, period: 'eq.' + _arCurrPeriod, moved_out_at: 'not.is.null' },
+                    { moved_out_at: null, updated_at: new Date().toISOString() }
+                );
+            } catch(e) {}
 
             invalidateResidentCache();
             return { success: true, residentId: arResidentId, houseNumber: arHouseNum };
