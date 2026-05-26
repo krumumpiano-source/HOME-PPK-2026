@@ -1055,6 +1055,31 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── บันทึกชำระยอดค้างทั้งหมด สำหรับผู้ย้ายออกที่บัญชีปิดแล้ว ─── */
+        case 'markAllMovedOutOutstandingPaid': {
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุ houseNumber' };
+            var _mamopSess = await _getSessionRole();
+            if (!_mamopSess || (_mamopSess.role !== 'admin' && _mamopSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            // ตรวจว่าบัญชีปิดแล้วจริง (is_active=false)
+            var _mamopUserCheck = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.false', select: 'user_id', order: 'end_date.desc', limit: '1' }).catch(function() { return []; });
+            if (!_mamopUserCheck || !_mamopUserCheck[0]) return { success: false, error: 'ไม่พบผู้ย้ายออกสำหรับบ้านนี้' };
+            var _mamopUid = _mamopUserCheck[0].user_id;
+            // mark outstanding ทั้งหมดของบ้านนี้ที่มี moved_out_at เป็น paid
+            var _mamopRows = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' }).catch(function() { return []; });
+            if (!_mamopRows || _mamopRows.length === 0) return { success: false, error: 'ไม่พบยอดค้างค้างชำระ' };
+            var _mamopNow = new Date().toISOString();
+            for (var _mi = 0; _mi < _mamopRows.length; _mi++) {
+                await sbPatch('outstanding', { id: 'eq.' + _mamopRows[_mi].id }, { status: 'paid', paid_at: _mamopNow, updated_at: _mamopNow }).catch(function() {});
+            }
+            // deactivate user ถ้ายังมีสิทธิ์ login (สถานะ departing)
+            if (_mamopUid) {
+                await sbPatch('users', { id: 'eq.' + _mamopUid }, { is_active: false, status: 'inactive', updated_at: _mamopNow }).catch(function() {});
+                await sbDelete('sessions', { user_id: 'eq.' + _mamopUid }).catch(function() {});
+            }
+            _logActivity('mark_all_moved_out_paid', _mamopSess.userId, 'บันทึกชำระยอดค้างทั้งหมด บ้าน=' + data.houseNumber + ' จำนวน=' + _mamopRows.length + ' รายการ', { houseNumber: data.houseNumber, count: _mamopRows.length });
+            return { success: true, count: _mamopRows.length };
+        }
+
         /* ── ลบข้อมูลผู้ย้ายออกทั้งหมด (เสมือนไม่เคยมีตัวตน) ─── */
         case 'purgeMovedOutUser': {
             if (!data.residentId) return { success: false, error: 'ไม่ระบุ residentId' };
