@@ -122,19 +122,25 @@ async function sbGet(table, params) {
                 Object.keys(params || {}).forEach(function (k) {
                     if (k === 'select' || k === 'order' || k === 'limit') return;
                     var val = String(params[k]);
-                    var m = val.match(/^(eq|neq|lt|lte|gt|gte|like|ilike|is|in)\.(.+)$/);
+                    var m = val.match(/^(not\.)?(eq|neq|lt|lte|gt|gte|like|ilike|is|in)\.(.+)$/);
                     if (!m) return;
-                    var op = m[1], v = m[2];
-                    if (op === 'eq')     q = q.eq(k, v);
-                    else if (op === 'neq')   q = q.neq(k, v);
-                    else if (op === 'lt')    q = q.lt(k, v);
-                    else if (op === 'lte')   q = q.lte(k, v);
-                    else if (op === 'gt')    q = q.gt(k, v);
-                    else if (op === 'gte')   q = q.gte(k, v);
-                    else if (op === 'like')  q = q.like(k, v);
-                    else if (op === 'ilike') q = q.ilike(k, v);
-                    else if (op === 'is')    q = q.is(k, v === 'null' ? null : v === 'true');
-                    else if (op === 'in')    q = q.in(k, v.replace(/^\(|\)$/g, '').split(','));
+                    var negate = m[1] === 'not.', op = m[2], v = m[3];
+                    if (negate) {
+                        if (op === 'is')   q = q.not(k, 'is', null);
+                        else if (op === 'in') q = q.not(k, 'in', '(' + v.replace(/^\(|\)$/g, '') + ')');
+                        else if (op === 'eq') q = q.not(k, 'eq', v);
+                    } else {
+                        if (op === 'eq')     q = q.eq(k, v);
+                        else if (op === 'neq')   q = q.neq(k, v);
+                        else if (op === 'lt')    q = q.lt(k, v);
+                        else if (op === 'lte')   q = q.lte(k, v);
+                        else if (op === 'gt')    q = q.gt(k, v);
+                        else if (op === 'gte')   q = q.gte(k, v);
+                        else if (op === 'like')  q = q.like(k, v);
+                        else if (op === 'ilike') q = q.ilike(k, v);
+                        else if (op === 'is')    q = q.is(k, v === 'null' ? null : v === 'true');
+                        else if (op === 'in')    q = q.in(k, v.replace(/^\(|\)$/g, '').split(','));
+                    }
                 });
                 if (params && params.order) {
                     var ord = params.order.split('.');
