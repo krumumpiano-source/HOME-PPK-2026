@@ -1054,6 +1054,29 @@ async function _routeAction(action, data) {
             return { success: true };
         }
 
+        /* ── Phase F: บันทึกชำระยอดค้างผู้ย้ายออกทั้งหมดในครั้งเดียว ─── */
+        case 'markAllMovedOutOutstandingPaid': {
+            if (!data.houseNumber) return { success: false, error: 'ไม่ระบุ houseNumber' };
+            var _maopSess = await _getSessionRole();
+            if (!_maopSess || (_maopSess.role !== 'admin' && _maopSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            var _maopRows = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, moved_out_at: 'not.is.null', status: 'not.in.(paid,waived)' }).catch(function() { return []; });
+            if (!_maopRows || _maopRows.length === 0) return { success: false, error: 'ไม่พบรายการค้างที่ต้องชำระ' };
+            var _maopNow = new Date().toISOString();
+            for (var _mi = 0; _mi < _maopRows.length; _mi++) {
+                await sbPatch('outstanding', { id: 'eq.' + _maopRows[_mi].id }, { status: 'paid', paid_at: _maopNow, updated_at: _maopNow }).catch(function() {});
+            }
+            _logActivity('mark_all_moved_out_paid', _maopSess.userId, 'บันทึกชำระยอดค้างทั้งหมด houseNumber=' + data.houseNumber + ' จำนวน=' + _maopRows.length, { houseNumber: data.houseNumber, count: _maopRows.length });
+            // auto-deactivate บัญชีผู้ย้ายออก
+            var _maopRes = await sbGet('residents', { house_number: 'eq.' + data.houseNumber, is_active: 'eq.false', order: 'end_date.desc', select: 'user_id', limit: '1' }).catch(function() { return []; });
+            var _maopUid = _maopRes && _maopRes[0] ? _maopRes[0].user_id : null;
+            if (_maopUid) {
+                await sbPatch('users', { id: 'eq.' + _maopUid }, { is_active: false, status: 'inactive', updated_at: _maopNow }).catch(function() {});
+                await sbDelete('sessions', { user_id: 'eq.' + _maopUid }).catch(function() {});
+                _logActivity('auto_deactivate_after_payment', _maopSess.userId, 'ปิดบัญชีอัตโนมัติหลังชำระครบ userId=' + _maopUid, { userId: _maopUid });
+            }
+            return { success: true, count: _maopRows.length };
+        }
+
         /* ── ลบข้อมูลผู้ย้ายออกทั้งหมด (เสมือนไม่เคยมีตัวตน) ─── */
         case 'purgeMovedOutUser': {
             if (!data.residentId) return { success: false, error: 'ไม่ระบุ residentId' };
