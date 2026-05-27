@@ -2474,6 +2474,18 @@ async function _routeAction(action, data) {
                     proxyEmailMap[p.house_number] = resUserEmailMap[p.proxy_user_id];
                 }
             });
+            // Override resEmailMap ด้วย users.email (กรณีแก้ email ผ่าน admin-settings → users.email เปลี่ยนแต่ residents.email ยังเก่า)
+            var _resLinkedUserIds = (resRows || []).filter(function(r) { return r.user_id && r.resident_type !== 'cohabitant'; }).map(function(r) { return r.user_id; });
+            if (_resLinkedUserIds.length > 0) {
+                var _usersEmailRows = await sbGet('users', { id: 'in.(' + _resLinkedUserIds.join(',') + ')', select: 'id,email' }).catch(function() { return []; });
+                var _userEmailById = {};
+                (_usersEmailRows || []).forEach(function(u) { if (u.id && u.email) _userEmailById[u.id] = u.email; });
+                (resRows || []).forEach(function(r) {
+                    if (r.house_number && r.user_id && r.resident_type !== 'cohabitant' && _userEmailById[r.user_id]) {
+                        resEmailMap[r.house_number] = _userEmailById[r.user_id];
+                    }
+                });
+            }
             // รวมข้อมูลตาม house_number
             var summaryMap = {};
             // ค่าส่วนกลาง: ใช้ค่าจาก settings เป็น default, ยกเว้นตาม exemptions table
