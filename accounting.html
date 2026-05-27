@@ -1496,7 +1496,8 @@
             if (!section || !content) return;
             var filterVal = (document.getElementById('advFilter') || {}).value || 'all';
             try {
-                var q = {};
+                var p = getSelectedPeriod();
+                var q = { period: p.year + '-' + p.month };
                 if (filterVal !== 'all') q.status = filterVal;
                 var result = await callBackend('getAdvancePayments', q);
                 var rows = (result && result.data) || [];
