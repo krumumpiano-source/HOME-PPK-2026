@@ -758,10 +758,10 @@
         if(unit.noResident){
           actionsHtml = '<span style="color:var(--muted);font-size:.85rem;">ไม่มีผู้พัก</span>';
         } else if(status === 'approved'){
-          const _sentStyle = unit.receiptEmailSent ? ' style="background:#6b7280;border-color:#6b7280;cursor:default;"' : '';
-          const _sentDisabled = unit.receiptEmailSent ? ' disabled' : '';
-          const _sentLabel = unit.receiptEmailSent ? '✅ ส่งแล้ว' : '📧 ส่งใบเสร็จ';
-          const _sentTitle = unit.receiptEmailSent ? 'ส่งใบเสร็จทางอีเมลแล้ว' : 'ส่งใบเสร็จทางอีเมล';
+          const _sentStyle = unit.receiptEmailSent ? ' style="background:#6b7280;border-color:#6b7280;"' : '';
+          const _sentDisabled = '';
+          const _sentLabel = unit.receiptEmailSent ? '🔁 ส่งซ้ำ' : '📧 ส่งใบเสร็จ';
+          const _sentTitle = unit.receiptEmailSent ? 'คลิกเพื่อส่งใบเสร็จซ้ำ (กรณีอีเมลเปลี่ยน)' : 'ส่งใบเสร็จทางอีเมล';
           actionsHtml = '<div class="action-btns">' +
             '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
             '<button class="btn btn-sm btn-success"' + _sentDisabled + _sentStyle + ' onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="' + _sentTitle + '">' + _sentLabel + '</button>' +
@@ -1193,6 +1193,13 @@
 
     // wrapper สำหรับปุ่มรายตัว — จัดการ loading state
     async function sendReceiptEmailBtn(btn, type, index) {
+      const list = type === 'houses' ? housesData : flatsData;
+      const _isResend = !!(list[index] && list[index].receiptEmailSent);
+      if (_isResend) {
+        const _targetEmail = (list[index].email || list[index].proxyEmail || '').trim();
+        const confirmed = await ppkConfirm(`ส่งใบเสร็จซ้ำไปยัง ${list[index].unitNumber} (${list[index].name})?\nอีเมล: ${_targetEmail || 'ไม่มีอีเมล'}`);
+        if (!confirmed) return;
+      }
       btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
       try {
         const ok = await sendReceiptEmail(type, index);
@@ -1213,11 +1220,11 @@
           try { _sentArr = JSON.parse(localStorage.getItem(_sentKey) || '[]'); } catch(e) {}
           if (!_sentArr.includes(list[index].unitNumber)) _sentArr.push(list[index].unitNumber);
           localStorage.setItem(_sentKey, JSON.stringify(_sentArr));
-          btn.disabled = true;
-          btn.innerHTML = '✅ ส่งแล้ว';
+          btn.disabled = false;
+          btn.innerHTML = '🔁 ส่งซ้ำ';
           btn.style.background = '#6b7280';
           btn.style.borderColor = '#6b7280';
-          btn.title = 'ส่งใบเสร็จทางอีเมลแล้ว';
+          btn.title = 'คลิกเพื่อส่งใบเสร็จซ้ำ (กรณีอีเมลเปลี่ยน)';
         } else {
           btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ';
         }
