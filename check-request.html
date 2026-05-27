@@ -2235,6 +2235,13 @@
                         ${item.reviewNote ? '<div style="font-size:0.875rem;color:#991b1b;">เหตุผล: ' + _e(item.reviewNote) + '</div>' : ''}
                         ${item.headSignature ? '<img src="' + item.headSignature + '" style="max-height:64px;display:block;border:1px solid #fca5a5;border-radius:6px;background:#fff;padding:0.25rem;margin-top:0.5rem;">' : ''}
                     </div>` : ''}
+                    ${item.status === 'completed' ? `
+                    <div style="margin-top:1.25rem;padding:1rem;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;">
+                        <div style="font-weight:700;color:#15803d;margin-bottom:0.5rem;">✅ ดำเนินการย้ายออกเสร็จสิ้นแล้ว${item.headReviewerName ? ' — ผู้อนุมัติ: ' + _e(item.headReviewerName) : ''}</div>
+                        ${item.headReviewedAt ? '<div style="font-size:0.875rem;color:#166534;margin-bottom:0.3rem;">วันที่ดำเนินการ: ' + formatDate(item.headReviewedAt) + '</div>' : ''}
+                        ${item.reviewNote ? '<div style="font-size:0.875rem;color:#166534;">หมายเหตุ: ' + _e(item.reviewNote) + '</div>' : ''}
+                        <div style="font-size:0.88rem;color:#166534;margin-top:0.5rem;">🏠 บ้านพักถูกปลดล็อกแล้ว — สามารถจัดสรรให้ผู้พักรายใหม่ได้</div>
+                    </div>` : ''}
                 `;
             }
 
@@ -3400,7 +3407,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260527B"></script>
+    <script src="ppk-api.js?v=20260527C"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>

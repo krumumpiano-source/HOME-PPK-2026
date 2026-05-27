@@ -3087,7 +3087,7 @@ async function _routeAction(action, data) {
             var _arReqRows2 = await sbGet('requests', { id: 'eq.' + data.requestId, select: 'user_id,status', limit: '1' });
             if (!_arReqRows2 || !_arReqRows2[0]) return { success: false, error: 'ไม่พบคำร้อง' };
             var _arReq2 = _arReqRows2[0];
-            if (_arReq2.status === 'approved') return { success: false, error: 'คำร้องนี้ถูกดำเนินการแล้ว' };
+            if (_arReq2.status === 'completed') return { success: false, error: 'ดำเนินการย้ายออกไปแล้ว (สถานะ: completed)' };
 
             var _arUserId2 = _arReq2.user_id;
             if (!_arUserId2) return { success: false, error: 'คำร้องไม่มี user_id' };
@@ -3187,9 +3187,12 @@ async function _routeAction(action, data) {
             }
 
             // 7. บ้าน → occupied ถ้ามีการ promote, available ถ้าไม่มี
+            var _arHouseNewStatus = _arPromoteCor ? 'occupied' : 'available';
             if (_arHouseId2) {
-                var _arHouseNewStatus = _arPromoteCor ? 'occupied' : 'available';
                 try { await sbPatch('housing', { id: 'eq.' + _arHouseId2 }, { status: _arHouseNewStatus, updated_at: new Date().toISOString() }); } catch(e) {}
+            } else if (_arHouseNumber2) {
+                // fallback: update โดย house_number กรณี house_id เป็น null
+                try { await sbPatch('housing', { house_number: 'eq.' + _arHouseNumber2 }, { status: _arHouseNewStatus, updated_at: new Date().toISOString() }); } catch(e) {}
             }
 
             // Phase G: แจ้งเตือนอีเมลคนแรกในคิวเมื่อบ้านว่าง (เฉพาะกรณีไม่มีการ promote coresident)
@@ -3218,9 +3221,9 @@ async function _routeAction(action, data) {
                 try { await sbDelete('sessions', { user_id: 'eq.' + _arUserId2 }); } catch(e) {}
             }
 
-            // 9. approve request
+            // 9. mark request completed
             await sbPatch('requests', { id: 'eq.' + data.requestId }, {
-                status: 'approved', reviewed_by: _arReviewerId2,
+                status: 'completed', reviewed_by: _arReviewerId2,
                 reviewed_at: new Date().toISOString(),
                 review_note: data.note || '', updated_at: new Date().toISOString()
             });
