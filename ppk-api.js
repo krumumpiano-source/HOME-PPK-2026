@@ -1041,7 +1041,7 @@ async function _routeAction(action, data) {
             if (!_mopRow) return { success: false, error: 'ไม่พบรายการ' };
             if (_mopRow.status === 'paid') return { success: false, error: 'รายการนี้ชำระแล้ว' };
             if (!_mopRow.moved_out_at) return { success: false, error: 'รายการนี้ไม่ใช่ยอดค้างผู้ย้ายออก' };
-            await sbPatch('outstanding', { id: 'eq.' + data.outstandingId }, { status: 'paid', paid_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+            await sbPatch('outstanding', { id: 'eq.' + data.outstandingId }, { status: 'paid', updated_at: new Date().toISOString() });
             _logActivity('mark_moved_out_paid', _mopSess.userId, 'บันทึกชำระยอดค้างผู้ย้ายออก outstandingId=' + data.outstandingId, { outstandingId: data.outstandingId });
             // ตรวจว่าชำระครบหมดแล้วหรือยัง → ถ้าครบ auto-deactivate บัญชี
             if (_mopRow.house_number) {
@@ -1069,7 +1069,7 @@ async function _routeAction(action, data) {
             if (!_maopRows || _maopRows.length === 0) return { success: false, error: 'ไม่พบรายการค้างที่ต้องชำระ' };
             var _maopNow = new Date().toISOString();
             for (var _mi = 0; _mi < _maopRows.length; _mi++) {
-                await sbPatch('outstanding', { id: 'eq.' + _maopRows[_mi].id }, { status: 'paid', paid_at: _maopNow, updated_at: _maopNow }).catch(function() {});
+                await sbPatch('outstanding', { id: 'eq.' + _maopRows[_mi].id }, { status: 'paid', updated_at: _maopNow }).catch(function() {});
             }
             _logActivity('mark_all_moved_out_paid', _maopSess.userId, 'บันทึกชำระยอดค้างทั้งหมด houseNumber=' + data.houseNumber + ' จำนวน=' + _maopRows.length, { houseNumber: data.houseNumber, count: _maopRows.length });
             // auto-deactivate บัญชีผู้ย้ายออก
