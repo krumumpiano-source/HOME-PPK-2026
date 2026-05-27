@@ -6,23 +6,33 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     name: ${{ matrix.project }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - e2e                   # Desktop Chrome (baseline)
-          - e2e-desktop-edge      # Microsoft Edge 1366×768
-          - e2e-desktop-firefox   # Firefox
-          - e2e-mobile-android    # Pixel 5 (Android)
-          - e2e-mobile-samsung    # Samsung Galaxy A (360px)
-          - e2e-mobile-ios        # iPhone 12 (WebKit)
-          - e2e-tablet-ipad       # iPad gen 7 (WebKit)
+        include:
+          - project: e2e                  # Desktop Chrome (baseline)
+            browser: chromium
+          - project: e2e-desktop-edge     # Microsoft Edge 1366×768
+            browser: chromium
+          - project: e2e-desktop-firefox  # Firefox
+            browser: firefox
+          - project: e2e-mobile-android   # Pixel 5 (Android)
+            browser: chromium
+          - project: e2e-mobile-samsung   # Samsung Galaxy A (360px)
+            browser: chromium
+          - project: e2e-mobile-ios       # iPhone 12 (WebKit)
+            browser: webkit
+          - project: e2e-tablet-ipad      # iPad gen 7 (WebKit)
+            browser: webkit
 
     steps:
       - name: Checkout repository
@@ -37,8 +47,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install ${{ matrix.browser }} --with-deps
+
+      - name: Install Playwright browser system deps (from cache)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps ${{ matrix.browser }}
 
       - name: Create .env.test from secrets
         run: |
@@ -107,8 +129,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright browsers (Chromium only)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --with-deps
+
+      - name: Install Playwright browser system deps (from cache)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Create .env.test from secrets
         run: |
