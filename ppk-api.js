@@ -3543,6 +3543,17 @@ async function _routeAction(action, data) {
                 arExistRes = arResRows && arResRows[0] ? arResRows[0] : null;
             }
 
+            // ตรวจชื่อ: ถ้า resident ที่พบไม่ตรงกับผู้ขอ (เช่น admin สร้างแทน) → ให้สร้าง record ใหม่
+            if (arExistRes) {
+                var _arExpFirst = (arDetails.firstname || '').trim().toLowerCase();
+                var _arExpLast  = (arDetails.lastname  || '').trim().toLowerCase();
+                var _arGotFirst = (arExistRes.firstname || '').trim().toLowerCase();
+                var _arGotLast  = (arExistRes.lastname  || '').trim().toLowerCase();
+                if (_arExpFirst && _arExpLast && (_arExpFirst !== _arGotFirst || _arExpLast !== _arGotLast)) {
+                    arExistRes = null; // ชื่อไม่ตรง → ไม่ใช่ผู้ขอจริง → สร้างใหม่
+                }
+            }
+
             var arResidentId = null;
             if (arExistRes) {
                 // กรณี B: มี resident อยู่แล้ว → cleanup บ้านเก่าก่อน แล้วอัปเดต house assignment
