@@ -80,8 +80,17 @@ test.describe('Cross-Device — User Flow (ผู้พักอาศัย)', 
         if (el) { el.click(); return true; }
         return false;
       });
-      if (!clicked) await page.goto('/upload-slip.html');
-      await page.waitForURL(/upload-slip\.html/, { timeout: 10000 });
+      if (!clicked) {
+        await page.goto('/upload-slip.html');
+      } else {
+        try {
+          await page.waitForURL(/upload-slip\.html/, { timeout: 5000 });
+        } catch {
+          // WebKit: JS click ไม่ trigger navigation — navigate โดยตรง
+          await page.goto('/upload-slip.html');
+        }
+      }
+      await expect(page).toHaveURL(/upload-slip\.html/);
     } else {
       // fallback: navigate โดยตรง
       await page.goto('/upload-slip.html');

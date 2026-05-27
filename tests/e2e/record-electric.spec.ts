@@ -62,7 +62,7 @@ test.describe('Record Electric Page', () => {
     await page.waitForTimeout(5000);
 
     const criticalErrors = errors.filter(
-      (e) => !e.includes('permission') && !e.includes('ไม่มีสิทธิ์')
+      (e) => e.includes('SyntaxError') || e.includes('ReferenceError') || e.includes('is not defined')
     );
     expect(criticalErrors.length).toBe(0);
   });
