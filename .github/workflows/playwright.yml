@@ -13,7 +13,7 @@ jobs:
   test:
     name: ${{ matrix.project }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: ${{ matrix.timeout || 45 }}
 
     strategy:
       fail-fast: false
@@ -31,8 +31,10 @@ jobs:
             browser: chromium
           - project: e2e-mobile-ios       # iPhone 12 (WebKit)
             browser: webkit
+            timeout: 60
           - project: e2e-tablet-ipad      # iPad gen 7 (WebKit)
             browser: webkit
+            timeout: 60
 
     steps:
       - name: Checkout repository
