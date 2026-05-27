@@ -1576,12 +1576,12 @@ async function _routeAction(action, data) {
             });
             (rows || []).forEach(function(s) {
                 var hn = s.house_number || '';
-                // 1. ใช้ submitted_by_user_id → ค้นชื่อจาก residents.user_id (แม่นยำที่สุด)
-                var slipName = (s.submitted_by_user_id && userIdNameMap[s.submitted_by_user_id])
-                    ? userIdNameMap[s.submitted_by_user_id] : '';
-                // 2. fallback: ใช้ resident_id ที่บันทึกในสลิป
-                if (!slipName && s.resident_id && resIdMap[s.resident_id]) {
-                    slipName = resIdMap[s.resident_id];
+                // 1. ใช้ resident_id ที่บันทึกในสลิป (แม่นยำที่สุด — ไม่ขึ้นกับว่าใครกด submit)
+                var slipName = (s.resident_id && resIdMap[s.resident_id])
+                    ? resIdMap[s.resident_id] : '';
+                // 2. fallback: ใช้ submitted_by_user_id (กรณีสลิปเก่าไม่มี resident_id)
+                if (!slipName && s.submitted_by_user_id && userIdNameMap[s.submitted_by_user_id]) {
+                    slipName = userIdNameMap[s.submitted_by_user_id];
                 }
                 // 3. fallback สุดท้าย: ดูจาก house_number (สลิปเก่าที่ไม่มี user_id)
                 if (!slipName) {
@@ -3544,6 +3544,7 @@ async function _routeAction(action, data) {
             }
 
             // ตรวจชื่อ: ถ้า resident ที่พบไม่ตรงกับผู้ขอ (เช่น admin สร้างแทน) → ให้สร้าง record ใหม่
+            var _arNameMismatch = false;
             if (arExistRes) {
                 var _arExpFirst = (arDetails.firstname || '').trim().toLowerCase();
                 var _arExpLast  = (arDetails.lastname  || '').trim().toLowerCase();
@@ -3551,6 +3552,7 @@ async function _routeAction(action, data) {
                 var _arGotLast  = (arExistRes.lastname  || '').trim().toLowerCase();
                 if (_arExpFirst && _arExpLast && (_arExpFirst !== _arGotFirst || _arExpLast !== _arGotLast)) {
                     arExistRes = null; // ชื่อไม่ตรง → ไม่ใช่ผู้ขอจริง → สร้างใหม่
+                    _arNameMismatch = true;
                 }
             }
 
@@ -3580,8 +3582,19 @@ async function _routeAction(action, data) {
                 arResidentId = arExistRes.id;
             } else {
                 // กรณี A: สร้าง resident ใหม่จากข้อมูลในคำร้อง
+                // ถ้า user_id เป็นของ admin (name mismatch) → ค้น user_id จริงจาก email ในคำร้อง
+                var arNewResUserId = arUserId || null;
+                if (_arNameMismatch) {
+                    arNewResUserId = null;
+                    if (arDetails.email) {
+                        try {
+                            var _arApplicantU = await sbGet('users', { email: 'eq.' + arDetails.email, select: 'id', limit: '1' });
+                            if (_arApplicantU && _arApplicantU[0]) arNewResUserId = _arApplicantU[0].id;
+                        } catch(e) {}
+                    }
+                }
                 var arNewRes = await sbPost('residents', {
-                    user_id:       arUserId || null,
+                    user_id:       arNewResUserId,
                     house_id:      arHouseId,
                     house_number:  arHouseNum,
                     prefix:        arDetails.prefix || '',
