@@ -1528,22 +1528,26 @@ async function _routeAction(action, data) {
                 sbGet('slip_submissions', q).catch(function() { return []; }),
                 sbGet('residents', { is_active: 'eq.true', select: 'id,house_number,prefix,firstname,lastname,email,resident_type,user_id,start_date,move_in_date' }).catch(function() { return []; }),
                 sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; }),
-                sbGet('residents', { is_active: 'eq.false', select: 'id,house_number,prefix,firstname,lastname,end_date', order: 'end_date.desc' }).catch(function() { return []; })
+                sbGet('residents', { is_active: 'eq.false', select: 'id,house_number,prefix,firstname,lastname,end_date,user_id', order: 'end_date.desc' }).catch(function() { return []; })
             ]);
             var resMap = {};
             var resEmailMap2 = {};
             var resUserEmail2 = {};
             var resStartMap2 = {};
-            // resIdMap: lookup ชื่อผู้พักจาก resident_id โดยตรง (ทั้ง active + inactive)
+            // resIdMap: lookup ชื่อจาก resident.id (ทั้ง active + inactive)
             var resIdMap = {};
+            // userIdNameMap: lookup ชื่อจาก user_id ของผู้พัก (ทั้ง active + inactive)
+            var userIdNameMap = {};
             (resRows || []).forEach(function(r) {
-                resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                var fullName = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                resMap[r.house_number] = fullName;
                 if (!resEmailMap2[r.house_number] && r.email && r.resident_type !== 'cohabitant') {
                     resEmailMap2[r.house_number] = r.email;
                 }
                 if (r.user_id && r.email) resUserEmail2[r.user_id] = r.email;
                 if (r.house_number) resStartMap2[r.house_number] = r.start_date || r.move_in_date || '';
-                if (r.id) resIdMap[r.id] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
+                if (r.id) resIdMap[r.id] = fullName;
+                if (r.user_id) userIdNameMap[r.user_id] = fullName;
             });
             // สร้าง map ผู้พักเก่า (inactive)
             var oldResMap2 = {};
@@ -1554,6 +1558,7 @@ async function _routeAction(action, data) {
                     oldResMap2[r.house_number] = { name: oName, end_date: r.end_date || '' };
                 }
                 if (r.id) resIdMap[r.id] = oName;
+                if (r.user_id && !userIdNameMap[r.user_id]) userIdNameMap[r.user_id] = oName;
             });
             var proxyEmailMap2 = {};
             // ดึง email จาก users table สำหรับ proxy ที่ residents อาจไม่มี email
@@ -1571,12 +1576,17 @@ async function _routeAction(action, data) {
             });
             (rows || []).forEach(function(s) {
                 var hn = s.house_number || '';
-                // ใช้ resident_id ที่บันทึกไว้ในสลิปก่อน (แม่นยำที่สุด)
-                var slipName = (s.resident_id && resIdMap[s.resident_id]) ? resIdMap[s.resident_id] : '';
-                // fallback: ดูจาก house_number (กรณีสลิปเก่าที่ไม่มี resident_id)
+                // 1. ใช้ submitted_by_user_id → ค้นชื่อจาก residents.user_id (แม่นยำที่สุด)
+                var slipName = (s.submitted_by_user_id && userIdNameMap[s.submitted_by_user_id])
+                    ? userIdNameMap[s.submitted_by_user_id] : '';
+                // 2. fallback: ใช้ resident_id ที่บันทึกในสลิป
+                if (!slipName && s.resident_id && resIdMap[s.resident_id]) {
+                    slipName = resIdMap[s.resident_id];
+                }
+                // 3. fallback สุดท้าย: ดูจาก house_number (สลิปเก่าที่ไม่มี user_id)
                 if (!slipName) {
                     slipName = resMap[hn] || '';
-                    // ตรวจว่าผู้พักปัจจุบันเข้ามาหลังช่วงบิลนี้หรือไม่
+                    // ถ้าผู้พักปัจจุบันเพิ่งเข้ามาหลังช่วงบิลนี้ → ใช้ชื่อผู้พักเก่า
                     if (slipName && s.period && resStartMap2[hn]) {
                         var _sParts = (s.period || '').split('-');
                         var _sAdY = parseInt(_sParts[0]) || 2026;
