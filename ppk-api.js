@@ -1526,14 +1526,16 @@ async function _routeAction(action, data) {
             if (data.houseNumber) q.house_number = 'eq.' + data.houseNumber;
             var [rows, resRows, proxyRows2, inactiveRes2] = await Promise.all([
                 sbGet('slip_submissions', q).catch(function() { return []; }),
-                sbGet('residents', { is_active: 'eq.true', select: 'house_number,prefix,firstname,lastname,email,resident_type,user_id,start_date,move_in_date' }).catch(function() { return []; }),
+                sbGet('residents', { is_active: 'eq.true', select: 'id,house_number,prefix,firstname,lastname,email,resident_type,user_id,start_date,move_in_date' }).catch(function() { return []; }),
                 sbGet('payment_proxies', { is_active: 'eq.true', select: 'house_number,proxy_user_id' }).catch(function() { return []; }),
-                sbGet('residents', { is_active: 'eq.false', select: 'house_number,prefix,firstname,lastname,end_date', order: 'end_date.desc' }).catch(function() { return []; })
+                sbGet('residents', { is_active: 'eq.false', select: 'id,house_number,prefix,firstname,lastname,end_date', order: 'end_date.desc' }).catch(function() { return []; })
             ]);
             var resMap = {};
             var resEmailMap2 = {};
             var resUserEmail2 = {};
             var resStartMap2 = {};
+            // resIdMap: lookup ชื่อผู้พักจาก resident_id โดยตรง (ทั้ง active + inactive)
+            var resIdMap = {};
             (resRows || []).forEach(function(r) {
                 resMap[r.house_number] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
                 if (!resEmailMap2[r.house_number] && r.email && r.resident_type !== 'cohabitant') {
@@ -1541,6 +1543,7 @@ async function _routeAction(action, data) {
                 }
                 if (r.user_id && r.email) resUserEmail2[r.user_id] = r.email;
                 if (r.house_number) resStartMap2[r.house_number] = r.start_date || r.move_in_date || '';
+                if (r.id) resIdMap[r.id] = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
             });
             // สร้าง map ผู้พักเก่า (inactive)
             var oldResMap2 = {};
@@ -1550,6 +1553,7 @@ async function _routeAction(action, data) {
                 if (!oldResMap2[r.house_number] || (r.end_date && (!oldResMap2[r.house_number].end_date || r.end_date > oldResMap2[r.house_number].end_date))) {
                     oldResMap2[r.house_number] = { name: oName, end_date: r.end_date || '' };
                 }
+                if (r.id) resIdMap[r.id] = oName;
             });
             var proxyEmailMap2 = {};
             // ดึง email จาก users table สำหรับ proxy ที่ residents อาจไม่มี email
@@ -1567,20 +1571,25 @@ async function _routeAction(action, data) {
             });
             (rows || []).forEach(function(s) {
                 var hn = s.house_number || '';
-                var slipName = resMap[hn] || '';
-                // ตรวจว่าผู้พักปัจจุบันอยู่ในช่วงบิลนี้หรือยัง
-                if (slipName && s.period && resStartMap2[hn]) {
-                    var _sParts = (s.period || '').split('-');
-                    var _sAdY = parseInt(_sParts[0]) || 2026;
-                    if (_sAdY > 2500) _sAdY -= 543;
-                    var _sMo = parseInt(_sParts[1]) || 1;
-                    var _slipPeriodYM = _sAdY + '-' + String(_sMo).padStart(2, '0');
-                    var _sStartYM = (resStartMap2[hn] || '').substring(0, 7);
-                    if (_sStartYM > _slipPeriodYM && oldResMap2[hn]) {
-                        slipName = oldResMap2[hn].name;
+                // ใช้ resident_id ที่บันทึกไว้ในสลิปก่อน (แม่นยำที่สุด)
+                var slipName = (s.resident_id && resIdMap[s.resident_id]) ? resIdMap[s.resident_id] : '';
+                // fallback: ดูจาก house_number (กรณีสลิปเก่าที่ไม่มี resident_id)
+                if (!slipName) {
+                    slipName = resMap[hn] || '';
+                    // ตรวจว่าผู้พักปัจจุบันเข้ามาหลังช่วงบิลนี้หรือไม่
+                    if (slipName && s.period && resStartMap2[hn]) {
+                        var _sParts = (s.period || '').split('-');
+                        var _sAdY = parseInt(_sParts[0]) || 2026;
+                        if (_sAdY > 2500) _sAdY -= 543;
+                        var _sMo = parseInt(_sParts[1]) || 1;
+                        var _slipPeriodYM = _sAdY + '-' + String(_sMo).padStart(2, '0');
+                        var _sStartYM = (resStartMap2[hn] || '').substring(0, 7);
+                        if (_sStartYM > _slipPeriodYM && oldResMap2[hn]) {
+                            slipName = oldResMap2[hn].name;
+                        }
                     }
+                    if (!slipName && oldResMap2[hn]) slipName = oldResMap2[hn].name;
                 }
-                if (!slipName && oldResMap2[hn]) slipName = oldResMap2[hn].name;
                 s.resident_name = slipName;
                 s.email = resEmailMap2[hn] || '';
                 s.proxy_email = proxyEmailMap2[hn] || '';
