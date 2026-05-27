@@ -206,6 +206,8 @@ test.describe('Cross-Device — Admin Flow', () => {
 // ─── Mobile Navigation Flow ───────────────────────────────────────────────────
 
 test.describe('Cross-Device — Mobile Navigation (hamburger)', () => {
+  // Firefox ไม่รองรับ isMobile option → skip ทั้ง group
+  test.skip(({ browserName }) => browserName === 'firefox', 'isMobile is not supported in Firefox');
   // บังคับ mobile viewport สำหรับ test group นี้
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true });
 
