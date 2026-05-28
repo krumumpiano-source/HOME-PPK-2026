@@ -1,0 +1,339 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>สัญญาเช่าบ้านพัก | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
+    <style>
+        :root {
+            --bg:#f8fafc; --surface:#ffffff; --border:#e5e7eb;
+            --text:#0f172a; --muted:#64748b; --primary:#2563eb;
+            --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+        }
+        body { background:var(--bg); color:var(--text); font-family:'Kanit',sans-serif; margin:0; }
+        .page-container { max-width:960px; margin:0 auto; padding:1rem; }
+        .page-header { margin-bottom:1.5rem; }
+        .page-header h2 { font-size:1.5rem; font-weight:700; margin:0 0 0.25rem; }
+        .page-header p  { color:var(--muted); margin:0; font-size:0.9rem; }
+        .tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:2px solid var(--border); padding-bottom:0.5rem; flex-wrap:wrap; }
+        .tab-btn { background:none; border:none; padding:0.5rem 1.25rem; font-size:0.95rem; font-family:'Kanit',sans-serif; cursor:pointer; border-radius:8px 8px 0 0; color:var(--muted); }
+        .tab-btn.active { background:var(--primary); color:#fff; font-weight:600; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:0.75rem; }
+        .form-group { margin-bottom:1rem; }
+        .form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem; }
+        .form-group select, .form-group input, .form-group textarea {
+            width:100%; padding:0.5rem 0.75rem; border:1.5px solid var(--border);
+            border-radius:8px; font-family:'Kanit',sans-serif; font-size:0.9rem; box-sizing:border-box;
+        }
+        .status-badge { display:inline-block; padding:0.15rem 0.6rem; border-radius:99px; font-size:0.78rem; font-weight:700; }
+        .badge-draft        { background:#f1f5f9; color:#475569; }
+        .badge-pending_sign { background:#fef9c3; color:#854d0e; }
+        .badge-signed       { background:#dcfce7; color:#166534; }
+        .badge-archived     { background:#f1f5f9; color:#64748b; }
+        .btn { padding:0.5rem 1.25rem; border:none; border-radius:8px; cursor:pointer; font-family:'Kanit',sans-serif; font-size:0.9rem; font-weight:600; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-primary:disabled { background:#93c5fd; cursor:not-allowed; }
+        .btn-sm { padding:0.25rem 0.75rem; font-size:0.82rem; }
+        .btn-outline { background:#fff; border:1.5px solid var(--border); color:var(--text); }
+        .btn-success { background:var(--success); color:#fff; }
+        .empty-state { text-align:center; color:var(--muted); padding:3rem 1rem; }
+        canvas { border:2px solid var(--border); border-radius:8px; display:block; touch-action:none; cursor:crosshair; }
+        .sign-area { background:#fafafa; border:1.5px dashed var(--border); border-radius:10px; padding:1rem; text-align:center; }
+    </style>
+</head>
+<body>
+<div id="ppkNav"></div>
+<div class="page-container">
+    <button class="btn btn-outline btn-sm" onclick="history.back()" style="margin-bottom:1rem;">← กลับ</button>
+    <div class="page-header">
+        <h2>📄 สัญญาเช่าบ้านพักครู</h2>
+        <p>จัดการสัญญาเช่าบ้านพักครู (MOU)</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('pending', this)">⏳ รอเซ็นสัญญา</button>
+        <button class="tab-btn" onclick="switchTab('all', this)">📋 ทั้งหมด</button>
+        <button class="tab-btn" onclick="switchTab('mine', this)">👤 ของฉัน</button>
+        <button class="tab-btn" onclick="switchTab('upload', this)">📤 อัพโหลดเอกสารเก่า</button>
+    </div>
+
+    <!-- Tab: รอเซ็น -->
+    <div id="tab-pending" class="tab-panel active">
+        <div id="pendingList"><div class="empty-state">⏳ กำลังโหลด...</div></div>
+    </div>
+
+    <!-- Tab: ทั้งหมด (admin) -->
+    <div id="tab-all" class="tab-panel">
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+            <input type="search" id="mouSearch" placeholder="🔍 ค้นหา..." oninput="renderAllMous()" style="flex:1;min-width:180px;padding:0.4rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
+            <select id="mouStatusFilter" onchange="renderAllMous()" style="padding:0.4rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
+                <option value="">ทุกสถานะ</option>
+                <option value="draft">ร่าง</option>
+                <option value="pending_sign">รอเซ็น</option>
+                <option value="signed">เซ็นแล้ว</option>
+                <option value="archived">เก็บแล้ว</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadAllMous()">🔄 โหลดใหม่</button>
+        </div>
+        <div id="allMouList"><div class="empty-state">⏳ กำลังโหลด...</div></div>
+    </div>
+
+    <!-- Tab: ของฉัน -->
+    <div id="tab-mine" class="tab-panel">
+        <div id="myMouList"><div class="empty-state">⏳ กำลังโหลด...</div></div>
+    </div>
+
+    <!-- Tab: อัพโหลดเอกสารเก่า -->
+    <div id="tab-upload" class="tab-panel">
+        <div class="card">
+            <h3 style="margin:0 0 1rem;font-size:1rem;">📤 อัพโหลดสัญญาเช่าที่เซ็นแล้ว (เอกสารกระดาษเก่า)</h3>
+            <div class="form-group">
+                <label for="uploadMouId">เลือกสัญญา MOU</label>
+                <select id="uploadMouId">
+                    <option value="">-- เลือกสัญญา --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="uploadScanFile">ไฟล์สแกนเอกสาร (PDF หรือรูปภาพ)</label>
+                <input type="file" id="uploadScanFile" accept=".pdf,image/*">
+            </div>
+            <button class="btn btn-primary" onclick="uploadScanDoc()" id="uploadScanBtn">📤 อัพโหลด</button>
+        </div>
+    </div>
+</div>
+
+<!-- Signature Modal -->
+<div id="signModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;overflow-y:auto;padding:1rem;">
+    <div style="background:#fff;border-radius:14px;max-width:520px;margin:2rem auto;padding:1.5rem;position:relative;">
+        <button onclick="document.getElementById('signModal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.4rem;cursor:pointer;">✕</button>
+        <h3 style="margin:0 0 1rem;font-size:1.05rem;">✍️ ลงลายเซ็น</h3>
+        <p id="signModalDesc" style="color:#6b7280;font-size:0.85rem;margin:0 0 1rem;"></p>
+        <div class="sign-area">
+            <canvas id="signCanvas" width="460" height="180"></canvas>
+            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;justify-content:center;">
+                <button class="btn btn-outline btn-sm" onclick="clearSignature()">🗑️ ล้าง</button>
+            </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1rem;">
+            <button class="btn btn-outline" onclick="document.getElementById('signModal').style.display='none'">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="submitSignature()" id="submitSignBtn">💾 บันทึกลายเซ็น</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var _allMous = [];
+var _myMous  = [];
+var _currentSignMouId = null;
+var _currentSignRole  = null;
+var _signCanvas = null;
+var _signCtx    = null;
+var _signing    = false;
+
+window.onload = async function() {
+    var user = await checkSession(true);
+    window._currentUser = user;
+    if (!user) { window.location.replace('login.html'); return; }
+    initSidebar();
+    _initSignCanvas();
+    await loadPendingMous();
+    if (user.role === 'admin' || user.role === 'head') {
+        loadAllMous();
+    }
+    loadMyMous();
+};
+
+function _initSignCanvas() {
+    _signCanvas = document.getElementById('signCanvas');
+    _signCtx    = _signCanvas.getContext('2d');
+    _signCtx.strokeStyle = '#1e293b';
+    _signCtx.lineWidth = 2.5;
+    _signCtx.lineCap = 'round';
+    function _getPos(e) {
+        var r = _signCanvas.getBoundingClientRect();
+        var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - r.left, y: clientY - r.top };
+    }
+    _signCanvas.addEventListener('mousedown', function(e) { _signing = true; var p = _getPos(e); _signCtx.beginPath(); _signCtx.moveTo(p.x, p.y); });
+    _signCanvas.addEventListener('mousemove', function(e) { if (!_signing) return; var p = _getPos(e); _signCtx.lineTo(p.x, p.y); _signCtx.stroke(); });
+    _signCanvas.addEventListener('mouseup',   function() { _signing = false; });
+    _signCanvas.addEventListener('touchstart', function(e) { e.preventDefault(); _signing = true; var p = _getPos(e); _signCtx.beginPath(); _signCtx.moveTo(p.x, p.y); }, { passive: false });
+    _signCanvas.addEventListener('touchmove',  function(e) { e.preventDefault(); if (!_signing) return; var p = _getPos(e); _signCtx.lineTo(p.x, p.y); _signCtx.stroke(); }, { passive: false });
+    _signCanvas.addEventListener('touchend',   function() { _signing = false; });
+}
+
+function clearSignature() { _signCtx.clearRect(0, 0, _signCanvas.width, _signCanvas.height); }
+
+async function loadPendingMous() {
+    var r = await callBackend('getAllMous', { status: 'pending_sign' });
+    var list = (r && r.mous) || [];
+    var el = document.getElementById('pendingList');
+    if (!list.length) { el.innerHTML = '<div class="empty-state">ไม่มีสัญญาที่รอเซ็น</div>'; return; }
+    el.innerHTML = list.map(function(m) { return renderMouCard(m, true); }).join('');
+    // populate upload select
+    var sel = document.getElementById('uploadMouId');
+    sel.innerHTML = '<option value="">-- เลือกสัญญา --</option>';
+    list.forEach(function(m) {
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.id + ' — ' + (m.status || '');
+        sel.appendChild(opt);
+    });
+}
+
+async function loadAllMous() {
+    var r = await callBackend('getAllMous', {});
+    _allMous = (r && r.mous) || [];
+    renderAllMous();
+    // also update upload select
+    var sel = document.getElementById('uploadMouId');
+    sel.innerHTML = '<option value="">-- เลือกสัญญา --</option>';
+    _allMous.forEach(function(m) {
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.id + ' (' + (statusLabel(m.status)) + ')';
+        sel.appendChild(opt);
+    });
+}
+
+async function loadMyMous() {
+    if (!window._currentUser) return;
+    var r = await callBackend('getMousByResident', { residentId: window._currentUser.id });
+    _myMous = (r && r.mous) || [];
+    renderMyMous();
+}
+
+function renderAllMous() {
+    var q  = (document.getElementById('mouSearch').value || '').toLowerCase();
+    var st = document.getElementById('mouStatusFilter').value;
+    var list = _allMous.filter(function(m) {
+        if (st && m.status !== st) return false;
+        if (q && m.id.toLowerCase().indexOf(q) < 0 && (m.resident_id || '').toLowerCase().indexOf(q) < 0) return false;
+        return true;
+    });
+    var el = document.getElementById('allMouList');
+    if (!list.length) { el.innerHTML = '<div class="empty-state">ไม่พบรายการ</div>'; return; }
+    el.innerHTML = list.map(function(m) { return renderMouCard(m, false); }).join('');
+}
+
+function renderMyMous() {
+    var el = document.getElementById('myMouList');
+    if (!_myMous.length) { el.innerHTML = '<div class="empty-state">คุณยังไม่มีสัญญา</div>'; return; }
+    el.innerHTML = _myMous.map(function(m) { return renderMouCard(m, m.status === 'pending_sign'); }).join('');
+}
+
+function statusLabel(s) { return { draft:'ร่าง', pending_sign:'รอเซ็น', signed:'เซ็นแล้ว', archived:'เก็บแล้ว' }[s] || s; }
+
+function renderMouCard(m, showSign) {
+    var stClass = 'badge-' + (m.status || 'draft');
+    var stLabel = statusLabel(m.status);
+    var resSign = m.sign_resident_url ? '✅' : '⬜';
+    var admSign = m.sign_admin_url    ? '✅' : '⬜';
+    var heaSign = m.sign_head_url     ? '✅' : '⬜';
+    var html = '<div class="card">' +
+        '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">' +
+        '<span class="status-badge ' + stClass + '">' + stLabel + '</span>' +
+        '<code style="font-size:0.8rem;">' + _e(m.id) + '</code></div>' +
+        '<div style="color:#6b7280;font-size:0.82rem;margin-top:0.35rem;">' +
+        'ผู้เช่า: ' + _e(m.resident_id) + ' &nbsp;|&nbsp; ' +
+        'บ้าน: ' + _e(m.house_id || '-') + ' &nbsp;|&nbsp; ' +
+        '📅 ' + formatDate(m.created_at) + '</div>' +
+        '<div style="margin-top:0.5rem;font-size:0.85rem;">ลายเซ็น: ผู้เช่า ' + resSign + ' แอดมิน ' + admSign + ' หัวหน้า ' + heaSign + '</div>';
+    if (showSign) {
+        html += '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">';
+        if (!m.sign_resident_url) html += '<button class="btn btn-primary btn-sm" onclick="openSignModal(\'' + m.id + '\',\'resident\',\'ลายเซ็นผู้เช่า\')">✍️ เซ็น (ผู้เช่า)</button>';
+        if (!m.sign_admin_url)    html += '<button class="btn btn-outline btn-sm" onclick="openSignModal(\'' + m.id + '\',\'admin\',\'ลายเซ็นแอดมิน\')">✍️ เซ็น (แอดมิน)</button>';
+        if (!m.sign_head_url)     html += '<button class="btn btn-outline btn-sm" onclick="openSignModal(\'' + m.id + '\',\'head\',\'ลายเซ็นหัวหน้า\')">✍️ เซ็น (หัวหน้า)</button>';
+        html += '</div>';
+    }
+    if (m.scanned_url) html += '<div style="margin-top:0.5rem;"><a href="' + _e(m.scanned_url) + '" target="_blank" class="btn btn-outline btn-sm">📄 ดูเอกสารสแกน</a></div>';
+    html += '</div>';
+    return html;
+}
+
+function openSignModal(mouId, role, desc) {
+    _currentSignMouId = mouId;
+    _currentSignRole  = role;
+    document.getElementById('signModalDesc').textContent = desc + ' — ' + mouId;
+    clearSignature();
+    document.getElementById('signModal').style.display = 'block';
+}
+
+async function submitSignature() {
+    var imageData = _signCanvas.toDataURL('image/png');
+    // Check canvas is not blank
+    var blank = document.createElement('canvas');
+    blank.width = _signCanvas.width; blank.height = _signCanvas.height;
+    if (imageData === blank.toDataURL()) { ppkToast('กรุณาลงลายเซ็นก่อน', 'warning'); return; }
+    var btn = document.getElementById('submitSignBtn');
+    btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+    var r = await callBackend('uploadMouSignature', { mouId: _currentSignMouId, role: _currentSignRole, signatureDataUrl: imageData });
+    btn.disabled = false; btn.textContent = '💾 บันทึกลายเซ็น';
+    if (r && r.success) {
+        ppkToast('บันทึกลายเซ็นเรียบร้อย', 'success');
+        document.getElementById('signModal').style.display = 'none';
+        loadPendingMous(); loadAllMous(); loadMyMous();
+    } else {
+        ppkToast('เกิดข้อผิดพลาด: ' + ((r && r.error) || ''), 'error');
+    }
+}
+
+async function uploadScanDoc() {
+    var mouId = document.getElementById('uploadMouId').value;
+    var file  = document.getElementById('uploadScanFile').files[0];
+    if (!mouId) { ppkToast('กรุณาเลือกสัญญา', 'warning'); return; }
+    if (!file)  { ppkToast('กรุณาเลือกไฟล์', 'warning'); return; }
+    var btn = document.getElementById('uploadScanBtn');
+    btn.disabled = true; btn.textContent = '⏳ กำลังอัพโหลด...';
+    var r = await callBackend('uploadMouScan', { mouId: mouId, file: file });
+    btn.disabled = false; btn.textContent = '📤 อัพโหลด';
+    if (r && r.success) {
+        ppkToast('อัพโหลดเอกสารเรียบร้อย', 'success');
+        document.getElementById('uploadScanFile').value = '';
+        loadPendingMous(); loadAllMous();
+    } else {
+        ppkToast('เกิดข้อผิดพลาด: ' + ((r && r.error) || ''), 'error');
+    }
+}
+
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (name === 'all')    loadAllMous();
+    if (name === 'mine')   loadMyMous();
+    if (name === 'pending') loadPendingMous();
+}
+
+function _e(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDate(d) {
+    if (!d) return '-';
+    try { return new Date(d).toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'numeric' }); }
+    catch(e) { return d; }
+}
+</script>
+    <script src="supabase/config.js?v=20260416C"></script>
+    <script src="supabase/supabase.min.js?v=20260416C"></script>
+    <script src="ppk-api.js?v=20260528A"></script>
+    <script src="ppk-app.js?v=20260416C"></script>
+    <script src="ppk-utils.js?v=20260416C"></script>
+    <script src="ppk-nav.js?v=20260416C"></script>
+    <script src="ppk-pwa.js?v=20260416C"></script>
+</body>
+</html>

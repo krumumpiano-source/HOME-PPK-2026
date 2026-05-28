@@ -1,6 +1,6 @@
-// ============================================================
+﻿// ============================================================
 //  Supabase Edge Function: cleanup-old-meter-photos
-//  ลบรูปมิเตอร์น้ำที่อายุเกิน 1 ปีออกจาก Storage
+//  ลบรูปมิเตอร์น้ำที่อายุเกิน 5 ปีออกจาก Storage
 //  (แต่คงไว้ DB record + ค่า OCR ตลอดกาล)
 //
 //  Deploy: supabase functions deploy cleanup-old-meter-photos
@@ -25,9 +25,9 @@ serve(async (req: Request) => {
     const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const sb = createClient(supabaseUrl, serviceKey);
 
-    // หา record ที่ meter_photo_url ไม่ว่าง และ created_at > 1 ปีที่แล้ว และยังไม่ได้ลบรูป
+    // หา record ที่ meter_photo_url ไม่ว่าง และ created_at > 5 ปีที่แล้ว และยังไม่ได้ลบรูป
     const cutoffDate = new Date();
-    cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+    cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
 
     const { data: bills, error } = await sb
       .from('water_bills')

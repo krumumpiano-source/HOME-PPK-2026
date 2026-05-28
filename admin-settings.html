@@ -1131,6 +1131,19 @@
                     <div class="btn-group">
                         <button class="btn btn-success" onclick="saveSystemSettings()">💾 บันทึกการตั้งค่าระบบ</button>
                     </div>
+
+                    <!-- MOU Template -->
+                    <div class="settings-card" style="margin-top:1.5rem;">
+                        <div class="settings-card-header">
+                            <span class="settings-card-title">📜 แม่แบบสัญญาเช่า (MOU Template)</span>
+                        </div>
+                        <div class="section-desc" style="margin-bottom:0.75rem;">กำหนดข้อความแม่แบบสัญญาเช่าบ้านพักครู ใช้ตัวแปร <code>{{resident_name}}</code>, <code>{{position}}</code>, <code>{{house_number}}</code>, <code>{{start_date}}</code></div>
+                        <div class="form-group">
+                            <label for="mouTemplate">เนื้อหาสัญญาเช่า</label>
+                            <textarea id="mouTemplate" rows="8" placeholder="พิมพ์ข้อความสัญญาเช่า..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveMouTemplate()">💾 บันทึก MOU Template</button>
+                    </div>
                 </div>
             </div>
 
@@ -4023,9 +4036,22 @@
             document.getElementById('receiptIncludeCommon').checked = settings.receiptIncludeCommon !== false;
             document.getElementById('receiptIncludePaid').checked = settings.receiptIncludePaid !== false;
             document.getElementById('receiptIncludeDate').checked = settings.receiptIncludeDate !== false;
+            // MOU template
+            callBackend('getSettings', {}).then(function(r) {
+                var tpl = r && r.mou_template;
+                if (tpl) document.getElementById('mouTemplate').value = tpl;
+            }).catch(function(){});
         }
 
         // ========== Backup/Restore Functions ==========
+
+        async function saveMouTemplate() {
+            var val = document.getElementById('mouTemplate').value.trim();
+            if (!val) { ppkToast('กรุณาระบุเนื้อหาสัญญา', 'warning'); return; }
+            var r = await callBackend('saveSettings', { mou_template: val });
+            if (r && r.success) ppkToast('บันทึก MOU Template เรียบร้อย', 'success');
+            else ppkToast('บันทึกไม่สำเร็จ: ' + ((r && r.error) || ''), 'error');
+        }
 
         // ========== Auto-Backup Cloud UI ==========
         async function loadBackups() {

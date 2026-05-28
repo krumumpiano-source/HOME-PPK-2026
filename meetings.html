@@ -1,0 +1,397 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>บันทึกการประชุม | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
+    <style>
+        :root {
+            --bg:#f8fafc; --surface:#ffffff; --border:#e5e7eb;
+            --text:#0f172a; --muted:#64748b; --primary:#2563eb;
+            --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+        }
+        body { background:var(--bg); color:var(--text); font-family:'Kanit',sans-serif; margin:0; }
+        .page-container { max-width:960px; margin:0 auto; padding:1rem; }
+        .page-header { margin-bottom:1.5rem; }
+        .page-header h2 { font-size:1.5rem; font-weight:700; margin:0 0 0.25rem; }
+        .page-header p  { color:var(--muted); margin:0; font-size:0.9rem; }
+        .tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:2px solid var(--border); padding-bottom:0.5rem; flex-wrap:wrap; }
+        .tab-btn { background:none; border:none; padding:0.5rem 1.25rem; font-size:0.95rem; font-family:'Kanit',sans-serif; cursor:pointer; border-radius:8px 8px 0 0; color:var(--muted); }
+        .tab-btn.active { background:var(--primary); color:#fff; font-weight:600; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+        .form-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; }
+        .form-group { margin-bottom:1rem; }
+        .form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem; }
+        .form-group select, .form-group input, .form-group textarea {
+            width:100%; padding:0.5rem 0.75rem; border:1.5px solid var(--border);
+            border-radius:8px; font-family:'Kanit',sans-serif; font-size:0.9rem; box-sizing:border-box;
+        }
+        .form-group textarea { min-height:90px; resize:vertical; }
+        .btn { padding:0.5rem 1.25rem; border:none; border-radius:8px; cursor:pointer; font-family:'Kanit',sans-serif; font-size:0.9rem; font-weight:600; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-primary:disabled { background:#93c5fd; cursor:not-allowed; }
+        .btn-sm { padding:0.25rem 0.75rem; font-size:0.82rem; }
+        .btn-outline { background:#fff; border:1.5px solid var(--border); color:var(--text); }
+        .btn-success { background:var(--success); color:#fff; }
+        .meeting-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:0.75rem; }
+        .status-badge { display:inline-block; padding:0.15rem 0.6rem; border-radius:99px; font-size:0.78rem; font-weight:700; }
+        .badge-draft     { background:#f1f5f9; color:#475569; }
+        .badge-approved  { background:#dcfce7; color:#166534; }
+        .badge-published { background:#dbeafe; color:#1e40af; }
+        .empty-state { text-align:center; color:var(--muted); padding:3rem 1rem; }
+        .resolution-row { display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem; }
+        .resolution-row input { flex:1; padding:0.4rem 0.6rem; border:1.5px solid var(--border); border-radius:6px; font-family:inherit; }
+        @media(max-width:600px){ .form-grid { grid-template-columns:1fr !important; } }
+    </style>
+</head>
+<body>
+<div id="ppkNav"></div>
+<div class="page-container">
+    <button class="btn btn-outline btn-sm" onclick="history.back()" style="margin-bottom:1rem;">← กลับ</button>
+    <div class="page-header">
+        <h2>📝 บันทึกการประชุม</h2>
+        <p>บันทึกมติและรายงานการประชุมคณะกรรมการบ้านพักครู</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('create', this)">✏️ บันทึกการประชุม</button>
+        <button class="tab-btn" onclick="switchTab('list', this)">📋 รายการประชุม</button>
+    </div>
+
+    <!-- Tab: บันทึก -->
+    <div id="tab-create" class="tab-panel active">
+        <div class="form-card">
+            <input type="hidden" id="editMeetingId">
+            <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label for="mtgTitle">ชื่อการประชุม <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="mtgTitle" placeholder="เช่น การประชุมคณะกรรมการบ้านพักครู ครั้งที่ 1/2569">
+                </div>
+                <div class="form-group">
+                    <label for="mtgDate">วันที่ประชุม <span style="color:#ef4444;">*</span></label>
+                    <input type="datetime-local" id="mtgDate">
+                </div>
+                <div class="form-group">
+                    <label for="mtgVenue">สถานที่ประชุม</label>
+                    <input type="text" id="mtgVenue" placeholder="เช่น ห้องประชุมโรงเรียนพะเยาพิทยาคม">
+                </div>
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label for="mtgAgenda">ระเบียบวาระการประชุม</label>
+                    <textarea id="mtgAgenda" placeholder="ระบุวาระการประชุม (ข้อ 1, ข้อ 2, ...)"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>รายชื่อผู้เข้าร่วมประชุม</label>
+                <div id="attendeeList" style="margin-bottom:0.5rem;"></div>
+                <div style="display:flex;gap:0.5rem;">
+                    <input type="text" id="attendeeName" placeholder="ชื่อ-นามสกุล" style="flex:2;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;">
+                    <input type="text" id="attendeeRole" placeholder="ตำแหน่ง/บทบาท" style="flex:1;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;">
+                    <button class="btn btn-outline btn-sm" onclick="addAttendee()">+ เพิ่ม</button>
+                </div>
+                <label style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:400;">
+                    <input type="checkbox" id="mtgQuorum"> ครบองค์ประชุม
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>มติที่ประชุม</label>
+                <div id="resolutionList" style="margin-bottom:0.5rem;"></div>
+                <button class="btn btn-outline btn-sm" onclick="addResolution()">+ เพิ่มมติ</button>
+            </div>
+
+            <div class="form-group">
+                <label for="mtgMinutes">บันทึกรายละเอียดการประชุม (รายงานการประชุม)</label>
+                <textarea id="mtgMinutes" rows="5" placeholder="บันทึกเนื้อหาการประชุม..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="mtgStatus">สถานะ</label>
+                <select id="mtgStatus">
+                    <option value="draft">ร่าง</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="published">เผยแพร่</option>
+                </select>
+            </div>
+
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="saveMeeting()" id="saveMtgBtn">💾 บันทึกการประชุม</button>
+                <button class="btn btn-outline" onclick="resetMeetingForm()">🗑️ ล้างแบบฟอร์ม</button>
+                <button class="btn btn-outline" onclick="printMeeting()">🖨️ พิมพ์รายงาน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: รายการ -->
+    <div id="tab-list" class="tab-panel">
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+            <input type="search" id="mtgSearch" placeholder="🔍 ค้นหาชื่อการประชุม..." oninput="renderMeetingList()" style="flex:1;min-width:180px;padding:0.4rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
+            <select id="mtgStatusFilter" onchange="renderMeetingList()" style="padding:0.4rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
+                <option value="">ทุกสถานะ</option>
+                <option value="draft">ร่าง</option>
+                <option value="approved">อนุมัติแล้ว</option>
+                <option value="published">เผยแพร่</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadMeetings()">🔄 โหลดใหม่</button>
+        </div>
+        <div id="meetingListContainer"><div class="empty-state">⏳ กำลังโหลด...</div></div>
+    </div>
+</div>
+
+<script>
+var _meetings = [];
+var _attendees = [];
+var _resolutions = [];
+
+window.onload = async function() {
+    var user = await checkSession(true);
+    if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+        if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+        window.location.replace('dashboard.html');
+        return;
+    }
+    window._currentUser = user;
+    initSidebar();
+    var now = new Date();
+    var local = new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('mtgDate').value = local;
+    loadMeetings();
+};
+
+function addAttendee() {
+    var name = document.getElementById('attendeeName').value.trim();
+    var role = document.getElementById('attendeeRole').value.trim();
+    if (!name) { ppkToast('กรุณาระบุชื่อ', 'warning'); return; }
+    _attendees.push({ name: name, role: role });
+    document.getElementById('attendeeName').value = '';
+    document.getElementById('attendeeRole').value = '';
+    renderAttendees();
+}
+
+function removeAttendee(i) { _attendees.splice(i, 1); renderAttendees(); }
+
+function renderAttendees() {
+    document.getElementById('attendeeList').innerHTML = _attendees.map(function(a, i) {
+        return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">' +
+            '<span style="flex:1;font-size:0.9rem;">' + _e(a.name) + (a.role ? ' <span style="color:#6b7280;">(' + _e(a.role) + ')</span>' : '') + '</span>' +
+            '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;padding:0.1rem 0.5rem;" onclick="removeAttendee(' + i + ')">✕</button></div>';
+    }).join('');
+}
+
+function addResolution() {
+    _resolutions.push({ text: '' });
+    renderResolutions();
+    var inputs = document.querySelectorAll('#resolutionList .res-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeResolution(i) { _resolutions.splice(i, 1); renderResolutions(); }
+
+function renderResolutions() {
+    document.getElementById('resolutionList').innerHTML = _resolutions.map(function(r, i) {
+        return '<div class="resolution-row">' +
+            '<span style="font-size:0.82rem;color:#6b7280;white-space:nowrap;">ข้อที่ ' + (i + 1) + '</span>' +
+            '<input class="res-input" type="text" value="' + _e(r.text) + '" placeholder="ระบุมติ..." oninput="_resolutions[' + i + '].text = this.value">' +
+            '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;padding:0.1rem 0.5rem;" onclick="removeResolution(' + i + ')">✕</button></div>';
+    }).join('');
+}
+
+async function saveMeeting() {
+    var title = document.getElementById('mtgTitle').value.trim();
+    var mtgDate = document.getElementById('mtgDate').value;
+    if (!title) { ppkToast('กรุณาระบุชื่อการประชุม', 'warning'); return; }
+    if (!mtgDate) { ppkToast('กรุณาระบุวันที่ประชุม', 'warning'); return; }
+    var btn = document.getElementById('saveMtgBtn');
+    btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+
+    var editId = document.getElementById('editMeetingId').value;
+    var payload = {
+        title:       title,
+        agenda:      document.getElementById('mtgAgenda').value.trim() || null,
+        venue:       document.getElementById('mtgVenue').value.trim() || null,
+        meetingDate: new Date(mtgDate).toISOString(),
+        attendees:   _attendees,
+        quorumMet:   document.getElementById('mtgQuorum').checked,
+        resolutions: _resolutions.filter(function(r) { return r.text.trim(); }),
+        minutes:     document.getElementById('mtgMinutes').value.trim() || null,
+        status:      document.getElementById('mtgStatus').value
+    };
+
+    var r;
+    if (editId) {
+        payload.id = editId;
+        r = await callBackend('updateMeeting', payload);
+    } else {
+        payload.createdBy = window._currentUser && window._currentUser.id;
+        r = await callBackend('createMeeting', payload);
+    }
+    btn.disabled = false; btn.textContent = '💾 บันทึกการประชุม';
+    if (r && r.success) {
+        ppkToast((editId ? 'อัปเดต' : 'บันทึก') + 'การประชุมเรียบร้อย', 'success');
+        resetMeetingForm();
+        loadMeetings();
+    } else {
+        ppkToast('เกิดข้อผิดพลาด: ' + ((r && r.error) || ''), 'error');
+    }
+}
+
+function resetMeetingForm() {
+    document.getElementById('editMeetingId').value = '';
+    document.getElementById('mtgTitle').value = '';
+    document.getElementById('mtgAgenda').value = '';
+    document.getElementById('mtgVenue').value = '';
+    document.getElementById('mtgMinutes').value = '';
+    document.getElementById('mtgQuorum').checked = false;
+    document.getElementById('mtgStatus').value = 'draft';
+    _attendees = []; _resolutions = [];
+    renderAttendees(); renderResolutions();
+}
+
+function editMeeting(m) {
+    document.getElementById('editMeetingId').value = m.id;
+    document.getElementById('mtgTitle').value = m.title || '';
+    document.getElementById('mtgDate').value = m.meeting_date ? new Date(m.meeting_date).toISOString().slice(0,16) : '';
+    document.getElementById('mtgVenue').value = m.venue || '';
+    document.getElementById('mtgAgenda').value = m.agenda || '';
+    document.getElementById('mtgMinutes').value = m.minutes || '';
+    document.getElementById('mtgQuorum').checked = m.quorum_met || false;
+    document.getElementById('mtgStatus').value = m.status || 'draft';
+    _attendees   = (m.attendees || []).slice();
+    _resolutions = (m.resolutions || []).map(function(r) { return typeof r === 'string' ? { text: r } : r; });
+    renderAttendees(); renderResolutions();
+    switchTab('create', document.querySelectorAll('.tab-btn')[0]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function printMeeting() {
+    var title    = document.getElementById('mtgTitle').value || 'รายงานการประชุม';
+    var date     = document.getElementById('mtgDate').value;
+    var venue    = document.getElementById('mtgVenue').value;
+    var agenda   = document.getElementById('mtgAgenda').value;
+    var minutes  = document.getElementById('mtgMinutes').value;
+    var resHTML  = _resolutions.filter(function(r) { return r.text; }).map(function(r, i) {
+        return '<li>' + _e(r.text) + '</li>';
+    }).join('');
+    var attHTML  = _attendees.map(function(a) {
+        return '<li>' + _e(a.name) + (a.role ? ' (' + _e(a.role) + ')' : '') + '</li>';
+    }).join('');
+    var win = window.open('', '_blank');
+    win.document.write('<html><head><meta charset="UTF-8"><title>' + title + '</title>' +
+        '<style>body{font-family:sans-serif;margin:2.5rem;}h1{font-size:1.3rem;text-align:center;}ul{padding-left:1.5rem;}pre{white-space:pre-wrap;font-family:inherit;}</style>' +
+        '</head><body>' +
+        '<h1>' + _e(title) + '</h1>' +
+        (date ? '<p><strong>วันที่:</strong> ' + _e(new Date(date).toLocaleDateString('th-TH')) + '</p>' : '') +
+        (venue ? '<p><strong>สถานที่:</strong> ' + _e(venue) + '</p>' : '') +
+        (attHTML ? '<h3>ผู้เข้าร่วมประชุม</h3><ul>' + attHTML + '</ul>' : '') +
+        (agenda ? '<h3>ระเบียบวาระ</h3><pre>' + _e(agenda) + '</pre>' : '') +
+        (minutes ? '<h3>รายละเอียดการประชุม</h3><pre>' + _e(minutes) + '</pre>' : '') +
+        (resHTML ? '<h3>มติที่ประชุม</h3><ol>' + resHTML + '</ol>' : '') +
+        '</body></html>');
+    win.document.close();
+    win.print();
+}
+
+async function loadMeetings() {
+    document.getElementById('meetingListContainer').innerHTML = '<div class="empty-state">⏳ กำลังโหลด...</div>';
+    var r = await callBackend('getMeetings', {});
+    _meetings = (r && r.meetings) || [];
+    renderMeetingList();
+}
+
+function renderMeetingList() {
+    var q  = (document.getElementById('mtgSearch').value || '').toLowerCase();
+    var st = document.getElementById('mtgStatusFilter').value;
+    var list = _meetings.filter(function(m) {
+        if (st && m.status !== st) return false;
+        if (q && (m.title || '').toLowerCase().indexOf(q) < 0) return false;
+        return true;
+    });
+    var el = document.getElementById('meetingListContainer');
+    if (!list.length) { el.innerHTML = '<div class="empty-state">ไม่พบรายการ</div>'; return; }
+    var statusLabels = { draft:'ร่าง', approved:'อนุมัติแล้ว', published:'เผยแพร่' };
+    var statusClasses = { draft:'badge-draft', approved:'badge-approved', published:'badge-published' };
+    el.innerHTML = list.map(function(m) {
+        var stLabel = statusLabels[m.status] || m.status;
+        var stClass = statusClasses[m.status] || 'badge-draft';
+        var attendeeCount = (m.attendees || []).length;
+        return '<div class="meeting-card">' +
+            '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">' +
+            '<span class="status-badge ' + stClass + '">' + stLabel + '</span>' +
+            '<strong>' + _e(m.title) + '</strong></div>' +
+            '<div style="color:#6b7280;font-size:0.85rem;margin-top:0.3rem;">📅 ' + formatDate(m.meeting_date) +
+            (m.venue ? ' &nbsp;📍 ' + _e(m.venue) : '') +
+            ' &nbsp;👥 ' + attendeeCount + ' คน</div>' +
+            '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">' +
+            '<button class="btn btn-outline btn-sm" onclick="editMeeting(' + JSON.stringify(m).replace(/"/g, '&quot;') + ')">✏️ แก้ไข</button>' +
+            '<button class="btn btn-outline btn-sm" onclick="printMeetingById(\'' + m.id + '\')">🖨️ พิมพ์</button>' +
+            (m.status === 'draft' ? '<button class="btn btn-success btn-sm" onclick="approveMtg(\'' + m.id + '\')">✅ อนุมัติ</button>' : '') +
+            '</div></div>';
+    }).join('');
+}
+
+async function approveMtg(id) {
+    if (!window._currentUser) return;
+    if (!await ppkConfirm('อนุมัติบันทึกการประชุมนี้?', { okText: 'อนุมัติ' })) return;
+    var r = await callBackend('approveMeeting', { id: id, approvedBy: window._currentUser.id });
+    if (r && r.success) { ppkToast('อนุมัติแล้ว', 'success'); loadMeetings(); }
+    else ppkToast('เกิดข้อผิดพลาด', 'error');
+}
+
+async function printMeetingById(id) {
+    var r = await callBackend('getMeetingById', { id: id });
+    if (!r || !r.meeting) { ppkToast('ไม่พบข้อมูล', 'error'); return; }
+    var m = r.meeting;
+    var resHTML = (m.resolutions || []).filter(function(r) { return r.text; }).map(function(r) { return '<li>' + _e(r.text) + '</li>'; }).join('');
+    var attHTML = (m.attendees || []).map(function(a) { return '<li>' + _e(a.name) + (a.role ? ' (' + _e(a.role) + ')' : '') + '</li>'; }).join('');
+    var win = window.open('', '_blank');
+    win.document.write('<html><head><meta charset="UTF-8"><title>' + _e(m.title) + '</title>' +
+        '<style>body{font-family:sans-serif;margin:2.5rem;}h1{font-size:1.3rem;text-align:center;}pre{white-space:pre-wrap;font-family:inherit;}</style>' +
+        '</head><body><h1>' + _e(m.title) + '</h1>' +
+        (m.meeting_date ? '<p><strong>วันที่:</strong> ' + new Date(m.meeting_date).toLocaleDateString('th-TH', {dateStyle:'full'}) + '</p>' : '') +
+        (m.venue ? '<p><strong>สถานที่:</strong> ' + _e(m.venue) + '</p>' : '') +
+        (attHTML ? '<h3>ผู้เข้าร่วมประชุม</h3><ul>' + attHTML + '</ul>' : '') +
+        (m.agenda ? '<h3>ระเบียบวาระ</h3><pre>' + _e(m.agenda) + '</pre>' : '') +
+        (m.minutes ? '<h3>รายละเอียดการประชุม</h3><pre>' + _e(m.minutes) + '</pre>' : '') +
+        (resHTML ? '<h3>มติที่ประชุม</h3><ol>' + resHTML + '</ol>' : '') +
+        '</body></html>');
+    win.document.close();
+    win.print();
+}
+
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (name === 'list') loadMeetings();
+}
+
+function _e(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDate(d) {
+    if (!d) return '-';
+    try { return new Date(d).toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+    catch(e) { return d; }
+}
+</script>
+    <script src="supabase/config.js?v=20260416C"></script>
+    <script src="supabase/supabase.min.js?v=20260416C"></script>
+    <script src="ppk-api.js?v=20260528A"></script>
+    <script src="ppk-app.js?v=20260416C"></script>
+    <script src="ppk-utils.js?v=20260416C"></script>
+    <script src="ppk-nav.js?v=20260416C"></script>
+    <script src="ppk-pwa.js?v=20260416C"></script>
+</body>
+</html>

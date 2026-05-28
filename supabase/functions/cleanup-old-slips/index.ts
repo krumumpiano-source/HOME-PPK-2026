@@ -1,6 +1,6 @@
-// ============================================================
+﻿// ============================================================
 //  Supabase Edge Function: cleanup-old-slips
-//  ลบรูปสลิปที่อายุเกิน 2 ปีออกจาก Storage
+//  ลบรูปสลิปที่อายุเกิน 5 ปีออกจาก Storage
 //  (แต่คงไว้ DB record ตลอดกาล)
 //
 //  Deploy: supabase functions deploy cleanup-old-slips
@@ -25,9 +25,9 @@ serve(async (req: Request) => {
     const serviceKey  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const sb = createClient(supabaseUrl, serviceKey);
 
-    // หา record ที่ slip_url ไม่ว่าง และ submitted_at > 2 ปีที่แล้ว และยังไม่ได้ลบรูป
+    // หา record ที่ slip_url ไม่ว่าง และ submitted_at > 5 ปีที่แล้ว และยังไม่ได้ลบรูป
     const cutoffDate = new Date();
-    cutoffDate.setFullYear(cutoffDate.getFullYear() - 2);
+    cutoffDate.setFullYear(cutoffDate.getFullYear() - 5);
 
     const { data: slips, error } = await sb
       .from('slip_submissions')

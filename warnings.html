@@ -1,0 +1,285 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HOME PPK">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <title>หนังสือตักเตือน | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
+    <style>
+        :root {
+            --bg:#f8fafc; --surface:#ffffff; --border:#e5e7eb;
+            --text:#0f172a; --muted:#64748b; --primary:#2563eb;
+            --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+        }
+        body { background:var(--bg); color:var(--text); font-family:'Kanit',sans-serif; margin:0; }
+        .page-container { max-width:900px; margin:0 auto; padding:1rem; }
+        .page-header { margin-bottom:1.5rem; }
+        .page-header h2 { font-size:1.5rem; font-weight:700; margin:0 0 0.25rem; }
+        .page-header p  { color:var(--muted); margin:0; font-size:0.9rem; }
+        .tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:2px solid var(--border); padding-bottom:0.5rem; }
+        .tab-btn { background:none; border:none; padding:0.5rem 1.25rem; font-size:0.95rem; font-family:'Kanit',sans-serif; cursor:pointer; border-radius:8px 8px 0 0; color:var(--muted); }
+        .tab-btn.active { background:var(--primary); color:#fff; font-weight:600; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+        .form-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1rem; }
+        .form-group { margin-bottom:1rem; }
+        .form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem; }
+        .form-group select, .form-group input, .form-group textarea {
+            width:100%; padding:0.5rem 0.75rem; border:1.5px solid var(--border);
+            border-radius:8px; font-family:'Kanit',sans-serif; font-size:0.9rem; box-sizing:border-box;
+        }
+        .form-group textarea { min-height:80px; resize:vertical; }
+        .level-badge { display:inline-block; padding:0.15rem 0.6rem; border-radius:99px; font-size:0.78rem; font-weight:700; }
+        .level-1 { background:#fef9c3; color:#854d0e; }
+        .level-2 { background:#fed7aa; color:#9a3412; }
+        .level-3 { background:#fee2e2; color:#7f1d1d; }
+        .ack-badge { background:#dcfce7; color:#166534; font-size:0.75rem; padding:0.1rem 0.5rem; border-radius:99px; }
+        .warning-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:0.75rem; }
+        .warning-card .meta { font-size:0.8rem; color:var(--muted); margin-top:0.4rem; }
+        .btn { padding:0.5rem 1.25rem; border:none; border-radius:8px; cursor:pointer; font-family:'Kanit',sans-serif; font-size:0.9rem; font-weight:600; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-primary:disabled { background:#93c5fd; cursor:not-allowed; }
+        .btn-sm { padding:0.25rem 0.75rem; font-size:0.82rem; }
+        .btn-outline { background:#fff; border:1.5px solid var(--border); color:var(--text); }
+        .empty-state { text-align:center; color:var(--muted); padding:3rem 1rem; font-size:1rem; }
+        @media(max-width:600px){.tabs{flex-wrap:wrap;}}
+    </style>
+</head>
+<body>
+<div id="ppkNav"></div>
+<div class="page-container">
+    <button class="btn btn-outline btn-sm" onclick="history.back()" style="margin-bottom:1rem;">← กลับ</button>
+    <div class="page-header">
+        <h2>⚠️ หนังสือตักเตือน</h2>
+        <p>บันทึกและติดตามหนังสือตักเตือนผู้พักอาศัย</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('issue')">📝 ออกหนังสือตักเตือน</button>
+        <button class="tab-btn" onclick="switchTab('history')">📋 ประวัติทั้งหมด</button>
+    </div>
+
+    <!-- Tab: ออกหนังสือ -->
+    <div id="tab-issue" class="tab-panel active">
+        <div class="form-card">
+            <div class="form-group">
+                <label for="warnResident">ผู้พักอาศัย</label>
+                <select id="warnResident" onchange="onResidentChange()">
+                    <option value="">-- เลือกผู้พักอาศัย --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="warnHouse">บ้านหลังที่</label>
+                <select id="warnHouse">
+                    <option value="">-- เลือกบ้าน (ถ้ามี) --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="warnLevel">ระดับการตักเตือน</label>
+                <select id="warnLevel">
+                    <option value="1">ระดับ 1 — แจ้งเตือนเป็นลายลักษณ์อักษร</option>
+                    <option value="2">ระดับ 2 — ตักเตือนอย่างเป็นทางการ</option>
+                    <option value="3">ระดับ 3 — ขั้นสุดท้าย (อาจนำสู่การยกเลิกสิทธิ์)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="warnReason">เหตุผล / เรื่องที่ตักเตือน <span style="color:#ef4444;">*</span></label>
+                <textarea id="warnReason" placeholder="ระบุพฤติกรรมหรือการฝ่าฝืนระเบียบที่ต้องตักเตือน..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="warnNote">หมายเหตุเพิ่มเติม</label>
+                <textarea id="warnNote" placeholder="(ถ้ามี)" style="min-height:60px;"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="submitWarning()" id="submitWarnBtn">📤 ออกหนังสือตักเตือน</button>
+        </div>
+    </div>
+
+    <!-- Tab: ประวัติ -->
+    <div id="tab-history" class="tab-panel">
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+            <input type="search" id="warnSearch" placeholder="🔍 ค้นหาชื่อ / เหตุผล..." oninput="renderHistory()" style="padding:0.4rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;flex:1;min-width:180px;">
+            <select id="warnLevelFilter" onchange="renderHistory()" style="padding:0.4rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
+                <option value="">ทุกระดับ</option>
+                <option value="1">ระดับ 1</option>
+                <option value="2">ระดับ 2</option>
+                <option value="3">ระดับ 3</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadHistory()">🔄 โหลดใหม่</button>
+        </div>
+        <div id="historyList"><div class="empty-state">⏳ กำลังโหลด...</div></div>
+    </div>
+</div>
+
+<script>
+var _allWarnings = [];
+var _residents = [];
+var _housing = [];
+
+window.onload = async function() {
+    var user = await checkSession(true);
+    if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+        if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+        window.location.replace('dashboard.html');
+        return;
+    }
+    initSidebar();
+    await Promise.all([loadResidents(), loadHousing()]);
+    loadHistory();
+};
+
+async function loadResidents() {
+    var r = await callBackend('getResidents', {});
+    _residents = (r && r.residents) || [];
+    var sel = document.getElementById('warnResident');
+    sel.innerHTML = '<option value="">-- เลือกผู้พักอาศัย --</option>';
+    _residents.forEach(function(res) {
+        var opt = document.createElement('option');
+        opt.value = res.id;
+        opt.textContent = (res.prefix || '') + (res.fullname || '') + ' (' + (res.house_number || '-') + ')';
+        sel.appendChild(opt);
+    });
+}
+
+async function loadHousing() {
+    var r = await callBackend('getHousing', {});
+    _housing = (r && r.housing) || [];
+}
+
+function onResidentChange() {
+    var userId = document.getElementById('warnResident').value;
+    var sel = document.getElementById('warnHouse');
+    sel.innerHTML = '<option value="">-- เลือกบ้าน (ถ้ามี) --</option>';
+    if (!userId) return;
+    var res = _residents.find(function(r) { return r.id === userId; });
+    var houseId = res && res.house_id;
+    if (houseId) {
+        var h = _housing.find(function(x) { return x.id === houseId; });
+        if (h) {
+            var opt = document.createElement('option');
+            opt.value = h.id;
+            opt.selected = true;
+            opt.textContent = 'บ้านเลขที่ ' + (h.house_number || h.id);
+            sel.appendChild(opt);
+        }
+    }
+}
+
+async function submitWarning() {
+    var userId   = document.getElementById('warnResident').value;
+    var houseId  = document.getElementById('warnHouse').value;
+    var level    = document.getElementById('warnLevel').value;
+    var reason   = document.getElementById('warnReason').value.trim();
+    var note     = document.getElementById('warnNote').value.trim();
+    if (!userId) { ppkToast('กรุณาเลือกผู้พักอาศัย', 'warning'); return; }
+    if (!reason) { ppkToast('กรุณาระบุเหตุผล', 'warning'); return; }
+    var session = await checkSession(false);
+    if (!session) return;
+    var btn = document.getElementById('submitWarnBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังบันทึก...';
+    var r = await callBackend('createWarning', {
+        userId: userId, houseId: houseId || null,
+        level: parseInt(level), reason: reason, note: note || null,
+        issuedBy: session.id
+    });
+    btn.disabled = false;
+    btn.textContent = '📤 ออกหนังสือตักเตือน';
+    if (r && r.success) {
+        ppkToast('ออกหนังสือตักเตือนระดับ ' + level + ' เรียบร้อย', 'success');
+        document.getElementById('warnReason').value = '';
+        document.getElementById('warnNote').value = '';
+        document.getElementById('warnResident').value = '';
+        document.getElementById('warnHouse').innerHTML = '<option value="">-- เลือกบ้าน (ถ้ามี) --</option>';
+        loadHistory();
+    } else {
+        ppkToast('เกิดข้อผิดพลาด: ' + ((r && r.error) || 'ไม่ทราบสาเหตุ'), 'error');
+    }
+}
+
+async function loadHistory() {
+    document.getElementById('historyList').innerHTML = '<div class="empty-state">⏳ กำลังโหลด...</div>';
+    var r = await callBackend('getAllWarnings', {});
+    _allWarnings = (r && r.warnings) || [];
+    renderHistory();
+}
+
+function renderHistory() {
+    var q  = (document.getElementById('warnSearch').value || '').toLowerCase();
+    var lv = document.getElementById('warnLevelFilter').value;
+    var list = _allWarnings.filter(function(w) {
+        if (lv && String(w.level) !== lv) return false;
+        if (q) {
+            var text = ((w.reason || '') + ' ' + (w.note || '')).toLowerCase();
+            var res = _residents.find(function(r) { return r.id === w.user_id; });
+            var name = res ? ((res.prefix || '') + (res.fullname || '')).toLowerCase() : '';
+            if (text.indexOf(q) < 0 && name.indexOf(q) < 0) return false;
+        }
+        return true;
+    });
+    var el = document.getElementById('historyList');
+    if (!list.length) { el.innerHTML = '<div class="empty-state">ไม่พบรายการ</div>'; return; }
+    el.innerHTML = list.map(function(w) {
+        var res = _residents.find(function(r) { return r.id === w.user_id; });
+        var name = res ? ((res.prefix || '') + (res.fullname || '')) : w.user_id;
+        var lvLabel = ['','ระดับ 1','ระดับ 2','ระดับ 3'][w.level] || ('ระดับ ' + w.level);
+        var lvClass = 'level-' + w.level;
+        var ackHtml = w.acknowledged_at
+            ? '<span class="ack-badge">✅ รับทราบแล้ว</span>'
+            : '<button class="btn btn-outline btn-sm" onclick="ackWarning(\'' + w.id + '\')">📌 บันทึกรับทราบ</button>';
+        return '<div class="warning-card">' +
+            '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">' +
+            '<span class="level-badge ' + lvClass + '">' + lvLabel + '</span>' +
+            '<strong>' + _e(name) + '</strong>' + ackHtml + '</div>' +
+            '<div style="margin-top:0.5rem;">' + _e(w.reason) + '</div>' +
+            (w.note ? '<div style="color:var(--muted);font-size:0.85rem;">' + _e(w.note) + '</div>' : '') +
+            '<div class="meta">📅 ' + formatDate(w.issued_at) + '</div></div>';
+    }).join('');
+}
+
+async function ackWarning(id) {
+    var r = await callBackend('acknowledgeWarning', { warningId: id });
+    if (r && r.success) {
+        ppkToast('บันทึกการรับทราบแล้ว', 'success');
+        loadHistory();
+    } else {
+        ppkToast('เกิดข้อผิดพลาด', 'error');
+    }
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'history') loadHistory();
+}
+
+function _e(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDate(d) {
+    if (!d) return '-';
+    try {
+        var dt = new Date(d);
+        return dt.toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    } catch(e) { return d; }
+}
+</script>
+    <script src="supabase/config.js?v=20260416C"></script>
+    <script src="supabase/supabase.min.js?v=20260416C"></script>
+    <script src="ppk-api.js?v=20260528A"></script>
+    <script src="ppk-app.js?v=20260416C"></script>
+    <script src="ppk-utils.js?v=20260416C"></script>
+    <script src="ppk-nav.js?v=20260416C"></script>
+    <script src="ppk-pwa.js?v=20260416C"></script>
+</body>
+</html>

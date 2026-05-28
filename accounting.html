@@ -723,6 +723,24 @@
             <div id="advanceSummaryContent" style="padding:0.5rem 0;"></div>
         </div>
 
+        <!-- 📊 รายงานสรุปรายปี -->
+        <div class="section no-print" id="annualReportSection">
+            <div class="section-title" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                📊 รายงานสรุปรายปี
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-left:auto;flex-wrap:wrap;">
+                    <div class="form-group" style="margin:0;">
+                        <label for="annual_year" style="font-size:0.85rem;margin-right:0.3rem;">ปี พ.ศ.</label>
+                        <select id="annual_year" onchange="loadAnnualReport()" style="padding:0.3rem;border-radius:6px;border:1px solid var(--border);font-size:0.85rem;"></select>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="loadAnnualReport()">🔄 โหลดข้อมูล</button>
+                    <button class="btn btn-secondary btn-sm" onclick="printAnnualReport()">🖨️ พิมพ์</button>
+                </div>
+            </div>
+            <div id="annualReportContent" style="padding:0.5rem 0;">
+                <div style="color:#9ca3af;text-align:center;padding:2rem;">กรุณาเลือกปีแล้วกดโหลดข้อมูล</div>
+            </div>
+        </div>
+
         <div class="footer-note">
             ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
             งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
@@ -770,14 +788,21 @@
         
         function initYearSelector() {
             const yearSelect = document.getElementById('bill_year');
+            const annualSelect = document.getElementById('annual_year');
             const currentYear = new Date().getFullYear() + 543;
             yearSelect.innerHTML = '';
+            annualSelect.innerHTML = '';
             
             for (let y = currentYear + 1; y >= 2568; y--) {
                 const opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = y;
                 yearSelect.appendChild(opt);
+
+                const opt2 = document.createElement('option');
+                opt2.value = y;
+                opt2.textContent = y;
+                annualSelect.appendChild(opt2);
             }
         }
         
@@ -1546,6 +1571,66 @@
                 console.error('loadAdvanceSummary error:', e);
                 section.style.display = 'none';
             }
+        }
+
+        // ========== รายงานสรุปรายปี ==========
+        async function loadAnnualReport() {
+            var content = document.getElementById('annualReportContent');
+            var year = parseInt(document.getElementById('annual_year').value);
+            if (!year) { content.innerHTML = '<div style="color:#9ca3af;text-align:center;padding:2rem;">กรุณาเลือกปี</div>'; return; }
+            content.innerHTML = '<div style="text-align:center;padding:2rem;color:#6b7280;">⏳ กำลังโหลด...</div>';
+            try {
+                var result = await callBackend('getAnnualReport', { year: year });
+                if (!result || !result.success) {
+                    content.innerHTML = '<div style="color:#ef4444;padding:1rem;">เกิดข้อผิดพลาด: ' + ((result && result.error) || 'ไม่ทราบสาเหตุ') + '</div>';
+                    return;
+                }
+                var months = result.months || [];
+                var totalInc = months.reduce(function(s, m) { return s + (m.income || 0); }, 0);
+                var totalExp = months.reduce(function(s, m) { return s + (m.expense || 0); }, 0);
+                var thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+                var rows = months.map(function(m) {
+                    var bal = (m.income || 0) - (m.expense || 0);
+                    var balColor = bal >= 0 ? '#10b981' : '#ef4444';
+                    return '<tr>' +
+                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:center;">' + (thaiMonths[m.month - 1] || m.month) + '</td>' +
+                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(m.income || 0) + '</td>' +
+                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(m.expense || 0) + '</td>' +
+                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:right;color:' + balColor + ';font-weight:600;">' + formatMoney(bal) + '</td>' +
+                        '</tr>';
+                }).join('');
+                content.innerHTML =
+                    '<div id="annualReportPrint">' +
+                    '<h3 style="margin:0 0 1rem;font-size:1.1rem;">รายงานสรุปรายได้-รายจ่ายปี พ.ศ. ' + year + '</h3>' +
+                    '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">' +
+                    '<thead><tr style="background:#f3f4f6;">' +
+                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;">เดือน</th>' +
+                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">รายรับ (บาท)</th>' +
+                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">รายจ่าย (บาท)</th>' +
+                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">คงเหลือ (บาท)</th>' +
+                    '</tr></thead><tbody>' + rows + '</tbody>' +
+                    '<tfoot><tr style="background:#f0fdf4;font-weight:700;">' +
+                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;">รวมทั้งปี</td>' +
+                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(totalInc) + '</td>' +
+                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(totalExp) + '</td>' +
+                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;color:' + (totalInc - totalExp >= 0 ? '#10b981' : '#ef4444') + ';">' + formatMoney(totalInc - totalExp) + '</td>' +
+                    '</tr></tfoot></table></div>';
+            } catch(e) {
+                console.error('loadAnnualReport error:', e);
+                content.innerHTML = '<div style="color:#ef4444;padding:1rem;">เกิดข้อผิดพลาด: ' + e.message + '</div>';
+            }
+        }
+
+        function printAnnualReport() {
+            var el = document.getElementById('annualReportPrint');
+            if (!el) { ppkToast('กรุณาโหลดข้อมูลก่อนพิมพ์', 'warning'); return; }
+            var year = document.getElementById('annual_year').value;
+            var win = window.open('', '_blank');
+            win.document.write('<html><head><title>รายงานสรุปรายปี ' + year + '</title>' +
+                '<meta charset="UTF-8"><style>body{font-family:sans-serif;margin:2rem;}table{width:100%;border-collapse:collapse;}th,td{padding:0.4rem 0.6rem;border:1px solid #ccc;}</style>' +
+                '</head><body>' + el.outerHTML + '</body></html>');
+            win.document.close();
+            win.print();
         }
         </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>

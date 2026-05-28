@@ -330,6 +330,17 @@ async function _findResidentForUser(userId, userEmail) {
     return null;
 }
 
+/* ── MIME Whitelist validator ────────────────────────────────
+   รองรับ: jpeg, png, webp, gif (รูปภาพ) + pdf (เอกสาร)
+   ใช้ก่อนทุก storage upload เพื่อป้องกัน SVG+XSS และไฟล์อันตราย
+──────────────────────────────────────────────────────────── */
+var _ALLOWED_MIME_IMAGE = ['image/jpeg','image/png','image/webp','image/gif'];
+var _ALLOWED_MIME_ALL   = ['image/jpeg','image/png','image/webp','image/gif','application/pdf'];
+function _validateMime(mime, allowPdf) {
+    var allowed = allowPdf ? _ALLOWED_MIME_ALL : _ALLOWED_MIME_IMAGE;
+    return allowed.indexOf((mime || '').toLowerCase()) !== -1;
+}
+
 async function ppkLogout() {
     // ลบ session จาก DB ถ้ามี
     try {
@@ -1970,6 +1981,7 @@ async function _routeAction(action, data) {
             var mimeMatchA = b64a.match(/data:([^;]+);base64,(.+)/);
             if (!mimeMatchA) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
             var mimeA = mimeMatchA[1];
+            if (!_validateMime(mimeA, true)) return { success: false, error: 'รองรับเฉพาะ JPG, PNG, WEBP, GIF, PDF เท่านั้น' };
             var rawA  = mimeMatchA[2];
             var binaryA = atob(rawA);
             var bytesA  = new Uint8Array(binaryA.length);
@@ -4032,6 +4044,37 @@ async function _routeAction(action, data) {
             return { success: true, incomeItems: (incRows || []).map(mapRow), expenseItems: (expRows || []).map(mapRow), carryForward: carryForward };
         }
 
+        /* ── getAnnualReport — รายงานสรุปรายปี ─── */
+        case 'getAnnualReport': {
+            return await getAnnualReport(data.year);
+        }
+
+        /* ── Warnings — ระบบตักเตือน ────────────── */
+        case 'createWarning':      return await createWarning(data);
+        case 'getWarningsByUser':  return await getWarningsByUser(data.userId);
+        case 'getWarningsByHouse': return await getWarningsByHouse(data.houseId);
+        case 'getAllWarnings':      return await getAllWarnings();
+        case 'acknowledgeWarning': return await acknowledgeWarning(data.warningId);
+
+        /* ── Inspections — ระบบตรวจสภาพบ้าน ────── */
+        case 'createInspection': return await createInspection(data);
+        case 'getInspection':    return await getInspection(data.requestId);
+
+        /* ── Meetings — ระบบบันทึกการประชุม ─────── */
+        case 'createMeeting':  return await createMeeting(data);
+        case 'updateMeeting':  return await updateMeeting(data);
+        case 'getMeetings':    return await getMeetings(data);
+        case 'getMeetingById': return await getMeetingById(data.id);
+        case 'approveMeeting': return await approveMeeting(data.id, data.approvedBy);
+
+        /* ── MOU — ระบบสัญญาเช่า ────────────────── */
+        case 'createMouDraft':      return await createMouDraft(data);
+        case 'getMouByRequest':     return await getMouByRequest(data.requestId);
+        case 'getMousByResident':   return await getMousByResident(data.residentId);
+        case 'getAllMous':           return await getAllMous(data);
+        case 'uploadMouSignature':  return await uploadMouSignature(data);
+        case 'uploadMouScan':       return await uploadMouScan(data);
+
         /* ── loadAndSyncAccounting — sync auto entries แล้ว load ข้อมูลบัญชี ─── */
         case 'loadAndSyncAccounting': {
             var period = data.period || '';
@@ -4227,6 +4270,7 @@ async function _routeAction(action, data) {
             var mimeMatch = b64.match(/data:([^;]+);base64,(.+)/);
             if (!mimeMatch) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
             var mime = mimeMatch[1];
+            if (!_validateMime(mime, false)) return { success: false, error: 'รองรับเฉพาะรูปภาพ JPG, PNG, WEBP, GIF เท่านั้น' };
             var raw  = mimeMatch[2];
             // แปลง base64 → Uint8Array
             var binary = atob(raw);
@@ -4557,6 +4601,7 @@ async function _routeAction(action, data) {
             var rpMatch = rpB64.match(/data:([^;]+);base64,(.+)/);
             if (!rpMatch) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
             var rpMime = rpMatch[1];
+            if (!_validateMime(rpMime, true)) return { success: false, error: 'รองรับเฉพาะไฟล์ PDF หรือรูปภาพเท่านั้น' };
             var rpRaw = rpMatch[2];
             var rpBinary = atob(rpRaw);
             var rpBytes = new Uint8Array(rpBinary.length);
@@ -5897,6 +5942,264 @@ function invalidateResidentCache() {
         if (k && k.indexOf('apicache_getHousing') === 0) keys.push(k);
     }
     keys.forEach(function(k) { localStorage.removeItem(k); });
+}
+
+/* ══════════════════════════════════════════
+   Inspections — ระบบตรวจสภาพบ้าน
+══════════════════════════════════════════ */
+async function createInspection(d) {
+    if (!d.requestId || !d.inspectorId) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        var row = await sbPost('inspections', {
+            request_id:      d.requestId,
+            house_id:        d.houseId || null,
+            inspector_id:    d.inspectorId,
+            items:           d.items || {},
+            photos:          d.photos || [],
+            damage_estimate: parseFloat(d.damageEstimate) || 0,
+            note:            d.note || null,
+            status:          d.status || 'pending'
+        });
+        return { success: true, inspection: row };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getInspection(requestId) {
+    if (!requestId) return { success: false, error: 'ต้องระบุ requestId' };
+    try {
+        var rows = await sbGet('inspections', { request_id: 'eq.' + requestId, order: 'created_at.desc', limit: 1 });
+        return { success: true, inspection: (rows && rows[0]) || null };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+/* ══════════════════════════════════════════
+   MOU — ระบบสัญญาเช่าบ้านพักครู
+══════════════════════════════════════════ */
+async function createMouDraft(d) {
+    if (!d.requestId || !d.residentId) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        // ดึง template จาก settings
+        var settRows = await sbGet('settings', { key: 'eq.mou_template' }).catch(function() { return []; });
+        var template = (settRows && settRows[0] && settRows[0].value) || '';
+        var row = await sbPost('mou_documents', {
+            request_id:       d.requestId,
+            resident_id:      d.residentId,
+            house_id:         d.houseId || null,
+            template_version: d.templateVersion || '1.0',
+            content:          d.content || { template: template },
+            status:           'pending_sign'
+        });
+        return { success: true, mou: row };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getMouByRequest(requestId) {
+    if (!requestId) return { success: false, error: 'ต้องระบุ requestId' };
+    try {
+        var rows = await sbGet('mou_documents', { request_id: 'eq.' + requestId, order: 'created_at.desc', limit: 1 });
+        return { success: true, mou: (rows && rows[0]) || null };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getMousByResident(residentId) {
+    if (!residentId) return { success: false, error: 'ต้องระบุ residentId' };
+    try {
+        var rows = await sbGet('mou_documents', { resident_id: 'eq.' + residentId, order: 'created_at.desc' });
+        return { success: true, mous: rows || [] };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getAllMous(opts) {
+    try {
+        var q = { order: 'created_at.desc' };
+        if (opts && opts.status) q.status = 'eq.' + opts.status;
+        var rows = await sbGet('mou_documents', q);
+        return { success: true, mous: rows || [] };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function uploadMouSignature(d) {
+    // d: { mouId, role (resident/admin/head), signatureDataUrl }
+    if (!d.mouId || !d.role || !d.signatureDataUrl) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        // Convert data URL to blob and upload to storage
+        var base64 = d.signatureDataUrl.split(',')[1];
+        var mimeType = 'image/png';
+        var binary = atob(base64);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        var blob = new Blob([bytes], { type: mimeType });
+        var path = 'signatures/' + d.mouId + '_' + d.role + '_' + Date.now() + '.png';
+        var { data: storageData, error: storageError } = await window._supabase.storage
+            .from('mou-documents').upload(path, blob, { contentType: mimeType, upsert: true });
+        if (storageError) return { success: false, error: storageError.message };
+        var { data: urlData } = window._supabase.storage.from('mou-documents').getPublicUrl(path);
+        var signUrl = urlData && urlData.publicUrl;
+        var patch = {};
+        if (d.role === 'resident') patch.sign_resident_url = signUrl;
+        else if (d.role === 'admin') patch.sign_admin_url = signUrl;
+        else if (d.role === 'head')  patch.sign_head_url  = signUrl;
+        patch.updated_at = new Date().toISOString();
+        // ถ้าครบ 3 ลายเซ็น → signed
+        var existing = await sbGet('mou_documents', { id: 'eq.' + d.mouId }).catch(function() { return []; });
+        var mou = existing && existing[0];
+        if (mou) {
+            var resSign  = patch.sign_resident_url || mou.sign_resident_url;
+            var admSign  = patch.sign_admin_url    || mou.sign_admin_url;
+            var heaSign  = patch.sign_head_url     || mou.sign_head_url;
+            if (resSign && admSign && heaSign) { patch.status = 'signed'; patch.signed_at = new Date().toISOString(); }
+        }
+        await sbPatch('mou_documents', { id: 'eq.' + d.mouId }, patch);
+        return { success: true, signUrl: signUrl };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function uploadMouScan(d) {
+    if (!d.mouId || !d.file) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        var path = 'scans/' + d.mouId + '_' + Date.now() + '.' + (d.file.name.split('.').pop() || 'pdf');
+        var { error: uploadError } = await window._supabase.storage
+            .from('mou-documents').upload(path, d.file, { contentType: d.file.type, upsert: true });
+        if (uploadError) return { success: false, error: uploadError.message };
+        var { data: urlData } = window._supabase.storage.from('mou-documents').getPublicUrl(path);
+        var scanUrl = urlData && urlData.publicUrl;
+        await sbPatch('mou_documents', { id: 'eq.' + d.mouId }, { scanned_url: scanUrl, status: 'signed', signed_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        return { success: true, scanUrl: scanUrl };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+/* ══════════════════════════════════════════
+   Meetings — ระบบบันทึกการประชุม
+══════════════════════════════════════════ */
+async function createMeeting(d) {
+    if (!d.title || !d.meetingDate || !d.createdBy) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        var row = await sbPost('meetings', {
+            title:        d.title,
+            agenda:       d.agenda || null,
+            venue:        d.venue || null,
+            meeting_date: d.meetingDate,
+            attendees:    d.attendees || [],
+            quorum_met:   d.quorumMet === true,
+            resolutions:  d.resolutions || [],
+            minutes:      d.minutes || null,
+            status:       d.status || 'draft',
+            created_by:   d.createdBy
+        });
+        return { success: true, meeting: row };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function updateMeeting(d) {
+    if (!d.id) return { success: false, error: 'ต้องระบุ id' };
+    try {
+        var patch = {};
+        if (d.title        !== undefined) patch.title        = d.title;
+        if (d.agenda       !== undefined) patch.agenda       = d.agenda;
+        if (d.venue        !== undefined) patch.venue        = d.venue;
+        if (d.meetingDate  !== undefined) patch.meeting_date = d.meetingDate;
+        if (d.attendees    !== undefined) patch.attendees    = d.attendees;
+        if (d.quorumMet    !== undefined) patch.quorum_met   = d.quorumMet;
+        if (d.resolutions  !== undefined) patch.resolutions  = d.resolutions;
+        if (d.minutes      !== undefined) patch.minutes      = d.minutes;
+        if (d.status       !== undefined) patch.status       = d.status;
+        if (d.approvedBy   !== undefined) patch.approved_by  = d.approvedBy;
+        patch.updated_at = new Date().toISOString();
+        await sbPatch('meetings', { id: 'eq.' + d.id }, patch);
+        return { success: true };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getMeetings(opts) {
+    try {
+        var q = { order: 'meeting_date.desc' };
+        if (opts && opts.status) q.status = 'eq.' + opts.status;
+        var rows = await sbGet('meetings', q);
+        return { success: true, meetings: rows || [] };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getMeetingById(id) {
+    if (!id) return { success: false, error: 'ต้องระบุ id' };
+    try {
+        var rows = await sbGet('meetings', { id: 'eq.' + id });
+        return { success: true, meeting: (rows && rows[0]) || null };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function approveMeeting(id, approvedBy) {
+    if (!id || !approvedBy) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        await sbPatch('meetings', { id: 'eq.' + id }, { status: 'approved', approved_by: approvedBy, updated_at: new Date().toISOString() });
+        return { success: true };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+/* ══════════════════════════════════════════
+   Warnings — ระบบหนังสือตักเตือน
+══════════════════════════════════════════ */
+async function createWarning(d) {
+    if (!d.userId || !d.level || !d.reason || !d.issuedBy) return { success: false, error: 'ข้อมูลไม่ครบ' };
+    try {
+        var row = await sbPost('warnings', {
+            user_id:   d.userId,
+            house_id:  d.houseId || null,
+            level:     parseInt(d.level),
+            reason:    d.reason,
+            note:      d.note || null,
+            issued_by: d.issuedBy
+        });
+        return { success: true, warning: row };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getWarningsByUser(userId) {
+    if (!userId) return { success: false, error: 'ต้องระบุ userId' };
+    try {
+        var rows = await sbGet('warnings', { user_id: 'eq.' + userId, order: 'issued_at.desc' });
+        return { success: true, warnings: rows || [] };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getWarningsByHouse(houseId) {
+    if (!houseId) return { success: false, error: 'ต้องระบุ houseId' };
+    try {
+        var rows = await sbGet('warnings', { house_id: 'eq.' + houseId, order: 'issued_at.desc' });
+        return { success: true, warnings: rows || [] };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function getAllWarnings() {
+    try {
+        var rows = await sbGet('warnings', { order: 'issued_at.desc' });
+        return { success: true, warnings: rows || [] };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+async function acknowledgeWarning(warningId) {
+    if (!warningId) return { success: false, error: 'ต้องระบุ warningId' };
+    try {
+        var rows = await sbPatch('warnings', { id: 'eq.' + warningId }, { acknowledged_at: new Date().toISOString() });
+        return { success: true };
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+/* ══════════════════════════════════════════
+   getAnnualReport — รายงานสรุปรายปี
+══════════════════════════════════════════ */
+async function getAnnualReport(year) {
+    if (!year) return { success: false, error: 'ต้องระบุปี' };
+    try {
+        var incRows = await sbGet('accounting_entries', { year: 'eq.' + year, type: 'eq.income',  select: 'month,amount' });
+        var expRows = await sbGet('accounting_entries', { year: 'eq.' + year, type: 'eq.expense', select: 'month,amount' });
+        var byMonth = {};
+        for (var m = 1; m <= 12; m++) byMonth[m] = { month: m, income: 0, expense: 0 };
+        (incRows || []).forEach(function(r) { if (r.month) byMonth[r.month].income += (parseFloat(r.amount) || 0); });
+        (expRows || []).forEach(function(r) { if (r.month) byMonth[r.month].expense += (parseFloat(r.amount) || 0); });
+        return { success: true, months: Object.values(byMonth) };
+    } catch(e) {
+        return { success: false, error: e.message };
+    }
 }
 
 /* ══════════════════════════════════════════
