@@ -479,7 +479,7 @@ var _STRICT_ADMIN_ACTIONS = ['addHousing','updateHousing','deleteHousing','addRe
     'getAdminTeam','getUsersList','getAllPermissions','getFloatingUsers','uploadRegulationPdf','deleteRegulationPdf',
     'getBackups','restoreBackup','deleteOldBackups','purgeStaleAutoEntries','exportFullBackup','anonymizeUser',
     'reactivateResident','getMovedOutUsers','forceDeactivateUser','adminInitiatedReturn','headReviewRequest',
-    'executeTransfer','waiveAllOutstanding','purgeMovedOutUser'];
+    'executeTransfer','waiveAllOutstanding','purgeMovedOutUser','reactivateUserAccount'];
 
 // ── Storage bucket helper: verify bucket exists ──
 var _bucketReady = {};
@@ -934,6 +934,21 @@ async function _routeAction(action, data) {
                 });
             }
             return { success: true, data: _gmuResult };
+        }
+
+        /* ── เปิดบัญชีคืน (กรณีถูกปิดโดยไม่ตั้งใจ เช่น system deactivate ตอนทำ admin_initiated_return) ── */
+        case 'reactivateUserAccount': {
+            if (!data.userId) return { success: false, error: 'ไม่ระบุ userId' };
+            var _ruaSess = await _getSessionRole();
+            if (!_ruaSess || (_ruaSess.role !== 'admin' && _ruaSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
+            // ตรวจ user exists
+            var _ruaRows = await sbGet('users', { id: 'eq.' + data.userId, select: 'id,is_active,email,firstname,lastname', limit: '1' }).catch(function() { return []; });
+            if (!_ruaRows || !_ruaRows[0]) return { success: false, error: 'ไม่พบบัญชีผู้ใช้' };
+            if (_ruaRows[0].is_active) return { success: false, error: 'บัญชีนี้เปิดใช้งานอยู่แล้ว' };
+            // เปิดบัญชีคืน
+            await sbPatch('users', { id: 'eq.' + data.userId }, { is_active: true, updated_at: new Date().toISOString() });
+            _logActivity('reactivate_user_account', _ruaSess.userId, 'เปิดบัญชีคืน ' + ((_ruaRows[0].firstname||'') + ' ' + (_ruaRows[0].lastname||'')).trim() + ' userId=' + data.userId, { userId: data.userId });
+            return { success: true };
         }
 
         case 'forceDeactivateUser': {
@@ -4445,7 +4460,8 @@ async function _routeAction(action, data) {
                     role: u ? u.role : '',
                     reg_status: regStatus,
                     permissions: perms,
-                    registered_at: u ? u.created_at : ''
+                    registered_at: u ? u.created_at : '',
+                    user_id: u ? u.id : (r.user_id || '')
                 };
             });
             result.sort(_naturalCmp);
