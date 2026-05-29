@@ -452,7 +452,7 @@
             const unitData = {
               id: idx + 1,
               unitNumber: unitNumber,
-              name: (slip && slip.resident_name) || bill.resident_name || '',
+              name: bill.resident_name || (slip && slip.resident_name) || '',
               email: bill.email || '',
               proxyEmail: bill.proxy_email || '',
               waterAmount: parseFloat(bill.water_amount) || 0,

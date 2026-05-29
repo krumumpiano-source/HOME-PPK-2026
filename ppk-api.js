@@ -1564,6 +1564,8 @@ async function _routeAction(action, data) {
             var resIdMap = {};
             // userIdNameMap: lookup ชื่อจาก user_id ของผู้พัก (ทั้ง active + inactive)
             var userIdNameMap = {};
+            // resHouseUserSet: set ของ user_id ที่เป็นผู้พักของแต่ละบ้าน (สำหรับตรวจ step 2)
+            var resHouseUserSet = {}; // { house_number: Set<user_id> }
             (resRows || []).forEach(function(r) {
                 var fullName = ((r.prefix || '') + (r.firstname || '') + ' ' + (r.lastname || '')).trim();
                 resMap[r.house_number] = fullName;
@@ -1574,6 +1576,11 @@ async function _routeAction(action, data) {
                 if (r.house_number) resStartMap2[r.house_number] = r.start_date || r.move_in_date || '';
                 if (r.id) resIdMap[r.id] = fullName;
                 if (r.user_id) userIdNameMap[r.user_id] = fullName;
+                // บันทึก user_id → บ้านที่เป็นผู้พักจริง
+                if (r.house_number && r.user_id) {
+                    if (!resHouseUserSet[r.house_number]) resHouseUserSet[r.house_number] = {};
+                    resHouseUserSet[r.house_number][r.user_id] = true;
+                }
             });
             // สร้าง map ผู้พักเก่า (inactive)
             var oldResMap2 = {};
@@ -1585,6 +1592,11 @@ async function _routeAction(action, data) {
                 }
                 if (r.id) resIdMap[r.id] = oName;
                 if (r.user_id && !userIdNameMap[r.user_id]) userIdNameMap[r.user_id] = oName;
+                // บันทึก inactive user_id → บ้านที่เคยพักด้วย
+                if (r.house_number && r.user_id) {
+                    if (!resHouseUserSet[r.house_number]) resHouseUserSet[r.house_number] = {};
+                    resHouseUserSet[r.house_number][r.user_id] = true;
+                }
             });
             var proxyEmailMap2 = {};
             // ดึง email จาก users table สำหรับ proxy ที่ residents อาจไม่มี email
@@ -1605,9 +1617,12 @@ async function _routeAction(action, data) {
                 // 1. ใช้ resident_id ที่บันทึกในสลิป (แม่นยำที่สุด — ไม่ขึ้นกับว่าใครกด submit)
                 var slipName = (s.resident_id && resIdMap[s.resident_id])
                     ? resIdMap[s.resident_id] : '';
-                // 2. fallback: ใช้ submitted_by_user_id (กรณีสลิปเก่าไม่มี resident_id)
+                // 2. fallback: ใช้ submitted_by_user_id เฉพาะกรณีที่ user นั้นเป็นผู้พักของบ้านนี้จริง
+                // (ป้องกันกรณีแอดมินกด "ชำระแทน" แล้วชื่อแอดมินไปแสดงแทนชื่อผู้พักที่แท้จริง)
                 if (!slipName && s.submitted_by_user_id && userIdNameMap[s.submitted_by_user_id]) {
-                    slipName = userIdNameMap[s.submitted_by_user_id];
+                    if (resHouseUserSet[hn] && resHouseUserSet[hn][s.submitted_by_user_id]) {
+                        slipName = userIdNameMap[s.submitted_by_user_id];
+                    }
                 }
                 // 3. fallback สุดท้าย: ดูจาก house_number (สลิปเก่าที่ไม่มี user_id)
                 if (!slipName) {
