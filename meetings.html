@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>??????????????? | HOME PPK 2026</title>
+    <title>บันทึกการประชุม | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
     <style>
         :root {
@@ -57,94 +57,94 @@
 <body>
 <div id="ppkNav"></div>
 <div class="page-container">
-    <button class="btn btn-outline btn-sm" onclick="history.back()" style="margin-bottom:1rem;">? ????</button>
+    <button class="btn btn-outline btn-sm" onclick="history.back()" style="margin-bottom:1rem;">← กลับ</button>
     <div class="page-header">
-        <h2>?? ???????????????</h2>
-        <p>???????????????????????????????????????????????</p>
+        <h2>📝 บันทึกการประชุม</h2>
+        <p>บันทึกมติและรายงานการประชุมคณะกรรมการบ้านพักครู</p>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('create', this)">?? ???????????????</button>
-        <button class="tab-btn" onclick="switchTab('list', this)">?? ????????????</button>
+        <button class="tab-btn active" onclick="switchTab('create', this)">✏️ บันทึกการประชุม</button>
+        <button class="tab-btn" onclick="switchTab('list', this)">📋 รายการประชุม</button>
     </div>
 
-    <!-- Tab: ?????? -->
+    <!-- Tab: บันทึก -->
     <div id="tab-create" class="tab-panel active">
         <div class="form-card">
             <input type="hidden" id="editMeetingId">
             <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
                 <div class="form-group" style="grid-column:1/-1;">
-                    <label for="mtgTitle">????????????? <span style="color:#ef4444;">*</span></label>
-                    <input type="text" id="mtgTitle" placeholder="???? ????????????????????????????? ???????? 1/2569">
+                    <label for="mtgTitle">ชื่อการประชุม <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="mtgTitle" placeholder="เช่น การประชุมคณะกรรมการบ้านพักครู ครั้งที่ 1/2569">
                 </div>
                 <div class="form-group">
-                    <label for="mtgDate">???????????? <span style="color:#ef4444;">*</span></label>
+                    <label for="mtgDate">วันที่ประชุม <span style="color:#ef4444;">*</span></label>
                     <input type="datetime-local" id="mtgDate">
                 </div>
                 <div class="form-group">
-                    <label for="mtgVenue">?????????????</label>
-                    <input type="text" id="mtgVenue" placeholder="???? ??????????????????????????????">
+                    <label for="mtgVenue">สถานที่ประชุม</label>
+                    <input type="text" id="mtgVenue" placeholder="เช่น ห้องประชุมโรงเรียนพะเยาพิทยาคม">
                 </div>
                 <div class="form-group" style="grid-column:1/-1;">
-                    <label for="mtgAgenda">????????????????????</label>
-                    <textarea id="mtgAgenda" placeholder="????????????????? (??? 1, ??? 2, ...)"></textarea>
+                    <label for="mtgAgenda">ระเบียบวาระการประชุม</label>
+                    <textarea id="mtgAgenda" placeholder="ระบุวาระการประชุม (ข้อ 1, ข้อ 2, ...)"></textarea>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>????????????????????????</label>
+                <label>รายชื่อผู้เข้าร่วมประชุม</label>
                 <div id="attendeeList" style="margin-bottom:0.5rem;"></div>
                 <div style="display:flex;gap:0.5rem;">
-                    <input type="text" id="attendeeName" placeholder="????-???????" style="flex:2;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;">
-                    <input type="text" id="attendeeRole" placeholder="???????/?????" style="flex:1;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;">
-                    <button class="btn btn-outline btn-sm" onclick="addAttendee()">+ ?????</button>
+                    <input type="text" id="attendeeName" placeholder="ชื่อ-นามสกุล" style="flex:2;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;">
+                    <input type="text" id="attendeeRole" placeholder="ตำแหน่ง/บทบาท" style="flex:1;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;">
+                    <button class="btn btn-outline btn-sm" onclick="addAttendee()">+ เพิ่ม</button>
                 </div>
                 <label style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:400;">
-                    <input type="checkbox" id="mtgQuorum"> ?????????????
+                    <input type="checkbox" id="mtgQuorum"> ครบองค์ประชุม
                 </label>
             </div>
 
             <div class="form-group">
-                <label>????????????</label>
+                <label>มติที่ประชุม</label>
                 <div id="resolutionList" style="margin-bottom:0.5rem;"></div>
-                <button class="btn btn-outline btn-sm" onclick="addResolution()">+ ????????</button>
+                <button class="btn btn-outline btn-sm" onclick="addResolution()">+ เพิ่มมติ</button>
             </div>
 
             <div class="form-group">
-                <label for="mtgMinutes">????????????????????????? (???????????????)</label>
-                <textarea id="mtgMinutes" rows="5" placeholder="??????????????????????..."></textarea>
+                <label for="mtgMinutes">บันทึกรายละเอียดการประชุม (รายงานการประชุม)</label>
+                <textarea id="mtgMinutes" rows="5" placeholder="บันทึกเนื้อหาการประชุม..."></textarea>
             </div>
 
             <div class="form-group">
-                <label for="mtgStatus">?????</label>
+                <label for="mtgStatus">สถานะ</label>
                 <select id="mtgStatus">
-                    <option value="draft">????</option>
-                    <option value="approved">???????????</option>
-                    <option value="published">???????</option>
+                    <option value="draft">ร่าง</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="published">เผยแพร่</option>
                 </select>
             </div>
 
             <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-                <button class="btn btn-primary" onclick="saveMeeting()" id="saveMtgBtn">?? ???????????????</button>
-                <button class="btn btn-outline" onclick="resetMeetingForm()">??? ????????????</button>
-                <button class="btn btn-outline" onclick="printMeeting()">??? ???????????</button>
+                <button class="btn btn-primary" onclick="saveMeeting()" id="saveMtgBtn">💾 บันทึกการประชุม</button>
+                <button class="btn btn-outline" onclick="resetMeetingForm()">🗑️ ล้างแบบฟอร์ม</button>
+                <button class="btn btn-outline" onclick="printMeeting()">🖨️ พิมพ์รายงาน</button>
             </div>
         </div>
     </div>
 
-    <!-- Tab: ?????? -->
+    <!-- Tab: รายการ -->
     <div id="tab-list" class="tab-panel">
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
-            <input type="search" id="mtgSearch" placeholder="?? ??????????????????..." oninput="renderMeetingList()" style="flex:1;min-width:180px;padding:0.4rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
+            <input type="search" id="mtgSearch" placeholder="🔍 ค้นหาชื่อการประชุม..." oninput="renderMeetingList()" style="flex:1;min-width:180px;padding:0.4rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
             <select id="mtgStatusFilter" onchange="renderMeetingList()" style="padding:0.4rem;border:1.5px solid var(--border);border-radius:8px;font-family:'Kanit',sans-serif;">
-                <option value="">????????</option>
-                <option value="draft">????</option>
-                <option value="approved">???????????</option>
-                <option value="published">???????</option>
+                <option value="">ทุกสถานะ</option>
+                <option value="draft">ร่าง</option>
+                <option value="approved">อนุมัติแล้ว</option>
+                <option value="published">เผยแพร่</option>
             </select>
-            <button class="btn btn-outline btn-sm" onclick="loadMeetings()">?? ????????</button>
+            <button class="btn btn-outline btn-sm" onclick="loadMeetings()">🔄 โหลดใหม่</button>
         </div>
-        <div id="meetingListContainer"><div class="empty-state">? ?????????...</div></div>
+        <div id="meetingListContainer"><div class="empty-state">⏳ กำลังโหลด...</div></div>
     </div>
 </div>
 
@@ -156,7 +156,7 @@ var _resolutions = [];
 window.onload = async function() {
     var user = await checkSession(true);
     if (!user || (user.role !== 'admin' && user.role !== 'head')) {
-        if (typeof ppkAlert === 'function') ppkAlert('????????????????????????????');
+        if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         window.location.replace('dashboard.html');
         return;
     }
@@ -171,7 +171,7 @@ window.onload = async function() {
 function addAttendee() {
     var name = document.getElementById('attendeeName').value.trim();
     var role = document.getElementById('attendeeRole').value.trim();
-    if (!name) { ppkToast('?????????????', 'warning'); return; }
+    if (!name) { ppkToast('กรุณาระบุชื่อ', 'warning'); return; }
     _attendees.push({ name: name, role: role });
     document.getElementById('attendeeName').value = '';
     document.getElementById('attendeeRole').value = '';
@@ -184,7 +184,7 @@ function renderAttendees() {
     document.getElementById('attendeeList').innerHTML = _attendees.map(function(a, i) {
         return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">' +
             '<span style="flex:1;font-size:0.9rem;">' + _e(a.name) + (a.role ? ' <span style="color:#6b7280;">(' + _e(a.role) + ')</span>' : '') + '</span>' +
-            '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;padding:0.1rem 0.5rem;" onclick="removeAttendee(' + i + ')">?</button></div>';
+            '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;padding:0.1rem 0.5rem;" onclick="removeAttendee(' + i + ')">✕</button></div>';
     }).join('');
 }
 
@@ -200,19 +200,19 @@ function removeResolution(i) { _resolutions.splice(i, 1); renderResolutions(); }
 function renderResolutions() {
     document.getElementById('resolutionList').innerHTML = _resolutions.map(function(r, i) {
         return '<div class="resolution-row">' +
-            '<span style="font-size:0.82rem;color:#6b7280;white-space:nowrap;">?????? ' + (i + 1) + '</span>' +
-            '<input class="res-input" type="text" value="' + _e(r.text) + '" placeholder="???????..." oninput="_resolutions[' + i + '].text = this.value">' +
-            '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;padding:0.1rem 0.5rem;" onclick="removeResolution(' + i + ')">?</button></div>';
+            '<span style="font-size:0.82rem;color:#6b7280;white-space:nowrap;">ข้อที่ ' + (i + 1) + '</span>' +
+            '<input class="res-input" type="text" value="' + _e(r.text) + '" placeholder="ระบุมติ..." oninput="_resolutions[' + i + '].text = this.value">' +
+            '<button class="btn btn-sm" style="background:#fef2f2;color:#ef4444;padding:0.1rem 0.5rem;" onclick="removeResolution(' + i + ')">✕</button></div>';
     }).join('');
 }
 
 async function saveMeeting() {
     var title = document.getElementById('mtgTitle').value.trim();
     var mtgDate = document.getElementById('mtgDate').value;
-    if (!title) { ppkToast('??????????????????????', 'warning'); return; }
-    if (!mtgDate) { ppkToast('?????????????????????', 'warning'); return; }
+    if (!title) { ppkToast('กรุณาระบุชื่อการประชุม', 'warning'); return; }
+    if (!mtgDate) { ppkToast('กรุณาระบุวันที่ประชุม', 'warning'); return; }
     var btn = document.getElementById('saveMtgBtn');
-    btn.disabled = true; btn.textContent = '? ???????????...';
+    btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
 
     var editId = document.getElementById('editMeetingId').value;
     var payload = {
@@ -235,13 +235,13 @@ async function saveMeeting() {
         payload.createdBy = window._currentUser && window._currentUser.id;
         r = await callBackend('createMeeting', payload);
     }
-    btn.disabled = false; btn.textContent = '?? ???????????????';
+    btn.disabled = false; btn.textContent = '💾 บันทึกการประชุม';
     if (r && r.success) {
-        ppkToast((editId ? '??????' : '??????') + '??????????????????', 'success');
+        ppkToast((editId ? 'อัปเดต' : 'บันทึก') + 'การประชุมเรียบร้อย', 'success');
         resetMeetingForm();
         loadMeetings();
     } else {
-        ppkToast('??????????????: ' + ((r && r.error) || ''), 'error');
+        ppkToast('เกิดข้อผิดพลาด: ' + ((r && r.error) || ''), 'error');
     }
 }
 
@@ -274,7 +274,7 @@ function editMeeting(m) {
 }
 
 function printMeeting() {
-    var title    = document.getElementById('mtgTitle').value || '???????????????';
+    var title    = document.getElementById('mtgTitle').value || 'รายงานการประชุม';
     var date     = document.getElementById('mtgDate').value;
     var venue    = document.getElementById('mtgVenue').value;
     var agenda   = document.getElementById('mtgAgenda').value;
@@ -290,19 +290,19 @@ function printMeeting() {
         '<style>body{font-family:sans-serif;margin:2.5rem;}h1{font-size:1.3rem;text-align:center;}ul{padding-left:1.5rem;}pre{white-space:pre-wrap;font-family:inherit;}</style>' +
         '</head><body>' +
         '<h1>' + _e(title) + '</h1>' +
-        (date ? '<p><strong>??????:</strong> ' + _e(new Date(date).toLocaleDateString('th-TH')) + '</p>' : '') +
-        (venue ? '<p><strong>???????:</strong> ' + _e(venue) + '</p>' : '') +
-        (attHTML ? '<h3>?????????????????</h3><ul>' + attHTML + '</ul>' : '') +
-        (agenda ? '<h3>???????????</h3><pre>' + _e(agenda) + '</pre>' : '') +
-        (minutes ? '<h3>???????????????????</h3><pre>' + _e(minutes) + '</pre>' : '') +
-        (resHTML ? '<h3>????????????</h3><ol>' + resHTML + '</ol>' : '') +
+        (date ? '<p><strong>วันที่:</strong> ' + _e(new Date(date).toLocaleDateString('th-TH')) + '</p>' : '') +
+        (venue ? '<p><strong>สถานที่:</strong> ' + _e(venue) + '</p>' : '') +
+        (attHTML ? '<h3>ผู้เข้าร่วมประชุม</h3><ul>' + attHTML + '</ul>' : '') +
+        (agenda ? '<h3>ระเบียบวาระ</h3><pre>' + _e(agenda) + '</pre>' : '') +
+        (minutes ? '<h3>รายละเอียดการประชุม</h3><pre>' + _e(minutes) + '</pre>' : '') +
+        (resHTML ? '<h3>มติที่ประชุม</h3><ol>' + resHTML + '</ol>' : '') +
         '</body></html>');
     win.document.close();
     win.print();
 }
 
 async function loadMeetings() {
-    document.getElementById('meetingListContainer').innerHTML = '<div class="empty-state">? ?????????...</div>';
+    document.getElementById('meetingListContainer').innerHTML = '<div class="empty-state">⏳ กำลังโหลด...</div>';
     var r = await callBackend('getMeetings', {});
     _meetings = (r && r.meetings) || [];
     renderMeetingList();
@@ -317,8 +317,8 @@ function renderMeetingList() {
         return true;
     });
     var el = document.getElementById('meetingListContainer');
-    if (!list.length) { el.innerHTML = '<div class="empty-state">???????????</div>'; return; }
-    var statusLabels = { draft:'????', approved:'???????????', published:'???????' };
+    if (!list.length) { el.innerHTML = '<div class="empty-state">ไม่พบรายการ</div>'; return; }
+    var statusLabels = { draft:'ร่าง', approved:'อนุมัติแล้ว', published:'เผยแพร่' };
     var statusClasses = { draft:'badge-draft', approved:'badge-approved', published:'badge-published' };
     el.innerHTML = list.map(function(m) {
         var stLabel = statusLabels[m.status] || m.status;
@@ -328,28 +328,28 @@ function renderMeetingList() {
             '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">' +
             '<span class="status-badge ' + stClass + '">' + stLabel + '</span>' +
             '<strong>' + _e(m.title) + '</strong></div>' +
-            '<div style="color:#6b7280;font-size:0.85rem;margin-top:0.3rem;">?? ' + formatDate(m.meeting_date) +
-            (m.venue ? ' &nbsp;?? ' + _e(m.venue) : '') +
-            ' &nbsp;?? ' + attendeeCount + ' ??</div>' +
+            '<div style="color:#6b7280;font-size:0.85rem;margin-top:0.3rem;">📅 ' + formatDate(m.meeting_date) +
+            (m.venue ? ' &nbsp;📍 ' + _e(m.venue) : '') +
+            ' &nbsp;👥 ' + attendeeCount + ' คน</div>' +
             '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">' +
-            '<button class="btn btn-outline btn-sm" onclick="editMeeting(' + JSON.stringify(m).replace(/"/g, '&quot;') + ')">?? ?????</button>' +
-            '<button class="btn btn-outline btn-sm" onclick="printMeetingById(\'' + m.id + '\')">??? ?????</button>' +
-            (m.status === 'draft' ? '<button class="btn btn-success btn-sm" onclick="approveMtg(\'' + m.id + '\')">? ???????</button>' : '') +
+            '<button class="btn btn-outline btn-sm" onclick="editMeeting(' + JSON.stringify(m).replace(/"/g, '&quot;') + ')">✏️ แก้ไข</button>' +
+            '<button class="btn btn-outline btn-sm" onclick="printMeetingById(\'' + m.id + '\')">🖨️ พิมพ์</button>' +
+            (m.status === 'draft' ? '<button class="btn btn-success btn-sm" onclick="approveMtg(\'' + m.id + '\')">✅ อนุมัติ</button>' : '') +
             '</div></div>';
     }).join('');
 }
 
 async function approveMtg(id) {
     if (!window._currentUser) return;
-    if (!await ppkConfirm('??????????????????????????', { okText: '???????' })) return;
+    if (!await ppkConfirm('อนุมัติบันทึกการประชุมนี้?', { okText: 'อนุมัติ' })) return;
     var r = await callBackend('approveMeeting', { id: id, approvedBy: window._currentUser.id });
-    if (r && r.success) { ppkToast('???????????', 'success'); loadMeetings(); }
-    else ppkToast('??????????????', 'error');
+    if (r && r.success) { ppkToast('อนุมัติแล้ว', 'success'); loadMeetings(); }
+    else ppkToast('เกิดข้อผิดพลาด', 'error');
 }
 
 async function printMeetingById(id) {
     var r = await callBackend('getMeetingById', { id: id });
-    if (!r || !r.meeting) { ppkToast('???????????', 'error'); return; }
+    if (!r || !r.meeting) { ppkToast('ไม่พบข้อมูล', 'error'); return; }
     var m = r.meeting;
     var resHTML = (m.resolutions || []).filter(function(r) { return r.text; }).map(function(r) { return '<li>' + _e(r.text) + '</li>'; }).join('');
     var attHTML = (m.attendees || []).map(function(a) { return '<li>' + _e(a.name) + (a.role ? ' (' + _e(a.role) + ')' : '') + '</li>'; }).join('');
@@ -357,12 +357,12 @@ async function printMeetingById(id) {
     win.document.write('<html><head><meta charset="UTF-8"><title>' + _e(m.title) + '</title>' +
         '<style>body{font-family:sans-serif;margin:2.5rem;}h1{font-size:1.3rem;text-align:center;}pre{white-space:pre-wrap;font-family:inherit;}</style>' +
         '</head><body><h1>' + _e(m.title) + '</h1>' +
-        (m.meeting_date ? '<p><strong>??????:</strong> ' + new Date(m.meeting_date).toLocaleDateString('th-TH', {dateStyle:'full'}) + '</p>' : '') +
-        (m.venue ? '<p><strong>???????:</strong> ' + _e(m.venue) + '</p>' : '') +
-        (attHTML ? '<h3>?????????????????</h3><ul>' + attHTML + '</ul>' : '') +
-        (m.agenda ? '<h3>???????????</h3><pre>' + _e(m.agenda) + '</pre>' : '') +
-        (m.minutes ? '<h3>???????????????????</h3><pre>' + _e(m.minutes) + '</pre>' : '') +
-        (resHTML ? '<h3>????????????</h3><ol>' + resHTML + '</ol>' : '') +
+        (m.meeting_date ? '<p><strong>วันที่:</strong> ' + new Date(m.meeting_date).toLocaleDateString('th-TH', {dateStyle:'full'}) + '</p>' : '') +
+        (m.venue ? '<p><strong>สถานที่:</strong> ' + _e(m.venue) + '</p>' : '') +
+        (attHTML ? '<h3>ผู้เข้าร่วมประชุม</h3><ul>' + attHTML + '</ul>' : '') +
+        (m.agenda ? '<h3>ระเบียบวาระ</h3><pre>' + _e(m.agenda) + '</pre>' : '') +
+        (m.minutes ? '<h3>รายละเอียดการประชุม</h3><pre>' + _e(m.minutes) + '</pre>' : '') +
+        (resHTML ? '<h3>มติที่ประชุม</h3><ol>' + resHTML + '</ol>' : '') +
         '</body></html>');
     win.document.close();
     win.print();

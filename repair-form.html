@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>?????????????????? | HOME PPK 2026</title>
+    <title>แบบรายงานขอซ่อมแซม | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
     <style>
         body {
@@ -97,119 +97,119 @@
 </head>
 <body>
     <div class="form-container">
-        <h2>?????????????????????????????</h2>
+        <h2>แบบฟอร์มแจ้งซ่อมแซมบำรุงรักษา</h2>
 
         <form id="repairForm" action="#" method="post" enctype="multipart/form-data">
-            <!-- ??????? 1: ????????????????? -->
+            <!-- ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม -->
             <div class="form-section">
-                <h3>??????? 1: ?????????????????</h3>
+                <h3>ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม</h3>
                 <div class="info-box">
-                    <p><strong>????????:</strong> ?????????????????????????????????????????????????????</p>
+                    <p><strong>หมายเหตุ:</strong> ข้อมูลผู้แจ้งซ่อมจะถูกดึงมาจากบัญชีผู้ใช้โดยอัตโนมัติ</p>
                 </div>
                 <div class="form-group">
-                    <label>????????</label>
+                    <label>คำนำหน้า</label>
                     <select name="prefix" id="prefix">
-                        <option value="???">???</option>
-                        <option value="???">???</option>
-                        <option value="??????">??????</option>
+                        <option value="นาย">นาย</option>
+                        <option value="นาง">นาง</option>
+                        <option value="นางสาว">นางสาว</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>????-???????</label>
+                    <label>ชื่อ-นามสกุล</label>
                     <input type="text" name="fullname" id="fullname" required>
                 </div>
                 <div class="form-group">
-                    <label>?????????????????</label>
-                    <input type="text" name="house_number" id="house_number" required placeholder="???? ????????????????? 1">
+                    <label>หมายเลขบ้านพักครู</label>
+                    <input type="text" name="house_number" id="house_number" required placeholder="เช่น บ้านพักครูหลังที่ 1">
                 </div>
                 <div class="form-group">
-                    <label>???????????????</label>
+                    <label>หมายเลขโทรศัพท์</label>
                     <input type="tel" name="phone" id="phone" required>
                 </div>
                 <div class="form-group">
-                    <label>????????????????????</label>
+                    <label>กลุ่มสาระการเรียนรู้</label>
                     <select name="subject_group" id="subject_group">
-                        <option value="???????">???????</option>
-                        <option value="??????????">??????????</option>
-                        <option value="???????????????????????">???????????????????????</option>
-                        <option value="?????????? ????????????????">?????????? ????????????????</option>
-                        <option value="??????????????????">??????????????????</option>
-                        <option value="?????">?????</option>
-                        <option value="???????????">???????????</option>
-                        <option value="??????????????">??????????????</option>
-                        <option value="???????????">???????????</option>
-                        <option value="???????">???????</option>
+                        <option value="ภาษาไทย">ภาษาไทย</option>
+                        <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                        <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                        <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                        <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                        <option value="ศิลปะ">ศิลปะ</option>
+                        <option value="การงานอาชีพ">การงานอาชีพ</option>
+                        <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                        <option value="เจ้าหน้าที่">เจ้าหน้าที่</option>
+                        <option value="ลูกจ้าง">ลูกจ้าง</option>
                     </select>
                 </div>
             </div>
 
-            <!-- ??????? 2: ????????????????????/?????????? -->
+            <!-- ส่วนที่ 2: รายละเอียดงานซ่อมแซม/บำรุงรักษา -->
             <div class="form-section">
-                <h3>??????? 2: ????????????????????/??????????</h3>
+                <h3>ส่วนที่ 2: รายละเอียดงานซ่อมแซม/บำรุงรักษา</h3>
                 <div class="form-group">
-                    <label>????????? (?????????)</label>
+                    <label>ประเภทงาน (โปรดเลือก)</label>
                     <div class="checkbox-group">
-                        <label><input type="checkbox" name="work_type" value="electrical"> ?????????</label>
-                        <label><input type="checkbox" name="work_type" value="plumbing"> ????????????</label>
-                        <label><input type="checkbox" name="work_type" value="structure"> ?????????????? (???? ?????? ???)</label>
-                        <label><input type="checkbox" name="work_type" value="fixtures"> ????????????? (????? ???????? ?????? ???)</label>
-                        <label><input type="checkbox" name="work_type" value="utilities"> ???????????????????????</label>
-                        <label><input type="checkbox" name="work_type" value="other" onchange="toggleOtherWorkType()"> ????? (????????)</label>
-                        <input type="text" name="other_work_type" id="other_work_type" placeholder="??????????????????????" style="margin-left: 1.5rem; margin-top: 0.3rem;" disabled>
+                        <label><input type="checkbox" name="work_type" value="electrical"> ระบบไฟฟ้า</label>
+                        <label><input type="checkbox" name="work_type" value="plumbing"> ระบบน้ำประปา</label>
+                        <label><input type="checkbox" name="work_type" value="structure"> โครงสร้างอาคาร (ผนัง หลังคา ฯลฯ)</label>
+                        <label><input type="checkbox" name="work_type" value="fixtures"> อุปกรณ์ตกแต่ง (ประตู หน้าต่าง ลูกบิด ฯลฯ)</label>
+                        <label><input type="checkbox" name="work_type" value="utilities"> ระบบสาธารณูปโภคส่วนกลาง</label>
+                        <label><input type="checkbox" name="work_type" value="other" onchange="toggleOtherWorkType()"> อื่นๆ (โปรดระบุ)</label>
+                        <input type="text" name="other_work_type" id="other_work_type" placeholder="โปรดระบุประเภทงานอื่นๆ" style="margin-left: 1.5rem; margin-top: 0.3rem;" disabled>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>??????????????? / ???????????</label>
-                    <textarea name="problem_detail" rows="5" required placeholder="?????????????????????????????????????????????????"></textarea>
+                    <label>รายละเอียดปัญหา / ความเสียหาย</label>
+                    <textarea name="problem_detail" rows="5" required placeholder="กรุณาอธิบายรายละเอียดของปัญหาหรือความเสียหายที่พบ"></textarea>
                 </div>
             </div>
 
-            <!-- ??????? 3: ?????????????????? -->
+            <!-- ส่วนที่ 3: ความเร่งด่วนของงาน -->
             <div class="form-section">
-                <h3>??????? 3: ??????????????????</h3>
+                <h3>ส่วนที่ 3: ความเร่งด่วนของงาน</h3>
                 <div class="checkbox-group">
-                    <label><input type="radio" name="urgency" value="urgent_high" required> <strong style="color: #dc2626;">???????</strong> (?????????????????)</label>
-                    <label><input type="radio" name="urgency" value="urgent"> <strong style="color: #f59e0b;">????</strong> (?????????????????)</label>
-                    <label><input type="radio" name="urgency" value="normal"> <strong style="color: #10b981;">????</strong> (????????????????????)</label>
+                    <label><input type="radio" name="urgency" value="urgent_high" required> <strong style="color: #dc2626;">ด่วนมาก</strong> (ส่งผลกระทบร้ายแรง)</label>
+                    <label><input type="radio" name="urgency" value="urgent"> <strong style="color: #f59e0b;">ด่วน</strong> (ส่งผลกระทบบางส่วน)</label>
+                    <label><input type="radio" name="urgency" value="normal"> <strong style="color: #10b981;">ปกติ</strong> (ไม่มีผลกระทบเร่งด่วน)</label>
                 </div>
             </div>
 
-            <!-- ??????? 4: ??????????????????????? -->
+            <!-- ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย -->
             <div class="form-section">
-                <h3>??????? 4: ???????????????????????</h3>
+                <h3>ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย</h3>
                 <div class="checkbox-group">
-                    <label><input type="radio" name="cost_responsibility" value="self" required onchange="toggleCostEstimate()"> ?????????????????????????????????</label>
-                    <label><input type="radio" name="cost_responsibility" value="school" onchange="toggleCostEstimate()"> ??????????????????????????????</label>
+                    <label><input type="radio" name="cost_responsibility" value="self" required onchange="toggleCostEstimate()"> ผู้พักอาศัยรับผิดชอบค่าใช้จ่ายเอง</label>
+                    <label><input type="radio" name="cost_responsibility" value="school" onchange="toggleCostEstimate()"> ขอความอนุเคราะห์จากทางโรงเรียน</label>
                 </div>
                 <div class="form-group" id="cost-estimate-group" style="margin-top: 1rem;">
-                    <label>??????????????????? (???????????????????)</label>
+                    <label>ค่าใช้จ่ายโดยประมาณ (รายการซ่อมพร้อมราคา)</label>
                     <div id="cost-items-container">
-                        <!-- ???????????????????????????????? -->
+                        <!-- รายการค่าใช้จ่ายจะถูกเพิ่มที่นี่ -->
                     </div>
-                    <button type="button" id="add-cost-btn" onclick="addCostItem()" style="background-color: #4f8cff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 0.5rem;">???????????</button>
+                    <button type="button" id="add-cost-btn" onclick="addCostItem()" style="background-color: #4f8cff; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 0.5rem;">เพิ่มรายการ</button>
                     <div class="form-group" style="margin-top: 1rem;">
-                        <label>???????????????????? (???)</label>
+                        <label>รวมค่าใช้จ่ายทั้งหมด (บาท)</label>
                         <input type="text" name="total_cost" id="total_cost" readonly style="background-color: #f0f7ff; font-weight: bold;">
                     </div>
                 </div>
             </div>
 
-            <!-- ??????? 5: ??????? -->
+            <!-- ส่วนที่ 5: ข้อตกลง -->
             <div class="form-section">
-                <h3>??????? 5: ???????</h3>
-                <p>??????????????????? ????????????????????????????????????????? ????????????????????????????????????? ????? ???? ?????????????????? ????????????????????</p>
+                <h3>ส่วนที่ 5: ข้อตกลง</h3>
+                <p>ข้าพเจ้าขอรับรองว่า ข้อมูลที่แจ้งข้างต้นเป็นความจริงทุกประการ และยินยอมปฏิบัติตามระเบียบงานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม</p>
                 <div class="checkbox-group">
-                    <label><input type="checkbox" name="agreement" required> ????????????????????????????</label>
+                    <label><input type="checkbox" name="agreement" required> ข้าพเจ้ายอมรับข้อตกลงข้างต้น</label>
                 </div>
             </div>
 
-            <!-- ?????????????????/?????? -->
+            <!-- ช่องแนบไฟล์เอกสาร/รูปภาพ -->
             <div class="form-section">
-                <label>???????????????????????? ??????????????????????? (?????)</label>
+                <label>แนบไฟล์รูปภาพความเสียหาย หรือเอกสารที่เกี่ยวข้อง (ถ้ามี)</label>
                 <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 1rem; text-align: center; background-color: #f9f9f9;">
                     <input type="file" name="attachments[]" id="file-input" multiple accept="image/*,.pdf" style="display: none;">
-                    <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem;">?????????</button>
-                    <p style="margin-top: 0.5rem; color: #666;">?????????????????? ??????????????????????</p>
+                    <button type="button" onclick="document.getElementById('file-input').click()" style="background: linear-gradient(to right, #4f8cff, #1e40af); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 1rem;">เลือกไฟล์</button>
+                    <p style="margin-top: 0.5rem; color: #666;">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
                     <div id="file-list" style="margin-top: 1rem; text-align: left;"></div>
                 </div>
             </div>
@@ -230,15 +230,15 @@
             </script>
 
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                <button type="button" class="back-btn" onclick="window.navigate('?page=form')" style="background: linear-gradient(to right, #d1d5db, #9ca3af); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">????????</button>
-                <button type="button" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">???????????</button>
-                <button type="submit" class="submit-btn">?????????</button>
+                <button type="button" class="back-btn" onclick="window.navigate('?page=form')" style="background: linear-gradient(to right, #d1d5db, #9ca3af); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">ย้อนกลับ</button>
+                <button type="button" onclick="printForm()" style="background: linear-gradient(to right, #10b981, #059669); border-radius: 12px; font-size: 1.2rem; font-weight: bold; color: white; padding: 0.5rem 1rem; border: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">พิมพ์คำร้อง</button>
+                <button type="submit" class="submit-btn">ส่งคำร้อง</button>
             </div>
         </form>
 
         <div style="text-align:center; margin-top:1.5rem; font-size:0.95rem; color:#888;">
-            ????????????????? ???????? ????????<br>
-            ??????????? ????? ???? ?????????????????? ????????????????????
+            ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+            งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
         </div>
     </div>
     <script src="supabase/config.js?v=20260416C"></script>
@@ -268,24 +268,24 @@
         const totalCost = document.getElementById('total_cost');
 
         if (selfRadio.checked) {
-            // ??????????????????????????????????????????????
+            // ล็อคช่องค่าใช้จ่ายเมื่อผู้พักอาศัยรับผิดชอบเอง
             costGroup.style.opacity = '0.5';
             addCostBtn.disabled = true;
             addCostBtn.style.backgroundColor = '#9ca3af';
             addCostBtn.style.cursor = 'not-allowed';
             costContainer.innerHTML = '';
             totalCost.value = '';
-            // ???????????? input ????????????????
+            // ปิดการใช้งาน input ทั้งหมดในส่วนนี้
             costContainer.querySelectorAll('input').forEach(input => {
                 input.disabled = true;
             });
         } else {
-            // ?????????????????????????????????????????????????????
+            // ปลดล็อคช่องค่าใช้จ่ายเมื่อขอความอนุเคราะห์จากโรงเรียน
             costGroup.style.opacity = '1';
             addCostBtn.disabled = false;
             addCostBtn.style.backgroundColor = '#4f8cff';
             addCostBtn.style.cursor = 'pointer';
-            // ????????????? input ????????????????
+            // เปิดการใช้งาน input ทั้งหมดในส่วนนี้
             costContainer.querySelectorAll('input').forEach(input => {
                 input.disabled = false;
             });
@@ -297,9 +297,9 @@
         const div = document.createElement('div');
         div.classList.add('cost-item');
         div.innerHTML = `
-            <input type="text" name="cost_item[]" placeholder="??????????" required style="flex: 2; min-width: 200px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;">
-            <input type="number" name="cost_price[]" placeholder="???? (???)" required style="width: 150px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;" onchange="calculateTotalCost()">
-            <button type="button" onclick="removeCostItem(this)" style="background-color: #e53e3e; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">??</button>
+            <input type="text" name="cost_item[]" placeholder="รายการซ่อม" required style="flex: 2; min-width: 200px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;">
+            <input type="number" name="cost_price[]" placeholder="ราคา (บาท)" required style="width: 150px; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem;" onchange="calculateTotalCost()">
+            <button type="button" onclick="removeCostItem(this)" style="background-color: #e53e3e; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">ลบ</button>
         `;
         container.appendChild(div);
     }
@@ -318,11 +318,11 @@
                 total += value;
             }
         });
-        document.getElementById('total_cost').value = total.toLocaleString('th-TH') + ' ???';
+        document.getElementById('total_cost').value = total.toLocaleString('th-TH') + ' บาท';
     }
 
     function printForm() {
-        // ????????????????????
+        // รวบรวมข้อมูลจากฟอร์ม
         const prefix = document.getElementById('prefix').value;
         const fullname = document.getElementById('fullname').value;
         const houseNumber = document.getElementById('house_number').value;
@@ -330,35 +330,35 @@
         const subjectGroup = document.getElementById('subject_group').value;
         const problemDetail = document.querySelector('textarea[name="problem_detail"]').value;
 
-        // ???????????????
+        // รวบรวมประเภทงาน
         const workTypes = [];
         document.querySelectorAll('input[name="work_type"]:checked').forEach(cb => {
             if (cb.value === 'other') {
                 const otherText = document.getElementById('other_work_type').value;
-                if (otherText) workTypes.push('?????: ' + otherText);
+                if (otherText) workTypes.push('อื่นๆ: ' + otherText);
             } else {
                 workTypes.push(cb.parentElement.textContent.trim());
             }
         });
 
-        // ????????????
+        // ความเร่งด่วน
         const urgencyRadio = document.querySelector('input[name="urgency"]:checked');
         let urgencyText = '';
         if (urgencyRadio) {
-            if (urgencyRadio.value === 'urgent_high') urgencyText = '??????? (?????????????????)';
-            else if (urgencyRadio.value === 'urgent') urgencyText = '???? (?????????????????)';
-            else urgencyText = '???? (????????????????????)';
+            if (urgencyRadio.value === 'urgent_high') urgencyText = 'ด่วนมาก (ส่งผลกระทบร้ายแรง)';
+            else if (urgencyRadio.value === 'urgent') urgencyText = 'ด่วน (ส่งผลกระทบบางส่วน)';
+            else urgencyText = 'ปกติ (ไม่มีผลกระทบเร่งด่วน)';
         }
 
-        // ???????????????????????
+        // ความรับผิดชอบค่าใช้จ่าย
         const costRadio = document.querySelector('input[name="cost_responsibility"]:checked');
         let costResponsibility = '';
         if (costRadio) {
-            if (costRadio.value === 'self') costResponsibility = '?????????????????????????????????';
-            else costResponsibility = '??????????????????????????????';
+            if (costRadio.value === 'self') costResponsibility = 'ผู้พักอาศัยรับผิดชอบค่าใช้จ่ายเอง';
+            else costResponsibility = 'ขอความอนุเคราะห์จากทางโรงเรียน';
         }
 
-        // ????????????????
+        // รายการค่าใช้จ่าย
         const costItems = document.querySelectorAll('input[name="cost_item[]"]');
         const costPrices = document.querySelectorAll('input[name="cost_price[]"]');
         let costHTML = '';
@@ -369,17 +369,17 @@
         }
         const totalCost = document.getElementById('total_cost').value;
 
-        // ??????????????
+        // วันที่ปัจจุบัน
         const today = new Date();
-        const thaiMonths = ['??????', '??????????', '??????', '??????', '???????', '????????', '???????', '???????', '???????', '??????', '?????????', '???????'];
+        const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         const dateStr = today.getDate() + ' ' + thaiMonths[today.getMonth()] + ' ' + (today.getFullYear() + 543);
 
-        // ???????????????????????????????
+        // สร้างหน้าพิมพ์ตามระเบียบสารบรรณ
         const printWindow = window.open('', '_blank');
-        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>?????????????????????????????</title>');
+        printWindow.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>แบบฟอร์มแจ้งซ่อมแซมบำรุงรักษา</title>');
         printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">');
         printWindow.document.write('<style>');
-        // ????????????????? A4 ?????????????????
+        // ตั้งค่าหน้ากระดาษ A4 ตามระเบียบสารบรรณ
         printWindow.document.write('@page { size: A4; margin: 2.5cm 2cm 2cm 3cm; }');
         printWindow.document.write('@media print { body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
         printWindow.document.write('* { box-sizing: border-box; }');
@@ -425,118 +425,118 @@
         printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
         printWindow.document.write('</head><body>');
         
-        // ????????? ?????????????
-        printWindow.document.write('<div class="memo-title">?????????????</div>');
+        // หัวเอกสาร บันทึกข้อความ
+        printWindow.document.write('<div class="memo-title">บันทึกข้อความ</div>');
         printWindow.document.write('<table class="memo-table">');
-        printWindow.document.write('<tr><td colspan="2"><b>??????????</b>&emsp;??????????? ????? ???? ??????????????????&emsp;????????????????????</td></tr>');
-        printWindow.document.write('<tr><td style="width:60%;"><b>???</b>&emsp;??./??.&nbsp;<span class="dotted-line-short"></span>/<span class="dotted-line-short"></span></td><td><b>??????</b>&emsp;' + dateStr + '</td></tr>');
-        printWindow.document.write('<tr><td colspan="2"><b>??????</b>&emsp;?????????????????????????????????????????????</td></tr>');
+        printWindow.document.write('<tr><td colspan="2"><b>ส่วนราชการ</b>&emsp;งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู&emsp;โรงเรียนพะเยาพิทยาคม</td></tr>');
+        printWindow.document.write('<tr><td style="width:60%;"><b>ที่</b>&emsp;พย./พก.&nbsp;<span class="dotted-line-short"></span>/<span class="dotted-line-short"></span></td><td><b>วันที่</b>&emsp;' + dateStr + '</td></tr>');
+        printWindow.document.write('<tr><td colspan="2"><b>เรื่อง</b>&emsp;ขอแจ้งซ่อมแซมบำรุงรักษาสิ่งก่อสร้างบ้านพักครู</td></tr>');
         printWindow.document.write('</table>');
         printWindow.document.write('<hr class="memo-divider">');
-        printWindow.document.write('<div class="salutation"><strong>?????</strong>&emsp;???????????????????????????????</div>');
+        printWindow.document.write('<div class="salutation"><strong>เรียน</strong>&emsp;ผู้อำนวยการโรงเรียนพะเยาพิทยาคม</div>');
         
-        // ????
-        printWindow.document.write('<p class="intro">???????? ' + prefix + fullname + ' ?????????? ????????????????????' + subjectGroup + ' ?????????????????????' + houseNumber + ' ????????????????????????/?????????? ??????????????????????????</p>');
+        // คำนำ
+        printWindow.document.write('<p class="intro">ข้าพเจ้า ' + prefix + fullname + ' ตำแหน่งครู กลุ่มสาระการเรียนรู้' + subjectGroup + ' ผู้พักอาศัยบ้านพักครู' + houseNumber + ' มีความประสงค์แจ้งซ่อมแซม/บำรุงรักษา โดยมีรายละเอียดดังต่อไปนี้</p>');
         
-        // ??????? 1: ?????????????????
+        // ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม
         printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">??????? 1: ?????????????????</div>');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 1: ข้อมูลผู้แจ้งซ่อม</div>');
         printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div>????-???????: ' + prefix + fullname + '</div>');
-        printWindow.document.write('<div>?????????????????: ' + houseNumber + '</div>');
-        printWindow.document.write('<div>???????????????: ' + phone + '</div>');
-        printWindow.document.write('<div>????????????????????: ' + subjectGroup + '</div>');
+        printWindow.document.write('<div>ชื่อ-นามสกุล: ' + prefix + fullname + '</div>');
+        printWindow.document.write('<div>หมายเลขบ้านพักครู: ' + houseNumber + '</div>');
+        printWindow.document.write('<div>หมายเลขโทรศัพท์: ' + phone + '</div>');
+        printWindow.document.write('<div>กลุ่มสาระการเรียนรู้: ' + subjectGroup + '</div>');
         printWindow.document.write('</div></div>');
         
-        // ??????? 2: ????????????????????
+        // ส่วนที่ 2: รายละเอียดงานซ่อมแซม
         printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">??????? 2: ????????????????????/??????????</div>');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 2: รายละเอียดงานซ่อมแซม/บำรุงรักษา</div>');
         printWindow.document.write('<div class="indent small-text">');
-        printWindow.document.write('<div><strong>?????????:</strong></div>');
+        printWindow.document.write('<div><strong>ประเภทงาน:</strong></div>');
         workTypes.forEach(wt => {
             printWindow.document.write('<div style="margin-left: 1cm;"><span class="checkbox">&#10003;</span> ' + wt + '</div>');
         });
-        printWindow.document.write('<div style="margin-top: 0.3cm;"><strong>??????????????? / ???????????:</strong></div>');
+        printWindow.document.write('<div style="margin-top: 0.3cm;"><strong>รายละเอียดปัญหา / ความเสียหาย:</strong></div>');
         printWindow.document.write('<div style="margin-left: 1cm;">' + problemDetail + '</div>');
         printWindow.document.write('</div></div>');
         
-        // ??????? 3: ????????????
+        // ส่วนที่ 3: ความเร่งด่วน
         printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">??????? 3: ??????????????????</div>');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 3: ความเร่งด่วนของงาน</div>');
         printWindow.document.write('<div class="indent small-text">');
         printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + urgencyText + '</div>');
         printWindow.document.write('</div></div>');
         
-        // ??????? 4: ???????????????????????
+        // ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย
         printWindow.document.write('<div class="section">');
-        printWindow.document.write('<div class="section-title">??????? 4: ???????????????????????</div>');
+        printWindow.document.write('<div class="section-title">ส่วนที่ 4: ความรับผิดชอบค่าใช้จ่าย</div>');
         printWindow.document.write('<div class="indent small-text">');
         printWindow.document.write('<div><span class="checkbox">&#10003;</span> ' + costResponsibility + '</div>');
         if (costHTML && costRadio && costRadio.value === 'school') {
-            printWindow.document.write('<div style="margin-top: 0.3cm;"><strong>?????????????????????????:</strong></div>');
-            printWindow.document.write('<table><thead><tr><th style="width: 50px;">?????</th><th>??????</th><th style="width: 120px;">???? (???)</th></tr></thead><tbody>' + costHTML + '</tbody></table>');
-            printWindow.document.write('<div style="text-align: right; font-weight: bold;">???????????: ' + totalCost + '</div>');
+            printWindow.document.write('<div style="margin-top: 0.3cm;"><strong>รายการค่าใช้จ่ายโดยประมาณ:</strong></div>');
+            printWindow.document.write('<table><thead><tr><th style="width: 50px;">ลำดับ</th><th>รายการ</th><th style="width: 120px;">ราคา (บาท)</th></tr></thead><tbody>' + costHTML + '</tbody></table>');
+            printWindow.document.write('<div style="text-align: right; font-weight: bold;">รวมทั้งสิ้น: ' + totalCost + '</div>');
         }
         printWindow.document.write('</div></div>');
         
-        // ??????????
+        // ช่องลงชื่อ
         printWindow.document.write('<div class="signature-section small-text">');
-        printWindow.document.write('<div class="signature-box"><div class="signature-line">??????<span class="dotted-line-sig"></span>???????????<br>(' + prefix + fullname + ')<br>?????? ' + dateStr + '</div></div>');
-        printWindow.document.write('<div class="signature-box"><div class="signature-line">??????<span class="dotted-line-sig"></span>????????????<br>(<span class="dotted-line-short"></span>)<br>??????<span class="dotted-line-date"></span></div></div>');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้แจ้งซ่อม<br>(' + prefix + fullname + ')<br>วันที่ ' + dateStr + '</div></div>');
+        printWindow.document.write('<div class="signature-box"><div class="signature-line">ลงชื่อ<span class="dotted-line-sig"></span>ผู้รับเรื่อง<br>(<span class="dotted-line-short"></span>)<br>วันที่<span class="dotted-line-date"></span></div></div>');
         printWindow.document.write('</div>');
         
-        // ???????????????????? admin settings
+        // อ่านชื่อผู้บริหารจาก admin settings
         var _sys = JSON.parse(localStorage.getItem('adminSettings_system') || '{}');
         var _headName = _sys.headOfPromotion || '';
         var _viceName = _sys.viceDirector || '';
         var _dirName = _sys.director || '';
 
-        // ????????????????????? (???? 3 ??????????????)
+        // ส่วนความเห็นผู้บริหาร (เป็น 3 กล่องเรียงลงมา)
         printWindow.document.write('<div class="approval-boxes">');
         
-        // ???????? 1: ???????????????????
+        // กล่องที่ 1: หัวหน้างานส่งเสริมฯ
         printWindow.document.write('<div class="approval-box">');
-        printWindow.document.write('<div class="approval-header">?????????????????????????? ????? ???? ??????????????????</div>');
+        printWindow.document.write('<div class="approval-header">ความเห็นหัวหน้างานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู</div>');
         printWindow.document.write('<div class="approval-content">');
-        printWindow.document.write('<div><span class="checkbox"></span> ??????? &nbsp;&nbsp; <span class="checkbox"></span> ??????????</div>');
-        printWindow.document.write('<div style="margin-top: 0.2cm;">????????: <span class="dotted-line-long"></span></div>');
+        printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
+        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
         printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
         printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">??????<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>???????<span class="dotted-line-short"></span><br>??????<span class="dotted-line-date"></span></div>');
+        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_headName || '<span class="dotted-line-short"></span>') + ')<br>ตำแหน่ง<span class="dotted-line-short"></span><br>วันที่<span class="dotted-line-date"></span></div>');
         printWindow.document.write('</div></div>');
         
-        // ???????? 2: ???????????????????????????????
+        // กล่องที่ 2: รองผู้อำนวยการกลุ่มบริหารทั่วไป
         printWindow.document.write('<div class="approval-box">');
-        printWindow.document.write('<div class="approval-header">???????????????????????????????????????</div>');
+        printWindow.document.write('<div class="approval-header">ความเห็นรองผู้อำนวยการกลุ่มบริหารทั่วไป</div>');
         printWindow.document.write('<div class="approval-content">');
-        printWindow.document.write('<div><span class="checkbox"></span> ?????????????? &nbsp;&nbsp; <span class="checkbox"></span> ?????????????????</div>');
-        printWindow.document.write('<div style="margin-top: 0.2cm;">????????: <span class="dotted-line-long"></span></div>');
+        printWindow.document.write('<div><span class="checkbox"></span> เห็นควรอนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่เห็นควรอนุมัติ</div>');
+        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
         printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
         printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">??????<span class="dotted-line-sig"></span><br>(' + (_viceName || '<span class="dotted-line-short"></span>') + ')<br>???????????????????????????????<br>??????<span class="dotted-line-date"></span></div>');
+        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_viceName || '<span class="dotted-line-short"></span>') + ')<br>รองผู้อำนวยการกลุ่มบริหารทั่วไป<br>วันที่<span class="dotted-line-date"></span></div>');
         printWindow.document.write('</div></div>');
         
-        // ???????? 3: ???????????
+        // กล่องที่ 3: ผู้อำนวยการ
         printWindow.document.write('<div class="approval-box">');
-        printWindow.document.write('<div class="approval-header">???????????????????</div>');
+        printWindow.document.write('<div class="approval-header">ความเห็นผู้อำนวยการ</div>');
         printWindow.document.write('<div class="approval-content">');
-        printWindow.document.write('<div><span class="checkbox"></span> ??????? &nbsp;&nbsp; <span class="checkbox"></span> ??????????</div>');
-        printWindow.document.write('<div style="margin-top: 0.2cm;">????????: <span class="dotted-line-long"></span></div>');
+        printWindow.document.write('<div><span class="checkbox"></span> อนุมัติ &nbsp;&nbsp; <span class="checkbox"></span> ไม่อนุมัติ</div>');
+        printWindow.document.write('<div style="margin-top: 0.2cm;">ความเห็น: <span class="dotted-line-long"></span></div>');
         printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
         printWindow.document.write('<div><span class="dotted-line-full"></span></div>');
-        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">??????<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>???????????????????????????????<br>??????<span class="dotted-line-date"></span></div>');
+        printWindow.document.write('<div style="text-align: right; margin-top: 0.3cm;">ลงชื่อ<span class="dotted-line-sig"></span><br>(' + (_dirName || '<span class="dotted-line-short"></span>') + ')<br>ผู้อำนวยการโรงเรียนพะเยาพิทยาคม<br>วันที่<span class="dotted-line-date"></span></div>');
         printWindow.document.write('</div></div>');
         
         printWindow.document.write('</div>');
 
-        // ?????????????
+        // ส่วนเอกสารแนบ
         const fileInput = document.getElementById('file-input');
         const files = fileInput.files;
         
         if (files.length > 0) {
             printWindow.document.write('<div style="page-break-before: always;"></div>');
             printWindow.document.write('<div class="header" style="margin-top: 1cm;">');
-            printWindow.document.write('<div class="header-title">??????/?????????????????????</div>');
+            printWindow.document.write('<div class="header-title">เอกสาร/รูปภาพแนบประกอบคำร้อง</div>');
             printWindow.document.write('</div>');
             
             let filePromises = [];
@@ -566,7 +566,7 @@
                 filePromises.push(promise);
             }
             
-            // ?????????????????????????
+            // รอให้อ่านไฟล์ทั้งหมดเสร็จ
             Promise.all(filePromises).then(async results => {
                 for (const result of results) {
                     if (result.isImage) {
@@ -574,12 +574,12 @@
                         printWindow.document.write('<img src="' + result.dataUrl + '" style="max-width: 100%; max-height: 25cm; display: block; margin: 0 auto;">');
                         printWindow.document.write('</div>');
                     } else if (result.isPDF) {
-                        // ???? PDF ???????????????????
+                        // แปลง PDF เป็นรูปภาพแต่ละหน้า
                         printWindow.document.write('<div id="pdf-container-' + result.index + '"></div>');
                     }
                 }
                 
-                // ??? HTML ???? ???????????????? PDF
+                // ปิด HTML ก่อน แล้วค่อยประมวลผล PDF
                 printWindow.document.write('<script>');
                 printWindow.document.write('pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";');
                 printWindow.document.write('async function renderPDFs() {');
@@ -642,12 +642,12 @@
     document.getElementById('repairForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const submitBtn = document.querySelector('.submit-btn');
-        submitBtn.disabled = true; submitBtn.textContent = '??????????????...';
+        submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
         try {
-            // ???????????????????????????
+            // ตรวจสอบความครบถ้วนของข้อมูล
             if (!document.querySelector('input[name="work_type"]:checked')) {
-                submitBtn.disabled = false; submitBtn.textContent = '?????????';
-                ppkAlert('??????????????????????????????????? 1 ??????', 'error');
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('กรุณาเลือกประเภทงานซ่อมแซมอย่างน้อย 1 รายการ', 'error');
                 return;
             }
             const workTypes = [];
@@ -674,11 +674,11 @@
                 total_cost: document.querySelector('input[name="total_cost"]')?.value || '0',
                 attachment_urls: []
             };
-            // ??????????????????? Storage
+            // อัปโหลดไฟล์แนบไปยัง Storage
             var uploadErrors = [];
             const fileInput = document.getElementById('file-input');
             if (fileInput.files.length > 0) {
-                submitBtn.textContent = '?????????????????????...';
+                submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ...';
                 for (let fi = 0; fi < fileInput.files.length; fi++) {
                     try {
                         var f = fileInput.files[fi];
@@ -691,48 +691,48 @@
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
                         } else {
-                            uploadErrors.push(f.name + ': ' + (upResult ? upResult.error : '?????????????'));
+                            uploadErrors.push(f.name + ': ' + (upResult ? upResult.error : 'ไม่ทราบสาเหตุ'));
                         }
-                    } catch(ue) { uploadErrors.push(f.name + ': ' + (ue.message || '??????????')); }
+                    } catch(ue) { uploadErrors.push(f.name + ': ' + (ue.message || 'ข้อผิดพลาด')); }
                 }
             }
             if (uploadErrors.length > 0 && data.attachment_urls.length === 0) {
-                submitBtn.disabled = false; submitBtn.textContent = '?????????';
-                ppkAlert('????????????????????:\n' + uploadErrors.join('\n') + '\n\n???????????????????? ???????????????????', 'error');
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                ppkAlert('อัปโหลดไฟล์ไม่สำเร็จ:\n' + uploadErrors.join('\n') + '\n\nกรุณาลองใหม่อีกครั้ง หรือแจ้งผู้ดูแลระบบ', 'error');
                 return;
             }
-            submitBtn.textContent = '??????????????...';
+            submitBtn.textContent = 'กำลังส่งคำร้อง...';
             const result = await callBackend('submitRequest', data);
             if (result && result.success) {
                 const reqId = result.requestId || '-';
-                submitBtn.disabled = false; submitBtn.textContent = '?????????';
+                submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
                 var sc = '<div style="background:white;border-radius:16px;padding:2rem;text-align:center;max-width:600px;margin:2rem auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">';
-                sc += '<div style="font-size:3rem;margin-bottom:0.5rem;">?</div>';
-                sc += '<h2 style="color:#059669;margin:0 0 0.5rem;">?????????????????????????????????</h2>';
+                sc += '<div style="font-size:3rem;margin-bottom:0.5rem;">✅</div>';
+                sc += '<h2 style="color:#059669;margin:0 0 0.5rem;">บันทึกคำร้องเข้าระบบเรียบร้อยแล้ว</h2>';
                 sc += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem;margin-bottom:1rem;">';
-                sc += '<div style="font-size:0.9rem;color:#6b7280;">??????????</div>';
+                sc += '<div style="font-size:0.9rem;color:#6b7280;">รหัสคำร้อง</div>';
                 sc += '<div style="font-size:1.5rem;font-weight:bold;color:#059669;letter-spacing:2px;">' + reqId + '</div></div>';
                 sc += '<div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:12px;padding:1rem;margin-bottom:1rem;text-align:left;">';
-                sc += '<div style="font-weight:bold;color:#1e40af;margin-bottom:0.3rem;">?? ?????: ?????????????????????</div>';
-                sc += '<div style="color:#1e3a5f;font-size:0.88rem;">???????????????????????????????? ??????????????????????????????????????????? ??????????????????????????????? "??????????????"</div></div>';
+                sc += '<div style="font-weight:bold;color:#1e40af;margin-bottom:0.3rem;">📋 สถานะ: รอคณะกรรมการดำเนินการ</div>';
+                sc += '<div style="color:#1e3a5f;font-size:0.88rem;">คำร้องของท่านถูกบันทึกในระบบแล้ว ขณะนี้อยู่ระหว่างรอคณะกรรมการบ้านพักพิจารณา ท่านสามารถติดตามสถานะได้ที่หน้า "แบบฟอร์มคำร้อง"</div></div>';
                 sc += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:1rem;margin-bottom:1.5rem;text-align:left;">';
-                sc += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">??? ????????????????</div>';
-                sc += '<div style="color:#78350f;font-size:0.88rem;">????? <b>???????????</b> ?????????????????????? ??????<br>';
-                sc += '? ????????????????????? ? ? ????????????????/??? ? ? ?????????????? ? ? ???????????<br>';
-                sc += '??????????????????????????????????????????????????</div></div>';
+                sc += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">🖨️ สิ่งที่ต้องทำต่อ</div>';
+                sc += '<div style="color:#78350f;font-size:0.88rem;">กรุณา <b>พิมพ์คำร้อง</b> แล้วนำเสนอเซ็นตามลำดับ ดังนี้<br>';
+                sc += '① ผู้ยื่นคำร้องเซ็นชื่อ → ② หัวหน้ากลุ่มสาระ/งาน → ③ รองผู้อำนวยการ → ④ ผู้อำนวยการ<br>';
+                sc += 'จากนั้นส่งเอกสารที่เซ็นครบแล้วให้คณะกรรมการบ้านพัก</div></div>';
                 sc += '<div style="display:flex;flex-direction:column;gap:0.8rem;">';
-                sc += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">??? ??????????? / ?????? PDF</button>';
-                sc += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">?? ???????????? ???????? "?????????? PDF" ??????????????????????????????</div>';
-                sc += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">?? ???????????????????</button>';
+                sc += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
+                sc += '<div style="font-size:0.82rem;color:#9ca3af;margin:-0.3rem 0;">💡 หากใช้มือถือ ให้เลือก "บันทึกเป็น PDF" แล้วพิมพ์จากคอมพิวเตอร์ภายหลัง</div>';
+                sc += '<button onclick="navigate(\'?page=form\')" style="background:linear-gradient(to right,#3b82f6,#2563eb);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1rem;font-weight:bold;cursor:pointer;font-family:inherit;">📋 ดูสถานะคำร้องของฉัน</button>';
                 sc += '</div></div>';
                 document.getElementById('repairForm').style.display = 'none';
                 var panel = document.createElement('div'); panel.innerHTML = sc;
                 document.getElementById('repairForm').parentElement.appendChild(panel);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
-            } else { ppkAlert(result?.error || '??????????????????'); }
-        } catch (err) { ppkAlert('?????????????????????????');
-        } finally { submitBtn.disabled = false; submitBtn.textContent = '?????????'; }
+            } else { ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ'); }
+        } catch (err) { ppkAlert('ไม่สามารถเชื่อมต่อระบบได้');
+        } finally { submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง'; }
     });
 
     initPage();
