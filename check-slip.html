@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>ตรวจสอบสลิป | HOME PPK 2026</title>
+    <title>??????????? | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
         <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
@@ -178,44 +178,44 @@
   <div id="ppkNav"></div>
 
   <div class="dashboard-container" id="dashboardContainer">
-    <button class="back-btn" onclick="history.back()">← กลับ</button>
+    <button class="back-btn" onclick="history.back()">? ????</button>
 
-    <div class="page-header"><h2>🧾 ตรวจสลิปการชำระเงิน</h2></div>
+    <div class="page-header"><h2>?? ???????????????????</h2></div>
 
-    <!-- ตัวเลือกรอบบิล -->
+    <!-- ?????????????? -->
     <div class="section" id="controlsSection">
       <div class="section-head">
         <div>
-          <div class="section-title">📅 รอบบิล</div>
-          <div class="section-subtitle">เลือกเดือน/ปี เพื่อตรวจสอบสลิปการชำระ</div>
+          <div class="section-title">?? ??????</div>
+          <div class="section-subtitle">??????????/?? ???????????????????????</div>
         </div>
       </div>
       <div class="controls-row">
         <div class="form-group">
-          <label for="bill_month">เดือน</label>
+          <label for="bill_month">?????</label>
           <select id="bill_month"></select>
         </div>
         <div class="form-group">
-          <label for="bill_year">ปี พ.ศ.</label>
+          <label for="bill_year">?? ?.?.</label>
           <select id="bill_year"></select>
         </div>
         <div class="form-group" style="display:flex;align-items:flex-end;">
-          <button class="btn btn-primary" onclick="loadSlipData()">🔍 โหลดข้อมูล</button>
+          <button class="btn btn-primary" onclick="loadSlipData()">?? ??????????</button>
         </div>
       </div>
     </div>
 
-    <!-- แจ้งเตือนเมื่อไม่มีบิล -->
+    <!-- ?????????????????????? -->
     <div id="no-bill-warning" style="display:none;background:#fef2f2;border:2px solid #dc2626;border-radius:12px;padding:1rem 1.2rem;margin:0 1rem 1rem;color:#991b1b;font-weight:600;">
-      ⚠️ เดือนที่เลือกยังไม่ได้บันทึกค่าน้ำค่าไฟ — สลิปที่แสดงด้านล่างไม่มียอดแจ้งเปรียบเทียบ
+      ?? ??????????????????????????????????????? � ??????????????????????????????????????????
     </div>
 
-    <!-- ตารางบ้านพัก -->
+    <!-- ???????????? -->
     <div class="section" id="section-houses">
       <div class="section-head">
         <div>
-          <div class="section-title">🏠 บ้านพัก</div>
-          <div class="section-subtitle">ตรวจสอบการชำระเงินของบ้านพัก</div>
+          <div class="section-title">?? ???????</div>
+          <div class="section-subtitle">????????????????????????????</div>
         </div>
       </div>
 
@@ -223,52 +223,52 @@
         <table id="table-houses">
           <thead>
             <tr>
-              <th style="width:50px;">ลำดับ</th>
-              <th style="width:100px;">เลขที่บ้าน</th>
-              <th>ชื่อผู้พัก</th>
-              <th style="width:100px;">ยอดที่แจ้ง</th>
-              <th style="width:100px;">ยอดที่ชำระ</th>
-              <th style="width:80px;">สถานะ</th>
-              <th style="width:130px;">สลิป</th>
-              <th style="width:180px;">การดำเนินการ</th>
+              <th style="width:50px;">?????</th>
+              <th style="width:100px;">??????????</th>
+              <th>??????????</th>
+              <th style="width:100px;">??????????</th>
+              <th style="width:100px;">??????????</th>
+              <th style="width:80px;">?????</th>
+              <th style="width:130px;">????</th>
+              <th style="width:180px;">????????????</th>
             </tr>
           </thead>
-          <tbody id="tbody-houses"><tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr></tbody>
+          <tbody id="tbody-houses"><tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">? ???????????????...</td></tr></tbody>
         </table>
       </div>
 
       <div class="summary-box">
         <div class="summary-item">
-          <div class="summary-label">ชำระแล้ว (ตรง)</div>
+          <div class="summary-label">???????? (???)</div>
           <div class="summary-value success" id="houses-match">0</div>
         </div>
         <div class="summary-item">
-          <div class="summary-label">ยอดไม่ตรง</div>
+          <div class="summary-label">?????????</div>
           <div class="summary-value warning" id="houses-mismatch">0</div>
         </div>
         <div class="summary-item">
-          <div class="summary-label">รอตรวจ</div>
+          <div class="summary-label">??????</div>
           <div class="summary-value primary" id="houses-pending">0</div>
         </div>
         <div class="summary-item">
-          <div class="summary-label">ยังไม่ชำระ</div>
+          <div class="summary-label">??????????</div>
           <div class="summary-value danger" id="houses-unpaid">0</div>
         </div>
       </div>
 
       <div class="action-buttons">
-        <button class="btn btn-success" onclick="sendAllReceipts('houses')">📧 ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)</button>
-        <button class="btn btn-warning" onclick="sendReminder('houses')">📧 ส่งอีเมลเตือนรายที่ยังไม่ชำระ</button>
-        <button class="btn btn-secondary" onclick="exportCSV('houses')" style="background:#475569;color:#fff;border-color:#475569;">📊 Export CSV บ้านพัก</button>
+        <button class="btn btn-success" onclick="sendAllReceipts('houses')">?? ????????????????? (??????????????)</button>
+        <button class="btn btn-warning" onclick="sendReminder('houses')">?? ?????????????????????????????</button>
+        <button class="btn btn-secondary" onclick="exportCSV('houses')" style="background:#475569;color:#fff;border-color:#475569;">?? Export CSV ???????</button>
       </div>
     </div>
 
-    <!-- ตารางแฟลต -->
+    <!-- ????????? -->
     <div class="section" id="section-flats">
       <div class="section-head">
         <div>
-          <div class="section-title">🏢 แฟลต</div>
-          <div class="section-subtitle">ตรวจสอบการชำระเงินของแฟลต</div>
+          <div class="section-title">?? ????</div>
+          <div class="section-subtitle">?????????????????????????</div>
         </div>
       </div>
 
@@ -276,90 +276,90 @@
         <table id="table-flats">
           <thead>
             <tr>
-              <th style="width:50px;">ลำดับ</th>
-              <th style="width:100px;">เลขที่ห้อง</th>
-              <th>ชื่อผู้พัก</th>
-              <th style="width:100px;">ยอดที่แจ้ง</th>
-              <th style="width:100px;">ยอดที่ชำระ</th>
-              <th style="width:80px;">สถานะ</th>
-              <th style="width:130px;">สลิป</th>
-              <th style="width:180px;">การดำเนินการ</th>
+              <th style="width:50px;">?????</th>
+              <th style="width:100px;">??????????</th>
+              <th>??????????</th>
+              <th style="width:100px;">??????????</th>
+              <th style="width:100px;">??????????</th>
+              <th style="width:80px;">?????</th>
+              <th style="width:130px;">????</th>
+              <th style="width:180px;">????????????</th>
             </tr>
           </thead>
-          <tbody id="tbody-flats"><tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">⏳ กำลังโหลดข้อมูล...</td></tr></tbody>
+          <tbody id="tbody-flats"><tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">? ???????????????...</td></tr></tbody>
         </table>
       </div>
 
       <div class="summary-box">
         <div class="summary-item">
-          <div class="summary-label">ชำระแล้ว (ตรง)</div>
+          <div class="summary-label">???????? (???)</div>
           <div class="summary-value success" id="flats-match">0</div>
         </div>
         <div class="summary-item">
-          <div class="summary-label">ยอดไม่ตรง</div>
+          <div class="summary-label">?????????</div>
           <div class="summary-value warning" id="flats-mismatch">0</div>
         </div>
         <div class="summary-item">
-          <div class="summary-label">รอตรวจ</div>
+          <div class="summary-label">??????</div>
           <div class="summary-value primary" id="flats-pending">0</div>
         </div>
         <div class="summary-item">
-          <div class="summary-label">ยังไม่ชำระ</div>
+          <div class="summary-label">??????????</div>
           <div class="summary-value danger" id="flats-unpaid">0</div>
         </div>
       </div>
 
       <div class="action-buttons">
-        <button class="btn btn-success" onclick="sendAllReceipts('flats')">📧 ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)</button>
-        <button class="btn btn-warning" onclick="sendReminder('flats')">📧 ส่งอีเมลเตือนรายที่ยังไม่ชำระ</button>
-        <button class="btn btn-secondary" onclick="exportCSV('flats')" style="background:#475569;color:#fff;border-color:#475569;">📊 Export CSV แฟลต</button>
+        <button class="btn btn-success" onclick="sendAllReceipts('flats')">?? ????????????????? (??????????????)</button>
+        <button class="btn btn-warning" onclick="sendReminder('flats')">?? ?????????????????????????????</button>
+        <button class="btn btn-secondary" onclick="exportCSV('flats')" style="background:#475569;color:#fff;border-color:#475569;">?? Export CSV ????</button>
       </div>
     </div>
 
     <div class="footer-note">
-      ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br />
-      งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
+      ????????????????? ???????? ????????<br />
+      ??????????? ????? ???? ?????????????????? ????????????????????
     </div>
   </div>
 
-  <!-- Modal ปฏิเสธสลิป -->
+  <!-- Modal ?????????? -->
   <div class="modal-overlay" id="rejectModal">
     <div class="modal-content" style="max-width:480px;">
-      <button class="modal-close" onclick="closeRejectModal()">×</button>
-      <div class="modal-title" style="color:#dc2626;">❌ ปฏิเสธสลิป</div>
+      <button class="modal-close" onclick="closeRejectModal()">�</button>
+      <div class="modal-title" style="color:#dc2626;">? ??????????</div>
       <div class="modal-body">
         <div id="rejectModalInfo" style="margin-bottom:1rem;"></div>
         <div class="form-group">
-          <label style="font-weight:700;">เหตุผล (แสดงให้ผู้พักอาศัยทราบ):</label>
-          <textarea id="rejectReason" class="reject-reason-box" placeholder="เช่น ยอดเงินไม่ตรงกับใบแจ้งหนี้ กรุณาส่งสลิปใหม่"></textarea>
+          <label style="font-weight:700;">?????? (??????????????????????):</label>
+          <textarea id="rejectReason" class="reject-reason-box" placeholder="???? ?????????????????????????? ????????????????"></textarea>
         </div>
         <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:.75rem;border-radius:6px;font-size:.9rem;color:#991b1b;margin-top:.75rem;">
-          ⚠️ ผู้พักอาศัยจะได้รับการแจ้งเตือนทางแดชบอร์ดและอีเมล และสามารถส่งสลิปใหม่ได้
+          ?? ?????????????????????????????????????????????????? ???????????????????????
         </div>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-danger" id="rejectConfirmBtn" onclick="doRejectSlip()">❌ ยืนยันปฏิเสธสลิป</button>
-        <button class="btn" onclick="closeRejectModal()">ยกเลิก</button>
+        <button class="btn btn-danger" id="rejectConfirmBtn" onclick="doRejectSlip()">? ????????????????</button>
+        <button class="btn" onclick="closeRejectModal()">??????</button>
       </div>
     </div>
   </div>
 
-  <!-- Lightbox ตรวจสลิปด่วน -->
+  <!-- Lightbox ???????????? -->
   <div class="slip-lightbox" id="slipLightbox" onclick="closeLightbox()">
     <div class="slip-lightbox-info" id="lbxInfo" onclick="event.stopPropagation()"></div>
-    <img class="slip-lightbox-img" id="lbxImg" src="" alt="สลิป" onclick="event.stopPropagation()" />
+    <img class="slip-lightbox-img" id="lbxImg" src="" alt="????" onclick="event.stopPropagation()" />
     <div class="slip-lightbox-nav" id="lbxNav" onclick="event.stopPropagation()"></div>
     <div class="slip-lightbox-btns" onclick="event.stopPropagation()">
-      <button class="btn btn-success" id="lbxApproveBtn" onclick="lightboxApprove()">✓ อนุมัติการชำระ</button>
-      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.35);" onclick="closeLightbox()">✕ ปิด</button>
+      <button class="btn btn-success" id="lbxApproveBtn" onclick="lightboxApprove()">? ??????????????</button>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.35);" onclick="closeLightbox()">? ???</button>
     </div>
   </div>
 
-  <!-- Modal ดูรายละเอียด -->
+  <!-- Modal ???????????? -->
   <div class="modal-overlay" id="detailModal">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeModal()">×</button>
-      <div class="modal-title" id="modalTitle">รายละเอียดการชำระ</div>
+      <button class="modal-close" onclick="closeModal()">�</button>
+      <div class="modal-title" id="modalTitle">?????????????????</div>
       <div class="modal-body">
         <div class="info-grid" id="modalInfo"></div>
         <div class="amount-compare" id="amountCompare"></div>
@@ -369,25 +369,25 @@
     </div>
   </div>
 
-  <!-- Modal บันทึกการชำระด้วยตนเอง -->
+  <!-- Modal ?????????????????????? -->
   <div class="modal-overlay" id="manualPayModal">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeManualPayModal()">×</button>
-      <div class="modal-title">💵 บันทึกการชำระด้วยตนเอง</div>
+      <button class="modal-close" onclick="closeManualPayModal()">�</button>
+      <div class="modal-title">?? ??????????????????????</div>
       <div class="modal-body">
         <div class="info-grid" id="manualPayInfo"></div>
         <div class="form-group" style="margin-top:1rem;">
-          <label for="manualPayAmount">ยอดที่ชำระ (บาท):</label>
-          <input type="number" id="manualPayAmount" min="0" step="0.01" placeholder="กรอกยอดเงินที่รับชำระ" />
+          <label for="manualPayAmount">?????????? (???):</label>
+          <input type="number" id="manualPayAmount" min="0" step="0.01" placeholder="?????????????????????" />
         </div>
         <div class="form-group">
-          <label for="manualPayNote">หมายเหตุ (ถ้ามี):</label>
-          <textarea id="manualPayNote" rows="2" placeholder="บันทึกเพิ่มเติม เช่น ชื่อผู้รับเงิน"></textarea>
+          <label for="manualPayNote">???????? (?????):</label>
+          <textarea id="manualPayNote" rows="2" placeholder="??????????????? ???? ??????????????"></textarea>
         </div>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-success" onclick="saveManualPayment()">✓ บันทึกและอนุมัติ</button>
-        <button class="btn" onclick="closeManualPayModal()">ยกเลิก</button>
+        <button class="btn btn-success" onclick="saveManualPayment()">? ????????????????</button>
+        <button class="btn" onclick="closeManualPayModal()">??????</button>
       </div>
     </div>
   </div>
@@ -402,13 +402,13 @@
     let _noBillData = false;
 
     const THAI_MONTHS = [
-      'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
+      '??????','??????????','??????','??????','???????','????????',
+      '???????','???????','???????','??????','?????????','???????'
     ];
 
     function toBuddhistYear(adYear){ return Number(adYear) + 543; }
 
-    const _SYSTEM_LIVE_PERIOD = '2569-03'; // งวดแรกที่ใช้ระบบจริง (ส่งสลิปผ่านระบบ)
+    const _SYSTEM_LIVE_PERIOD = '2569-03'; // ???????????????????? (???????????????)
 
     function getSelectedPeriod(){
       const month = document.getElementById('bill_month').value;
@@ -424,7 +424,7 @@
       return Number.isFinite(n) ? n.toLocaleString('th-TH') : '0';
     }
 
-    // โหลดข้อมูลสลิปและเปรียบเทียบกับยอดแจ้ง
+    // ??????????????????????????????????????
     async function loadSlipData(){
       const { month, year, key } = getSelectedPeriod();
       const period = year + '-' + month;
@@ -432,19 +432,19 @@
       housesData = [];
       flatsData = [];
 
-      // ลอง Backend ก่อน
+      // ??? Backend ????
       try {
-          // ดึงยอดแจ้งจาก BillSummaryAll
+          // ????????????? BillSummaryAll
           const billResult = await cachedCall('getBillSummaryAll', { period }, 300000);
           const billData = (billResult && billResult.success) ? (billResult.data || []) : [];
           _noBillData = (billData.length === 0);
           document.getElementById('no-bill-warning').style.display = _noBillData ? '' : 'none';
 
-          // ดึงสลิปที่ส่งมา
+          // ???????????????
           const slipResult = await callBackendGet('getSlipSubmissions', { period });
           const slipData = (slipResult && slipResult.success) ? (slipResult.data || []) : [];
 
-          // รวมข้อมูล
+          // ?????????
           billData.forEach((bill, idx) => {
             const unitNumber = String(bill.house_number || '');
             const slip = slipData.find(s => String(s.house_number) === unitNumber) || null;
@@ -484,14 +484,14 @@
               } catch(e) { unitData.slipImages.push(slip.slip_url); }
             }
 
-            if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
+            if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('????')) {
               flatsData.push(unitData);
             } else {
               housesData.push(unitData);
             }
           });
 
-          // เพิ่มรายการที่ส่งสลิปมาแต่ไม่อยู่ใน BillSummaryAll
+          // ??????????????????????????????????? BillSummaryAll
           slipData.forEach(slip => {
             const unitNumber = String(slip.house_number || '');
             const alreadyInBill = housesData.concat(flatsData).find(u => u.unitNumber === unitNumber);
@@ -521,7 +521,7 @@
                   (Array.isArray(urls2) ? urls2 : [slip.slip_url]).forEach(function(u){ unitData.slipImages.push(u); });
                 } catch(e) { unitData.slipImages.push(slip.slip_url); }
               }
-              if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')) {
+              if (unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('????')) {
                 flatsData.push(unitData);
               } else {
                 housesData.push(unitData);
@@ -529,7 +529,7 @@
             }
           });
 
-          // รวม localStorage slips สำหรับบ้านที่ยังไม่มีสลิปจาก backend
+          // ??? localStorage slips ???????????????????????????? backend
           try {
             const localSlips = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
             const localApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
@@ -555,7 +555,7 @@
                     slipId: null, slipStatus: null, reviewNote: '', approval: localApprovals[uNum] || null,
                     proxyNote: '', noResident: false
                   };
-                  if (uNum.toLowerCase().startsWith('f') || uNum.includes('แฟลต')) { flatsData.push(ud); }
+                  if (uNum.toLowerCase().startsWith('f') || uNum.includes('????')) { flatsData.push(ud); }
                   else { housesData.push(ud); }
                 }
               });
@@ -568,51 +568,51 @@
           }
         } catch (e) { console.error('loadSlipData backend error:', e); }
 
-      // ── Fallback: localStorage ──
+      // -- Fallback: localStorage --
       let residentsData = [], waterData = {}, waterRecords = [], electricData = {}, electricRecords = [];
       let slipSubmissions = [], slipApprovals = {}, commonFeeRate = 0;
       try {
-        // ดึงข้อมูลผู้พักอาศัย
+        // ????????????????????
         residentsData = JSON.parse(localStorage.getItem('residentsData') || '[]');
-        // ดึงข้อมูลค่าน้ำ ค่าไฟ
+        // ??????????????? ?????
         waterData = JSON.parse(localStorage.getItem('waterBill_' + key) || '{}');
         waterRecords = waterData.records || [];
         electricData = JSON.parse(localStorage.getItem('electricBill_' + key) || '{}');
         electricRecords = electricData.records || [];
-        // ดึงข้อมูลสลิปที่ส่งมา
+        // ?????????????????????
         slipSubmissions = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
-        // ดึงข้อมูลสถานะการอนุมัติ
+        // ????????????????????????
         slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
-        // ค่าส่วนกลาง (ไม่ hardcode → ใช้จาก settings จริง, default 0 ถ้าไม่มี)
-        // หมายเหตุ: fallback นี้ไม่สามารถตรวจ exemptions จาก DB ได้เพราะ backend ใช้ไม่ได้
-        // ในโหมดปกติ ข้อมูลจะมาจาก getBillSummaryAll ซึ่งตรวจ exemptions แล้ว
+        // ??????????? (??? hardcode ? ?????? settings ????, default 0 ????????)
+        // ????????: fallback ???????????????? exemptions ??? DB ???????? backend ?????????
+        // ?????????? ????????????? getBillSummaryAll ???????? exemptions ????
         commonFeeRate = Number(localStorage.getItem('commonFee') || '0');
       } catch(lsErr) { console.warn('localStorage fallback error:', lsErr); }
 
       housesData = [];
       flatsData = [];
 
-      // รวมข้อมูลทั้งหมด
+      // ????????????????
       residentsData.forEach((resident, idx) => {
         const unitNumber = resident.house_number || '';
         
-        // ค้นหาข้อมูลค่าน้ำ ค่าไฟ
+        // ????????????????? ?????
         const waterRecord = waterRecords.find(w => w.house === unitNumber) || {};
         const electricRecord = electricRecords.find(e => e.house === unitNumber) || {};
         
-        // คำนวณยอดที่แจ้ง
+        // ???????????????
         const waterAmount = parseFloat(waterRecord.amount) || 0;
         const electricAmount = parseFloat(electricRecord.amount) || 0;
         const commonFee = resident.no_resident ? 0 : commonFeeRate;
         const notifiedAmount = waterAmount + electricAmount + commonFee;
         
-        // ค้นหาข้อมูลสลิปที่ส่งมา
+        // ???????????????????????
         const slipData = slipSubmissions.find(s => s.unitNumber === unitNumber) || null;
         const paidAmount = slipData ? parseFloat(slipData.paidAmount) || 0 : null;
         const slipImages = slipData ? (slipData.slipImages || []) : [];
         const slipDate = slipData ? slipData.submittedAt : null;
         
-        // ตรวจสอบสถานะการอนุมัติ
+        // ??????????????????????
         const approval = slipApprovals[unitNumber] || null;
 
         const unitData = {
@@ -634,14 +634,14 @@
           noResident: resident.no_resident || false
         };
 
-        if(unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')){
+        if(unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('????')){
           flatsData.push(unitData);
         } else {
           housesData.push(unitData);
         }
       });
 
-      // ถ้าไม่มีข้อมูลผู้พักอาศัย ให้ดึงจากบันทึกค่าน้ำ
+      // ????????????????????????? ?????????????????????
       if(housesData.length === 0 && flatsData.length === 0){
         waterRecords.forEach((w, idx) => {
           const unitNumber = w.house || '';
@@ -674,7 +674,7 @@
             noResident: false
           };
 
-          if(unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('แฟลต')){
+          if(unitNumber.toLowerCase().startsWith('f') || unitNumber.includes('????')){
             flatsData.push(unitData);
           } else {
             housesData.push(unitData);
@@ -685,31 +685,31 @@
       renderAll();
     }
 
-    // ตรวจสอบสถานะ
+    // ????????????
     function getStatus(unit){
       if(unit.noResident) return 'no-resident';
       if(unit.slipStatus === 'rejected') return 'rejected';
       if(unit.approval && unit.approval.status === 'approved') return 'approved';
       if(unit.paidAmount === null) {
-        // งวดก่อนระบบ live → ถือว่าชำระนอกระบบแล้ว
+        // ??????????? live ? ?????????????????????
         const { isPreSystem } = getSelectedPeriod();
         if(isPreSystem) return 'pre-system';
         return 'unpaid';
       }
-      // สลิปค้างตรวจ: แยกตาม match/mismatch
+      // ????????????: ?????? match/mismatch
       if(Math.abs((unit.paidAmount||0) - (unit.notifiedAmount||0)) < 0.01) return 'pending-match';
       return 'pending-mismatch';
     }
 
     function getStatusBadge(status){
       const badges = {
-        'pending-match':    '<span class="status-badge status-pending-match">⏳ รอตรวจ (ยอดตรง)</span>',
-        'pending-mismatch': '<span class="status-badge status-pending-mismatch">⚠️ ยอดไม่ตรง</span>',
-        'rejected':    '<span class="status-badge status-rejected">✗ ถูกปฏิเสธ</span>',
-        'unpaid':      '<span class="status-badge status-unpaid">○ ยังไม่ชำระ</span>',
-        'approved':    '<span class="status-badge status-approved">✓ อนุมัติแล้ว</span>',
-        'pre-system':  '<span class="status-badge status-approved" style="background:#e0e7ff;color:#4338ca;">✓ ชำระแล้ว (นอกระบบ)</span>',
-        'no-resident': '<span class="status-badge status-unpaid">- ไม่มีผู้พัก</span>'
+        'pending-match':    '<span class="status-badge status-pending-match">? ?????? (??????)</span>',
+        'pending-mismatch': '<span class="status-badge status-pending-mismatch">?? ?????????</span>',
+        'rejected':    '<span class="status-badge status-rejected">? ?????????</span>',
+        'unpaid':      '<span class="status-badge status-unpaid">? ??????????</span>',
+        'approved':    '<span class="status-badge status-approved">? ???????????</span>',
+        'pre-system':  '<span class="status-badge status-approved" style="background:#e0e7ff;color:#4338ca;">? ???????? (???????)</span>',
+        'no-resident': '<span class="status-badge status-unpaid">- ???????????</span>'
       };
       return badges[status] || '';
     }
@@ -726,7 +726,7 @@
         const td = document.createElement('td');
         td.colSpan = 8;
         td.className = 'empty-row';
-        td.textContent = 'ยังไม่มีข้อมูล - กรุณาเลือกเดือน/ปี แล้วกดโหลดข้อมูล';
+        td.textContent = '?????????????? - ???????????????/?? ????????????????';
         tr.appendChild(td);
         tbody.appendChild(tr);
         return;
@@ -736,58 +736,58 @@
         const tr = document.createElement('tr');
         const status = getStatus(unit);
 
-        // นับสถานะ
+        // ????????
         if(status === 'approved' || status === 'pre-system') countMatch++;
         else if(status === 'pending-mismatch' || status === 'rejected') countMismatch++;
         else if(status === 'pending-match') countPending++;
         else if(status === 'unpaid') countUnpaid++;
 
-        // สลิป thumbnail - คลิกเพื่อดูเต็มจอทันที
+        // ???? thumbnail - ??????????????????????
         let slipHtml = '<span class="no-slip">-</span>';
         if(unit.slipImages && unit.slipImages.length > 0){
           var allThumb = unit.slipImages.map(function(src, i){
-            return '<img src="' + src + '" class="slip-thumb" onclick="quickView(\'' + type + '\',' + index + ',' + i + ')" alt="สลิป" loading="lazy" onerror="this.outerHTML=\'<a href=&quot;' + src.replace(/'/g,'&apos;') + '&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot; class=&quot;slip-link-btn&quot;>🔗 ดูสลิป</a>\'" />';
+            return '<img src="' + src + '" class="slip-thumb" onclick="quickView(\'' + type + '\',' + index + ',' + i + ')" alt="????" loading="lazy" onerror="this.outerHTML=\'<a href=&quot;' + src.replace(/'/g,'&apos;') + '&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot; class=&quot;slip-link-btn&quot;>?? ??????</a>\'" />';
           }).join('');
           slipHtml = unit.slipImages.length > 1
-            ? '<div class="slip-multi">' + allThumb + '<span style="font-size:.75rem;color:var(--muted);">(' + unit.slipImages.length + ' รูป)</span></div>'
+            ? '<div class="slip-multi">' + allThumb + '<span style="font-size:.75rem;color:var(--muted);">(' + unit.slipImages.length + ' ???)</span></div>'
             : allThumb;
         }
 
-        // ปุ่มการดำเนินการ
+        // ????????????????
         let actionsHtml = '';
         if(unit.noResident){
-          actionsHtml = '<span style="color:var(--muted);font-size:.85rem;">ไม่มีผู้พัก</span>';
+          actionsHtml = '<span style="color:var(--muted);font-size:.85rem;">???????????</span>';
         } else if(status === 'approved'){
           const _sentStyle = unit.receiptEmailSent ? ' style="background:#6b7280;border-color:#6b7280;"' : '';
           const _sentDisabled = '';
-          const _sentLabel = unit.receiptEmailSent ? '🔁 ส่งซ้ำ' : '📧 ส่งใบเสร็จ';
-          const _sentTitle = unit.receiptEmailSent ? 'คลิกเพื่อส่งใบเสร็จซ้ำ (กรณีอีเมลเปลี่ยน)' : 'ส่งใบเสร็จทางอีเมล';
+          const _sentLabel = unit.receiptEmailSent ? '?? ??????' : '?? ??????????';
+          const _sentTitle = unit.receiptEmailSent ? '?????????????????????? (????????????????)' : '??????????????????';
           actionsHtml = '<div class="action-btns">' +
-            '<span style="color:var(--success);font-size:.85rem;">✓</span>' +
+            '<span style="color:var(--success);font-size:.85rem;">?</span>' +
             '<button class="btn btn-sm btn-success"' + _sentDisabled + _sentStyle + ' onclick="sendReceiptEmailBtn(this,\'' + type + '\',' + index + ')" title="' + _sentTitle + '">' + _sentLabel + '</button>' +
           '</div>';
         } else if(status === 'pre-system'){
-          actionsHtml = '<span style="color:#4338ca;font-size:.82rem;">✓ ข้อมูลย้อนหลัง</span>';
+          actionsHtml = '<span style="color:#4338ca;font-size:.82rem;">? ??????????????</span>';
         } else if(status === 'unpaid'){
           actionsHtml = '<div class="action-btns">' +
-            '<button class="btn btn-sm btn-primary" onclick="showManualPayment(\'' + type + '\',' + index + ')" title="บันทึกการชำระด้วยตนเอง">💵 บันทึก</button>' +
-            '<button class="btn btn-sm btn-warning" onclick="showReminder(\'' + type + '\',' + index + ')" title="ส่งอีเมลเตือน">📧 เตือน</button>' +
+            '<button class="btn btn-sm btn-primary" onclick="showManualPayment(\'' + type + '\',' + index + ')" title="??????????????????????">?? ??????</button>' +
+            '<button class="btn btn-sm btn-warning" onclick="showReminder(\'' + type + '\',' + index + ')" title="?????????????">?? ?????</button>' +
           '</div>';
         } else if(status === 'rejected'){
           actionsHtml = '<div class="action-btns">' +
-            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
-            '<span style="font-size:.78rem;color:#6d28d9;white-space:nowrap;">✗ ปฏิเสธแล้ว</span>' +
+            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">??? ??</button>' +
+            '<span style="font-size:.78rem;color:#6d28d9;white-space:nowrap;">? ??????????</span>' +
           '</div>';
         } else if(status === 'pending-mismatch'){
           actionsHtml = '<div class="action-btns">' +
-            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
-            '<button class="btn btn-sm btn-danger" onclick="showRejectModal(\'' + type + '\',' + index + ')" title="ยอดไม่ตรง — ปฏิเสธสลิป">❌ ปฏิเสธ</button>' +
+            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">??? ??</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="showRejectModal(\'' + type + '\',' + index + ')" title="????????? � ??????????">? ??????</button>' +
           '</div>';
         } else if(status === 'pending-match'){
           actionsHtml = '<div class="action-btns">' +
-            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">👁️ ดู</button>' +
-            '<button class="btn btn-sm btn-success" onclick="approvePayment(\'' + type + '\',' + index + ')">✓ อนุมัติ</button>' +
-            '<button class="btn btn-sm btn-danger" onclick="showRejectModal(\'' + type + '\',' + index + ')" title="ปฏิเสธ">❌</button>' +
+            '<button class="btn btn-sm btn-primary" onclick="viewDetail(\'' + type + '\',' + index + ')">??? ??</button>' +
+            '<button class="btn btn-sm btn-success" onclick="approvePayment(\'' + type + '\',' + index + ')">? ???????</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="showRejectModal(\'' + type + '\',' + index + ')" title="??????">?</button>' +
           '</div>';
         }
 
@@ -803,7 +803,7 @@
         tbody.appendChild(tr);
       });
 
-      // อัปเดตสรุป
+      // ??????????
       document.getElementById(type + '-match').textContent = countMatch;
       document.getElementById(type + '-mismatch').textContent = countMismatch;
       document.getElementById(type + '-pending').textContent = countPending;
@@ -823,7 +823,7 @@
       renderTable('flats');
     }
 
-    // ดูรายละเอียด
+    // ????????????
     function viewDetail(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
@@ -831,21 +831,21 @@
 
       currentUnit = { type, index, data: unit };
 
-      document.getElementById('modalTitle').textContent = '📋 รายละเอียด: ' + unit.unitNumber;
+      document.getElementById('modalTitle').textContent = '?? ??????????: ' + unit.unitNumber;
 
-      // ข้อมูลทั่วไป
+      // ????????????
       const infoHtml = `
-        <div class="info-item"><span class="info-label">เลขที่:</span><span class="info-value">${unit.unitNumber}</span></div>
-        <div class="info-item"><span class="info-label">ชื่อผู้พัก:</span><span class="info-value">${unit.name || '-'}</span></div>
-        <div class="info-item"><span class="info-label">ค่าน้ำ:</span><span class="info-value">${formatMoney(unit.waterAmount)} บาท</span></div>
-        <div class="info-item"><span class="info-label">ค่าไฟ:</span><span class="info-value">${formatMoney(unit.electricAmount)} บาท</span></div>
-        <div class="info-item"><span class="info-label">ค่าส่วนกลาง:</span><span class="info-value">${formatMoney(unit.commonFee)} บาท</span></div>
-        <div class="info-item"><span class="info-label">วันที่ส่งสลิป:</span><span class="info-value">${unit.slipDate ? new Date(unit.slipDate).toLocaleString('th-TH') : '-'}</span></div>
+        <div class="info-item"><span class="info-label">??????:</span><span class="info-value">${unit.unitNumber}</span></div>
+        <div class="info-item"><span class="info-label">??????????:</span><span class="info-value">${unit.name || '-'}</span></div>
+        <div class="info-item"><span class="info-label">??????:</span><span class="info-value">${formatMoney(unit.waterAmount)} ???</span></div>
+        <div class="info-item"><span class="info-label">?????:</span><span class="info-value">${formatMoney(unit.electricAmount)} ???</span></div>
+        <div class="info-item"><span class="info-label">???????????:</span><span class="info-value">${formatMoney(unit.commonFee)} ???</span></div>
+        <div class="info-item"><span class="info-label">?????????????:</span><span class="info-value">${unit.slipDate ? new Date(unit.slipDate).toLocaleString('th-TH') : '-'}</span></div>
         ${unit.proxyNote ? '<div class="info-item"><span class="info-label">\uD83D\uDD04 \u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19:</span><span class="info-value" style="color:#C2410C;font-weight:600;">' + _esc(unit.proxyNote.replace('\u0E2A\u0E48\u0E07\u0E41\u0E17\u0E19\u0E42\u0E14\u0E22: ','')) + '</span></div>' : ''}
       `;
       document.getElementById('modalInfo').innerHTML = infoHtml;
 
-      // เปรียบเทียบยอด
+      // ??????????????
       const diff = unit.paidAmount !== null ? unit.paidAmount - unit.notifiedAmount : 0;
       let diffClass = diff === 0 ? '' : 'diff';
       let qrHtml = '';
@@ -875,37 +875,37 @@
       `;
       document.getElementById('amountCompare').innerHTML = amountHtml;
 
-      // แสดงสลิป
+      // ????????
       let galleryHtml = '';
       if(unit.slipImages && unit.slipImages.length > 0){
         unit.slipImages.forEach(img => {
-          galleryHtml += `<img src="${img}" alt="สลิป" onclick="window.open('${img}','_blank')" style="cursor:pointer;" />`;
+          galleryHtml += `<img src="${img}" alt="????" onclick="window.open('${img}','_blank')" style="cursor:pointer;" />`;
         });
       } else {
-        galleryHtml = '<p style="color:var(--muted);text-align:center;">ไม่มีรูปสลิป</p>';
+        galleryHtml = '<p style="color:var(--muted);text-align:center;">????????????</p>';
       }
       document.getElementById('slipGallery').innerHTML = galleryHtml;
 
-      // ปุ่มการดำเนินการ
+      // ????????????????
       const status = getStatus(unit);
       let actionsHtml = '';
       if(status === 'approved'){
-        actionsHtml = '<span style="color:var(--success);">✓ อนุมัติการชำระแล้ว</span>';
+        actionsHtml = '<span style="color:var(--success);">? ??????????????????</span>';
       } else if(status === 'rejected'){
         actionsHtml = '<div style="background:#f5f3ff;border-left:4px solid #6d28d9;padding:.7rem .9rem;border-radius:6px;font-size:.9rem;margin-bottom:.5rem;">'
-          + '✗ สลิปถูกปฏิเสธแล้ว' + (unit.reviewNote ? '<br><small style="color:#6d28d9;">' + _esc(unit.reviewNote) + '</small>' : '') + '</div>';
+          + '? ?????????????????' + (unit.reviewNote ? '<br><small style="color:#6d28d9;">' + _esc(unit.reviewNote) + '</small>' : '') + '</div>';
       } else if(status === 'pending-mismatch'){
         const _diff = ((unit.paidAmount||0) - (unit.notifiedAmount||0));
         actionsHtml = '<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:.7rem .9rem;border-radius:6px;font-size:.9rem;margin-bottom:.5rem;">'
-          + '⛔ ยอดเงินไม่ตรง — <strong>ไม่สามารถอนุมัติได้</strong><br>'
-          + 'ยอดที่ส่ง: ' + formatMoney(unit.paidAmount) + ' | แจ้งไว้: ' + formatMoney(unit.notifiedAmount) + ' | ผลต่าง: <strong style="color:#dc2626;">' + (_diff>0?'+':'') + formatMoney(_diff) + ' บาท</strong>'
+          + '? ????????????? � <strong>???????????????????</strong><br>'
+          + '?????????: ' + formatMoney(unit.paidAmount) + ' | ???????: ' + formatMoney(unit.notifiedAmount) + ' | ??????: <strong style="color:#dc2626;">' + (_diff>0?'+':'') + formatMoney(_diff) + ' ???</strong>'
           + '</div>'
-          + '<button class="btn btn-danger" onclick="closeModal();showRejectModal(\'' + type + '\',' + index + ');">❌ ปฏิเสธสลิป</button>';
+          + '<button class="btn btn-danger" onclick="closeModal();showRejectModal(\'' + type + '\',' + index + ');">? ??????????</button>';
       } else if(unit.paidAmount !== null){
-        actionsHtml = '<button class="btn btn-success" onclick="approvePayment(\'' + type + '\',' + index + ');closeModal();">✓ อนุมัติ (ส่งใบเสร็จ)</button>'
-          + '<button class="btn btn-danger" onclick="closeModal();showRejectModal(\'' + type + '\',' + index + ');" style="margin-left:.5rem;">❌ ปฏิเสธ</button>';
+        actionsHtml = '<button class="btn btn-success" onclick="approvePayment(\'' + type + '\',' + index + ');closeModal();">? ??????? (??????????)</button>'
+          + '<button class="btn btn-danger" onclick="closeModal();showRejectModal(\'' + type + '\',' + index + ');" style="margin-left:.5rem;">? ??????</button>';
       }
-      actionsHtml += '<button class="btn" onclick="closeModal()">ปิด</button>';
+      actionsHtml += '<button class="btn" onclick="closeModal()">???</button>';
       document.getElementById('modalActions').innerHTML = actionsHtml;
 
       document.getElementById('detailModal').classList.add('show');
@@ -916,7 +916,7 @@
       currentUnit = null;
     }
 
-    // ── Lightbox ตรวจสลิปด่วน ──
+    // -- Lightbox ???????????? --
     let lbxUnit = null;
     let lbxImages = [];
     let lbxIdx = 0;
@@ -931,8 +931,8 @@
       const status = getStatus(unit);
       document.getElementById('lbxInfo').textContent =
         unit.unitNumber + (unit.name ? '  |  ' + unit.name : '') +
-        '  |  แจ้ง: ' + formatMoney(unit.notifiedAmount) + ' บาท' +
-        (unit.paidAmount !== null ? '  →  ชำระ: ' + formatMoney(unit.paidAmount) + ' บาท' : '  (ยังไม่มียอดชำระ)');
+        '  |  ????: ' + formatMoney(unit.notifiedAmount) + ' ???' +
+        (unit.paidAmount !== null ? '  ?  ????: ' + formatMoney(unit.paidAmount) + ' ???' : '  (???????????????)');
       const approveBtn = document.getElementById('lbxApproveBtn');
       approveBtn.style.display = (status === 'approved' || status === 'unpaid' || status === 'no-resident' || status === 'rejected' || status === 'pending-mismatch') ? 'none' : '';
       renderLbxImg();
@@ -950,7 +950,7 @@
         a.href = lbxImages[lbxIdx]; a.target = '_blank'; a.rel = 'noopener';
         a.id = 'lbxLink'; a.className = 'slip-link-btn';
         a.style.cssText = 'font-size:1.2rem;padding:16px 28px;margin:40px auto;display:inline-flex;';
-        a.textContent = '🔗 เปิดดูสลิปในแท็บใหม่';
+        a.textContent = '?? ????????????????????';
         this.parentNode.insertBefore(a, this.nextSibling);
       };
       const nav = document.getElementById('lbxNav');
@@ -977,31 +977,31 @@
       await approvePayment(t, i);
     }
 
-    // ── Helper: escape HTML (ป้องกัน XSS) ──
+    // -- Helper: escape HTML (??????? XSS) --
     function _esc(s){ if(!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
-    // ── Reject slip modal ──
+    // -- Reject slip modal --
     var _rejectTarget = null;
 
     function showRejectModal(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
-      if(!unit || !unit.slipId){ ppkAlert('ไม่พบสลิปที่จะปฏิเสธ'); return; }
+      if(!unit || !unit.slipId){ ppkAlert('????????????????????'); return; }
       _rejectTarget = { type, index };
       const diff = ((unit.paidAmount||0) - (unit.notifiedAmount||0));
       const diffStr = (diff > 0 ? '+' : '') + formatMoney(diff);
       document.getElementById('rejectModalInfo').innerHTML =
         '<div class="info-grid" style="gap:.5rem;margin-bottom:.75rem;">'
-        + '<div class="info-item"><span class="info-label">เลขที่:</span><span class="info-value">'+_esc(unit.unitNumber)+'</span></div>'
-        + '<div class="info-item"><span class="info-label">ผู้พัก:</span><span class="info-value">'+_esc(unit.name||'-')+'</span></div>'
-        + '<div class="info-item"><span class="info-label">ยอดที่แจ้ง:</span><span class="info-value">฿'+formatMoney(unit.notifiedAmount)+'</span></div>'
-        + '<div class="info-item"><span class="info-label">ยอดที่ส่ง:</span><span class="info-value" style="color:#dc2626;">฿'+formatMoney(unit.paidAmount)+'</span></div>'
-        + (Math.abs(diff) > 0.01 ? '<div class="info-item" style="grid-column:span 2;"><span class="info-label">ผลต่าง:</span><span class="info-value" style="color:#dc2626;font-weight:700;">'+diffStr+' บาท</span></div>' : '')
+        + '<div class="info-item"><span class="info-label">??????:</span><span class="info-value">'+_esc(unit.unitNumber)+'</span></div>'
+        + '<div class="info-item"><span class="info-label">??????:</span><span class="info-value">'+_esc(unit.name||'-')+'</span></div>'
+        + '<div class="info-item"><span class="info-label">??????????:</span><span class="info-value">?'+formatMoney(unit.notifiedAmount)+'</span></div>'
+        + '<div class="info-item"><span class="info-label">?????????:</span><span class="info-value" style="color:#dc2626;">?'+formatMoney(unit.paidAmount)+'</span></div>'
+        + (Math.abs(diff) > 0.01 ? '<div class="info-item" style="grid-column:span 2;"><span class="info-label">??????:</span><span class="info-value" style="color:#dc2626;font-weight:700;">'+diffStr+' ???</span></div>' : '')
         + '</div>';
       var defaultReason = '';
-      if(diff < -0.01) defaultReason = 'ยอดเงินน้อยกว่าที่แจ้ง ' + formatMoney(Math.abs(diff)) + ' บาท กรุณาส่งสลิปใหม่';
-      else if(diff > 0.01) defaultReason = 'ยอดเงินมากกว่าที่แจ้ง ' + formatMoney(Math.abs(diff)) + ' บาท กรุณาส่งสลิปใหม่';
-      else defaultReason = 'สลิปไม่ถูกต้อง กรุณาส่งสลิปใหม่';
+      if(diff < -0.01) defaultReason = '?????????????????????? ' + formatMoney(Math.abs(diff)) + ' ??? ????????????????';
+      else if(diff > 0.01) defaultReason = '????????????????????? ' + formatMoney(Math.abs(diff)) + ' ??? ????????????????';
+      else defaultReason = '?????????????? ????????????????';
       document.getElementById('rejectReason').value = defaultReason;
       document.getElementById('rejectModal').classList.add('show');
     }
@@ -1019,14 +1019,14 @@
       const { type, index } = _rejectTarget;
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
-      if(!unit || !unit.slipId){ ppkAlert('ไม่พบสลิป'); return; }
+      if(!unit || !unit.slipId){ ppkAlert('?????????'); return; }
       const reason = document.getElementById('rejectReason').value.trim();
-      if(!reason){ ppkAlert('กรุณากรอกเหตุผล'); return; }
+      if(!reason){ ppkAlert('???????????????'); return; }
       const { month, year } = getSelectedPeriod();
       const period = year + '-' + month;
-      const sig = (cachedAdminSettings||{}).emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
+      const sig = (cachedAdminSettings||{}).emailSignature || '????????????? ????????????????????';
       const btn = document.getElementById('rejectConfirmBtn');
-      btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+      btn.disabled = true; btn.textContent = '????????...';
       try {
         const r = await callBackend('rejectSlip', {
           id: unit.slipId,
@@ -1044,37 +1044,37 @@
           unit.reviewNote = reason;
           closeRejectModal();
           renderTable(type);
-          ppkAlert('✓ ปฏิเสธสลิปและแจ้งผู้พักเรียบร้อยแล้ว');
+          ppkAlert('? ????????????????????????????????????');
         } else {
-          ppkAlert('เกิดข้อผิดพลาด: ' + ((r||{}).error||'ไม่สามารถปฏิเสธได้'));
+          ppkAlert('??????????????: ' + ((r||{}).error||'??????????????????'));
         }
-      } catch(e){ ppkAlert('เกิดข้อผิดพลาด: ' + e.message); }
-      btn.disabled = false; btn.textContent = '❌ ยืนยันปฏิเสธสลิป';
+      } catch(e){ ppkAlert('??????????????: ' + e.message); }
+      btn.disabled = false; btn.textContent = '? ????????????????';
     }
 
-    // อนุมัติการชำระ
+    // ??????????????
     async function approvePayment(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
 
-      // ป้องกันอนุมัติเมื่อยอดไม่ตรง
+      // ????????????????????????????
       if(getStatus(unit) === 'pending-mismatch'){
-        ppkAlert('⛔ ไม่สามารถอนุมัติได้\n\nยอดที่ผู้พักส่งมา: ' + formatMoney(unit.paidAmount) + ' บาท\nยอดที่ต้องชำระ: ' + formatMoney(unit.notifiedAmount) + ' บาท\n\nกรุณาใช้ปุ่ม "ปฏิเสธสลิป" เพื่อแจ้งผู้พักให้ส่งสลิปใหม่');
+        ppkAlert('? ???????????????????\n\n?????????????????: ' + formatMoney(unit.paidAmount) + ' ???\n??????????????: ' + formatMoney(unit.notifiedAmount) + ' ???\n\n???????????? "??????????" ?????????????????????????????');
         return;
       }
 
       if(_noBillData){
-        if(!await ppkConfirm('⚠️ เดือนนี้ยังไม่ได้บันทึกค่าน้ำค่าไฟ\n\nไม่มียอดแจ้งเปรียบเทียบกับยอดที่ชำระ\nคุณแน่ใจหรือไม่ว่าต้องการอนุมัติ?')){
+        if(!await ppkConfirm('?? ??????????????????????????????????\n\n????????????????????????????????????\n?????????????????????????????????')){
           return;
         }
       }
       
-      if(!await ppkConfirm(`ยืนยันอนุมัติการชำระเงินของ ${unit.unitNumber} (${unit.name})?\nยอดที่ชำระ: ${formatMoney(unit.paidAmount)} บาท`)){
+      if(!await ppkConfirm(`??????????????????????????? ${unit.unitNumber} (${unit.name})?\n??????????: ${formatMoney(unit.paidAmount)} ???`)){
         return;
       }
 
-      // ส่ง Backend ก่อน
+      // ??? Backend ????
       if (unit.slipId) {
         try {
           const { month, year } = getSelectedPeriod();
@@ -1088,29 +1088,29 @@
             amount: unit.paidAmount
           });
           if (result && result.success) {
-            // ลบ cache bill summary เพื่อโหลดสถานะใหม่
+            // ?? cache bill summary ??????????????????
             localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: _period }));
             unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
-            // ส่งอีเมลใบเสร็จอัตโนมัติ
+            // ????????????????????????
             const { monthName, year: yr } = getSelectedPeriod();
             const paidDate = new Date().toLocaleDateString('th-TH');
             try {
               const _autoEmail = (unit.email || '').trim();
               const _autoEmailOk = _autoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_autoEmail) && _autoEmail.length <= 320;
               if (_autoEmailOk) {
-                const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
-                const _emailRes = await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+                const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>? <strong>???????????????????????????? ${monthName} ${yr}</strong></p><p>???????: ${unit.unitNumber} | ???: ${(unit.paidAmount||0).toLocaleString('th-TH')} ??? | ??????: ${paidDate}</p></div></div>`;
+                const _emailRes = await callBackend('sendEmail', { to: _autoEmail, subject: `? ????????????????????? ${monthName} ${yr} - ??????? ${unit.unitNumber}`, html: receiptHtml });
                 if (_emailRes && _emailRes.success) {
-                  // บันทึกสถานะส่งใบเสร็จลง DB (sync ทุก device)
+                  // ??????????????????????? DB (sync ??? device)
                   try { await callBackend('markReceiptSent', { id: unit.slipId }); unit.receiptSentAt = new Date().toISOString(); } catch(e) {}
                 }
               }
             } catch(e) {}
-            ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+            ppkAlert(`? ????????????????????? ${unit.unitNumber} ?????????????`);
             renderTable(type);
             return;
           } else {
-            ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่สามารถอนุมัติได้'));
+            ppkAlert('??????????????: ' + (result?.error || '???????????????????'));
             return;
           }
         } catch (e) { console.error('approvePayment backend error:', e); }
@@ -1124,29 +1124,29 @@
       slipApprovals[unit.unitNumber] = {
         status: 'approved',
         approvedAt: new Date().toISOString(),
-        approvedBy: currentUserData ? ((currentUserData.prefix||'') + (currentUserData.firstname||'') + ' ' + (currentUserData.lastname||'')).trim() : 'ผู้ดูแลระบบ',
+        approvedBy: currentUserData ? ((currentUserData.prefix||'') + (currentUserData.firstname||'') + ' ' + (currentUserData.lastname||'')).trim() : '???????????',
         paidAmount: unit.paidAmount,
         notifiedAmount: unit.notifiedAmount
       };
       
       localStorage.setItem('slipApprovals_' + key, JSON.stringify(slipApprovals));
       
-      // อัปเดตข้อมูลใน memory
+      // ?????????????? memory
       unit.approval = slipApprovals[unit.unitNumber];
       
-      ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+      ppkAlert(`? ????????????????????? ${unit.unitNumber} ?????????????`);
       renderTable(type);
     }
 
-    // ส่งเตือนรายเดียว
+    // ????????????????
     async function showReminder(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
 
-      if(await ppkConfirm(`ส่งอีเมลเตือนการชำระไปยัง ${unit.unitNumber} (${unit.name})? `)){
+      if(await ppkConfirm(`????????????????????????? ${unit.unitNumber} (${unit.name})? `)){
         const ok = await sendReminderToUnit(unit);
-        ppkAlert(ok ? `✅ ส่งเตือนไปยัง ${unit.unitNumber} ทางอีเมลเรียบร้อย` : `⚠️ ${unit.unitNumber}: ${!unit.email ? 'ไม่มีอีเมล' : 'ส่งอีเมลไม่สำเร็จ'}`);
+        ppkAlert(ok ? `? ????????????? ${unit.unitNumber} ?????????????????` : `?? ${unit.unitNumber}: ${!unit.email ? '??????????' : '?????????????????'}`);
       }
     }
 
@@ -1154,21 +1154,21 @@
       const { monthName, year, month } = getSelectedPeriod();
       const period = year + '-' + month;
       const systemSettings = cachedAdminSettings || {};
-      const emailSignature = systemSettings.emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
-      const emailReminderNote = systemSettings.emailReminderNote || 'กรุณาชำระเงินและส่งสลิปโดยเร็วที่สุด';
+      const emailSignature = systemSettings.emailSignature || '????????????? ????????????????????';
+      const emailReminderNote = systemSettings.emailReminderNote || '????????????????????????????????????';
       const dueDays = systemSettings.due_date || systemSettings.due_date_working_days || '15';
 
-      let details = `\nเลขที่บ้านพัก/ห้อง: ${unit.unitNumber}`;
-      details += `\nยอดค้างชำระรวม: ${formatMoney(unit.notifiedAmount)} บาท`;
-      if (unit.waterAmount)    details += `\n  - ค่าน้ำ: ${formatMoney(unit.waterAmount)} บาท`;
-      if (unit.electricAmount) details += `\n  - ค่าไฟ: ${formatMoney(unit.electricAmount)} บาท`;
-      if (unit.commonFee)      details += `\n  - ค่าส่วนกลาง: ${formatMoney(unit.commonFee)} บาท`;
-      details += `\nกำหนดชำระภายใน: ${dueDays} วันทำการ`;
+      let details = `\n?????????????/????: ${unit.unitNumber}`;
+      details += `\n??????????????: ${formatMoney(unit.notifiedAmount)} ???`;
+      if (unit.waterAmount)    details += `\n  - ??????: ${formatMoney(unit.waterAmount)} ???`;
+      if (unit.electricAmount) details += `\n  - ?????: ${formatMoney(unit.electricAmount)} ???`;
+      if (unit.commonFee)      details += `\n  - ???????????: ${formatMoney(unit.commonFee)} ???`;
+      details += `\n??????????????: ${dueDays} ????????`;
 
-      const subject = `แจ้งเตือนค่าสาธารณูปโภค ${monthName} ${year} — บ้านพัก ${unit.unitNumber}`;
+      const subject = `??????????????????????? ${monthName} ${year} � ??????? ${unit.unitNumber}`;
       const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7">
-<p>เรียน ${unit.name || 'ผู้พักอาศัย'}</p>
-<p>เรื่อง: <strong>แจ้งเตือนการชำระค่าสาธารณูปโภค ประจำเดือน ${monthName} ${year}</strong></p>
+<p>????? ${unit.name || '???????????'}</p>
+<p>??????: <strong>?????????????????????????????? ?????????? ${monthName} ${year}</strong></p>
 <pre style="background:#fef9c3;padding:12px;border-radius:8px;border:1px solid #fde047">${details}</pre>
 <p>${emailReminderNote}</p>
 <p>---<br>${emailSignature}</p></div>`;
@@ -1191,16 +1191,16 @@
       }
     }
 
-    // wrapper สำหรับปุ่มรายตัว — จัดการ loading state
+    // wrapper ???????????????? � ?????? loading state
     async function sendReceiptEmailBtn(btn, type, index) {
       const list = type === 'houses' ? housesData : flatsData;
       const _isResend = !!(list[index] && list[index].receiptEmailSent);
       if (_isResend) {
         const _targetEmail = (list[index].email || list[index].proxyEmail || '').trim();
-        const confirmed = await ppkConfirm(`ส่งใบเสร็จซ้ำไปยัง ${list[index].unitNumber} (${list[index].name})?\nอีเมล: ${_targetEmail || 'ไม่มีอีเมล'}`);
+        const confirmed = await ppkConfirm(`?????????????????? ${list[index].unitNumber} (${list[index].name})?\n?????: ${_targetEmail || '??????????'}`);
         if (!confirmed) return;
       }
-      btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+      btn.disabled = true; btn.textContent = '? ????????...';
       try {
         const ok = await sendReceiptEmail(type, index);
         if (ok) {
@@ -1209,7 +1209,7 @@
             list[index].receiptEmailSent = true;
             list[index].receiptSentAt = new Date().toISOString();
           }
-          // บันทึกลง DB (sync ทุก device)
+          // ???????? DB (sync ??? device)
           if (list[index] && list[index].slipId) {
             try { await callBackend('markReceiptSent', { id: list[index].slipId }); } catch(e) {}
           }
@@ -1221,28 +1221,28 @@
           if (!_sentArr.includes(list[index].unitNumber)) _sentArr.push(list[index].unitNumber);
           localStorage.setItem(_sentKey, JSON.stringify(_sentArr));
           btn.disabled = false;
-          btn.innerHTML = '🔁 ส่งซ้ำ';
+          btn.innerHTML = '?? ??????';
           btn.style.background = '#6b7280';
           btn.style.borderColor = '#6b7280';
-          btn.title = 'คลิกเพื่อส่งใบเสร็จซ้ำ (กรณีอีเมลเปลี่ยน)';
+          btn.title = '?????????????????????? (????????????????)';
         } else {
-          btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ';
+          btn.disabled = false; btn.innerHTML = '?? ??????????';
         }
-      } catch(e) { btn.disabled = false; btn.innerHTML = '📧 ส่งใบเสร็จ'; }
+      } catch(e) { btn.disabled = false; btn.innerHTML = '?? ??????????'; }
     }
 
-    // ส่งใบเสร็จทางอีเมล
+    // ??????????????????
     async function sendReceiptEmail(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
       if(!unit) return;
-      if(!unit.approval) { ppkAlert('ยังไม่ได้อนุมัติการชำระเงินของห้องนี้'); return; }
+      if(!unit.approval) { ppkAlert('?????????????????????????????????????'); return; }
       console.log('[sendReceiptEmail] unit.email =', JSON.stringify(unit.email), 'unit.unitNumber =', unit.unitNumber);
 
       const { monthName, year } = getSelectedPeriod();
       const sysSettings = cachedAdminSettings || {};
-      const emailSig = sysSettings.emailSignature || 'งานบ้านพักครู โรงเรียนพะเยาพิทยาคม';
-      const emailReceiptNote = sysSettings.emailReceiptNote || 'ขอบคุณที่ชำระตรงเวลาครับ/ค่ะ';
+      const emailSig = sysSettings.emailSignature || '????????????? ????????????????????';
+      const emailReceiptNote = sysSettings.emailReceiptNote || '????????????????????????/???';
       const paidDate = unit.approval?.approvedAt ? new Date(unit.approval.approvedAt).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH');
 
       const dueDateStr = unit.dueDate ? new Date(unit.dueDate).toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'}) : '-';
@@ -1251,40 +1251,40 @@
         ? new Date(unit.slipDate).toLocaleString('th-TH', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})
         : (unit.approval?.approvedAt ? new Date(unit.approval.approvedAt).toLocaleString('th-TH', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}) : paidDate);
       const waterUnits = (unit.prevMeter != null && unit.currMeter != null) ? (unit.currMeter - unit.prevMeter) : null;
-      const defaultFooter = 'งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม';
+      const defaultFooter = '??????????? ????? ???? ?????????????????? ????????????????????';
       const emailSigFinal = sysSettings.emailSignature || defaultFooter;
 
-      const subject = `ใบเสร็จค่าสาธารณูปโภค ${monthName} ${year} - ${unit.unitNumber}`;
+      const subject = `????????????????????? ${monthName} ${year} - ${unit.unitNumber}`;
       const html = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.8;color:#0f172a">
-<p>เรียน ${unit.name || 'ผู้พักอาศัย'}</p>
+<p>????? ${unit.name || '???????????'}</p>
 <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:18px;margin:12px 0">
-  <p style="margin:0 0 12px;font-size:16px">✅ <strong>ใบเสร็จรับเงินค่าสาธารณูปโภค ${monthName} ${year}</strong></p>
+  <p style="margin:0 0 12px;font-size:16px">? <strong>???????????????????????????? ${monthName} ${year}</strong></p>
   <table style="width:100%;border-collapse:collapse;font-size:14px">
-    <tr><td style="padding:4px 8px;color:#64748b;width:45%">บ้านพัก/ห้อง</td><td style="padding:4px 8px"><strong>${unit.unitNumber}</strong></td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">ชื่อผู้ชำระ</td><td style="padding:4px 8px"><strong>${unit.name || '-'}</strong></td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">วันที่แจ้งชำระ</td><td style="padding:4px 8px">${notifiedAtStr}</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">วันครบกำหนด</td><td style="padding:4px 8px">${dueDateStr}</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">วันเวลาที่ชำระ</td><td style="padding:4px 8px">${slipDateStr}</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b;width:45%">???????/????</td><td style="padding:4px 8px"><strong>${unit.unitNumber}</strong></td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">???????????</td><td style="padding:4px 8px"><strong>${unit.name || '-'}</strong></td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">??????????????</td><td style="padding:4px 8px">${notifiedAtStr}</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">???????????</td><td style="padding:4px 8px">${dueDateStr}</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">??????????????</td><td style="padding:4px 8px">${slipDateStr}</td></tr>
   </table>
   <hr style="border:none;border-top:1px solid #bbf7d0;margin:12px 0">
   <table style="width:100%;border-collapse:collapse;font-size:14px">
-    <tr><td style="padding:4px 8px;color:#64748b;width:45%">💧 มิเตอร์น้ำก่อน</td><td style="padding:4px 8px;text-align:right">${unit.prevMeter != null ? unit.prevMeter.toLocaleString('th-TH') : '-'} หน่วย</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">💧 มิเตอร์น้ำหลัง</td><td style="padding:4px 8px;text-align:right">${unit.currMeter != null ? unit.currMeter.toLocaleString('th-TH') : '-'} หน่วย</td></tr>
-    <tr style="background:#dcfce7"><td style="padding:4px 8px;color:#166534">💧 รวมหน่วยน้ำ</td><td style="padding:4px 8px;text-align:right;color:#166534;font-weight:bold">${waterUnits != null ? waterUnits.toLocaleString('th-TH') : '-'} หน่วย</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">💧 ค่าน้ำ</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.waterAmount)} บาท</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">⚡ ค่าไฟ</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.electricAmount)} บาท</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">🏢 ค่าส่วนกลาง</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.commonFee)} บาท</td></tr>
-    <tr style="background:#16a34a;color:#fff"><td style="padding:6px 8px;font-weight:bold">💰 รวมทั้งสิ้น</td><td style="padding:6px 8px;text-align:right;font-weight:bold">${formatMoney(unit.notifiedAmount)} บาท</td></tr>
-    <tr><td style="padding:4px 8px;color:#64748b">✅ ยอดที่ชำระ</td><td style="padding:4px 8px;text-align:right;color:#16a34a;font-weight:bold">${formatMoney(unit.paidAmount)} บาท</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b;width:45%">?? ??????????????</td><td style="padding:4px 8px;text-align:right">${unit.prevMeter != null ? unit.prevMeter.toLocaleString('th-TH') : '-'} ?????</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">?? ??????????????</td><td style="padding:4px 8px;text-align:right">${unit.currMeter != null ? unit.currMeter.toLocaleString('th-TH') : '-'} ?????</td></tr>
+    <tr style="background:#dcfce7"><td style="padding:4px 8px;color:#166534">?? ???????????</td><td style="padding:4px 8px;text-align:right;color:#166534;font-weight:bold">${waterUnits != null ? waterUnits.toLocaleString('th-TH') : '-'} ?????</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">?? ??????</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.waterAmount)} ???</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">? ?????</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.electricAmount)} ???</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">?? ???????????</td><td style="padding:4px 8px;text-align:right">${formatMoney(unit.commonFee)} ???</td></tr>
+    <tr style="background:#16a34a;color:#fff"><td style="padding:6px 8px;font-weight:bold">?? ???????????</td><td style="padding:6px 8px;text-align:right;font-weight:bold">${formatMoney(unit.notifiedAmount)} ???</td></tr>
+    <tr><td style="padding:4px 8px;color:#64748b">? ??????????</td><td style="padding:4px 8px;text-align:right;color:#16a34a;font-weight:bold">${formatMoney(unit.paidAmount)} ???</td></tr>
   </table>
 </div>
 <p>${emailReceiptNote}</p>
-<p style="color:#64748b;font-size:13px">—<br>${emailSigFinal}</p></div>`;
+<p style="color:#64748b;font-size:13px">�<br>${emailSigFinal}</p></div>`;
 
       let emailSent = false;
       let emailError = '';
 
-      // ตรวจสอบว่า email ถูกต้อง
+      // ?????????? email ???????
       const emailTo = (unit.email || unit.proxyEmail || '').trim();
       const emailValid = emailTo && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTo) && emailTo.length <= 320;
 
@@ -1292,32 +1292,32 @@
         try {
           const er = await callBackend('sendEmail', { to: emailTo, subject, html });
           emailSent = er && er.success;
-          if (!emailSent) emailError = (er && er.error) || 'ไม่ทราบสาเหตุ';
-        } catch(e) { console.error('sendReceiptEmail error:', e); emailError = e.message || 'เกิดข้อผิดพลาด'; }
+          if (!emailSent) emailError = (er && er.error) || '?????????????';
+        } catch(e) { console.error('sendReceiptEmail error:', e); emailError = e.message || '??????????????'; }
       }
 
       if (emailSent) {
-        ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
+        ppkAlert('?? ???????????????????????!');
       } else {
-        var errMsg = !emailTo ? '⚠️ ไม่พบอีเมลของผู้พัก' : !emailValid ? '⚠️ อีเมลไม่ถูกต้อง: ' + emailTo : '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '');
+        var errMsg = !emailTo ? '?? ???????????????????' : !emailValid ? '?? ???????????????: ' + emailTo : '? ?????????????????' + (emailError ? '\n(' + emailError + ')' : '');
         ppkAlert(errMsg, { type: 'error' });
       }
       return emailSent;
     }
 
-    // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
+    // ????????????????????????????
     async function sendReminder(type){
       const list = type === 'houses' ? housesData : flatsData;
-      const typeName = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
+      const typeName = type === 'houses' ? '???????' : '????';
       
       const unpaidUnits = list.filter(u => getStatus(u) === 'unpaid');
 
       if(unpaidUnits.length === 0){
-        ppkAlert('ไม่มีรายการที่ยังไม่ชำระ');
+        ppkAlert('????????????????????????');
         return;
       }
 
-      if(!await ppkConfirm(`ส่งอีเมลเตือน${typeName}ที่ยังไม่ชำระ จำนวน ${unpaidUnits.length} รายการ?`)){
+      if(!await ppkConfirm(`?????????????${typeName}????????????? ????? ${unpaidUnits.length} ???????`)){
         return;
       }
 
@@ -1333,22 +1333,22 @@
         }
       }
 
-      ppkAlert(`ส่งอีเมลเตือน${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
+      ppkAlert(`?????????????${typeName}:\n- ?????????: ${sent} ??????\n- ??????????/??????: ${failed} ??????`, { type: failed === 0 ? 'success' : 'warning' });
     }
 
-    // ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)
+    // ????????????????? (??????????????)
     async function sendAllReceipts(type){
       const list = type === 'houses' ? housesData : flatsData;
-      const typeName = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
+      const typeName = type === 'houses' ? '???????' : '????';
       
       const approvedUnits = list.filter(u => getStatus(u) === 'approved');
 
       if(approvedUnits.length === 0){
-        ppkAlert('ไม่มีรายการที่อนุมัติแล้ว');
+        ppkAlert('?????????????????????????');
         return;
       }
 
-      if(!await ppkConfirm(`ส่งใบเสร็จทางอีเมล${typeName}ที่อนุมัติแล้ว จำนวน ${approvedUnits.length} รายการ?`)){
+      if(!await ppkConfirm(`??????????????????${typeName}?????????????? ????? ${approvedUnits.length} ???????`)){
         return;
       }
 
@@ -1368,7 +1368,7 @@
             list[_rIdx].receiptEmailSent = true;
             list[_rIdx].receiptSentAt = new Date().toISOString();
           }
-          // บันทึกลง DB (sync ทุก device)
+          // ???????? DB (sync ??? device)
           if (list[_rIdx] && list[_rIdx].slipId) {
             try { await callBackend('markReceiptSent', { id: list[_rIdx].slipId }); } catch(e) {}
           }
@@ -1382,25 +1382,25 @@
         } else failed++;
       }
 
-      ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
+      ppkAlert(`?? ??????????${typeName}:\n- ?????????: ${sent} ??????\n- ??????????/??????: ${failed} ??????`, { type: failed === 0 ? 'success' : 'warning' });
     }
 
-    // ── Export CSV ── ดาวน์โหลดข้อมูลสรุปสลิปเป็นไฟล์ CSV (รองรับภาษาไทยด้วย BOM)
+    // -- Export CSV -- ??????????????????????????????? CSV (????????????????? BOM)
     function exportCSV(type) {
       var list      = type === 'houses' ? housesData : flatsData;
-      var typeName  = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
+      var typeName  = type === 'houses' ? '???????' : '????';
       var period    = getSelectedPeriod();
-      var fileName  = 'สรุปสลิป_' + typeName + '_' + period.monthName + '_' + period.year + '.csv';
+      var fileName  = '????????_' + typeName + '_' + period.monthName + '_' + period.year + '.csv';
 
       var STATUS_LABEL = {
-        'approved':        'อนุมัติแล้ว',
-        'rejected':        'ปฏิเสธ',
-        'pending-match':   'รอตรวจ (ยอดตรง)',
-        'pending-mismatch':'รอตรวจ (ยอดไม่ตรง)',
-        'unpaid':          'ยังไม่ชำระ'
+        'approved':        '???????????',
+        'rejected':        '??????',
+        'pending-match':   '?????? (??????)',
+        'pending-mismatch':'?????? (?????????)',
+        'unpaid':          '??????????'
       };
 
-      var rows = [['ลำดับ', 'เลขที่', 'ชื่อผู้พักอาศัย', 'ยอดแจ้ง (บาท)', 'ยอดชำระ (บาท)', 'สถานะ', 'วันที่ส่งสลิป', 'หมายเหตุ']];
+      var rows = [['?????', '??????', '???????????????', '??????? (???)', '??????? (???)', '?????', '?????????????', '????????']];
       list.forEach(function(u, i) {
         var status  = getStatus(u);
         var dateStr = u.slipDate ? new Date(u.slipDate).toLocaleDateString('th-TH') : '-';
@@ -1434,7 +1434,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // เริ่มต้น
+    // ????????
     function initPeriodSelectors(){
       const monthSelect = document.getElementById('bill_month');
       const yearSelect = document.getElementById('bill_year');
@@ -1461,11 +1461,11 @@
       yearSelect.value = String(yearBE);
     }
 
-    // Nav — handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
+    // Nav � handled by ppk-nav.js (auto-renders when ppk-nav.js loads)
     window._ppkNavPage = 'check-slip';
     if (typeof renderPPKNav === 'function') { renderPPKNav('ppkNav', 'check-slip'); }
 
-    // ปิด modal เมื่อคลิกนอก
+    // ??? modal ????????????
     document.getElementById('detailModal').addEventListener('click', function(e){
       if(e.target === this) closeModal();
     });
@@ -1473,7 +1473,7 @@
       if(e.target === this) closeManualPayModal();
     });
 
-    // แสดง Modal บันทึกการชำระด้วยตนเอง
+    // ???? Modal ??????????????????????
     function showManualPayment(type, index){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
@@ -1482,12 +1482,12 @@
       currentUnit = { type, index, data: unit };
 
       const infoHtml = `
-        <div class="info-item"><span class="info-label">เลขที่:</span><span class="info-value">${unit.unitNumber}</span></div>
-        <div class="info-item"><span class="info-label">ชื่อผู้พัก:</span><span class="info-value">${unit.name || '-'}</span></div>
-        <div class="info-item"><span class="info-label">ค่าน้ำ:</span><span class="info-value">${formatMoney(unit.waterAmount)} บาท</span></div>
-        <div class="info-item"><span class="info-label">ค่าไฟ:</span><span class="info-value">${formatMoney(unit.electricAmount)} บาท</span></div>
-        <div class="info-item"><span class="info-label">ค่าส่วนกลาง:</span><span class="info-value">${formatMoney(unit.commonFee)} บาท</span></div>
-        <div class="info-item"><span class="info-label">ยอดรวมที่ต้องชำระ:</span><span class="info-value" style="color:var(--primary);font-weight:700;">${formatMoney(unit.notifiedAmount)} บาท</span></div>
+        <div class="info-item"><span class="info-label">??????:</span><span class="info-value">${unit.unitNumber}</span></div>
+        <div class="info-item"><span class="info-label">??????????:</span><span class="info-value">${unit.name || '-'}</span></div>
+        <div class="info-item"><span class="info-label">??????:</span><span class="info-value">${formatMoney(unit.waterAmount)} ???</span></div>
+        <div class="info-item"><span class="info-label">?????:</span><span class="info-value">${formatMoney(unit.electricAmount)} ???</span></div>
+        <div class="info-item"><span class="info-label">???????????:</span><span class="info-value">${formatMoney(unit.commonFee)} ???</span></div>
+        <div class="info-item"><span class="info-label">?????????????????:</span><span class="info-value" style="color:var(--primary);font-weight:700;">${formatMoney(unit.notifiedAmount)} ???</span></div>
       `;
       document.getElementById('manualPayInfo').innerHTML = infoHtml;
       document.getElementById('manualPayAmount').value = unit.notifiedAmount;
@@ -1501,7 +1501,7 @@
       currentUnit = null;
     }
 
-    // บันทึกการชำระด้วยตนเอง
+    // ??????????????????????
     async function saveManualPayment(){
       if(!currentUnit) return;
       
@@ -1512,55 +1512,55 @@
       const payNote = document.getElementById('manualPayNote').value.trim();
 
       if(paidAmount <= 0){
-        ppkAlert('กรุณากรอกยอดเงินที่ชำระ');
+        ppkAlert('???????????????????????');
         return;
       }
 
-      if(!await ppkConfirm(`ยืนยันบันทึกการชำระเงินของ ${unit.unitNumber}?\n\nยอดที่ชำระ: ${formatMoney(paidAmount)} บาท`)){
+      if(!await ppkConfirm(`?????????????????????????? ${unit.unitNumber}?\n\n??????????: ${formatMoney(paidAmount)} ???`)){
         return;
       }
 
       const { month, year, key } = getSelectedPeriod();
       const period = year + '-' + month;
 
-      // ส่ง Backend ก่อน
+      // ??? Backend ????
       try {
-          // สร้าง slip record (manual)
+          // ????? slip record (manual)
           const submitResult = await callBackend('submitSlip', {
             houseNumber: unit.unitNumber,
             residentId:  unit.residentId || null,
             period:      period,
             amount:      paidAmount,
             slipUrl:     null,
-            bankName:    'เงินสด'
+            bankName:    '??????'
           });
           if (submitResult && submitResult.success && submitResult.data && submitResult.data.id) {
-            // อนุมัติอัตโนมัติ
+            // ????????????????
             await callBackend('reviewSlip', {
               id:          submitResult.data.id,
               status:      'approved',
-              note:        payNote || 'บันทึกด้วยตนเอง',
+              note:        payNote || '???????????????',
               houseNumber: unit.unitNumber,
               period:      period,
               amount:      paidAmount
             });
-            // ลบ cache bill summary
+            // ?? cache bill summary
             localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: period }));
-            ppkAlert(`✓ บันทึกและอนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+            ppkAlert(`? ?????????????????????????????? ${unit.unitNumber} ?????????????`);
             closeManualPayModal();
             await loadSlipData();
             return;
           } else {
-            throw new Error(submitResult?.error || 'บันทึกไม่สำเร็จ');
+            throw new Error(submitResult?.error || '???????????????');
           }
         } catch (e) {
           console.error('saveManualPayment backend error:', e);
-          ppkAlert('Backend error: ' + e.message + '\n\nจะบันทึกใน localStorage แทน');
+          ppkAlert('Backend error: ' + e.message + '\n\n?????????? localStorage ???');
         }
 
       // Fallback: localStorage
       
-      // บันทึกข้อมูลสลิป
+      // ????????????????
       const slipSubmissions = JSON.parse(localStorage.getItem('slipSubmissions_' + key) || '[]');
       const existingIndex = slipSubmissions.findIndex(s => s.unitNumber === unit.unitNumber);
       
@@ -1582,12 +1582,12 @@
       }
       localStorage.setItem('slipSubmissions_' + key, JSON.stringify(slipSubmissions));
 
-      // บันทึกการอนุมัติอัตโนมัติ (เพราะบันทึกด้วยตนเอง)
+      // ????????????????????????? (????????????????????)
       const slipApprovals = JSON.parse(localStorage.getItem('slipApprovals_' + key) || '{}');
       slipApprovals[unit.unitNumber] = {
         status: 'approved',
         approvedAt: new Date().toISOString(),
-        approvedBy: currentUserData ? ((currentUserData.prefix||'') + (currentUserData.firstname||'') + ' ' + (currentUserData.lastname||'')).trim() : 'ผู้ดูแลระบบ',
+        approvedBy: currentUserData ? ((currentUserData.prefix||'') + (currentUserData.firstname||'') + ' ' + (currentUserData.lastname||'')).trim() : '???????????',
         paidAmount: paidAmount,
         notifiedAmount: unit.notifiedAmount,
         paymentMethod: 'cash',
@@ -1595,7 +1595,7 @@
       };
       localStorage.setItem('slipApprovals_' + key, JSON.stringify(slipApprovals));
 
-      ppkAlert(`✓ บันทึกและอนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+      ppkAlert(`? ?????????????????????????????? ${unit.unitNumber} ?????????????`);
       closeManualPayModal();
       loadSlipData();
     }
@@ -1604,13 +1604,13 @@
       const user = await checkSession(true);
             var _perms = user && user.permissions || [];
             if (!user || (user.role !== 'admin' && user.role !== 'head' && _perms.indexOf('slip') < 0)) {
-                if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+                if (typeof ppkAlert === 'function') ppkAlert('????????????????????????????');
                 window.location.replace('dashboard.html');
                 return;
             }
       currentUserData = user;
 
-      // ดึง adminSettings จาก Backend
+      // ??? adminSettings ??? Backend
       try {
           const settingsResult = await cachedCall('getSettings', {}, 600000);
           if (settingsResult && settingsResult.success) {
@@ -1634,7 +1634,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260527B"></script>
+    <script src="ppk-api.js?v=20260624A"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>

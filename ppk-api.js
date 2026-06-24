@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HOME PPK 2026 — Supabase API Wrapper
  * ดัดแปลงจากรูปแบบ Band Management By SoulCiety
  *
@@ -3770,33 +3770,40 @@ async function _routeAction(action, data) {
 
         /* ── Resident CRUD (admin) ───────────────── */
         case 'addResident': {
+            var _residentType = (data.residentType || data.resident_type || 'staff');
+            // ผู้ร่วมพักอาศัย (cohabitant) หรือผู้พักอาศัยที่ไม่มีบัญชีผู้ใช้ — ไม่ต้องสร้าง user
+            var _noAccount = (_residentType === 'cohabitant' || _residentType === 'no_account');
             var email = (data.email || '').trim().toLowerCase();
-            var uid = 'USR-' + Date.now().toString(36).toUpperCase();
-            var pwRaw = '';
-            if (data.password) {
-                try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
-            }
-            // สร้าง random password ถ้าไม่ได้ระบุ (บังคับเปลี่ยนตอนเข้าครั้งแรก)
-            if (!pwRaw) {
-                var _rndArr = new Uint8Array(16);
-                (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(_rndArr) : _rndArr.forEach(function(v,i,a){ a[i] = Math.floor(Math.random()*256); });
-                pwRaw = Array.from(_rndArr, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-            }
-            var pwHash = await sha256hexSalted(pwRaw, email || uid + '@local.ppk');
-            // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
-            await sbPost('users', {
-                id: uid, email: email || uid + '@local.ppk',
-                firstname: data.firstname || '', lastname: data.lastname || '',
-                prefix: data.prefix || '', phone: data.phone || '',
-                role: 'resident', position: data.position || '',
-                is_active: true, pdpa_consent: false,
-                password_hash: pwHash
-            });
-            // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก (retry 1 ครั้งถ้า fail)
-            var _flagKey = 'must_change_pw_' + uid;
-            try { await sbUpsert('settings', { key: _flagKey, value: 'true' }, 'key'); } catch(e1) {
-                console.warn('set must_change_pw flag attempt 1 failed:', e1);
-                try { await sbPost('settings', { key: _flagKey, value: 'true' }); } catch(e2) { console.warn('set must_change_pw flag attempt 2 failed:', e2); }
+            var uid = null;
+            if (!_noAccount) {
+                // สร้าง user account สำหรับ staff / ผู้พักอาศัยที่มีบัญชี
+                uid = 'USR-' + Date.now().toString(36).toUpperCase();
+                var pwRaw = '';
+                if (data.password) {
+                    try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
+                }
+                // สร้าง random password ถ้าไม่ได้ระบุ (บังคับเปลี่ยนตอนเข้าครั้งแรก)
+                if (!pwRaw) {
+                    var _rndArr = new Uint8Array(16);
+                    (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(_rndArr) : _rndArr.forEach(function(v,i,a){ a[i] = Math.floor(Math.random()*256); });
+                    pwRaw = Array.from(_rndArr, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+                }
+                var pwHash = await sha256hexSalted(pwRaw, email || uid + '@local.ppk');
+                // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
+                await sbPost('users', {
+                    id: uid, email: email || uid + '@local.ppk',
+                    firstname: data.firstname || '', lastname: data.lastname || '',
+                    prefix: data.prefix || '', phone: data.phone || '',
+                    role: 'resident', position: data.position || '',
+                    is_active: true, pdpa_consent: false,
+                    password_hash: pwHash
+                });
+                // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก (retry 1 ครั้งถ้า fail)
+                var _flagKey = 'must_change_pw_' + uid;
+                try { await sbUpsert('settings', { key: _flagKey, value: 'true' }, 'key'); } catch(e1) {
+                    console.warn('set must_change_pw flag attempt 1 failed:', e1);
+                    try { await sbPost('settings', { key: _flagKey, value: 'true' }); } catch(e2) { console.warn('set must_change_pw flag attempt 2 failed:', e2); }
+                }
             }
             // หา house_id จาก house_number (ลองหลายวิธี)
             var houseId = null;
@@ -3812,9 +3819,20 @@ async function _routeAction(action, data) {
             }
             var _resWarning = '';
             if (!houseId && _hn) _resWarning = 'ไม่พบเลขที่บ้าน "' + _hn + '" ในระบบ — บันทึกผู้พักอาศัยแล้ว แต่ยังไม่ผูกบ้าน';
+            // ตรวจสอบว่าบ้านนี้มีผู้พักอาศัย active อยู่แล้วหรือไม่ (ก่อน insert เพื่อให้ error message ชัดเจน)
+            if (houseId) {
+                var _existCheck = await sbGet('residents', { house_id: 'eq.' + houseId, is_active: 'eq.true', select: 'id,firstname,lastname', limit: '1' });
+                if (_existCheck && _existCheck.length > 0) {
+                    // cleanup user ที่สร้างไปแล้ว (ถ้ามี)
+                    if (uid) {
+                        try { await sbDelete('users', { id: uid }); } catch(eDel2) { console.warn('Cleanup user failed:', eDel2); }
+                    }
+                    var _existName = (_existCheck[0].firstname || '') + ' ' + (_existCheck[0].lastname || '');
+                    return { success: false, error: 'บ้านพักหลังที่ ' + _hn + ' มีผู้พักอาศัยอยู่แล้ว (' + _existName.trim() + ') — กรุณาย้ายผู้พักอาศัยเดิมออกก่อน หรือเลือกบ้านหลังอื่น' };
+                }
+            }
             // สร้าง resident — ใช้เฉพาะ columns ที่มีใน schema
             var _resBody = {
-                user_id:      uid,
                 house_number: _hn,
                 prefix:       data.prefix    || '',
                 firstname:    data.firstname || '',
@@ -3822,25 +3840,33 @@ async function _routeAction(action, data) {
                 position:     data.position  || '',
                 email:        email || '',
                 phone:        data.phone     || '',
+                resident_type: _residentType,
                 is_active:    true
             };
+            if (uid) _resBody.user_id = uid;
             if (houseId) _resBody.house_id = houseId;
             var newRes = null;
             try {
                 newRes = await sbPost('residents', _resBody);
             } catch(eRes) {
-                // ถ้า house_id NOT NULL constraint fail ให้ลองโดยไม่มี house_id
-                console.warn('addResident insert failed (house_id):', eRes.message, '— retrying without house_id');
-                delete _resBody.house_id;
-                try { newRes = await sbPost('residents', _resBody); } catch(eRes2) {
-                    console.error('addResident insert retry failed:', eRes2.message);
-                    _resWarning = 'สร้าง user สำเร็จ แต่สร้าง resident ไม่ได้: ' + eRes2.message;
+                // Cleanup: ลบ user ที่สร้างไปแล้ว เพื่อไม่ให้เป็น orphan
+                if (uid) {
+                    try { await sbDelete('users', { id: uid }); } catch(eDel) { console.warn('Cleanup created user failed:', eDel); }
                 }
+                var errMsg = eRes.message || 'ไม่ทราบสาเหตุ';
+                if (errMsg.indexOf('idx_residents_one_active_per_house') !== -1) {
+                    return { success: false, error: 'บ้านพักหลังที่ ' + (_hn || '?') + ' มีผู้พักอาศัย active อยู่แล้ว — กรุณาย้ายผู้พักอาศัยเดิมออกก่อน' };
+                }
+                if (errMsg.indexOf('not-null') !== -1 && errMsg.indexOf('house_id') !== -1) {
+                    return { success: false, error: 'ไม่พบบ้านเลขที่ "' + _hn + '" ในระบบ กรุณาตรวจสอบเลขที่บ้าน' };
+                }
+                return { success: false, error: 'สร้างผู้พักอาศัยไม่สำเร็จ: ' + errMsg };
             }
             invalidateResidentCache();
-            var _result = { success: true, userId: uid, residentId: newRes ? newRes.id : null };
-            if (_resWarning) _result.warning = _resWarning;
-            return _result;
+            var _ret = { success: true, residentId: newRes ? newRes.id : null };
+            if (uid) _ret.userId = uid;
+            if (_resWarning) _ret.warning = _resWarning;
+            return _ret;
         }
         case 'updateResident': {
             var rid = data.id;

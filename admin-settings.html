@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -1617,11 +1617,12 @@
                 <div class="form-grid">
                     <div class="form-group" style="grid-column: span 2;">
                         <label>ประเภทผู้พัก <span style="color:#ef4444">*</span></label>
-                        <select id="residentType" required>
+                        <select id="residentType" required onchange="updateResidentTypeHint(this.value)">
                             <option value="staff">👨‍🏫 บุคลากร (ครู/พนักงานในหน่วยงาน) - มีสิทธิ์เข้าระบบ</option>
+                            <option value="no_account">🏠 ผู้พักอาศัย (ไม่มีบัญชีผู้ใช้) - บันทึกข้อมูลเท่านั้น</option>
                             <option value="cohabitant">👤 ผู้ร่วมพักอาศัย (บุคคลภายนอก) - ไม่มีสิทธิ์เข้าระบบ</option>
                         </select>
-                        <div class="hint" style="color:#ef4444;">⚠️ ผู้ร่วมพักอาศัยที่ไม่ใช่บุคลากรจะไม่มีสิทธิ์เข้าใช้งานระบบโดยเด็ดขาด</div>
+                        <div class="hint" id="residentTypeHint" style="color:#ef4444;">⚠️ บุคลากรจะได้รับบัญชีผู้ใช้และรหัสผ่านชั่วคราวโดยอัตโนมัติ</div>
                     </div>
                     <div class="form-group">
                         <label>คำนำหน้า</label>
@@ -3404,6 +3405,17 @@
             }
         }
 
+        function updateResidentTypeHint(type) {
+            var hints = {
+                'staff':      '🔑 บุคลากรจะได้รับบัญชีผู้ใช้และรหัสผ่านชั่วคราวโดยอัตโนมัติ',
+                'no_account': '🏠 ผู้พักอาศัยประเภทนี้จะถูกบันทึกข้อมูลเท่านั้น ไม่มีบัญชีสำหรับเข้าสู่ระบบ',
+                'cohabitant': '⚠️ ผู้ร่วมพักอาศัยที่ไม่ใช่บุคลากรจะไม่มีสิทธิ์เข้าใช้งานระบบโดยเด็ดขาด'
+            };
+            var colors = { 'staff': '#16a34a', 'no_account': '#2563eb', 'cohabitant': '#ef4444' };
+            var el = document.getElementById('residentTypeHint');
+            if (el) { el.textContent = hints[type] || hints['staff']; el.style.color = colors[type] || '#ef4444'; }
+        }
+
         function saveResident() {
             const residentType = document.getElementById('residentType').value;
             const prefix = document.getElementById('residentPrefix').value;
@@ -3433,6 +3445,14 @@
             if (password && password.length < 8) {
                 ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                 return;
+            }
+
+            // Find save button to prevent double click
+            const saveBtn = document.querySelector('#modal-addResident .modal-footer .btn-primary');
+            if (saveBtn) {
+                if (saveBtn.disabled) return;
+                saveBtn.disabled = true;
+                saveBtn.textContent = '⏳ กำลังบันทึก...';
             }
 
             const data = getResidentsData();
@@ -3489,15 +3509,28 @@
                     closeModal('addResident');
                     clearAddForm();
                     if (result.warning) {
-                        ppkAlert('⚠️ บันทึก user สำเร็จ แต่: ' + result.warning);
+                        ppkAlert('⚠️ ' + result.warning);
+                    } else if (!result.userId) {
+                        ppkAlert('✅ บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว\n(ไม่มีบัญชีผู้ใช้)');
                     } else {
-                        ppkAlert('บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว');
+                        ppkAlert('✅ บันทึกข้อมูลผู้พักอาศัยเรียบร้อยแล้ว\nสร้างบัญชีผู้ใช้สำเร็จ');
                     }
                 } else {
                     data.pop(); // revert
-                    ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
+                    ppkAlert('❌ ' + (result?.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'));
                 }
-            }).catch(err => { data.pop(); ppkAlert(err.message); });
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'บันทึก';
+                }
+            }).catch(err => {
+                data.pop();
+                ppkAlert(err.message);
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'บันทึก';
+                }
+            });
         }
 
         async function editResident(id) {
@@ -3569,6 +3602,14 @@
                 if (!ok) return;
             }
 
+            // Find edit button to prevent double click
+            const editBtn = document.querySelector('#modal-editResident .modal-footer .btn-primary');
+            if (editBtn) {
+                if (editBtn.disabled) return;
+                editBtn.disabled = true;
+                editBtn.textContent = '⏳ กำลังบันทึก...';
+            }
+
             const updated = {
                 residentType, prefix,
                 firstname: firstName, lastname: lastName,
@@ -3597,7 +3638,17 @@
                 } else {
                     ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่ทราบสาเหตุ'));
                 }
-            }).catch(err => ppkAlert(err.message));
+                if (editBtn) {
+                    editBtn.disabled = false;
+                    editBtn.textContent = 'บันทึก';
+                }
+            }).catch(err => {
+                ppkAlert(err.message);
+                if (editBtn) {
+                    editBtn.disabled = false;
+                    editBtn.textContent = 'บันทึก';
+                }
+            });
         }
 
         async function deleteResident(id) {
@@ -5875,7 +5926,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260527B"></script>
+    <script src="ppk-api.js?v=20260624A"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
