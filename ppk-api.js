@@ -127,7 +127,7 @@ async function sbGet(table, params) {
                     var negate = m[1] === 'not.', op = m[2], v = m[3];
                     if (negate) {
                         if (op === 'is')   q = q.not(k, 'is', null);
-                        else if (op === 'in') q = q.not(k, 'in', '(' + v.replace(/^\(|\)$/g, '') + ')');
+                        else if (op === 'in') q = q.not(k, 'in', v.replace(/^\(|\)$/g, '').split(','));
                         else if (op === 'eq') q = q.not(k, 'eq', v);
                     } else {
                         if (op === 'eq')     q = q.eq(k, v);
@@ -200,10 +200,22 @@ async function sbPatch(table, filter, body) {
         _waitSb(async function (sb) {
             try {
                 var q = sb.from(table).update(body);
+                var hasFilter = false;
                 Object.keys(filter || {}).forEach(function (k) {
-                    var m = String(filter[k]).match(/^eq\.(.+)$/);
-                    if (m) q = q.eq(k, m[1]);
+                    var v = String(filter[k]);
+                    var mEq = v.match(/^eq\.(.+)$/);
+                    if (mEq) { q = q.eq(k, mEq[1]); hasFilter = true; return; }
+                    var mIn = v.match(/^in\.\((.+)\)$/);
+                    if (mIn) { q = q.in(k, mIn[1].split(',').map(function(s){ return s.trim(); })); hasFilter = true; return; }
+                    var mNeq = v.match(/^neq\.(.+)$/);
+                    if (mNeq) { q = q.neq(k, mNeq[1]); hasFilter = true; return; }
+                    var mNotIn = v.match(/^not\.in\.\((.+)\)$/);
+                    if (mNotIn) { q = q.not(k, 'in', mNotIn[1].split(',').map(function(s){ return s.trim(); })); hasFilter = true; }
                 });
+                if (!hasFilter) {
+                    reject(new Error('sbPatch: no valid filter — aborting to prevent update-all'));
+                    return;
+                }
                 var res = await q.select();
                 if (res.error) reject(new Error(res.error.message));
                 else resolve(res.data);
