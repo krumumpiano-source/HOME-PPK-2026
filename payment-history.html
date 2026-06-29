@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -1023,12 +1023,23 @@
                     commonVal = (notif.common_fee != null) ? parseFloat(notif.common_fee) : commonFeeFromSettings;
                 }
                 var totalVal = waterVal + electricVal + commonVal;
-                if (totalVal > 0 || notif.sent_at) {
-                    allBillData.push({
-                        month: mm, year: year, water: waterVal, electric: electricVal,
-                        common: commonVal, total: totalVal,
-                        notifiedAt: notif.sent_at || '', dueDate: notif.due_date || ''
+
+                var isLegacy = parseInt(year) < 2569 || (parseInt(year) === 2569 && parseInt(mm) < 3);
+                var hasSlip = false;
+                if (res[4] && res[4].success) {
+                    hasSlip = (res[4].data || []).some(function(s) {
+                        return (s.period || '') === (year + '-' + mm);
                     });
+                }
+
+                if (hasSlip || isLegacy) {
+                    if (totalVal > 0 || notif.sent_at) {
+                        allBillData.push({
+                            month: mm, year: year, water: waterVal, electric: electricVal,
+                            common: commonVal, total: totalVal,
+                            notifiedAt: notif.sent_at || '', dueDate: notif.due_date || ''
+                        });
+                    }
                 }
             }
 
@@ -1132,7 +1143,8 @@
                     callBackend('getElectricBills', { year: yr }),
                     callBackend('getSettings'),
                     callBackend('getSlipSubmissions', { houseNumber: hn }),
-                    callBackend('getExemptions',      { houseNumber: hn })
+                    callBackend('getExemptions',      { houseNumber: hn }),
+                    callBackend('getNotificationHistory', { houseNumber: hn, limit: 100 })
                 ]);
 
                 var wMap = {}, eMap = {};
@@ -1164,19 +1176,49 @@
                     commonFee = parseFloat(isFlat ? (sett.common_fee_flat || sett.commonFee || 0) : (sett.common_fee_house || sett.commonFee || 0)) || 0;
                 }
 
+                var notifMap = {};
+                if (res[5] && res[5].success) {
+                    (res[5].data || []).forEach(function(n) {
+                        var p = n.period || '';
+                        if (p.substring(0,4) === yr) {
+                            var mm = p.split('-')[1] || '';
+                            if (!notifMap[mm] || new Date(n.sent_at) > new Date(notifMap[mm].sent_at)) {
+                                notifMap[mm] = n;
+                            }
+                        }
+                    });
+                }
+
                 /* Bills for this year */
                 periods.filter(function(p) { return p.year === yr; }).forEach(function(p) {
                     var mm = p.month;
-                    var w = wMap[mm] || 0;
-                    var e = eMap[mm] || 0;
-                    var commonVal = (w > 0 || e > 0) ? commonFee : 0;
+                    var notif = notifMap[mm] || {};
+                    var w = wMap[mm] || parseFloat(notif.water_amount) || 0;
+                    var e = eMap[mm] || parseFloat(notif.electric_amount) || 0;
+                    var commonVal = 0;
+                    if (notif.sent_at) {
+                        commonVal = (notif.common_fee != null) ? parseFloat(notif.common_fee) : commonFee;
+                    } else if (w > 0 || e > 0) {
+                        commonVal = commonFee; 
+                    }
                     var totalVal = w + e + commonVal;
-                    if (totalVal > 0) {
-                        allBill.push({
-                            month: mm, year: yr, water: w, electric: e,
-                            common: commonVal, total: totalVal,
-                            notifiedAt: '', dueDate: ''
+
+                    var isLegacy = parseInt(yr) < 2569 || (parseInt(yr) === 2569 && parseInt(mm) < 3);
+                    var hasSlip = false;
+                    if (res[3] && res[3].success) {
+                        hasSlip = (res[3].data || []).some(function(s) {
+                            return (s.period || '') === (yr + '-' + mm);
                         });
+                    }
+
+                    if (hasSlip || isLegacy) {
+                        if (totalVal > 0 || notif.sent_at) {
+                            allBill.push({
+                                month: mm, year: yr, water: w, electric: e,
+                                common: commonVal, total: totalVal,
+                                notifiedAt: notif.sent_at || '', dueDate: notif.due_date || ''
+                            });
+                        }
                     }
                 });
 
@@ -1192,7 +1234,8 @@
                                 month: mm, year: yr, period: s.period || '',
                                 submittedAt: s.submitted_at || '', amount: parseFloat(s.amount) || 0,
                                 status: s.status || 'pending', reviewedAt: s.reviewed_at || '',
-                                notifiedAt: '', dueDate: ''
+                                notifiedAt: notifMap[mm] ? (notifMap[mm].sent_at || '') : '',
+                                dueDate: notifMap[mm] ? (notifMap[mm].due_date || '') : ''
                             });
                         }
                     });
