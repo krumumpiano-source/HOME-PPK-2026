@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -531,12 +531,15 @@
 
             // Amount display
             var amtEl = document.getElementById('currentMonthAmount');
+            var lblEl = document.querySelector('.hero-label');
             if (amount > 0) {
                 amtEl.textContent = amount.toLocaleString('th-TH') + ' บาท';
                 amtEl.className = 'hero-amount';
+                if (lblEl) lblEl.textContent = slipStatus === 'success' ? '💳 ยอดที่ชำระแล้ว' : '💳 ยอดชำระเดือนนี้';
             } else {
                 amtEl.textContent = 'ยังไม่มียอดแจ้ง';
                 amtEl.className = 'hero-amount zero';
+                if (lblEl) lblEl.textContent = '💳 ยอดชำระเดือนนี้';
             }
 
             // Bill breakdown
