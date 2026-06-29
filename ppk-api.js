@@ -5112,7 +5112,7 @@ async function _routeAction(action, data) {
                     var ahvPaidPeriods = {};
                     (ahvPhRows || []).forEach(function(ph) { if (ph.period) ahvPaidPeriods[ph.period] = true; });
                     (ahvSlipRows || []).forEach(function(sl) { if (sl.status === 'approved' && sl.period) ahvPaidPeriods[sl.period] = true; });
-                    for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvOutRows.length && ahvHi < ahvOutRows.length; ahvHi++) {
+                    for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvHi++) {
                         if (ahvOutRows[ahvHi].status !== 'paid' && (ahvPaidPeriods[ahvOutRows[ahvHi].period] || (ahvOutRows[ahvHi].period && ahvOutRows[ahvHi].period < _ahvSysLive))) {
                             ahvOutRows[ahvHi].status = 'paid';
                             sbPatch('outstanding', { id: 'eq.' + ahvOutRows[ahvHi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
