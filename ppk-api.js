@@ -4436,13 +4436,23 @@ async function _routeAction(action, data) {
                     phone: u.phone || '', created_at: u.created_at || ''
                 };
             });
-            // เสริมข้อมูล house_number จาก residents table
+            // เสริมข้อมูล house_number จาก residents table และ coresidents
             var userIds = allUsers.map(function(u) { return u.id; }).filter(Boolean);
             if (userIds.length > 0) {
                 try {
                     var resRows = await sbGet('residents', { user_id: 'in.(' + userIds.join(',') + ')', is_active: 'eq.true', select: 'user_id,house_number' });
                     var houseMap = {};
                     (resRows || []).forEach(function(r) { if (r.user_id) houseMap[r.user_id] = r.house_number; });
+                    var coRows = await sbGet('coresidents', { user_id: 'in.(' + userIds.join(',') + ')', select: 'user_id,resident_id' });
+                    if (coRows && coRows.length > 0) {
+                        var resIds = coRows.map(function(c) { return c.resident_id; }).filter(Boolean);
+                        if (resIds.length > 0) {
+                            var mainRes = await sbGet('residents', { id: 'in.(' + resIds.join(',') + ')', select: 'id,house_number' });
+                            var mainMap = {};
+                            (mainRes || []).forEach(function(m) { mainMap[m.id] = m.house_number; });
+                            coRows.forEach(function(c) { if (c.user_id && c.resident_id && mainMap[c.resident_id]) houseMap[c.user_id] = mainMap[c.resident_id]; });
+                        }
+                    }
                     allUsers.forEach(function(u) { u.house_number = houseMap[u.id] || ''; });
                 } catch(e) {}
             }
@@ -5076,7 +5086,14 @@ async function _routeAction(action, data) {
                 return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             }
             var ahvHouse = data.houseNumber;
-            if (!ahvHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
+            var ahvUserId = data.userId;
+            var targetRes = null;
+            if (ahvUserId) {
+                targetRes = await _findResidentForUser(ahvUserId, null);
+                if (targetRes && targetRes.house_number) ahvHouse = targetRes.house_number;
+            }
+            if (!ahvHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน (หรือผู้ใช้นี้ไม่มีบ้าน)' };
+            
             var ahvNow = new Date();
             var ahvPeriod = (ahvNow.getFullYear() + 543) + '-' + String(ahvNow.getMonth() + 1).padStart(2, '0');
             // ดึงข้อมูลทั้งหมดพร้อมกัน
@@ -5095,7 +5112,7 @@ async function _routeAction(action, data) {
                     var ahvPaidPeriods = {};
                     (ahvPhRows || []).forEach(function(ph) { if (ph.period) ahvPaidPeriods[ph.period] = true; });
                     (ahvSlipRows || []).forEach(function(sl) { if (sl.status === 'approved' && sl.period) ahvPaidPeriods[sl.period] = true; });
-                    for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvHi++) {
+                    for (var ahvHi = 0; ahvHi < ahvOutRows.length; ahvOutRows.length && ahvHi < ahvOutRows.length; ahvHi++) {
                         if (ahvOutRows[ahvHi].status !== 'paid' && (ahvPaidPeriods[ahvOutRows[ahvHi].period] || (ahvOutRows[ahvHi].period && ahvOutRows[ahvHi].period < _ahvSysLive))) {
                             ahvOutRows[ahvHi].status = 'paid';
                             sbPatch('outstanding', { id: 'eq.' + ahvOutRows[ahvHi].id }, { status: 'paid', updated_at: new Date().toISOString() }).catch(function() {});
@@ -5103,9 +5120,25 @@ async function _routeAction(action, data) {
                     }
                 } catch(e) {}
             }
-            // ชื่อผู้พัก
-            var ahvRes = ahvResRows && ahvResRows[0];
-            var ahvResName = ahvRes ? ((ahvRes.prefix||'') + (ahvRes.firstname||'') + ' ' + (ahvRes.lastname||'')).trim() : '';
+            // ชื่อผู้พัก (ยึดตาม userId ถ้ามีการส่งมา หรือใช้ชื่อผู้พักหลักถ้าไม่ได้ระบุ)
+            var ahvResName = '';
+            var ahvResPosition = '';
+            var ahvResPhone = '';
+            if (ahvUserId) {
+                try {
+                    var suRows = await sbGet('users', { id: 'eq.' + ahvUserId, limit: '1' });
+                    if (suRows && suRows[0]) {
+                        ahvResName = ((suRows[0].prefix||'') + (suRows[0].firstname||'') + ' ' + (suRows[0].lastname||'')).trim() || suRows[0].email || '';
+                        ahvResPosition = suRows[0].position || '';
+                        ahvResPhone = suRows[0].phone || '';
+                    }
+                } catch(e) {}
+            } else {
+                var ahvRes = ahvResRows && ahvResRows[0];
+                ahvResName = ahvRes ? ((ahvRes.prefix||'') + (ahvRes.firstname||'') + ' ' + (ahvRes.lastname||'')).trim() : '';
+                ahvResPosition = ahvRes ? (ahvRes.position || '') : '';
+                ahvResPhone = ahvRes ? (ahvRes.phone || '') : '';
+            }
             // ข้อมูลงวดปัจจุบัน
             var ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod; });
             // fallback: ถ้าไม่มีใน outstanding ให้ดึงจาก notifications
@@ -5228,8 +5261,8 @@ async function _routeAction(action, data) {
             return { success: true, data: {
                 houseNumber:     ahvHouse,
                 residentName:    ahvResName,
-                residentPosition: ahvRes ? (ahvRes.position || '') : '',
-                residentPhone:   ahvRes ? (ahvRes.phone || '') : '',
+                residentPosition: ahvResPosition,
+                residentPhone:   ahvResPhone,
                 period:          ahvPeriod,
                 currentAmount:   ahvCurOut ? parseFloat(ahvCurOut.total_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.total_amount) || 0 : 0),
                 water_amount:    ahvCurOut ? parseFloat(ahvCurOut.water_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.water_amount) || 0 : 0),
@@ -5266,29 +5299,60 @@ async function _routeAction(action, data) {
             var ahpSess = await _getSessionRole();
             if (!ahpSess || (ahpSess.role !== 'admin' && ahpSess.role !== 'head')) return { success: false, error: 'สิทธิ์ไม่เพียงพอ' };
             var ahpHouse = data.houseNumber;
+            var ahpUserId = data.userId;
+            
+            var targetRes = null;
+            if (ahpUserId) {
+                targetRes = await _findResidentForUser(ahpUserId, null);
+                if (targetRes && targetRes.house_number) ahpHouse = targetRes.house_number;
+            }
             if (!ahpHouse) return { success: false, error: 'ไม่ระบุเลขที่บ้าน' };
             var ahpResults = await Promise.all([
                 sbGet('residents', { house_number: 'eq.' + ahpHouse, is_active: 'eq.true', resident_type: 'neq.cohabitant', limit: '1' }).catch(function() { return []; }),
                 sbGet('residents', { house_number: 'eq.' + ahpHouse, is_active: 'eq.true', resident_type: 'eq.cohabitant' }).catch(function() { return []; }),
                 sbGet('housing', { house_number: 'eq.' + ahpHouse, limit: '1' }).catch(function() { return []; })
             ]);
-            var ahpRes = ahpResults[0] && ahpResults[0][0];
+            var ahpRes = ahpResults[0] && ahpResults[0][0]; // primary resident
             var ahpCoRows = ahpResults[1] || [];
             var ahpHou = ahpResults[2] && ahpResults[2][0];
+            
+            // ถ้าระบุ userId มา ให้พยายามดึง Profile จาก userId นั้นโดยตรง
+            var ahpProfileBase = ahpRes;
+            if (ahpUserId) {
+                // ถ้าเป็น coresident ก็ใช้ข้อมูลจาก coresident table แต่ตอนนี้เรารวมใน users
+                // หา record resident จริงๆ ของ user นี้
+                var userResRow = null;
+                try {
+                    var _ur = await sbGet('residents', { user_id: 'eq.' + ahpUserId, is_active: 'eq.true', limit: '1' });
+                    if (_ur && _ur[0]) userResRow = _ur[0];
+                } catch(e) {}
+                if (!userResRow) {
+                    try {
+                        var _uc = await sbGet('coresidents', { user_id: 'eq.' + ahpUserId, limit: '1' });
+                        if (_uc && _uc[0]) {
+                            userResRow = _uc[0];
+                            userResRow.resident_type = 'cohabitant';
+                        }
+                    } catch(e) {}
+                }
+                if (userResRow) ahpProfileBase = userResRow;
+            }
+
             var ahpUserInfo = {};
-            if (ahpRes && ahpRes.user_id) {
-                var ahpURows = await sbGet('users', { id: 'eq.' + ahpRes.user_id, select: 'email,phone', limit: '1' }).catch(function() { return []; });
+            var uidToFetch = ahpUserId || (ahpProfileBase ? ahpProfileBase.user_id : null);
+            if (uidToFetch) {
+                var ahpURows = await sbGet('users', { id: 'eq.' + uidToFetch, select: 'email,phone', limit: '1' }).catch(function() { return []; });
                 if (ahpURows && ahpURows[0]) ahpUserInfo = ahpURows[0];
             }
             return { success: true, data: {
                 houseNumber:   ahpHouse,
-                residentName:  ahpRes ? ((ahpRes.prefix||'') + (ahpRes.firstname||'') + ' ' + (ahpRes.lastname||'')).trim() : '',
-                position:      ahpRes ? (ahpRes.position || '') : '',
-                phone:         ahpUserInfo.phone || (ahpRes ? (ahpRes.phone || '') : ''),
+                residentName:  ahpProfileBase ? ((ahpProfileBase.prefix||'') + (ahpProfileBase.firstname||'') + ' ' + (ahpProfileBase.lastname||'')).trim() : '',
+                position:      ahpProfileBase ? (ahpProfileBase.position || '') : '',
+                phone:         ahpUserInfo.phone || (ahpProfileBase ? (ahpProfileBase.phone || '') : ''),
                 email:         ahpUserInfo.email || '',
-                photo_url:     ahpRes ? (ahpRes.photo_url || '') : '',
-                resident_type: ahpRes ? (ahpRes.resident_type || '') : '',
-                move_in_date:  ahpRes ? (ahpRes.move_in_date || '') : '',
+                photo_url:     ahpProfileBase ? (ahpProfileBase.photo_url || '') : '',
+                resident_type: ahpProfileBase ? (ahpProfileBase.resident_type || '') : '',
+                move_in_date:  ahpProfileBase ? (ahpProfileBase.move_in_date || '') : '',
                 coresidents:   ahpCoRows.map(function(r) {
                     return { name: ((r.prefix||'') + (r.firstname||'') + ' ' + (r.lastname||'')).trim(), relation: r.relation || '', phone: r.phone || '' };
                 }),

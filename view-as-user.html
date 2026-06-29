@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -307,15 +307,15 @@
                 <span class="avb-badge">&#128274; &#3604;&#3641;&#3652;&#3604;&#3657;&#3629;&#3618;&#3656;&#3634;&#3591;&#3648;&#3604;&#3637;&#3618;&#3623;</span>
             </div>
             <div class="house-picker-card">
-                <label for="housePickerSel">&#127968; &#3648;&#3621;&#3639;&#3629;&#3585;&#3610;&#3657;&#3634;&#3609;&#3614;&#3633;&#3585;/&#3649;&#3615;&#3621;&#3605;</label>
-                <select id="housePickerSel" onchange="onHouseSelect(this.value)">
-                    <option value="">-- &#3648;&#3621;&#3639;&#3629;&#3585;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621; --</option>
+                <label for="housePickerSel">&#128100; &#3648;&#3621;&#3639;&#3629;&#3585;&#3612;&#3641;&#3657;&#3651;&#3594;&#3657;&#3591;&#3634;&#3609; (User Picker)</label>
+                <select id="housePickerSel" onchange="onUserSelect(this.value)">
+                    <option value="">-- &#3648;&#3621;&#3639;&#3629;&#3585;&#3612;&#3641;&#3657;&#3651;&#3594;&#3657;&#3591;&#3634;&#3609;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621; --</option>
                 </select>
             </div>
             <div id="mainWrap">
                 <div class="view-empty">
-                    <div class="ve-icon">&#127969;</div>
-                    <div>&#3648;&#3621;&#3639;&#3629;&#3585;&#3610;&#3657;&#3634;&#3609;&#3614;&#3633;&#3585;/&#3649;&#3615;&#3621;&#3605;&#3604;&#3657;&#3634;&#3609;&#3610;&#3609;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621;&#3651;&#3609;&#3617;&#3640;&#3617;&#3617;&#3629;&#3591;&#3586;&#3629;&#3591;&#3612;&#3641;&#3657;&#3614;&#3633;&#3585;</div>
+                    <div class="ve-icon">&#128100;</div>
+                    <div>&#3648;&#3621;&#3639;&#3629;&#3585;&#3612;&#3641;&#3657;&#3651;&#3594;&#3657;&#3591;&#3634;&#3609;&#3604;&#3657;&#3634;&#3609;&#3610;&#3609;&#3648;&#3614;&#3639;&#3656;&#3629;&#3604;&#3641;&#3586;&#3657;&#3629;&#3617;&#3641;&#3621;&#3651;&#3609;&#3617;&#3640;&#3617;&#3617;&#3629;&#3591;&#3586;&#3629;&#3591;&#3612;&#3641;&#3657;&#3614;&#3633;&#3585;</div>
                 </div>
             </div>
         </div>
@@ -324,7 +324,7 @@
 <script src="supabase/config.js?v=20260416C"></script>
 <script src="supabase/supabase.min.js?v=20260416C"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
-<script src="ppk-api.js?v=20260624A"></script>
+<script src="ppk-api.js?v=20260629A"></script>
 <script src="ppk-app.js?v=20260416C"></script>
 <script src="ppk-utils.js?v=20260416C"></script>
 <script src="ppk-nav.js?v=20260326A"></script>
@@ -333,52 +333,57 @@
 var THAI_MONTHS = ['\u0e21\u0e01\u0e23\u0e32\u0e04\u0e21','\u0e01\u0e38\u0e21\u0e20\u0e32\u0e1e\u0e31\u0e19\u0e18\u0e4c','\u0e21\u0e35\u0e19\u0e32\u0e04\u0e21','\u0e40\u0e21\u0e29\u0e32\u0e22\u0e19','\u0e1e\u0e24\u0e29\u0e20\u0e32\u0e04\u0e21','\u0e21\u0e34\u0e16\u0e38\u0e19\u0e32\u0e22\u0e19','\u0e01\u0e23\u0e01\u0e0e\u0e32\u0e04\u0e21','\u0e2a\u0e34\u0e07\u0e2b\u0e32\u0e04\u0e21','\u0e01\u0e31\u0e19\u0e22\u0e32\u0e22\u0e19','\u0e15\u0e38\u0e25\u0e32\u0e04\u0e21','\u0e1e\u0e24\u0e28\u0e08\u0e34\u0e01\u0e32\u0e22\u0e19','\u0e18\u0e31\u0e19\u0e27\u0e32\u0e04\u0e21'];
 var THAI_MONTHS_SHORT = ['\u0e21.\u0e04.','\u0e01.\u0e1e.','\u0e21\u0e35.\u0e04.','\u0e40\u0e21.\u0e22.','\u0e1e.\u0e04.','\u0e21\u0e34.\u0e22.','\u0e01.\u0e04.','\u0e2a.\u0e04.','\u0e01.\u0e22.','\u0e15.\u0e04.','\u0e1e.\u0e22.','\u0e18.\u0e04.'];
 window._ppkNavPage = 'view-as-user';
-var _curHouse = null, _dashData = null, _reqData = null, _profData = null, _tabLoaded = {};
+var _curHouse = null, _curUserId = null, _dashData = null, _reqData = null, _profData = null, _tabLoaded = {};
 function _esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 function fmtPeriod(p) { if (!p) return '-'; var parts = p.split('-'); var mIdx = parts[1] ? parseInt(parts[1]) - 1 : 0; return THAI_MONTHS[mIdx] + ' ' + (parts[0] || ''); }
 function fmtDate(dt) { if (!dt) return '-'; try { return new Date(dt).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' }); } catch(e) { return dt; } }
 function fmtMoney(n) { return (parseFloat(n)||0).toLocaleString('th-TH'); }
 
-async function loadHousePicker() {
+async function loadUserPicker() {
     var sel = document.getElementById('housePickerSel');
     try {
-        var results = await Promise.all([ callBackend('getHousingList', {}), callBackend('getResidentsList', {}) ]);
-        var r = results[0];
-        var houses = (r && r.success && r.data) ? r.data : [];
-        var resMap = {};
-        ((results[1] && results[1].data) || []).forEach(function(res) {
-            if (res.house_number && !resMap[res.house_number] && res.resident_type !== 'cohabitant') {
-                resMap[res.house_number] = ((res.prefix||'') + (res.firstname||'') + ' ' + (res.lastname||'')).trim();
-            }
-        });
+        var r = await callBackend('getUsersList', {});
+        var users = (r && r.success && r.data) ? r.data : [];
         var typeOrder = function(s) { return s.startsWith('\u0e1a\u0e49\u0e32\u0e19') ? 0 : s.startsWith('\u0e41\u0e1f\u0e25\u0e15') ? 1 : 2; };
         var getNum = function(s) { return parseInt((s.match(/\d+/) || ['0'])[0]); };
-        houses.sort(function(a, b) {
-            var ha = a.display_number || '', hb = b.display_number || '';
-            if (typeOrder(ha) !== typeOrder(hb)) return typeOrder(ha) - typeOrder(hb);
-            return getNum(ha) - getNum(hb);
+        
+        users.sort(function(a, b) {
+            var ha = a.house_number || '', hb = b.house_number || '';
+            if (ha !== hb) {
+                if (typeOrder(ha) !== typeOrder(hb)) return typeOrder(ha) - typeOrder(hb);
+                return getNum(ha) - getNum(hb);
+            }
+            // If same house, sort by role (admin first, etc) then name
+            if (a.role !== b.role) return (a.role === 'admin' ? -1 : 1);
+            return (a.firstname || '').localeCompare(b.firstname || '');
         });
-        houses.forEach(function(h) {
-            var dn = h.display_number || '';
-            if (!dn) return;
+        
+        users.forEach(function(u) {
+            if (!u.house_number && u.role !== 'admin' && u.role !== 'head') return;
+            var hn = u.house_number ? '[\u0e1a\u0e49\u0e32\u0e19 ' + u.house_number + '] ' : '[\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1a\u0e49\u0e32\u0e19] ';
+            var name = ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() || u.email;
             var opt = document.createElement('option');
-            opt.value = dn;
-            var resName = resMap[dn] || '';
-            var statusLabel = h.status === 'occupied' ? '' : h.status === 'available' ? ' (\u0e27\u0e48\u0e32\u0e07)' : ' (' + (h.status||'') + ')';
-            opt.textContent = resName ? dn + ' \u2014 ' + resName + statusLabel : dn + statusLabel;
+            opt.value = u.id;
+            opt.dataset.house = u.house_number || '';
+            var roleLabel = u.role === 'admin' ? ' (\u0e41\u0e2d\u0e14\u0e21\u0e34\u0e19)' : '';
+            opt.textContent = hn + name + roleLabel;
             sel.appendChild(opt);
         });
     } catch(e) { sel.innerHTML = '<option value="">\u0e40\u0e01\u0e34\u0e14\u0e02\u0e49\u0e2d\u0e1c\u0e34\u0e14\u0e1e\u0e25\u0e32\u0e14</option>'; }
 }
 
-async function onHouseSelect(houseNumber) {
+async function onUserSelect(userId) {
+    var sel = document.getElementById('housePickerSel');
+    var opt = sel.options[sel.selectedIndex];
+    var houseNumber = opt ? opt.dataset.house : null;
     _curHouse = houseNumber || null;
+    _curUserId = userId || null;
     _dashData = null; _reqData = null; _profData = null; _tabLoaded = {};
     var wrap = document.getElementById('mainWrap');
-    if (!houseNumber) { wrap.innerHTML = '<div class="view-empty"><div class="ve-icon">\ud83c\udfe1</div><div>\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e1a\u0e49\u0e32\u0e19\u0e1e\u0e31\u0e01/\u0e41\u0e1f\u0e25\u0e15</div></div>'; return; }
+    if (!userId) { wrap.innerHTML = '<div class="view-empty"><div class="ve-icon">\ud83d\udc64</div><div>\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e1c\u0e39\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e14\u0e49\u0e32\u0e19\u0e1a\u0e19\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25</div></div>'; return; }
     wrap.innerHTML = '<div class="tab-loading">\u23f3 \u0e01\u0e33\u0e25\u0e31\u0e07\u0e42\u0e2b\u0e25\u0e14\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25...</div>';
     try {
-        var r = await callBackend('getAdminHouseView', { houseNumber: houseNumber });
+        var r = await callBackend('getAdminHouseView', { userId: userId, houseNumber: houseNumber });
         if (!r || !r.success) { wrap.innerHTML = '<div class="view-empty"><div class="ve-icon">\u26a0\ufe0f</div><div>' + _esc(r && r.error || '\u0e42\u0e2b\u0e25\u0e14\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08') + '</div></div>'; return; }
         _dashData = r.data; _tabLoaded = { dashboard: true };
         buildShell(_dashData);
@@ -974,7 +979,7 @@ async function loadAndRenderProfile() {
     var panel = document.getElementById('panel-profile');
     panel.innerHTML = '<div class="tab-loading">\u23f3 \u0e01\u0e33\u0e25\u0e31\u0e07\u0e42\u0e2b\u0e25\u0e14\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e1c\u0e39\u0e49\u0e1e\u0e31\u0e01...</div>';
     try {
-        var r = await callBackend('getAdminHouseProfile', { houseNumber: _curHouse });
+        var r = await callBackend('getAdminHouseProfile', { houseNumber: _curHouse, userId: _curUserId });
         if (!r || !r.success) { panel.innerHTML = '<div class="view-empty"><div class="ve-icon">\u26a0\ufe0f</div><div>' + _esc(r && r.error || '\u0e42\u0e2b\u0e25\u0e14\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08') + '</div></div>'; return; }
         _profData = r.data;
         var p = _profData;
@@ -1019,7 +1024,7 @@ window.onload = async function() {
         return;
     }
     if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'view-as-user');
-    await loadHousePicker();
+    await loadUserPicker();
 };
 </script>
 </body>
