@@ -360,7 +360,12 @@ async function loadUserPicker() {
         
         users.forEach(function(u) {
             if (!u.house_number && u.role !== 'admin' && u.role !== 'head') return;
-            var hn = u.house_number ? '[\u0e1a\u0e49\u0e32\u0e19 ' + u.house_number + '] ' : '[\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1a\u0e49\u0e32\u0e19] ';
+            var hn = '';
+            if (u.house_number) {
+                hn = u.house_number.startsWith('\u0e41\u0e1f\u0e25\u0e15') ? '[' + u.house_number + '] ' : '[\u0e1a\u0e49\u0e32\u0e19 ' + u.house_number + '] ';
+            } else {
+                hn = '[\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1a\u0e49\u0e32\u0e19] ';
+            }
             var name = ((u.prefix||'') + (u.firstname||'') + ' ' + (u.lastname||'')).trim() || u.email;
             var opt = document.createElement('option');
             opt.value = u.id;
