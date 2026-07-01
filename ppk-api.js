@@ -2709,9 +2709,18 @@ async function _routeAction(action, data) {
                     var adminOutRows = adminResults[4] || [];
                     var adminSlipRows = adminResults[5] || [];
                     var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
-                    // Fix: คงยอดแจ้งไว้จนกว่าจะครบ 10 วันนับจากวันแจ้ง (created_at/sent_at)
+                    // ดึง sent_at มาใช้คำนวณ 10 วันให้แม่นยำ
+                    if (adminOutRows.length > 0) {
+                        try {
+                            var _aNotifs = await sbGet('notifications', { house_number: 'eq.' + sessHouseNumber, select: 'period,sent_at', limit: '100' }).catch(function() { return []; });
+                            var _aNotifMap = {};
+                            (_aNotifs || []).forEach(function(n) { if (n.period && n.sent_at) _aNotifMap[n.period] = n.sent_at; });
+                            adminOutRows.forEach(function(o) { o._sent_at = _aNotifMap[o.period]; });
+                        } catch(e) {}
+                    }
+                    // Fix: คงยอดแจ้งไว้จนกว่าจะครบ 10 วันนับจากวันแจ้ง (sent_at)
                     if (adminCurrentOut) {
-                        var _cDate = new Date(adminCurrentOut.created_at || adminCurrentOut.created);
+                        var _cDate = new Date(adminCurrentOut._sent_at || adminCurrentOut.created_at || adminCurrentOut.created);
                         if (!isNaN(_cDate.getTime())) {
                             if ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10) adminCurrentOut = null;
                         }
@@ -2721,7 +2730,7 @@ async function _routeAction(action, data) {
                         for (var _ai = 0; _ai < adminOutRows.length; _ai++) {
                             var _aLast = adminOutRows[_ai];
                             if (_aLast && _aLast.period) {
-                                var _aDate = new Date(_aLast.created_at || _aLast.created);
+                                var _aDate = new Date(_aLast._sent_at || _aLast.created_at || _aLast.created);
                                 if (isNaN(_aDate.getTime()) || (now2.getTime() - _aDate.getTime()) / (1000 * 60 * 60 * 24) <= 10) {
                                     adminCurrentOut = _aLast; 
                                     _adminDisplayPeriod = _aLast.period;
@@ -2842,16 +2851,28 @@ async function _routeAction(action, data) {
                 // ป้องกันแสดงยอดแก่ผู้พักอาศัยก่อนที่แอดมินจะกด "บันทึกข้อมูลแจ้งยอดลงระบบ"
                 if (outRows && outRows.length > 0 && houseNumber) {
                     try {
-                        var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period', limit: '100' }).catch(function() { return []; });
+                        var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period,sent_at', limit: '100' }).catch(function() { return []; });
                         var _gddPublished = {};
-                        (_gddNotifs || []).forEach(function(n) { if (n.period) _gddPublished[n.period] = true; });
-                        outRows = outRows.filter(function(o) { return _gddPublished[o.period]; });
+                        (_gddNotifs || []).forEach(function(n) { 
+                            if (n.period) {
+                                if (!_gddPublished[n.period] || (n.sent_at && new Date(n.sent_at) > new Date(_gddPublished[n.period]))) {
+                                    _gddPublished[n.period] = n.sent_at || true;
+                                }
+                            } 
+                        });
+                        outRows = outRows.filter(function(o) { 
+                            if (_gddPublished[o.period]) {
+                                o._sent_at = _gddPublished[o.period] === true ? null : _gddPublished[o.period];
+                                return true;
+                            }
+                            return false;
+                        });
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
                 // Fix: คงยอดแจ้งไว้ใน "ยอดชำระประจำเดือน" จนกว่าจะครบ 10 วันนับจากวันแจ้ง
                 if (currentOut) {
-                    var _cDate = new Date(currentOut.created_at || currentOut.created);
+                    var _cDate = new Date(currentOut._sent_at || currentOut.created_at || currentOut.created);
                     if (!isNaN(_cDate.getTime())) {
                         if ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10) currentOut = null;
                     }
@@ -2861,7 +2882,7 @@ async function _routeAction(action, data) {
                     for (var _oi = 0; _oi < outRows.length; _oi++) {
                         var _latestOut = outRows[_oi];
                         if (_latestOut && _latestOut.period) {
-                            var _lDate = new Date(_latestOut.created_at || _latestOut.created);
+                            var _lDate = new Date(_latestOut._sent_at || _latestOut.created_at || _latestOut.created);
                             if (isNaN(_lDate.getTime()) || (now2.getTime() - _lDate.getTime()) / (1000 * 60 * 60 * 24) <= 10) {
                                 currentOut = _latestOut;
                                 period = _latestOut.period;
