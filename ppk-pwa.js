@@ -1,4 +1,4 @@
-﻿// HOME PPK 2026 — PWA Install Prompt v1.0
+// HOME PPK 2026 — PWA Install Prompt v1.0
 // แสดงคำแนะนำสร้างแอปง่ายๆ สำหรับผู้ใช้ทุกระดับ
 (function () {
   'use strict';
@@ -256,9 +256,26 @@
     '.ppk-install-skip:hover{color:#DC2626;border-color:#FECACA;}';
   document.head.appendChild(style);
 
-  // ---- Register Service Worker ----
+  // ---- Register Service Worker & Auto Update ----
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(function () { });
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      // เมื่อกลับเข้ามาหน้าแอป (เปิดจอขึ้นมาใหม่) ให้เช็คว่ามีอัปเดตไหม
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+          reg.update().catch(function(){});
+        }
+      });
+      // ถ้าพบว่ามีอัปเดตใหม่ถูกติดตั้งเสร็จแล้ว ให้รีเฟรชหน้าต่างอัตโนมัติ
+      reg.addEventListener('updatefound', function () {
+        var newWorker = reg.installing;
+        newWorker.addEventListener('statechange', function () {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('New version found. Auto-reloading...');
+            window.location.reload(true);
+          }
+        });
+      });
+    }).catch(function () { });
   }
 
   // ---- แสดง prompt หลังหน้าโหลดเสร็จ 2 วินาที ----
