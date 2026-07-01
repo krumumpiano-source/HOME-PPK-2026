@@ -2709,15 +2709,13 @@ async function _routeAction(action, data) {
                     var adminOutRows = adminResults[4] || [];
                     var adminSlipRows = adminResults[5] || [];
                     var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
-                    // Fix: แจ้งยอดช้าข้ามเดือน — ถ้าไม่มียอดเดือนนี้ ให้ดูงวดล่าสุดที่มี (≤1 เดือน)
+                    // Fix: แจ้งยอดช้าข้ามเดือน — ถ้าไม่มียอดเดือนนี้ ให้ดูงวดล่าสุดที่มี
                     var _adminDisplayPeriod = adminPeriod;
                     if (!adminCurrentOut && adminOutRows.length > 0) {
                         var _aLast = adminOutRows[0];
                         if (_aLast && _aLast.period) {
-                            var _aNY = now2.getFullYear() + 543, _aNM = now2.getMonth() + 1;
-                            var _aLP = _aLast.period.split('-');
-                            var _aMD = (_aNY * 12 + _aNM) - (parseInt(_aLP[0]) * 12 + parseInt(_aLP[1]));
-                            if (_aMD >= 0 && _aMD <= 1) { adminCurrentOut = _aLast; _adminDisplayPeriod = _aLast.period; }
+                            adminCurrentOut = _aLast; 
+                            _adminDisplayPeriod = _aLast.period;
                         }
                     }
                     var adminLatestSlip = adminSlipRows[0];
@@ -2839,25 +2837,17 @@ async function _routeAction(action, data) {
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
-                // Fix: แจ้งยอดช้าข้ามเดือน (เช่น แจ้งยอดเมษาในวันที่ 1 พฤษภา)
-                // ถ้าไม่มียอดเดือนนี้ แต่งวดล่าสุดใน outRows คือเดือนก่อน (≤1 เดือน)
-                // → แสดงเป็น current แทนที่จะขึ้น "ยังไม่มียอดแจ้ง" + แบนเนอร์ค้างสะสม
+                // Fix: แจ้งยอดช้าข้ามเดือน
+                // ถ้าไม่มียอดเดือนนี้ ให้แสดงงวดค้างล่าสุดเป็นยอดปัจจุบัน แทนที่จะขึ้น "ยังไม่มียอดแจ้ง"
                 if (!currentOut && outRows && outRows.length > 0) {
                     var _latestOut = outRows[0]; // outRows เรียง period.desc → งวดล่าสุดก่อน
                     if (_latestOut && _latestOut.period) {
-                        var _nYear = now2.getFullYear() + 543;
-                        var _nMonth = now2.getMonth() + 1;
-                        var _lp = _latestOut.period.split('-');
-                        var _lYear = parseInt(_lp[0]), _lMonth = parseInt(_lp[1]);
-                        var _mDiff = (_nYear * 12 + _nMonth) - (_lYear * 12 + _lMonth);
-                        if (_mDiff >= 0 && _mDiff <= 1) {
-                            currentOut = _latestOut;
-                            period = _latestOut.period;
-                            // ดึง slips ใหม่สำหรับ period จริง (ไม่ใช่เดือนปัจจุบัน)
-                            try {
-                                slipRows = await sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
-                            } catch(e) { slipRows = []; }
-                        }
+                        currentOut = _latestOut;
+                        period = _latestOut.period;
+                        // ดึง slips ใหม่สำหรับ period จริง (ไม่ใช่เดือนปัจจุบัน)
+                        try {
+                            slipRows = await sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
+                        } catch(e) { slipRows = []; }
                     }
                 }
                 // Fallback: ถ้าไม่เจอใน outstanding ให้ดึงจาก notifications
