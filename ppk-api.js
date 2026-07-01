@@ -2720,9 +2720,11 @@ async function _routeAction(action, data) {
                     }
                     // Fix: คงยอดแจ้งไว้จนกว่าจะครบ 10 วันนับจากวันแจ้ง (sent_at)
                     if (adminCurrentOut) {
-                        var _cDate = new Date(adminCurrentOut._sent_at || adminCurrentOut.created_at || adminCurrentOut.created);
-                        if (!isNaN(_cDate.getTime())) {
-                            if ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10) adminCurrentOut = null;
+                        if (adminCurrentOut._sent_at) {
+                            var _cDate = new Date(adminCurrentOut._sent_at);
+                            if (!isNaN(_cDate.getTime()) && ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
+                                adminCurrentOut = null;
+                            }
                         }
                     }
                     var _adminDisplayPeriod = adminPeriod;
@@ -2730,8 +2732,14 @@ async function _routeAction(action, data) {
                         for (var _ai = 0; _ai < adminOutRows.length; _ai++) {
                             var _aLast = adminOutRows[_ai];
                             if (_aLast && _aLast.period) {
-                                var _aDate = new Date(_aLast._sent_at || _aLast.created_at || _aLast.created);
-                                if (isNaN(_aDate.getTime()) || (now2.getTime() - _aDate.getTime()) / (1000 * 60 * 60 * 24) <= 10) {
+                                var _isExpired = false;
+                                if (_aLast._sent_at) {
+                                    var _aDate = new Date(_aLast._sent_at);
+                                    if (!isNaN(_aDate.getTime()) && ((now2.getTime() - _aDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
+                                        _isExpired = true;
+                                    }
+                                }
+                                if (!_isExpired) {
                                     adminCurrentOut = _aLast; 
                                     _adminDisplayPeriod = _aLast.period;
                                     break;
@@ -2873,9 +2881,11 @@ async function _routeAction(action, data) {
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
                 // Fix: คงยอดแจ้งไว้ใน "ยอดชำระประจำเดือน" จนกว่าจะครบ 10 วันนับจากวันแจ้ง
                 if (currentOut) {
-                    var _cDate = new Date(currentOut._sent_at || currentOut.created_at || currentOut.created);
-                    if (!isNaN(_cDate.getTime())) {
-                        if ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10) currentOut = null;
+                    if (currentOut._sent_at) {
+                        var _cDate = new Date(currentOut._sent_at);
+                        if (!isNaN(_cDate.getTime()) && ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
+                            currentOut = null;
+                        }
                     }
                 }
                 
@@ -2883,8 +2893,14 @@ async function _routeAction(action, data) {
                     for (var _oi = 0; _oi < outRows.length; _oi++) {
                         var _latestOut = outRows[_oi];
                         if (_latestOut && _latestOut.period) {
-                            var _lDate = new Date(_latestOut._sent_at || _latestOut.created_at || _latestOut.created);
-                            if (isNaN(_lDate.getTime()) || (now2.getTime() - _lDate.getTime()) / (1000 * 60 * 60 * 24) <= 10) {
+                            var _isExpired = false;
+                            if (_latestOut._sent_at) {
+                                var _lDate = new Date(_latestOut._sent_at);
+                                if (!isNaN(_lDate.getTime()) && ((now2.getTime() - _lDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
+                                    _isExpired = true;
+                                }
+                            }
+                            if (!_isExpired) {
                                 currentOut = _latestOut;
                                 period = _latestOut.period;
                                 // ดึง slips ใหม่สำหรับ period จริง (ไม่ใช่เดือนปัจจุบัน)
