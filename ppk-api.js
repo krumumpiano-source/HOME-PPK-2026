@@ -2731,6 +2731,9 @@ async function _routeAction(action, data) {
                                     if (!isNaN(_aDate.getTime()) && ((now2.getTime() - _aDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
                                         _isExpired = true;
                                     }
+                                } else {
+                                    // ถ้าบิลยังไม่ถูกแจ้งยอด ให้ข้ามไป (ยังไม่นำมาขึ้น Hero Card)
+                                    _isExpired = true;
                                 }
                                 if (!_isExpired) {
                                     adminCurrentOut = _aLast; 
@@ -2740,9 +2743,9 @@ async function _routeAction(action, data) {
                             }
                         }
                     }
-                    // If all are expired or no bills, fallback to the current period if it exists
+                    // If all are expired or no bills, fallback to the current period if it exists (must be notified)
                     if (!adminCurrentOut) {
-                        adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
+                        adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod && o._sent_at; });
                         _adminDisplayPeriod = adminPeriod;
                     }
                     var adminLatestSlip = adminSlipRows[0];
@@ -2888,6 +2891,9 @@ async function _routeAction(action, data) {
                                 if (!isNaN(_lDate.getTime()) && ((now2.getTime() - _lDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
                                     _isExpired = true;
                                 }
+                            } else {
+                                // ถ้าบิลยังไม่ถูกแจ้งยอด ให้ข้ามไป
+                                _isExpired = true;
                             }
                             if (!_isExpired) {
                                 currentOut = _latestOut;
@@ -2901,9 +2907,9 @@ async function _routeAction(action, data) {
                         }
                     }
                 }
-                // If all are expired or no bills, fallback to the current period if it exists
+                // If all are expired or no bills, fallback to the current period if it exists (must be notified)
                 if (!currentOut) {
-                    currentOut = (outRows || []).find(function(o) { return o.period === period; });
+                    currentOut = (outRows || []).find(function(o) { return o.period === period && o._sent_at; });
                 }
                 // Fallback: ถ้าไม่เจอใน outstanding ให้ดึงจาก notifications
                 var notifRow = null;
