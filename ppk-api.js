@@ -2915,14 +2915,8 @@ async function _routeAction(action, data) {
                 var notifRow = null;
                 if (!currentOut && houseNumber) {
                     try {
-                        var notifRows = await sbGet('notifications', { house_number: 'eq.' + houseNumber, order: 'sent_at.desc', limit: '1' });
+                        var notifRows = await sbGet('notifications', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'sent_at.desc', limit: '1' });
                         notifRow = notifRows && notifRows[0];
-                        if (notifRow && notifRow.sent_at) {
-                            var _nDate = new Date(notifRow.sent_at);
-                            if (!isNaN(_nDate.getTime()) && ((now.getTime() - _nDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                                notifRow = null;
-                            }
-                        }
                     } catch(e) {}
                 }
                 var currentAmount = currentOut ? parseFloat(currentOut.total_amount) || 0 : (notifRow ? parseFloat(notifRow.total_amount) || 0 : 0);
