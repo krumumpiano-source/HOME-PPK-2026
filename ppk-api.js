@@ -5155,6 +5155,52 @@ async function _routeAction(action, data) {
                 sbGet('payment_proxies',  { house_number: 'eq.' + ahvHouse, is_active: 'eq.true', limit: '1' }).catch(function() { return []; })
             ]);
             var ahvResRows = ahvResults[0], ahvOutRows = ahvResults[1], ahvSlipRows = ahvResults[2], ahvProxyRows = ahvResults[3];
+            
+            // ดึง sent_at จาก notifications มาใช้คำนวณ 10 วันนับจากวันแจ้ง
+            if (ahvOutRows && ahvOutRows.length > 0) {
+                try {
+                    var _aNotifs2 = await sbGet('notifications', { house_number: 'eq.' + ahvHouse, select: 'period,sent_at', limit: '100' }).catch(function() { return []; });
+                    var _aNotifMap2 = {};
+                    (_aNotifs2 || []).forEach(function(n) { if (n.period) _aNotifMap2[n.period] = n.sent_at; });
+                    ahvOutRows.forEach(function(o) { o._sent_at = _aNotifMap2[o.period]; });
+                } catch(e) {}
+            }
+            var ahvCurOut = null;
+            var _ahvDisplayPeriod = ahvPeriod;
+            if (ahvOutRows && ahvOutRows.length > 0) {
+                for (var _ahi = 0; _ahi < ahvOutRows.length; _ahi++) {
+                    var _ahLast = ahvOutRows[_ahi];
+                    if (_ahLast && _ahLast.period) {
+                        var _isExp = false;
+                        if (_ahLast._sent_at) {
+                            var _ahDate = new Date(_ahLast._sent_at);
+                            if (!isNaN(_ahDate.getTime()) && ((ahvNow.getTime() - _ahDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
+                                _isExp = true;
+                            }
+                        } else {
+                            _isExp = true;
+                        }
+                        if (!_isExp) {
+                            ahvCurOut = _ahLast;
+                            _ahvDisplayPeriod = _ahLast.period;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!ahvCurOut) {
+                ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod && o._sent_at; });
+                _ahvDisplayPeriod = ahvPeriod;
+            }
+            
+            var ahvCurNotif = null;
+            if (!ahvCurOut) {
+                try {
+                    var ahvNotifR = await sbGet('notifications', { house_number: 'eq.' + ahvHouse, period: 'eq.' + _ahvDisplayPeriod, order: 'sent_at.desc', limit: '1' });
+                    ahvCurNotif = ahvNotifR && ahvNotifR[0];
+                } catch(e) {}
+            }
+            
             // Self-healing: ตรวจ outstanding ที่ค้างอยู่ว่ามี slip approved หรือ payment_history หรือเป็นงวดก่อนระบบ live → auto-mark paid
             var _ahvSysLive = '2569-03';
             if (ahvOutRows && ahvOutRows.length > 0) {
@@ -5190,17 +5236,8 @@ async function _routeAction(action, data) {
                 ahvResPosition = ahvRes ? (ahvRes.position || '') : '';
                 ahvResPhone = ahvRes ? (ahvRes.phone || '') : '';
             }
-            // ข้อมูลงวดปัจจุบัน
-            var ahvCurOut = (ahvOutRows || []).find(function(o) { return o.period === ahvPeriod; });
-            // fallback: ถ้าไม่มีใน outstanding ให้ดึงจาก notifications
-            var ahvCurNotif = null;
-            if (!ahvCurOut) {
-                try {
-                    var ahvNotifR = await sbGet('notifications', { house_number: 'eq.' + ahvHouse, period: 'eq.' + ahvPeriod, order: 'sent_at.desc', limit: '1' });
-                    ahvCurNotif = ahvNotifR && ahvNotifR[0];
-                } catch(e) {}
-            }
-            var ahvCurSlip = (ahvSlipRows || []).find(function(s) { return s.period === ahvPeriod; });
+            
+            var ahvCurSlip = (ahvSlipRows || []).find(function(s) { return s.period === _ahvDisplayPeriod; });
             var ahvSlipStatus = 'none', ahvReviewNote = '', ahvSlipId = null;
             if (ahvCurSlip) {
                 ahvSlipId = ahvCurSlip.id;
@@ -5208,7 +5245,7 @@ async function _routeAction(action, data) {
                 else if (ahvCurSlip.status === 'rejected') { ahvSlipStatus = 'rejected'; ahvReviewNote = ahvCurSlip.review_note || ''; }
                 else ahvSlipStatus = 'reviewing';
             }
-            var ahvTotalOs = (ahvOutRows || []).filter(function(r) { return r.status !== 'paid'; }).reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
+            var ahvTotalOs = (ahvOutRows || []).filter(function(r) { return r.status !== 'paid' && r.period !== _ahvDisplayPeriod; }).reduce(function(s, r) { return s + (parseFloat(r.total_amount) || 0); }, 0);
             // ประวัติรายเดือน (join outstanding + slip ล่าสุดของแต่ละงวด)
             var ahvHistory = (ahvOutRows || []).map(function(o) {
                 var s = (ahvSlipRows || []).find(function(sl) { return sl.period === o.period; });
@@ -5314,7 +5351,7 @@ async function _routeAction(action, data) {
                 residentName:    ahvResName,
                 residentPosition: ahvResPosition,
                 residentPhone:   ahvResPhone,
-                period:          ahvPeriod,
+                period:          _ahvDisplayPeriod,
                 currentAmount:   ahvCurOut ? parseFloat(ahvCurOut.total_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.total_amount) || 0 : 0),
                 water_amount:    ahvCurOut ? parseFloat(ahvCurOut.water_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.water_amount) || 0 : 0),
                 electric_amount: ahvCurOut ? parseFloat(ahvCurOut.electric_amount) || 0 : (ahvCurNotif ? parseFloat(ahvCurNotif.electric_amount) || 0 : 0),
