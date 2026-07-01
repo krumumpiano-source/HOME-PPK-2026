@@ -2718,17 +2718,10 @@ async function _routeAction(action, data) {
                             adminOutRows.forEach(function(o) { o._sent_at = _aNotifMap[o.period]; });
                         } catch(e) {}
                     }
-                    // Fix: คงยอดแจ้งไว้จนกว่าจะครบ 10 วันนับจากวันแจ้ง (sent_at)
-                    if (adminCurrentOut) {
-                        if (adminCurrentOut._sent_at) {
-                            var _cDate = new Date(adminCurrentOut._sent_at);
-                            if (!isNaN(_cDate.getTime()) && ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                                adminCurrentOut = null;
-                            }
-                        }
-                    }
+                    var adminCurrentOut = null;
                     var _adminDisplayPeriod = adminPeriod;
-                    if (!adminCurrentOut && adminOutRows.length > 0) {
+                    // First, try to find an unexpired bill from previous months or current month
+                    if (adminOutRows.length > 0) {
                         for (var _ai = 0; _ai < adminOutRows.length; _ai++) {
                             var _aLast = adminOutRows[_ai];
                             if (_aLast && _aLast.period) {
@@ -2746,6 +2739,11 @@ async function _routeAction(action, data) {
                                 }
                             }
                         }
+                    }
+                    // If all are expired or no bills, fallback to the current period if it exists
+                    if (!adminCurrentOut) {
+                        adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
+                        _adminDisplayPeriod = adminPeriod;
                     }
                     var adminLatestSlip = adminSlipRows[0];
                     // Re-fetch slips ถ้า period เปลี่ยนไปจาก adminPeriod
@@ -2878,18 +2876,9 @@ async function _routeAction(action, data) {
                         });
                     } catch(e) {}
                 }
-                var currentOut = (outRows || []).find(function(o) { return o.period === period; });
-                // Fix: คงยอดแจ้งไว้ใน "ยอดชำระประจำเดือน" จนกว่าจะครบ 10 วันนับจากวันแจ้ง
-                if (currentOut) {
-                    if (currentOut._sent_at) {
-                        var _cDate = new Date(currentOut._sent_at);
-                        if (!isNaN(_cDate.getTime()) && ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                            currentOut = null;
-                        }
-                    }
-                }
-                
-                if (!currentOut && outRows && outRows.length > 0) {
+                var currentOut = null;
+                // First, try to find an unexpired bill from previous months or current month
+                if (outRows && outRows.length > 0) {
                     for (var _oi = 0; _oi < outRows.length; _oi++) {
                         var _latestOut = outRows[_oi];
                         if (_latestOut && _latestOut.period) {
@@ -2911,6 +2900,10 @@ async function _routeAction(action, data) {
                             }
                         }
                     }
+                }
+                // If all are expired or no bills, fallback to the current period if it exists
+                if (!currentOut) {
+                    currentOut = (outRows || []).find(function(o) { return o.period === period; });
                 }
                 // Fallback: ถ้าไม่เจอใน outstanding ให้ดึงจาก notifications
                 var notifRow = null;
