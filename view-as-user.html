@@ -324,7 +324,7 @@
 <script src="supabase/config.js?v=20260416C"></script>
 <script src="supabase/supabase.min.js?v=20260416C"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
-<script src="ppk-api.js?v=20260701E"></script>
+<script src="ppk-api.js?v=20260701Z"></script>
 <script src="ppk-app.js?v=20260416C"></script>
 <script src="ppk-utils.js?v=20260416C"></script>
 <script src="ppk-nav.js?v=20260326A"></script>
@@ -475,12 +475,20 @@ function renderDashboard(d) {
             var paRejectHtml = (pa.slip_status === 'rejected' && pa.review_note) ? '<div class="phcv-reject-note">\u274C \u0e2a\u0e25\u0e34\u0e1b\u0e16\u0e39\u0e01\u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18: <strong>' + _esc(pa.review_note) + '</strong></div>' : '';
             var paParts = (pa.period || '').split('-');
             var paPeriodDisplay = paParts[1] ? (THAI_MONTHS[parseInt(paParts[1]) - 1] || '') + ' ' + (paParts[0] || '') : (pa.period || '');
-            proxyAssignHtml += '<div class="proxy-hero-card-view">'
+                var paBreakdownHtml = '';
+                if (pa.amount > 0 && (pa.water_amount > 0 || pa.electric_amount > 0 || pa.common_fee > 0)) {
+                    paBreakdownHtml = '<div class="hero-breakdown" style="margin-top: 0.75rem; background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 12px; margin-bottom: 0.75rem;">'
+                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val">' + fmtMoney(pa.water_amount) + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val">' + fmtMoney(pa.electric_amount) + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val">' + fmtMoney(pa.common_fee) + ' บาท</span></div>'
+                        + '</div>';
+                }
+                proxyAssignHtml += '<div class="proxy-hero-card-view">'
                 + '<div class="phcv-proxy-badge">\uD83D\uDD04 \u0e0a\u0e33\u0e23\u0e30\u0e41\u0e17\u0e19</div>'
                 + '<div class="phcv-house">\uD83C\uDFE0 \u0e1a\u0e49\u0e32\u0e19\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 ' + _esc(pa.house_number) + '</div>'
                 + (pa.resident_name ? '<div class="phcv-name">' + _esc(pa.resident_name) + '</div>' : '')
                 + '<hr class="phcv-divider">'
-                + '<div class="phcv-row"><div class="phcv-col"><div class="phcv-label">\uD83D\uDCB3 \u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30</div><div class="' + paAmtCls + '">' + paAmtTxt + '</div><div class="phcv-period">\uD83D\uDCC5 ' + paPeriodDisplay + '</div></div><div>' + paBadge + '</div></div>'
+                + '<div class="phcv-row"><div class="phcv-col"><div class="phcv-label">\uD83D\uDCB3 \u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30</div><div class="' + paAmtCls + '">' + paAmtTxt + '</div>' + paBreakdownHtml + '<div class="phcv-period">\uD83D\uDCC5 ' + paPeriodDisplay + '</div></div><div>' + paBadge + '</div></div>'
                 + paRejectHtml
                 + '<button class="view-cta-disabled" disabled style="margin-top:0.9rem;width:100%;padding:0.85rem;border-radius:12px;border:none;font-family:\'Kanit\',sans-serif;font-size:0.95rem;font-weight:600;cursor:not-allowed;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;gap:0.5rem;">\uD83D\uDCE4 \u0e2a\u0e48\u0e07\u0e2a\u0e25\u0e34\u0e1b <span class="readonly-chip">\uD83D\uDD12 \u0e14\u0e39\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27</span></button>'
                 + '</div>';
