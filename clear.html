@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ล้างข้อมูลแคช HOME PPK</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 2rem;">
+    <h2>กำลังล้างข้อมูล...</h2>
+    <script>
+        localStorage.clear();
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            });
+        } else {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
