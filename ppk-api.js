@@ -2709,13 +2709,25 @@ async function _routeAction(action, data) {
                     var adminOutRows = adminResults[4] || [];
                     var adminSlipRows = adminResults[5] || [];
                     var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
-                    // Fix: แจ้งยอดช้าข้ามเดือน — ถ้าไม่มียอดเดือนนี้ ให้ดูงวดล่าสุดที่มี
+                    // Fix: คงยอดแจ้งไว้จนกว่าจะครบ 10 วันนับจากวันแจ้ง (created_at/sent_at)
+                    if (adminCurrentOut) {
+                        var _cDate = new Date(adminCurrentOut.created_at || adminCurrentOut.created);
+                        if (!isNaN(_cDate.getTime())) {
+                            if ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10) adminCurrentOut = null;
+                        }
+                    }
                     var _adminDisplayPeriod = adminPeriod;
                     if (!adminCurrentOut && adminOutRows.length > 0) {
-                        var _aLast = adminOutRows[0];
-                        if (_aLast && _aLast.period) {
-                            adminCurrentOut = _aLast; 
-                            _adminDisplayPeriod = _aLast.period;
+                        for (var _ai = 0; _ai < adminOutRows.length; _ai++) {
+                            var _aLast = adminOutRows[_ai];
+                            if (_aLast && _aLast.period) {
+                                var _aDate = new Date(_aLast.created_at || _aLast.created);
+                                if (isNaN(_aDate.getTime()) || (now2.getTime() - _aDate.getTime()) / (1000 * 60 * 60 * 24) <= 10) {
+                                    adminCurrentOut = _aLast; 
+                                    _adminDisplayPeriod = _aLast.period;
+                                    break;
+                                }
+                            }
                         }
                     }
                     var adminLatestSlip = adminSlipRows[0];
@@ -2837,17 +2849,29 @@ async function _routeAction(action, data) {
                     } catch(e) {}
                 }
                 var currentOut = (outRows || []).find(function(o) { return o.period === period; });
-                // Fix: แจ้งยอดช้าข้ามเดือน
-                // ถ้าไม่มียอดเดือนนี้ ให้แสดงงวดค้างล่าสุดเป็นยอดปัจจุบัน แทนที่จะขึ้น "ยังไม่มียอดแจ้ง"
+                // Fix: คงยอดแจ้งไว้ใน "ยอดชำระประจำเดือน" จนกว่าจะครบ 10 วันนับจากวันแจ้ง
+                if (currentOut) {
+                    var _cDate = new Date(currentOut.created_at || currentOut.created);
+                    if (!isNaN(_cDate.getTime())) {
+                        if ((now2.getTime() - _cDate.getTime()) / (1000 * 60 * 60 * 24) > 10) currentOut = null;
+                    }
+                }
+                
                 if (!currentOut && outRows && outRows.length > 0) {
-                    var _latestOut = outRows[0]; // outRows เรียง period.desc → งวดล่าสุดก่อน
-                    if (_latestOut && _latestOut.period) {
-                        currentOut = _latestOut;
-                        period = _latestOut.period;
-                        // ดึง slips ใหม่สำหรับ period จริง (ไม่ใช่เดือนปัจจุบัน)
-                        try {
-                            slipRows = await sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
-                        } catch(e) { slipRows = []; }
+                    for (var _oi = 0; _oi < outRows.length; _oi++) {
+                        var _latestOut = outRows[_oi];
+                        if (_latestOut && _latestOut.period) {
+                            var _lDate = new Date(_latestOut.created_at || _latestOut.created);
+                            if (isNaN(_lDate.getTime()) || (now2.getTime() - _lDate.getTime()) / (1000 * 60 * 60 * 24) <= 10) {
+                                currentOut = _latestOut;
+                                period = _latestOut.period;
+                                // ดึง slips ใหม่สำหรับ period จริง (ไม่ใช่เดือนปัจจุบัน)
+                                try {
+                                    slipRows = await sbGet('slip_submissions', { house_number: 'eq.' + houseNumber, period: 'eq.' + period, order: 'submitted_at.desc', limit: '1' }).catch(function() { return []; });
+                                } catch(e) { slipRows = []; }
+                                break;
+                            }
+                        }
                     }
                 }
                 // Fallback: ถ้าไม่เจอใน outstanding ให้ดึงจาก notifications

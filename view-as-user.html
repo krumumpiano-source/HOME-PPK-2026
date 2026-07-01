@@ -443,7 +443,7 @@ function renderDashboard(d) {
     else { statusBadge = '<span class="view-status-badge none">\u2014</span>'; ctaLabel = '\ud83d\udce4 \u0e2a\u0e48\u0e07\u0e2a\u0e25\u0e34\u0e1b'; }
     var amtDisplay = d.currentAmount > 0 ? fmtMoney(d.currentAmount) + ' \u0e1a\u0e32\u0e17' : '\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e22\u0e2d\u0e14\u0e41\u0e08\u0e49\u0e07';
     var rejectHtml = d.slipStatus === 'rejected' && d.reviewNote ? '<div style="margin-top:0.7rem;background:rgba(239,68,68,0.15);border-radius:10px;padding:0.6rem 0.8rem;font-size:0.82rem;color:#FCA5A5;">\u274c \u0e2a\u0e25\u0e34\u0e1b\u0e16\u0e39\u0e01\u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18: <strong>' + _esc(d.reviewNote) + '</strong></div>' : '';
-    var amtLabel = d.slipStatus === 'success' ? '\ud83d\udcb3 \u0e22\u0e2d\u0e14\u0e17\u0e35\u0e48\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e49\u0e27' : '\ud83d\udcb3 \u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30\u0e40\u0e14\u0e37\u0e2d\u0e19\u0e19\u0e35\u0e49';
+    var amtLabel = d.slipStatus === 'success' ? '\ud83d\udcb3 \u0e22\u0e2d\u0e14\u0e17\u0e35\u0e48\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e25\u0e49\u0e27' : '\ud83d\udcb3 \u0e22\u0e2d\u0e14\u0e0a\u0e33\u0e23\u0e30\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e40\u0e14\u0e37\u0e2d\u0e19';
     var heroHtml = '<div class="view-hero">'
         + '<div class="view-hero-greeting">\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35 ' + _esc(d.residentName || '\u2014') + '</div>'
         + '<div class="view-hero-house">\ud83c\udfe0 ' + _esc(d.houseNumber) + '</div>'

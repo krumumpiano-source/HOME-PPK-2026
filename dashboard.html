@@ -313,7 +313,7 @@
                     <hr class="hero-divider">
                     <div class="hero-row">
                         <div class="hero-col">
-                            <div class="hero-label">💳 ยอดชำระเดือนนี้</div>
+                            <div class="hero-label">💳 ยอดชำระประจำเดือน</div>
                             <div class="hero-amount" id="currentMonthAmount">—</div>
                             <div id="heroBillBreakdown" class="hero-breakdown" style="display:none;">
                                 <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ<span id="hbWaterDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbWater">—</span></div>
@@ -535,11 +535,11 @@
             if (amount > 0) {
                 amtEl.textContent = amount.toLocaleString('th-TH') + ' บาท';
                 amtEl.className = 'hero-amount';
-                if (lblEl) lblEl.textContent = slipStatus === 'success' ? '💳 ยอดที่ชำระแล้ว' : '💳 ยอดชำระเดือนนี้';
+                if (lblEl) lblEl.textContent = slipStatus === 'success' ? '💳 ยอดที่ชำระแล้ว' : '💳 ยอดชำระประจำเดือน';
             } else {
                 amtEl.textContent = 'ยังไม่มียอดแจ้ง';
                 amtEl.className = 'hero-amount zero';
-                if (lblEl) lblEl.textContent = '💳 ยอดชำระเดือนนี้';
+                if (lblEl) lblEl.textContent = '💳 ยอดชำระประจำเดือน';
             }
 
             // Bill breakdown
@@ -753,7 +753,7 @@
                     + '<hr class="phc-divider">'
                     + '<div class="phc-row">'
                         + '<div class="phc-col">'
-                            + '<div class="phc-amount-label">💳 ยอดชำระเดือนนี้</div>'
+                            + '<div class="phc-amount-label">💳 ยอดชำระประจำเดือน</div>'
                             + '<div class="' + amtClass + '">' + amtHtml + '</div>'
                             + breakdownHtml
                             + '<div class="phc-period">📅 ' + periodDisplay + '</div>'
