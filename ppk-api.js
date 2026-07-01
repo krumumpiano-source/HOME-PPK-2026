@@ -2709,12 +2709,12 @@ async function _routeAction(action, data) {
                     var adminOutRows = adminResults[4] || [];
                     var adminSlipRows = adminResults[5] || [];
                     var adminCurrentOut = adminOutRows.find(function(o) { return o.period === adminPeriod; });
-                    // ดึง sent_at มาใช้คำนวณ 10 วันให้แม่นยำ
+                    // ดึง sent_at หรือ created_at จาก notifications มาใช้คำนวณ 10 วันนับจากวันแจ้ง
                     if (adminOutRows.length > 0) {
                         try {
-                            var _aNotifs = await sbGet('notifications', { house_number: 'eq.' + sessHouseNumber, select: 'period,sent_at', limit: '100' }).catch(function() { return []; });
+                            var _aNotifs = await sbGet('notifications', { house_number: 'eq.' + sessHouseNumber, select: 'period,sent_at,created_at', limit: '100' }).catch(function() { return []; });
                             var _aNotifMap = {};
-                            (_aNotifs || []).forEach(function(n) { if (n.period && n.sent_at) _aNotifMap[n.period] = n.sent_at; });
+                            (_aNotifs || []).forEach(function(n) { if (n.period) _aNotifMap[n.period] = n.sent_at || n.created_at; });
                             adminOutRows.forEach(function(o) { o._sent_at = _aNotifMap[o.period]; });
                         } catch(e) {}
                     }
@@ -2851,12 +2851,13 @@ async function _routeAction(action, data) {
                 // ป้องกันแสดงยอดแก่ผู้พักอาศัยก่อนที่แอดมินจะกด "บันทึกข้อมูลแจ้งยอดลงระบบ"
                 if (outRows && outRows.length > 0 && houseNumber) {
                     try {
-                        var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period,sent_at', limit: '100' }).catch(function() { return []; });
+                        var _gddNotifs = await sbGet('notifications', { house_number: 'eq.' + houseNumber, select: 'period,sent_at,created_at', limit: '100' }).catch(function() { return []; });
                         var _gddPublished = {};
                         (_gddNotifs || []).forEach(function(n) { 
                             if (n.period) {
-                                if (!_gddPublished[n.period] || (n.sent_at && new Date(n.sent_at) > new Date(_gddPublished[n.period]))) {
-                                    _gddPublished[n.period] = n.sent_at || true;
+                                var _nDate = n.sent_at || n.created_at;
+                                if (!_gddPublished[n.period] || (_nDate && new Date(_nDate) > new Date(_gddPublished[n.period]))) {
+                                    _gddPublished[n.period] = _nDate || true;
                                 }
                             } 
                         });
