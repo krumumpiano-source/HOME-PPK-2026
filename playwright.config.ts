@@ -1,4 +1,4 @@
-﻿import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 import * as path from 'path';
 
 // โหลด .env.test
@@ -49,6 +49,7 @@ export default defineConfig({
     {
       name: 'auth-setup',
       testMatch: /auth\.setup\.ts/,
+      use: { channel: 'chrome' },
     },
 
     /* === Integration Tests (API endpoint) === */
