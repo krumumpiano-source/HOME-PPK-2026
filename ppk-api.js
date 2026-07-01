@@ -2888,9 +2888,7 @@ async function _routeAction(action, data) {
                             var _isExpired = false;
                             if (_latestOut._sent_at) {
                                 var _lDate = new Date(_latestOut._sent_at);
-                                if (!isNaN(_lDate.getTime()) && ((now2.getTime() - _lDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                                    _isExpired = true;
-                                }
+                                // No expiration for unpaid bills
                             } else {
                                 // ถ้าบิลยังไม่ถูกแจ้งยอด ให้ข้ามไป
                                 _isExpired = true;
@@ -2943,9 +2941,22 @@ async function _routeAction(action, data) {
                     if (!upaUserId) {
                         try { var upaStored = JSON.parse(localStorage.getItem('currentUser') || 'null'); if (upaStored) upaUserId = upaStored.id; } catch(e) {}
                     }
+                    var upaRows = [];
                     if (upaUserId) {
                         upaRows = await sbGet('payment_proxies', { proxy_user_id: 'eq.' + upaUserId, is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
-                        for (var upai = 0; upai < (upaRows || []).length; upai++) {
+                    }
+                    if (upaRows.length === 0 && sessUserId) {
+                        // Fallback to proxy_resident_id just like Admin View
+                        try {
+                            var _myResRows = await sbGet('residents', { user_id: 'eq.' + sessUserId, is_active: 'eq.true', select: 'id' }).catch(function() { return []; });
+                            var _myResIds = (_myResRows || []).map(function(r) { return r.id; }).filter(Boolean);
+                            if (_myResIds.length > 0) {
+                                upaRows = await sbGet('payment_proxies', { proxy_resident_id: 'in.(' + _myResIds.join(',') + ')', is_active: 'eq.true', order: 'assigned_at.desc' }).catch(function() { return []; });
+                            }
+                        } catch(e) {}
+                    }
+                    if (upaRows.length > 0) {
+                        for (var upai = 0; upai < upaRows.length; upai++) {
                             var upaP = upaRows[upai];
                             var upaResName = '';
                             try {
@@ -2967,9 +2978,7 @@ async function _routeAction(action, data) {
                                             var _upaExp = false;
                                             if (_upaB._sent_at) {
                                                 var _upaD = new Date(_upaB._sent_at);
-                                                if (!isNaN(_upaD.getTime()) && ((now.getTime() - _upaD.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                                                    _upaExp = true;
-                                                }
+                                                // No expiration for unpaid bills
                                             } else {
                                                 _upaExp = true;
                                             }
@@ -5197,9 +5206,7 @@ async function _routeAction(action, data) {
                         var _isExp = false;
                         if (_ahLast._sent_at) {
                             var _ahDate = new Date(_ahLast._sent_at);
-                            if (!isNaN(_ahDate.getTime()) && ((ahvNow.getTime() - _ahDate.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                                _isExp = true;
-                            }
+                            // No expiration for unpaid bills
                         } else {
                             _isExp = true;
                         }
@@ -5350,9 +5357,7 @@ async function _routeAction(action, data) {
                                         var _paExp = false;
                                         if (_paB._sent_at) {
                                             var _paD = new Date(_paB._sent_at);
-                                            if (!isNaN(_paD.getTime()) && ((ahvNow.getTime() - _paD.getTime()) / (1000 * 60 * 60 * 24) > 10)) {
-                                                _paExp = true;
-                                            }
+                                            // No expiration for unpaid bills
                                         } else {
                                             _paExp = true;
                                         }
