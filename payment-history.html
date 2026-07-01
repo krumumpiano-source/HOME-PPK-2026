@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™à¸¢à¹‰à¸­à¸™à¸«à¸¥à¸±à¸‡ | HOME PPK 2026</title>
+    <title>ข้อมูลการชำระเงินย้อนหลัง | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
     <style>
         /* ===== Stat Grid ===== */
@@ -128,38 +128,38 @@
     <div id="ppkNav"></div>
     <div class="ppk-main" id="dashboardContainer">
         <div class="ppk-topbar">
-            <button class="ppk-btn ppk-btn-ghost ppk-btn-sm" onclick="navigate('?page=dashboard')">&#8592; à¸à¸¥à¸±à¸š</button>
-            <div class="ppk-topbar-title"><span class="icon">&#128184;</span> à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™à¸¢à¹‰à¸­à¸™à¸«à¸¥à¸±à¸‡</div>
+            <button class="ppk-btn ppk-btn-ghost ppk-btn-sm" onclick="navigate('?page=dashboard')">&#8592; กลับ</button>
+            <div class="ppk-topbar-title"><span class="icon">&#128184;</span> ข้อมูลการชำระเงินย้อนหลัง</div>
         </div>
         <div class="ppk-content">
             <!-- Filter (TOP) -->
             <div class="filter-section">
-                <label for="timeRange">à¸Šà¹ˆà¸§à¸‡à¹€à¸§à¸¥à¸²:</label>
+                <label for="timeRange">ช่วงเวลา:</label>
                 <select id="timeRange" onchange="onTimeRangeChange()">
-                    <option value="year">à¸—à¸±à¹‰à¸‡à¸›à¸µ</option>
-                    <option value="month">à¹€à¸¥à¸·à¸­à¸à¹€à¸”à¸·à¸­à¸™</option>
-                    <option value="last3">à¸¢à¹‰à¸­à¸™à¸«à¸¥à¸±à¸‡ 3 à¹€à¸”à¸·à¸­à¸™</option>
-                    <option value="last6">à¸¢à¹‰à¸­à¸™à¸«à¸¥à¸±à¸‡ 6 à¹€à¸”à¸·à¸­à¸™</option>
-                    <option value="last12">à¸¢à¹‰à¸­à¸™à¸«à¸¥à¸±à¸‡ 12 à¹€à¸”à¸·à¸­à¸™</option>
+                    <option value="year">ทั้งปี</option>
+                    <option value="month">เลือกเดือน</option>
+                    <option value="last3">ย้อนหลัง 3 เดือน</option>
+                    <option value="last6">ย้อนหลัง 6 เดือน</option>
+                    <option value="last12">ย้อนหลัง 12 เดือน</option>
                 </select>
                 <span id="monthWrap">
-                    <label for="month">à¹€à¸”à¸·à¸­à¸™:</label>
+                    <label for="month">เดือน:</label>
                     <select id="month" onchange="onFilterChange()">
-                        <option value="">&#8212; à¸—à¸±à¹‰à¸‡à¸›à¸µ &#8212;</option>
-                        <option value="01">à¸¡à¸à¸£à¸²à¸„à¸¡</option><option value="02">à¸à¸¸à¸¡à¸ à¸²à¸žà¸±à¸™à¸˜à¹Œ</option>
-                        <option value="03">à¸¡à¸µà¸™à¸²à¸„à¸¡</option><option value="04">à¹€à¸¡à¸©à¸²à¸¢à¸™</option>
-                        <option value="05">à¸žà¸¤à¸©à¸ à¸²à¸„à¸¡</option><option value="06">à¸¡à¸´à¸–à¸¸à¸™à¸²à¸¢à¸™</option>
-                        <option value="07">à¸à¸£à¸à¸Žà¸²à¸„à¸¡</option><option value="08">à¸ªà¸´à¸‡à¸«à¸²à¸„à¸¡</option>
-                        <option value="09">à¸à¸±à¸™à¸¢à¸²à¸¢à¸™</option><option value="10">à¸•à¸¸à¸¥à¸²à¸„à¸¡</option>
-                        <option value="11">à¸žà¸¤à¸¨à¸ˆà¸´à¸à¸²à¸¢à¸™</option><option value="12">à¸˜à¸±à¸™à¸§à¸²à¸„à¸¡</option>
+                        <option value="">&#8212; ทั้งปี &#8212;</option>
+                        <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option>
+                        <option value="03">มีนาคม</option><option value="04">เมษายน</option>
+                        <option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
+                        <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option>
+                        <option value="09">กันยายน</option><option value="10">ตุลาคม</option>
+                        <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
                     </select>
                 </span>
                 <span id="yearWrap">
-                    <label for="year">à¸›à¸µ:</label>
+                    <label for="year">ปี:</label>
                     <select id="year" onchange="onYearChange()"></select>
                 </span>
                 <span id="houseSelectWrap" style="display:none;">
-                    <label for="houseSelect">à¸šà¹‰à¸²à¸™à¸žà¸±à¸:</label>
+                    <label for="houseSelect">บ้านพัก:</label>
                     <select id="houseSelect" onchange="onHouseChange()"></select>
                 </span>
             </div>
@@ -168,34 +168,34 @@
             <div class="stat-grid">
                 <div class="stat-card c-total">
                     <div class="stat-card-icon">&#128176;</div>
-                    <div class="stat-card-label" id="statTotalLabel">à¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡à¸Šà¸³à¸£à¸°à¸£à¸§à¸¡</div>
+                    <div class="stat-card-label" id="statTotalLabel">ยอดแจ้งชำระรวม</div>
                     <div class="stat-card-value" id="statTotal">-</div>
                 </div>
                 <div class="stat-card c-water">
                     <div class="stat-card-icon">&#128167;</div>
-                    <div class="stat-card-label">à¸„à¹ˆà¸²à¸™à¹‰à¸³à¸£à¸§à¸¡</div>
+                    <div class="stat-card-label">ค่าน้ำรวม</div>
                     <div class="stat-card-value" id="statWater">-</div>
                 </div>
                 <div class="stat-card c-elec">
                     <div class="stat-card-icon">&#9889;</div>
-                    <div class="stat-card-label">à¸„à¹ˆà¸²à¹„à¸Ÿà¸£à¸§à¸¡</div>
+                    <div class="stat-card-label">ค่าไฟรวม</div>
                     <div class="stat-card-value" id="statElec">-</div>
                 </div>
                 <div class="stat-card c-common">
                     <div class="stat-card-icon">&#127970;</div>
-                    <div class="stat-card-label">à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡à¸£à¸§à¸¡</div>
+                    <div class="stat-card-label">ค่าส่วนกลางรวม</div>
                     <div class="stat-card-value" id="statCommon">-</div>
                 </div>
                 <div class="stat-card c-owed" id="statOwedCard">
                     <div class="stat-card-icon">&#128179;</div>
-                    <div class="stat-card-label">à¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡à¸Šà¸³à¸£à¸°</div>
+                    <div class="stat-card-label">ยอดค้างชำระ</div>
                     <div class="stat-card-value" id="statOwed">-</div>
                 </div>
             </div>
 
             <!-- Discipline Section -->
             <div class="discipline-card" id="disciplineSection" style="display:none;">
-                <div class="section-title" style="margin-top:0;">&#127942; à¸§à¸´à¸™à¸±à¸¢à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™</div>
+                <div class="section-title" style="margin-top:0;">&#127942; วินัยการชำระเงิน</div>
                 <div class="discipline-header">
                     <div class="discipline-ring">
                         <svg width="100" height="100" viewBox="0 0 100 100">
@@ -204,7 +204,7 @@
                         </svg>
                         <div class="discipline-ring-text">
                             <div class="discipline-ring-pct" id="disciplinePct">-</div>
-                            <div class="discipline-ring-label">à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²</div>
+                            <div class="discipline-ring-label">ตรงเวลา</div>
                         </div>
                     </div>
                     <div class="discipline-info">
@@ -218,22 +218,22 @@
             <!-- Charts -->
             <div class="charts-grid">
                 <div class="chart-card">
-                    <div class="chart-title">&#128202; à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢à¸£à¸²à¸¢à¹€à¸”à¸·à¸­à¸™ (à¹à¸¢à¸à¸•à¸²à¸¡à¸›à¸£à¸°à¹€à¸ à¸—)</div>
+                    <div class="chart-title">&#128202; ค่าใช้จ่ายรายเดือน (แยกตามประเภท)</div>
                     <canvas id="chartBar" height="220"></canvas>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">&#129513; à¸ªà¸±à¸”à¸ªà¹ˆà¸§à¸™à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢</div>
+                    <div class="chart-title">&#129513; สัดส่วนค่าใช้จ่าย</div>
                     <div class="doughnut-wrapper">
                         <canvas id="chartDoughnut" height="220"></canvas>
                         <div class="doughnut-center">
                             <div class="doughnut-center-value" id="doughnutCenterVal">-</div>
-                            <div class="doughnut-center-label">à¸šà¸²à¸— (à¸£à¸§à¸¡)</div>
+                            <div class="doughnut-center-label">บาท (รวม)</div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="chart-card-full">
-                <div class="chart-title">&#128200; à¹à¸™à¸§à¹‚à¸™à¹‰à¸¡à¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡à¸Šà¸³à¸£à¸°à¸£à¸²à¸¢à¹€à¸”à¸·à¸­à¸™</div>
+                <div class="chart-title">&#128200; แนวโน้มยอดแจ้งชำระรายเดือน</div>
                 <canvas id="chartLine" height="110"></canvas>
             </div>
 
@@ -241,83 +241,83 @@
             <div class="insight-grid" id="insightGrid" style="display:none;">
                 <div class="insight-card" style="border-left:3px solid #06b6d4;">
                     <div class="insight-icon">&#128167;</div>
-                    <div class="insight-label">à¸„à¹ˆà¸²à¸™à¹‰à¸³à¹€à¸‰à¸¥à¸µà¹ˆà¸¢/à¹€à¸”à¸·à¸­à¸™</div>
+                    <div class="insight-label">ค่าน้ำเฉลี่ย/เดือน</div>
                     <div class="insight-value" id="insightWaterAvg">-</div>
                     <div class="insight-sub" id="insightWaterAvgSub"></div>
                 </div>
                 <div class="insight-card" style="border-left:3px solid #f59e0b;">
                     <div class="insight-icon">&#9889;</div>
-                    <div class="insight-label">à¸„à¹ˆà¸²à¹„à¸Ÿà¹€à¸‰à¸¥à¸µà¹ˆà¸¢/à¹€à¸”à¸·à¸­à¸™</div>
+                    <div class="insight-label">ค่าไฟเฉลี่ย/เดือน</div>
                     <div class="insight-value" id="insightElecAvg">-</div>
                     <div class="insight-sub" id="insightElecAvgSub"></div>
                 </div>
                 <div class="insight-card" style="border-left:3px solid #6366f1;">
                     <div class="insight-icon">&#128202;</div>
-                    <div class="insight-label">à¸£à¸§à¸¡à¹€à¸‰à¸¥à¸µà¹ˆà¸¢/à¹€à¸”à¸·à¸­à¸™</div>
+                    <div class="insight-label">รวมเฉลี่ย/เดือน</div>
                     <div class="insight-value" id="insightTotalAvg">-</div>
                     <div class="insight-sub" id="insightTotalAvgSub"></div>
                 </div>
                 <div class="insight-card" style="border-left:3px solid #06b6d4;">
                     <div class="insight-icon">&#128167;&#128314;</div>
-                    <div class="insight-label">à¸„à¹ˆà¸²à¸™à¹‰à¸³à¸ªà¸¹à¸‡à¸ªà¸¸à¸”</div>
+                    <div class="insight-label">ค่าน้ำสูงสุด</div>
                     <div class="insight-value" id="insightWaterMax">-</div>
                     <div class="insight-sub" id="insightWaterMaxSub"></div>
                 </div>
                 <div class="insight-card" style="border-left:3px solid #f59e0b;">
                     <div class="insight-icon">&#9889;&#128314;</div>
-                    <div class="insight-label">à¸„à¹ˆà¸²à¹„à¸Ÿà¸ªà¸¹à¸‡à¸ªà¸¸à¸”</div>
+                    <div class="insight-label">ค่าไฟสูงสุด</div>
                     <div class="insight-value" id="insightElecMax">-</div>
                     <div class="insight-sub" id="insightElecMaxSub"></div>
                 </div>
                 <div class="insight-card" style="border-left:3px solid #10b981;">
                     <div class="insight-icon">&#128176;</div>
-                    <div class="insight-label">à¸›à¸£à¸°à¸«à¸¢à¸±à¸”à¹„à¸”à¹‰à¸–à¹‰à¸²à¸¥à¸” 10%</div>
+                    <div class="insight-label">ประหยัดได้ถ้าลด 10%</div>
                     <div class="insight-value" id="insightSaveVal">-</div>
                     <div class="insight-sub" id="insightSaveSub"></div>
                 </div>
             </div>
 
-            <!-- à¸•à¸²à¸£à¸²à¸‡à¸ªà¸£à¸¸à¸›à¸£à¸²à¸¢à¹€à¸”à¸·à¸­à¸™ (à¸£à¸§à¸¡ Bill + Slip) -->
-            <div class="section-title">&#128203; à¸ªà¸£à¸¸à¸›à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢à¹à¸¥à¸°à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™à¸£à¸²à¸¢à¹€à¸”à¸·à¸­à¸™</div>
+            <!-- ตารางสรุปรายเดือน (รวม Bill + Slip) -->
+            <div class="section-title">&#128203; สรุปค่าใช้จ่ายและการชำระเงินรายเดือน</div>
             <div class="ppk-table-card">
                 <table>
                     <thead><tr>
-                        <th>à¹€à¸”à¸·à¸­à¸™</th><th>à¸„à¹ˆà¸²à¸™à¹‰à¸³</th><th>à¸„à¹ˆà¸²à¹„à¸Ÿ</th>
-                        <th>à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡</th><th>à¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡</th>
-                        <th>à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°</th><th>à¸§à¸±à¸™à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›</th>
-                        <th>à¸ªà¸–à¸²à¸™à¸°</th><th>à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²</th>
+                        <th>เดือน</th><th>ค่าน้ำ</th><th>ค่าไฟ</th>
+                        <th>ค่าส่วนกลาง</th><th>ยอดแจ้ง</th>
+                        <th>ยอดชำระ</th><th>วันส่งสลิป</th>
+                        <th>สถานะ</th><th>ตรงเวลา</th>
                     </tr></thead>
                     <tbody id="merged-table-body">
-                        <tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">&#8987; à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”...</td></tr>
+                        <tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลด...</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <!-- Export Buttons -->
             <div class="export-bar">
-                <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="exportCSV()">&#128229; à¸šà¸±à¸™à¸—à¸¶à¸ CSV</button>
-                <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="window.print()">&#128424; à¸žà¸´à¸¡à¸žà¹Œà¸£à¸²à¸¢à¸‡à¸²à¸™</button>
+                <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="exportCSV()">&#128229; บันทึก CSV</button>
+                <button class="ppk-btn ppk-btn-outline ppk-btn-sm" onclick="window.print()">&#128424; พิมพ์รายงาน</button>
             </div>
 
-            <!-- â˜… Proxy Payment History -->
+            <!-- ★ Proxy Payment History -->
             <div id="proxyHistorySection" style="display:none; margin-top:1.5rem;">
-                <div class="section-title">ðŸ”„ à¸›à¸£à¸°à¸§à¸±à¸•à¸´à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹à¸—à¸™ (à¸ªà¸¥à¸´à¸›à¸—à¸µà¹ˆà¸„à¸¸à¸“à¸ªà¹ˆà¸‡à¹à¸—à¸™à¸œà¸¹à¹‰à¸­à¸·à¹ˆà¸™)</div>
+                <div class="section-title">🔄 ประวัติการชำระแทน (สลิปที่คุณส่งแทนผู้อื่น)</div>
                 <div class="ppk-table-card">
                     <table>
                         <thead><tr>
-                            <th>à¸‡à¸§à¸”</th><th>à¸šà¹‰à¸²à¸™</th><th>à¸Šà¸·à¹ˆà¸­à¸œà¸¹à¹‰à¸žà¸±à¸</th>
-                            <th>à¸¢à¸­à¸” (à¸šà¸²à¸—)</th><th>à¸§à¸±à¸™à¸ªà¹ˆà¸‡</th><th>à¸ªà¸–à¸²à¸™à¸°</th><th>à¸«à¸¡à¸²à¸¢à¹€à¸«à¸•à¸¸</th>
+                            <th>งวด</th><th>บ้าน</th><th>ชื่อผู้พัก</th>
+                            <th>ยอด (บาท)</th><th>วันส่ง</th><th>สถานะ</th><th>หมายเหตุ</th>
                         </tr></thead>
                         <tbody id="proxyHistoryBody">
-                            <tr><td colspan="7" style="text-align:center;color:#999;padding:1.5rem;">â³ à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”...</td></tr>
+                            <tr><td colspan="7" style="text-align:center;color:#999;padding:1.5rem;">⏳ กำลังโหลด...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <div class="ppk-footer">
-                à¸­à¸­à¸à¹à¸šà¸šà¹à¸¥à¸°à¸žà¸±à¸’à¸™à¸²à¹‚à¸”à¸¢ à¸„à¸£à¸¹à¸žà¸‡à¸¨à¸˜à¸£ à¹‚à¸žà¸˜à¸´à¹à¸à¹‰à¸§<br>
-                à¸‡à¸²à¸™à¸ªà¹ˆà¸‡à¹€à¸ªà¸£à¸´à¸¡ à¸à¸³à¸à¸±à¸š à¸”à¸¹à¹à¸¥ à¹à¸¥à¸°à¸žà¸±à¸’à¸™à¸²à¸šà¹‰à¸²à¸™à¸žà¸±à¸à¸„à¸£à¸¹ à¹‚à¸£à¸‡à¹€à¸£à¸µà¸¢à¸™à¸žà¸°à¹€à¸¢à¸²à¸žà¸´à¸—à¸¢à¸²à¸„à¸¡
+                ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+                งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
             </div>
         </div>
     </div>
@@ -325,10 +325,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
     <script>
     /* ============ Constants ============ */
-    var THAI_MONTHS = ['à¸¡à¸à¸£à¸²à¸„à¸¡','à¸à¸¸à¸¡à¸ à¸²à¸žà¸±à¸™à¸˜à¹Œ','à¸¡à¸µà¸™à¸²à¸„à¸¡','à¹€à¸¡à¸©à¸²à¸¢à¸™','à¸žà¸¤à¸©à¸ à¸²à¸„à¸¡','à¸¡à¸´à¸–à¸¸à¸™à¸²à¸¢à¸™',
-                       'à¸à¸£à¸à¸Žà¸²à¸„à¸¡','à¸ªà¸´à¸‡à¸«à¸²à¸„à¸¡','à¸à¸±à¸™à¸¢à¸²à¸¢à¸™','à¸•à¸¸à¸¥à¸²à¸„à¸¡','à¸žà¸¤à¸¨à¸ˆà¸´à¸à¸²à¸¢à¸™','à¸˜à¸±à¸™à¸§à¸²à¸„à¸¡'];
-    var THAI_MONTHS_SHORT = ['à¸¡.à¸„.','à¸.à¸ž.','à¸¡à¸µ.à¸„.','à¹€à¸¡.à¸¢.','à¸ž.à¸„.','à¸¡à¸´.à¸¢.',
-                             'à¸.à¸„.','à¸ª.à¸„.','à¸.à¸¢.','à¸•.à¸„.','à¸ž.à¸¢.','à¸˜.à¸„.'];
+    var THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                       'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    var THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
+                             'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
     var allBillData  = [];
     var allSlipData  = [];
@@ -418,7 +418,7 @@
 
     /* ============ Stat Cards ============ */
     function updateStats(billData, slipData) {
-        var fmt = function(v) { return v > 0 ? v.toLocaleString('th-TH') + ' à¸š.' : '-'; };
+        var fmt = function(v) { return v > 0 ? v.toLocaleString('th-TH') + ' บ.' : '-'; };
         var w = 0, e = 0, c = 0, t = 0;
         billData.forEach(function(r) { w += r.water; e += r.electric; c += r.common; t += r.total; });
         document.getElementById('statTotal').textContent  = fmt(t);
@@ -430,13 +430,13 @@
         var range = document.getElementById('timeRange').value;
         var labelSuffix = '';
         if (range === 'year' || range === 'month') {
-            labelSuffix = ' (à¸›à¸µ ' + document.getElementById('year').value + ')';
-        } else if (range === 'last3') { labelSuffix = ' (3 à¹€à¸”à¸·à¸­à¸™à¸¥à¹ˆà¸²à¸ªà¸¸à¸”)'; }
-        else if (range === 'last6') { labelSuffix = ' (6 à¹€à¸”à¸·à¸­à¸™à¸¥à¹ˆà¸²à¸ªà¸¸à¸”)'; }
-        else if (range === 'last12') { labelSuffix = ' (12 à¹€à¸”à¸·à¸­à¸™à¸¥à¹ˆà¸²à¸ªà¸¸à¸”)'; }
-        document.getElementById('statTotalLabel').textContent = 'à¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡à¸Šà¸³à¸£à¸°à¸£à¸§à¸¡' + labelSuffix;
+            labelSuffix = ' (ปี ' + document.getElementById('year').value + ')';
+        } else if (range === 'last3') { labelSuffix = ' (3 เดือนล่าสุด)'; }
+        else if (range === 'last6') { labelSuffix = ' (6 เดือนล่าสุด)'; }
+        else if (range === 'last12') { labelSuffix = ' (12 เดือนล่าสุด)'; }
+        document.getElementById('statTotalLabel').textContent = 'ยอดแจ้งชำระรวม' + labelSuffix;
 
-        /* Outstanding balance â€” à¸™à¸±à¸šà¹€à¸‰à¸žà¸²à¸°à¹€à¸”à¸·à¸­à¸™à¸—à¸µà¹ˆà¹à¸­à¸”à¸¡à¸´à¸™à¹à¸ˆà¹‰à¸‡à¸¢à¸­à¸”à¹à¸¥à¹‰à¸§ (notifiedAt à¸¡à¸µà¸„à¹ˆà¸²) */
+        /* Outstanding balance — นับเฉพาะเดือนที่แอดมินแจ้งยอดแล้ว (notifiedAt มีค่า) */
         var owedBilled = 0;
         billData.forEach(function(r) { if (r.notifiedAt) owedBilled += r.total; });
         var approvedTotal = 0;
@@ -446,10 +446,10 @@
         var owed = owedBilled - approvedTotal;
         var owedCard = document.getElementById('statOwedCard');
         if (owed <= 0) {
-            document.getElementById('statOwed').textContent = 'à¸Šà¸³à¸£à¸°à¸„à¸£à¸š';
+            document.getElementById('statOwed').textContent = 'ชำระครบ';
             owedCard.className = 'stat-card c-owed paid';
         } else {
-            document.getElementById('statOwed').textContent = owed.toLocaleString('th-TH') + ' à¸š.';
+            document.getElementById('statOwed').textContent = owed.toLocaleString('th-TH') + ' บ.';
             owedCard.className = 'stat-card c-owed';
         }
     }
@@ -572,16 +572,16 @@
         chartBar = new Chart(barCtx, {
             type: 'bar',
             data: { labels: labels, datasets: [
-                { label:'à¸„à¹ˆà¸²à¸™à¹‰à¸³',      data:wArr, backgroundColor:gradW, borderColor:'rgba(6,182,212,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
-                { label:'à¸„à¹ˆà¸²à¹„à¸Ÿ',      data:eArr, backgroundColor:gradE, borderColor:'rgba(245,158,11,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
-                { label:'à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡', data:cArr, backgroundColor:gradC, borderColor:'rgba(16,185,129,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
-                { label:'à¸„à¹ˆà¸²à¹€à¸‰à¸¥à¸µà¹ˆà¸¢',  data:avgArr, type:'line', borderColor:'rgba(234,179,8,0.8)', borderWidth:2, borderDash:[6,4], pointRadius:0, pointHoverRadius:4, fill:false, order:0, yAxisID:'y' }
+                { label:'ค่าน้ำ',      data:wArr, backgroundColor:gradW, borderColor:'rgba(6,182,212,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
+                { label:'ค่าไฟ',      data:eArr, backgroundColor:gradE, borderColor:'rgba(245,158,11,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
+                { label:'ค่าส่วนกลาง', data:cArr, backgroundColor:gradC, borderColor:'rgba(16,185,129,1)', borderWidth:1, borderRadius:6, borderSkipped:false },
+                { label:'ค่าเฉลี่ย',  data:avgArr, type:'line', borderColor:'rgba(234,179,8,0.8)', borderWidth:2, borderDash:[6,4], pointRadius:0, pointHoverRadius:4, fill:false, order:0, yAxisID:'y' }
             ]},
             options: { responsive:true, animation:{ duration:800, easing:'easeOutQuart' },
                 interaction: { intersect: false, mode: 'index' },
                 plugins:{ legend:{ position:'top', labels:{ font:fk, boxWidth:14, padding:10, usePointStyle:true, pointStyle:'rectRounded' }},
                     tooltip:{ enabled:false, position:'nearest', external:externalTooltipHandler,
-                        callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' à¸š.'; }}}},
+                        callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
                 scales:{
                     x:{ stacked:true, ticks:{ font:fk, maxRotation:45 }, grid:{ display:false }},
                     y:{ stacked:true, beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}, grid:{ color:'rgba(0,0,0,0.04)' }}
@@ -606,7 +606,7 @@
 
         chartDoughnut = new Chart(dCtx, {
             type: 'doughnut',
-            data: { labels:['à¸„à¹ˆà¸²à¸™à¹‰à¸³','à¸„à¹ˆà¸²à¹„à¸Ÿ','à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡'],
+            data: { labels:['ค่าน้ำ','ค่าไฟ','ค่าส่วนกลาง'],
                 datasets:[{ data:[tw,te,tc],
                     backgroundColor:[gD1, gD2, gD3],
                     borderWidth:3, borderColor:'#fff', hoverOffset:12, spacing:3 }]},
@@ -616,11 +616,11 @@
                     tooltip:{ enabled:false, external:externalTooltipHandler,
                         callbacks:{ label:function(ctx){
                             var pct = doughnutTotal > 0 ? ((ctx.parsed / doughnutTotal) * 100).toFixed(1) : 0;
-                            return ctx.label+': '+ctx.parsed.toLocaleString('th-TH')+' à¸š. ('+pct+'%)';
+                            return ctx.label+': '+ctx.parsed.toLocaleString('th-TH')+' บ. ('+pct+'%)';
                         }}}}}
         });
 
-        /* ===== Line Chart (2 lines: à¸„à¹ˆà¸²à¸™à¹‰à¸³ + à¸„à¹ˆà¸²à¹„à¸Ÿ) ===== */
+        /* ===== Line Chart (2 lines: ค่าน้ำ + ค่าไฟ) ===== */
         var lineCtx = document.getElementById('chartLine').getContext('2d');
         var gradLineW = lineCtx.createLinearGradient(0, 0, 0, 200);
         gradLineW.addColorStop(0, 'rgba(6,182,212,0.2)'); gradLineW.addColorStop(1, 'rgba(6,182,212,0.01)');
@@ -630,13 +630,13 @@
         chartLine = new Chart(lineCtx, {
             type: 'line',
             data: { labels: labels, datasets:[
-                { label:'à¸„à¹ˆà¸²à¸™à¹‰à¸³', data:wArr,
+                { label:'ค่าน้ำ', data:wArr,
                     borderColor:'#06b6d4', backgroundColor:gradLineW,
                     borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#06b6d4',
                     pointBorderColor:'#fff', pointBorderWidth:2, pointHoverRadius:7,
                     pointHoverBackgroundColor:'#06b6d4', pointHoverBorderColor:'#fff', pointHoverBorderWidth:3,
                     tension:0.4, fill:true },
-                { label:'à¸„à¹ˆà¸²à¹„à¸Ÿ', data:eArr,
+                { label:'ค่าไฟ', data:eArr,
                     borderColor:'#f59e0b', backgroundColor:gradLineE,
                     borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#f59e0b',
                     pointBorderColor:'#fff', pointBorderWidth:2, pointHoverRadius:7,
@@ -647,7 +647,7 @@
                 interaction: { intersect: false, mode: 'index' },
                 plugins:{ legend:{ display:true, labels:{ font:fk, usePointStyle:true, pointStyle:'circle' }},
                     tooltip:{ enabled:false, external:externalTooltipHandler,
-                        callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' à¸š.'; }}}},
+                        callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ctx.parsed.y.toLocaleString('th-TH')+' บ.'; }}}},
                 scales:{
                     x:{ ticks:{ font:fk, maxRotation:45 }, grid:{ display:false }},
                     y:{ beginAtZero:true, ticks:{ font:fk, callback:function(v){ return v.toLocaleString('th-TH'); }}, grid:{ color:'rgba(0,0,0,0.04)' }}
@@ -656,7 +656,7 @@
         });
     }
 
-    /* ============ Insight Cards (à¹à¸¢à¸à¸„à¹ˆà¸²à¸™à¹‰à¸³/à¸„à¹ˆà¸²à¹„à¸Ÿ) ============ */
+    /* ============ Insight Cards (แยกค่าน้ำ/ค่าไฟ) ============ */
     function renderInsights(data) {
         var grid = document.getElementById('insightGrid');
         var withData = data.filter(function(r) { return r.total > 0; });
@@ -665,7 +665,7 @@
         var displayYear = document.getElementById('year').value;
         var n = withData.length;
 
-        /* à¸„à¸³à¸™à¸§à¸“à¸„à¹ˆà¸²à¸™à¹‰à¸³ */
+        /* คำนวณค่าน้ำ */
         var wSum = 0, wMax = 0, wMaxM = '', wMin = Infinity, wMinM = '';
         withData.forEach(function(r) {
             wSum += r.water;
@@ -675,7 +675,7 @@
         if (wMin === Infinity) wMin = 0;
         var wAvg = Math.round(wSum / n);
 
-        /* à¸„à¸³à¸™à¸§à¸“à¸„à¹ˆà¸²à¹„à¸Ÿ */
+        /* คำนวณค่าไฟ */
         var eSum = 0, eMax = 0, eMaxM = '', eMin = Infinity, eMinM = '';
         withData.forEach(function(r) {
             eSum += r.electric;
@@ -685,41 +685,41 @@
         if (eMin === Infinity) eMin = 0;
         var eAvg = Math.round(eSum / n);
 
-        /* à¸£à¸§à¸¡ */
+        /* รวม */
         var tSum = 0;
         withData.forEach(function(r) { tSum += r.total; });
         var tAvg = Math.round(tSum / n);
 
-        /* à¹à¸ªà¸”à¸‡à¸œà¸¥: à¸„à¹ˆà¸²à¸™à¹‰à¸³ */
-        document.getElementById('insightWaterAvg').textContent = wAvg.toLocaleString('th-TH') + ' à¸š.';
-        document.getElementById('insightWaterAvgSub').textContent = 'à¸£à¸§à¸¡ ' + wSum.toLocaleString('th-TH') + ' à¸š. (' + n + ' à¹€à¸”à¸·à¸­à¸™)';
+        /* แสดงผล: ค่าน้ำ */
+        document.getElementById('insightWaterAvg').textContent = wAvg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightWaterAvgSub').textContent = 'รวม ' + wSum.toLocaleString('th-TH') + ' บ. (' + n + ' เดือน)';
 
-        /* à¹à¸ªà¸”à¸‡à¸œà¸¥: à¸„à¹ˆà¸²à¹„à¸Ÿ */
-        document.getElementById('insightElecAvg').textContent = eAvg.toLocaleString('th-TH') + ' à¸š.';
-        document.getElementById('insightElecAvgSub').textContent = 'à¸£à¸§à¸¡ ' + eSum.toLocaleString('th-TH') + ' à¸š. (' + n + ' à¹€à¸”à¸·à¸­à¸™)';
+        /* แสดงผล: ค่าไฟ */
+        document.getElementById('insightElecAvg').textContent = eAvg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightElecAvgSub').textContent = 'รวม ' + eSum.toLocaleString('th-TH') + ' บ. (' + n + ' เดือน)';
 
-        /* à¹à¸ªà¸”à¸‡à¸œà¸¥: à¸£à¸§à¸¡ */
-        document.getElementById('insightTotalAvg').textContent = tAvg.toLocaleString('th-TH') + ' à¸š.';
-        document.getElementById('insightTotalAvgSub').textContent = 'à¸£à¸§à¸¡à¸—à¸±à¹‰à¸‡à¸›à¸µ ' + tSum.toLocaleString('th-TH') + ' à¸š.';
+        /* แสดงผล: รวม */
+        document.getElementById('insightTotalAvg').textContent = tAvg.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightTotalAvgSub').textContent = 'รวมทั้งปี ' + tSum.toLocaleString('th-TH') + ' บ.';
 
-        /* à¹à¸ªà¸”à¸‡à¸œà¸¥: à¸„à¹ˆà¸²à¸™à¹‰à¸³à¸ªà¸¹à¸‡à¸ªà¸¸à¸” */
-        document.getElementById('insightWaterMax').textContent = wMax.toLocaleString('th-TH') + ' à¸š.';
-        document.getElementById('insightWaterMaxSub').textContent = _fmtMonthYear(wMaxM, displayYear) + (wMinM ? ' | à¸•à¹ˆà¸³à¸ªà¸¸à¸” ' + wMin.toLocaleString('th-TH') + ' à¸š. (' + _fmtMonthYear(wMinM, displayYear) + ')' : '');
+        /* แสดงผล: ค่าน้ำสูงสุด */
+        document.getElementById('insightWaterMax').textContent = wMax.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightWaterMaxSub').textContent = _fmtMonthYear(wMaxM, displayYear) + (wMinM ? ' | ต่ำสุด ' + wMin.toLocaleString('th-TH') + ' บ. (' + _fmtMonthYear(wMinM, displayYear) + ')' : '');
 
-        /* à¹à¸ªà¸”à¸‡à¸œà¸¥: à¸„à¹ˆà¸²à¹„à¸Ÿà¸ªà¸¹à¸‡à¸ªà¸¸à¸” */
-        document.getElementById('insightElecMax').textContent = eMax.toLocaleString('th-TH') + ' à¸š.';
-        document.getElementById('insightElecMaxSub').textContent = _fmtMonthYear(eMaxM, displayYear) + (eMinM ? ' | à¸•à¹ˆà¸³à¸ªà¸¸à¸” ' + eMin.toLocaleString('th-TH') + ' à¸š. (' + _fmtMonthYear(eMinM, displayYear) + ')' : '');
+        /* แสดงผล: ค่าไฟสูงสุด */
+        document.getElementById('insightElecMax').textContent = eMax.toLocaleString('th-TH') + ' บ.';
+        document.getElementById('insightElecMaxSub').textContent = _fmtMonthYear(eMaxM, displayYear) + (eMinM ? ' | ต่ำสุด ' + eMin.toLocaleString('th-TH') + ' บ. (' + _fmtMonthYear(eMinM, displayYear) + ')' : '');
 
-        /* à¹à¸ªà¸”à¸‡à¸œà¸¥: à¸›à¸£à¸°à¸«à¸¢à¸±à¸” */
+        /* แสดงผล: ประหยัด */
         var save10 = Math.round((wSum + eSum) * 0.1);
-        document.getElementById('insightSaveVal').textContent = save10.toLocaleString('th-TH') + ' à¸š./à¸›à¸µ';
-        document.getElementById('insightSaveSub').textContent = 'à¸™à¹‰à¸³ ~' + Math.round(wSum*0.1/n).toLocaleString('th-TH') + ' + à¹„à¸Ÿ ~' + Math.round(eSum*0.1/n).toLocaleString('th-TH') + ' à¸š./à¹€à¸”à¸·à¸­à¸™';
+        document.getElementById('insightSaveVal').textContent = save10.toLocaleString('th-TH') + ' บ./ปี';
+        document.getElementById('insightSaveSub').textContent = 'น้ำ ~' + Math.round(wSum*0.1/n).toLocaleString('th-TH') + ' + ไฟ ~' + Math.round(eSum*0.1/n).toLocaleString('th-TH') + ' บ./เดือน';
     }
 
     /* ============ Discipline Section ============ */
     function renderDiscipline(slipData) {
         var section = document.getElementById('disciplineSection');
-        /* Show for approved slips â€” dueDate may be unavailable for historical data */
+        /* Show for approved slips — dueDate may be unavailable for historical data */
         var approved = slipData.filter(function(s) { return s.submittedAt && s.status === 'approved'; });
         if (approved.length === 0) { section.style.display = 'none'; return; }
         section.style.display = '';
@@ -755,21 +755,21 @@
             pctEl.textContent = pct + '%';
             pctEl.style.color = ringColor;
         } else {
-            /* No due date data â†’ show approved count */
+            /* No due date data → show approved count */
             var dashLen2 = circumference;
             arc.setAttribute('stroke-dasharray', dashLen2 + ' ' + circumference);
             ringColor = '#10b981';
             arc.setAttribute('stroke', ringColor);
             pctEl.textContent = approved.length;
             pctEl.style.color = ringColor;
-            document.querySelector('.discipline-ring-label').textContent = 'à¹€à¸”à¸·à¸­à¸™à¸—à¸µà¹ˆà¸Šà¸³à¸£à¸°';
+            document.querySelector('.discipline-ring-label').textContent = 'เดือนที่ชำระ';
         }
 
         /* Streak */
         var streakEl = document.getElementById('disciplineStreak');
         if (!hasDueData) {
-            /* No due-date â†’ just show total approved months */
-            streakEl.innerHTML = '&#9989; à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§ ' + approved.length + ' à¹€à¸”à¸·à¸­à¸™';
+            /* No due-date → just show total approved months */
+            streakEl.innerHTML = '&#9989; ชำระแล้ว ' + approved.length + ' เดือน';
             streakEl.style.color = '#10b981';
         } else {
             var sorted = withDue.slice().sort(function(a,b) {
@@ -785,15 +785,15 @@
                 } else { break; }
             }
             if (streak > 0) {
-                streakEl.innerHTML = '&#128293; à¸Šà¸³à¸£à¸°à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¸à¸±à¸™ ' + streak + ' à¹€à¸”à¸·à¸­à¸™';
+                streakEl.innerHTML = '&#128293; ชำระตรงเวลาติดต่อกัน ' + streak + ' เดือน';
                 streakEl.style.color = '#10b981';
             } else if (lateSlips.length > 0) {
                 var lastLate = lateSlips[lateSlips.length - 1];
                 var lmLabel = _fmtMonthYear(lastLate.month, lastLate.year || document.getElementById('year').value);
-                streakEl.innerHTML = '&#9888;&#65039; à¸¥à¹ˆà¸²à¸Šà¹‰à¸²à¸„à¸£à¸±à¹‰à¸‡à¸¥à¹ˆà¸²à¸ªà¸¸à¸”: ' + _e(lmLabel);
+                streakEl.innerHTML = '&#9888;&#65039; ล่าช้าครั้งล่าสุด: ' + _e(lmLabel);
                 streakEl.style.color = '#ef4444';
             } else {
-                streakEl.innerHTML = '&#9989; à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§ ' + approved.length + ' à¹€à¸”à¸·à¸­à¸™';
+                streakEl.innerHTML = '&#9989; ชำระแล้ว ' + approved.length + ' เดือน';
                 streakEl.style.color = '#10b981';
             }
         }
@@ -801,15 +801,15 @@
         /* Message */
         var msgEl = document.getElementById('disciplineMsg');
         if (!hasDueData) {
-            msgEl.textContent = 'à¸¡à¸µà¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™à¸„à¸£à¸š ' + approved.length + ' à¹€à¸”à¸·à¸­à¸™ â€” à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸à¸³à¸«à¸™à¸”à¸Šà¸³à¸£à¸°à¸ˆà¸°à¸žà¸£à¹‰à¸­à¸¡à¹ƒà¸Šà¹‰à¸‡à¸²à¸™à¸ªà¸³à¸«à¸£à¸±à¸šà¹€à¸”à¸·à¸­à¸™à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¸œà¹ˆà¸²à¸™à¸£à¸°à¸šà¸šà¹ƒà¸«à¸¡à¹ˆ';
+            msgEl.textContent = 'มีการชำระเงินครบ ' + approved.length + ' เดือน — ข้อมูลกำหนดชำระจะพร้อมใช้งานสำหรับเดือนที่ส่งผ่านระบบใหม่';
         } else if (pct >= 90) {
-            msgEl.textContent = 'à¸¢à¸­à¸”à¹€à¸¢à¸µà¹ˆà¸¢à¸¡! à¸§à¸´à¸™à¸±à¸¢à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™à¸”à¸µà¸¡à¸²à¸ à¸£à¸±à¸à¸©à¸²à¸£à¸°à¸”à¸±à¸šà¸™à¸µà¹‰à¹„à¸§à¹‰à¸™à¸°à¸„à¸£à¸±à¸š';
+            msgEl.textContent = 'ยอดเยี่ยม! วินัยการชำระเงินดีมาก รักษาระดับนี้ไว้นะครับ';
         } else if (pct >= 70) {
-            msgEl.textContent = 'à¸”à¸µà¸¡à¸²à¸! à¹à¸•à¹ˆà¸¢à¸±à¸‡à¸¡à¸µà¸šà¸²à¸‡à¹€à¸”à¸·à¸­à¸™à¸—à¸µà¹ˆà¸¥à¹ˆà¸²à¸Šà¹‰à¸² à¸žà¸¢à¸²à¸¢à¸²à¸¡à¸Šà¸³à¸£à¸°à¹ƒà¸«à¹‰à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²à¸—à¸¸à¸à¹€à¸”à¸·à¸­à¸™à¸™à¸°à¸„à¸£à¸±à¸š';
+            msgEl.textContent = 'ดีมาก! แต่ยังมีบางเดือนที่ล่าช้า พยายามชำระให้ตรงเวลาทุกเดือนนะครับ';
         } else if (pct >= 50) {
-            msgEl.textContent = 'à¸„à¸§à¸£à¸›à¸£à¸±à¸šà¸›à¸£à¸¸à¸‡ â€” à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²à¸ˆà¸°à¸Šà¹ˆà¸§à¸¢à¹ƒà¸«à¹‰à¹„à¸¡à¹ˆà¸•à¹‰à¸­à¸‡à¸à¸±à¸‡à¸§à¸¥à¹€à¸£à¸·à¹ˆà¸­à¸‡à¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡à¸Šà¸³à¸£à¸°à¸„à¸£à¸±à¸š';
+            msgEl.textContent = 'ควรปรับปรุง — การชำระตรงเวลาจะช่วยให้ไม่ต้องกังวลเรื่องยอดค้างชำระครับ';
         } else {
-            msgEl.textContent = 'à¸•à¹‰à¸­à¸‡à¸›à¸£à¸±à¸šà¸›à¸£à¸¸à¸‡à¸­à¸¢à¹ˆà¸²à¸‡à¹€à¸£à¹ˆà¸‡à¸”à¹ˆà¸§à¸™ â€” à¸à¸£à¸¸à¸“à¸²à¸Šà¸³à¸£à¸°à¸„à¹ˆà¸²à¹ƒà¸Šà¹‰à¸ˆà¹ˆà¸²à¸¢à¹ƒà¸«à¹‰à¸•à¸£à¸‡à¸à¸³à¸«à¸™à¸”à¹€à¸§à¸¥à¸²à¸„à¸£à¸±à¸š';
+            msgEl.textContent = 'ต้องปรับปรุงอย่างเร่งด่วน — กรุณาชำระค่าใช้จ่ายให้ตรงกำหนดเวลาครับ';
         }
 
         /* Timeline (12 months) */
@@ -827,7 +827,7 @@
                 }
             });
         } else {
-            /* No due dates â†’ mark approved months as on-time (paid) */
+            /* No due dates → mark approved months as on-time (paid) */
             approved.forEach(function(s) { monthMap[s.month] = 'on-time'; });
         }
         for (var m = 1; m <= 12; m++) {
@@ -836,7 +836,7 @@
             var dot = document.createElement('div');
             dot.className = 'discipline-dot ' + cls;
             dot.textContent = THAI_MONTHS_SHORT[m-1];
-            dot.title = THAI_MONTHS[m-1] + ': ' + (cls === 'on-time' ? (hasDueData ? 'à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²' : 'à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§') : cls === 'late' ? 'à¸¥à¹ˆà¸²à¸Šà¹‰à¸²' : 'à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥');
+            dot.title = THAI_MONTHS[m-1] + ': ' + (cls === 'on-time' ? (hasDueData ? 'ตรงเวลา' : 'ชำระแล้ว') : cls === 'late' ? 'ล่าช้า' : 'ไม่มีข้อมูล');
             timeline.appendChild(dot);
         }
     }
@@ -849,9 +849,9 @@
         _lastLoadedYear = year;
 
         document.getElementById('merged-table-body').innerHTML =
-            '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">&#8987; à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥...</td></tr>';
+            '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">&#8987; กำลังโหลดข้อมูล...</td></tr>';
 
-        /* -- à¸–à¹‰à¸² houseNumber à¸§à¹ˆà¸²à¸‡ à¸¥à¸­à¸‡ refresh à¸ˆà¸²à¸ resident data -- */
+        /* -- ถ้า houseNumber ว่าง ลอง refresh จาก resident data -- */
         if (!hn && user.id) {
             try {
                 var curRes = await callBackend('getCurrentUser');
@@ -869,7 +869,7 @@
             } catch(e) { console.warn('refresh user:', e); }
         }
 
-        /* -- à¸–à¹‰à¸² hn à¸¢à¸±à¸‡à¸§à¹ˆà¸²à¸‡ â†’ à¹à¸ªà¸”à¸‡ dropdown à¹€à¸¥à¸·à¸­à¸à¸šà¹‰à¸²à¸™ (à¸—à¸¸à¸ role) -- */
+        /* -- ถ้า hn ยังว่าง → แสดง dropdown เลือกบ้าน (ทุก role) -- */
         if (!hn) {
             var hSel = document.getElementById('houseSelect');
             if (hSel.options.length <= 1) {
@@ -898,7 +898,7 @@
 
         if (!hn) {
             document.getElementById('merged-table-body').innerHTML =
-                '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸šà¹‰à¸²à¸™à¸žà¸±à¸ à¸à¸£à¸¸à¸“à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¸„à¸“à¸°à¸—à¸³à¸‡à¸²à¸™</td></tr>';
+                '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">ไม่พบข้อมูลบ้านพัก กรุณาติดต่อคณะทำงาน</td></tr>';
             return;
         }
         console.log('[payment-history] house:', hn, 'year:', year);
@@ -907,7 +907,7 @@
         allSlipData = [];
         allNotifMap = {};
 
-        /* à¸¥à¹‰à¸²à¸‡ cache à¹€à¸à¹ˆà¸² */
+        /* ล้าง cache เก่า */
         try {
             Object.keys(localStorage).forEach(function(k) {
                 if (k.indexOf('apicache_getWaterBills') === 0 ||
@@ -965,10 +965,10 @@
                 var dbHouses = {};
                 (res[0] && res[0].data || []).forEach(function(w) { dbHouses[w.house_number] = 1; });
                 (res[1] && res[1].data || []).forEach(function(e) { dbHouses[e.house_number] = 1; });
-                console.warn('[payment-history] à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸³à¸«à¸£à¸±à¸šà¸šà¹‰à¸²à¸™ "' + hn + '" | à¸šà¹‰à¸²à¸™à¹ƒà¸™ DB:', Object.keys(dbHouses).join(', '));
+                console.warn('[payment-history] ไม่พบข้อมูลสำหรับบ้าน "' + hn + '" | บ้านใน DB:', Object.keys(dbHouses).join(', '));
             }
 
-            /* -- Common fee from settings (à¹ƒà¸Šà¹‰à¹€à¸‰à¸žà¸²à¸°à¹€à¸”à¸·à¸­à¸™à¸—à¸µà¹ˆà¸¡à¸µ notification) -- */
+            /* -- Common fee from settings (ใช้เฉพาะเดือนที่มี notification) -- */
             var commonFeeFromSettings = 0;
             var isExemptCommon = (res[5] && res[5].success && Object.keys(res[5].data || {}).length > 0);
             if (isExemptCommon) {
@@ -1017,7 +1017,7 @@
                 var notif = allNotifMap[mm] || {};
                 var waterVal    = w || parseFloat(notif.water_amount) || 0;
                 var electricVal = e || parseFloat(notif.electric_amount) || 0;
-                /* à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡: à¹ƒà¸ªà¹ˆà¹€à¸‰à¸žà¸²à¸°à¹€à¸¡à¸·à¹ˆà¸­à¸¡à¸µ notification (admin à¸à¸”à¹à¸ˆà¹‰à¸‡à¸¢à¸­à¸”à¹à¸¥à¹‰à¸§) */
+                /* ค่าส่วนกลาง: ใส่เฉพาะเมื่อมี notification (admin กดแจ้งยอดแล้ว) */
                 var commonVal   = 0;
                 if (notif.sent_at) {
                     commonVal = (notif.common_fee != null) ? parseFloat(notif.common_fee) : commonFeeFromSettings;
@@ -1282,13 +1282,13 @@
             }
         });
 
-        /* Collect months from bill data only â€” à¹€à¸”à¸·à¸­à¸™à¸—à¸µà¹ˆà¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹à¸ˆà¹‰à¸‡à¸¢à¸­à¸”à¸ˆà¸°à¹„à¸¡à¹ˆà¹à¸ªà¸”à¸‡ */
+        /* Collect months from bill data only — เดือนที่ยังไม่แจ้งยอดจะไม่แสดง */
         var monthKeys = {};
         billData.forEach(function(r) { monthKeys[(r.year||year)+'-'+r.month] = true; });
         var sortedKeys = Object.keys(monthKeys).sort();
 
         if (sortedKeys.length === 0) {
-            tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥</td></tr>';
+            tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:2rem;">ยังไม่มีข้อมูล</td></tr>';
             return;
         }
 
@@ -1306,11 +1306,11 @@
             /* Slip status badge */
             var stTxt = '', stCls = '';
             if (slip) {
-                if      (slip.status === 'approved') { stTxt = '\u2705 à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´';  stCls = 'badge-approved'; }
-                else if (slip.status === 'rejected') { stTxt = '\u274C à¸›à¸à¸´à¹€à¸ªà¸˜';   stCls = 'badge-rejected'; }
-                else                                 { stTxt = '\u23F3 à¸£à¸­à¸•à¸£à¸§à¸ˆ';   stCls = 'badge-pending';  }
+                if      (slip.status === 'approved') { stTxt = '\u2705 อนุมัติ';  stCls = 'badge-approved'; }
+                else if (slip.status === 'rejected') { stTxt = '\u274C ปฏิเสธ';   stCls = 'badge-rejected'; }
+                else                                 { stTxt = '\u23F3 รอตรวจ';   stCls = 'badge-pending';  }
             } else if (key < '2569-03') {
-                stTxt = '\u2714 à¸™à¸­à¸à¸£à¸°à¸šà¸š'; stCls = 'badge-approved';
+                stTxt = '\u2714 นอกระบบ'; stCls = 'badge-approved';
             }
 
             /* On-time check */
@@ -1319,11 +1319,11 @@
                 var due = new Date(slip.dueDate + 'T23:59:59');
                 var sub = new Date(slip.submittedAt);
                 if (!isNaN(due.getTime()) && !isNaN(sub.getTime())) {
-                    if (sub <= due) { tmTxt = '\u2705 à¸•à¸£à¸‡à¹€à¸§à¸¥à¸²'; tmCls = 'badge-ontime'; }
+                    if (sub <= due) { tmTxt = '\u2705 ตรงเวลา'; tmCls = 'badge-ontime'; }
                     else {
                         var diff = Math.ceil((sub - due) / 86400000);
-                        if (diff <= 7) { tmTxt = '\u26A0\uFE0F à¸Šà¹‰à¸² ' + diff + ' à¸§à¸±à¸™'; tmCls = 'badge-late'; }
-                        else           { tmTxt = '\u274C à¸Šà¹‰à¸² ' + diff + ' à¸§à¸±à¸™'; tmCls = 'badge-late-severe'; }
+                        if (diff <= 7) { tmTxt = '\u26A0\uFE0F ช้า ' + diff + ' วัน'; tmCls = 'badge-late'; }
+                        else           { tmTxt = '\u274C ช้า ' + diff + ' วัน'; tmCls = 'badge-late-severe'; }
                     }
                 }
             }
@@ -1349,7 +1349,7 @@
         var lines = [];
         var year = document.getElementById('year').value;
         /* Header */
-        lines.push('à¹€à¸”à¸·à¸­à¸™,à¸„à¹ˆà¸²à¸™à¹‰à¸³,à¸„à¹ˆà¸²à¹„à¸Ÿ,à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡,à¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡,à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°,à¸§à¸±à¸™à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›,à¸ªà¸–à¸²à¸™à¸°');
+        lines.push('เดือน,ค่าน้ำ,ค่าไฟ,ค่าส่วนกลาง,ยอดแจ้ง,ยอดชำระ,วันส่งสลิป,สถานะ');
         /* Build merged data for export */
         var slipByM = {};
         allSlipData.forEach(function(s) {
@@ -1409,7 +1409,7 @@
         document.getElementById('timeRange').value = 'year';
         document.getElementById('monthWrap').style.display = 'none';
         await loadData();
-        // à¹‚à¸«à¸¥à¸” proxy history à¸ªà¸³à¸«à¸£à¸±à¸šà¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸£à¸±à¸šà¸¡à¸­à¸šà¸«à¸¡à¸²à¸¢à¸Šà¸³à¸£à¸°à¹à¸—à¸™ (non-blocking)
+        // โหลด proxy history สำหรับผู้ที่รับมอบหมายชำระแทน (non-blocking)
         var _usr = {}; try { _usr = JSON.parse(localStorage.getItem('currentUser')||'{}'); } catch(e) {}
         if (_usr.role !== 'admin' && _usr.role !== 'head') loadProxyHistory();
     };
@@ -1423,7 +1423,7 @@
             var tb = document.getElementById('proxyHistoryBody');
             if (!sec || !tb) return;
             sec.style.display = '';
-            var STATUS_MAP = { success: 'âœ… à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´', approved: 'âœ… à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´', rejected: 'âŒ à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™', pending: 'â³ à¸£à¸­à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š', reviewing: 'ðŸ” à¸£à¸­à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š' };
+            var STATUS_MAP = { success: '✅ อนุมัติ', approved: '✅ อนุมัติ', rejected: '❌ ไม่ผ่าน', pending: '⏳ รอตรวจสอบ', reviewing: '🔍 รอตรวจสอบ' };
             var rows = slips.map(function(s) {
                 var periodParts = (s.period || '').split('-');
                 var mIdx = periodParts[1] ? parseInt(periodParts[1]) - 1 : 0;
@@ -1458,13 +1458,10 @@
 
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260701D"></script>
+    <script src="ppk-api.js?v=20260701F"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
     <script src="ppk-pwa.js?v=20260416C"></script>
 </body>
 </html>
-
-
-

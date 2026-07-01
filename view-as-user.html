@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>à¸”à¸¹à¸¡à¸¸à¸¡à¸¡à¸­à¸‡à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰ | HOME PPK 2026</title>
+    <title>ดูมุมมองผู้ใช้ | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260326B">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,7 +122,7 @@
         }
         .proxy-banner .pb-title { font-weight: 700; color: #065F46; font-size: 0.88rem; margin-bottom: 0.25rem; }
         .proxy-banner .pb-detail { font-size: 0.8rem; color: #047857; }
-        /* â”€â”€ Proxy Hero Card (admin view â€” read-only) â”€â”€ */
+        /* ── Proxy Hero Card (admin view — read-only) ── */
         .proxy-hero-card-view {
             background: linear-gradient(135deg, #065F46 0%, #059669 55%, #34D399 100%);
             border-radius: 18px; padding: 1.4rem 1.4rem 1.2rem;
@@ -324,7 +324,7 @@
 <script src="supabase/config.js?v=20260416C"></script>
 <script src="supabase/supabase.min.js?v=20260416C"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
-<script src="ppk-api.js?v=20260701D"></script>
+<script src="ppk-api.js?v=20260701F"></script>
 <script src="ppk-app.js?v=20260416C"></script>
 <script src="ppk-utils.js?v=20260416C"></script>
 <script src="ppk-nav.js?v=20260326A"></script>
@@ -459,7 +459,7 @@ function renderDashboard(d) {
         + '</div>' : '';
     var osHtml = d.totalOutstanding > 0 ? '<div class="os-banner"><div class="os-icon">\u26a0\ufe0f</div><div style="flex:1;"><div class="os-label">\u0e22\u0e2d\u0e14\u0e04\u0e07\u0e04\u0e49\u0e32\u0e07\u0e2a\u0e30\u0e2a\u0e21 (\u0e17\u0e38\u0e01\u0e07\u0e27\u0e14)</div><div class="os-amount">' + fmtMoney(d.totalOutstanding) + ' \u0e1a\u0e32\u0e17</div></div></div>' : '';
     var proxyHtml = d.proxyName ? '<div class="proxy-banner"><div class="pb-title">\ud83d\udd04 \u0e1c\u0e39\u0e49\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e17\u0e19: ' + _esc(d.proxyName) + (d.proxyHouse ? ' (' + _esc(d.proxyHouse) + ')' : '') + '</div>' + (d.proxyNotes ? '<div class="pb-detail">\ud83d\udcdd ' + _esc(d.proxyNotes) + '</div>' : '') + '</div>' : '';
-    // â”€â”€ proxy assignments: à¸šà¹‰à¸²à¸™à¸—à¸µà¹ˆà¸œà¸¹à¹‰à¸žà¸±à¸à¸™à¸µà¹‰à¸£à¸±à¸šà¸œà¸´à¸”à¸Šà¸­à¸šà¸Šà¸³à¸£à¸°à¹à¸—à¸™ â”€â”€
+    // ── proxy assignments: บ้านที่ผู้พักนี้รับผิดชอบชำระแทน ──
     var proxyAssignHtml = '';
     if (d.proxyAssignments && d.proxyAssignments.length > 0) {
         proxyAssignHtml += '<div style="font-size:0.82rem;font-weight:700;color:var(--c-text-2);margin:0.75rem 0 0.4rem;text-transform:uppercase;letter-spacing:0.05em;">\uD83D\uDD04 \u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a\u0e0a\u0e33\u0e23\u0e30\u0e41\u0e17\u0e19</div>';
@@ -1035,6 +1035,3 @@ window.onload = async function() {
 </script>
 </body>
 </html>
-
-
-

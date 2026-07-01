@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-title" content="HOME PPK">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
-    <title>à¹à¸”à¸Šà¸šà¸­à¸£à¹Œà¸” | HOME PPK 2026</title>
+    <title>แดชบอร์ด | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260416C">
     <style>
         .dashboard-amount { font-size: 1.35rem; font-weight: 700; }
         .dashboard-amount.danger { color: var(--c-danger); }
         .dashboard-amount.ok { color: var(--c-success); }
 
-        /* â”€â”€ Hero Payment Card â”€â”€ */
+        /* ── Hero Payment Card ── */
         .hero-payment {
             background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #06B6D4 100%);
             border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
@@ -69,7 +69,7 @@
         }
         .hero-payment .hero-col { flex: 1; }
 
-        /* â”€â”€ Big CTA Button â”€â”€ */
+        /* ── Big CTA Button ── */
         .hero-cta {
             display: flex; align-items: center; justify-content: center; gap: 0.5rem;
             width: 100%; padding: 0.9rem;
@@ -84,7 +84,7 @@
         .hero-cta.reviewing { background: rgba(251,191,36,0.2); color: #F59E0B; cursor: default; }
         .hero-cta.success { background: rgba(16,185,129,0.2); color: #10B981; cursor: default; }
 
-        /* â”€â”€ Status badge â”€â”€ */
+        /* ── Status badge ── */
         .hero-status {
             display: inline-flex; align-items: center; gap: 0.3rem;
             padding: 0.3rem 0.7rem; border-radius: 20px;
@@ -116,7 +116,7 @@
         }
         .hero-cancel-btn:hover { background: rgba(220,38,38,0.15); }
 
-        /* â”€â”€ Outstanding banner â”€â”€ */
+        /* ── Outstanding banner ── */
         .outstanding-banner {
             background: linear-gradient(135deg, #FEF3C7, #FDE68A);
             border: 1.5px solid #F59E0B; border-radius: 14px;
@@ -135,7 +135,7 @@
         }
         .outstanding-banner .ob-btn:hover { background: #92400E; }
 
-        /* â”€â”€ Proxy Assignment Banner â”€â”€ */
+        /* ── Proxy Assignment Banner ── */
         .proxy-assign-section { margin-bottom: 0; }
         .proxy-assign-section .pa-header {
             font-size: 0.82rem; color: #065F46; font-weight: 600;
@@ -143,7 +143,7 @@
             display: flex; align-items: center; gap: 0.4rem;
         }
 
-        /* â”€â”€ Proxy Hero Card (full card, à¹€à¸«à¸¡à¸·à¸­à¸™ hero-payment à¹à¸•à¹ˆà¸ªà¸µà¹€à¸‚à¸µà¸¢à¸§) â”€â”€ */
+        /* ── Proxy Hero Card (full card, เหมือน hero-payment แต่สีเขียว) ── */
         .proxy-hero-card {
             background: linear-gradient(135deg, #065F46 0%, #059669 55%, #34D399 100%);
             border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem;
@@ -220,7 +220,7 @@
             .proxy-hero-card .phc-cta { font-size: 0.95rem; padding: 0.75rem; }
         }
 
-        /* â”€â”€ Quick Actions Row â”€â”€ */
+        /* ── Quick Actions Row ── */
         .quick-actions {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
             margin-bottom: 1rem;
@@ -265,7 +265,7 @@
 
     <div class="ppk-main" id="dashboardContainer">
         <div class="ppk-topbar">
-            <div class="ppk-topbar-title"><span class="icon">ðŸ </span> HOME PPK 2026</div>
+            <div class="ppk-topbar-title"><span class="icon">🏠</span> HOME PPK 2026</div>
         </div>
 
         <div class="ppk-content">
@@ -273,52 +273,52 @@
             <div id="adminStatsSection" style="display:none; margin-bottom:1.25rem;">
                 <div class="ppk-stats">
                     <div class="ppk-stat" onclick="navigate('?page=team-management')">
-                        <div class="ppk-stat-icon">ðŸ‘¥</div>
-                        <div class="ppk-stat-value danger" id="statPendingReg">â€”</div>
-                        <div class="ppk-stat-label">à¸„à¸³à¸‚à¸­à¸ªà¸¡à¸±à¸„à¸£à¸£à¸­à¸•à¸£à¸§à¸ˆ</div>
+                        <div class="ppk-stat-icon">👥</div>
+                        <div class="ppk-stat-value danger" id="statPendingReg">—</div>
+                        <div class="ppk-stat-label">คำขอสมัครรอตรวจ</div>
                     </div>
                     <div class="ppk-stat" onclick="navigate('?page=check-slip')">
-                        <div class="ppk-stat-icon">ðŸ”</div>
-                        <div class="ppk-stat-value danger" id="statPendingSlips">â€”</div>
-                        <div class="ppk-stat-label">à¸ªà¸¥à¸´à¸›à¸£à¸­à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š</div>
+                        <div class="ppk-stat-icon">🔍</div>
+                        <div class="ppk-stat-value danger" id="statPendingSlips">—</div>
+                        <div class="ppk-stat-label">สลิปรอตรวจสอบ</div>
                     </div>
                     <div class="ppk-stat" onclick="navigate('?page=check-request')">
-                        <div class="ppk-stat-icon">ðŸ“‹</div>
-                        <div class="ppk-stat-value danger" id="statPendingReqs">â€”</div>
-                        <div class="ppk-stat-label">à¸„à¸³à¸£à¹‰à¸­à¸‡à¸£à¸­à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£</div>
+                        <div class="ppk-stat-icon">📋</div>
+                        <div class="ppk-stat-value danger" id="statPendingReqs">—</div>
+                        <div class="ppk-stat-label">คำร้องรอดำเนินการ</div>
                     </div>
-                    <div class="ppk-stat" onclick="navigate('?page=check-slip')" title="à¸­à¸±à¸•à¸£à¸²à¸à¸²à¸£à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™à¹€à¸”à¸·à¸­à¸™à¸™à¸µà¹‰">
-                        <div class="ppk-stat-icon">ðŸ’°</div>
-                        <div class="ppk-stat-value" id="statCollectionRate">â€”</div>
-                        <div class="ppk-stat-label">% à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§à¹€à¸”à¸·à¸­à¸™à¸™à¸µà¹‰</div>
+                    <div class="ppk-stat" onclick="navigate('?page=check-slip')" title="อัตราการชำระเงินเดือนนี้">
+                        <div class="ppk-stat-icon">💰</div>
+                        <div class="ppk-stat-value" id="statCollectionRate">—</div>
+                        <div class="ppk-stat-label">% ชำระแล้วเดือนนี้</div>
                     </div>
-                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="à¸ˆà¸³à¸™à¸§à¸™à¸«à¹‰à¸­à¸‡à¸—à¸µà¹ˆà¸¢à¸±à¸‡à¸„à¹‰à¸²à¸‡à¸Šà¸³à¸£à¸°">
-                        <div class="ppk-stat-icon">â³</div>
-                        <div class="ppk-stat-value" id="statOutstandingRooms">â€”</div>
-                        <div class="ppk-stat-label">à¸«à¹‰à¸­à¸‡à¸„à¹‰à¸²à¸‡à¸Šà¸³à¸£à¸°</div>
+                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="จำนวนห้องที่ยังค้างชำระ">
+                        <div class="ppk-stat-icon">⏳</div>
+                        <div class="ppk-stat-value" id="statOutstandingRooms">—</div>
+                        <div class="ppk-stat-label">ห้องค้างชำระ</div>
                     </div>
-                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="à¹€à¸‡à¸´à¸™à¸ªà¸³à¸£à¸­à¸‡à¸ˆà¹ˆà¸²à¸¢à¸—à¸µà¹ˆà¸¢à¸±à¸‡à¸„à¸·à¸™à¹„à¸¡à¹ˆà¸„à¸£à¸š">
-                        <div class="ppk-stat-icon">ðŸ¤</div>
-                        <div class="ppk-stat-value" id="statPendingAdvance">â€”</div>
-                        <div class="ppk-stat-label">à¸ªà¸³à¸£à¸­à¸‡à¸„à¹‰à¸²à¸‡à¸„à¸·à¸™</div>
+                    <div class="ppk-stat" onclick="navigate('?page=monthly-withdraw')" title="เงินสำรองจ่ายที่ยังคืนไม่ครบ">
+                        <div class="ppk-stat-icon">🤝</div>
+                        <div class="ppk-stat-value" id="statPendingAdvance">—</div>
+                        <div class="ppk-stat-label">สำรองค้างคืน</div>
                     </div>
                 </div>
             </div>
 
-            <!-- â˜… HERO: Payment Card (residents see first) -->
+            <!-- ★ HERO: Payment Card (residents see first) -->
             <div id="paymentSection" style="display:none;">
                 <div class="hero-payment" id="heroPayment">
-                    <div class="hero-greeting" id="heroGreeting">à¸ªà¸§à¸±à¸ªà¸”à¸µ</div>
-                    <div class="hero-house" id="heroHouse">ðŸ  à¸šà¹‰à¸²à¸™à¸žà¸±à¸ â€”</div>
+                    <div class="hero-greeting" id="heroGreeting">สวัสดี</div>
+                    <div class="hero-house" id="heroHouse">🏠 บ้านพัก —</div>
                     <hr class="hero-divider">
                     <div class="hero-row">
                         <div class="hero-col">
-                            <div class="hero-label">ðŸ’³ à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°à¸›à¸£à¸°à¸ˆà¸³à¹€à¸”à¸·à¸­à¸™</div>
-                            <div class="hero-amount" id="currentMonthAmount">â€”</div>
+                            <div class="hero-label">💳 ยอดชำระประจำเดือน</div>
+                            <div class="hero-amount" id="currentMonthAmount">—</div>
                             <div id="heroBillBreakdown" class="hero-breakdown" style="display:none;">
-                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">à¸„à¹ˆà¸²à¸™à¹‰à¸³<span id="hbWaterDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbWater">â€”</span></div>
-                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">à¸„à¹ˆà¸²à¹„à¸Ÿ<span id="hbElectricDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbElectric">â€”</span></div>
-                                <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡</span><span class="hb-val" id="hbCommon">â€”</span></div>
+                                <div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ<span id="hbWaterDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbWater">—</span></div>
+                                <div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ<span id="hbElectricDate" style="display:none;opacity:0.72;font-weight:400;"></span></span><span class="hb-val" id="hbElectric">—</span></div>
+                                <div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val" id="hbCommon">—</span></div>
                             </div>
                             <div class="hero-period" id="heroPeriod"></div>
                         </div>
@@ -328,28 +328,28 @@
                     </div>
                     <div id="heroDueDateWarning" style="display:none;background:#fef9c3;border:1px solid #facc15;border-radius:8px;padding:8px 12px;margin:8px 0 4px;text-align:center;font-size:14px;color:#92400e;font-weight:bold;">
                     </div>
-                    <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">ðŸ“¤ à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™</button>
+                    <button class="hero-cta" id="heroCta" onclick="heroCtaClick()">📤 ส่งสลิปชำระเงิน</button>
                     <div class="hero-reject-banner" id="heroRejectBanner"></div>
-                    <button class="hero-cancel-btn" id="heroCancelBtn" onclick="cancelSlipClick()" style="display:none;">ðŸ—‘ï¸ à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¹„à¸§à¹‰</button>
+                    <button class="hero-cancel-btn" id="heroCancelBtn" onclick="cancelSlipClick()" style="display:none;">🗑️ ยกเลิกสลิปที่ส่งไว้</button>
                 </div>
             </div>
 
-            <!-- â˜… Outstanding Banner (if any) -->
+            <!-- ★ Outstanding Banner (if any) -->
             <div id="outstandingSection" style="display:none;">
                 <div class="outstanding-banner" id="outstandingBanner">
-                    <div class="ob-icon">âš ï¸</div>
+                    <div class="ob-icon">⚠️</div>
                     <div class="ob-info">
-                        <div class="ob-label">à¸¢à¸­à¸”à¸„à¸‡à¸„à¹‰à¸²à¸‡à¸ªà¸°à¸ªà¸¡</div>
-                        <div class="ob-amount" id="outstandingAmount">â€”</div>
+                        <div class="ob-label">ยอดคงค้างสะสม</div>
+                        <div class="ob-amount" id="outstandingAmount">—</div>
                     </div>
-                    <button class="ob-btn" id="outstandingBtn" onclick="outstandingBtnClick()">à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›</button>
+                    <button class="ob-btn" id="outstandingBtn" onclick="outstandingBtnClick()">ส่งสลิป</button>
                 </div>
             </div>
 
-            <!-- â˜… Proxy Assignment Section -->
+            <!-- ★ Proxy Assignment Section -->
             <div id="proxyAssignSection" class="proxy-assign-section" style="display:none;"></div>
 
-            <!-- â˜… Quick Actions (4 icons) -->
+            <!-- ★ Quick Actions (4 icons) -->
             <div id="quickActionsSection">
                 <div class="quick-actions" id="quickActions"></div>
             </div>
@@ -357,8 +357,8 @@
             <!-- Hub Menu Grid (full menu) -->
             <div class="ppk-card" id="hubMenuCard" style="margin-bottom:1rem; padding:1rem;">
                 <div class="ppk-card-header" style="margin-bottom:0.75rem; padding-bottom:0.5rem;">
-                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">ðŸ“±</div>
-                    <div class="ppk-card-title">à¹€à¸¡à¸™à¸¹à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”</div>
+                    <div class="ppk-card-icon" style="background:var(--c-primary-bg);color:var(--c-primary);">📱</div>
+                    <div class="ppk-card-title">เมนูทั้งหมด</div>
                 </div>
                 <div id="hubGrid" class="ppk-hub-grid"></div>
             </div>
@@ -366,29 +366,29 @@
             <!-- Announcements -->
             <div class="ppk-card" style="margin-bottom:1rem;">
                 <div class="ppk-card-header">
-                    <div class="ppk-card-icon" style="background:var(--c-info-bg);color:var(--c-info);">ðŸ“¢</div>
-                    <div class="ppk-card-title">à¸›à¸£à¸°à¸à¸²à¸¨</div>
+                    <div class="ppk-card-icon" style="background:var(--c-info-bg);color:var(--c-info);">📢</div>
+                    <div class="ppk-card-title">ประกาศ</div>
                 </div>
                 <div id="announceList">
-                    <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">à¸à¸³à¸¥à¸±à¸‡à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥...</div></div>
+                    <div class="ppk-loading"><div class="ppk-spinner"></div><div class="ppk-loading-text">กำลังโหลดข้อมูล...</div></div>
                 </div>
             </div>
 
             <div class="ppk-footer">
-                à¸­à¸­à¸à¹à¸šà¸šà¹à¸¥à¸°à¸žà¸±à¸’à¸™à¸²à¹‚à¸”à¸¢ à¸„à¸£à¸¹à¸žà¸‡à¸¨à¸˜à¸£ à¹‚à¸žà¸˜à¸´à¹à¸à¹‰à¸§<br>
-                à¸‡à¸²à¸™à¸ªà¹ˆà¸‡à¹€à¸ªà¸£à¸´à¸¡ à¸à¸³à¸à¸±à¸š à¸”à¸¹à¹à¸¥ à¹à¸¥à¸°à¸žà¸±à¸’à¸™à¸²à¸šà¹‰à¸²à¸™à¸žà¸±à¸à¸„à¸£à¸¹ à¹‚à¸£à¸‡à¹€à¸£à¸µà¸¢à¸™à¸žà¸°à¹€à¸¢à¸²à¸žà¸´à¸—à¸¢à¸²à¸„à¸¡
+                ออกแบบและพัฒนาโดย ครูพงศธร โพธิแก้ว<br>
+                งานส่งเสริม กำกับ ดูแล และพัฒนาบ้านพักครู โรงเรียนพะเยาพิทยาคม
             </div>
         </div>
     </div>
 
     <script>
-        const THAI_MONTHS = ['à¸¡à¸à¸£à¸²à¸„à¸¡','à¸à¸¸à¸¡à¸ à¸²à¸žà¸±à¸™à¸˜à¹Œ','à¸¡à¸µà¸™à¸²à¸„à¸¡','à¹€à¸¡à¸©à¸²à¸¢à¸™','à¸žà¸¤à¸©à¸ à¸²à¸„à¸¡','à¸¡à¸´à¸–à¸¸à¸™à¸²à¸¢à¸™',
-            'à¸à¸£à¸à¸Žà¸²à¸„à¸¡','à¸ªà¸´à¸‡à¸«à¸²à¸„à¸¡','à¸à¸±à¸™à¸¢à¸²à¸¢à¸™','à¸•à¸¸à¸¥à¸²à¸„à¸¡','à¸žà¸¤à¸¨à¸ˆà¸´à¸à¸²à¸¢à¸™','à¸˜à¸±à¸™à¸§à¸²à¸„à¸¡'];
+        const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+            'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-        // â”€â”€ Global state for CTA buttons â”€â”€
+        // ── Global state for CTA buttons ──
         var _ctaData = {};
 
-        // â”€â”€ Quick actions builder â”€â”€
+        // ── Quick actions builder ──
         function buildQuickActions(isAdmin) {
             var el = document.getElementById('quickActions');
             if (!el) return;
@@ -397,10 +397,10 @@
                 return;
             }
             var items = [
-                { page: 'upload-slip', icon: 'ðŸ“¤', label: 'à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›', bg: '#EEF2FF' },
-                { page: 'payment-history', icon: 'ðŸ’³', label: 'à¸›à¸£à¸°à¸§à¸±à¸•à¸´à¸Šà¸³à¸£à¸°', bg: '#F0FDF4' },
-                { page: 'form', icon: 'ðŸ“', label: 'à¸¢à¸·à¹ˆà¸™à¸„à¸³à¸£à¹‰à¸­à¸‡', bg: '#FFFBEB' },
-                { page: 'settings', icon: 'âš™ï¸', label: 'à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²', bg: '#EFF6FF' }
+                { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#FFFBEB' },
+                { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
             el.innerHTML = items.map(function(item) {
                 return '<button class="quick-action" onclick="navigate(\'?page=' + item.page + '\')">'
@@ -418,23 +418,23 @@
             function _hp(p) { return perms.indexOf(p) >= 0; }
 
             var residentItems = [
-                { page: 'upload-slip', icon: 'ðŸ“¤', label: 'à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›', bg: '#EEF2FF' },
-                { page: 'payment-history', icon: 'ðŸ’³', label: 'à¸›à¸£à¸°à¸§à¸±à¸•à¸´à¸Šà¸³à¸£à¸°', bg: '#F0FDF4' },
-                { page: 'form', icon: 'ðŸ“', label: 'à¸¢à¸·à¹ˆà¸™à¸„à¸³à¸£à¹‰à¸­à¸‡', bg: '#FFFBEB' },
-                { page: 'regulations', icon: 'ðŸ“–', label: 'à¸£à¸°à¹€à¸šà¸µà¸¢à¸š', bg: '#FFF7ED' },
-                { page: 'electrical-info', icon: 'âš¡', label: 'à¸„à¸§à¸²à¸¡à¸£à¸¹à¹‰à¹„à¸Ÿà¸Ÿà¹‰à¸²', bg: '#FFFBEB' },
-                { page: 'settings', icon: 'âš™ï¸', label: 'à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²', bg: '#EFF6FF' }
+                { page: 'upload-slip', icon: '📤', label: 'ส่งสลิป', bg: '#EEF2FF' },
+                { page: 'payment-history', icon: '💳', label: 'ประวัติชำระ', bg: '#F0FDF4' },
+                { page: 'form', icon: '📝', label: 'ยื่นคำร้อง', bg: '#FFFBEB' },
+                { page: 'regulations', icon: '📖', label: 'ระเบียบ', bg: '#FFF7ED' },
+                { page: 'electrical-info', icon: '⚡', label: 'ความรู้ไฟฟ้า', bg: '#FFFBEB' },
+                { page: 'settings', icon: '⚙️', label: 'ตั้งค่า', bg: '#EFF6FF' }
             ];
             var adminItems = [];
-            if (isAdmin) adminItems.push({ page: 'team-management', icon: 'ðŸ‘¥', label: 'à¸¨à¸¹à¸™à¸¢à¹Œà¸„à¸§à¸šà¸„à¸¸à¸¡', bg: '#EEF2FF', badgeId: 'badge-pending-reg' });
-            if (isAdmin || _hp('water')) adminItems.push({ page: 'record-water', icon: 'ðŸ’§', label: 'à¸šà¸±à¸™à¸—à¸¶à¸à¸„à¹ˆà¸²à¸™à¹‰à¸³', bg: '#EFF6FF' });
-            if (isAdmin || _hp('electric')) adminItems.push({ page: 'record-electric', icon: 'âš¡', label: 'à¸šà¸±à¸™à¸—à¸¶à¸à¸„à¹ˆà¸²à¹„à¸Ÿ', bg: '#FFFBEB' });
-            if (isAdmin || _hp('notify')) adminItems.push({ page: 'payment-notification', icon: 'ðŸ“¢', label: 'à¹à¸ˆà¹‰à¸‡à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°', bg: '#FEF2F2' });
-            if (isAdmin || _hp('slip')) adminItems.push({ page: 'check-slip', icon: 'ðŸ”', label: 'à¸•à¸£à¸§à¸ˆà¸ªà¸¥à¸´à¸›', bg: '#F0FDF4', badgeId: 'badge-pending-slips' });
-            if (isAdmin || _hp('request')) adminItems.push({ page: 'check-request', icon: 'ðŸ“‹', label: 'à¸•à¸£à¸§à¸ˆà¸„à¸³à¸£à¹‰à¸­à¸‡', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' });
-            if (isAdmin || _hp('accounting')) adminItems.push({ page: 'accounting', icon: 'ðŸ“Š', label: 'à¸šà¸±à¸à¸Šà¸µ', bg: '#EEF2FF' });
-            if (isAdmin || _hp('withdraw')) adminItems.push({ page: 'monthly-withdraw', icon: 'ðŸ’µ', label: 'à¹€à¸šà¸´à¸à¹€à¸‡à¸´à¸™', bg: '#F0FDF4' });
-            if (isAdmin) adminItems.push({ page: 'admin-settings', icon: 'ðŸ”§', label: 'à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¹à¸­à¸”à¸¡à¸´à¸™', bg: '#F1F5F9' });
+            if (isAdmin) adminItems.push({ page: 'team-management', icon: '👥', label: 'ศูนย์ควบคุม', bg: '#EEF2FF', badgeId: 'badge-pending-reg' });
+            if (isAdmin || _hp('water')) adminItems.push({ page: 'record-water', icon: '💧', label: 'บันทึกค่าน้ำ', bg: '#EFF6FF' });
+            if (isAdmin || _hp('electric')) adminItems.push({ page: 'record-electric', icon: '⚡', label: 'บันทึกค่าไฟ', bg: '#FFFBEB' });
+            if (isAdmin || _hp('notify')) adminItems.push({ page: 'payment-notification', icon: '📢', label: 'แจ้งยอดชำระ', bg: '#FEF2F2' });
+            if (isAdmin || _hp('slip')) adminItems.push({ page: 'check-slip', icon: '🔍', label: 'ตรวจสลิป', bg: '#F0FDF4', badgeId: 'badge-pending-slips' });
+            if (isAdmin || _hp('request')) adminItems.push({ page: 'check-request', icon: '📋', label: 'ตรวจคำร้อง', bg: '#FFFBEB', badgeId: 'badge-pending-reqs' });
+            if (isAdmin || _hp('accounting')) adminItems.push({ page: 'accounting', icon: '📊', label: 'บัญชี', bg: '#EEF2FF' });
+            if (isAdmin || _hp('withdraw')) adminItems.push({ page: 'monthly-withdraw', icon: '💵', label: 'เบิกเงิน', bg: '#F0FDF4' });
+            if (isAdmin) adminItems.push({ page: 'admin-settings', icon: '🔧', label: 'ตั้งค่าแอดมิน', bg: '#F1F5F9' });
 
             var el = document.getElementById('hubGrid');
             if (!el) return;
@@ -449,10 +449,10 @@
                 }).join('');
             }
 
-            var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> à¸œà¸¹à¹‰à¸žà¸±à¸à¸­à¸²à¸¨à¸±à¸¢</div>';
+            var html = '<div class="ppk-hub-section"><span class="section-dot resident"></span> ผู้พักอาศัย</div>';
             html += renderItems(residentItems);
             if (adminItems.length > 0) {
-                html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> à¸„à¸“à¸°à¸—à¸³à¸‡à¸²à¸™</div>';
+                html += '<div class="ppk-hub-section"><span class="section-dot admin"></span> คณะทำงาน</div>';
                 html += renderItems(adminItems);
             }
             el.innerHTML = html;
@@ -466,11 +466,11 @@
         function renderAnnouncements(rows) {
             const el = document.getElementById('announceList');
             if (!Array.isArray(rows) || rows.length === 0) {
-                el.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">ðŸ“­</div><div class="ppk-empty-text">à¹„à¸¡à¹ˆà¸¡à¸µà¸›à¸£à¸°à¸à¸²à¸¨à¹ƒà¸™à¸‚à¸“à¸°à¸™à¸µà¹‰</div></div>';
+                el.innerHTML = '<div class="ppk-empty"><div class="ppk-empty-icon">📭</div><div class="ppk-empty-text">ไม่มีประกาศในขณะนี้</div></div>';
                 return;
             }
             el.innerHTML = rows.map(function(a) {
-                var prefix = a.type === 'urgent' ? 'ðŸš¨ ' : (a.type === 'warning' ? 'âš ï¸ ' : 'â„¹ï¸ ');
+                var prefix = a.type === 'urgent' ? '🚨 ' : (a.type === 'warning' ? '⚠️ ' : 'ℹ️ ');
                 var cls = a.type === 'urgent' ? ' urgent' : (a.type === 'warning' ? ' warning' : '');
                 var body = a.body ? '<div class="ppk-announce-body">' + _escHtml(a.body) + '</div>' : '';
                 return '<div class="ppk-announce-item' + cls + '">' + prefix + '<strong>' + _escHtml(a.title) + '</strong>' + body + '</div>';
@@ -489,24 +489,24 @@
             var reviewNote = data.reviewNote || '';
             var slipId = data.slipId || null;
 
-            // â”€â”€ à¸à¸£à¸“à¸µà¸šà¸±à¸à¸Šà¸µà¸¢à¸±à¸‡à¸¡à¸µà¸­à¸¢à¸¹à¹ˆà¹à¸•à¹ˆà¹„à¸¡à¹ˆà¸¡à¸µà¸šà¹‰à¸²à¸™à¸œà¸¹à¸ (à¹€à¸Šà¹ˆà¸™ à¸œà¸¹à¹‰à¸žà¸±à¸à¸£à¹ˆà¸§à¸¡à¸—à¸µà¹ˆà¸œà¸¹à¹‰à¸žà¸±à¸à¸«à¸¥à¸±à¸à¸­à¸­à¸à¹„à¸›à¹à¸¥à¹‰à¸§) â”€â”€
+            // ── กรณีบัญชียังมีอยู่แต่ไม่มีบ้านผูก (เช่น ผู้พักร่วมที่ผู้พักหลักออกไปแล้ว) ──
             if (!houseNumber) {
                 var user2 = {};
                 try { user2 = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e2) {}
-                document.getElementById('heroGreeting').textContent = 'à¸ªà¸§à¸±à¸ªà¸”à¸µ' + (user2.firstname ? ', ' + user2.firstname : '');
-                document.getElementById('heroHouse').textContent = 'ðŸ  â€”';
+                document.getElementById('heroGreeting').textContent = 'สวัสดี' + (user2.firstname ? ', ' + user2.firstname : '');
+                document.getElementById('heroHouse').textContent = '🏠 —';
                 var amtEl2 = document.getElementById('currentMonthAmount');
-                if (amtEl2) { amtEl2.textContent = 'â€”'; amtEl2.className = 'hero-amount zero'; }
+                if (amtEl2) { amtEl2.textContent = '—'; amtEl2.className = 'hero-amount zero'; }
                 var bdEl2 = document.getElementById('heroBillBreakdown');
                 if (bdEl2) bdEl2.innerHTML = '<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:1rem;margin-top:0.5rem;text-align:left;">'
-                    + '<div style="font-weight:bold;color:#92400E;margin-bottom:0.3rem;">âš ï¸ à¸šà¸±à¸à¸Šà¸µà¸‚à¸­à¸‡à¸—à¹ˆà¸²à¸™à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸œà¸¹à¸à¸à¸±à¸šà¸šà¹‰à¸²à¸™à¸žà¸±à¸à¹ƒà¸”à¹†</div>'
-                    + '<div style="font-size:0.88rem;color:#78350F;line-height:1.6;">à¸ªà¸²à¹€à¸«à¸•à¸¸à¸—à¸µà¹ˆà¸žà¸šà¸šà¹ˆà¸­à¸¢:<br>'
-                    + 'â€¢ <b>à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™à¸«à¸¥à¸²à¸¢ email</b> â€” à¸à¸£à¸¸à¸“à¸²à¸¥à¸­à¸‡à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸šà¸”à¹‰à¸§à¸¢ email à¸­à¸·à¹ˆà¸™à¸—à¸µà¹ˆà¹€à¸„à¸¢à¸ªà¸¡à¸±à¸„à¸£à¹„à¸§à¹‰<br>'
-                    + 'â€¢ <b>à¸„à¸³à¸£à¹‰à¸­à¸‡à¸‚à¸­à¸žà¸±à¸à¸­à¸²à¸¨à¸±à¸¢à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸£à¸±à¸šà¸à¸²à¸£à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´</b> â€” à¸£à¸­à¹à¸­à¸”à¸¡à¸´à¸™à¸”à¸³à¹€à¸™à¸´à¸™à¸à¸²à¸£<br>'
-                    + 'â€¢ <b>à¸œà¸¹à¹‰à¸žà¸±à¸à¸­à¸²à¸¨à¸±à¸¢à¸«à¸¥à¸±à¸à¸¢à¹‰à¸²à¸¢à¸­à¸­à¸à¹à¸¥à¹‰à¸§</b> â€” à¹à¸­à¸”à¸¡à¸´à¸™à¸•à¹‰à¸­à¸‡à¸à¸³à¸«à¸™à¸”à¸šà¹‰à¸²à¸™à¸žà¸±à¸à¹ƒà¸«à¸¡à¹ˆ<br><br>'
-                    + 'à¸«à¸²à¸à¸¢à¸±à¸‡à¸žà¸šà¸›à¸±à¸à¸«à¸² à¸à¸£à¸¸à¸“à¸²à¸•à¸´à¸”à¸•à¹ˆà¸­à¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥à¸£à¸°à¸šà¸šà¸žà¸£à¹‰à¸­à¸¡à¹à¸ˆà¹‰à¸‡ email à¸—à¸µà¹ˆà¹ƒà¸Šà¹‰à¸ªà¸¡à¸±à¸„à¸£</div></div>';
+                    + '<div style="font-weight:bold;color:#92400E;margin-bottom:0.3rem;">⚠️ บัญชีของท่านยังไม่ได้ผูกกับบ้านพักใดๆ</div>'
+                    + '<div style="font-size:0.88rem;color:#78350F;line-height:1.6;">สาเหตุที่พบบ่อย:<br>'
+                    + '• <b>ลงทะเบียนหลาย email</b> — กรุณาลองเข้าสู่ระบบด้วย email อื่นที่เคยสมัครไว้<br>'
+                    + '• <b>คำร้องขอพักอาศัยยังไม่ได้รับการอนุมัติ</b> — รอแอดมินดำเนินการ<br>'
+                    + '• <b>ผู้พักอาศัยหลักย้ายออกแล้ว</b> — แอดมินต้องกำหนดบ้านพักใหม่<br><br>'
+                    + 'หากยังพบปัญหา กรุณาติดต่อผู้ดูแลระบบพร้อมแจ้ง email ที่ใช้สมัคร</div></div>';
                 var ctaEl2 = document.getElementById('heroCTA');
-                if (ctaEl2) { ctaEl2.innerHTML = 'ðŸ“ž à¸•à¸´à¸”à¸•à¹ˆà¸­à¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥à¸£à¸°à¸šà¸š'; ctaEl2.className = 'hero-cta reviewing'; ctaEl2.onclick = null; }
+                if (ctaEl2) { ctaEl2.innerHTML = '📞 ติดต่อผู้ดูแลระบบ'; ctaEl2.className = 'hero-cta reviewing'; ctaEl2.onclick = null; }
                 document.getElementById('outstandingSection').style.display = 'none';
                 _ctaData = { periodKey: '', amount: 0, outstanding: 0, houseNumber: '', slipStatus: 'none', slipId: null };
                 return;
@@ -526,20 +526,20 @@
             var user = {};
             try { user = JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch(e) {}
             var firstName = user.firstname || '';
-            document.getElementById('heroGreeting').textContent = 'à¸ªà¸§à¸±à¸ªà¸”à¸µ' + (firstName ? ', ' + firstName : '');
-            document.getElementById('heroHouse').textContent = 'ðŸ  ' + (houseNumber || 'â€”');
+            document.getElementById('heroGreeting').textContent = 'สวัสดี' + (firstName ? ', ' + firstName : '');
+            document.getElementById('heroHouse').textContent = '🏠 ' + (houseNumber || '—');
 
             // Amount display
             var amtEl = document.getElementById('currentMonthAmount');
             var lblEl = document.querySelector('.hero-label');
             if (amount > 0) {
-                amtEl.textContent = amount.toLocaleString('th-TH') + ' à¸šà¸²à¸—';
+                amtEl.textContent = amount.toLocaleString('th-TH') + ' บาท';
                 amtEl.className = 'hero-amount';
-                if (lblEl) lblEl.textContent = slipStatus === 'success' ? 'ðŸ’³ à¸¢à¸­à¸”à¸—à¸µà¹ˆà¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§' : 'ðŸ’³ à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°à¸›à¸£à¸°à¸ˆà¸³à¹€à¸”à¸·à¸­à¸™';
+                if (lblEl) lblEl.textContent = slipStatus === 'success' ? '💳 ยอดที่ชำระแล้ว' : '💳 ยอดชำระประจำเดือน';
             } else {
-                amtEl.textContent = 'à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡';
+                amtEl.textContent = 'ยังไม่มียอดแจ้ง';
                 amtEl.className = 'hero-amount zero';
-                if (lblEl) lblEl.textContent = 'ðŸ’³ à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°à¸›à¸£à¸°à¸ˆà¸³à¹€à¸”à¸·à¸­à¸™';
+                if (lblEl) lblEl.textContent = '💳 ยอดชำระประจำเดือน';
             }
 
             // Bill breakdown
@@ -550,10 +550,10 @@
                 var cAmt = data.commonFee || 0;
                 if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
                     bdEl.style.display = '';
-                    document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' à¸šà¸²à¸—';
-                    document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' à¸šà¸²à¸—';
-                    document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' à¸šà¸²à¸—';
-                    // à¸§à¸±à¸™à¸—à¸µà¹ˆà¸ˆà¸”à¸¡à¸´à¹€à¸•à¸­à¸£à¹Œ â€” à¹à¸ªà¸”à¸‡à¹ƒà¸™à¸§à¸‡à¹€à¸¥à¹‡à¸šà¸•à¹ˆà¸­à¸—à¹‰à¸²à¸¢à¸„à¹ˆà¸²à¸™à¹‰à¸³à¹à¸¥à¸°à¸„à¹ˆà¸²à¹„à¸Ÿ
+                    document.getElementById('hbWater').textContent = wAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbElectric').textContent = eAmt.toLocaleString('th-TH') + ' บาท';
+                    document.getElementById('hbCommon').textContent = cAmt.toLocaleString('th-TH') + ' บาท';
+                    // วันที่จดมิเตอร์ — แสดงในวงเล็บต่อท้ายค่าน้ำและค่าไฟ
                     function _fmtReadDate(d) {
                         if (!d) return null;
                         var _dt = new Date(d + 'T00:00:00');
@@ -563,12 +563,12 @@
                     var _edEl = document.getElementById('hbElectricDate');
                     if (_wdEl) {
                         var _wds = _fmtReadDate(data.waterReadDate);
-                        if (_wds) { _wdEl.textContent = ' (à¸ˆà¸”à¸¡à¸´à¹€à¸•à¸­à¸£à¹Œà¹€à¸¡à¸·à¹ˆà¸­ ' + _wds + ')'; _wdEl.style.display = ''; }
+                        if (_wds) { _wdEl.textContent = ' (จดมิเตอร์เมื่อ ' + _wds + ')'; _wdEl.style.display = ''; }
                         else { _wdEl.style.display = 'none'; }
                     }
                     if (_edEl) {
                         var _eds = _fmtReadDate(data.electricReadDate);
-                        if (_eds) { _edEl.textContent = ' (à¸ˆà¸”à¸¡à¸´à¹€à¸•à¸­à¸£à¹Œà¹€à¸¡à¸·à¹ˆà¸­ ' + _eds + ')'; _edEl.style.display = ''; }
+                        if (_eds) { _edEl.textContent = ' (จดมิเตอร์เมื่อ ' + _eds + ')'; _edEl.style.display = ''; }
                         else { _edEl.style.display = 'none'; }
                     }
                 } else {
@@ -576,7 +576,7 @@
                 }
             }
 
-            document.getElementById('heroPeriod').textContent = 'ðŸ“… ' + periodDisplay;
+            document.getElementById('heroPeriod').textContent = '📅 ' + periodDisplay;
 
             // Due date warning
             var dueDateWarn = document.getElementById('heroDueDateWarning');
@@ -586,21 +586,21 @@
                 var daysLeft = Math.ceil((dd - new Date()) / (1000 * 60 * 60 * 24));
                 var daysText = '';
                 if (daysLeft < 0) {
-                    daysText = ' (à¹€à¸¥à¸¢à¸à¸³à¸«à¸™à¸”à¹à¸¥à¹‰à¸§ ' + Math.abs(daysLeft) + ' à¸§à¸±à¸™)';
+                    daysText = ' (เลยกำหนดแล้ว ' + Math.abs(daysLeft) + ' วัน)';
                     dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
                 } else if (daysLeft === 0) {
-                    daysText = ' (à¸„à¸£à¸šà¸à¸³à¸«à¸™à¸”à¸§à¸±à¸™à¸™à¸µà¹‰!)';
+                    daysText = ' (ครบกำหนดวันนี้!)';
                     dueDateWarn.style.background = '#fee2e2'; dueDateWarn.style.borderColor = '#ef4444'; dueDateWarn.style.color = '#991b1b';
                 } else if (daysLeft <= 3) {
-                    daysText = ' (à¹€à¸«à¸¥à¸·à¸­à¸­à¸µà¸ ' + daysLeft + ' à¸§à¸±à¸™)';
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
                     dueDateWarn.style.background = '#ffedd5'; dueDateWarn.style.borderColor = '#f97316'; dueDateWarn.style.color = '#9a3412';
                 } else if (daysLeft <= 7) {
-                    daysText = ' (à¹€à¸«à¸¥à¸·à¸­à¸­à¸µà¸ ' + daysLeft + ' à¸§à¸±à¸™)';
+                    daysText = ' (เหลืออีก ' + daysLeft + ' วัน)';
                     dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
                 } else {
                     dueDateWarn.style.background = '#fef9c3'; dueDateWarn.style.borderColor = '#facc15'; dueDateWarn.style.color = '#92400e';
                 }
-                dueDateWarn.textContent = 'â° à¸à¸£à¸¸à¸“à¸²à¸Šà¸³à¸£à¸°à¸ à¸²à¸¢à¹ƒà¸™à¸§à¸±à¸™à¸—à¸µà¹ˆ ' + ddStr + daysText;
+                dueDateWarn.textContent = '⏰ กรุณาชำระภายในวันที่ ' + ddStr + daysText;
                 dueDateWarn.style.display = '';
             } else {
                 dueDateWarn.style.display = 'none';
@@ -609,13 +609,13 @@
             // Status badge
             var badgeEl = document.getElementById('heroStatusBadge');
             if (slipStatus === 'success') {
-                badgeEl.innerHTML = '<div class="hero-status paid">âœ… à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§</div>';
+                badgeEl.innerHTML = '<div class="hero-status paid">✅ ชำระแล้ว</div>';
             } else if (slipStatus === 'reviewing') {
-                badgeEl.innerHTML = '<div class="hero-status pending">ðŸ” à¸£à¸­à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š</div>';
+                badgeEl.innerHTML = '<div class="hero-status pending">🔍 รอตรวจสอบ</div>';
             } else if (slipStatus === 'rejected') {
-                badgeEl.innerHTML = '<div class="hero-status rejected">âŒ à¸ªà¸¥à¸´à¸›à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™</div>';
+                badgeEl.innerHTML = '<div class="hero-status rejected">❌ สลิปไม่ผ่าน</div>';
             } else if (amount > 0) {
-                badgeEl.innerHTML = '<div class="hero-status overdue">â³ à¸£à¸­à¸Šà¸³à¸£à¸°</div>';
+                badgeEl.innerHTML = '<div class="hero-status overdue">⏳ รอชำระ</div>';
             } else {
                 badgeEl.innerHTML = '';
             }
@@ -624,9 +624,9 @@
             var rejectBanner = document.getElementById('heroRejectBanner');
             if (slipStatus === 'rejected' && rejectBanner) {
                 rejectBanner.style.display = '';
-                rejectBanner.innerHTML = 'âš ï¸ <strong>à¸ªà¸¥à¸´à¸›à¸–à¸¹à¸à¸›à¸à¸´à¹€à¸ªà¸˜</strong>'
-                    + (reviewNote ? '<br>à¹€à¸«à¸•à¸¸à¸œà¸¥: <strong>' + reviewNote.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
-                    + '<br>à¸à¸£à¸¸à¸“à¸²à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸¢à¸­à¸”à¹€à¸‡à¸´à¸™à¹à¸¥à¹‰à¸§à¸à¸” <strong>â€œâš ï¸ à¸ªà¸¥à¸´à¸›à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™ â€” à¸à¸”à¸ªà¹ˆà¸‡à¹ƒà¸«à¸¡à¹ˆâ€</strong> à¹€à¸žà¸·à¹ˆà¸­à¸­à¸±à¸žà¹‚à¸«à¸¥à¸”à¸ªà¸¥à¸´à¸›à¹ƒà¸«à¸¡à¹ˆ';
+                rejectBanner.innerHTML = '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                    + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>' : '')
+                    + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>“⚠️ สลิปไม่ผ่าน — กดส่งใหม่”</strong> เพื่ออัพโหลดสลิปใหม่';
             } else if (rejectBanner) {
                 rejectBanner.style.display = 'none';
             }
@@ -641,31 +641,31 @@
             ctaEl.style.color = '';
             ctaEl.onclick = heroCtaClick;
             if (slipStatus === 'success') {
-                ctaEl.innerHTML = 'âœ… à¸Šà¸³à¸£à¸°à¸ªà¸³à¹€à¸£à¹‡à¸ˆà¹à¸¥à¹‰à¸§';
+                ctaEl.innerHTML = '✅ ชำระสำเร็จแล้ว';
                 ctaEl.className = 'hero-cta success';
                 ctaEl.onclick = null;
             } else if (slipStatus === 'reviewing') {
-                ctaEl.innerHTML = 'ðŸ” à¸­à¸¢à¸¹à¹ˆà¸£à¸°à¸«à¸§à¹ˆà¸²à¸‡à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š';
+                ctaEl.innerHTML = '🔍 อยู่ระหว่างตรวจสอบ';
                 ctaEl.className = 'hero-cta reviewing';
                 ctaEl.onclick = null;
             } else if (slipStatus === 'rejected') {
-                ctaEl.innerHTML = 'âš ï¸ à¸ªà¸¥à¸´à¸›à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™ â€” à¸à¸”à¸ªà¹ˆà¸‡à¹ƒà¸«à¸¡à¹ˆ';
+                ctaEl.innerHTML = '⚠️ สลิปไม่ผ่าน — กดส่งใหม่';
                 ctaEl.className = 'hero-cta';
                 ctaEl.style.background = '#FEE2E2';
                 ctaEl.style.color = '#DC2626';
             } else if (!houseNumber) {
-                ctaEl.innerHTML = 'ðŸ  à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸£à¸±à¸šà¸¡à¸­à¸šà¸«à¸¡à¸²à¸¢à¸šà¹‰à¸²à¸™à¸žà¸±à¸';
+                ctaEl.innerHTML = '🏠 ยังไม่ได้รับมอบหมายบ้านพัก';
                 ctaEl.className = 'hero-cta reviewing';
                 ctaEl.onclick = null;
             } else {
-                ctaEl.innerHTML = 'ðŸ“¤ à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™';
+                ctaEl.innerHTML = '📤 ส่งสลิปชำระเงิน';
                 ctaEl.className = 'hero-cta';
             }
 
-            // Outstanding â€” à¸‹à¹ˆà¸­à¸™à¸–à¹‰à¸²à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§
+            // Outstanding — ซ่อนถ้าชำระแล้ว
             if (outstanding > 0 && slipStatus !== 'success') {
                 document.getElementById('outstandingSection').style.display = '';
-                document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' à¸šà¸²à¸—';
+                document.getElementById('outstandingAmount').textContent = outstanding.toLocaleString('th-TH') + ' บาท';
             } else {
                 document.getElementById('outstandingSection').style.display = 'none';
             }
@@ -680,11 +680,11 @@
             _proxyList = list;
             sec.style.display = '';
 
-            var html = '<div class="pa-header">ðŸ”„ à¸šà¹‰à¸²à¸™à¸—à¸µà¹ˆà¸„à¸¸à¸“à¹„à¸”à¹‰à¸£à¸±à¸šà¸¡à¸­à¸šà¸«à¸¡à¸²à¸¢à¹ƒà¸«à¹‰à¸Šà¸³à¸£à¸°à¹à¸—à¸™ (' + list.length + ')</div>';
+            var html = '<div class="pa-header">🔄 บ้านที่คุณได้รับมอบหมายให้ชำระแทน (' + list.length + ')</div>';
 
             list.forEach(function(a, idx) {
                 var houseLabel = _escHtml(a.house_number || '-');
-                var resName    = _escHtml(a.resident_name || 'à¸œà¸¹à¹‰à¸žà¸±à¸');
+                var resName    = _escHtml(a.resident_name || 'ผู้พัก');
                 var period     = a.period || '';
                 var parts      = period.split('-');
                 var monthIdx   = parts[1] ? parseInt(parts[1]) - 1 : new Date().getMonth();
@@ -694,69 +694,69 @@
                 var slipStatus = a.slip_status || 'none';
                 var reviewNote = _escHtml(a.review_note || '');
 
-                /* â”€â”€ à¸¢à¸­à¸”à¹€à¸‡à¸´à¸™ â”€â”€ */
+                /* ── ยอดเงิน ── */
                 var amtHtml = amount > 0
-                    ? amount.toLocaleString('th-TH') + ' à¸šà¸²à¸—'
-                    : 'à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡';
+                    ? amount.toLocaleString('th-TH') + ' บาท'
+                    : 'ยังไม่มียอดแจ้ง';
                 var amtClass = amount > 0 ? 'phc-amount' : 'phc-amount zero';
 
-                /* â”€â”€ Bill breakdown â”€â”€ */
+                /* ── Bill breakdown ── */
                 var wAmt = a.water_amount || 0;
                 var eAmt = a.electric_amount || 0;
                 var cAmt = a.common_fee || 0;
                 var breakdownHtml = '';
                 if (amount > 0 && (wAmt > 0 || eAmt > 0 || cAmt > 0)) {
                     breakdownHtml = '<div class="hero-breakdown">'
-                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">à¸„à¹ˆà¸²à¸™à¹‰à¸³</span><span class="hb-val">' + wAmt.toLocaleString('th-TH') + ' à¸šà¸²à¸—</span></div>'
-                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">à¸„à¹ˆà¸²à¹„à¸Ÿ</span><span class="hb-val">' + eAmt.toLocaleString('th-TH') + ' à¸šà¸²à¸—</span></div>'
-                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">à¸„à¹ˆà¸²à¸ªà¹ˆà¸§à¸™à¸à¸¥à¸²à¸‡</span><span class="hb-val">' + cAmt.toLocaleString('th-TH') + ' à¸šà¸²à¸—</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot water"></span><span class="hb-label">ค่าน้ำ</span><span class="hb-val">' + wAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot electric"></span><span class="hb-label">ค่าไฟ</span><span class="hb-val">' + eAmt.toLocaleString('th-TH') + ' บาท</span></div>'
+                        + '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">ค่าส่วนกลาง</span><span class="hb-val">' + cAmt.toLocaleString('th-TH') + ' บาท</span></div>'
                         + '</div>';
                 }
 
-                /* â”€â”€ Status badge â”€â”€ */
+                /* ── Status badge ── */
                 var badgeHtml = '';
-                if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">âœ… à¸Šà¸³à¸£à¸°à¹à¸¥à¹‰à¸§</div>';
-                else if (slipStatus === 'reviewing') badgeHtml = '<div class="phc-status pending">ðŸ” à¸£à¸­à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š</div>';
-                else if (slipStatus === 'rejected')  badgeHtml = '<div class="phc-status rejected">âŒ à¸ªà¸¥à¸´à¸›à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™</div>';
-                else if (amount > 0)                 badgeHtml = '<div class="phc-status overdue">â³ à¸£à¸­à¸Šà¸³à¸£à¸°</div>';
+                if (slipStatus === 'success')   badgeHtml = '<div class="phc-status paid">✅ ชำระแล้ว</div>';
+                else if (slipStatus === 'reviewing') badgeHtml = '<div class="phc-status pending">🔍 รอตรวจสอบ</div>';
+                else if (slipStatus === 'rejected')  badgeHtml = '<div class="phc-status rejected">❌ สลิปไม่ผ่าน</div>';
+                else if (amount > 0)                 badgeHtml = '<div class="phc-status overdue">⏳ รอชำระ</div>';
 
-                /* â”€â”€ Rejection banner â”€â”€ */
+                /* ── Rejection banner ── */
                 var rejectBannerHtml = '';
                 if (slipStatus === 'rejected') {
                     rejectBannerHtml = '<div class="phc-reject-banner" style="display:block;">'
-                        + 'âš ï¸ <strong>à¸ªà¸¥à¸´à¸›à¸–à¸¹à¸à¸›à¸à¸´à¹€à¸ªà¸˜</strong>'
-                        + (reviewNote ? '<br>à¹€à¸«à¸•à¸¸à¸œà¸¥: <strong>' + reviewNote + '</strong>' : '')
-                        + '<br>à¸à¸£à¸¸à¸“à¸²à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸šà¸¢à¸­à¸”à¹€à¸‡à¸´à¸™à¹à¸¥à¹‰à¸§à¸à¸” <strong>"âš ï¸ à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›à¹ƒà¸«à¸¡à¹ˆ"</strong></div>';
+                        + '⚠️ <strong>สลิปถูกปฏิเสธ</strong>'
+                        + (reviewNote ? '<br>เหตุผล: <strong>' + reviewNote + '</strong>' : '')
+                        + '<br>กรุณาตรวจสอบยอดเงินแล้วกด <strong>"⚠️ ส่งสลิปใหม่"</strong></div>';
                 }
 
-                /* â”€â”€ CTA button â”€â”€ */
+                /* ── CTA button ── */
                 var ctaHtml = '';
                 var cancelHtml = '';
                 if (slipStatus === 'success') {
-                    ctaHtml = '<button class="phc-cta success" disabled>âœ… à¸Šà¸³à¸£à¸°à¸ªà¸³à¹€à¸£à¹‡à¸ˆà¹à¸¥à¹‰à¸§</button>';
+                    ctaHtml = '<button class="phc-cta success" disabled>✅ ชำระสำเร็จแล้ว</button>';
                 } else if (slipStatus === 'reviewing') {
-                    ctaHtml = '<button class="phc-cta reviewing" disabled>ðŸ” à¸­à¸¢à¸¹à¹ˆà¸£à¸°à¸«à¸§à¹ˆà¸²à¸‡à¸•à¸£à¸§à¸ˆà¸ªà¸­à¸š</button>';
-                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">ðŸ—‘ï¸ à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¹„à¸§à¹‰</button>';
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>🔍 อยู่ระหว่างตรวจสอบ</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
                 } else if (slipStatus === 'rejected') {
-                    ctaHtml = '<button class="phc-cta" style="background:#FEE2E2;color:#DC2626;" onclick="proxyGoUpload(' + idx + ')">âš ï¸ à¸ªà¸¥à¸´à¸›à¹„à¸¡à¹ˆà¸œà¹ˆà¸²à¸™ â€” à¸à¸”à¸ªà¹ˆà¸‡à¹ƒà¸«à¸¡à¹ˆ</button>';
-                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">ðŸ—‘ï¸ à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¹„à¸§à¹‰</button>';
+                    ctaHtml = '<button class="phc-cta" style="background:#FEE2E2;color:#DC2626;" onclick="proxyGoUpload(' + idx + ')">⚠️ สลิปไม่ผ่าน — กดส่งใหม่</button>';
+                    cancelHtml = '<button class="phc-cancel-btn" onclick="proxyCancelSlip(' + idx + ')">🗑️ ยกเลิกสลิปที่ส่งไว้</button>';
                 } else if (amount > 0) {
-                    ctaHtml = '<button class="phc-cta" onclick="proxyGoUpload(' + idx + ')">ðŸ“¤ à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™</button>';
+                    ctaHtml = '<button class="phc-cta" onclick="proxyGoUpload(' + idx + ')">📤 ส่งสลิปชำระเงิน</button>';
                 } else {
-                    ctaHtml = '<button class="phc-cta reviewing" disabled>à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¸¡à¸µà¸¢à¸­à¸”à¹à¸ˆà¹‰à¸‡à¹€à¸”à¸·à¸­à¸™à¸™à¸µà¹‰</button>';
+                    ctaHtml = '<button class="phc-cta reviewing" disabled>ยังไม่มียอดแจ้งเดือนนี้</button>';
                 }
 
                 html += '<div class="proxy-hero-card">'
-                    + '<div class="phc-label-proxy">ðŸ”„ à¸Šà¸³à¸£à¸°à¹à¸—à¸™</div>'
-                    + '<div class="phc-house">ðŸ  ' + houseLabel + '</div>'
+                    + '<div class="phc-label-proxy">🔄 ชำระแทน</div>'
+                    + '<div class="phc-house">🏠 ' + houseLabel + '</div>'
                     + '<div class="phc-name">' + resName + '</div>'
                     + '<hr class="phc-divider">'
                     + '<div class="phc-row">'
                         + '<div class="phc-col">'
-                            + '<div class="phc-amount-label">ðŸ’³ à¸¢à¸­à¸”à¸Šà¸³à¸£à¸°à¸›à¸£à¸°à¸ˆà¸³à¹€à¸”à¸·à¸­à¸™</div>'
+                            + '<div class="phc-amount-label">💳 ยอดชำระประจำเดือน</div>'
                             + '<div class="' + amtClass + '">' + amtHtml + '</div>'
                             + breakdownHtml
-                            + '<div class="phc-period">ðŸ“… ' + periodDisplay + '</div>'
+                            + '<div class="phc-period">📅 ' + periodDisplay + '</div>'
                         + '</div>'
                         + '<div class="phc-col" style="text-align:right;">' + badgeHtml + '</div>'
                     + '</div>'
@@ -787,16 +787,16 @@
 
         async function proxyCancelSlip(idx) {
             var a = _proxyList[idx];
-            if (!a || !a.slip_id) { if (typeof ppkAlert === 'function') ppkAlert('à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸¥à¸´à¸›'); return; }
+            if (!a || !a.slip_id) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
             var ok = await ppkConfirm(
-                'à¸¢à¸·à¸™à¸¢à¸±à¸™à¸à¸²à¸£à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¸‚à¸­à¸‡à¸šà¹‰à¸²à¸™ ' + (a.house_number || '') + '?\n\nà¸ªà¸¥à¸´à¸›à¸ˆà¸°à¸–à¸¹à¸à¸¥à¸šà¸­à¸­à¸à¸ˆà¸²à¸à¸£à¸°à¸šà¸š',
-                { type: 'danger', okText: 'à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›', cancelText: 'à¹„à¸¡à¹ˆà¸¢à¸à¹€à¸¥à¸´à¸' }
+                'ยืนยันการยกเลิกสลิปของบ้าน ' + (a.house_number || '') + '?\n\nสลิปจะถูกลบออกจากระบบ',
+                { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' }
             );
             if (!ok) return;
             try {
                 var result = await callBackend('cancelSlip', { id: a.slip_id });
                 if (result && result.success) {
-                    if (typeof ppkToast === 'function') ppkToast('à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¹€à¸£à¸µà¸¢à¸šà¸£à¹‰à¸­à¸¢à¹à¸¥à¹‰à¸§', 'success');
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
                     try {
                         var keys = [];
                         for (var i = 0; i < localStorage.length; i++) {
@@ -807,10 +807,10 @@
                     } catch(e) {}
                     setTimeout(function() { loadDashboard(); }, 400);
                 } else {
-                    if (typeof ppkAlert === 'function') ppkAlert('âš ï¸ ' + (result && result.error || 'à¸¢à¸à¹€à¸¥à¸´à¸à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ'));
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
                 }
             } catch(e) {
-                if (typeof ppkAlert === 'function') ppkAlert('âŒ à¹€à¸à¸´à¸”à¸‚à¹‰à¸­à¸œà¸´à¸”à¸žà¸¥à¸²à¸”: ' + e.message);
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
@@ -818,7 +818,7 @@
             var d = _ctaData;
             if (d.slipStatus === 'success' || d.slipStatus === 'reviewing') return;
             if (!d.houseNumber) {
-                // à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸£à¸±à¸šà¸¡à¸­à¸šà¸«à¸¡à¸²à¸¢à¸šà¹‰à¸²à¸™à¸žà¸±à¸ â†’ à¸™à¸³à¹„à¸›à¸¢à¸·à¹ˆà¸™à¸„à¸³à¸£à¹‰à¸­à¸‡
+                // ยังไม่ได้รับมอบหมายบ้านพัก → นำไปยื่นคำร้อง
                 window.location.href = 'request-form.html';
                 return;
             }
@@ -826,14 +826,14 @@
         }
         async function cancelSlipClick() {
             var d = _ctaData;
-            if (!d.slipId) { if (typeof ppkAlert === 'function') ppkAlert('à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸¥à¸´à¸›'); return; }
-            var ok = await ppkConfirm('à¸¢à¸·à¸™à¸¢à¸±à¸™à¸à¸²à¸£à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¹„à¸§à¹‰?\n\nà¸ªà¸¥à¸´à¸›à¸ˆà¸°à¸–à¸¹à¸à¸¥à¸šà¸­à¸­à¸à¸ˆà¸²à¸à¸£à¸°à¸šà¸š à¸„à¸¸à¸“à¸ˆà¸°à¸ªà¸²à¸¡à¸²à¸£à¸–à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›à¹ƒà¸«à¸¡à¹ˆà¹„à¸”à¹‰', { type: 'danger', okText: 'à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›', cancelText: 'à¹„à¸¡à¹ˆà¸¢à¸à¹€à¸¥à¸´à¸' });
+            if (!d.slipId) { if (typeof ppkAlert === 'function') ppkAlert('ไม่พบข้อมูลสลิป'); return; }
+            var ok = await ppkConfirm('ยืนยันการยกเลิกสลิปที่ส่งไว้?\n\nสลิปจะถูกลบออกจากระบบ คุณจะสามารถส่งสลิปใหม่ได้', { type: 'danger', okText: 'ยกเลิกสลิป', cancelText: 'ไม่ยกเลิก' });
             if (!ok) return;
             try {
                 var result = await callBackend('cancelSlip', { id: d.slipId });
                 if (result && result.success) {
-                    if (typeof ppkToast === 'function') ppkToast('à¸¢à¸à¹€à¸¥à¸´à¸à¸ªà¸¥à¸´à¸›à¹€à¸£à¸µà¸¢à¸šà¸£à¹‰à¸­à¸¢à¹à¸¥à¹‰à¸§', 'success');
-                    // à¸¥à¹‰à¸²à¸‡ cache à¸—à¸¸à¸ key à¸—à¸µà¹ˆà¹€à¸à¸µà¹ˆà¸¢à¸§à¸à¸±à¸š getDashboardData à¹à¸¥à¹‰à¸§ reload
+                    if (typeof ppkToast === 'function') ppkToast('ยกเลิกสลิปเรียบร้อยแล้ว', 'success');
+                    // ล้าง cache ทุก key ที่เกี่ยวกับ getDashboardData แล้ว reload
                     try {
                         var keys = [];
                         for (var i = 0; i < localStorage.length; i++) {
@@ -844,17 +844,17 @@
                     } catch(e) {}
                     setTimeout(function() { loadDashboard(); }, 400);
                 } else {
-                    if (typeof ppkAlert === 'function') ppkAlert('âš ï¸ ' + (result && result.error || 'à¸¢à¸à¹€à¸¥à¸´à¸à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ'));
+                    if (typeof ppkAlert === 'function') ppkAlert('⚠️ ' + (result && result.error || 'ยกเลิกไม่สำเร็จ'));
                 }
             } catch(e) {
-                if (typeof ppkAlert === 'function') ppkAlert('âŒ à¹€à¸à¸´à¸”à¸‚à¹‰à¸­à¸œà¸´à¸”à¸žà¸¥à¸²à¸”: ' + e.message);
+                if (typeof ppkAlert === 'function') ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
             }
         }
 
         function outstandingBtnClick() {
             var d = _ctaData;
             if (!d.houseNumber) {
-                if (typeof ppkAlert === 'function') ppkAlert('à¸à¸£à¸¸à¸“à¸²à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸šà¹‰à¸²à¸™à¸žà¸±à¸à¸à¹ˆà¸­à¸™à¸ªà¹ˆà¸‡à¸ªà¸¥à¸´à¸›');
+                if (typeof ppkAlert === 'function') ppkAlert('กรุณาตั้งค่าบ้านพักก่อนส่งสลิป');
                 return;
             }
             goToUploadSlip(d.periodKey, d.outstanding, true);
@@ -869,23 +869,23 @@
                 try {
                     var ed = new Date(endDate);
                     var d = ed.getDate(), m = ed.getMonth(), y = ed.getFullYear() + 543;
-                    var thMonths = ['à¸¡.à¸„.','à¸.à¸ž.','à¸¡à¸µ.à¸„.','à¹€à¸¡.à¸¢.','à¸ž.à¸„.','à¸¡à¸´.à¸¢.','à¸.à¸„.','à¸ª.à¸„.','à¸.à¸¢.','à¸•.à¸„.','à¸ž.à¸¢.','à¸˜.à¸„.'];
+                    var thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
                     endDateStr = d + ' ' + thMonths[m] + ' ' + y;
                 } catch(e) { endDateStr = endDate; }
             }
             var rows = data.outstandingRows || [];
 
-            // à¸‹à¹ˆà¸­à¸™ section à¸—à¸µà¹ˆà¹„à¸¡à¹ˆà¹€à¸à¸µà¹ˆà¸¢à¸§à¸‚à¹‰à¸­à¸‡
+            // ซ่อน section ที่ไม่เกี่ยวข้อง
             var hide = ['paymentSection','outstandingSection','heroStatusBadge','heroCancelBtn','heroRejectBanner','proxyAssignSection'];
             hide.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
 
-            // à¹à¸à¹‰ heroGreeting + heroHouse
+            // แก้ heroGreeting + heroHouse
             var greetEl = document.getElementById('heroGreeting');
-            if (greetEl) greetEl.textContent = 'à¸„à¸¸à¸“à¹„à¸”à¹‰à¸¢à¹‰à¸²à¸¢à¸­à¸­à¸à¸ˆà¸²à¸à¸šà¹‰à¸²à¸™à¸žà¸±à¸à¹à¸¥à¹‰à¸§';
+            if (greetEl) greetEl.textContent = 'คุณได้ย้ายออกจากบ้านพักแล้ว';
             var houseEl = document.getElementById('heroHouse');
-            if (houseEl) houseEl.textContent = 'ðŸ  à¸šà¹‰à¸²à¸™à¹€à¸¥à¸‚à¸—à¸µà¹ˆ ' + houseNumber + (endDateStr ? '  Â·  à¸¢à¹‰à¸²à¸¢à¸­à¸­à¸ ' + endDateStr : '');
+            if (houseEl) houseEl.textContent = '🏠 บ้านเลขที่ ' + houseNumber + (endDateStr ? '  ·  ย้ายออก ' + endDateStr : '');
 
-            // à¹à¸ªà¸”à¸‡ UI à¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡
+            // แสดง UI ยอดค้าง
             var ctaEl = document.getElementById('heroCta');
             if (ctaEl) { ctaEl.style.display = 'none'; }
 
@@ -894,33 +894,33 @@
 
             if (outstanding > 0) {
                 if (amountEl) {
-                    amountEl.textContent = outstanding.toLocaleString('th-TH') + ' à¸šà¸²à¸—';
-                    amountEl.closest && amountEl.closest('.hero-amount-label') && (amountEl.closest('.hero-amount-label').textContent = 'ðŸ’³ à¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡à¸Šà¸³à¸£à¸°à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”');
+                    amountEl.textContent = outstanding.toLocaleString('th-TH') + ' บาท';
+                    amountEl.closest && amountEl.closest('.hero-amount-label') && (amountEl.closest('.hero-amount-label').textContent = '💳 ยอดค้างชำระทั้งหมด');
                 }
-                // à¹à¸ªà¸”à¸‡ breakdown à¸£à¸²à¸¢à¹€à¸”à¸·à¸­à¸™
+                // แสดง breakdown รายเดือน
                 if (breakdownEl && rows.length > 0) {
                     var bHtml = '<div style="margin-top:0.5rem;">';
                     rows.forEach(function(r) {
                         var parts = (r.period || '').split('-');
                         var mIdx = parts[1] ? parseInt(parts[1]) - 1 : 0;
-                        var mName = ['à¸¡.à¸„.','à¸.à¸ž.','à¸¡à¸µ.à¸„.','à¹€à¸¡.à¸¢.','à¸ž.à¸„.','à¸¡à¸´.à¸¢.','à¸.à¸„.','à¸ª.à¸„.','à¸.à¸¢.','à¸•.à¸„.','à¸ž.à¸¢.','à¸˜.à¸„.'][mIdx] || r.period;
-                        bHtml += '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">à¹€à¸”à¸·à¸­à¸™ ' + mName + ' ' + (parts[0] || '') + '</span><span class="hb-val">' + (r.amount||0).toLocaleString('th-TH') + ' à¸šà¸²à¸—</span></div>';
+                        var mName = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][mIdx] || r.period;
+                        bHtml += '<div class="hb-item"><span class="hb-dot common"></span><span class="hb-label">เดือน ' + mName + ' ' + (parts[0] || '') + '</span><span class="hb-val">' + (r.amount||0).toLocaleString('th-TH') + ' บาท</span></div>';
                     });
                     bHtml += '</div>';
                     breakdownEl.innerHTML = bHtml;
                     breakdownEl.style.display = '';
                 }
-                // à¸›à¸¸à¹ˆà¸¡à¸Šà¸³à¸£à¸° â€” à¸•à¹‰à¸­à¸‡à¸à¸²à¸£ contact admin
+                // ปุ่มชำระ — ต้องการ contact admin
                 if (ctaEl) {
-                    ctaEl.innerHTML = 'ðŸ“ž à¸•à¸´à¸”à¸•à¹ˆà¸­à¹€à¸ˆà¹‰à¸²à¸«à¸™à¹‰à¸²à¸—à¸µà¹ˆà¹€à¸žà¸·à¹ˆà¸­à¸Šà¸³à¸£à¸°à¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡';
+                    ctaEl.innerHTML = '📞 ติดต่อเจ้าหน้าที่เพื่อชำระยอดค้าง';
                     ctaEl.className = 'hero-cta reviewing';
                     ctaEl.onclick = null;
                     ctaEl.style.display = '';
                 }
             } else {
-                // à¹„à¸¡à¹ˆà¸¡à¸µà¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡
-                if (amountEl) amountEl.textContent = 'à¹„à¸¡à¹ˆà¸¡à¸µà¸¢à¸­à¸”à¸„à¹‰à¸²à¸‡à¸Šà¸³à¸£à¸°';
-                if (breakdownEl) breakdownEl.innerHTML = '<div style="color:var(--success,#16a34a);font-size:0.9rem;">âœ… à¸Šà¸³à¸£à¸°à¸„à¸£à¸šà¹à¸¥à¹‰à¸§</div>';
+                // ไม่มียอดค้าง
+                if (amountEl) amountEl.textContent = 'ไม่มียอดค้างชำระ';
+                if (breakdownEl) breakdownEl.innerHTML = '<div style="color:var(--success,#16a34a);font-size:0.9rem;">✅ ชำระครบแล้ว</div>';
                 if (ctaEl) { ctaEl.style.display = 'none'; }
             }
         }
@@ -942,7 +942,7 @@
             var rateEl = document.getElementById('statCollectionRate');
             if (rateEl) {
                 var rate = data.collectionRate;
-                if (rate == null) { rateEl.textContent = 'â€”'; rateEl.className = 'ppk-stat-value'; }
+                if (rate == null) { rateEl.textContent = '—'; rateEl.className = 'ppk-stat-value'; }
                 else {
                     rateEl.textContent = rate + '%';
                     rateEl.className = 'ppk-stat-value ' + (rate >= 80 ? 'ok' : rate >= 50 ? 'warning' : 'danger');
@@ -952,7 +952,7 @@
             var outEl = document.getElementById('statOutstandingRooms');
             if (outEl) {
                 var out = data.outstandingRooms;
-                if (out == null) { outEl.textContent = 'â€”'; outEl.className = 'ppk-stat-value'; }
+                if (out == null) { outEl.textContent = '—'; outEl.className = 'ppk-stat-value'; }
                 else {
                     outEl.textContent = String(out);
                     outEl.className = 'ppk-stat-value ' + (out > 0 ? 'danger' : 'ok');
@@ -967,7 +967,7 @@
                 advList.forEach(function(a) { pendingTotal += (a.amount - (a.reimbursed_amount || 0)); });
                 var advEl = document.getElementById('statPendingAdvance');
                 if (advEl) {
-                    advEl.textContent = pendingTotal > 0 ? pendingTotal.toLocaleString() + 'à¸¿' : '0';
+                    advEl.textContent = pendingTotal > 0 ? pendingTotal.toLocaleString() + '฿' : '0';
                     advEl.className = 'ppk-stat-value ' + (pendingTotal > 0 ? 'warning' : 'ok');
                 }
             } catch(e) { console.warn('advance stat:', e); }
@@ -983,16 +983,16 @@
 
             buildQuickActions(isAdmin);
             buildHubGrid();
-            // re-render nav à¸«à¸¥à¸±à¸‡ checkSession à¹€à¸žà¸·à¹ˆà¸­à¹ƒà¸«à¹‰à¹„à¸”à¹‰ permissions à¸¥à¹ˆà¸²à¸ªà¸¸à¸”
+            // re-render nav หลัง checkSession เพื่อให้ได้ permissions ล่าสุด
             if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'dashboard');
 
             try {
                 var result = await cachedCall('getDashboardData', {}, isAdmin ? 60000 : 15000);
                 if (!result || !result.success) {
-                    if (typeof ppkAlert === 'function') ppkAlert('à¹‚à¸«à¸¥à¸”à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹„à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ à¸à¸£à¸¸à¸“à¸²à¸£à¸µà¹€à¸Ÿà¸£à¸Šà¸«à¸™à¹‰à¸²');
+                    if (typeof ppkAlert === 'function') ppkAlert('โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า');
                     return;
                 }
-                if (result._isStale && typeof ppkToast === 'function') ppkToast('à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸­à¸²à¸ˆà¹„à¸¡à¹ˆà¹€à¸›à¹‡à¸™à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™ à¸à¸£à¸¸à¸“à¸²à¸£à¸µà¹€à¸Ÿà¸£à¸Š', 'warning');
+                if (result._isStale && typeof ppkToast === 'function') ppkToast('ข้อมูลอาจไม่เป็นปัจจุบัน กรุณารีเฟรช', 'warning');
                 renderAnnouncements(result.announcements || []);
                 if (result.role === 'admin' || result.role === 'head') {
                     renderAdminDashboard(result.data || {});
@@ -1038,14 +1038,10 @@
     </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260701D"></script>
+    <script src="ppk-api.js?v=20260701F"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
     <script src="ppk-pwa.js?v=20260416C"></script>
 </body>
 </html>
-
-
-
-
