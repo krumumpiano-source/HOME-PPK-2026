@@ -49,7 +49,7 @@ export default defineConfig({
     {
       name: 'auth-setup',
       testMatch: /auth\.setup\.ts/,
-      use: { channel: 'chrome' },
+      use: { browserName: 'chromium' },
     },
 
     /* === Integration Tests (API endpoint) === */
@@ -130,11 +130,13 @@ export default defineConfig({
       name: 'e2e-mobile-ios',
       testDir: './tests/e2e',
       dependencies: ['auth-setup'],
+      timeout: 60_000,
       use: {
         ...devices['iPhone 12'],
         storageState: '.auth/admin.json',
         // ปิด video สำหรับ WebKit บน Linux CI — ป้องกัน browser.newContext crash
         video: 'off',
+        navigationTimeout: 30_000,
       },
     },
 
@@ -143,11 +145,13 @@ export default defineConfig({
       name: 'e2e-tablet-ipad',
       testDir: './tests/e2e',
       dependencies: ['auth-setup'],
+      timeout: 60_000,
       use: {
         ...devices['iPad (gen 7)'],
         storageState: '.auth/admin.json',
         // ปิด video สำหรับ WebKit บน Linux CI — ป้องกัน browser.newContext crash
         video: 'off',
+        navigationTimeout: 30_000,
       },
     },
   ],

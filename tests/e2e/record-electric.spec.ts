@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Record Electric Bills
  * ทดสอบ: period selector, amount input, save
  */
@@ -9,7 +9,7 @@ test.describe('Record Electric Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/record-electric.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
   });
 
   test('should display page title', async ({ page }) => {
@@ -31,7 +31,7 @@ test.describe('Record Electric Page', () => {
   });
 
   test('should display electric data table', async ({ page }) => {
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1000);
     const table = page.locator('table');
     if (await table.count() > 0) {
       await expect(table.first()).toBeVisible();
@@ -59,7 +59,7 @@ test.describe('Record Electric Page', () => {
 
     await page.goto('/record-electric.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
 
     const criticalErrors = errors.filter(
       (e) => e.includes('SyntaxError') || e.includes('ReferenceError') || e.includes('is not defined')

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Upload Slip Flow
  * ทดสอบ: auto-fill, file upload/preview, submit
  */
@@ -13,7 +13,7 @@ test.describe('Upload Slip Page', () => {
     });
     await page.goto('/upload-slip.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
   });
 
   test('should display slip upload form', async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe('Upload Slip Page', () => {
 
   test('should auto-fill display elements', async ({ page }) => {
     // รอข้อมูลโหลด
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const displayUnit = page.locator('#display-unit');
     const displayPeriod = page.locator('#display-period');
@@ -67,7 +67,7 @@ test.describe('Upload Slip Page', () => {
     if (await submitBtn.count() > 0) {
       await submitBtn.click({ force: true });
       // ควรมี validation error หรือ browser native validation
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(300);
     }
   });
 

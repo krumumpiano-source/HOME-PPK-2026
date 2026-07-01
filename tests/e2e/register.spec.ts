@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Registration Flow
  * ทดสอบ: form display, validation, submit
  */
@@ -51,7 +51,7 @@ test.describe('Register Page', () => {
       await submitBtn.click();
 
       // รอ error message (password mismatch)
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(500);
       const errorMsg = page.locator('#errorMsg');
       if (await errorMsg.count() > 0 && await errorMsg.isVisible()) {
         const text = await errorMsg.textContent();
@@ -64,7 +64,7 @@ test.describe('Register Page', () => {
     const province = page.locator('#province');
     if (await province.count() > 0) {
       // รอข้อมูลจังหวัดโหลด
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(500);
       const optionCount = await province.locator('option').count();
       // ต้องมีมากกว่า 1 option (อย่างน้อย placeholder + จังหวัด)
       expect(optionCount).toBeGreaterThan(1);

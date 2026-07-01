@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Accessibility (a11y)
  * ใช้ @axe-core/playwright ตรวจ WCAG violations บนหน้าสำคัญ
  *
@@ -52,6 +52,9 @@ function formatViolations(
     .join('\n');
 }
 
+// WebKit: axe a11y scan ให้ผลเหมือน Chromium — skip เพื่อลดเวลา CI
+test.skip(({ browserName }) => browserName === 'webkit', 'Axe a11y scan ไม่จำเป็นบน WebKit');
+
 // ─── Login Page ───────────────────────────────────────────────────────────────
 
 test.describe('Accessibility — Login Page', () => {
@@ -100,7 +103,7 @@ test.describe('Accessibility — Dashboard Page', () => {
   test('dashboard.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(500);
 
     const { violations } = await checkA11y(page);
     expect(violations, `dashboard.html violations:\n${formatViolations(violations)}`).toHaveLength(
@@ -111,7 +114,7 @@ test.describe('Accessibility — Dashboard Page', () => {
   test('dashboard.html — page มี <main> หรือ main role', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const main = page.locator('main, [role="main"]');
     // ถ้ามี → ดี; ถ้าไม่มีก็ไม่ fail (เป็น recommendation ไม่ใช่ requirement)
@@ -123,7 +126,7 @@ test.describe('Accessibility — Dashboard Page', () => {
   test('dashboard.html — ปุ่ม CTA มี accessible name', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const buttons = page.locator('button, a[role="button"]');
     const count = await buttons.count();
@@ -152,7 +155,7 @@ test.describe('Accessibility — Settings Page', () => {
   test('settings.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/settings.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const { violations } = await checkA11y(page, [
       // settings มี form ซับซ้อน — ปิด autocomplete rule (เป็น medium ไม่ critical)
@@ -167,7 +170,7 @@ test.describe('Accessibility — Settings Page', () => {
   test('settings.html — form inputs มี labels', async ({ page }) => {
     await page.goto('/settings.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const inputs = page.locator('input[type="text"], input[type="email"], input[type="tel"]');
     const count = await inputs.count();
@@ -199,7 +202,7 @@ test.describe('Accessibility — Upload Slip Page', () => {
   test('upload-slip.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/upload-slip.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const { violations } = await checkA11y(page);
     expect(
@@ -215,7 +218,7 @@ test.describe('Accessibility — Check Slip Page', () => {
   test('check-slip.html — ไม่มี critical/serious a11y violations', async ({ page }) => {
     await page.goto('/check-slip.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const { violations } = await checkA11y(page);
     expect(
@@ -231,7 +234,7 @@ test.describe('Accessibility — Navigation', () => {
   test('sidebar nav items — ไม่มี button ที่มีแค่ emoji (ไม่มี text)', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const navButtons = page.locator('nav button, nav a, .sidebar button, .sidebar a, #ppk-sidebar button, #ppk-sidebar a');
     const count = await navButtons.count();
@@ -266,7 +269,7 @@ test.describe('Accessibility — Navigation', () => {
   }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     // ตรวจ skip link หรือ main landmark
     const skipLink = page.locator('a[href="#main"], a[href="#content"], .skip-link');

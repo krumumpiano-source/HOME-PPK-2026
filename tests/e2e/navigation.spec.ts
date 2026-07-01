@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Navigation & Auth Guard
  * ทดสอบ: sidebar rendering, auth redirect, nav links
  */
@@ -8,7 +8,7 @@ test.describe('Navigation — Authenticated', () => {
   test('should display sidebar navigation', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     // Sidebar should be rendered by ppk-nav.js
     const nav = page.locator('#ppk-nav, nav, .sidebar, .ppk-sidebar');
@@ -20,7 +20,7 @@ test.describe('Navigation — Authenticated', () => {
   test('should have links to main pages', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const expectedLinks = [
       'dashboard.html',
@@ -40,7 +40,7 @@ test.describe('Navigation — Authenticated', () => {
   test('admin should see admin menu items', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     const adminLinks = [
       'admin-settings.html',
@@ -66,7 +66,7 @@ test.describe('Navigation — Auth Guard', () => {
   test('accessing dashboard without login → redirect to login', async ({ page }) => {
     await page.goto('/dashboard.html');
     // รอ redirect
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
 
     const url = page.url();
     // ควร redirect ไป login.html หรืออยู่หน้า dashboard แต่ไม่มีข้อมูล
@@ -78,7 +78,7 @@ test.describe('Navigation — Auth Guard', () => {
 
   test('accessing admin-settings without login → redirect', async ({ page }) => {
     await page.goto('/admin-settings.html');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
 
     const url = page.url();
     const redirected = url.includes('login.html') || url.includes('dashboard.html');
@@ -108,7 +108,7 @@ test.describe('Navigation — User role restrictions', () => {
   test('user should see limited menu items', async ({ page }) => {
     await page.goto('/dashboard.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     // User ไม่ควรเห็น admin-only links (หรือเห็นแต่ disabled)
     const adminLink = page.locator('a[href*="admin-settings"]');

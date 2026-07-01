@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Responsive Layout (Cross-Viewport)
  * ทดสอบ layout ที่ breakpoint ต่างๆ ครอบคลุมทุกอุปกรณ์ที่คาดว่าจะมีผู้ใช้งาน
  *
@@ -117,7 +117,7 @@ test.describe('Responsive — Mobile Viewports', () => {
       }) => {
         await page.goto('/dashboard.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
 
         expect(await hasNoHorizontalScroll(page)).toBe(true);
         await checkNavBehavior(page, true);
@@ -128,7 +128,7 @@ test.describe('Responsive — Mobile Viewports', () => {
       }) => {
         await page.goto('/dashboard.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
 
         // ตรวจว่าตัวหนังสือไม่เล็กเกินไป
         const bodyFontSize = await page.evaluate(() => {
@@ -140,14 +140,14 @@ test.describe('Responsive — Mobile Viewports', () => {
       test(`[${vp.name}] upload-slip — no horizontal scroll`, async ({ page }) => {
         await page.goto('/upload-slip.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
       test(`[${vp.name}] settings — no horizontal scroll`, async ({ page }) => {
         await page.goto('/settings.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
     });
@@ -164,21 +164,21 @@ test.describe('Responsive — Tablet Viewports', () => {
       test(`[${vp.name}] dashboard — no horizontal scroll`, async ({ page }) => {
         await page.goto('/dashboard.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
       test(`[${vp.name}] check-slip — no horizontal scroll`, async ({ page }) => {
         await page.goto('/check-slip.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
       test(`[${vp.name}] record-water — no horizontal scroll`, async ({ page }) => {
         await page.goto('/record-water.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
     });
@@ -195,14 +195,14 @@ test.describe('Responsive — Desktop Viewports', () => {
       test(`[${vp.name}] dashboard — sidebar fixed (not hamburger)`, async ({ page }) => {
         await page.goto('/dashboard.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
         await checkNavBehavior(page, false);
       });
 
       test(`[${vp.name}] dashboard — no horizontal scroll`, async ({ page }) => {
         await page.goto('/dashboard.html');
         await page.waitForLoadState('load');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
         expect(await hasNoHorizontalScroll(page)).toBe(true);
       });
 
@@ -210,7 +210,7 @@ test.describe('Responsive — Desktop Viewports', () => {
         for (const pg of ['/team-management.html', '/accounting.html', '/activity-log.html']) {
           await page.goto(pg);
           await page.waitForLoadState('load');
-          await page.waitForTimeout(1000);
+          await page.waitForTimeout(300);
           const ok = await hasNoHorizontalScroll(page);
           expect(ok, `${pg} มี horizontal scroll ที่ ${vp.name}`).toBe(true);
         }
@@ -232,7 +232,7 @@ test.describe('Responsive — All Critical Pages horizontal-overflow check', () 
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await page.goto(pg.path);
         await page.waitForLoadState('load');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(300);
 
         const ok = await hasNoHorizontalScroll(page);
         expect(ok, `${pg.path} มี horizontal scroll ที่ ${vp.name} (${vp.width}px)`).toBe(true);

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Test — Record Water Bills
  * ทดสอบ: period selector, meter input table, auto-calculate, save
  */
@@ -8,7 +8,7 @@ test.describe('Record Water Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/record-water.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
   });
 
   test('should display page title', async ({ page }) => {
@@ -35,7 +35,7 @@ test.describe('Record Water Page', () => {
 
   test('should display house/meter table after loading data', async ({ page }) => {
     // รอข้อมูลโหลด
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1000);
 
     // ตรวจหา table หรือ data rows
     const table = page.locator('table');
@@ -65,7 +65,7 @@ test.describe('Record Water Page', () => {
 
     await page.goto('/record-water.html');
     await page.waitForLoadState('load');
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
 
     // กรอง error ที่เกี่ยวกับ permission (ปกติสำหรับ user ที่ไม่มีสิทธิ์)
     const criticalErrors = errors.filter(
