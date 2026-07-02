@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -1574,52 +1574,89 @@
         }
 
         // ========== รายงานสรุปรายปี ==========
+        // ========== รายงานสรุปรายปี ==========
         async function loadAnnualReport() {
             var content = document.getElementById('annualReportContent');
             var year = parseInt(document.getElementById('annual_year').value);
             if (!year) { content.innerHTML = '<div style="color:#9ca3af;text-align:center;padding:2rem;">กรุณาเลือกปี</div>'; return; }
             content.innerHTML = '<div style="text-align:center;padding:2rem;color:#6b7280;">⏳ กำลังโหลด...</div>';
             try {
-                var result = await callBackend('getAnnualReport', { year: year });
+                var [result, pubResult] = await Promise.all([
+                    callBackend('getAnnualReport', { year: year }),
+                    callBackend('getPublishedReports', { year: year })
+                ]);
                 if (!result || !result.success) {
                     content.innerHTML = '<div style="color:#ef4444;padding:1rem;">เกิดข้อผิดพลาด: ' + ((result && result.error) || 'ไม่ทราบสาเหตุ') + '</div>';
                     return;
                 }
                 var months = result.months || [];
+                var published = (pubResult && pubResult.reports) ? pubResult.reports : [];
+                var pubMap = {};
+                published.forEach(function(p) { pubMap[p.month] = p; });
+
                 var totalInc = months.reduce(function(s, m) { return s + (m.income || 0); }, 0);
                 var totalExp = months.reduce(function(s, m) { return s + (m.expense || 0); }, 0);
                 var thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
                 var rows = months.map(function(m) {
                     var bal = (m.income || 0) - (m.expense || 0);
                     var balColor = bal >= 0 ? '#10b981' : '#ef4444';
+                    var pub = pubMap[m.month];
+                    var statusHtml = pub ? '<span style="color:#10b981;font-size:0.8rem;font-weight:600;">✅ เผยแพร่แล้ว</span>' : '<span style="color:#9ca3af;font-size:0.8rem;">📝 ร่าง</span>';
+                    var btnHtml = '<button onclick="doPublishMonth(' + year + ',' + m.month + ',' + m.income + ',' + m.expense + ')" style="padding:0.3rem 0.8rem;font-size:0.85rem;border:none;border-radius:6px;background:#3b82f6;color:white;cursor:pointer;transition:background 0.2s;">' + (pub ? 'แก้ไข' : 'เผยแพร่') + '</button>';
+
                     return '<tr>' +
-                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:center;">' + (thaiMonths[m.month - 1] || m.month) + '</td>' +
-                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(m.income || 0) + '</td>' +
-                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(m.expense || 0) + '</td>' +
-                        '<td style="padding:0.4rem 0.6rem;border:1px solid #e5e7eb;text-align:right;color:' + balColor + ';font-weight:600;">' + formatMoney(bal) + '</td>' +
+                        '<td style="padding:0.6rem;border:1px solid #e5e7eb;text-align:center;">' + (thaiMonths[m.month - 1] || m.month) + '<br>' + statusHtml + '</td>' +
+                        '<td style="padding:0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(m.income || 0) + '</td>' +
+                        '<td style="padding:0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(m.expense || 0) + '</td>' +
+                        '<td style="padding:0.6rem;border:1px solid #e5e7eb;text-align:right;color:' + balColor + ';font-weight:600;">' + formatMoney(bal) + '</td>' +
+                        '<td style="padding:0.6rem;border:1px solid #e5e7eb;text-align:center;">' + btnHtml + '</td>' +
                         '</tr>';
                 }).join('');
                 content.innerHTML =
                     '<div id="annualReportPrint">' +
-                    '<h3 style="margin:0 0 1rem;font-size:1.1rem;">รายงานสรุปรายได้-รายจ่ายปี พ.ศ. ' + year + '</h3>' +
-                    '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">' +
-                    '<thead><tr style="background:#f3f4f6;">' +
-                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;">เดือน</th>' +
-                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">รายรับ (บาท)</th>' +
-                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">รายจ่าย (บาท)</th>' +
-                    '<th style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">คงเหลือ (บาท)</th>' +
+                    '<h3 style="margin:0 0 1rem;font-size:1.1rem;color:#1f2937;">รายงานสรุปรายได้-รายจ่ายปี พ.ศ. ' + year + '</h3>' +
+                    '<table style="width:100%;border-collapse:collapse;font-size:0.95rem;">' +
+                    '<thead><tr style="background:#f3f4f6;color:#4b5563;">' +
+                    '<th style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;">เดือน</th>' +
+                    '<th style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">รายรับ (บาท)</th>' +
+                    '<th style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">รายจ่าย (บาท)</th>' +
+                    '<th style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">คงเหลือ (บาท)</th>' +
+                    '<th style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:center;">จัดการเผยแพร่</th>' +
                     '</tr></thead><tbody>' + rows + '</tbody>' +
-                    '<tfoot><tr style="background:#f0fdf4;font-weight:700;">' +
-                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;">รวมทั้งปี</td>' +
-                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(totalInc) + '</td>' +
-                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(totalExp) + '</td>' +
-                    '<td style="padding:0.5rem 0.6rem;border:1px solid #e5e7eb;text-align:right;color:' + (totalInc - totalExp >= 0 ? '#10b981' : '#ef4444') + ';">' + formatMoney(totalInc - totalExp) + '</td>' +
+                    '<tfoot><tr style="background:#f0fdf4;font-weight:700;color:#111827;">' +
+                    '<td style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;">รวมทั้งปี</td>' +
+                    '<td style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(totalInc) + '</td>' +
+                    '<td style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:right;">' + formatMoney(totalExp) + '</td>' +
+                    '<td style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;text-align:right;color:' + (totalInc - totalExp >= 0 ? '#10b981' : '#ef4444') + ';">' + formatMoney(totalInc - totalExp) + '</td>' +
+                    '<td style="padding:0.8rem 0.6rem;border:1px solid #e5e7eb;"></td>' +
                     '</tr></tfoot></table></div>';
             } catch(e) {
                 console.error('loadAnnualReport error:', e);
                 content.innerHTML = '<div style="color:#ef4444;padding:1rem;">เกิดข้อผิดพลาด: ' + e.message + '</div>';
             }
         }
+
+        async function doPublishMonth(year, month, income, expense) {
+            var memo = prompt('กรุณากรอกคำอธิบาย (Memo) หากต้องการชี้แจงเพิ่มเติม (เว้นว่างได้):');
+            if (memo === null) return;
+            ppkToast('⏳ กำลังประมวลผลสถิติและเผยแพร่...', 'info');
+            try {
+                var metricResult = await callBackend('calculateMonthlyMetrics', { year: year, month: month });
+                var metrics = (metricResult && metricResult.success) ? metricResult.metrics : {};
+                var pubResult = await callBackend('publishReport', {
+                    year: year, month: month, income: income, expense: expense, memo: memo, metrics: metrics
+                });
+                if (pubResult && pubResult.success) {
+                    ppkToast('เผยแพร่รายงานสำเร็จ!', 'success');
+                    loadAnnualReport();
+                } else {
+                    ppkToast('เกิดข้อผิดพลาด: ' + (pubResult.error || 'ไม่สามารถเผยแพร่ได้'), 'error');
+                }
+            } catch(e) {
+                ppkToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+            }
+        }
+
 
         function printAnnualReport() {
             var el = document.getElementById('annualReportPrint');

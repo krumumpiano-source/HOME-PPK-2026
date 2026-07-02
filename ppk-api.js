@@ -4200,6 +4200,12 @@ async function _routeAction(action, data) {
             return await getAnnualReport(data.year);
         }
 
+        /* ── Published Reports — รายงานเผยแพร่สู่สาธารณะ ─── */
+        case 'calculateMonthlyMetrics': return await calculateMonthlyMetrics(data.year, data.month);
+        case 'publishReport':           return await publishReport(data);
+        case 'getPublishedReports':     return await getPublishedReports(data.year);
+
+
         /* ── Warnings — ระบบตักเตือน ────────────── */
         case 'createWarning':      return await createWarning(data);
         case 'getWarningsByUser':  return await getWarningsByUser(data.userId);
@@ -6475,6 +6481,120 @@ async function getAnnualReport(year) {
         return { success: false, error: e.message };
     }
 }
+
+/* ══════════════════════════════════════════
+   Published Reports — รายงานเผยแพร่สู่สาธารณะ
+══════════════════════════════════════════ */
+
+async function calculateMonthlyMetrics(year, month) {
+    var period = year + '-' + String(month).padStart(2, '0');
+    try {
+        var [waterRows, elecRows, outRows, incRows, expRows] = await Promise.all([
+            sbGet('water_bills', { period: 'eq.' + period }).catch(function(){ return []; }),
+            sbGet('electric_bills', { period: 'eq.' + period }).catch(function(){ return []; }),
+            sbGet('outstanding', { period: 'eq.' + period }).catch(function(){ return []; }),
+            sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.income', select: 'amount' }).catch(function(){ return []; }),
+            sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.expense', select: 'amount' }).catch(function(){ return []; })
+        ]);
+
+        var metrics = {
+            water: { min: 0, max: 0, avg: 0, count: 0 },
+            electric: { min: 0, max: 0, avg: 0, count: 0 },
+            payment: { total: 0, paid: 0, rate: 0 },
+            fund: { income: 0, expense: 0, balance: 0 }
+        };
+
+        // Water stats
+        if (waterRows && waterRows.length > 0) {
+            var wAmts = waterRows.map(function(r) { return parseFloat(r.total_amount) || 0; }).filter(function(a) { return a > 0; });
+            if (wAmts.length > 0) {
+                metrics.water.min = Math.min.apply(null, wAmts);
+                metrics.water.max = Math.max.apply(null, wAmts);
+                metrics.water.avg = wAmts.reduce(function(a, b){ return a + b; }, 0) / wAmts.length;
+                metrics.water.count = wAmts.length;
+            }
+        }
+
+        // Electric stats
+        if (elecRows && elecRows.length > 0) {
+            var eAmts = elecRows.map(function(r) { return parseFloat(r.total_amount) || 0; }).filter(function(a) { return a > 0; });
+            if (eAmts.length > 0) {
+                metrics.electric.min = Math.min.apply(null, eAmts);
+                metrics.electric.max = Math.max.apply(null, eAmts);
+                metrics.electric.avg = eAmts.reduce(function(a, b){ return a + b; }, 0) / eAmts.length;
+                metrics.electric.count = eAmts.length;
+            }
+        }
+
+        // Payment stats
+        if (outRows && outRows.length > 0) {
+            metrics.payment.total = outRows.length;
+            metrics.payment.paid = outRows.filter(function(r) { return r.status === 'paid'; }).length;
+            metrics.payment.rate = (metrics.payment.paid / metrics.payment.total) * 100;
+        }
+
+        // Fund stats for this month
+        metrics.fund.income = (incRows || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+        metrics.fund.expense = (expRows || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+        metrics.fund.balance = metrics.fund.income - metrics.fund.expense;
+
+        // Cash on hand (all time up to this period)
+        try {
+            var [allInc, allExp] = await Promise.all([
+                sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.income', select: 'amount' }).catch(function(){ return []; }),
+                sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.expense', select: 'amount' }).catch(function(){ return []; })
+            ]);
+            var tInc = (allInc || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+            var tExp = (allExp || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+            metrics.fund.cashOnHand = tInc - tExp;
+        } catch(e) { metrics.fund.cashOnHand = 0; }
+
+        return { success: true, metrics: metrics };
+    } catch(e) {
+        return { success: false, error: e.message };
+    }
+}
+
+async function publishReport(data) {
+    if (!data.year || !data.month) return { success: false, error: 'ระบุปีและเดือนไม่ครบถ้วน' };
+    try {
+        var sess = await _getSessionRole();
+        if (!sess || (sess.role !== 'admin' && sess.role !== 'head')) return { success: false, error: 'ไม่มีสิทธิ์' };
+        
+        var payload = {
+            year: data.year,
+            month: data.month,
+            income: data.income || 0,
+            expense: data.expense || 0,
+            memo: data.memo || '',
+            metrics: data.metrics || {},
+            published_by: sess.userId,
+            published_at: new Date().toISOString()
+        };
+
+        // Upsert
+        var existing = await sbGet('published_reports', { year: 'eq.' + data.year, month: 'eq.' + data.month, limit: '1' }).catch(function(){ return []; });
+        if (existing && existing.length > 0) {
+            await sbPatch('published_reports', { id: 'eq.' + existing[0].id }, payload);
+        } else {
+            await sbPost('published_reports', payload);
+        }
+        return { success: true };
+    } catch(e) {
+        return { success: false, error: e.message };
+    }
+}
+
+async function getPublishedReports(year) {
+    if (!year) return { success: false, error: 'ระบุปีไม่ครบถ้วน' };
+    try {
+        var rows = await sbGet('published_reports', { year: 'eq.' + year, order: 'month.asc' });
+        return { success: true, reports: rows || [] };
+    } catch(e) {
+        return { success: false, error: e.message };
+    }
+}
+
 
 /* ══════════════════════════════════════════
    Register real implementations for ppk-app.js stubs

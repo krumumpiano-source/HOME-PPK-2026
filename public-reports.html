@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>รายงานส่วนกลาง | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260702">
+    <style>
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .page-header h2 { color: #92400e; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; justify-content: center; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 0.6rem 1.5rem; background: #fff; border: 2px solid #e5e7eb; border-radius: 10px;
+            font-weight: 700; color: #6b7280; cursor: pointer; transition: all 0.2s;
+        }
+        .tab-btn.active {
+            border-color: #f59e0b; background: #fef3c7; color: #92400e;
+        }
+        .tab-content { display: none; animation: ppk-fadein 0.3s; }
+        .tab-content.active { display: block; }
+        
+        /* Card Styles */
+        .report-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        .report-card-title { font-size: 1.1rem; font-weight: 700; color: #92400e; margin-bottom: 1rem; border-bottom: 2px solid #fde68a; padding-bottom: 0.5rem; }
+        
+        table.finance-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        table.finance-table th, table.finance-table td { padding: 0.8rem; text-align: right; border: 1px solid #e5e7eb; }
+        table.finance-table th { background: #f8fafc; text-align: center; color: #475569; }
+        table.finance-table td.text-left { text-align: left; }
+        table.finance-table td.positive { color: #10b981; font-weight: 600; }
+        table.finance-table td.negative { color: #ef4444; font-weight: 600; }
+        table.finance-table tr:hover { background: #f1f5f9; }
+        
+        .meeting-item { padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 1rem; }
+        .meeting-item h4 { margin: 0 0 0.5rem 0; color: #1e293b; }
+        .meeting-meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.8rem; }
+        .meeting-resolutions { margin: 0; padding-left: 1.2rem; font-size: 0.95rem; color: #334155; }
+        .meeting-resolutions li { margin-bottom: 0.3rem; }
+        
+        /* Admin notice */
+        .admin-notice { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 0.8rem; border-radius: 8px; text-align: center; margin-bottom: 1.5rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div id="ppkNav"></div>
+    <div class="dashboard-container">
+        <div class="page-header">
+            <h2>📢 รายงานผลการดำเนินงานส่วนกลาง</h2>
+            <p style="color:var(--muted);margin-top:0.5rem;">สรุปงบการเงินและรายงานการประชุมสำหรับผู้พักอาศัย</p>
+        </div>
+        
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('finance', this)">💰 สรุปบัญชี</button>
+            <button class="tab-btn" onclick="switchTab('meetings', this)">📝 รายงานการประชุม</button>
+        </div>
+
+        <!-- แท็บการเงิน -->
+        <div id="tab-finance" class="tab-content active">
+            <div class="report-card">
+                <div class="report-card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>📊 สรุปรายรับ-รายจ่าย ประจำปี</span>
+                    <select id="financeYear" onchange="loadFinanceData()" style="padding:0.4rem; border-radius:6px; border:1px solid #cbd5e1;"></select>
+                </div>
+                
+                <div class="admin-notice" style="background:#e0f2fe; border-color:#38bdf8; color:#0369a1; font-weight:normal; text-align:left; font-size:0.9rem;">
+                    <strong>💡 คำอธิบายการแสดงผล:</strong><br>
+                    • <strong>รายรับ</strong> = ค่าส่วนกลาง + ค่าไฟ(ปัดเศษ) + อื่นๆ (ไม่รวมเงินรับฝากค่าน้ำ/ค่าไฟ)<br>
+                    • <strong>รายจ่าย</strong> = ค่า Loss ไฟฟ้า + ค่าตัดหญ้า + ค่าขยะ + อื่นๆ
+                </div>
+
+                <div id="financeContent" style="overflow-x:auto;">
+                    <div style="text-align:center; padding:2rem; color:#64748b;">⏳ กำลังโหลด...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- แท็บการประชุม -->
+        <div id="tab-meetings" class="tab-content">
+            <div class="report-card">
+                <div class="report-card-title">📝 รายงานการประชุมคณะกรรมการ (ฉบับเผยแพร่)</div>
+                <div id="meetingsContent">
+                    <div style="text-align:center; padding:2rem; color:#64748b;">⏳ กำลังโหลด...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase / Supabase SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="ppk-api.js?v=20260416"></script>
+    <script src="ppk-nav.js?v=20260416"></script>
+
+    <script>
+        const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        
+        window.onload = async function() {
+            var user = await checkSession(true);
+            if (!user) {
+                window.location.replace('login.html');
+                return;
+            }
+            
+            initSidebar();
+            initYearSelector();
+            loadFinanceData();
+            loadMeetingsData();
+        };
+
+        function initSidebar() {
+            renderPPKNav('ppkNav', 'public-reports');
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function initYearSelector() {
+            const yearSelect = document.getElementById('financeYear');
+            const currentYear = new Date().getFullYear() + 543;
+            yearSelect.innerHTML = '';
+            for (let y = currentYear; y >= 2568; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = 'ปี พ.ศ. ' + y;
+                yearSelect.appendChild(opt);
+            }
+        }
+
+        function formatMoney(value) {
+            return parseFloat(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+            } catch { return dateStr; }
+        }
+
+        async function loadFinanceData() {
+            const container = document.getElementById('financeContent');
+            const year = parseInt(document.getElementById('financeYear').value);
+            if (!year) return;
+            
+            container.innerHTML = '<div style="text-align:center; padding:2rem; color:#64748b;">⏳ กำลังโหลด...</div>';
+            
+            try {
+                const result = await callBackend('getPublishedReports', { year: year });
+                if (!result || !result.success) {
+                    container.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">ไม่สามารถโหลดข้อมูลได้</div>';
+                    return;
+                }
+                
+                const reports = result.reports || [];
+                if (reports.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:3rem; color:#9ca3af; font-size:1.1rem;">ยังไม่มีรายงานที่เผยแพร่ในปีนี้</div>';
+                    return;
+                }
+
+                let html = '<div style="display:flex; flex-direction:column; gap:1.5rem;">';
+                
+                reports.forEach(r => {
+                    const inc = r.income || 0;
+                    const exp = r.expense || 0;
+                    const bal = inc - exp;
+                    const metrics = r.metrics || {};
+                    const memoHtml = r.memo ? `<div style="margin-top:1rem; padding:1rem; background:#fef3c7; border-left:4px solid #f59e0b; border-radius:4px; color:#92400e; font-size:0.95rem;"><strong>📝 บันทึกเพิ่มเติม:</strong><br>${r.memo}</div>` : '';
+                    
+                    // Stats
+                    const mWater = metrics.water || {};
+                    const mElec = metrics.electric || {};
+                    const mPay = metrics.payment || {};
+                    const mFund = metrics.fund || {};
+                    
+                    html += `
+                    <div style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.02); transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding:1rem 1.5rem; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="margin:0; color:#1e293b; font-size:1.2rem;">ประจำเดือน ${THAI_MONTHS[r.month - 1]}</h3>
+                            <span style="background:#dcfce7; color:#166534; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; font-weight:600;">✅ เผยแพร่เมื่อ ${formatDate(r.published_at)}</span>
+                        </div>
+                        
+                        <div style="padding:1.5rem;">
+                            <!-- Financial Summary Grid -->
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                                <div style="background:#ecfdf5; padding:1rem; border-radius:8px; text-align:center;">
+                                    <div style="color:#059669; font-size:0.9rem; font-weight:600; margin-bottom:0.5rem;">รายรับส่วนกลาง</div>
+                                    <div style="color:#065f46; font-size:1.4rem; font-weight:700;">${formatMoney(inc)} <span style="font-size:0.9rem;">บาท</span></div>
+                                </div>
+                                <div style="background:#fef2f2; padding:1rem; border-radius:8px; text-align:center;">
+                                    <div style="color:#dc2626; font-size:0.9rem; font-weight:600; margin-bottom:0.5rem;">รายจ่ายส่วนกลาง</div>
+                                    <div style="color:#991b1b; font-size:1.4rem; font-weight:700;">${formatMoney(exp)} <span style="font-size:0.9rem;">บาท</span></div>
+                                </div>
+                                <div style="background:${bal >= 0 ? '#f0fdf4' : '#fef2f2'}; padding:1rem; border-radius:8px; text-align:center; border:1px solid ${bal >= 0 ? '#bbf7d0' : '#fecaca'};">
+                                    <div style="color:${bal >= 0 ? '#166534' : '#991b1b'}; font-size:0.9rem; font-weight:600; margin-bottom:0.5rem;">คงเหลือประจำเดือน</div>
+                                    <div style="color:${bal >= 0 ? '#166534' : '#991b1b'}; font-size:1.4rem; font-weight:700;">${formatMoney(bal)} <span style="font-size:0.9rem;">บาท</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Metrics Grid -->
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; border-top:1px dashed #cbd5e1; padding-top:1.5rem;">
+                                
+                                <!-- Utility Stats -->
+                                <div style="background:#f8fafc; border-radius:8px; padding:1rem;">
+                                    <div style="font-weight:600; color:#334155; margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                        💧⚡ สถิติการใช้น้ำ-ไฟ
+                                    </div>
+                                    <table style="width:100%; font-size:0.85rem; color:#475569;">
+                                        <tr><td style="padding:0.2rem 0;">ค่าน้ำต่ำสุด:</td><td style="text-align:right; font-weight:600;">${formatMoney(mWater.min)} ฿</td></tr>
+                                        <tr><td style="padding:0.2rem 0;">ค่าน้ำสูงสุด:</td><td style="text-align:right; font-weight:600;">${formatMoney(mWater.max)} ฿</td></tr>
+                                        <tr><td style="padding:0.2rem 0;">ค่าน้ำเฉลี่ย:</td><td style="text-align:right; font-weight:600;">${formatMoney(mWater.avg)} ฿</td></tr>
+                                        <tr><td colspan="2"><hr style="border:none; border-top:1px dashed #cbd5e1; margin:0.5rem 0;"></td></tr>
+                                        <tr><td style="padding:0.2rem 0;">ค่าไฟต่ำสุด:</td><td style="text-align:right; font-weight:600;">${formatMoney(mElec.min)} ฿</td></tr>
+                                        <tr><td style="padding:0.2rem 0;">ค่าไฟสูงสุด:</td><td style="text-align:right; font-weight:600;">${formatMoney(mElec.max)} ฿</td></tr>
+                                        <tr><td style="padding:0.2rem 0;">ค่าไฟเฉลี่ย:</td><td style="text-align:right; font-weight:600;">${formatMoney(mElec.avg)} ฿</td></tr>
+                                    </table>
+                                </div>
+
+                                <!-- Payment Stats -->
+                                <div style="background:#f8fafc; border-radius:8px; padding:1rem;">
+                                    <div style="font-weight:600; color:#334155; margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                        💳 สถิติการชำระเงิน
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem;">
+                                        <span>ชำระแล้ว ${mPay.paid || 0} จาก ${mPay.total || 0} บิล</span>
+                                        <span style="font-weight:700; color:#0284c7;">${parseFloat(mPay.rate || 0).toFixed(1)}%</span>
+                                    </div>
+                                    <div style="width:100%; background:#e2e8f0; height:8px; border-radius:4px; overflow:hidden;">
+                                        <div style="height:100%; width:${mPay.rate || 0}%; background:#38bdf8;"></div>
+                                    </div>
+                                    <div style="margin-top:1.5rem; font-weight:600; color:#334155; margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem;">
+                                        🏦 ยอดเงินกองกลางสะสม (Cash on Hand)
+                                    </div>
+                                    <div style="font-size:1.5rem; font-weight:700; color:#0369a1;">
+                                        ${formatMoney(mFund.cashOnHand)} <span style="font-size:0.9rem;">บาท</span>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                            ${memoHtml}
+                        </div>
+                    </div>
+                    `;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+                
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+            }
+        }
+
+        async function loadMeetingsData() {
+            const container = document.getElementById('meetingsContent');
+            try {
+                const result = await callBackend('getMeetings', {});
+                const meetings = (result && result.meetings) || [];
+                
+                // กรองเฉพาะที่ published
+                const publishedMeetings = meetings.filter(m => m.status === 'published');
+                
+                if (publishedMeetings.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:2rem; color:#64748b;">ยังไม่มีรายงานการประชุมที่เผยแพร่</div>';
+                    return;
+                }
+                
+                // เรียงจากใหม่ไปเก่า
+                publishedMeetings.sort((a, b) => new Date(b.meeting_date) - new Date(a.meeting_date));
+                
+                let html = '';
+                publishedMeetings.forEach(m => {
+                    let resHtml = '';
+                    if (m.resolutions && m.resolutions.length > 0) {
+                        resHtml = '<ol class="meeting-resolutions">' + 
+                            m.resolutions.map(r => `<li>${typeof r === 'string' ? r : r.text}</li>`).join('') +
+                        '</ol>';
+                    } else {
+                        resHtml = '<div style="color:#94a3b8; font-size:0.9rem; padding-left:1rem;">- ไม่มีมติ หรือรับทราบร่วมกัน -</div>';
+                    }
+                    
+                    html += `
+                    <div class="meeting-item">
+                        <h4>${m.title || 'รายงานการประชุม'}</h4>
+                        <div class="meeting-meta">
+                            📅 วันที่: ${formatDate(m.meeting_date)} &nbsp; | &nbsp; 📍 สถานที่: ${m.venue || '-'}
+                        </div>
+                        <div style="font-weight:600; margin-bottom:0.5rem; color:#475569;">มติที่ประชุม:</div>
+                        ${resHtml}
+                    </div>`;
+                });
+                
+                container.innerHTML = html;
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+            }
+        }
+    </script>
+</body>
+</html>
