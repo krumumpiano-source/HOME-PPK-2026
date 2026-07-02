@@ -51,6 +51,9 @@
             <p style="color:var(--muted);margin-top:0.5rem;">สรุปงบการเงินและรายงานการประชุมสำหรับผู้พักอาศัย</p>
         </div>
         
+        <div class="admin-notice">
+            ⚠️ โหมดทดสอบ: หน้านี้ยังจำกัดสิทธิ์ให้เห็นเฉพาะแอดมิน (Admin) เท่านั้น
+        </div>
 
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('finance', this)">💰 สรุปบัญชี</button>
@@ -98,10 +101,13 @@
         
         window.onload = async function() {
             var user = await checkSession(true);
-            if (!user) {
-                window.location.replace('login.html');
+            // ให้เข้าได้เฉพาะ Admin หรือ Head เท่านั้นในช่วงทดสอบ
+            if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+                if (typeof ppkAlert === 'function') ppkAlert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (กำลังอยู่ในช่วงทดสอบ)');
+                window.location.replace('dashboard.html');
                 return;
             }
+
             
             initSidebar();
             initYearSelector();
