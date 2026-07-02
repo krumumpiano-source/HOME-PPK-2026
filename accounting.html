@@ -1637,6 +1637,12 @@
         }
 
         async function doPublishMonth(year, month, income, expense) {
+            var user = await checkSession(true);
+            if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+                ppkToast('เฉพาะแอดมิน (Admin) หรือหัวหน้างานเท่านั้น ที่สามารถเผยแพร่รายงานได้', 'error');
+                return;
+            }
+
             var memo = prompt('กรุณากรอกคำอธิบาย (Memo) หากต้องการชี้แจงเพิ่มเติม (เว้นว่างได้):');
             if (memo === null) return;
             ppkToast('⏳ กำลังประมวลผลสถิติและเผยแพร่...', 'info');
