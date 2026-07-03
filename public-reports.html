@@ -99,6 +99,7 @@
         window.onload = async function() {
             var user = await checkSession(true);
             if (!user) return;
+            window.currentUser = user;
 
             
             initSidebar();
@@ -142,13 +143,18 @@
                     return;
                 }
                 
-                const reports = result.reports || [];
+                let reports = result.reports || [];
                 if (reports.length === 0) {
                     container.innerHTML = '<div style="text-align:center; padding:3rem; color:#9ca3af; font-size:1.1rem;">ยังไม่มีรายงานที่เผยแพร่ในปีนี้</div>';
                     return;
                 }
                 
                 reports.reverse(); // เรียงเดือนล่าสุดขึ้นก่อน
+
+                // ถ้าไม่ใช่แอดมินหรือหัวหน้า ให้เห็นแค่เดือนล่าสุดเท่านั้น
+                if (window.currentUser && window.currentUser.role !== 'admin' && window.currentUser.role !== 'head') {
+                    reports = reports.slice(0, 1);
+                }
 
                 let html = '<div style="display:flex; flex-direction:column; gap:1.5rem;">';
                 
