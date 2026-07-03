@@ -84,5 +84,13 @@
         <p>ขออภัยในความไม่สะดวก ขณะนี้ระบบบ้านพักครู (HOME PPK 2026) กำลังอยู่ในระหว่างการปรับปรุงและอัปเดตข้อมูล กรุณากลับมาใช้งานใหม่อีกครั้งในภายหลังครับ</p>
         <a href="login.html" class="btn-admin">เข้าสู่ระบบ (เฉพาะแอดมิน)</a>
     </div>
+    <script>
+        // ล้าง cache maintenance เมื่อมาถึงหน้านี้
+        // เพื่อให้เมื่อกดไป login.html จะไม่ถูก redirect กลับมาจาก cache เก่า
+        try {
+            localStorage.removeItem('_isMaint');
+            localStorage.removeItem('_maintCheckTs');
+        } catch(e) {}
+    </script>
 </body>
 </html>

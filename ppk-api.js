@@ -571,8 +571,9 @@ async function _routeAction(action, data) {
             }
         }
     }
-    // ตรวจสอบ Maintenance Mode ก่อน (ถ้าไม่ใช่หน้า login)
-    if (action !== 'login' && action !== 'checkLogin') {
+    // ตรวจสอบ Maintenance Mode ก่อน (ข้าม actions ที่เกี่ยวกับการ login)
+    var _skipMaintActions = ['login', 'checkLogin', 'getCurrentUser', 'setFirstPassword', 'forgotPassword'];
+    if (_skipMaintActions.indexOf(action) === -1) {
         var isMaintRedirect = await _checkMaintenance(_sess ? _sess.role : null);
         if (isMaintRedirect) return { success: false, error: 'ระบบกำลังปิดปรับปรุงชั่วคราว' };
     }
