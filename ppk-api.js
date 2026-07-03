@@ -6021,6 +6021,29 @@ async function _routeAction(action, data) {
             };
         }
 
+        // ── Published Reports & Meetings ──
+        case 'getPublishedReports': {
+            return await getPublishedReports(data.year);
+        }
+        case 'publishReport': {
+            return await publishReport(data);
+        }
+        case 'getMeetings': {
+            return await getMeetings(data);
+        }
+        case 'getMeetingById': {
+            return await getMeetingById(data.id);
+        }
+        case 'createMeeting': {
+            return await createMeeting(data);
+        }
+        case 'updateMeeting': {
+            return await updateMeeting(data);
+        }
+        case 'approveMeeting': {
+            return await approveMeeting(data.id, data.approvedBy);
+        }
+
         default:
             throw new Error('Unknown action: ' + action);
     }
