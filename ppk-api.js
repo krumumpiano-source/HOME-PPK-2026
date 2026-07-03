@@ -415,7 +415,33 @@ async function _getSessionRole() {
     return null;
 }
 
+async function _checkMaintenance(userRole) {
+    if (window.location.pathname.endsWith('maintenance.html')) return false;
+    try {
+        var lastMaintCheck = parseInt(localStorage.getItem('_maintCheckTs') || '0');
+        var isMaint = localStorage.getItem('_isMaint') === 'true';
+        if (Date.now() - lastMaintCheck > 30000) {
+            var mRows = await sbGet('settings', { key: 'eq.maintenance_mode', limit: '1' }).catch(function(){return null;});
+            if (mRows && mRows.length > 0) {
+                isMaint = mRows[0].value === 'true';
+            }
+            localStorage.setItem('_isMaint', isMaint ? 'true' : 'false');
+            localStorage.setItem('_maintCheckTs', String(Date.now()));
+        }
+        if (isMaint && userRole !== 'admin' && userRole !== 'head') {
+            window.location.replace('maintenance.html');
+            return true;
+        }
+    } catch(e) {}
+    return false;
+}
+
 async function checkSession(autoRedirect) {
+    var tempUser = null;
+    try { tempUser = JSON.parse(localStorage.getItem('currentUser') || 'null'); } catch(e) {}
+    var isMaintRedirect = await _checkMaintenance(tempUser ? tempUser.role : null);
+    if (isMaintRedirect) return null;
+
     // ตรวจ localStorage ก่อน แต่ต้อง verify กับ DB ทุก 1 นาที
     // bypass cache ถ้ายังไม่มี permissions (เช่น login จากเวอร์ชันเก่า)
     try {
@@ -544,6 +570,12 @@ async function _routeAction(action, data) {
             }
         }
     }
+    // ตรวจสอบ Maintenance Mode ก่อน (ถ้าไม่ใช่หน้า login)
+    if (action !== 'login' && action !== 'checkLogin') {
+        var isMaintRedirect = await _checkMaintenance(_sess ? _sess.role : null);
+        if (isMaintRedirect) return { success: false, error: 'ระบบกำลังปิดปรับปรุงชั่วคราว' };
+    }
+
     switch (action) {
         case 'login': {
             var email = (data.email || '').trim().toLowerCase();

@@ -25,10 +25,4 @@ CREATE POLICY "Everyone can view published reports"
 CREATE POLICY "Admins can manage published reports" 
     ON public.published_reports 
     FOR ALL 
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.sessions
-            WHERE sessions.user_id = auth.uid() 
-              AND (sessions.role = 'admin' OR sessions.role = 'head')
-        )
-    );
+    USING (public.is_admin_session());

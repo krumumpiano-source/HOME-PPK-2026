@@ -986,6 +986,17 @@
                         </div>
                     </div>
 
+                    <button class="accordion-toggle" onclick="toggleAccordion(this)">🛠️ โหมดปิดปรับปรุงระบบ <span class="acc-arrow">▼</span></button>
+                    <div class="settings-card accordion-body">
+                        <div class="checkbox-group" style="margin-top: 0.5rem;">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="maintenanceMode">
+                                <span style="color: #ef4444; font-weight: 600;">เปิดใช้งานโหมดปิดปรับปรุงชั่วคราว (Maintenance Mode)</span>
+                            </label>
+                            <span class="hint" style="display:block; margin-top:0.3rem; margin-left: 2rem;">ผู้ใช้งานทั่วไปจะถูกพาไปหน้าปิดปรับปรุง (แอดมินยังคงเข้าใช้งานได้ตามปกติ)</span>
+                        </div>
+                    </div>
+
                     <button class="accordion-toggle" onclick="toggleAccordion(this)">🔐 ตั้งค่าความปลอดภัย <span class="acc-arrow">▼</span></button>
                     <div class="settings-card accordion-body">
                         <div class="checkbox-group" style="margin-top: 0.5rem;">
@@ -3979,6 +3990,7 @@
                 adminPhone: document.getElementById('adminPhone').value,
                 paymentDueWorkingDays: parseInt(document.getElementById('paymentDueWorkingDays').value) || 15,
                 requireLogin: document.getElementById('requireLogin').checked,
+                maintenanceMode: document.getElementById('maintenanceMode').checked,
                 allowResetPassword: document.getElementById('allowResetPassword').checked,
                 allowRegistration: document.getElementById('allowRegistration').checked,
                 queueExpiryDate: document.getElementById('queueExpiryDateAdmin').value || '',
@@ -4013,6 +4025,7 @@
                     admin_email: settings.adminEmail,
                     admin_phone: settings.adminPhone,
                     due_date: String(settings.paymentDueWorkingDays),
+                    maintenance_mode: String(settings.maintenanceMode),
                     require_login: String(settings.requireLogin),
                     allow_reset_password: String(settings.allowResetPassword),
                     allow_registration: String(settings.allowRegistration),
@@ -4062,6 +4075,13 @@
             document.getElementById('adminPhone').value = settings.adminPhone;
             document.getElementById('paymentDueWorkingDays').value = settings.paymentDueWorkingDays;
             document.getElementById('requireLogin').checked = settings.requireLogin;
+            // โหลดค่าจาก Backend โดยตรงสำหรับ Maintenance Mode
+            callBackend('getSettings', {}).then(function(r) {
+                if (r && r.data) {
+                    var isMaint = r.data.maintenance_mode === 'true';
+                    document.getElementById('maintenanceMode').checked = isMaint;
+                }
+            }).catch(function(){});
             document.getElementById('allowResetPassword').checked = settings.allowResetPassword;
             document.getElementById('allowRegistration').checked = settings.allowRegistration;
             document.getElementById('queueExpiryDateAdmin').value = settings.queueExpiryDate || '';
@@ -5926,7 +5946,7 @@
         </script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260701A"></script>
+    <script src="ppk-api.js?v=20260703J"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>
