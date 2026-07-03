@@ -2,7 +2,7 @@ name: Playwright UI/UX Tests (Cross-Device)
 
 on:
   push:
-    branches: [main, dev]
+    branches: [dev]          # รัน E2E เฉพาะ dev branch, ไม่รันตอน push main
   pull_request:
     branches: [main]
 
