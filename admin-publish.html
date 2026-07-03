@@ -105,6 +105,10 @@
         const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
                              'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
+        function formatMoney(value) {
+            return parseFloat(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
         window.onload = async function() {
             var user = await checkSession(true);
             if (!user || (user.role !== 'admin' && user.role !== 'head')) {
