@@ -416,7 +416,8 @@ async function _getSessionRole() {
 }
 
 async function _checkMaintenance(userRole) {
-    if (window.location.pathname.endsWith('maintenance.html')) return false;
+    var path = window.location.pathname;
+    if (path.endsWith('maintenance.html') || path.endsWith('login.html') || path.endsWith('forgot-password.html') || path.endsWith('setup-admin.html')) return false;
     try {
         var lastMaintCheck = parseInt(localStorage.getItem('_maintCheckTs') || '0');
         var isMaint = localStorage.getItem('_isMaint') === 'true';
