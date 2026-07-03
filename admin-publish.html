@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>จัดการเผยแพร่รายงาน | HOME PPK 2026</title>
+    <link rel="stylesheet" href="ppk-theme.css?v=20260703J">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
+        body { margin:0; font-family:'Kanit',sans-serif; background:var(--bg); color:var(--text); }
+        .main-container { min-height:100vh; padding:2rem; max-width: 1200px; margin: 0 auto; }
+        @media (max-width:600px) { .main-container { padding:1rem; } }
+        
+        .page-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+        .back-btn { padding:.5rem 1rem; border-radius:8px; border:1px solid var(--border); background:var(--surface); cursor:pointer; font:inherit; }
+        .page-title { margin:0; font-size:1.5rem; color:var(--primary); }
+
+        .section { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:var(--shadow); }
+        .section-title { font-size:1.2rem; font-weight:700; margin-bottom:1rem; color:var(--text); border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem; }
+        
+        .btn { padding:0.6rem 1.2rem; border:none; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-secondary { background:var(--surface); border:1px solid var(--border); color:var(--text); }
+
+        table { width:100%; border-collapse:collapse; margin-top:1rem; }
+        th, td { padding:0.75rem; border:1px solid var(--border); text-align:right; }
+        th { background:#f8fafc; font-weight:600; text-align:center; }
+        tr:hover { background:#f1f5f9; }
+
+        /* Modal */
+        .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+        .modal-overlay.active { opacity:1; pointer-events:auto; }
+        .modal-content { background:var(--surface); border-radius:12px; padding:1.5rem; width:90%; max-width:600px; max-height:90vh; overflow-y:auto; position:relative; }
+        .modal-close { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--muted); }
+    </style>
+</head>
+<body>
+    <div id="ppkNav"></div>
+
+    <div class="main-container">
+        <div class="page-header no-print">
+            <button class="back-btn" onclick="navigate('?page=dashboard')">← ย้อนกลับ</button>
+            <h1 class="page-title">📢 จัดการเผยแพร่รายงานส่วนกลาง</h1>
+        </div>
+
+        <div class="section" id="annualReportSection">
+            <div class="section-title" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                📊 รายงานสรุปรายปี
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-left:auto;flex-wrap:wrap;">
+                    <div class="form-group" style="margin:0;">
+                        <label for="annual_year" style="font-size:0.85rem;margin-right:0.3rem;">ปี พ.ศ.</label>
+                        <select id="annual_year" onchange="loadAnnualReport()" style="padding:0.3rem;border-radius:6px;border:1px solid var(--border);font-size:0.85rem;"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadAnnualReport()">🔄 โหลดข้อมูล</button>
+                </div>
+            </div>
+            <div id="annualReportContent" style="padding:0.5rem 0;">
+                <div style="color:#9ca3af;text-align:center;padding:2rem;">กรุณาเลือกปีแล้วกดโหลดข้อมูล</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Publish Preview Modal -->
+    <div class="modal-overlay" id="publishPreviewModal" onclick="closePublishPreview()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:1rem;">
+                <h3 style="margin:0; color:var(--primary);">🔍 ตรวจสอบก่อนเผยแพร่</h3>
+                <button class="modal-close" style="position:static;" onclick="closePublishPreview()">&times;</button>
+            </div>
+            
+            <div id="publishPreviewContent">
+                <div style="text-align:center; padding:2rem; color:var(--muted);">⏳ กำลังโหลดข้อมูล...</div>
+            </div>
+            
+            <div class="form-group" style="margin-top:1.5rem;">
+                <label for="publishMemo">📝 บันทึกเพิ่มเติม (Memo) ถึงผู้พักอาศัย (เว้นว่างได้):</label>
+                <textarea id="publishMemo" rows="3" style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid var(--border); font-family:inherit;"></textarea>
+            </div>
+            
+            <div style="margin-top:1.5rem; display:flex; gap:1rem;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="closePublishPreview()">❌ ยกเลิก</button>
+                <button class="btn btn-primary" style="flex:2;" id="btnConfirmPublish">✅ ยืนยันและเผยแพร่สู่สาธารณะ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase/config.js?v=20260703J"></script>
+    <script src="supabase/supabase.min.js?v=20260703J"></script>
+    <script src="ppk-api.js?v=20260703G"></script>
+    <script src="ppk-app.js?v=20260703J"></script>
+    <script src="ppk-utils.js?v=20260703J"></script>
+    <script src="ppk-nav.js?v=20260703J"></script>
+
+    <script>
+        const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                             'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+        window.onload = async function() {
+            var user = await checkSession(true);
+            if (!user || (user.role !== 'admin' && user.role !== 'head')) {
+                document.body.innerHTML = '<div style="padding:2rem;text-align:center;color:red;">เฉพาะแอดมินเท่านั้น</div>';
+                return;
+            }
+            if (typeof renderPPKNav === 'function') renderPPKNav('ppkNav', 'admin-publish');
+            
+            var ySel = document.getElementById('annual_year');
+            var currY = new Date().getFullYear();
+            for (var y = currY - 2; y <= currY + 1; y++) {
+                var opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y + 543;
+                if (y === currY) opt.selected = true;
+                ySel.appendChild(opt);
+            }
+            loadAnnualReport();
+        };
+
+        async function loadAnnualReport() {
+            var year = document.getElementById('annual_year').value;
+            var content = document.getElementById('annualReportContent');
+            content.innerHTML = '<div style="color:var(--muted);text-align:center;padding:2rem;">⏳ กำลังโหลด...</div>';
+            
+            try {
+                var pubRes = await callBackend('getPublishedReports', { limit: 100 });
+                var publishedMap = {};
+                if (pubRes && pubRes.success && pubRes.reports) {
+                    pubRes.reports.forEach(function(r) {
+                        if (r.year == year) publishedMap[r.month] = r;
+                    });
+                }
+                
+                var res = await callBackend('getAnnualReport', { year: year });
+                if (!res || !res.success) throw new Error(res?.error || 'Failed to load');
+                
+                var html = '<div style="overflow-x:auto;"><table id="annualReportPrint"><thead><tr>' +
+                           '<th>เดือน</th><th>รายรับ (บาท)</th><th>รายจ่าย (บาท)</th><th>คงเหลือ (บาท)</th><th>สถานะเผยแพร่</th><th>จัดการ</th>' +
+                           '</tr></thead><tbody>';
+                var sumInc = 0, sumExp = 0;
+                
+                res.months.forEach(function(m) {
+                    var inc = m.income || 0;
+                    var exp = m.expense || 0;
+                    var bal = inc - exp;
+                    sumInc += inc; sumExp += exp;
+                    var isPub = !!publishedMap[m.month];
+                    
+                    html += '<tr>' +
+                        '<td style="text-align:center;">' + THAI_MONTHS[m.month - 1] + '</td>' +
+                        '<td style="color:var(--success);">' + formatMoney(inc) + '</td>' +
+                        '<td style="color:var(--danger);">' + formatMoney(exp) + '</td>' +
+                        '<td style="font-weight:600;color:' + (bal >= 0 ? 'var(--success)' : 'var(--danger)') + '">' + formatMoney(bal) + '</td>' +
+                        '<td style="text-align:center;">' + (isPub ? '<span style="background:var(--success-light);color:var(--success);padding:0.2rem 0.5rem;border-radius:12px;font-size:0.8rem;">✅ เผยแพร่แล้ว</span>' : '<span style="background:#f1f5f9;color:var(--muted);padding:0.2rem 0.5rem;border-radius:12px;font-size:0.8rem;">-</span>') + '</td>' +
+                        '<td style="text-align:center;">' +
+                            '<button class="btn ' + (isPub ? 'btn-secondary' : 'btn-primary') + '" onclick="doPublishMonth(' + year + ', ' + m.month + ')" style="padding:0.3rem 0.8rem;font-size:0.85rem;">' +
+                            (isPub ? 'แก้ไข' : 'เผยแพร่') + '</button>' +
+                        '</td>' +
+                    '</tr>';
+                });
+                
+                html += '<tr style="font-weight:700;background:#f8fafc;">' +
+                    '<td style="text-align:center;">รวมทั้งปี</td>' +
+                    '<td style="color:var(--success);">' + formatMoney(sumInc) + '</td>' +
+                    '<td style="color:var(--danger);">' + formatMoney(sumExp) + '</td>' +
+                    '<td style="color:' + ((sumInc - sumExp) >= 0 ? 'var(--success)' : 'var(--danger)') + '">' + formatMoney(sumInc - sumExp) + '</td>' +
+                    '<td colspan="2"></td>' +
+                '</tr></tbody></table></div>';
+                
+                content.innerHTML = html;
+            } catch(e) {
+                content.innerHTML = '<div style="color:var(--danger);text-align:center;padding:2rem;">❌ เกิดข้อผิดพลาด: ' + e.message + '</div>';
+            }
+        }
+
+        function closePublishPreview() {
+            document.getElementById('publishPreviewModal').classList.remove('active');
+        }
+
+        async function doPublishMonth(year, month) {
+            var modal = document.getElementById('publishPreviewModal');
+            var content = document.getElementById('publishPreviewContent');
+            var memoInput = document.getElementById('publishMemo');
+            var btnConfirm = document.getElementById('btnConfirmPublish');
+            
+            modal.classList.add('active');
+            content.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--muted);">⏳ กำลังคำนวณและสรุปข้อมูลตามแผน...</div>';
+            memoInput.value = '';
+            btnConfirm.disabled = true;
+
+            try {
+                var metricResult = await callBackend('calculateMonthlyMetrics', { year: year, month: month });
+                if (!metricResult || !metricResult.success) throw new Error(metricResult?.error || 'Failed to calculate metrics');
+                
+                var m = metricResult.metrics;
+                var inc = m.fund.incomeBreakdown || {};
+                var exp = m.fund.expenseBreakdown || {};
+                
+                var html = `
+                    <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:1rem;">
+                        <h4 style="margin:0 0 0.8rem; color:var(--text); text-align:center;">📊 สรุปกองทุนส่วนกลาง (เดือน ${month}/${year})</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <!-- Income -->
+                            <div style="background:var(--success-light); border:1px solid #a7f3d0; border-radius:6px; padding:0.8rem;">
+                                <div style="font-weight:700; color:var(--success); border-bottom:1px solid #a7f3d0; padding-bottom:0.5rem; margin-bottom:0.5rem;">📥 รายรับ: ${formatMoney(m.fund.income)}</div>
+                                <div style="font-size:0.85rem; color:#065f46; display:flex; flex-direction:column; gap:0.3rem;">
+                                    <div style="display:flex; justify-content:space-between;"><span>ค่าส่วนกลาง:</span> <span>${formatMoney(inc.common_fee)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>ปัดเศษค่าไฟ:</span> <span>${formatMoney(inc.electric_rounded)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>อื่นๆ:</span> <span>${formatMoney(inc.other)}</span></div>
+                                </div>
+                            </div>
+                            <!-- Expense -->
+                            <div style="background:var(--danger-light); border:1px solid #fecaca; border-radius:6px; padding:0.8rem;">
+                                <div style="font-weight:700; color:var(--danger); border-bottom:1px solid #fecaca; padding-bottom:0.5rem; margin-bottom:0.5rem;">📤 รายจ่าย: ${formatMoney(m.fund.expense)}</div>
+                                <div style="font-size:0.85rem; color:#991b1b; display:flex; flex-direction:column; gap:0.3rem;">
+                                    <div style="display:flex; justify-content:space-between;"><span>Loss ไฟฟ้า:</span> <span>${formatMoney(exp.electric_loss)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>ค่าตัดหญ้า:</span> <span>${formatMoney(exp.grass)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>ค่าขยะ:</span> <span>${formatMoney(exp.garbage)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>อื่นๆ:</span> <span>${formatMoney(exp.other)}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align:center; margin-top:1rem; font-weight:700; font-size:1.1rem; color:${m.fund.balance >= 0 ? 'var(--success)' : 'var(--danger)'}">
+                            ยอดคงเหลือสุทธิ: ${formatMoney(m.fund.balance)} บาท
+                        </div>
+                        ${m.fund.depositExcluded > 0 ? `<div style="text-align:center; font-size:0.8rem; color:var(--warning); margin-top:0.5rem;">* กรองยอดเงินรับฝากค่าน้ำ/ค่าไฟออกจำนวน ${formatMoney(m.fund.depositExcluded)} บาทแล้ว</div>` : ''}
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; font-size:0.85rem; text-align:center;">
+                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.6rem;">
+                            <div style="color:var(--muted); margin-bottom:0.2rem;">💧 ค่าน้ำเฉลี่ย</div>
+                            <div style="font-weight:600; color:var(--info);">${formatMoney(m.water.avg)} บ.</div>
+                        </div>
+                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.6rem;">
+                            <div style="color:var(--muted); margin-bottom:0.2rem;">⚡ ค่าไฟเฉลี่ย</div>
+                            <div style="font-weight:600; color:var(--warning);">${formatMoney(m.electric.avg)} บ.</div>
+                        </div>
+                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.6rem;">
+                            <div style="color:var(--muted); margin-bottom:0.2rem;">📈 จ่ายตรงเวลา</div>
+                            <div style="font-weight:600; color:var(--success);">${m.payment.rate.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+                content.innerHTML = html;
+                btnConfirm.disabled = false;
+                
+                btnConfirm.onclick = async function() {
+                    btnConfirm.disabled = true;
+                    btnConfirm.innerHTML = '⏳ กำลังเผยแพร่...';
+                    try {
+                        var pubResult = await callBackend('publishReport', {
+                            year: year, month: month, 
+                            income: m.fund.income, 
+                            expense: m.fund.expense, 
+                            memo: memoInput.value.trim(), 
+                            metrics: m
+                        });
+                        if (pubResult && pubResult.success) {
+                            ppkToast('เผยแพร่รายงานสำเร็จ!', 'success');
+                            closePublishPreview();
+                            loadAnnualReport();
+                        } else {
+                            throw new Error(pubResult.error || 'ไม่สามารถเผยแพร่ได้');
+                        }
+                    } catch(err) {
+                        ppkToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+                        btnConfirm.disabled = false;
+                        btnConfirm.innerHTML = '✅ ยืนยันและเผยแพร่สู่สาธารณะ';
+                    }
+                };
+
+            } catch(e) {
+                content.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--danger);">❌ เกิดข้อผิดพลาดในการดึงข้อมูล: ' + e.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>
