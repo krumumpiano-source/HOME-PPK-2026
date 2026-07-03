@@ -747,6 +747,30 @@
         </div>
     </div>
     
+    <!-- Publish Preview Modal -->
+    <div class="modal-overlay" id="publishPreviewModal" onclick="closePublishPreview()">
+        <div class="modal-content" style="max-width:600px; width:100%;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:1rem;">
+                <h3 style="margin:0; color:var(--primary);">🔍 ตรวจสอบก่อนเผยแพร่</h3>
+                <button class="modal-close" style="position:static;" onclick="closePublishPreview()">&times;</button>
+            </div>
+            
+            <div id="publishPreviewContent">
+                <div style="text-align:center; padding:2rem; color:var(--muted);">⏳ กำลังโหลดข้อมูล...</div>
+            </div>
+            
+            <div class="form-group" style="margin-top:1.5rem;">
+                <label for="publishMemo">📝 บันทึกเพิ่มเติม (Memo) ถึงผู้พักอาศัย (เว้นว่างได้):</label>
+                <textarea id="publishMemo" rows="3" style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid var(--border); font-family:inherit;"></textarea>
+            </div>
+            
+            <div class="modal-actions" style="margin-top:1.5rem; gap:1rem;">
+                <button class="btn" style="flex:1;" onclick="closePublishPreview()">❌ ยกเลิก</button>
+                <button class="btn btn-primary" style="flex:2;" id="btnConfirmPublish">✅ ยืนยันและเผยแพร่สู่สาธารณะ</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Image Modal -->
     <div class="modal-overlay" id="imageModal" onclick="closeImageModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -1636,30 +1660,110 @@
             }
         }
 
-        async function doPublishMonth(year, month, income, expense) {
+        function closePublishPreview() {
+            document.getElementById('publishPreviewModal').classList.remove('active');
+        }
+
+        async function doPublishMonth(year, month) {
             var user = await checkSession(true);
             if (!user || (user.role !== 'admin' && user.role !== 'head')) {
                 ppkToast('เฉพาะแอดมิน (Admin) หรือหัวหน้างานเท่านั้น ที่สามารถเผยแพร่รายงานได้', 'error');
                 return;
             }
 
-            var memo = prompt('กรุณากรอกคำอธิบาย (Memo) หากต้องการชี้แจงเพิ่มเติม (เว้นว่างได้):');
-            if (memo === null) return;
-            ppkToast('⏳ กำลังประมวลผลสถิติและเผยแพร่...', 'info');
+            var modal = document.getElementById('publishPreviewModal');
+            var content = document.getElementById('publishPreviewContent');
+            var memoInput = document.getElementById('publishMemo');
+            var btnConfirm = document.getElementById('btnConfirmPublish');
+            
+            modal.classList.add('active');
+            content.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--muted);">⏳ กำลังคำนวณและสรุปข้อมูลตามแผน...</div>';
+            memoInput.value = '';
+            btnConfirm.disabled = true;
+
             try {
                 var metricResult = await callBackend('calculateMonthlyMetrics', { year: year, month: month });
-                var metrics = (metricResult && metricResult.success) ? metricResult.metrics : {};
-                var pubResult = await callBackend('publishReport', {
-                    year: year, month: month, income: income, expense: expense, memo: memo, metrics: metrics
-                });
-                if (pubResult && pubResult.success) {
-                    ppkToast('เผยแพร่รายงานสำเร็จ!', 'success');
-                    loadAnnualReport();
-                } else {
-                    ppkToast('เกิดข้อผิดพลาด: ' + (pubResult.error || 'ไม่สามารถเผยแพร่ได้'), 'error');
-                }
+                if (!metricResult || !metricResult.success) throw new Error(metricResult?.error || 'Failed to calculate metrics');
+                
+                var m = metricResult.metrics;
+                var inc = m.fund.incomeBreakdown || {};
+                var exp = m.fund.expenseBreakdown || {};
+                
+                var html = `
+                    <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:1rem;">
+                        <h4 style="margin:0 0 0.8rem; color:var(--text); text-align:center;">📊 สรุปกองทุนส่วนกลาง (เดือน ${month}/${year})</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <!-- Income -->
+                            <div style="background:var(--success-light); border:1px solid #a7f3d0; border-radius:6px; padding:0.8rem;">
+                                <div style="font-weight:700; color:var(--success); border-bottom:1px solid #a7f3d0; padding-bottom:0.5rem; margin-bottom:0.5rem;">📥 รายรับ: ${formatMoney(m.fund.income)}</div>
+                                <div style="font-size:0.85rem; color:#065f46; display:flex; flex-direction:column; gap:0.3rem;">
+                                    <div style="display:flex; justify-content:space-between;"><span>ค่าส่วนกลาง:</span> <span>${formatMoney(inc.common_fee)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>ปัดเศษค่าไฟ:</span> <span>${formatMoney(inc.electric_rounded)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>อื่นๆ:</span> <span>${formatMoney(inc.other)}</span></div>
+                                </div>
+                            </div>
+                            <!-- Expense -->
+                            <div style="background:var(--danger-light); border:1px solid #fecaca; border-radius:6px; padding:0.8rem;">
+                                <div style="font-weight:700; color:var(--danger); border-bottom:1px solid #fecaca; padding-bottom:0.5rem; margin-bottom:0.5rem;">📤 รายจ่าย: ${formatMoney(m.fund.expense)}</div>
+                                <div style="font-size:0.85rem; color:#991b1b; display:flex; flex-direction:column; gap:0.3rem;">
+                                    <div style="display:flex; justify-content:space-between;"><span>Loss ไฟฟ้า:</span> <span>${formatMoney(exp.electric_loss)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>ค่าตัดหญ้า:</span> <span>${formatMoney(exp.grass)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>ค่าขยะ:</span> <span>${formatMoney(exp.garbage)}</span></div>
+                                    <div style="display:flex; justify-content:space-between;"><span>อื่นๆ:</span> <span>${formatMoney(exp.other)}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align:center; margin-top:1rem; font-weight:700; font-size:1.1rem; color:${m.fund.balance >= 0 ? 'var(--success)' : 'var(--danger)'}">
+                            ยอดคงเหลือสุทธิ: ${formatMoney(m.fund.balance)} บาท
+                        </div>
+                        ${m.fund.depositExcluded > 0 ? `<div style="text-align:center; font-size:0.8rem; color:var(--warning); margin-top:0.5rem;">* กรองยอดเงินรับฝากค่าน้ำ/ค่าไฟออกจำนวน ${formatMoney(m.fund.depositExcluded)} บาทแล้ว</div>` : ''}
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; font-size:0.85rem; text-align:center;">
+                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.6rem;">
+                            <div style="color:var(--muted); margin-bottom:0.2rem;">💧 ค่าน้ำเฉลี่ย</div>
+                            <div style="font-weight:600; color:var(--info);">${formatMoney(m.water.avg)} บ.</div>
+                        </div>
+                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.6rem;">
+                            <div style="color:var(--muted); margin-bottom:0.2rem;">⚡ ค่าไฟเฉลี่ย</div>
+                            <div style="font-weight:600; color:var(--warning);">${formatMoney(m.electric.avg)} บ.</div>
+                        </div>
+                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.6rem;">
+                            <div style="color:var(--muted); margin-bottom:0.2rem;">📈 จ่ายตรงเวลา</div>
+                            <div style="font-weight:600; color:var(--success);">${m.payment.rate.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+                content.innerHTML = html;
+                btnConfirm.disabled = false;
+                
+                btnConfirm.onclick = async function() {
+                    btnConfirm.disabled = true;
+                    btnConfirm.innerHTML = '⏳ กำลังเผยแพร่...';
+                    try {
+                        var pubResult = await callBackend('publishReport', {
+                            year: year, month: month, 
+                            income: m.fund.income, 
+                            expense: m.fund.expense, 
+                            memo: memoInput.value.trim(), 
+                            metrics: m
+                        });
+                        if (pubResult && pubResult.success) {
+                            ppkToast('เผยแพร่รายงานสำเร็จ!', 'success');
+                            closePublishPreview();
+                            loadAnnualReport();
+                        } else {
+                            throw new Error(pubResult.error || 'ไม่สามารถเผยแพร่ได้');
+                        }
+                    } catch(err) {
+                        ppkToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+                        btnConfirm.disabled = false;
+                        btnConfirm.innerHTML = '✅ ยืนยันและเผยแพร่สู่สาธารณะ';
+                    }
+                };
+
             } catch(e) {
-                ppkToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+                content.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--danger);">❌ เกิดข้อผิดพลาดในการดึงข้อมูล: ' + e.message + '</div>';
             }
         }
 
@@ -1679,7 +1783,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="supabase/config.js?v=20260416C"></script>
     <script src="supabase/supabase.min.js?v=20260416C"></script>
-    <script src="ppk-api.js?v=20260703U"></script>
+    <script src="ppk-api.js?v=20260703M"></script>
     <script src="ppk-app.js?v=20260416C"></script>
     <script src="ppk-utils.js?v=20260416C"></script>
     <script src="ppk-nav.js?v=20260416C"></script>

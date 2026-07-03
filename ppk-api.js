@@ -6578,11 +6578,18 @@ async function acknowledgeWarning(warningId) {
 async function getAnnualReport(year) {
     if (!year) return { success: false, error: 'ต้องระบุปี' };
     try {
-        var incRows = await sbGet('accounting_entries', { year: 'eq.' + year, type: 'eq.income',  select: 'month,amount' });
+        var incRows = await sbGet('accounting_entries', { year: 'eq.' + year, type: 'eq.income',  select: 'month,amount,description' });
         var expRows = await sbGet('accounting_entries', { year: 'eq.' + year, type: 'eq.expense', select: 'month,amount' });
         var byMonth = {};
         for (var m = 1; m <= 12; m++) byMonth[m] = { month: m, income: 0, expense: 0 };
-        (incRows || []).forEach(function(r) { if (r.month) byMonth[r.month].income += (parseFloat(r.amount) || 0); });
+        (incRows || []).forEach(function(r) { 
+            if (r.month) {
+                var desc = (r.description || '').toLowerCase();
+                if (!desc.includes('รับฝาก') && !desc.includes('deposit')) {
+                    byMonth[r.month].income += (parseFloat(r.amount) || 0); 
+                }
+            }
+        });
         (expRows || []).forEach(function(r) { if (r.month) byMonth[r.month].expense += (parseFloat(r.amount) || 0); });
         return { success: true, months: Object.values(byMonth) };
     } catch(e) {
@@ -6641,18 +6648,58 @@ async function calculateMonthlyMetrics(year, month) {
             metrics.payment.rate = (metrics.payment.paid / metrics.payment.total) * 100;
         }
 
-        // Fund stats for this month
-        metrics.fund.income = (incRows || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-        metrics.fund.expense = (expRows || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-        metrics.fund.balance = metrics.fund.income - metrics.fund.expense;
+        // Fund stats for this month (Filter out deposits and categorize)
+        var incBreakdown = { common_fee: 0, electric_rounded: 0, other: 0 };
+        var expBreakdown = { electric_loss: 0, garbage: 0, grass: 0, other: 0 };
+        var filteredIncome = 0;
+        var filteredExpense = 0;
+        var depositExcluded = 0;
+
+        (incRows || []).forEach(function(r) {
+            var amt = parseFloat(r.amount) || 0;
+            var desc = (r.description || '').toLowerCase();
+            
+            // ข้ามเงินรับฝาก (deposit)
+            if (desc.includes('รับฝาก') || desc.includes('deposit')) {
+                depositExcluded += amt;
+                return;
+            }
+            
+            filteredIncome += amt;
+            if (desc.includes('ค่าส่วนกลาง')) incBreakdown.common_fee += amt;
+            else if (desc.includes('ส่วนต่างค่าไฟ') || desc.includes('ปัดเศษ')) incBreakdown.electric_rounded += amt;
+            else incBreakdown.other += amt;
+        });
+
+        (expRows || []).forEach(function(r) {
+            var amt = parseFloat(r.amount) || 0;
+            var desc = (r.description || '').toLowerCase();
+            
+            filteredExpense += amt;
+            if (desc.includes('lost') || desc.includes('ส่วนต่างค่าไฟ (ติดลบ)')) expBreakdown.electric_loss += amt;
+            else if (desc.includes('ขยะ')) expBreakdown.garbage += amt;
+            else if (desc.includes('หญ้า')) expBreakdown.grass += amt;
+            else expBreakdown.other += amt;
+        });
+
+        metrics.fund.income = filteredIncome;
+        metrics.fund.expense = filteredExpense;
+        metrics.fund.balance = filteredIncome - filteredExpense;
+        metrics.fund.incomeBreakdown = incBreakdown;
+        metrics.fund.expenseBreakdown = expBreakdown;
+        metrics.fund.depositExcluded = depositExcluded;
 
         // Cash on hand (all time up to this period)
         try {
             var [allInc, allExp] = await Promise.all([
-                sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.income', select: 'amount' }).catch(function(){ return []; }),
+                sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.income', select: 'amount,description' }).catch(function(){ return []; }),
                 sbGet('accounting_entries', { period: 'lte.' + period, type: 'eq.expense', select: 'amount' }).catch(function(){ return []; })
             ]);
-            var tInc = (allInc || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
+            var tInc = (allInc || []).reduce(function(s, r) { 
+                var desc = (r.description || '').toLowerCase();
+                if (desc.includes('รับฝาก') || desc.includes('deposit')) return s; // กรองออกเช่นกัน
+                return s + (parseFloat(r.amount) || 0); 
+            }, 0);
             var tExp = (allExp || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
             metrics.fund.cashOnHand = tInc - tExp;
         } catch(e) { metrics.fund.cashOnHand = 0; }
