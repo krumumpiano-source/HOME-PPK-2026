@@ -6021,13 +6021,33 @@ async function _routeAction(action, data) {
             };
         }
 
-        // ── Published Reports & Meetings ──
-        case 'getPublishedReports': {
-            return await getPublishedReports(data.year);
+        // ── Inspections & MOU ──
+        case 'createInspection': {
+            return await createInspection(data);
         }
-        case 'publishReport': {
-            return await publishReport(data);
+        case 'getInspection': {
+            return await getInspection(data.requestId);
         }
+        case 'createMouDraft': {
+            return await createMouDraft(data);
+        }
+        case 'getMouByRequest': {
+            return await getMouByRequest(data.requestId);
+        }
+        case 'getMousByResident': {
+            return await getMousByResident(data.residentId);
+        }
+        case 'getAllMous': {
+            return await getAllMous(data);
+        }
+        case 'uploadMouSignature': {
+            return await uploadMouSignature(data);
+        }
+        case 'uploadMouScan': {
+            return await uploadMouScan(data);
+        }
+
+        // ── Meetings ──
         case 'getMeetings': {
             return await getMeetings(data);
         }
@@ -6042,6 +6062,37 @@ async function _routeAction(action, data) {
         }
         case 'approveMeeting': {
             return await approveMeeting(data.id, data.approvedBy);
+        }
+
+        // ── Warnings ──
+        case 'createWarning': {
+            return await createWarning(data);
+        }
+        case 'getWarningsByUser': {
+            return await getWarningsByUser(data.userId);
+        }
+        case 'getWarningsByHouse': {
+            return await getWarningsByHouse(data.houseId);
+        }
+        case 'getAllWarnings': {
+            return await getAllWarnings();
+        }
+        case 'acknowledgeWarning': {
+            return await acknowledgeWarning(data.warningId);
+        }
+
+        // ── Annual Report & Published Reports ──
+        case 'getAnnualReport': {
+            return await getAnnualReport(data.year);
+        }
+        case 'calculateMonthlyMetrics': {
+            return await calculateMonthlyMetrics(data.year, data.month);
+        }
+        case 'publishReport': {
+            return await publishReport(data);
+        }
+        case 'getPublishedReports': {
+            return await getPublishedReports(data.year);
         }
 
         default:
