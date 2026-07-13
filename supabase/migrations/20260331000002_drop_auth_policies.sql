@@ -1,4 +1,4 @@
-﻿-- Migration: ลบ policy ที่ใช้ is_authenticated() ออกทั้งหมด
+-- Migration: ลบ policy ที่ใช้ is_authenticated() ออกทั้งหมด
 -- สาเหตุ: ระบบนี้ใช้ custom session ไม่ใช่ Supabase Auth
 --         policy พวก *_auth_* ใช้ is_authenticated() ซึ่ง return false ตลอด
 --         ทำให้ INSERT/UPDATE/DELETE ถูกบล็อกแม้จะมี anon_all_* policy อยู่แล้ว

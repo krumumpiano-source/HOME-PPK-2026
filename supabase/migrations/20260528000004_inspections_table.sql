@@ -1,4 +1,4 @@
-﻿-- Migration: inspections table
+-- Migration: inspections table
 -- Purpose: บันทึกผลการตรวจสภาพบ้านก่อนการส่งมอบคืน
 
 CREATE TABLE IF NOT EXISTS inspections (

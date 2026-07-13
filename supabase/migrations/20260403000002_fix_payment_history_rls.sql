@@ -1,4 +1,4 @@
-﻿-- Migration: แก้ไข RLS Policy สำหรับ payment_history
+-- Migration: แก้ไข RLS Policy สำหรับ payment_history
 -- ปัญหา: "new row violates row-level security policy for table payment_history"
 -- สาเหตุ: มี policy ที่ใช้ is_authenticated() (Supabase Auth) ขัดกับระบบ custom session
 -- Idempotent — รันซ้ำได้อย่างปลอดภัย

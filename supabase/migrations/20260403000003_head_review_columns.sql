@@ -1,4 +1,4 @@
-﻿-- เพิ่ม columns สำหรับ workflow ลงความเห็นหัวหน้างาน
+-- เพิ่ม columns สำหรับ workflow ลงความเห็นหัวหน้างาน
 -- head_comment: ความเห็นที่หัวหน้าพิมพ์
 -- head_signature: ลายเซ็นดิจิทัล (base64 PNG data URL)
 -- head_reviewed_at: วันเวลาที่ลงความเห็น

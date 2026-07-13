@@ -16,12 +16,14 @@ CREATE TABLE IF NOT EXISTS public.published_reports (
 ALTER TABLE public.published_reports ENABLE ROW LEVEL SECURITY;
 
 -- Allow everyone to read published reports
+DROP POLICY IF EXISTS "Everyone can view published reports" ON public.published_reports;
 CREATE POLICY "Everyone can view published reports" 
     ON public.published_reports 
     FOR SELECT 
     USING (true);
 
 -- Allow admins/heads to insert/update published reports
+DROP POLICY IF EXISTS "Admins can manage published reports" ON public.published_reports;
 CREATE POLICY "Admins can manage published reports" 
     ON public.published_reports 
     FOR ALL 

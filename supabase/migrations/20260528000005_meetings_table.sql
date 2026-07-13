@@ -1,4 +1,4 @@
-﻿-- Migration: meetings table
+-- Migration: meetings table
 -- Purpose: บันทึกการประชุมคณะกรรมการบ้านพักครู
 
 CREATE TABLE IF NOT EXISTS meetings (
@@ -26,16 +26,19 @@ CREATE INDEX IF NOT EXISTS idx_meetings_status       ON meetings(status);
 ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
 
 -- Everyone authenticated can read published meetings; admin/head can read all
+DROP POLICY IF EXISTS meetings_select ON meetings;
 CREATE POLICY meetings_select ON meetings
     FOR SELECT
     USING (status = 'published' OR public.is_admin_session());
 
 -- Only admin/head can insert
+DROP POLICY IF EXISTS meetings_insert ON meetings;
 CREATE POLICY meetings_insert ON meetings
     FOR INSERT
     WITH CHECK (public.is_admin_session());
 
 -- Only admin/head can update
+DROP POLICY IF EXISTS meetings_update ON meetings;
 CREATE POLICY meetings_update ON meetings
     FOR UPDATE
     USING (public.is_admin_session())

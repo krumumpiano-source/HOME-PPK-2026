@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Fix: RLS policies ทุก table — ไม่อนุญาต UPDATE/INSERT/DELETE สำหรับ anon
 -- สาเหตุ: policies อาจหายหลัง Supabase project pause/restore
 -- วิธีใช้: คัดลอก SQL ทั้งหมดไปรันใน Supabase Dashboard → SQL Editor

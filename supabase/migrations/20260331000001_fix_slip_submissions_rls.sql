@@ -1,4 +1,4 @@
-﻿-- Migration: แก้ไข RLS Policy สำหรับ slip_submissions
+-- Migration: แก้ไข RLS Policy สำหรับ slip_submissions
 -- ปัญหา: "new row violates row-level security policy for table slip_submissions"
 -- สาเหตุ: มี policy slip_auth_insert ที่ใช้ is_authenticated() (Supabase Auth)
 --         ขัดกับระบบนี้ที่ใช้ custom session ไม่ใช่ Supabase Auth

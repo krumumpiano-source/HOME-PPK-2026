@@ -1,4 +1,4 @@
-﻿-- Migration: warnings table
+-- Migration: warnings table
 -- Purpose: บันทึกหนังสือตักเตือนผู้พักอาศัย ระดับ 1-3
 
 CREATE TABLE IF NOT EXISTS warnings (

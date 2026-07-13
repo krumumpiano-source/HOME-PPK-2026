@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Advance Payments — ระบบสำรองจ่าย/ทดรองจ่าย
 -- HOME PPK 2026
 -- Date: 2026-04-16
@@ -41,6 +41,7 @@ ALTER TABLE IF EXISTS public.outstanding
 ALTER TABLE public.advance_payments ENABLE ROW LEVEL SECURITY;
 
 -- ── 4. RLS Policies (transitional — เหมือน pattern เดิม) ─
+DROP POLICY IF EXISTS "anon_all_advance_payments" ON public.advance_payments;
 CREATE POLICY "anon_all_advance_payments"
   ON public.advance_payments FOR ALL TO anon
   USING (true) WITH CHECK (true);

@@ -1,4 +1,4 @@
-﻿-- Migration: mou_documents table + mou-documents storage bucket
+-- Migration: mou_documents table + mou-documents storage bucket
 -- Purpose: สัญญาเช่าบ้านพักครู (MOU)
 
 CREATE TABLE IF NOT EXISTS mou_documents (
@@ -27,6 +27,7 @@ CREATE INDEX IF NOT EXISTS idx_mou_status      ON mou_documents(status);
 ALTER TABLE mou_documents ENABLE ROW LEVEL SECURITY;
 
 -- Resident can read their own MOU; admin/head can read all
+DROP POLICY IF EXISTS mou_select ON mou_documents;
 CREATE POLICY mou_select ON mou_documents
     FOR SELECT
     USING (
@@ -35,11 +36,13 @@ CREATE POLICY mou_select ON mou_documents
     );
 
 -- Only admin/head can insert
+DROP POLICY IF EXISTS mou_insert ON mou_documents;
 CREATE POLICY mou_insert ON mou_documents
     FOR INSERT
     WITH CHECK (public.is_admin_session());
 
 -- Admin/head can update any; resident can update sign_resident_url only
+DROP POLICY IF EXISTS mou_update ON mou_documents;
 CREATE POLICY mou_update ON mou_documents
     FOR UPDATE
     USING (

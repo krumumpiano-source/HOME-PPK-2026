@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- HOME PPK 2026 — Security: ป้องกัน role escalation ใน users
 -- ปัญหา: users_update มี WITH CHECK (true) → anon เปลี่ยน role
 --        เป็น admin หรือ is_active=true ได้
@@ -19,7 +19,7 @@ CREATE POLICY "users_update" ON public.users
     WITH CHECK (
         public.is_admin_session()
         OR (
-            NEW.role      = (SELECT u.role      FROM public.users u WHERE u.id = NEW.id) AND
-            NEW.is_active = (SELECT u.is_active FROM public.users u WHERE u.id = NEW.id)
+            role      = (SELECT u.role      FROM public.users u WHERE u.id = id) AND
+            is_active = (SELECT u.is_active FROM public.users u WHERE u.id = id)
         )
     );

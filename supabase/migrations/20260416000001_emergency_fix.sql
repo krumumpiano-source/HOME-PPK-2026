@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Phase 1: Emergency Fix
 -- 1.1 Enable RLS on report_approvals (CRITICAL)
 -- 1.2 Fix function search_path (6 warnings)

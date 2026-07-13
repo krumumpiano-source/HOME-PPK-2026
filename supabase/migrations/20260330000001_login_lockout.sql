@@ -1,4 +1,4 @@
-﻿-- Migration: เพิ่ม columns สำหรับ Account Lockout ใน users table
+-- Migration: เพิ่ม columns สำหรับ Account Lockout ใน users table
 -- Additive only — ไม่กระทบข้อมูลเดิม
 
 ALTER TABLE public.users

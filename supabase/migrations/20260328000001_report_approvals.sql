@@ -1,4 +1,4 @@
-﻿-- Report approval workflow: user submits → admin signs → user prints
+-- Report approval workflow: user submits → admin signs → user prints
 create table if not exists public.report_approvals (
   id            text primary key default ('RAP' || upper(substr(gen_random_uuid()::text, 1, 8))),
   report_type   text not null,             -- 'water_monthly' | 'water_yearly' | 'electric_monthly' | 'electric_yearly'

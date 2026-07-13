@@ -255,6 +255,22 @@ async function sbDelete(table, filter) {
     });
 }
 
+
+/* ──────────────────────────────────────────
+   Supabase SDK — RPC
+────────────────────────────────────────── */
+async function sbRpc(fn, args) {
+    return new Promise(function (resolve, reject) {
+        _waitSb(async function (sb) {
+            try {
+                var res = await sb.rpc(fn, args || {});
+                if (res.error) reject(new Error(res.error.message));
+                else resolve(res.data);
+            } catch (e) { reject(e); }
+        });
+    });
+}
+
 /* ══════════════════════════════════════════
    Activity Logging (fire-and-forget)
 ══════════════════════════════════════════ */
@@ -625,19 +641,14 @@ async function _routeAction(action, data) {
                 matched = true;
                 try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
             }
-            if (!matched) {
-                // ✅ นับครั้งที่ผิด + ล็อคถ้าเกิน 5 ครั้ง
-                var newAttempts = (parseInt(u.failed_attempts) || 0) + 1;
-                var lockPatch = { failed_attempts: newAttempts, updated_at: new Date().toISOString() };
-                if (newAttempts >= 5) {
-                    lockPatch.locked_until = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-                    _logActivity('account_locked', u.id, 'บัญชีถูกล็อกอัตโนมัติ (กรอกรหัสผ่านผิด ' + newAttempts + ' ครั้ง)', { email: email });
-                }
-                try { await sbPatch('users', { id: 'eq.' + u.id }, lockPatch); } catch(e) {}
-                if (newAttempts >= 5) {
+                        if (!matched) {
+                var rpcRes = await sbRpc('rpc_login_lockout', { p_email: email });
+                if (rpcRes && rpcRes.locked) {
+                    _logActivity('account_locked', u.id, 'บัญชีถูกล็อกอัตโนมัติ (กรอกรหัสผ่านผิดเกิน 5 ครั้ง)', { email: email });
                     return { success: false, error: 'รหัสผ่านไม่ถูกต้อง บัญชีถูกล็อกชั่วคราว 15 นาที' };
                 }
-                var remaining = Math.max(1, 5 - newAttempts);
+                var failedAtt = rpcRes ? rpcRes.failed_attempts : ((parseInt(u.failed_attempts) || 0) + 1);
+                var remaining = Math.max(1, 5 - failedAtt);
                 return { success: false, error: 'รหัสผ่านไม่ถูกต้อง (เหลืออีก ' + remaining + ' ครั้งก่อนถูกล็อก)' };
             }
             // ✅ Login สำเร็จ — reset lockout counter
@@ -2251,9 +2262,9 @@ async function _routeAction(action, data) {
             var otpHash = await sha256hex(otp + ':' + email);
             var expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 นาที
             // เก็บ OTP ใน settings table (key = pw_reset_{email})
-            var otpKey = 'pw_reset_' + email;
-            var otpVal = JSON.stringify({ code_hash: otpHash, expires_at: expiresAt, attempts: 0 });
-            await sbUpsert('settings', { key: otpKey, value: otpVal }, 'key');
+            var rpcRes = await sbRpc('rpc_request_password_reset', { p_email: email, p_otp_hash: otpHash, p_expires_at: expiresAt });
+            if (!rpcRes || !rpcRes.success) return { success: false, error: 'เกิดข้อผิดพลาดในการขอรหัส OTP' };
+            if (rpcRes.firstname) u.firstname = rpcRes.firstname;
             // ส่งอีเมล OTP
             var emailSent = false;
             try {
@@ -2288,25 +2299,11 @@ async function _routeAction(action, data) {
             var newPassword = data.newPassword || '';
             if (!email || !code) return { success: false, error: 'กรุณากรอกอีเมลและรหัส OTP' };
             if (!newPassword || newPassword.length < 8) return { success: false, error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร' };
-            var otpKey = 'pw_reset_' + email;
-            var resetRows = await sbGet('settings', { key: 'eq.' + otpKey, limit: '1' });
-            if (!resetRows || !resetRows[0]) return { success: false, error: 'ไม่พบคำขอรีเซ็ต กรุณาขอรหัส OTP ใหม่' };
-            var rr = {};
-            try { rr = JSON.parse(resetRows[0].value); } catch(e) { return { success: false, error: 'ข้อมูล OTP ไม่สมบูรณ์ กรุณาขอใหม่' }; }
-            if ((rr.attempts || 0) >= 5) return { success: false, error: 'ป้อนรหัสผิดเกินจำนวนครั้ง กรุณาขอรหัส OTP ใหม่' };
-            if (new Date(rr.expires_at) < new Date()) return { success: false, error: 'รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่' };
-            var codeHash = await sha256hex(code + ':' + email);
-            if (codeHash !== rr.code_hash) {
-                rr.attempts = (rr.attempts || 0) + 1;
-                await sbUpsert('settings', { key: otpKey, value: JSON.stringify(rr) }, 'key');
-                return { success: false, error: 'รหัส OTP ไม่ถูกต้อง (เหลือ ' + (5 - rr.attempts) + ' ครั้ง)' };
-            }
-            // OTP ถูกต้อง → เปลี่ยนรหัสผ่าน
+            var codeHash = await sha256hex(code + ":" + email);
             var pwHash = await sha256hexSalted(newPassword, email);
-            await sbPatch('users', { email: 'eq.' + email }, { password_hash: pwHash, updated_at: new Date().toISOString() });
-            // ลบ OTP record
-            await sbDelete('settings', { key: 'eq.' + otpKey });
-            return { success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
+            var rpcRes = await sbRpc('rpc_verify_password_reset', { p_email: email, p_otp_hash: codeHash, p_new_password_hash: pwHash });
+            if (!rpcRes || !rpcRes.success) return { success: false, error: rpcRes.error || 'รหัส OTP ไม่ถูกต้อง' };
+            return { success: true, message: rpcRes.message || 'เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
         }
 
         case 'findEmail': {
@@ -3533,7 +3530,11 @@ async function _routeAction(action, data) {
                     var reqRow = await sbGet('requests', { id: 'eq.' + reqIdToReview, select: 'user_id' });
                     var reqUserId = reqRow && reqRow[0] ? reqRow[0].user_id : null;
                     // ดูว่ามี row ใน queue อยู่แล้วหรือไม่
-                    var existQ = await sbGet('queue', { request_id: 'eq.' + reqIdToReview, status: 'eq.waiting', limit: '1' });
+                    var currentReq = await sbGet('requests', { id: 'eq.' + reqIdToReview, select: 'status', limit: '1' });
+            if (currentReq && currentReq[0] && (currentReq[0].status === 'approved' || currentReq[0].status === 'rejected')) {
+                 return { success: false, error: 'คำร้องนี้ถูกดำเนินการไปแล้วโดยแอดมินคนอื่น' };
+            }
+            var existQ = await sbGet('queue', { request_id: 'eq.' + reqIdToReview, status: 'eq.waiting', limit: '1' });
                     if (!existQ || existQ.length === 0) {
                         // หา position สูงสุดปัจจุบัน
                         var allQ = await sbGet('queue', { status: 'eq.waiting', order: 'position.desc', limit: '1' });

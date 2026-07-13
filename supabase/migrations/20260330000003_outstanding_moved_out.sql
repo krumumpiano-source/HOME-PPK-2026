@@ -1,4 +1,4 @@
-﻿-- Migration: เพิ่ม moved_out_at ใน outstanding เพื่อซ่อนหนี้เก่าจากผู้พักใหม่
+-- Migration: เพิ่ม moved_out_at ใน outstanding เพื่อซ่อนหนี้เก่าจากผู้พักใหม่
 -- Additive only — ไม่กระทบข้อมูลเดิม (DEFAULT NULL = ปกติ)
 -- เมื่อ resident ย้ายออกและยังมียอดค้าง → ระบบจะ set moved_out_at = timestamp
 -- ผู้พักใหม่จะไม่เห็น rows ที่ moved_out_at IS NOT NULL ใน dashboard

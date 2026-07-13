@@ -1,5 +1,5 @@
 // HOME PPK 2026 � Service Worker v1
-var CACHE_NAME = 'ppk-v20260713N';
+var CACHE_NAME = 'ppk-v20260713K';
 var PRECACHE = [
   './',
   './dashboard.html',
@@ -63,7 +63,14 @@ self.addEventListener('fetch', function(e) {
       }
       return resp;
     }).catch(function() {
-      return caches.match(e.request);
+      return caches.match(e.request).then(function(response) {
+        if (response) return response;
+        // Fallback mapping
+        if (e.request.url.endsWith('/') || e.request.url.endsWith('/index.html')) {
+          return caches.match('./');
+        }
+        return new Response('Network error happened', { status: 408, headers: { 'Content-Type': 'text/plain' } });
+      });
     })
   );
 });

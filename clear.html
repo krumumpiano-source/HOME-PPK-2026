@@ -14,13 +14,16 @@
                 for(let registration of registrations) {
                     registration.unregister();
                 }
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
             });
-        } else {
-            window.location.href = 'index.html';
         }
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) caches.delete(name);
+            });
+        }
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
     </script>
 </body>
 </html>
