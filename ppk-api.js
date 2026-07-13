@@ -574,7 +574,13 @@ async function _routeAction(action, data) {
     // ตรวจสอบ Maintenance Mode ก่อน (ข้าม actions ที่เกี่ยวกับการ login)
     var _skipMaintActions = ['login', 'checkLogin', 'getCurrentUser', 'setFirstPassword', 'forgotPassword'];
     if (_skipMaintActions.indexOf(action) === -1) {
-        var isMaintRedirect = await _checkMaintenance(_sess ? _sess.role : null);
+        var _tmpMaintRole = null;
+        if (typeof _sess !== 'undefined' && _sess) _tmpMaintRole = _sess.role;
+        else if (typeof _sess2 !== 'undefined' && _sess2) _tmpMaintRole = _sess2.role;
+        if (!_tmpMaintRole) {
+            try { _tmpMaintRole = JSON.parse(localStorage.getItem('currentUser') || '{}').role || null; } catch(e) {}
+        }
+        var isMaintRedirect = await _checkMaintenance(_tmpMaintRole);
         if (isMaintRedirect) return { success: false, error: 'ระบบกำลังปิดปรับปรุงชั่วคราว' };
     }
 
