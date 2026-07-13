@@ -3,11 +3,12 @@
    Sidebar (Desktop) + Topbar Hamburger & Drawer (Mobile)
    ═══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 /* ─── Design Tokens ─── */
 :root {
   /* Primary */
+  --font-heading: 'Outfit', 'Kanit', sans-serif;
   --c-primary: #4F46E5;
   --c-primary-light: #818CF8;
   --c-primary-lighter: #C7D2FE;
@@ -25,7 +26,7 @@
   /* Text */
   --c-text: #1E293B;
   --c-text-2: #475569;
-  --c-text-3: #94A3B8;
+  --c-text-3: #64748B;
   --c-text-inv: #FFFFFF;
 
   /* Status */
@@ -61,7 +62,7 @@
 
   /* Transition */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ─── Reset & Base ─── */
@@ -135,7 +136,7 @@ img { max-width: 100%; height: auto; }
   flex-shrink: 0;
 }
 .sidebar-brand {
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-heading);
   font-size: 17px;
   font-weight: 700;
   color: var(--c-cyan);
@@ -392,7 +393,7 @@ img { max-width: 100%; height: auto; }
 
 /* Brand in topbar */
 .nav-topbar-brand {
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 700;
   color: var(--c-cyan);
@@ -570,7 +571,7 @@ img { max-width: 100%; height: auto; }
   margin-bottom: 1rem; padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--c-border-light);
 }
-.ppk-card-title { font-size: 1rem; font-weight: 600; color: var(--c-text); }
+.ppk-card-title { font-family: var(--font-heading); font-size: 1rem; font-weight: 600; color: var(--c-text); }
 .ppk-card-icon {
   width: 36px; height: 36px; border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
@@ -595,7 +596,7 @@ img { max-width: 100%; height: auto; }
 .ppk-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .ppk-stat:active { transform: scale(0.97); }
 .ppk-stat-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
-.ppk-stat-value { font-size: 2rem; font-weight: 700; line-height: 1.1; margin-bottom: 0.25rem; }
+.ppk-stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; line-height: 1.1; margin-bottom: 0.25rem; }
 .ppk-stat-value.danger { color: var(--c-danger); }
 .ppk-stat-value.ok { color: var(--c-success); }
 .ppk-stat-label { font-size: 0.78rem; color: var(--c-text-3); font-weight: 400; }
@@ -819,4 +820,20 @@ img { max-width: 100%; height: auto; }
 @media (max-width: 350px) {
   .ppk-hub-grid { grid-template-columns: repeat(2, 1fr); }
   .ppk-stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* ─── Dark Mode Support ─── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #0F172A;
+    --c-surface: #1E293B;
+    --c-surface-2: #334155;
+    --c-surface-3: #475569;
+    --c-border: #334155;
+    --c-border-light: #1E293B;
+    --c-text: #F8FAFC;
+    --c-text-2: #CBD5E1;
+    --c-text-3: #94A3B8;
+    --c-text-inv: #1E293B;
+  }
 }

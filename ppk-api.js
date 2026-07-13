@@ -1893,23 +1893,36 @@ async function _routeAction(action, data) {
             return { success: true, data: rows || [] };
         }
         case 'reimburseAdvance': {
-            // ดึงข้อมูลเดิมก่อน
+            // ดึงข้อมูลเดิมก่อน เพื่อเอา period ไปทำ autoSync 
             var existing = await sbGet('advance_payments', { id: 'eq.' + data.id });
             if (!existing || !existing[0]) return { success: false, error: 'ไม่พบรายการสำรองจ่าย' };
             var adv = existing[0];
+            
+            var sess = await sbGet('sessions', { token: 'eq.' + getSessionToken(), select: 'user_id' });
+            var recordedBy = sess && sess[0] ? sess[0].user_id : '';
+            if (!recordedBy) {
+                var lsUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                if (lsUser && lsUser.id) recordedBy = lsUser.id;
+            }
+
             var addAmt = parseFloat(data.reimbursed_amount) || 0;
-            var newReimbursed = (parseFloat(adv.reimbursed_amount) || 0) + addAmt;
-            var advTotal = parseFloat(adv.amount) || 0;
-            var newStatus = newReimbursed >= advTotal ? 'reimbursed' : (newReimbursed > 0 ? 'partial' : 'pending');
-            await sbPatch('advance_payments', { id: 'eq.' + data.id }, {
-                reimbursed_amount: Math.min(newReimbursed, advTotal),
-                reimbursed_at: new Date().toISOString(),
-                reimbursed_note: data.reimbursed_note || '',
-                approved_by: data.approved_by || null,
-                approved_at: data.approved_by ? new Date().toISOString() : null,
-                status: newStatus,
-                updated_at: new Date().toISOString()
-            });
+            var rpcData = {
+                p_advance_id: data.id,
+                p_amount: addAmt,
+                p_note: data.reimbursed_note || '',
+                p_recorded_by: recordedBy,
+                p_approved_by: data.approved_by || null
+            };
+
+            var res = await _sb.rpc('rpc_reimburse_advance', rpcData);
+            if (res && res.error) {
+                return { success: false, error: res.error.message || res.error };
+            }
+            if (res && res.data && res.data.success === false) {
+                return { success: false, error: res.data.error };
+            }
+
+            var newStatus = res.data ? res.data.status : 'pending';
             try { await _autoSyncAccounting(adv.period); } catch(e) { console.warn('autoSync reimburse error', e); }
             return { success: true, status: newStatus };
         }
@@ -3179,29 +3192,23 @@ async function _routeAction(action, data) {
                 if (lsUser && lsUser.id) reviewerId = lsUser.id;
             }
             var reviewedBy = data.reviewedBy || reviewerId || '';
-            await sbPatch('slip_submissions', { id: 'eq.' + data.id }, {
-                status: data.status, reviewed_by: reviewedBy,
-                reviewed_at: new Date().toISOString(), review_note: data.note || ''
-            });
+            var rpcData = {
+                p_slip_id: data.id,
+                p_status: data.status,
+                p_reviewed_by: reviewedBy,
+                p_review_note: data.note || '',
+                p_outstanding_id: data.outstandingId || null
+            };
+            
+            var res = await _sb.rpc('rpc_approve_slip', rpcData);
+            if (res && res.error) {
+                return { success: false, error: res.error.message || res.error };
+            }
+            if (res && res.data && res.data.success === false) {
+                return { success: false, error: res.data.error };
+            }
+
             if (data.status === 'approved' && data.houseNumber && data.period && data.amount) {
-                await sbPost('payment_history', {
-                    house_number: data.houseNumber, period: data.period,
-                    amount_paid: data.amount, payment_date: new Date().toISOString().split('T')[0],
-                    payment_method: 'transfer', slip_id: data.id, recorded_by: reviewedBy
-                });
-                // mark outstanding เป็น paid — ใช้ outstandingId ถ้ามี, ไม่งั้น lookup ด้วย house_number + period
-                if (data.outstandingId) {
-                    await sbPatch('outstanding', { id: 'eq.' + data.outstandingId }, { status: 'paid', updated_at: new Date().toISOString() });
-                } else {
-                    try {
-                        var outRows = await sbGet('outstanding', { house_number: 'eq.' + data.houseNumber, period: 'eq.' + data.period, status: 'neq.paid', limit: '10' });
-                        if (outRows && outRows.length > 0) {
-                            for (var oi = 0; oi < outRows.length; oi++) {
-                                await sbPatch('outstanding', { id: 'eq.' + outRows[oi].id }, { status: 'paid', updated_at: new Date().toISOString() });
-                            }
-                        }
-                    } catch(e) { console.warn('reviewSlip: auto-mark outstanding paid error', e); }
-                }
 
                 // ─── Auto-deactivate ผู้ย้ายออกแล้วหากยอดค้างครบทุกงวด ───
                 try {
