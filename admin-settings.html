@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260713K">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260725I">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -1908,7 +1908,59 @@
         </div>
     </div>
 
-    <!-- Modal: Move Resident -->    <div class="modal-overlay" id="modal-moveResident">
+    <!-- Modal: Reset Password -->
+    <div class="modal-overlay" id="modal-resetPassword">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <span class="modal-title">🔑 รีเซ็ตรหัสผ่านผู้ใช้งาน</span>
+                <button class="modal-close" onclick="closeModal('resetPassword')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resetPassResidentId">
+                <input type="hidden" id="resetPassUserEmail">
+                
+                <div style="background:#EEF2FF; border:1px solid #C7D2FE; border-radius:10px; padding:0.85rem; margin-bottom:1rem;">
+                    <div style="font-weight:700; color:#3730A3; font-size:1rem;" id="resetPassUserName">-</div>
+                    <div style="font-size:0.85rem; color:#4F46E5; margin-top:0.2rem;" id="resetPassUserInfo">-</div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-weight:600;">รหัสผ่านใหม่ <span style="color:#ef4444">*</span></label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <div style="position:relative; flex:1;">
+                            <input type="password" id="resetPassNewPassword" placeholder="อย่างน้อย 8 ตัวอักษร" style="width:100%; padding-right:2.5rem; font-family:monospace; font-size:1.05rem;">
+                            <button type="button" style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1.1rem;" onclick="togglePw('resetPassNewPassword', this)">👁</button>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="generateAdminTempPassword()" title="สุ่มรหัสผ่านปลอดภัย" style="white-space:nowrap; padding:0.65rem 0.9rem;">🎲 สุ่มรหัส</button>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; margin-top:0.3rem;">
+                    <button type="button" class="btn btn-sm" onclick="copyAdminResetPassword()" style="font-size:0.85rem; background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; cursor:pointer;">📋 คัดลอกรหัสผ่าน</button>
+                </div>
+
+                <div class="form-group" style="margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:#374151;">
+                        <input type="checkbox" id="resetPassMustChange" checked style="width:auto;">
+                        <span>🔒 บังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งถัดไป</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:#374151;">
+                        <input type="checkbox" id="resetPassSendEmail" checked style="width:auto;">
+                        <span>📧 ส่งแจ้งเตือนรหัสผ่านใหม่ไปยังอีเมลของผู้ใช้</span>
+                    </label>
+                </div>
+
+                <div class="error-message" id="resetPassError" style="display:none; color:#DC2626; font-size:0.88rem; text-align:center; margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('resetPassword')">ยกเลิก</button>
+                <button class="btn btn-primary" id="btnConfirmResetPass" onclick="submitResetPasswordModal()">✅ ยืนยันรีเซ็ตรหัสผ่าน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Move Resident -->
+    <div class="modal-overlay" id="modal-moveResident">
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title">🔀 ย้ายผู้พักอาศัย</span>
@@ -2730,6 +2782,7 @@
                     '<td class="ht-actions">' +
                         reactivateBtn +
                         '<button onclick="openMoveResidentModal(\'' + safeId + '\')" title="ย้ายบ้าน">🔀</button>' +
+                        '<button onclick="openResetPasswordModal(\'' + safeId + '\')" title="รีเซ็ตรหัสผ่าน" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;padding:2px 7px;font-size:0.82rem;border-radius:6px;cursor:pointer;">🔑</button>' +
                         '<button onclick="editResident(\'' + safeId + '\')" title="แก้ไข">✏️</button>' +
                         '<button class="act-del" onclick="deleteResident(\'' + safeId + '\')" title="ลบ">🗑️</button>' +
                     '</td></tr>';
@@ -3719,35 +3772,144 @@
             }
         }
 
+        // ========== Admin Password Reset System ==========
+        function generateAdminTempPassword() {
+            const digits = Math.floor(1000 + Math.random() * 9000);
+            const pw = 'Ppk#' + digits;
+            const inp = document.getElementById('resetPassNewPassword');
+            if (inp) {
+                inp.value = pw;
+                inp.type = 'text';
+            }
+        }
+
+        function copyAdminResetPassword() {
+            const pw = document.getElementById('resetPassNewPassword')?.value || '';
+            if (!pw) { ppkAlert('กรุณากรอกหรือสุ่มรหัสผ่านก่อนคัดลอก'); return; }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(pw).then(() => {
+                    if (typeof ppkToast === 'function') ppkToast('คัดลอกรหัสผ่านแล้ว: ' + pw, 'success');
+                    else ppkAlert('📋 คัดลอกรหัสผ่านเรียบร้อยแล้ว: ' + pw);
+                }).catch(() => { ppkAlert('รหัสผ่านคือ: ' + pw); });
+            } else {
+                ppkAlert('รหัสผ่านคือ: ' + pw);
+            }
+        }
+
+        async function openResetPasswordModal(id) {
+            const data = getResidentsData();
+            const item = data.find(r => String(r.id) === String(id));
+            if (!item) { ppkAlert('ไม่พบข้อมูลผู้ใช้'); return; }
+
+            document.getElementById('resetPassResidentId').value = String(id);
+            document.getElementById('resetPassUserEmail').value = item.email || '';
+
+            const fullName = ((item.prefix || '') + (item.firstname || '') + ' ' + (item.lastname || '')).trim();
+            document.getElementById('resetPassUserName').textContent = fullName || 'ผู้ใช้งาน';
+            document.getElementById('resetPassUserInfo').textContent = 'บ้านพัก: ' + (item.house_number || '-') + ' | ตำแหน่ง: ' + (item.position || '-') + (item.email ? ' | อีเมล: ' + item.email : ' (ไม่มีอีเมล)');
+
+            const errEl = document.getElementById('resetPassError');
+            if (errEl) errEl.style.display = 'none';
+
+            generateAdminTempPassword();
+
+            const sendMailCb = document.getElementById('resetPassSendEmail');
+            if (sendMailCb) {
+                sendMailCb.checked = !!item.email;
+                sendMailCb.disabled = !item.email;
+            }
+
+            openModal('resetPassword');
+        }
+
         async function resetResidentPassword(id) {
-            const newPassword = prompt('กรอกรหัสผ่านใหม่สำหรับผู้พักอาศัย (อย่างน้อย 8 ตัวอักษร):');
-            
-            if (!newPassword) return;
-            
-            if (newPassword.length < 8) {
-                ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+            openResetPasswordModal(id);
+        }
+
+        async function submitResetPasswordModal() {
+            const id = document.getElementById('resetPassResidentId').value;
+            const newPassword = document.getElementById('resetPassNewPassword').value.trim();
+            const mustChange = document.getElementById('resetPassMustChange').checked;
+            const sendEmail = document.getElementById('resetPassSendEmail').checked;
+            const userEmail = document.getElementById('resetPassUserEmail').value.trim();
+
+            const errEl = document.getElementById('resetPassError');
+            if (errEl) errEl.style.display = 'none';
+
+            if (!newPassword || newPassword.length < 8) {
+                if (errEl) { errEl.textContent = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'; errEl.style.display = 'block'; }
+                else ppkAlert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
                 return;
             }
 
-            const data = getResidentsData();
-            const index = data.findIndex(r => String(r.id) === String(id));
-            
-            if (index === -1) return;
+            const btn = document.getElementById('btnConfirmResetPass');
+            btn.disabled = true;
+            btn.textContent = 'กำลังบันทึก...';
 
-            data[index].password = btoa(newPassword);
-            data[index].updatedAt = new Date().toISOString();
-            saveResidentsData(data);
-
-            // รอ backend อัปเดตจริง
             try {
-                const result = await callBackend('updateResident', { id: String(id), password: newPassword });
+                const result = await callBackend('updateResident', {
+                    id: String(id),
+                    password: btoa(newPassword),
+                    must_change_pw: mustChange
+                });
+
                 if (result && result.success) {
-                    ppkAlert('รีเซ็ตรหัสผ่านเรียบร้อยแล้ว');
+                    const data = getResidentsData();
+                    const idx = data.findIndex(r => String(r.id) === String(id));
+                    if (idx !== -1) {
+                        data[idx].password = btoa(newPassword);
+                        data[idx].updatedAt = new Date().toISOString();
+                        saveResidentsData(data);
+                    }
+
+                    let emailStatusNote = '';
+                    if (sendEmail && userEmail) {
+                        try {
+                            const item = data.find(r => String(r.id) === String(id));
+                            const name = item ? ((item.prefix||'') + (item.firstname||'') + ' ' + (item.lastname||'')).trim() : 'คุณ';
+                            const htmlBody = '<div style="font-family:Kanit,sans-serif;max-width:480px;margin:0 auto;padding:2rem;border:1px solid #e5e7eb;border-radius:12px;">'
+                                + '<h2 style="color:#4F46E5;margin-top:0;">HOME PPK 2026</h2>'
+                                + '<p>สวัสดีคุณ <strong>' + name + '</strong></p>'
+                                + '<p>ผู้ดูแลระบบได้ตั้งรหัสผ่านใหม่สำหรับเข้าใช้งานระบบบ้านพักครูให้คุณเรียบร้อยแล้ว:</p>'
+                                + '<div style="text-align:center;margin:1.5rem 0;background:#eef2ff;padding:1rem;border-radius:8px;border:1px dashed #4F46E5;">'
+                                + '<span style="font-size:1.5rem;font-weight:700;color:#4F46E5;letter-spacing:1px;">' + newPassword + '</span>'
+                                + '</div>'
+                                + (mustChange ? '<p style="color:#e11d48;font-size:0.9rem;">⚠️ คุณจะต้องเปลี่ยนรหัสผ่านใหม่เมื่อเข้าสู่ระบบในครั้งถัดไป</p>' : '')
+                                + '<p style="color:#666;font-size:0.85rem;">กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่นี้</p>'
+                                + '<hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">'
+                                + '<p style="color:#999;font-size:0.8rem;">ระบบบริหารจัดการบ้านพักครู โรงเรียนพะเยาพิทยาคม</p></div>';
+                            
+                            const mailRes = await _callEdge('send-email', {
+                                to: userEmail,
+                                subject: '[HOME PPK] แจ้งเตือนรีเซ็ตรหัสผ่านโดยผู้ดูแลระบบ',
+                                html: htmlBody
+                            });
+                            if (mailRes && mailRes.success) emailStatusNote = '\n📧 ส่งอีเมลแจ้งผู้ใช้เรียบร้อยแล้ว';
+                            else emailStatusNote = '\n⚠️ ส่งอีเมลไม่สำเร็จ (แต่เปลี่ยนรหัสผ่านสำเร็จแล้ว)';
+                        } catch(_mErr) {
+                            emailStatusNote = '\n⚠️ ส่งอีเมลไม่สำเร็จ (แต่เปลี่ยนรหัสผ่านสำเร็จแล้ว)';
+                        }
+                    }
+
+                    closeModal('resetPassword');
+                    
+                    await ppkAlert(
+                        '✅ รีเซ็ตรหัสผ่านสำเร็จ!' + emailStatusNote + '\n\n' +
+                        '🔑 รหัสผ่านใหม่: ' + newPassword + '\n\n' +
+                        '💡 แอดมินสามารถคัดลอกรหัสผ่านนี้ส่งให้ผู้ใช้ทาง LINE ได้ทันที'
+                    );
+
+                    renderResidentTable();
                 } else {
-                    ppkAlert('⚠️ บันทึกรหัสผ่านในเครื่อง แต่อัปเดต backend ไม่สำเร็จ: ' + (result?.error || ''));
+                    if (errEl) { errEl.textContent = result?.error || 'เกิดข้อผิดพลาดในการบันทึก'; errEl.style.display = 'block'; }
+                    else ppkAlert('❌ ' + (result?.error || 'เกิดข้อผิดพลาดในการบันทึก'));
                 }
             } catch(e) {
-                ppkAlert('⚠️ บันทึกรหัสผ่านในเครื่อง แต่ไม่สามารถเชื่อมต่อ backend: ' + e.message);
+                if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+                else ppkAlert('❌ เกิดข้อผิดพลาด: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✅ ยืนยันรีเซ็ตรหัสผ่าน';
             }
         }
 
@@ -5944,12 +6106,12 @@
             window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260713K"></script>
-    <script src="supabase/supabase.min.js?v=20260713K"></script>
-    <script src="ppk-api.js?v=20260713K"></script>
-    <script src="ppk-app.js?v=20260713K"></script>
-    <script src="ppk-utils.js?v=20260713K"></script>
-    <script src="ppk-nav.js?v=20260713K"></script>
-    <script src="ppk-pwa.js?v=20260713K"></script>
+    <script src="supabase/config.js?v=20260725I"></script>
+    <script src="supabase/supabase.min.js?v=20260725I"></script>
+    <script src="ppk-api.js?v=20260725I"></script>
+    <script src="ppk-app.js?v=20260725I"></script>
+    <script src="ppk-utils.js?v=20260725I"></script>
+    <script src="ppk-nav.js?v=20260725I"></script>
+    <script src="ppk-pwa.js?v=20260725I"></script>
 </body>
 </html>

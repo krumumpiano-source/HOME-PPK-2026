@@ -632,7 +632,7 @@ async function _routeAction(action, data) {
             }
             // เข้าสู่ระบบปกติ — ตรวจรหัสผ่าน
             if (!data.password) return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
-            var pwSalted = await sha256hexSalted(data.password, data.email);
+            var pwSalted = await sha256hexSalted(data.password, email);
             var pwLegacy = await sha256hex(data.password);
             var matched = false;
             if (u.password_hash === pwSalted) { matched = true; }
@@ -1096,8 +1096,11 @@ async function _routeAction(action, data) {
                 if (_airHasOut) {
                     try { await sbPatch('users', { id: 'eq.' + _airUserId }, { status: 'departing', updated_at: new Date().toISOString() }); } catch(e) {}
                 } else {
-                    await sbPatch('users', { id: 'eq.' + _airUserId }, { is_active: false, updated_at: new Date().toISOString() });
-                    try { await sbDelete('sessions', { user_id: 'eq.' + _airUserId }); } catch(e) {}
+                    var _otherActiveRes = await sbGet('residents', { user_id: 'eq.' + _airUserId, is_active: 'eq.true', limit: '1' }).catch(function() { return []; });
+                    if (!_otherActiveRes || _otherActiveRes.length === 0) {
+                        await sbPatch('users', { id: 'eq.' + _airUserId }, { is_active: false, updated_at: new Date().toISOString() });
+                        try { await sbDelete('sessions', { user_id: 'eq.' + _airUserId }); } catch(e) {}
+                    }
                 }
             }
             invalidateResidentCache();
@@ -3398,8 +3401,11 @@ async function _routeAction(action, data) {
             if (_arHasOut2) {
                 try { await sbPatch('users', { id: 'eq.' + _arUserId2 }, { status: 'departing', updated_at: new Date().toISOString() }); } catch(e) {}
             } else {
-                await sbPatch('users', { id: 'eq.' + _arUserId2 }, { is_active: false, updated_at: new Date().toISOString() });
-                try { await sbDelete('sessions', { user_id: 'eq.' + _arUserId2 }); } catch(e) {}
+                var _otherActiveRes2 = await sbGet('residents', { user_id: 'eq.' + _arUserId2, is_active: 'eq.true', limit: '1' }).catch(function() { return []; });
+                if (!_otherActiveRes2 || _otherActiveRes2.length === 0) {
+                    await sbPatch('users', { id: 'eq.' + _arUserId2 }, { is_active: false, updated_at: new Date().toISOString() });
+                    try { await sbDelete('sessions', { user_id: 'eq.' + _arUserId2 }); } catch(e) {}
+                }
             }
 
             // 9. mark request completed
@@ -4056,6 +4062,20 @@ async function _routeAction(action, data) {
                         urEmail = urU && urU[0] ? (urU[0].email || '').trim().toLowerCase() : '';
                     }
                     userUp.password_hash = await sha256hexSalted(pw2, urEmail);
+                    userUp.failed_attempts = 0;
+                    userUp.locked_until = null;
+                    if (userUp.is_active === undefined) {
+                        userUp.is_active = true;
+                        userUp.status = 'active';
+                    }
+                    if (data.must_change_pw !== undefined) {
+                        var _mcKey = 'must_change_pw_' + resRow[0].user_id;
+                        if (data.must_change_pw) {
+                            try { await sbUpsert('settings', { key: _mcKey, value: 'true' }, 'key'); } catch(eMc) {}
+                        } else {
+                            try { await sbDelete('settings', { key: _mcKey }); } catch(eMc) {}
+                        }
+                    }
                 }
                 await sbPatch('users', { id: 'eq.' + resRow[0].user_id }, userUp);
             }

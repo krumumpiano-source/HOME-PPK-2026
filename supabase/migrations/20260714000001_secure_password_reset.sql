@@ -124,8 +124,8 @@ CREATE POLICY "users_update" ON public.users
         public.is_admin_session()
         OR (
             id = public.get_session_user_id() AND
-            role = (SELECT u.role FROM public.users u WHERE u.id = id) AND
-            is_active = (SELECT u.is_active FROM public.users u WHERE u.id = id)
+            role = (SELECT u.role FROM public.users u WHERE u.id = public.users.id LIMIT 1) AND
+            is_active = (SELECT u.is_active FROM public.users u WHERE u.id = public.users.id LIMIT 1)
         )
     );
 
