@@ -306,21 +306,21 @@ async function sha256hexSalted(password, email) {
 
 /* ── Helper: ค้นหา resident จาก user — fallback email + auto-link ── */
 async function _findResidentForUser(userId, userEmail) {
-    // 1) ค้นจาก user_id ตรงๆ
+    // 1) ค้นจาก user_id ตรงๆ (เลือกบ้านปัจจุบันที่ active และอัปเดตล่าสุด)
     if (userId) {
         try {
-            var rows = await sbGet('residents', { user_id: 'eq.' + userId, is_active: 'eq.true', limit: '1' });
+            var rows = await sbGet('residents', { user_id: 'eq.' + userId, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
             if (rows && rows[0]) return rows[0];
         } catch(e) {}
     }
-    // 2) Fallback: ค้นจาก email ใน residents table → auto-link user_id
+    // 2) Fallback: ค้นจาก email ใน residents table → auto-link user_id (เลือกบ้านปัจจุบันที่ active และอัปเดตล่าสุด)
     if (userEmail) {
         var em = userEmail.trim().toLowerCase();
         try {
-            var emRows = await sbGet('residents', { email: 'eq.' + em, is_active: 'eq.true', limit: '1' });
+            var emRows = await sbGet('residents', { email: 'eq.' + em, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
             if (emRows && emRows[0]) {
                 if (userId && !emRows[0].user_id) {
-                    try { await sbPatch('residents', { id: 'eq.' + emRows[0].id }, { user_id: userId }); } catch(e2) {}
+                    try { await sbPatch('residents', { id: 'eq.' + emRows[0].id }, { user_id: userId, updated_at: new Date().toISOString() }); } catch(e2) {}
                     emRows[0].user_id = userId;
                 }
                 return emRows[0];
@@ -330,10 +330,10 @@ async function _findResidentForUser(userId, userEmail) {
     // 3) ค้นจาก coresidents table (ผู้ร่วมพักอาศัย)
     if (userId) {
         try {
-            var corRows = await sbGet('coresidents', { user_id: 'eq.' + userId, limit: '1' });
+            var corRows = await sbGet('coresidents', { user_id: 'eq.' + userId, order: 'updated_at.desc', limit: '1' });
             if (corRows && corRows[0]) {
                 // ดึงข้อมูล resident หลักเพื่อได้ house_number
-                var mainRes = await sbGet('residents', { id: 'eq.' + corRows[0].resident_id, is_active: 'eq.true', limit: '1' });
+                var mainRes = await sbGet('residents', { id: 'eq.' + corRows[0].resident_id, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
                 if (mainRes && mainRes[0]) {
                     return { id: corRows[0].id, house_number: mainRes[0].house_number, house_id: mainRes[0].house_id, is_coresident: true };
                 }
@@ -343,12 +343,12 @@ async function _findResidentForUser(userId, userEmail) {
     if (userEmail) {
         var em2 = userEmail.trim().toLowerCase();
         try {
-            var corEmRows = await sbGet('coresidents', { email: 'eq.' + em2, limit: '1' });
+            var corEmRows = await sbGet('coresidents', { email: 'eq.' + em2, order: 'updated_at.desc', limit: '1' });
             if (corEmRows && corEmRows[0]) {
                 if (userId && !corEmRows[0].user_id) {
-                    try { await sbPatch('coresidents', { id: 'eq.' + corEmRows[0].id }, { user_id: userId }); } catch(e3) {}
+                    try { await sbPatch('coresidents', { id: 'eq.' + corEmRows[0].id }, { user_id: userId, updated_at: new Date().toISOString() }); } catch(e3) {}
                 }
-                var mainRes2 = await sbGet('residents', { id: 'eq.' + corEmRows[0].resident_id, is_active: 'eq.true', limit: '1' });
+                var mainRes2 = await sbGet('residents', { id: 'eq.' + corEmRows[0].resident_id, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
                 if (mainRes2 && mainRes2[0]) {
                     return { id: corEmRows[0].id, house_number: mainRes2[0].house_number, house_id: mainRes2[0].house_id, is_coresident: true };
                 }
@@ -615,8 +615,8 @@ async function _routeAction(action, data) {
                 }
             }
             if (!uRows || uRows.length === 0) {
-                // Fallback 2: ตรวจจาก residents table เผื่อยังไม่ได้สร้างหรือผูก user_id
-                var resMatch = await sbGet('residents', { email: 'eq.' + email, is_active: 'eq.true', limit: '1' });
+                // Fallback 2: ตรวจจาก residents table เผื่อยังไม่ได้สร้างหรือผูก user_id (เลือกบ้านปัจจุบันที่ active ล่าสุด)
+                var resMatch = await sbGet('residents', { email: 'eq.' + email, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
                 if (resMatch && resMatch[0] && resMatch[0].user_id) {
                     uRows = await sbGet('users', { id: 'eq.' + resMatch[0].user_id, limit: '1' });
                 }
@@ -3969,33 +3969,52 @@ async function _routeAction(action, data) {
             var email = (data.email || '').trim().toLowerCase();
             var uid = null;
             if (!_noAccount) {
-                // สร้าง user account สำหรับ staff / ผู้พักอาศัยที่มีบัญชี
-                uid = 'USR-' + Date.now().toString(36).toUpperCase();
-                var pwRaw = '';
-                if (data.password) {
-                    try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
-                }
-                // สร้าง random password ถ้าไม่ได้ระบุ (บังคับเปลี่ยนตอนเข้าครั้งแรก)
-                if (!pwRaw) {
-                    var _rndArr = new Uint8Array(16);
-                    (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(_rndArr) : _rndArr.forEach(function(v,i,a){ a[i] = Math.floor(Math.random()*256); });
-                    pwRaw = Array.from(_rndArr, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-                }
-                var pwHash = await sha256hexSalted(pwRaw, email || uid + '@local.ppk');
-                // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
-                await sbPost('users', {
-                    id: uid, email: email || uid + '@local.ppk',
-                    firstname: data.firstname || '', lastname: data.lastname || '',
-                    prefix: data.prefix || '', phone: data.phone || '',
-                    role: 'resident', position: data.position || '',
-                    is_active: true, pdpa_consent: false,
-                    password_hash: pwHash
-                });
-                // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก (retry 1 ครั้งถ้า fail)
-                var _flagKey = 'must_change_pw_' + uid;
-                try { await sbUpsert('settings', { key: _flagKey, value: 'true' }, 'key'); } catch(e1) {
-                    console.warn('set must_change_pw flag attempt 1 failed:', e1);
-                    try { await sbPost('settings', { key: _flagKey, value: 'true' }); } catch(e2) { console.warn('set must_change_pw flag attempt 2 failed:', e2); }
+                // ตรวจสอบก่อนว่าผู้พักอาศัยนี้มี user account ในระบบแล้วหรือไม่ (เช่น กรณีย้ายบ้าน/แฟลต)
+                var existingUser = email ? await sbGet('users', { email: 'eq.' + email, limit: '1' }) : null;
+                if (existingUser && existingUser[0]) {
+                    uid = existingUser[0].id;
+                    // Reactivate user account if it was deactivated
+                    try {
+                        await sbPatch('users', { id: 'eq.' + uid }, {
+                            is_active: true,
+                            status: 'active',
+                            firstname: data.firstname || existingUser[0].firstname || '',
+                            lastname: data.lastname || existingUser[0].lastname || '',
+                            prefix: data.prefix || existingUser[0].prefix || '',
+                            phone: data.phone || existingUser[0].phone || '',
+                            position: data.position || existingUser[0].position || '',
+                            updated_at: new Date().toISOString()
+                        });
+                    } catch(eUpU) {}
+                } else {
+                    // สร้าง user account ใหม่สำหรับ staff / ผู้พักอาศัยที่ยังไม่เคยมีบัญชี
+                    uid = 'USR-' + Date.now().toString(36).toUpperCase();
+                    var pwRaw = '';
+                    if (data.password) {
+                        try { pwRaw = atob(data.password); } catch(e4) { pwRaw = data.password; }
+                    }
+                    // สร้าง random password ถ้าไม่ได้ระบุ (บังคับเปลี่ยนตอนเข้าครั้งแรก)
+                    if (!pwRaw) {
+                        var _rndArr = new Uint8Array(16);
+                        (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues(_rndArr) : _rndArr.forEach(function(v,i,a){ a[i] = Math.floor(Math.random()*256); });
+                        pwRaw = Array.from(_rndArr, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+                    }
+                    var pwHash = await sha256hexSalted(pwRaw, email || uid + '@local.ppk');
+                    // สร้าง user (เพื่อ login ได้) — users table มี phone, email, position
+                    await sbPost('users', {
+                        id: uid, email: email || uid + '@local.ppk',
+                        firstname: data.firstname || '', lastname: data.lastname || '',
+                        prefix: data.prefix || '', phone: data.phone || '',
+                        role: 'resident', position: data.position || '',
+                        is_active: true, pdpa_consent: false,
+                        password_hash: pwHash
+                    });
+                    // ตั้ง flag บังคับเปลี่ยนรหัสผ่านครั้งแรก (retry 1 ครั้งถ้า fail)
+                    var _flagKey = 'must_change_pw_' + uid;
+                    try { await sbUpsert('settings', { key: _flagKey, value: 'true' }, 'key'); } catch(e1) {
+                        console.warn('set must_change_pw flag attempt 1 failed:', e1);
+                        try { await sbPost('settings', { key: _flagKey, value: 'true' }); } catch(e2) { console.warn('set must_change_pw flag attempt 2 failed:', e2); }
+                    }
                 }
             }
             // หา house_id จาก house_number (ลองหลายวิธี)
@@ -4227,14 +4246,23 @@ async function _routeAction(action, data) {
                 if (_rmByEmail && _rmByEmail[0]) _rmUserId = _rmByEmail[0].id;
             }
             if (_rmUserId) {
-                var _rmOutRows = [];
-                try { _rmOutRows = await sbGet('outstanding', { house_number: 'eq.' + _rmHouseNumber, status: 'neq.paid' }) || []; } catch(e) {}
-                if (_rmOutRows.length === 0) {
-                    // ไม่มียอดค้าง → deactivate + ลบ sessions
-                    await sbPatch('users', { id: 'eq.' + _rmUserId }, { is_active: false, updated_at: new Date().toISOString() });
-                    try { await sbDelete('sessions', { user_id: 'eq.' + _rmUserId }); } catch(e) {}
+                // ตรวจสอบว่าผู้ใช้รายนี้ยังมีบ้านพัก/แฟลตอื่นที่ active อยู่หรือไม่ (กรณีย้ายบ้าน/แฟลต)
+                var otherActiveRes = [];
+                try {
+                    otherActiveRes = await sbGet('residents', { user_id: 'eq.' + _rmUserId, is_active: 'eq.true' }) || [];
+                    otherActiveRes = otherActiveRes.filter(function(r) { return String(r.id) !== String(rid); });
+                } catch(eOth) {}
+
+                // ถ้าไม่มีบ้านพักอื่นที่ active อยู่เลย → ตรวจยอดค้างก่อน deactivate
+                if (otherActiveRes.length === 0) {
+                    var _rmOutRows = [];
+                    try { _rmOutRows = await sbGet('outstanding', { house_number: 'eq.' + _rmHouseNumber, status: 'neq.paid' }) || []; } catch(e) {}
+                    if (_rmOutRows.length === 0) {
+                        // ไม่มียอดค้างและไม่มียูนิตอื่นที่ active → deactivate + ลบ sessions
+                        await sbPatch('users', { id: 'eq.' + _rmUserId }, { is_active: false, updated_at: new Date().toISOString() });
+                        try { await sbDelete('sessions', { user_id: 'eq.' + _rmUserId }); } catch(e) {}
+                    }
                 }
-                // ถ้ามียอดค้าง → user ยังล็อกอินได้ ไม่ต้อง deactivate
             }
 
             // 3. ลบ coresidents ของผู้พักนี้ (backup เก็บไว้ข้างบนแล้ว)
