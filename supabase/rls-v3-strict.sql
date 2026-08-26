@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- HOME PPK 2026 — Strict RLS v3.0
 --
 -- แนวทาง:
@@ -206,7 +206,7 @@ CREATE POLICY "water_bills_insert" ON public.water_bills FOR INSERT TO anon WITH
 CREATE POLICY "water_bills_update" ON public.water_bills FOR UPDATE TO anon
     USING (public.has_permission(ARRAY['water','water_reader']))
     WITH CHECK (public.has_permission(ARRAY['water','water_reader']));
-CREATE POLICY "water_bills_delete" ON public.water_bills FOR DELETE TO anon USING (public.is_admin_session());
+CREATE POLICY "water_bills_delete" ON public.water_bills FOR DELETE TO anon USING (public.has_permission(ARRAY['water','water_reader']));
 
 -- ── electric_bills ──
 CREATE POLICY "electric_bills_select" ON public.electric_bills FOR SELECT TO anon USING (true);
@@ -214,7 +214,7 @@ CREATE POLICY "electric_bills_insert" ON public.electric_bills FOR INSERT TO ano
 CREATE POLICY "electric_bills_update" ON public.electric_bills FOR UPDATE TO anon
     USING (public.has_permission(ARRAY['electric']))
     WITH CHECK (public.has_permission(ARRAY['electric']));
-CREATE POLICY "electric_bills_delete" ON public.electric_bills FOR DELETE TO anon USING (public.is_admin_session());
+CREATE POLICY "electric_bills_delete" ON public.electric_bills FOR DELETE TO anon USING (public.has_permission(ARRAY['electric']));
 
 -- ── water_rates ──
 CREATE POLICY "water_rates_select" ON public.water_rates FOR SELECT TO anon USING (true);

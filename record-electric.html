@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>บันทึกค่าไฟ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260725I">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260826J">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -630,16 +630,20 @@
 
             try {
                     const result = await callBackend('getElectricBills', { period });
-                    if (result && result.success && result.data && result.data.length > 0) {
+                    if (result && result.success) {
                         // โหลดค่า PEA total + lost
                         var lostData = result.lost || result.meta || null;
                         if (lostData) {
-                            document.getElementById('pea_total').value = lostData.pea_total || '';
-                            document.getElementById('lost_house').value = lostData.lost_house || '';
-                            document.getElementById('lost_flat').value = lostData.lost_flat || '';
+                            document.getElementById('pea_total').value = (lostData.pea_total !== undefined && lostData.pea_total !== null && lostData.pea_total !== '') ? lostData.pea_total : '';
+                            document.getElementById('lost_house').value = (lostData.lost_house !== undefined && lostData.lost_house !== null && lostData.lost_house !== '') ? lostData.lost_house : '';
+                            document.getElementById('lost_flat').value = (lostData.lost_flat !== undefined && lostData.lost_flat !== null && lostData.lost_flat !== '') ? lostData.lost_flat : '';
+                        } else {
+                            document.getElementById('pea_total').value = '';
+                            document.getElementById('lost_house').value = '';
+                            document.getElementById('lost_flat').value = '';
                         }
                         const amountMap = {};
-                        result.data.forEach(r => {
+                        (result.data || []).forEach(r => {
                             const key = r.house_number || r.house;
                             amountMap[key] = {
                                 amount: parseFloat(r.amount) || 0,
@@ -1356,13 +1360,13 @@
             window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260725I"></script>
-    <script src="supabase/supabase.min.js?v=20260725I"></script>
-    <script src="ppk-api.js?v=20260725I"></script>
-    <script src="ppk-app.js?v=20260725I"></script>
-    <script src="ppk-utils.js?v=20260725I"></script>
-    <script src="ppk-nav.js?v=20260725I"></script>
-    <script src="ppk-pwa.js?v=20260725I"></script>
+    <script src="supabase/config.js?v=20260826J"></script>
+    <script src="supabase/supabase.min.js?v=20260826J"></script>
+    <script src="ppk-api.js?v=20260826J"></script>
+    <script src="ppk-app.js?v=20260826J"></script>
+    <script src="ppk-utils.js?v=20260826J"></script>
+    <script src="ppk-nav.js?v=20260826J"></script>
+    <script src="ppk-pwa.js?v=20260826J"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>

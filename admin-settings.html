@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตั้งค่าระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260725I">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260826J">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -1941,8 +1941,8 @@
 
                 <div class="form-group" style="margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;">
                     <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:#374151;">
-                        <input type="checkbox" id="resetPassMustChange" checked style="width:auto;">
-                        <span>🔒 บังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งถัดไป</span>
+                        <input type="checkbox" id="resetPassMustChange" style="width:auto;">
+                        <span>🔒 บังคับให้ผู้ใช้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบ (ไม่แนะนำ หากผู้ใช้มักสับสน)</span>
                     </label>
                     <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:#374151;">
                         <input type="checkbox" id="resetPassSendEmail" checked style="width:auto;">
@@ -3812,6 +3812,9 @@
             if (errEl) errEl.style.display = 'none';
 
             generateAdminTempPassword();
+
+            const mustChangeCb = document.getElementById('resetPassMustChange');
+            if (mustChangeCb) mustChangeCb.checked = false;
 
             const sendMailCb = document.getElementById('resetPassSendEmail');
             if (sendMailCb) {
@@ -6106,12 +6109,12 @@
             window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260725I"></script>
-    <script src="supabase/supabase.min.js?v=20260725I"></script>
-    <script src="ppk-api.js?v=20260725I"></script>
-    <script src="ppk-app.js?v=20260725I"></script>
-    <script src="ppk-utils.js?v=20260725I"></script>
-    <script src="ppk-nav.js?v=20260725I"></script>
-    <script src="ppk-pwa.js?v=20260725I"></script>
+    <script src="supabase/config.js?v=20260826J"></script>
+    <script src="supabase/supabase.min.js?v=20260826J"></script>
+    <script src="ppk-api.js?v=20260826J"></script>
+    <script src="ppk-app.js?v=20260826J"></script>
+    <script src="ppk-utils.js?v=20260826J"></script>
+    <script src="ppk-nav.js?v=20260826J"></script>
+    <script src="ppk-pwa.js?v=20260826J"></script>
 </body>
 </html>

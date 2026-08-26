@@ -631,17 +631,27 @@ async function _routeAction(action, data) {
                 return { success: true, must_set_password: true, userId: u.id, userName: (u.firstname || '') + ' ' + (u.lastname || '') };
             }
             // เข้าสู่ระบบปกติ — ตรวจรหัสผ่าน
-            if (!data.password) return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
-            var pwSalted = await sha256hexSalted(data.password, email);
-            var pwLegacy = await sha256hex(data.password);
+            var rawPw = data.password || '';
+            var password = rawPw.trim();
+            if (!password) return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
+            var pwSalted = await sha256hexSalted(password, email);
+            var pwLegacy = await sha256hex(password);
             var matched = false;
             if (u.password_hash === pwSalted) { matched = true; }
             else if (u.password_hash === pwLegacy) {
                 // Lazy migration: อัปเกรดเป็น salted hash
                 matched = true;
                 try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
+            } else if (rawPw !== password) {
+                // Fallback: กรณีรหัสเดิมที่เคยบันทึกไว้มี space ติดมา
+                var pwSaltedRaw = await sha256hexSalted(rawPw, email);
+                var pwLegacyRaw = await sha256hex(rawPw);
+                if (u.password_hash === pwSaltedRaw || u.password_hash === pwLegacyRaw) {
+                    matched = true;
+                    try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
+                }
             }
-                        if (!matched) {
+            if (!matched) {
                 var rpcRes = await sbRpc('rpc_login_lockout', { p_email: email });
                 if (rpcRes && rpcRes.locked) {
                     _logActivity('account_locked', u.id, 'บัญชีถูกล็อกอัตโนมัติ (กรอกรหัสผ่านผิดเกิน 5 ครั้ง)', { email: email });
@@ -669,7 +679,7 @@ async function _routeAction(action, data) {
                 must_change_password: false,
                 permissions: _loginPerms
             };
-            // สร้าง session ใน DB
+            // สร้าง session ใน DB (ยืดอายุเป็น 90 วัน เพื่อไม่ให้หลุดทุกเดือน)
             var token = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
                 ? crypto.randomUUID()
                 : ('tok-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36));
@@ -680,7 +690,7 @@ async function _routeAction(action, data) {
                     role: u.role || 'resident',
                     resident_id: resident ? resident.id : null,
                     house_number: resident ? (resident.house_number || '') : '',
-                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                    expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
                 });
             } catch(e) { console.warn('สร้าง session ไม่สำเร็จ:', e); }
             // อัพเดท Supabase client ให้ส่ง session token ไปกับทุก request
@@ -774,7 +784,7 @@ async function _routeAction(action, data) {
                 ? crypto.randomUUID()
                 : ('tok-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36));
             try {
-                await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString() });
+                await sbPost('sessions', { token: token2, user_id: u2.id, role: u2.role || 'resident', resident_id: resident2 ? resident2.id : null, house_number: resident2 ? (resident2.house_number || '') : '', expires_at: new Date(Date.now() + 90*24*60*60*1000).toISOString() });
             } catch(e) {}
             _updateSupabaseToken(token2);
             _logActivity('set_first_password', userId, (u2.firstname || '') + ' ' + (u2.lastname || '') + ' ตั้งรหัสผ่านครั้งแรก', { email: u2.email });
@@ -1538,13 +1548,13 @@ async function _routeAction(action, data) {
                     try { await sbDelete('electric_bills', { id: 'in.(' + _oldEIds.join(',') + ')' }); } catch(e) { console.warn('cleanup old electric_bills:', e); }
                 }
                 // บันทึก PEA total + Lost + rounding_surplus ลง settings (ต่อ period)
-                if (data.pea_total || data.lost_house || data.lost_flat || data.rounding_surplus || data.electric_diff) {
+                if (data.pea_total !== undefined || data.lost_house !== undefined || data.lost_flat !== undefined || data.rounding_surplus !== undefined || data.electric_diff !== undefined) {
                     var lostData = JSON.stringify({
-                        pea_total: data.pea_total || 0,
-                        lost_house: data.lost_house || 0,
-                        lost_flat: data.lost_flat || 0,
-                        rounding_surplus: data.rounding_surplus || 0,
-                        electric_diff: data.electric_diff || 0
+                        pea_total: parseFloat(data.pea_total) || 0,
+                        lost_house: parseFloat(data.lost_house) || 0,
+                        lost_flat: parseFloat(data.lost_flat) || 0,
+                        rounding_surplus: parseFloat(data.rounding_surplus) || 0,
+                        electric_diff: parseFloat(data.electric_diff) || 0
                     });
                     try { await sbUpsert('settings', { key: 'electric_lost_' + data.period, value: lostData }, 'key'); } catch(e) { console.warn('settings upsert (electric_lost):', e); }
                 }
