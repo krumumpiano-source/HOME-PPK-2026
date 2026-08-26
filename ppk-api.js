@@ -787,7 +787,13 @@ async function _routeAction(action, data) {
             var fpUser = await sbGet('users', { id: 'eq.' + userId, select: 'email', limit: '1' });
             var fpEmail = (fpUser && fpUser[0] ? fpUser[0].email : '').trim().toLowerCase();
             var newHash = await sha256hexSalted(newPassword, fpEmail);
-            await sbPatch('users', { id: 'eq.' + userId }, { password_hash: newHash, updated_at: new Date().toISOString() });
+            await sbPatch('users', { id: 'eq.' + userId }, {
+                password_hash: newHash,
+                failed_attempts: 0,
+                locked_until: null,
+                is_active: true,
+                updated_at: new Date().toISOString()
+            });
             // ลบ flag (ถ้ามี)
             if (hasFlag) { try { await sbDelete('settings', { key: 'eq.must_change_pw_' + userId }); } catch(e) {} }
             // สร้าง session + return user
