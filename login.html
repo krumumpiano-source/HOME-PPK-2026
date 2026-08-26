@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>เข้าสู่ระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260826Z">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260826M">
     <style>
         body {
             margin: 0; padding: 0 !important; min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -121,11 +121,11 @@
     </form>
 
     <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
-    <script src="supabase/config.js?v=20260826Z"></script>
-    <script src="supabase/supabase.min.js?v=20260826Z"></script>
-    <script src="ppk-api.js?v=20260826Z"></script>
-    <script src="ppk-app.js?v=20260826Z"></script>
-    <script src="ppk-utils.js?v=20260826Z"></script>
+    <script src="supabase/config.js?v=20260826M"></script>
+    <script src="supabase/supabase.min.js?v=20260826M"></script>
+    <script src="ppk-api.js?v=20260826M"></script>
+    <script src="ppk-app.js?v=20260826M"></script>
+    <script src="ppk-utils.js?v=20260826M"></script>
     <!-- Fallback: ถ้า ppk-app.js เก่าไม่มี stub → สร้างเอง -->
     <script>
     (function() {
@@ -283,6 +283,7 @@
                     _clearLoginFailures(email);
                     // เข้าใช้ครั้งแรก → แสดง modal ตั้งรหัสผ่าน
                     window._firstLoginUserId = result.userId;
+                    window._firstLoginEmail  = email; // เก็บ email ไว้ใช้ตอน setFirstPassword
                     var nameEl = document.getElementById('flUserName');
                     if (nameEl) nameEl.textContent = result.userName || '';
                     document.getElementById('firstLoginOverlay').classList.add('active');
@@ -340,6 +341,7 @@
             try {
                 const result = await callBackend('setFirstPassword', {
                     userId: window._firstLoginUserId,
+                    email: window._firstLoginEmail || document.getElementById('email').value.trim().toLowerCase(),
                     newPassword: newPw
                 });
                 if (result && result.success) {
@@ -372,6 +374,6 @@
             }
         })();
     </script>
-    <script src="ppk-pwa.js?v=20260826Z"></script>
+    <script src="ppk-pwa.js?v=20260826M"></script>
 </body>
 </html>

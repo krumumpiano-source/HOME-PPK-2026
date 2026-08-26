@@ -772,20 +772,33 @@ async function _routeAction(action, data) {
         }
 
         case 'setFirstPassword': {
-            // ตั้งรหัสผ่านครั้งแรก — ใช้ได้เฉพาะ user ที่มี flag must_change_pw
+            // ตั้งรหัสผ่านครั้งแรก — ใช้ได้เฉพาะ user ที่มี flag must_change_pw หรือ session เพิ่งสร้างใหม่ (first-login)
             var userId = data.userId || '';
             if (!userId) return { success: false, error: 'ไม่ระบุ userId' };
             var newPassword = data.newPassword || '';
             if (!newPassword || newPassword.length < 8) return { success: false, error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
-            // ตรวจสอบว่ามี flag must_change_pw หรือยังไม่เคย login (ไม่มี session)
+            // ตรวจสอบสิทธิ์: มี flag หรือ session เพิ่งสร้างใหม่ภายใน 15 นาที (first-login flow)
             var flagRows = await sbGet('settings', { key: 'eq.must_change_pw_' + userId, limit: '1' });
             var hasFlag = !!(flagRows && flagRows.length > 0);
             if (!hasFlag) {
-                var sesCheck = await sbGet('sessions', { user_id: 'eq.' + userId, limit: '1' });
-                if (sesCheck && sesCheck.length > 0) return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
+                var sesCheck = await sbGet('sessions', { user_id: 'eq.' + userId, order: 'created_at.desc', limit: '1' });
+                var allowBySession = false;
+                if (sesCheck && sesCheck.length > 0) {
+                    // อนุญาตถ้า session เพิ่งสร้างภายใน 15 นาที (first-login session)
+                    var sesAge = Date.now() - new Date(sesCheck[0].created_at).getTime();
+                    allowBySession = sesAge < 15 * 60 * 1000;
+                }
+                if (!allowBySession && sesCheck && sesCheck.length > 0) {
+                    return { success: false, error: 'ไม่พบสิทธิ์ตั้งรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ' };
+                }
             }
-            var fpUser = await sbGet('users', { id: 'eq.' + userId, select: 'email', limit: '1' });
-            var fpEmail = (fpUser && fpUser[0] ? fpUser[0].email : '').trim().toLowerCase();
+            // ใช้ email จาก client (ถ้าส่งมา) ก่อน เพื่อป้องกัน RLS บล็อก users query
+            var fpEmail = (data.email || '').trim().toLowerCase();
+            if (!fpEmail) {
+                var fpUser = await sbGet('users', { id: 'eq.' + userId, select: 'email', limit: '1' });
+                fpEmail = (fpUser && fpUser[0] ? fpUser[0].email : '').trim().toLowerCase();
+            }
+            if (!fpEmail) return { success: false, error: 'ไม่พบข้อมูลอีเมล กรุณาล็อกอินใหม่อีกครั้ง' };
             var newHash = await sha256hexSalted(newPassword, fpEmail);
             await sbPatch('users', { id: 'eq.' + userId }, {
                 password_hash: newHash,
