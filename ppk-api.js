@@ -606,6 +606,21 @@ async function _routeAction(action, data) {
             if (!email) return { success: false, error: 'กรุณากรอกอีเมล' };
             if (!_isValidEmail(email)) return { success: false, error: 'รูปแบบอีเมลไม่ถูกต้อง' };
             var uRows = await sbGet('users', { email: 'eq.' + email, is_active: 'eq.true', limit: '1' });
+            if (!uRows || uRows.length === 0) {
+                // Fallback 1: ตรวจว่ามี user ใน users table แต่ is_active ยังไม่เป็น true หรือไม่
+                var uInactive = await sbGet('users', { email: 'eq.' + email, limit: '1' });
+                if (uInactive && uInactive.length > 0) {
+                    try { await sbPatch('users', { id: 'eq.' + uInactive[0].id }, { is_active: true, status: 'active' }); } catch(eAct) {}
+                    uRows = uInactive;
+                }
+            }
+            if (!uRows || uRows.length === 0) {
+                // Fallback 2: ตรวจจาก residents table เผื่อยังไม่ได้สร้างหรือผูก user_id
+                var resMatch = await sbGet('residents', { email: 'eq.' + email, is_active: 'eq.true', limit: '1' });
+                if (resMatch && resMatch[0] && resMatch[0].user_id) {
+                    uRows = await sbGet('users', { id: 'eq.' + resMatch[0].user_id, limit: '1' });
+                }
+            }
             if (!uRows || uRows.length === 0) return { success: false, error: 'ไม่พบบัญชีผู้ใช้ หรืออีเมลไม่ถูกต้อง' };
             var u = uRows[0];
             // ✅ ตรวจสอบ account lockout
@@ -4053,41 +4068,73 @@ async function _routeAction(action, data) {
             if (data.house_number !== undefined && resUp.house_id) {
                 try { await sbPatch('coresidents', { resident_id: 'eq.' + rid }, { house_id: resUp.house_id }); } catch(e) {}
             }
-            var resRow = await sbGet('residents', { id: 'eq.' + rid, select: 'user_id', limit: '1' });
-            if (resRow && resRow[0] && resRow[0].user_id) {
-                var userUp = { updated_at: new Date().toISOString() };
-                if (data.phone     !== undefined) userUp.phone     = data.phone;
-                if (data.email     !== undefined) userUp.email     = (data.email || '').trim().toLowerCase();
-                if (data.position  !== undefined) userUp.position  = data.position;
-                if (data.prefix    !== undefined) userUp.prefix    = data.prefix;
-                if (data.firstname !== undefined) userUp.firstname = data.firstname;
-                if (data.lastname  !== undefined) userUp.lastname  = data.lastname;
-                if (data.is_active !== undefined) userUp.is_active = data.is_active;
-                if (data.password) {
-                    var pw2 = '';
-                    try { pw2 = atob(data.password); } catch(e3) { pw2 = data.password; }
-                    var urEmail = (data.email || userUp.email || '').trim().toLowerCase();
-                    if (!urEmail) {
-                        var urU = await sbGet('users', { id: 'eq.' + resRow[0].user_id, select: 'email', limit: '1' });
-                        urEmail = urU && urU[0] ? (urU[0].email || '').trim().toLowerCase() : '';
-                    }
-                    userUp.password_hash = await sha256hexSalted(pw2, urEmail);
-                    userUp.failed_attempts = 0;
-                    userUp.locked_until = null;
-                    if (userUp.is_active === undefined) {
-                        userUp.is_active = true;
-                        userUp.status = 'active';
-                    }
-                    if (data.must_change_pw !== undefined) {
-                        var _mcKey = 'must_change_pw_' + resRow[0].user_id;
-                        if (data.must_change_pw) {
-                            try { await sbUpsert('settings', { key: _mcKey, value: 'true' }, 'key'); } catch(eMc) {}
-                        } else {
-                            try { await sbDelete('settings', { key: _mcKey }); } catch(eMc) {}
-                        }
+            var resRow = await sbGet('residents', { id: 'eq.' + rid, limit: '1' });
+            var curRes = resRow && resRow[0] ? resRow[0] : null;
+            if (curRes) {
+                var targetUserId = curRes.user_id || null;
+                var urEmail = (data.email || curRes.email || '').trim().toLowerCase();
+
+                // ถ้าผู้พักยังไม่มี user_id ผูกอยู่ ให้ค้นหา user จาก email หรือสร้าง user account ใหม่
+                if (!targetUserId && urEmail) {
+                    var existingU = await sbGet('users', { email: 'eq.' + urEmail, limit: '1' });
+                    if (existingU && existingU[0]) {
+                        targetUserId = existingU[0].id;
+                        try { await sbPatch('residents', { id: 'eq.' + rid }, { user_id: targetUserId }); } catch(e) {}
+                    } else if (data.password) {
+                        // สร้าง user account ใหม่ในตาราง users ทันที
+                        targetUserId = 'USR-' + Date.now().toString(36).toUpperCase();
+                        var pwNew = '';
+                        try { pwNew = atob(data.password); } catch(e3) { pwNew = data.password; }
+                        var pwNewHash = await sha256hexSalted(pwNew.trim(), urEmail);
+                        await sbPost('users', {
+                            id: targetUserId,
+                            email: urEmail,
+                            firstname: data.firstname || curRes.firstname || '',
+                            lastname: data.lastname || curRes.lastname || '',
+                            prefix: data.prefix || curRes.prefix || '',
+                            phone: data.phone || curRes.phone || '',
+                            role: 'resident',
+                            position: data.position || curRes.position || '',
+                            is_active: true,
+                            pdpa_consent: false,
+                            password_hash: pwNewHash
+                        });
+                        try { await sbPatch('residents', { id: 'eq.' + rid }, { user_id: targetUserId }); } catch(e) {}
                     }
                 }
-                await sbPatch('users', { id: 'eq.' + resRow[0].user_id }, userUp);
+
+                if (targetUserId) {
+                    var userUp = { updated_at: new Date().toISOString() };
+                    if (data.phone     !== undefined) userUp.phone     = data.phone;
+                    if (data.email     !== undefined) userUp.email     = (data.email || '').trim().toLowerCase();
+                    if (data.position  !== undefined) userUp.position  = data.position;
+                    if (data.prefix    !== undefined) userUp.prefix    = data.prefix;
+                    if (data.firstname !== undefined) userUp.firstname = data.firstname;
+                    if (data.lastname  !== undefined) userUp.lastname  = data.lastname;
+                    if (data.is_active !== undefined) userUp.is_active = data.is_active;
+                    if (data.password) {
+                        var pw2 = '';
+                        try { pw2 = atob(data.password); } catch(e3) { pw2 = data.password; }
+                        if (!urEmail) {
+                            var urU = await sbGet('users', { id: 'eq.' + targetUserId, select: 'email', limit: '1' });
+                            urEmail = urU && urU[0] ? (urU[0].email || '').trim().toLowerCase() : '';
+                        }
+                        userUp.password_hash = await sha256hexSalted(pw2.trim(), urEmail);
+                        userUp.failed_attempts = 0;
+                        userUp.locked_until = null;
+                        userUp.is_active = true;
+                        userUp.status = 'active';
+                        if (data.must_change_pw !== undefined) {
+                            var _mcKey = 'must_change_pw_' + targetUserId;
+                            if (data.must_change_pw) {
+                                try { await sbUpsert('settings', { key: _mcKey, value: 'true' }, 'key'); } catch(eMc) {}
+                            } else {
+                                try { await sbDelete('settings', { key: _mcKey }); } catch(eMc) {}
+                            }
+                        }
+                    }
+                    await sbPatch('users', { id: 'eq.' + targetUserId }, userUp);
+                }
             }
             invalidateResidentCache();
             return { success: true };
