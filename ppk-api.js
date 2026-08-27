@@ -629,18 +629,13 @@ async function _routeAction(action, data) {
                 return { success: false, error: 'บัญชีนี้ถูกล็อกชั่วคราว กรุณารออีก ' + remainMin + ' นาที (กรอกรหัสผ่านผิดซ้ำหลายครั้ง)' };
             }
             // ตรวจ flag must_change_pw จาก settings table
+            // (ใช้ flag เท่านั้น — ไม่ตรวจ sessions เพราะ session ถูกลบทุกครั้งที่ logout ปกติ
+            //  การใช้ sessions ว่าง = first-login ทำให้ user เจอ First-Login Modal ทุกครั้งหลัง logout)
             var mustChangePw = false;
             try {
                 var mcRows = await sbGet('settings', { key: 'eq.must_change_pw_' + u.id, limit: '1' });
                 mustChangePw = !!(mcRows && mcRows.length > 0);
             } catch(e) { mustChangePw = false; }
-            // Failsafe: ถ้าไม่มี flag แต่ไม่เคย login (ไม่มี session) → ถือเป็น first-login
-            if (!mustChangePw) {
-                try {
-                    var sesRows = await sbGet('sessions', { user_id: 'eq.' + u.id, limit: '1' });
-                    if (!sesRows || sesRows.length === 0) { mustChangePw = true; }
-                } catch(e2) { /* ignore */ }
-            }
             // ถ้าเป็นการเข้าใช้ครั้งแรก → ข้าม password check ให้ตั้งรหัสผ่านเอง
             if (mustChangePw) {
                 return { success: true, must_set_password: true, userId: u.id, userName: (u.firstname || '') + ' ' + (u.lastname || '') };
@@ -2363,6 +2358,14 @@ async function _routeAction(action, data) {
             var pwHash = await sha256hexSalted(newPassword, email);
             var rpcRes = await sbRpc('rpc_verify_password_reset', { p_email: email, p_otp_hash: codeHash, p_new_password_hash: pwHash });
             if (!rpcRes || !rpcRes.success) return { success: false, error: rpcRes.error || 'รหัส OTP ไม่ถูกต้อง' };
+            // ★ [FIX] ลบ sessions ทั้งหมดของ user นี้ (belt-and-suspenders นอกจาก SQL RPC แล้ว)
+            // เพื่อ force logout ทุก device และป้องกัน session เก่าค้างอยู่
+            try {
+                var _vrcUserR = await sbGet('users', { email: 'eq.' + email, select: 'id', limit: '1' });
+                if (_vrcUserR && _vrcUserR[0]) {
+                    await sbDelete('sessions', { user_id: 'eq.' + _vrcUserR[0].id });
+                }
+            } catch(eSess) { /* ignore — SQL RPC จัดการให้แล้ว */ }
             return { success: true, message: rpcRes.message || 'เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
         }
 
@@ -4172,6 +4175,11 @@ async function _routeAction(action, data) {
                         }
                     }
                     await sbPatch('users', { id: 'eq.' + targetUserId }, userUp);
+                    // ★ ถ้า admin รีเซ็ตรหัสผ่าน → force logout sessions เก่าทั้งหมด
+                    // เพื่อบังคับให้ user login ใหม่ด้วยรหัสผ่านที่ admin กำหนด
+                    if (data.password) {
+                        try { await sbDelete('sessions', { user_id: 'eq.' + targetUserId }); } catch(eSess) {}
+                    }
                 }
             }
             invalidateResidentCache();
