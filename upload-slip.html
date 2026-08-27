@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>อัปโหลดสลิป | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260827B">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260827P">
     <style>
         body {
             margin: 0; min-height: 100vh; font-family: 'Kanit', sans-serif;
@@ -791,6 +791,16 @@
             if(files.length === 0){ ppkAlert('กรุณาแนบรูปสลิปอย่างน้อย 1 รูป'); return; }
             if(paidAmount <= 0){ ppkAlert('กรุณากรอกจำนวนเงินที่ชำระ'); return; }
             if(window.billingInfo && window.billingInfo.noBillData){ ppkAlert('⛔ ยังไม่สามารถส่งสลิปได้\n\nเดือนนี้ยังไม่ได้บันทึกค่าน้ำค่าไฟ\nกรุณารอแจ้งยอดก่อน'); return; }
+            
+            // ✅ ตรวจสอบยอดเงินให้ตรงกับที่ระบบแจ้ง (Financial Integrity)
+            if (window.billingInfo && window.billingInfo.notifiedAmount > 0) {
+                // อนุญาตให้คลาดเคลื่อนทศนิยมเล็กน้อย (0.05 บาท)
+                if (Math.abs(paidAmount - window.billingInfo.notifiedAmount) > 0.05) {
+                    ppkAlert('❌ ยอดเงินไม่ตรงกับยอดเรียกเก็บ\n\nยอดที่ต้องชำระคือ ' + formatMoney(window.billingInfo.notifiedAmount) + ' บาท\nแต่ยอดที่ระบุ/อ่านได้คือ ' + formatMoney(paidAmount) + ' บาท\n\nกรุณาตรวจสอบรายละเอียดสลิปอีกครั้งให้ถูกต้อง');
+                    return;
+                }
+            }
+
             // ตรวจขนาดไฟล์ (สูงสุด 5MB ต่อรูป)
             for (var fi = 0; fi < files.length; fi++) {
                 if (files[fi].size > 5 * 1024 * 1024) { ppkAlert('ไฟล์ ' + files[fi].name + ' มีขนาดเกิน 5MB'); return; }
@@ -1111,13 +1121,13 @@
         };
     </script>
     </div><!-- /ppk-main -->
-    <script src="libs/jsqr.min.js?v=20260827B"></script>
-    <script src="supabase/config.js?v=20260827B"></script>
-    <script src="supabase/supabase.min.js?v=20260827B"></script>
-    <script src="ppk-api.js?v=20260827B"></script>
-    <script src="ppk-app.js?v=20260827B"></script>
-    <script src="ppk-utils.js?v=20260827B"></script>
-    <script src="ppk-nav.js?v=20260827B"></script>
-    <script src="ppk-pwa.js?v=20260827B"></script>
+    <script src="libs/jsqr.min.js?v=20260827P"></script>
+    <script src="supabase/config.js?v=20260827P"></script>
+    <script src="supabase/supabase.min.js?v=20260827P"></script>
+    <script src="ppk-api.js?v=20260827P"></script>
+    <script src="ppk-app.js?v=20260827P"></script>
+    <script src="ppk-utils.js?v=20260827P"></script>
+    <script src="ppk-nav.js?v=20260827P"></script>
+    <script src="ppk-pwa.js?v=20260827P"></script>
 </body>
 </html>
