@@ -639,23 +639,56 @@ async function _routeAction(action, data) {
             var rawPw = data.password || '';
             var password = rawPw.trim();
             if (!password) return { success: false, error: 'กรุณากรอกรหัสผ่าน' };
+            // ตรวจสอบรหัสผ่าน (รองรับ Salt ปัจจุบัน, Legacy Unsalted, และ Fallback Salt จาก Email เดิม/UID)
+            var matched = false;
             var pwSalted = await sha256hexSalted(password, email);
             var pwLegacy = await sha256hex(password);
-            var matched = false;
-            if (u.password_hash === pwSalted) { matched = true; }
-            else if (u.password_hash === pwLegacy) {
-                // Lazy migration: อัปเกรดเป็น salted hash
+            
+            if (u.password_hash === pwSalted) {
                 matched = true;
-                try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
-            } else if (rawPw !== password) {
-                // Fallback: กรณีรหัสเดิมที่เคยบันทึกไว้มี space ติดมา
-                var pwSaltedRaw = await sha256hexSalted(rawPw, email);
-                var pwLegacyRaw = await sha256hex(rawPw);
-                if (u.password_hash === pwSaltedRaw || u.password_hash === pwLegacyRaw) {
-                    matched = true;
-                    try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
+            } else if (u.password_hash === pwLegacy) {
+                matched = true;
+            } else {
+                // Fallback: ตรวจสอบ salt รูปแบบอื่นๆ (เช่น email ใน resident ต่างกัน, uid salt, reverse order, หรือ raw password)
+                var resAltEmail = (resMatch && resMatch[0] && resMatch[0].email) ? resMatch[0].email.trim().toLowerCase() : '';
+                var candidateSalts = [
+                    resAltEmail,
+                    u.id + '@local.ppk',
+                    u.id
+                ].filter(Boolean);
+
+                // ตรวจ candidate salts ทั้งแบบ email:pw และ pw:email
+                for (var ci = 0; ci < candidateSalts.length; ci++) {
+                    var salt = candidateSalts[ci];
+                    var hash1 = await sha256hexSalted(password, salt);
+                    var hash2 = await sha256hex(password + ':' + salt);
+                    if (u.password_hash === hash1 || u.password_hash === hash2) {
+                        matched = true;
+                        break;
+                    }
+                }
+
+                // Fallback: Reverse order ของอีเมลปัจจุบัน (pw + ':' + email)
+                if (!matched) {
+                    var hashRev = await sha256hex(password + ':' + email);
+                    if (u.password_hash === hashRev) matched = true;
+                }
+
+                // Fallback: กรณีรหัสเดิมที่เคยบันทึกไว้มี space (rawPw)
+                if (!matched && rawPw !== password) {
+                    var pwSaltedRaw = await sha256hexSalted(rawPw, email);
+                    var pwLegacyRaw = await sha256hex(rawPw);
+                    if (u.password_hash === pwSaltedRaw || u.password_hash === pwLegacyRaw) {
+                        matched = true;
+                    }
                 }
             }
+
+            if (matched && u.password_hash !== pwSalted) {
+                // Lazy migration: อัปเกรดเป็น salted hash ปัจจุบันอัตโนมัติ
+                try { await sbPatch('users', { id: 'eq.' + u.id }, { password_hash: pwSalted, updated_at: new Date().toISOString() }); } catch(e) {}
+            }
+
             if (!matched) {
                 return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
             }
