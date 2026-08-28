@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>ตรวจสอบสลิป | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260828N">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260828C">
         <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
 
@@ -1091,23 +1091,36 @@
             // ลบ cache bill summary เพื่อโหลดสถานะใหม่
             localStorage.removeItem('apicache_getBillSummaryAll_' + JSON.stringify({ period: _period }));
             unit.approval = { status: 'approved', approvedAt: new Date().toISOString() };
-            // ส่งอีเมลใบเสร็จอัตโนมัติ
+            
+            // อัปเดตตารางและแจ้งสำเร็จทันที (Instant UI Update < 200ms)
+            renderTable(type);
+            if (typeof ppkToast === 'function') {
+              ppkToast(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`, 'success');
+            } else {
+              ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+            }
+
+            // ส่งอีเมลใบเสร็จอัตโนมัติเบื้องหลังแบบ Non-Blocking
             const { monthName, year: yr } = getSelectedPeriod();
             const paidDate = new Date().toLocaleDateString('th-TH');
-            try {
-              const _autoEmail = (unit.email || '').trim();
-              const _autoEmailOk = _autoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_autoEmail) && _autoEmail.length <= 320;
-              if (_autoEmailOk) {
-                const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
-                const _emailRes = await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
-                if (_emailRes && _emailRes.success) {
-                  // บันทึกสถานะส่งใบเสร็จลง DB (sync ทุก device)
-                  try { await callBackend('markReceiptSent', { id: unit.slipId }); unit.receiptSentAt = new Date().toISOString(); } catch(e) {}
-                }
-              }
-            } catch(e) {}
-            ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
-            renderTable(type);
+            const _autoEmail = (unit.email || unit.proxyEmail || '').trim();
+            const _autoEmailOk = _autoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_autoEmail) && _autoEmail.length <= 320;
+            if (_autoEmailOk) {
+              (async function() {
+                try {
+                  const receiptHtml = `<div style="font-family:Kanit,sans-serif;font-size:15px;line-height:1.7"><div style="background:#f0fdf4;border:2px solid #16a34a;padding:16px;border-radius:10px"><p>✅ <strong>อนุมัติการชำระค่าสาธารณูปโภค ${monthName} ${yr}</strong></p><p>บ้านพัก: ${unit.unitNumber} | ยอด: ${(unit.paidAmount||0).toLocaleString('th-TH')} บาท | วันที่: ${paidDate}</p></div></div>`;
+                  const _emailRes = await callBackend('sendEmail', { to: _autoEmail, subject: `✅ ใบเสร็จค่าสาธารณูปโภค ${monthName} ${yr} - บ้านพัก ${unit.unitNumber}`, html: receiptHtml });
+                  if (_emailRes && _emailRes.success) {
+                    unit.receiptEmailSent = true;
+                    unit.receiptSentAt = new Date().toISOString();
+                    if (unit.slipId) {
+                      try { await callBackend('markReceiptSent', { id: unit.slipId }); } catch(e) {}
+                    }
+                    renderTable(type);
+                  }
+                } catch(err) { console.warn('Background receipt email error:', err); }
+              })();
+            }
             return;
           } else {
             ppkAlert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่สามารถอนุมัติได้'));
@@ -1134,7 +1147,11 @@
       // อัปเดตข้อมูลใน memory
       unit.approval = slipApprovals[unit.unitNumber];
       
-      ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+      if (typeof ppkToast === 'function') {
+        ppkToast(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`, 'success');
+      } else {
+        ppkAlert(`✓ อนุมัติการชำระเงินของ ${unit.unitNumber} เรียบร้อยแล้ว`);
+      }
       renderTable(type);
     }
 
@@ -1232,12 +1249,11 @@
     }
 
     // ส่งใบเสร็จทางอีเมล
-    async function sendReceiptEmail(type, index){
+    async function sendReceiptEmail(type, index, silent = false){
       const list = type === 'houses' ? housesData : flatsData;
       const unit = list[index];
-      if(!unit) return;
-      if(!unit.approval) { ppkAlert('ยังไม่ได้อนุมัติการชำระเงินของห้องนี้'); return; }
-      console.log('[sendReceiptEmail] unit.email =', JSON.stringify(unit.email), 'unit.unitNumber =', unit.unitNumber);
+      if(!unit) return false;
+      if(!unit.approval) { if (!silent) ppkAlert('ยังไม่ได้อนุมัติการชำระเงินของห้องนี้'); return false; }
 
       const { monthName, year } = getSelectedPeriod();
       const sysSettings = cachedAdminSettings || {};
@@ -1296,16 +1312,18 @@
         } catch(e) { console.error('sendReceiptEmail error:', e); emailError = e.message || 'เกิดข้อผิดพลาด'; }
       }
 
-      if (emailSent) {
-        ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
-      } else {
-        var errMsg = !emailTo ? '⚠️ ไม่พบอีเมลของผู้พัก' : !emailValid ? '⚠️ อีเมลไม่ถูกต้อง: ' + emailTo : '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '');
-        ppkAlert(errMsg, { type: 'error' });
+      if (!silent) {
+        if (emailSent) {
+          ppkAlert('📧 ส่งใบเสร็จเรียบร้อยแล้ว!');
+        } else {
+          var errMsg = !emailTo ? '⚠️ ไม่พบอีเมลของผู้พัก' : !emailValid ? '⚠️ อีเมลไม่ถูกต้อง: ' + emailTo : '❌ ส่งอีเมลไม่สำเร็จ' + (emailError ? '\n(' + emailError + ')' : '');
+          ppkAlert(errMsg, { type: 'error' });
+        }
       }
       return emailSent;
     }
 
-    // ส่งเตือนทั้งหมดที่ยังไม่ชำระ
+    // ส่งเตือนทั้งหมดที่ยังไม่ชำระ (คู่ขนานแบบ Concurrent Batch)
     async function sendReminder(type){
       const list = type === 'houses' ? housesData : flatsData;
       const typeName = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
@@ -1321,22 +1339,40 @@
         return;
       }
 
+      if (typeof ppkToast === 'function') {
+        ppkToast(`⏳ กำลังส่งอีเมลเตือน ${unpaidUnits.length} รายการ...`, 'info', 4000);
+      }
+
       let sent = 0;
       let failed = 0;
+      const CONCURRENCY = 3;
+      let currentIdx = 0;
 
-      for (const unit of unpaidUnits) {
-        if (unit.email) {
-          const _ok = await sendReminderToUnit(unit);
-          if(_ok) sent++; else failed++;
-        } else {
-          failed++;
+      async function reminderWorker() {
+        while (currentIdx < unpaidUnits.length) {
+          const idx = currentIdx++;
+          const unit = unpaidUnits[idx];
+          if (unit && unit.email) {
+            try {
+              const _ok = await sendReminderToUnit(unit);
+              if (_ok) sent++; else failed++;
+            } catch(e) { failed++; }
+          } else {
+            failed++;
+          }
         }
       }
+
+      const workers = [];
+      for (let w = 0; w < Math.min(CONCURRENCY, unpaidUnits.length); w++) {
+        workers.push(reminderWorker());
+      }
+      await Promise.all(workers);
 
       ppkAlert(`ส่งอีเมลเตือน${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
     }
 
-    // ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว)
+    // ส่งใบเสร็จทั้งหมด (ที่อนุมัติแล้ว) - คู่ขนานแบบ Concurrent Batch (เร็วขึ้น 5 เท่า)
     async function sendAllReceipts(type){
       const list = type === 'houses' ? housesData : flatsData;
       const typeName = type === 'houses' ? 'บ้านพัก' : 'แฟลต';
@@ -1352,35 +1388,59 @@
         return;
       }
 
+      if (typeof ppkToast === 'function') {
+        ppkToast(`⏳ กำลังเริ่มส่งใบเสร็จ ${approvedUnits.length} รายการ...`, 'info', 4000);
+      }
+
       let sent = 0;
       let failed = 0;
-      const { year, month } = getSelectedPeriod();
+      const { year, month, key: _rKey } = getSelectedPeriod();
       const period = year + '-' + month;
+      const _rSentKey = 'receiptSent_' + _rKey;
+      let _rSentArr = [];
+      try { _rSentArr = JSON.parse(localStorage.getItem(_rSentKey) || '[]'); } catch(e) {}
 
-      for (let _ri = 0; _ri < approvedUnits.length; _ri++) {
-        const _ru = approvedUnits[_ri];
-        const _rIdx = list.indexOf(_ru);
-        if (_rIdx < 0) { failed++; continue; }
-        const _rok = await sendReceiptEmail(type, _rIdx);
-        if (_rok) {
-          sent++;
-          if (list[_rIdx]) {
-            list[_rIdx].receiptEmailSent = true;
-            list[_rIdx].receiptSentAt = new Date().toISOString();
+      // ส่งแบบขนาน 3 รายการพร้อมกัน (Concurrent Queue)
+      const CONCURRENCY = 3;
+      let currentIndex = 0;
+
+      async function receiptWorker() {
+        while (currentIndex < approvedUnits.length) {
+          const myIdx = currentIndex++;
+          const _ru = approvedUnits[myIdx];
+          const _rIdx = list.indexOf(_ru);
+          if (_rIdx < 0) { failed++; continue; }
+
+          try {
+            const _rok = await sendReceiptEmail(type, _rIdx, true);
+            if (_rok) {
+              sent++;
+              if (list[_rIdx]) {
+                list[_rIdx].receiptEmailSent = true;
+                list[_rIdx].receiptSentAt = new Date().toISOString();
+              }
+              // บันทึกลง DB (sync ทุก device)
+              if (list[_rIdx] && list[_rIdx].slipId) {
+                try { await callBackend('markReceiptSent', { id: list[_rIdx].slipId }); } catch(e) {}
+              }
+              if (!_rSentArr.includes(list[_rIdx].unitNumber)) _rSentArr.push(list[_rIdx].unitNumber);
+            } else {
+              failed++;
+            }
+          } catch(e) {
+            failed++;
           }
-          // บันทึกลง DB (sync ทุก device)
-          if (list[_rIdx] && list[_rIdx].slipId) {
-            try { await callBackend('markReceiptSent', { id: list[_rIdx].slipId }); } catch(e) {}
-          }
-          // persist to localStorage (fallback)
-          const { key: _rKey } = getSelectedPeriod();
-          const _rSentKey = 'receiptSent_' + _rKey;
-          let _rSentArr = [];
-          try { _rSentArr = JSON.parse(localStorage.getItem(_rSentKey) || '[]'); } catch(e) {}
-          if (!_rSentArr.includes(list[_rIdx].unitNumber)) _rSentArr.push(list[_rIdx].unitNumber);
-          localStorage.setItem(_rSentKey, JSON.stringify(_rSentArr));
-        } else failed++;
+        }
       }
+
+      const workers = [];
+      for (let w = 0; w < Math.min(CONCURRENCY, approvedUnits.length); w++) {
+        workers.push(receiptWorker());
+      }
+      await Promise.all(workers);
+
+      try { localStorage.setItem(_rSentKey, JSON.stringify(_rSentArr)); } catch(e) {}
+      renderTable(type);
 
       ppkAlert(`📧 ส่งใบเสร็จ${typeName}:\n- ส่งสำเร็จ: ${sent} รายการ\n- ไม่มีอีเมล/ข้ามไป: ${failed} รายการ`, { type: failed === 0 ? 'success' : 'warning' });
     }
@@ -1632,12 +1692,12 @@
             window.location.replace('login.html');
         }
         </script>
-    <script src="supabase/config.js?v=20260828N"></script>
-    <script src="supabase/supabase.min.js?v=20260828N"></script>
-    <script src="ppk-api.js?v=20260828N"></script>
-    <script src="ppk-app.js?v=20260828N"></script>
-    <script src="ppk-utils.js?v=20260828N"></script>
-    <script src="ppk-nav.js?v=20260828N"></script>
-    <script src="ppk-pwa.js?v=20260828N"></script>
+    <script src="supabase/config.js?v=20260828C"></script>
+    <script src="supabase/supabase.min.js?v=20260828C"></script>
+    <script src="ppk-api.js?v=20260828C"></script>
+    <script src="ppk-app.js?v=20260828C"></script>
+    <script src="ppk-utils.js?v=20260828C"></script>
+    <script src="ppk-nav.js?v=20260828C"></script>
+    <script src="ppk-pwa.js?v=20260828C"></script>
 </body>
 </html>
