@@ -655,17 +655,29 @@ async function _routeAction(action, data) {
             } else if (u.password_hash === pwLegacy) {
                 matched = true;
             } else {
-                // Fallback: ตรวจสอบ salt รูปแบบอื่นๆ (เช่น email ใน resident ต่างกัน, uid salt, reverse order, หรือ raw password)
-                var resAltEmail = (resMatch && resMatch[0] && resMatch[0].email) ? resMatch[0].email.trim().toLowerCase() : '';
+                // Fallback: ดึง email จาก residents table ของ user นี้มาเป็น candidate salts
                 var candidateSalts = [
-                    resAltEmail,
                     u.id + '@local.ppk',
                     u.id
-                ].filter(Boolean);
+                ];
+                try {
+                    var rRows = await sbGet('residents', { user_id: 'eq.' + u.id, limit: '5' });
+                    if (rRows && rRows.length > 0) {
+                        rRows.forEach(function(rr) {
+                            if (rr.email) candidateSalts.push(rr.email.trim().toLowerCase());
+                        });
+                    }
+                } catch(eR) {}
+
+                // เพิ่ม known typo salts
+                if (email === 'chiraphan.c@ppk.ac.th' || email.indexOf('chiraph') !== -1) {
+                    candidateSalts.push('chiraph.c@ppk.ac.th');
+                }
 
                 // ตรวจ candidate salts ทั้งแบบ email:pw และ pw:email
                 for (var ci = 0; ci < candidateSalts.length; ci++) {
                     var salt = candidateSalts[ci];
+                    if (!salt) continue;
                     var hash1 = await sha256hexSalted(password, salt);
                     var hash2 = await sha256hex(password + ':' + salt);
                     if (u.password_hash === hash1 || u.password_hash === hash2) {
