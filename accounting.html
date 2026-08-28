@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>บัญชีรายรับ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260828O">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260828N">
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -766,19 +766,23 @@
             const yearSelect = document.getElementById('bill_year');
             const annualSelect = document.getElementById('annual_year');
             const currentYear = new Date().getFullYear() + 543;
-            yearSelect.innerHTML = '';
-            annualSelect.innerHTML = '';
+            if (yearSelect) yearSelect.innerHTML = '';
+            if (annualSelect) annualSelect.innerHTML = '';
             
             for (let y = currentYear + 1; y >= 2568; y--) {
-                const opt = document.createElement('option');
-                opt.value = y;
-                opt.textContent = y;
-                yearSelect.appendChild(opt);
+                if (yearSelect) {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    yearSelect.appendChild(opt);
+                }
 
-                const opt2 = document.createElement('option');
-                opt2.value = y;
-                opt2.textContent = y;
-                annualSelect.appendChild(opt2);
+                if (annualSelect) {
+                    const opt2 = document.createElement('option');
+                    opt2.value = y;
+                    opt2.textContent = y;
+                    annualSelect.appendChild(opt2);
+                }
             }
         }
         
@@ -1471,6 +1475,7 @@
         async function loadCashOnHand(period) {
             var card = document.getElementById('cashOnHandCard');
             var content = document.getElementById('cashOnHandContent');
+            if (!card || !content) return;
             try {
                 var result = await callBackend('getCashOnHand', { period: period });
                 var d = (result && result.data) || {};
@@ -1552,12 +1557,12 @@
 
         </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="supabase/config.js?v=20260828O"></script>
-    <script src="supabase/supabase.min.js?v=20260828O"></script>
-    <script src="ppk-api.js?v=20260828O"></script>
-    <script src="ppk-app.js?v=20260828O"></script>
-    <script src="ppk-utils.js?v=20260828O"></script>
-    <script src="ppk-nav.js?v=20260828O"></script>
-    <script src="ppk-pwa.js?v=20260828O"></script>
+    <script src="supabase/config.js?v=20260828N"></script>
+    <script src="supabase/supabase.min.js?v=20260828N"></script>
+    <script src="ppk-api.js?v=20260828N"></script>
+    <script src="ppk-app.js?v=20260828N"></script>
+    <script src="ppk-utils.js?v=20260828N"></script>
+    <script src="ppk-nav.js?v=20260828N"></script>
+    <script src="ppk-pwa.js?v=20260828N"></script>
 </body>
 </html>
