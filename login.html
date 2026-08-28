@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>เข้าสู่ระบบ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260827P">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260828G">
     <style>
         body {
             margin: 0; padding: 0 !important; min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -121,11 +121,11 @@
     </form>
 
     <!-- โหลด ppk-api.js ก่อน inline script เพื่อให้ callBackend พร้อมใช้ -->
-    <script src="supabase/config.js?v=20260827P"></script>
-    <script src="supabase/supabase.min.js?v=20260827P"></script>
-    <script src="ppk-api.js?v=20260827P"></script>
-    <script src="ppk-app.js?v=20260827P"></script>
-    <script src="ppk-utils.js?v=20260827P"></script>
+    <script src="supabase/config.js?v=20260828G"></script>
+    <script src="supabase/supabase.min.js?v=20260828G"></script>
+    <script src="ppk-api.js?v=20260828G"></script>
+    <script src="ppk-app.js?v=20260828G"></script>
+    <script src="ppk-utils.js?v=20260828G"></script>
     <!-- Fallback: ถ้า ppk-app.js เก่าไม่มี stub → สร้างเอง -->
     <script>
     (function() {
@@ -229,31 +229,14 @@
             return false;
         }
 
-        // ── ป้องกัน brute-force: จำกัดจำนวนครั้งการเข้าสู่ระบบผิดพลาด (ออก 5 ครั้ง ล็อค 15 นาที) ──
-        function _getLoginLockStatus(email) {
-            var lockKey  = 'loginLock_' + email.toLowerCase();
-            var lockUntil = parseInt(localStorage.getItem(lockKey) || '0');
-            if (lockUntil > Date.now()) {
-                var minsLeft = Math.ceil((lockUntil - Date.now()) / 60000);
-                return 'บัญชีถูกล็อคชั่วคราว กรุณารอ ' + minsLeft + ' นาที แล้วลองอีกครั้ง';
+        // ล้างข้อมูล lockout เดิมที่อาจค้างอยู่ใน localStorage (ถ้ามี)
+        try {
+            for (var k in localStorage) {
+                if (k.startsWith('loginLock_') || k.startsWith('loginAttempts_')) {
+                    localStorage.removeItem(k);
+                }
             }
-            return null;
-        }
-        function _recordLoginFailure(email) {
-            var attKey  = 'loginAttempts_' + email.toLowerCase();
-            var lockKey = 'loginLock_'     + email.toLowerCase();
-            var attempts = parseInt(localStorage.getItem(attKey) || '0') + 1;
-            if (attempts >= 5) {
-                localStorage.setItem(lockKey, String(Date.now() + 15 * 60 * 1000));
-                localStorage.removeItem(attKey);
-            } else {
-                localStorage.setItem(attKey, String(attempts));
-            }
-        }
-        function _clearLoginFailures(email) {
-            localStorage.removeItem('loginAttempts_' + email.toLowerCase());
-            localStorage.removeItem('loginLock_'     + email.toLowerCase());
-        }
+        } catch(e) {}
 
         // ============ Login Handler ============
         async function handleLogin() {
@@ -266,21 +249,10 @@
             loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
             errorMsg.style.display = 'none';
 
-            // ตรวจว่าถูกล็อคอยู่หรือไม่
-            var _lockMsg = _getLoginLockStatus(email);
-            if (_lockMsg) {
-                errorMsg.textContent = _lockMsg;
-                errorMsg.style.display = 'block';
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'เข้าสู่ระบบ';
-                return;
-            }
-
             try {
                 const result = await callBackend('login', { email, password });
 
                 if (result.success && result.must_set_password) {
-                    _clearLoginFailures(email);
                     // เข้าใช้ครั้งแรก → แสดง modal ตั้งรหัสผ่าน
                     window._firstLoginUserId = result.userId;
                     window._firstLoginEmail  = email; // เก็บ email ไว้ใช้ตอน setFirstPassword
@@ -293,7 +265,6 @@
                 }
 
                 if (result.success) {
-                    _clearLoginFailures(email);
                     // Store session
                     localStorage.setItem('sessionToken', result.token);
                     localStorage.setItem('currentUser', JSON.stringify(result.user));
@@ -312,7 +283,6 @@
                     // Redirect to dashboard
                     window.location.href = 'dashboard.html';
                 } else {
-                    _recordLoginFailure(email);
                     errorMsg.textContent = result.error || result.message || 'เข้าสู่ระบบไม่สำเร็จ';
                     errorMsg.style.display = 'block';
                 }
@@ -374,6 +344,6 @@
             }
         })();
     </script>
-    <script src="ppk-pwa.js?v=20260827P"></script>
+    <script src="ppk-pwa.js?v=20260828G"></script>
 </body>
 </html>

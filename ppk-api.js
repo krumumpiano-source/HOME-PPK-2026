@@ -623,11 +623,6 @@ async function _routeAction(action, data) {
             }
             if (!uRows || uRows.length === 0) return { success: false, error: 'ไม่พบบัญชีผู้ใช้ หรืออีเมลไม่ถูกต้อง' };
             var u = uRows[0];
-            // ✅ ตรวจสอบ account lockout
-            if (u.locked_until && new Date(u.locked_until) > new Date()) {
-                var remainMin = Math.ceil((new Date(u.locked_until) - new Date()) / 60000);
-                return { success: false, error: 'บัญชีนี้ถูกล็อกชั่วคราว กรุณารออีก ' + remainMin + ' นาที (กรอกรหัสผ่านผิดซ้ำหลายครั้ง)' };
-            }
             // ตรวจ flag must_change_pw จาก settings table
             // (ใช้ flag เท่านั้น — ไม่ตรวจ sessions เพราะ session ถูกลบทุกครั้งที่ logout ปกติ
             //  การใช้ sessions ว่าง = first-login ทำให้ user เจอ First-Login Modal ทุกครั้งหลัง logout)
@@ -662,16 +657,9 @@ async function _routeAction(action, data) {
                 }
             }
             if (!matched) {
-                var rpcRes = await sbRpc('rpc_login_lockout', { p_email: email });
-                if (rpcRes && rpcRes.locked) {
-                    _logActivity('account_locked', u.id, 'บัญชีถูกล็อกอัตโนมัติ (กรอกรหัสผ่านผิดเกิน 5 ครั้ง)', { email: email });
-                    return { success: false, error: 'รหัสผ่านไม่ถูกต้อง บัญชีถูกล็อกชั่วคราว 15 นาที' };
-                }
-                var failedAtt = rpcRes ? rpcRes.failed_attempts : ((parseInt(u.failed_attempts) || 0) + 1);
-                var remaining = Math.max(1, 5 - failedAtt);
-                return { success: false, error: 'รหัสผ่านไม่ถูกต้อง (เหลืออีก ' + remaining + ' ครั้งก่อนถูกล็อก)' };
+                return { success: false, error: 'รหัสผ่านไม่ถูกต้อง' };
             }
-            // ✅ Login สำเร็จ — reset lockout counter
+            // ✅ Login สำเร็จ
             try { await sbPatch('users', { id: 'eq.' + u.id }, { failed_attempts: 0, locked_until: null, updated_at: new Date().toISOString() }); } catch(e) {}
             // ดึงข้อมูล resident ที่ active (fallback email + auto-link)
             var resident = await _findResidentForUser(u.id, u.email);
