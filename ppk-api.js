@@ -310,7 +310,13 @@ async function _findResidentForUser(userId, userEmail) {
     if (userId) {
         try {
             var rows = await sbGet('residents', { user_id: 'eq.' + userId, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
-            if (rows && rows[0]) return rows[0];
+            if (rows && rows[0]) {
+                if (userEmail && rows[0].email !== userEmail) {
+                    try { await sbPatch('residents', { id: 'eq.' + rows[0].id }, { email: userEmail, updated_at: new Date().toISOString() }); } catch(eSync) {}
+                    rows[0].email = userEmail;
+                }
+                return rows[0];
+            }
         } catch(e) {}
     }
     // 2) Fallback: ค้นจาก email ใน residents table → auto-link user_id (เลือกบ้านปัจจุบันที่ active และอัปเดตล่าสุด)
