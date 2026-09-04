@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>บัญชีรายรับ | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260828C">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260904G">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
             <style>
@@ -1157,7 +1157,7 @@
         // ============================
         // SAVE DATA
         // ============================
-        async function saveData() {
+        async function saveData(silent = false) {
             const { month, year, key } = getSelectedPeriod();
             const period = year + '-' + month;
             
@@ -1206,14 +1206,15 @@
                         // ลบ cache เพื่อโหลดข้อมูลใหม่เมื่อกลับมาดู
                         localStorage.removeItem('apicache_loadAccountingData_' + JSON.stringify({ period: period }));
                         localStorage.removeItem('apicache_calculateAutoEntries_' + JSON.stringify({ period: period }));
-                        ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+                        if (!silent) ppkAlert('บันทึกข้อมูลเรียบร้อยแล้ว!');
                         await loadMonthData();
                     } else {
-                        ppkAlert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
+                        if (!silent) ppkAlert('เกิดข้อผิดพลาด: ' + (result?.message || result?.error || 'ไม่ทราบสาเหตุ'));
                     }
                 } catch (e) {
                     console.error('บันทึกไม่สำเร็จ:', e);
-                    ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+                    if (!silent) ppkAlert('บันทึกไม่สำเร็จ — กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+                    throw e; // re-throw เพื่อให้ attachImage จับ error ได้
                 }
         }
         
@@ -1291,18 +1292,58 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = function(e) {
+            input.onchange = async function(e) {
                 const file = e.target.files[0];
-                if (file) {
+                if (!file) return;
+                
+                // แสดง loading บน badge ชั่วคราว
+                const list = type === 'income' ? incomeItems : expenseItems;
+                if (!list[index]) return;
+                
+                // อ่านไฟล์เป็น base64
+                const base64 = await new Promise(resolve => {
                     const reader = new FileReader();
-                    reader.onload = function(ev) {
-                        const list = type === 'income' ? incomeItems : expenseItems;
-                        if (list[index]) {
-                            list[index].image = ev.target.result;
-                            renderAll();
-                        }
-                    };
+                    reader.onload = ev => resolve(ev.target.result);
                     reader.readAsDataURL(file);
+                });
+                
+                // ใส่ base64 ชั่วคราวให้แสดงผล
+                list[index].image = base64;
+                renderAll();
+                
+                // อัปโหลดทันทีและบันทึกลง backend
+                try {
+                    // แจ้ง user ว่ากำลัง upload
+                    const statusEl = document.createElement('span');
+                    statusEl.id = 'imgUploadStatus';
+                    statusEl.style.cssText = 'position:fixed;bottom:1.2rem;right:1.2rem;background:#2563eb;color:#fff;padding:0.6rem 1.2rem;border-radius:8px;font-size:0.9rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+                    statusEl.textContent = '⏳ กำลังอัปโหลดรูปและบันทึก...';
+                    document.body.appendChild(statusEl);
+                    
+                    // upload รูปไปยัง Supabase Storage
+                    const uploadResult = await callBackend('uploadReceiptImage', {
+                        base64: base64,
+                        description: list[index].description || 'หลักฐานบัญชี',
+                        date: list[index].date || new Date().toISOString().split('T')[0]
+                    });
+                    
+                    if (uploadResult && uploadResult.success && uploadResult.fileId) {
+                        // ใช้ URL จาก Storage แทน base64
+                        list[index].image = uploadResult.fileId;
+                        renderAll();
+                    }
+                    
+                    // บันทึกทั้ง period ลง backend (silent = ไม่ popup alert)
+                    await saveData(true);
+                    
+                    // แจ้งสำเร็จ
+                    var el = document.getElementById('imgUploadStatus');
+                    if (el) { el.style.background = '#059669'; el.textContent = '✅ แนบรูปและบันทึกเรียบร้อยแล้ว'; setTimeout(() => el.remove(), 2500); }
+                    
+                } catch(err) {
+                    console.error('attachImage error:', err);
+                    var el = document.getElementById('imgUploadStatus');
+                    if (el) { el.style.background = '#dc2626'; el.textContent = '❌ เกิดข้อผิดพลาด: ' + (err.message || 'ลองใหม่อีกครั้ง'); setTimeout(() => el.remove(), 3000); }
                 }
             };
             input.click();
@@ -1616,12 +1657,12 @@
 
         </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="supabase/config.js?v=20260828C"></script>
-    <script src="supabase/supabase.min.js?v=20260828C"></script>
-    <script src="ppk-api.js?v=20260828C"></script>
-    <script src="ppk-app.js?v=20260828C"></script>
-    <script src="ppk-utils.js?v=20260828C"></script>
-    <script src="ppk-nav.js?v=20260828C"></script>
-    <script src="ppk-pwa.js?v=20260828C"></script>
+    <script src="supabase/config.js?v=20260904G"></script>
+    <script src="supabase/supabase.min.js?v=20260904G"></script>
+    <script src="ppk-api.js?v=20260904G"></script>
+    <script src="ppk-app.js?v=20260904G"></script>
+    <script src="ppk-utils.js?v=20260904G"></script>
+    <script src="ppk-nav.js?v=20260904G"></script>
+    <script src="ppk-pwa.js?v=20260904G"></script>
 </body>
 </html>
