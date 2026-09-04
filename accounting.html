@@ -13,6 +13,8 @@
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>บัญชีรายรับ | HOME PPK 2026</title>
     <link rel="stylesheet" href="ppk-theme.css?v=20260828C">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
             <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
@@ -627,7 +629,7 @@
                 </div>
                 <div class="form-group">
                     <label>วันที่</label>
-                    <input type="date" id="entryDate">
+                    <input type="text" id="entryDate" placeholder="เลือกวันที่" readonly style="cursor:pointer;background:#fff;">
                 </div>
                 <div class="form-group">
                     <label>รายการ</label>
@@ -760,7 +762,64 @@
             setCurrentPeriod();
             await loadMonthData();
             initSidebar();
+            initThaiDatePicker();
         };
+        
+        function initThaiDatePicker() {
+            if (typeof flatpickr === 'undefined') return;
+            const thaiLocale = {
+                weekdays: {
+                    shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'],
+                    longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์']
+                },
+                months: {
+                    shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+                    longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
+                },
+                firstDayOfWeek: 0,
+                rangeSeparator: ' ถึง ',
+                weekAbbreviation: 'สัปดาห์',
+                scrollTitle: 'เลื่อนเพื่อเพิ่ม',
+                toggleTitle: 'คลิกเพื่อสลับ'
+            };
+            flatpickr('#entryDate', {
+                locale: thaiLocale,
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd F Y',
+                // แสดงปี พ.ศ. ใน altInput
+                onReady: function(selectedDates, dateStr, instance) {
+                    updateThaiYearDisplay(instance);
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    updateThaiYearDisplay(instance);
+                },
+                onMonthChange: function(selectedDates, dateStr, instance) {
+                    updateThaiYearDisplay(instance);
+                },
+                onYearChange: function(selectedDates, dateStr, instance) {
+                    updateThaiYearDisplay(instance);
+                }
+            });
+        }
+        
+        function updateThaiYearDisplay(instance) {
+            // แปลงปี ค.ศ. → พ.ศ. ใน header ของ Flatpickr
+            var yearEl = instance.calendarContainer && instance.calendarContainer.querySelector('.cur-year');
+            if (yearEl) {
+                var ce = parseInt(yearEl.value || yearEl.textContent);
+                if (!isNaN(ce) && ce < 2500) {
+                    yearEl.value = ce + 543;
+                }
+            }
+            // แปลงในช่อง altInput
+            if (instance.altInput && instance.latestSelectedDateObj) {
+                var d = instance.latestSelectedDateObj;
+                var thaiYear = d.getFullYear() + 543;
+                var monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+                instance.altInput.value = d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + thaiYear;
+            }
+        }
         
         function initYearSelector() {
             const yearSelect = document.getElementById('bill_year');
