@@ -336,7 +336,7 @@ async function _findResidentForUser(userId, userEmail) {
     // 3) ค้นจาก coresidents table (ผู้ร่วมพักอาศัย)
     if (userId) {
         try {
-            var corRows = await sbGet('coresidents', { user_id: 'eq.' + userId, order: 'updated_at.desc', limit: '1' });
+            var corRows = await sbGet('coresidents', { user_id: 'eq.' + userId, limit: '1' });
             if (corRows && corRows[0]) {
                 // ดึงข้อมูล resident หลักเพื่อได้ house_number
                 var mainRes = await sbGet('residents', { id: 'eq.' + corRows[0].resident_id, is_active: 'eq.true', order: 'updated_at.desc', limit: '1' });
@@ -349,7 +349,7 @@ async function _findResidentForUser(userId, userEmail) {
     if (userEmail) {
         var em2 = userEmail.trim().toLowerCase();
         try {
-            var corEmRows = await sbGet('coresidents', { email: 'eq.' + em2, order: 'updated_at.desc', limit: '1' });
+            var corEmRows = await sbGet('coresidents', { email: 'eq.' + em2, limit: '1' });
             if (corEmRows && corEmRows[0]) {
                 if (userId && !corEmRows[0].user_id) {
                     try { await sbPatch('coresidents', { id: 'eq.' + corEmRows[0].id }, { user_id: userId, updated_at: new Date().toISOString() }); } catch(e3) {}
