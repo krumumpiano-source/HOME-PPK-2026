@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แบบขอเข้าพักอาศัย | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260904G">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260907F">
     <style>
         body {
             margin: 0; min-height: 100vh; font-family: 'Kanit', sans-serif;
@@ -482,12 +482,12 @@
     </div>
     </div><!-- end main-container -->
 
-    <script src="supabase/config.js?v=20260904G"></script>
-    <script src="supabase/supabase.min.js?v=20260904G"></script>
-    <script src="ppk-api.js?v=20260904G"></script>
-    <script src="ppk-app.js?v=20260904G"></script>
-    <script src="ppk-utils.js?v=20260904G"></script>
-    <script src="ppk-nav.js?v=20260904G"></script>
+    <script src="supabase/config.js?v=20260907F"></script>
+    <script src="supabase/supabase.min.js?v=20260907F"></script>
+    <script src="ppk-api.js?v=20260907F"></script>
+    <script src="ppk-app.js?v=20260907F"></script>
+    <script src="ppk-utils.js?v=20260907F"></script>
+    <script src="ppk-nav.js?v=20260907F"></script>
 <script>
     // Nav — handled by ppk-nav.js
     window._ppkNavPage = 'request-form';
@@ -506,11 +506,13 @@
         const totalInput = document.getElementById('total_residents');
         if (stayAlone) {
             familySection.style.display = 'none';
+            totalInput.min = 1;
             totalInput.value = 1;
             document.getElementById('residents-container').innerHTML = '';
             document.getElementById('residents-list-group').style.display = 'none';
         } else {
             familySection.style.display = 'block';
+            totalInput.min = 2;
             totalInput.value = 2;
             generateResidentFields();
         }
@@ -603,18 +605,31 @@
     document.getElementById('requestForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const submitBtn = document.querySelector('.submit-btn');
-        submitBtn.disabled = true; submitBtn.textContent = 'กำลังส่งคำร้อง...';
+        submitBtn.disabled = true; submitBtn.textContent = 'กำลังตรวจสอบ...';
 
         try {
-            // ตรวจสอบ session ก่อน — ผู้ใช้ที่ยังไม่ login จะส่งคำร้องไม่ได้
+            // ── 1. ตรวจสอบ session token ──
             var _sessionTk = localStorage.getItem('sessionToken');
             if (!_sessionTk) {
                 submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
-                ppkAlert('กรุณาเข้าสู่ระบบก่อนส่งคำร้อง\nระบบจะพาท่านไปหน้าเข้าสู่ระบบ...', 'error');
-                setTimeout(function() { window.location.href = 'login.html'; }, 2000);
+                await ppkAlert('กรุณาเข้าสู่ระบบก่อนส่งคำร้อง\nระบบจะพาท่านไปหน้าเข้าสู่ระบบ...', 'error');
+                window.location.href = 'login.html';
                 return;
             }
-            // ตรวจสอบความครบถ้วนของข้อมูล
+
+            // ── 2. Refresh Supabase client ให้ส่ง token ไปทุก request (สำคัญมาก!) ──
+            if (typeof _updateSupabaseToken === 'function') {
+                _updateSupabaseToken(_sessionTk);
+            } else if (typeof window._callBackendReal === 'function') {
+                // ppk-api.js โหลดแล้ว แต่ _updateSupabaseToken อาจยังไม่ expose — rebuild client
+                try { window._sb = null; } catch(e) {}
+            }
+            // รอให้ Supabase client พร้อม
+            await new Promise(function(res) { setTimeout(res, 200); });
+
+            submitBtn.textContent = 'กำลังส่งคำร้อง...';
+
+            // ── 3. ตรวจสอบความครบถ้วนของข้อมูล ──
             if (!document.querySelector('input[name="stay_type"]:checked')) {
                 submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
                 ppkAlert('กรุณาเลือกลักษณะการเข้าพัก', 'error');
@@ -682,7 +697,7 @@
                 form_date: document.getElementById('admin-form-date') ? document.getElementById('admin-form-date').value : ''
             };
 
-            // อัปโหลดไฟล์แนบไปยัง Storage
+            // ── 4. อัปโหลดไฟล์แนบ (ถ้ามี) ──
             var uploadErrors = [];
             var _currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
             var _uploadHouseNumber = (_currentUser.house_number || _currentUser.houseNumber || 'new');
@@ -690,47 +705,51 @@
                 ? _attachedFiles
                 : (document.getElementById('file-input').files || []);
             if (_filesToUpload && _filesToUpload.length > 0) {
-                submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ...';
+                submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ (0/' + _filesToUpload.length + ')...';
                 for (let fi = 0; fi < _filesToUpload.length; fi++) {
+                    submitBtn.textContent = 'กำลังอัปโหลดเอกสารแนบ (' + (fi+1) + '/' + _filesToUpload.length + ')...';
                     try {
                         var f = _filesToUpload[fi];
                         var b64 = await new Promise(function(resolve, reject) {
                             var reader = new FileReader();
                             reader.onload = function(ev) { resolve(ev.target.result); };
-                            reader.onerror = function() { reject(new Error('อ่านไฟล์ไม่สำเร็จ กรุณาลองใหม่')); };
+                            reader.onerror = function() { reject(new Error('อ่านไฟล์ไม่สำเร็จ')); };
                             reader.readAsDataURL(f);
                         });
                         var upResult = await callBackend('uploadRequestAttachment', { base64: b64, filename: f.name, requestType: 'residence', houseNumber: _uploadHouseNumber });
                         if (upResult && upResult.success && upResult.url) {
                             data.attachment_urls.push({ url: upResult.url, name: f.name, type: f.type });
                         } else {
-                            uploadErrors.push(f.name + ': ' + (upResult ? upResult.error : 'ไม่ทราบสาเหตุ'));
+                            uploadErrors.push(f.name + ': ' + (upResult ? (upResult.error || 'ไม่ทราบสาเหตุ') : 'ไม่ตอบสนอง'));
                         }
                     } catch(ue) { uploadErrors.push(f.name + ': ' + (ue.message || 'ข้อผิดพลาด')); }
                 }
+                // หยุดเฉพาะถ้าไม่มีไฟล์อัปโหลดได้เลย
                 if (uploadErrors.length > 0 && data.attachment_urls.length === 0) {
                     submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
                     ppkAlert('อัปโหลดไฟล์ไม่สำเร็จ:\n' + uploadErrors.join('\n') + '\n\nกรุณาลองใหม่อีกครั้ง หรือแจ้งผู้ดูแลระบบ', 'error');
                     return;
                 }
+                // มีบางไฟล์ upload ได้ → เตือนแต่ยังส่งต่อได้
+                if (uploadErrors.length > 0) {
+                    console.warn('[Upload] บางไฟล์อัปโหลดไม่สำเร็จ:', uploadErrors);
+                }
                 submitBtn.textContent = 'กำลังส่งคำร้อง...';
             }
 
+            // ── 5. ส่งคำร้อง ──
             const result = await callBackend('submitRequest', data);
 
             if (result && result.success) {
                 const reqId = result.requestId || '-';
-                // บันทึก requestId ไว้สำหรับตรวจสอบสถานะและพิมพ์
                 window._lastRequestId = reqId;
                 localStorage.setItem('_lastResidenceRequestId', reqId);
 
                 submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
 
-                // ตรวจว่า admin หรือไม่ (admin พิมพ์ได้ทันที)
                 var _cu = JSON.parse(localStorage.getItem('currentUser') || '{}');
                 var _isAdmin = (_cu.role === 'admin' || _cu.role === 'head');
 
-                // ซ่อนฟอร์ม แสดงหน้าสำเร็จพร้อมตัวเลือก
                 var successHTML = '<div id="submitSuccessPanel" style="background:white;border-radius:16px;padding:2rem;text-align:center;max-width:600px;margin:2rem auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">';
                 successHTML += '<div style="font-size:3rem;margin-bottom:0.5rem;">✅</div>';
                 successHTML += '<h2 style="color:#059669;margin:0 0 0.5rem;">บันทึกคำร้องเข้าระบบเรียบร้อยแล้ว</h2>';
@@ -739,14 +758,12 @@
                 successHTML += '<div style="font-size:1.5rem;font-weight:bold;color:#059669;letter-spacing:2px;">' + reqId + '</div></div>';
 
                 if (_isAdmin) {
-                    // แอดมินกรอกให้ → พิมพ์ได้ทันที (ข้าม workflow รอหัวหน้า)
                     successHTML += '<div class="print-ready-banner" style="text-align:left;">';
                     successHTML += '<div style="font-weight:bold;color:#065f46;margin-bottom:0.3rem;">✅ โหมดแอดมิน: พิมพ์ได้ทันที</div>';
                     successHTML += '<div style="color:#064e3b;font-size:0.88rem;">เนื่องจากแอดมินเป็นผู้กรอก — สามารถพิมพ์คำร้องได้ทันที หรือกลับมาลงความเห็นในแผง "คำร้องรอลงความเห็น" ด้านบน</div></div>';
                     successHTML += '<div style="display:flex;flex-direction:column;gap:0.8rem;margin-top:1rem;">';
                     successHTML += '<button onclick="printForm()" style="background:linear-gradient(to right,#10b981,#059669);color:white;border:none;border-radius:12px;padding:0.9rem;font-size:1.1rem;font-weight:bold;cursor:pointer;font-family:inherit;">🖨️ พิมพ์คำร้อง / บันทึก PDF</button>';
                 } else {
-                    // ผู้ใช้ทั่วไป — ต้องรอหัวหน้าลงความเห็นก่อน
                     successHTML += '<div class="wait-review-banner" style="text-align:left;">';
                     successHTML += '<div style="font-weight:bold;color:#92400e;margin-bottom:0.3rem;">⏳ ขั้นตอนถัดไป: รอหัวหน้างานลงความเห็น</div>';
                     successHTML += '<div style="color:#78350f;font-size:0.88rem;">คำร้องของท่านถูกบันทึกในระบบแล้ว <b>ยังไม่สามารถพิมพ์ได้ในขณะนี้</b><br>';
@@ -773,11 +790,20 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             } else {
-                ppkAlert(result?.error || 'ส่งคำร้องไม่สำเร็จ กรุณาลองใหม่');
+                var errMsg = (result && result.error) ? result.error : 'ส่งคำร้องไม่สำเร็จ กรุณาลองใหม่';
+                // กรณี error จาก RLS / session → แนะนำให้ login ใหม่
+                if (/permission|authenticate|session|rls|policy/i.test(errMsg)) {
+                    errMsg += '\n\n💡 แนะนำ: ลองออกจากระบบแล้วเข้าสู่ระบบใหม่อีกครั้ง';
+                }
+                ppkAlert(errMsg, 'error');
             }
         } catch (err) {
-            console.error(err);
-            ppkAlert('ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่');
+            console.error('[submitRequest]', err);
+            var msg = err.message || 'ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่';
+            if (/fetch|network|CORS|Failed to fetch/i.test(msg)) {
+                msg = 'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบสัญญาณแล้วลองใหม่';
+            }
+            ppkAlert(msg, 'error');
         } finally {
             submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
         }
@@ -785,6 +811,7 @@
 
     // Initialize
     initPage();
+
 </script>
 <script>
     /* ═══════════════════════════════════════════
@@ -1121,6 +1148,6 @@
         }
     }
 </script>
-    <script src="ppk-pwa.js?v=20260904G"></script>
+    <script src="ppk-pwa.js?v=20260907F"></script>
 </body>
 </html>

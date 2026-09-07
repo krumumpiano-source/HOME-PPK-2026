@@ -2165,11 +2165,12 @@ async function _routeAction(action, data) {
         case 'uploadRequestAttachment': {
             var b64a = data.base64 || '';
             if (!b64a.startsWith('data:')) return { success: false, error: 'ไม่ใช่ base64 file' };
-            var mimeMatchA = b64a.match(/data:([^;]+);base64,(.+)/);
-            if (!mimeMatchA) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
-            var mimeA = mimeMatchA[1];
+            var partsA = b64a.split(',');
+            if (partsA.length < 2) return { success: false, error: 'รูปแบบ base64 ไม่ถูกต้อง' };
+            var headerPartsA = partsA[0].split(';');
+            var mimeA = headerPartsA[0].replace('data:', '');
             if (!_validateMime(mimeA, true)) return { success: false, error: 'รองรับเฉพาะ JPG, PNG, WEBP, GIF, PDF เท่านั้น' };
-            var rawA  = mimeMatchA[2];
+            var rawA  = partsA[1];
             var binaryA = atob(rawA);
             var bytesA  = new Uint8Array(binaryA.length);
             for (var ka = 0; ka < binaryA.length; ka++) { bytesA[ka] = binaryA.charCodeAt(ka); }
@@ -4454,13 +4455,28 @@ async function _routeAction(action, data) {
         /* ── loadAndSyncAccounting — sync auto entries แล้ว load ข้อมูลบัญชี ─── */
         case 'loadAndSyncAccounting': {
             var period = data.period || '';
-            // 1. Sync: ลบ auto entries เก่า แล้ว insert ใหม่ที่ถูกต้อง
-            await _autoSyncAccounting(period);
-            // 2. Load: ดึงข้อมูลทั้งหมด (manual + auto ใหม่)
+            // ── Smart Sync: skip ถ้า sync แล้วใน session นี้ (today) ──
+            var _syncKey = 'acctSync_' + period + '_' + new Date().toISOString().slice(0,10);
+            if (!sessionStorage.getItem(_syncKey)) {
+                await _autoSyncAccounting(period);
+                sessionStorage.setItem(_syncKey, '1');
+            }
+            // Load: ดึงข้อมูลทั้งหมด (manual + auto ใหม่) — income + expense parallel
             var [incRows, expRows] = await Promise.all([
                 sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.income',  order: 'recorded_at.asc' }).catch(function() { return []; }),
                 sbGet('accounting_entries', { period: 'eq.' + period, type: 'eq.expense', order: 'recorded_at.asc' }).catch(function() { return []; })
             ]);
+            // carryForward — aggregate SUM query เริ่มทำ parallel กับสอง queries ข้างบน
+            var _cfPromise = new Promise(function(res) {
+                _waitSb(async function(sb) {
+                    try {
+                        var r = await sb.from('accounting_entries')
+                            .select('type, amount.sum()')
+                            .lt('period', period);
+                        res(r.error ? [] : (r.data || []));
+                    } catch(e) { res([]); }
+                });
+            });
             var mapRow2 = function(r) {
                 return {
                     id: r.id, amount: parseFloat(r.amount) || 0,
@@ -4471,16 +4487,28 @@ async function _routeAction(action, data) {
                     receipt_url: r.receipt_url || null
                 };
             };
-            // คำนวณ carryForward จาก period ก่อนหน้า (หลัง sync แล้ว ตัวเลขถูกต้อง)
+            // คำนวณ carryForward ด้วย aggregate SUM — หลีกเงินการดึงทุก row
             var carryForward2 = 0;
             try {
-                var [allPrevInc2, allPrevExp2] = await Promise.all([
-                    sbGet('accounting_entries', { period: 'lt.' + period, type: 'eq.income',  select: 'amount' }).catch(function() { return []; }),
-                    sbGet('accounting_entries', { period: 'lt.' + period, type: 'eq.expense', select: 'amount' }).catch(function() { return []; })
-                ]);
-                var totalPrevInc2 = (allPrevInc2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-                var totalPrevExp2 = (allPrevExp2 || []).reduce(function(s, r) { return s + (parseFloat(r.amount) || 0); }, 0);
-                carryForward2 = Math.round((totalPrevInc2 - totalPrevExp2) * 100) / 100;
+                // ใช้ Supabase SDK โดยตรง เพราะ sbGet ไม่รองรับ group
+                var _cfRes = await new Promise(function(res, rej) {
+                    _waitSb(async function(sb) {
+                        try {
+                            var r = await sb.from('accounting_entries')
+                                .select('type, amount.sum()')
+                                .lt('period', period);
+                            if (r.error) { rej(r.error); return; }
+                            res(r.data || []);
+                        } catch(e) { rej(e); }
+                    });
+                });
+                var _prevInc = 0, _prevExp = 0;
+                (_cfRes || []).forEach(function(r) {
+                    var _amt = parseFloat(r.sum || r['amount.sum()'] || r.amount) || 0;
+                    if (r.type === 'income')  _prevInc = _amt;
+                    if (r.type === 'expense') _prevExp = _amt;
+                });
+                carryForward2 = Math.round((_prevInc - _prevExp) * 100) / 100;
             } catch(e) { carryForward2 = 0; }
             // sort auto expense items ตามลำดับที่กำหนด
             var _expSortOrder = { 'ส่วนต่างค่าไฟ (ติดลบ)': 1, 'ค่า Lost ไฟฟ้า (บ้านพัก)': 2, 'ค่า Lost ไฟฟ้า (แฟลต)': 3, 'ค่าขยะ': 4 };
