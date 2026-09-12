@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <title>แบบขอเข้าพักอาศัย | HOME PPK 2026</title>
-    <link rel="stylesheet" href="ppk-theme.css?v=20260907T">
+    <link rel="stylesheet" href="ppk-theme.css?v=20260912O">
     <style>
         body {
             margin: 0; min-height: 100vh; font-family: 'Kanit', sans-serif;
@@ -337,6 +337,7 @@
                 <div id="family-section" style="display:none;">
                     <div class="form-group" id="total-residents-group">
                         <label>จำนวนผู้เข้าพักทั้งหมด (รวมผู้ยื่นคำร้อง)</label>
+                        <!-- ไม่ใส่ required เพราะ field นี้อาจถูกซ่อน (display:none) ทำให้ browser validate ไม่ได้ → ใช้ JS validation แทน -->
                         <input type="number" name="total_residents" id="total_residents" min="2" value="2" onchange="generateResidentFields()" oninput="generateResidentFields()">
                         <div style="font-size:0.82rem;color:#6b7280;margin-top:0.3rem;">ใส่จำนวนคนทั้งหมด แล้วช่องกรอกรายชื่อจะปรากฏด้านล่างอัตโนมัติ</div>
                     </div>
@@ -482,12 +483,12 @@
     </div>
     </div><!-- end main-container -->
 
-    <script src="supabase/config.js?v=20260907T"></script>
-    <script src="supabase/supabase.min.js?v=20260907T"></script>
-    <script src="ppk-api.js?v=20260907T"></script>
-    <script src="ppk-app.js?v=20260907T"></script>
-    <script src="ppk-utils.js?v=20260907T"></script>
-    <script src="ppk-nav.js?v=20260907T"></script>
+    <script src="supabase/config.js?v=20260912O"></script>
+    <script src="supabase/supabase.min.js?v=20260912O"></script>
+    <script src="ppk-api.js?v=20260912O"></script>
+    <script src="ppk-app.js?v=20260912O"></script>
+    <script src="ppk-utils.js?v=20260912O"></script>
+    <script src="ppk-nav.js?v=20260912O"></script>
 <script>
     // Nav — handled by ppk-nav.js
     window._ppkNavPage = 'request-form';
@@ -543,17 +544,20 @@
             var old = oldData[i] || {};
             var div = document.createElement('div');
             div.classList.add('resident-entry');
+            // หมายเหตุ: ไม่ใส่ required บน dynamically generated fields เพราะ:
+            // 1) form มี novalidate แล้ว และ 2) ใช้ JS validation ใน submit handler
+            // การใส่ required บน hidden fields ทำให้เกิด "invalid form control not focusable"
             div.innerHTML = '<div style="margin-bottom:0.75rem;padding:0.6rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">'
                 + '<div style="font-size:0.82rem;color:#6b7280;margin-bottom:0.4rem;">สมาชิกคนที่ ' + (i+1) + '</div>'
                 + '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
-                + '<select name="resident_prefix[]" required style="width:100px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
+                + '<select name="resident_prefix[]" style="width:100px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
                 + '<option value="นาย"' + (old.prefix==='นาย'?' selected':'') + '>นาย</option>'
                 + '<option value="นาง"' + (old.prefix==='นาง'?' selected':'') + '>นาง</option>'
                 + '<option value="นางสาว"' + (old.prefix==='นางสาว'?' selected':'') + '>นางสาว</option>'
                 + '<option value="เด็กชาย"' + (old.prefix==='เด็กชาย'?' selected':'') + '>เด็กชาย</option>'
                 + '<option value="เด็กหญิง"' + (old.prefix==='เด็กหญิง'?' selected':'') + '>เด็กหญิง</option></select>'
-                + '<input type="text" name="resident_name[]" placeholder="ชื่อ-นามสกุล" value="' + (old.name||'').replace(/"/g,'&quot;') + '" required style="flex:2;min-width:180px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
-                + '<select name="resident_relation[]" required style="width:120px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
+                + '<input type="text" name="resident_name[]" placeholder="ชื่อ-นามสกุล" value="' + (old.name||'').replace(/"/g,'&quot;') + '" style="flex:2;min-width:180px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
+                + '<select name="resident_relation[]" style="width:120px;padding:0.5rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;font-family:inherit;">'
                 + '<option value="คู่สมรส"' + (old.relation==='คู่สมรส'?' selected':'') + '>คู่สมรส</option>'
                 + '<option value="บุตร"' + (old.relation==='บุตร'?' selected':'') + '>บุตร</option>'
                 + '<option value="บิดา"' + (old.relation==='บิดา'?' selected':'') + '>บิดา</option>'
@@ -658,12 +662,25 @@
             const documents = [];
             document.querySelectorAll('input[name="documents"]:checked').forEach(cb => documents.push(cb.value));
 
+            // ── JS Validation: ตรวจสอบชื่อสมาชิกครอบครัว (แทน HTML required) ──
+            const stayTypeVal = document.querySelector('input[name="stay_type"]:checked')?.value || '';
             const residents = [];
             const resNames = document.querySelectorAll('input[name="resident_name[]"]');
             const resPrefixes = document.querySelectorAll('select[name="resident_prefix[]"]');
             const resRelations = document.querySelectorAll('select[name="resident_relation[]"]');
-            for (let i = 0; i < resNames.length; i++) {
-                residents.push({ prefix: resPrefixes[i]?.value || '', name: resNames[i]?.value || '', relation: resRelations[i]?.value || '' });
+            if (stayTypeVal === 'family') {
+                for (let i = 0; i < resNames.length; i++) {
+                    if (!resNames[i]?.value.trim()) {
+                        submitBtn.disabled = false; submitBtn.textContent = 'ส่งคำร้อง';
+                        ppkAlert('กรุณากรอกชื่อ-นามสกุลสมาชิกคนที่ ' + (i + 1) + ' ให้ครบถ้วน', 'error');
+                        return;
+                    }
+                    residents.push({ prefix: resPrefixes[i]?.value || 'นาย', name: resNames[i]?.value.trim(), relation: resRelations[i]?.value || 'คู่สมรส' });
+                }
+            } else {
+                for (let i = 0; i < resNames.length; i++) {
+                    residents.push({ prefix: resPrefixes[i]?.value || '', name: resNames[i]?.value || '', relation: resRelations[i]?.value || '' });
+                }
             }
 
             const stayType = document.querySelector('input[name="stay_type"]:checked')?.value || '';
@@ -1148,6 +1165,6 @@
         }
     }
 </script>
-    <script src="ppk-pwa.js?v=20260907T"></script>
+    <script src="ppk-pwa.js?v=20260912O"></script>
 </body>
 </html>

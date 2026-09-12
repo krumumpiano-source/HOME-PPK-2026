@@ -334,7 +334,8 @@ async function _findResidentForUser(userId, userEmail) {
         } catch(e) {}
     }
     // 3) ค้นจาก coresidents table (ผู้ร่วมพักอาศัย)
-    if (userId) {
+    // Guard: ตรวจสอบ userId ไม่ว่างก่อน query เพื่อป้องกัน Error 400 จาก eq.undefined
+    if (userId && String(userId).trim()) {
         try {
             var corRows = await sbGet('coresidents', { user_id: 'eq.' + userId, limit: '1' });
             if (corRows && corRows[0]) {
@@ -346,7 +347,8 @@ async function _findResidentForUser(userId, userEmail) {
             }
         } catch(e) {}
     }
-    if (userEmail) {
+    // Guard: ตรวจสอบ email ไม่ว่างก่อน query เพื่อป้องกัน Error 400 จาก eq.
+    if (userEmail && String(userEmail).trim()) {
         var em2 = userEmail.trim().toLowerCase();
         try {
             var corEmRows = await sbGet('coresidents', { email: 'eq.' + em2, limit: '1' });
@@ -4740,7 +4742,16 @@ async function _routeAction(action, data) {
 
         /* ── getStaffCoresidents — ดึงผู้ร่วมพักอาศัยที่เป็นบุคลากร ─── */
         case 'getStaffCoresidents': {
-            var cRows = await sbGet('coresidents', { select: '*, residents!inner(id, prefix, firstname, lastname, house_id, housing!inner(house_number)), users!inner(position, phone)' });
+            // หมายเหตุ: ใช้ left join (ไม่ใช้ !inner) เพื่อป้องกัน Error 400
+            // เมื่อ coresidents record ไม่มี user_id (null) - !inner join จะ filter ออกไปเอง
+            var cRows = [];
+            try {
+                cRows = await sbGet('coresidents', { select: '*, residents!inner(id, prefix, firstname, lastname, house_id, housing!inner(house_number)), users(position, phone)' }) || [];
+            } catch(e) {
+                // Fallback: ดึงเฉพาะ coresidents พื้นฐานถ้า join ทับซ้อน Error
+                console.warn('[getStaffCoresidents] join error, falling back:', e.message);
+                try { cRows = await sbGet('coresidents', { select: '*' }) || []; } catch(e2) { cRows = []; }
+            }
             var mapped = (cRows || []).map(function (c) {
                 var r = c.residents || {};
                 var u = c.users || {};
@@ -4779,18 +4790,22 @@ async function _routeAction(action, data) {
                     var resRows = await sbGet('residents', { user_id: 'in.(' + userIds.join(',') + ')', is_active: 'eq.true', select: 'user_id,house_number' });
                     var houseMap = {};
                     (resRows || []).forEach(function(r) { if (r.user_id) houseMap[r.user_id] = r.house_number; });
-                    var coRows = await sbGet('coresidents', { user_id: 'in.(' + userIds.join(',') + ')', select: 'user_id,resident_id' });
-                    if (coRows && coRows.length > 0) {
-                        var resIds = coRows.map(function(c) { return c.resident_id; }).filter(Boolean);
-                        if (resIds.length > 0) {
-                            var mainRes = await sbGet('residents', { id: 'in.(' + resIds.join(',') + ')', select: 'id,house_number' });
-                            var mainMap = {};
-                            (mainRes || []).forEach(function(m) { mainMap[m.id] = m.house_number; });
-                            coRows.forEach(function(c) { if (c.user_id && c.resident_id && mainMap[c.resident_id]) houseMap[c.user_id] = mainMap[c.resident_id]; });
+                    // Guard: ตรวจ userIds ไม่ว่างก่อน query coresidents เพื่อป้องกัน Error 400 in.()
+                    var validUserIds = userIds.filter(function(id) { return id && String(id).trim(); });
+                    if (validUserIds.length > 0) {
+                        var coRows = await sbGet('coresidents', { user_id: 'in.(' + validUserIds.join(',') + ')', select: 'user_id,resident_id' });
+                        if (coRows && coRows.length > 0) {
+                            var resIds = coRows.map(function(c) { return c.resident_id; }).filter(Boolean);
+                            if (resIds.length > 0) {
+                                var mainRes = await sbGet('residents', { id: 'in.(' + resIds.join(',') + ')', select: 'id,house_number' });
+                                var mainMap = {};
+                                (mainRes || []).forEach(function(m) { mainMap[m.id] = m.house_number; });
+                                coRows.forEach(function(c) { if (c.user_id && c.resident_id && mainMap[c.resident_id]) houseMap[c.user_id] = mainMap[c.resident_id]; });
+                            }
                         }
                     }
                     allUsers.forEach(function(u) { u.house_number = houseMap[u.id] || ''; });
-                } catch(e) {}
+                } catch(e) { console.warn('[getUsersList] coresidents lookup error:', e.message); }
             }
             return { success: true, data: allUsers };
         }
