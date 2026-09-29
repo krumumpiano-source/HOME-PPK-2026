@@ -14,7 +14,7 @@ set TIMESTAMP=%date% %time%
 git commit -m "Auto-deploy update: %TIMESTAMP%"
 
 echo Pushing to GitHub (main branch)...
-git push origin main
+git push origin HEAD:main
 
 echo.
 echo ===================================================

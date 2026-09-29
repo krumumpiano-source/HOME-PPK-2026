@@ -1,4 +1,4 @@
-﻿/* ═══════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    HOME PPK 2026 — Design System v5.0
    Sidebar (Desktop) + Topbar Hamburger & Drawer (Mobile)
    ═══════════════════════════════════════════════════════════ */
@@ -7,6 +7,7 @@
 
 /* ─── Design Tokens ─── */
 :root {
+  color-scheme: light;
   /* Primary */
   --font-heading: 'Outfit', 'Kanit', sans-serif;
   --c-primary: #4F46E5;
