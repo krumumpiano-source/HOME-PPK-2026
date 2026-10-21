@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOME PPK 2026 — ย้ายที่อยู่เว็บไซต์</title>
+<link rel="icon" href="favicon.ico">
+<script>
+(function () {
+  var target = 'https://home-ppk-2026.pages.dev/';
+  var p = location.pathname.replace(/^\/HOME-PPK-2026\/?/i, '');
+  var url = target + p + location.search + location.hash;
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+    }
+    if (window.caches && caches.keys) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+  } catch (e) {}
+  location.replace(url);
+})();
+</script>
+<style>body{font-family:Kanit,system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;background:#312E81;color:#fff;text-align:center;padding:1rem}a{color:#fde68a;font-size:1.1rem}</style>
+</head>
+<body>
+<div>
+<h1>HOME PPK 2026 ย้ายไปที่อยู่ใหม่แล้ว</h1>
+<p>กำลังพาไปยัง <a href="https://home-ppk-2026.pages.dev/">home-ppk-2026.pages.dev</a></p>
+<p>กรุณาบันทึกที่อยู่ใหม่ หรือเพิ่มลงหน้าจอโฮมอีกครั้ง</p>
+</div>
+</body>
+</html>
