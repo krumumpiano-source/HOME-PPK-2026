@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>สำเนาใบเสร็จ | HOME PPK 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --brand:#4f46e5; --ok:#166534; --bad:#b91c1c; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:Kanit,system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#312e81,#4f46e5 55%,#0891b2); color:#fff; padding:1.1rem 1rem 1rem; }
+  header h1 { margin:0; font-size:1.25rem; font-weight:600; }
+  header p { margin:0.25rem 0 0; font-size:0.88rem; opacity:0.9; }
+  main { max-width:980px; margin:0 auto; padding:1rem; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; margin-bottom:0.85rem; }
+  label { display:block; font-size:0.82rem; color:var(--muted); margin-bottom:0.2rem; }
+  input, select, button { font-family:inherit; font-size:0.95rem; }
+  input, select { width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:0.55rem 0.7rem; background:#fff; }
+  button { border:0; border-radius:8px; padding:0.55rem 0.9rem; background:var(--brand); color:#fff; font-weight:500; cursor:pointer; }
+  button.ghost { background:#e2e8f0; color:var(--ink); }
+  button.warn { background:#b45309; }
+  button:disabled { opacity:0.6; cursor:wait; }
+  .row { display:flex; flex-wrap:wrap; gap:0.6rem; align-items:end; }
+  .row > * { flex:1 1 140px; }
+  .checks { flex:1 1 180px; padding-bottom:0.45rem; }
+  .err { color:var(--bad); font-size:0.9rem; min-height:1.2rem; }
+  .note { color:var(--muted); font-size:0.82rem; line-height:1.5; }
+  .item { border:1px solid var(--line); border-radius:12px; padding:0.75rem 0.85rem; margin-bottom:0.55rem; background:#fff; }
+  .item h2 { margin:0 0 0.2rem; font-size:1rem; }
+  .meta { color:var(--muted); font-size:0.84rem; line-height:1.55; }
+  .badge { display:inline-block; border-radius:999px; padding:0.05rem 0.55rem; font-size:0.78rem; font-weight:600; }
+  .badge.sent { background:#dcfce7; color:var(--ok); }
+  .badge.failed { background:#fee2e2; color:var(--bad); }
+  .badge.pending { background:#fef3c7; color:#92400e; }
+  .actions { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.55rem; }
+  .actions button { padding:0.4rem 0.7rem; }
+  #detail { display:none; }
+  iframe { width:100%; min-height:420px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  .empty { text-align:center; color:var(--muted); padding:1.5rem 0.5rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>สำเนาใบเสร็จ</h1>
+  <p>HOME PPK 2026 — เปิดดู ดาวน์โหลด หรือส่งซ้ำเมื่ออีเมลใบเสร็จส่งไม่ถึง</p>
+</header>
+<main>
+  <section id="loginCard" class="card">
+    <p class="note">หน้านี้สำหรับเจ้าหน้าที่ตรวจสลิปและผู้ดูแลระบบ ใช้บัญชีเดียวกับระบบบ้านพัก</p>
+    <div class="row">
+      <div><label for="email">อีเมล</label><input id="email" type="email" autocomplete="username"></div>
+      <div><label for="password">รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password"></div>
+      <div><button id="loginBtn" type="button">เข้าสู่ระบบ</button></div>
+    </div>
+    <p id="loginErr" class="err"></p>
+  </section>
+
+  <section id="app" style="display:none">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="month">เดือน</label>
+          <select id="month"></select>
+        </div>
+        <div>
+          <label for="year">ปี พ.ศ.</label>
+          <select id="year"></select>
+        </div>
+        <div>
+          <label for="unit">บ้าน / ห้อง</label>
+          <input id="unit" placeholder="เช่น แฟลต5 หรือ บ้าน6">
+        </div>
+        <div class="checks"><label><input id="failedOnly" type="checkbox" style="width:auto"> เฉพาะที่ส่งไม่ถึง</label></div>
+        <div><button id="searchBtn" type="button">ค้นหา</button></div>
+      </div>
+      <div class="actions">
+        <button id="syncBtn" class="warn" type="button">ตรวจจดหมายตีกลับจาก Gmail</button>
+        <button id="logoutBtn" class="ghost" type="button">ออกจากระบบ</button>
+      </div>
+      <p class="note">สถานะ «ส่งแล้ว» หมายถึง Gmail รับจดหมายไว้แล้ว การตีกลับทีหลัง (กล่องเต็ม, ที่อยู่ผิด) จะเปลี่ยนเป็น «ส่งไม่ถึง» เมื่อกดตรวจจดหมายตีกลับ</p>
+      <p id="listErr" class="err"></p>
+    </div>
+    <div id="list"></div>
+    <section id="detail" class="card">
+      <h2 id="detailTitle" style="margin-top:0">ใบเสร็จ</h2>
+      <p id="detailMeta" class="meta"></p>
+      <iframe id="frame" sandbox="" title="สำเนาใบเสร็จ"></iframe>
+      <div class="row" style="margin-top:0.8rem">
+        <div>
+          <label for="resendEmail">อีเมลที่จะส่งซ้ำ</label>
+          <input id="resendEmail" type="email">
+        </div>
+        <div><button id="resendBtn" type="button">ส่งซ้ำจากสำเนานี้</button></div>
+        <div><button id="downloadBtn" class="ghost" type="button">ดาวน์โหลด HTML</button></div>
+      </div>
+      <p id="detailErr" class="err"></p>
+    </section>
+  </section>
+</main>
+<script>
+(function () {
+  var FN = location.hostname.indexOf('supabase.co') >= 0
+    ? location.pathname
+    : 'https://mwigdgxrfpcmfjuztmip.supabase.co/functions/v1/receipt-archive';
+  var KEY = 'sb_publishable_DInAJWyKXTwcxC79jNiS9A_PDxjKWHL';
+  var TOKEN_KEY = 'ppkReceiptArchiveToken';
+  var current = null;
+
+  var months = ['ทั้งปี','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var monthSel = document.getElementById('month');
+  var yearSel = document.getElementById('year');
+  months.forEach(function (name, i) {
+    var opt = document.createElement('option');
+    opt.value = i === 0 ? '' : String(i).padStart(2, '0');
+    opt.textContent = name;
+    monthSel.appendChild(opt);
+  });
+  var thisYear = new Date().getFullYear() + 543;
+  for (var y = thisYear + 1; y >= thisYear - 2; y--) {
+    var yopt = document.createElement('option');
+    yopt.value = String(y);
+    yopt.textContent = String(y);
+    yearSel.appendChild(yopt);
+  }
+  monthSel.value = '';
+  yearSel.value = String(thisYear);
+
+  function token() { try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function setToken(v) { try { if (v) sessionStorage.setItem(TOKEN_KEY, v); else sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+    });
+  }
+  function statusLabel(st) {
+    if (st === 'failed') return '<span class="badge failed">ส่งไม่ถึง</span>';
+    if (st === 'pending') return '<span class="badge pending">กำลังส่ง</span>';
+    return '<span class="badge sent">ส่งแล้ว</span>';
+  }
+  function money(n) {
+    if (n == null || n === '') return '-';
+    var num = Number(n);
+    if (!isFinite(num)) return '-';
+    return num.toLocaleString('th-TH') + ' บาท';
+  }
+  function when(s) {
+    if (!s) return '-';
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' });
+  }
+  function periodLabel() {
+    var m = monthSel.value;
+    if (!m) return '';
+    return yearSel.value + '-' + m;
+  }
+
+  async function api(body) {
+    var headers = { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + KEY };
+    if (token()) headers['x-session-token'] = token();
+    var res = await fetch(FN, { method: 'POST', headers: headers, body: JSON.stringify(body || {}) });
+    var json = {};
+    try { json = await res.json(); } catch (e) { json = { error: 'ระบบไม่ตอบกลับ' }; }
+    if (res.status === 401) {
+      setToken('');
+      showLogin(json.error || 'กรุณาเข้าสู่ระบบใหม่');
+      throw new Error(json.error || 'หมดเวลาเข้าสู่ระบบ');
+    }
+    if (!res.ok || json.success === false) throw new Error(json.error || 'ทำรายการไม่สำเร็จ');
+    return json;
+  }
+
+  function showLogin(msg) {
+    document.getElementById('loginCard').style.display = '';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginErr').textContent = msg || '';
+  }
+  function showApp() {
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('app').style.display = '';
+  }
+
+  async function loadList() {
+    document.getElementById('listErr').textContent = '';
+    var data = await api({
+      action: 'list',
+      period: periodLabel(),
+      house: document.getElementById('unit').value.trim(),
+      failedOnly: document.getElementById('failedOnly').checked
+    });
+    var rows = data.rows || [];
+    var box = document.getElementById('list');
+    if (!rows.length) {
+      box.innerHTML = '<div class="card empty">ไม่พบสำเนาใบเสร็จตามเงื่อนไขนี้</div>';
+      return;
+    }
+    box.innerHTML = rows.map(function (r) {
+      return '<article class="item"><h2>' + esc(r.house_number || 'ไม่ระบุห้อง') + ' · ' + esc(r.resident_name || 'ไม่ระบุชื่อ') + '</h2>'
+        + '<div class="meta">' + statusLabel(r.status) + ' · งวด ' + esc(r.period || '-') + ' · ' + esc(money(r.amount)) + '<br>'
+        + 'อีเมล ' + esc(r.email || '-') + '<br>บันทึกเมื่อ ' + esc(when(r.created_at))
+        + (r.failure_reason ? '<br>สาเหตุ: ' + esc(r.failure_reason) : '')
+        + '</div><div class="actions"><button type="button" data-open="' + esc(r.id) + '">เปิดสำเนา</button></div></article>';
+    }).join('');
+    box.querySelectorAll('[data-open]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openOne(btn.getAttribute('data-open')); });
+    });
+  }
+
+  async function openOne(id) {
+    document.getElementById('detailErr').textContent = '';
+    var data = await api({ action: 'get', id: id });
+    current = data.row;
+    document.getElementById('detail').style.display = '';
+    document.getElementById('detailTitle').textContent = (current.house_number || '') + ' · ' + (current.subject || 'ใบเสร็จ');
+    document.getElementById('detailMeta').textContent = (current.resident_name || '') + ' · ' + (current.email || '') + ' · ' + money(current.amount);
+    document.getElementById('resendEmail').value = current.email || '';
+    document.getElementById('frame').srcdoc = current.html || '<p>ไม่มีเนื้อหา</p>';
+    document.getElementById('detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function downloadCurrent() {
+    if (!current) return;
+    var blob = new Blob([current.html || ''], { type: 'text/html;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ใบเสร็จ-' + (current.house_number || 'ppk') + '-' + (current.period || '') + '.html';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', async function () {
+    document.getElementById('loginErr').textContent = '';
+    document.getElementById('loginBtn').disabled = true;
+    try {
+      var data = await api({
+        action: 'login',
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      });
+      setToken(data.token);
+      document.getElementById('password').value = '';
+      showApp();
+      await loadList();
+    } catch (e) {
+      document.getElementById('loginErr').textContent = e.message;
+    } finally {
+      document.getElementById('loginBtn').disabled = false;
+    }
+  });
+  document.getElementById('password').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+  document.getElementById('searchBtn').addEventListener('click', function () {
+    loadList().catch(function (e) { document.getElementById('listErr').textContent = e.message; });
+  });
+  document.getElementById('syncBtn').addEventListener('click', async function () {
+    var btn = document.getElementById('syncBtn');
+    btn.disabled = true;
+    document.getElementById('listErr').textContent = 'กำลังตรวจจดหมายตีกลับ...';
+    try {
+      var data = await api({ action: 'sync' });
+      document.getElementById('listErr').textContent = data.message || 'ตรวจแล้ว';
+      await loadList();
+    } catch (e) {
+      document.getElementById('listErr').textContent = e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  document.getElementById('logoutBtn').addEventListener('click', async function () {
+    try { await api({ action: 'logout' }); } catch (e) {}
+    setToken('');
+    current = null;
+    showLogin('');
+  });
+  document.getElementById('downloadBtn').addEventListener('click', downloadCurrent);
+  document.getElementById('resendBtn').addEventListener('click', async function () {
+    if (!current) return;
+    var btn = document.getElementById('resendBtn');
+    btn.disabled = true;
+    document.getElementById('detailErr').textContent = '';
+    try {
+      await api({ action: 'resend', id: current.id, email: document.getElementById('resendEmail').value.trim() });
+      document.getElementById('detailErr').textContent = 'ส่งซ้ำแล้ว และเก็บสำเนาใหม่ไว้ในรายการ';
+      await loadList();
+    } catch (e) {
+      document.getElementById('detailErr').textContent = e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  if (token()) {
+    showApp();
+    loadList().catch(function () { setToken(''); showLogin('กรุณาเข้าสู่ระบบใหม่'); });
+  }
+})();
+</script>
+</body>
+</html>
